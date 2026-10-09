@@ -23,8 +23,8 @@ import java.util.List;
 public class DemonsHorn extends Card {
 
     public DemonsHorn() {
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.BLACK), List.of(new GainLifeEffect(1))),
-                "Gain 1 life?"));
+        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(
+                new CardColorPredicate(CardColor.BLACK),
+                List.of(new MayEffect(new GainLifeEffect(1), "Gain 1 life?"))));
     }
 }

@@ -44,11 +44,7 @@ public class DesperatePlea extends Card {
                         returnCreature, creatureCard),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature",
-                        destroyCreature, creaturePermanent),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Return target creature card from your graveyard to the battlefield if its power is less than or equal to the sacrificed creature's power and destroy target creature",
-                        List.<CardEffect>of(returnCreature, destroyCreature),
-                        List.of(creatureCard, creaturePermanent))
+                        destroyCreature, creaturePermanent)
         )));
     }
 }

@@ -42,6 +42,7 @@ class DreadSlaverTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
     }
 
     @Test

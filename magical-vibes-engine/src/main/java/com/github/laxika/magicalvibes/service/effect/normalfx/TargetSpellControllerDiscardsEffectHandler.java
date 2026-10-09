@@ -28,12 +28,15 @@ public class TargetSpellControllerDiscardsEffectHandler implements NormalEffectH
 
         for (StackEntry se : gameData.stack) {
             if (se.getTargetableId().equals(targetCardId)) {
-                gameData.discardCausedByOpponent = true;
+                gameData.discardCausedByOpponent = !entry.getControllerId().equals(se.getControllerId());
                 playerInteractionSupport.resolveDiscardCards(gameData, se.getControllerId(), e.amount());
                 return;
             }
         }
-        // Target spell already left the stack (e.g. was countered by earlier e)
-    
+        UUID controllerId = entry.getCounteredSpellControllerId();
+        if (controllerId != null) {
+            gameData.discardCausedByOpponent = !entry.getControllerId().equals(controllerId);
+            playerInteractionSupport.resolveDiscardCards(gameData, controllerId, e.amount());
+        }
     }
 }

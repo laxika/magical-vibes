@@ -1021,7 +1021,7 @@ public class DamageSupport {
     }
 
     public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
-        if (entry.getSourcePermanentId() == null) return false;
+        if (!gameQueryService.isDamagePreventable(gameData) || entry.getSourcePermanentId() == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source != null && (gameQueryService.isPreventedFromDealingDamage(gameData, source)
                 || gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
@@ -2222,8 +2222,10 @@ public class DamageSupport {
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
-                    // An "exile it if it would die" rider follows the creature the spell damaged
-                    // (Carbonize's "that creature"), not one that received redirected damage.
+                    if (entry != null && entry.isExilesCreaturesDamaged()
+                            && gameQueryService.isCreature(gameData, targetPerm)) {
+                        targetPerm.setExileInsteadOfDieThisTurn(true);
+                    }
                     gameData.recordDamageDealtBySource(sourceId, effectiveDamage);
                     damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
                     // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle
@@ -2617,7 +2619,7 @@ public class DamageSupport {
      * controller. If the controller has fewer permanents, all of them are sacrificed.
      */
     public int applyDralnuReplacement(GameData gameData, Permanent target, int damage) {
-        if (damage <= 0 || !hasDralnuDamageReplacement(target)) return 0;
+        if (damage <= 0 || !hasDralnuDamageReplacement(gameData, target)) return 0;
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (controllerId != null) {
@@ -2629,8 +2631,8 @@ public class DamageSupport {
         return damage;
     }
 
-    public boolean hasDralnuDamageReplacement(Permanent target) {
-        return target != null && target.getCard().getEffects(EffectSlot.STATIC).stream()
+    public boolean hasDralnuDamageReplacement(GameData gameData, Permanent target) {
+        return target != null && gameQueryService.getActiveStaticEffects(gameData, target).stream()
                 .anyMatch(DralnuDamageReplacementEffect.class::isInstance);
     }
 

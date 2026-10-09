@@ -89,6 +89,26 @@ public class PermanentCounterSupport {
         fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
     }
 
+    /** Queues a last-counter draw trigger when that permanent's controller removed the counter. */
+    public void notifyLastCounterRemoved(GameData gameData, Permanent source, CounterType counterType,
+                                        int removed, UUID removingPlayerId) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+        if (removed <= 0 || source.getCounterCount(counterType) != 0
+                || !Objects.equals(controllerId, removingPlayerId)
+                || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
+            return;
+        }
+        for (CardEffect effect : source.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED)) {
+            if (effect instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect removal
+                    && removal.counterType() == counterType && removal.onlyIfLastCounterRemoved()
+                    && removal.thenEffect() instanceof com.github.laxika.magicalvibes.model.effect.DrawGameEffect) {
+                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        source.getCard(), controllerId, source.getCard().getName() + "'s ability",
+                        List.of(removal.thenEffect()), null, source.getId()));
+            }
+        }
+    }
+
     /** Fires controller-scoped "whenever you put one or more counters on a creature" watchers. */
     private void fireYouPutCountersOnCreatureTriggers(
             GameData gameData, Permanent creature, int count, UUID placingPlayerId) {
@@ -1001,6 +1021,7 @@ public class PermanentCounterSupport {
 
         int removed = Math.min(current, amount);
         target.setCounterCount(counterType, current - removed);
+        checkLastTimeCounterRemoved(gameData, target, counterType, current);
         if (counterType == CounterType.OIL) {
             gameData.recordOilCounterRemoved(target, removed);
         }
@@ -1028,6 +1049,7 @@ public class PermanentCounterSupport {
             int current = permanent.getCounterCount(counterType);
             int removed = Math.min(current, count);
             permanent.setCounterCount(counterType, current - removed);
+            checkLastTimeCounterRemoved(gameData, permanent, counterType, current);
             if (counterType == CounterType.OIL) {
                 gameData.recordOilCounterRemoved(permanent, removed);
             }
@@ -1039,6 +1061,23 @@ public class PermanentCounterSupport {
                 : count + " " + counterName + " counters";
         gameLogService.append(gameData, GameLog.cardThen(
                 permanent.getCard(), " removes " + counterText + "."));
+    }
+
+    /** Vanishing's sacrifice ability triggers whenever the last time counter is removed. */
+    private void checkLastTimeCounterRemoved(GameData gameData, Permanent permanent,
+                                              CounterType counterType, int previousCount) {
+        if (counterType != CounterType.TIME || previousCount <= 0
+                || permanent.getCounterCount(CounterType.TIME) != 0
+                || !gameQueryService.hasKeyword(gameData, permanent,
+                com.github.laxika.magicalvibes.model.Keyword.VANISHING)) return;
+        UUID controllerId = controllerOf(gameData, permanent);
+        if (controllerId == null) return;
+        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, permanent.getCard(),
+                controllerId, permanent.getCard().getName() + "'s vanishing ability",
+                List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect()),
+                null, permanent.getId());
+        trigger.setSourcePermanentSnapshot(new Permanent(permanent));
+        gameData.stack.add(trigger);
     }
 
     private void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga, int loreCount) {
@@ -1640,6 +1679,7 @@ public class PermanentCounterSupport {
 
     private void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target,
                                                              UUID placingPlayerId, int count) {
+        if (gameQueryService.hasLostPrintedAbilities(gameData, target)) return;
         Card card = target.getCard();
         List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT);
         if (effects.isEmpty()) {

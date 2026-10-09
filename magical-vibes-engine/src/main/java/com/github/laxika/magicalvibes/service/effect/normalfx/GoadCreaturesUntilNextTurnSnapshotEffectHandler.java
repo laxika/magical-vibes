@@ -35,6 +35,9 @@ public class GoadCreaturesUntilNextTurnSnapshotEffectHandler implements NormalEf
                 (GoadCreaturesUntilNextTurnSnapshotEffect) effect;
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         FilterContext context = FilterContext.of(gameData)
                 .withSourceControllerId(entry.getControllerId())
                 .withSourceCardId(entry.getCard() == null ? null : entry.getCard().getId())

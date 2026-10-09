@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.condition.ControllerHasCommanderAsCast;
+import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -38,6 +38,6 @@ public class DrownInDreams extends Card {
                         "Target player mills twice X cards",
                         new MillEffect(new Scaled(new XValue(), 2), MillRecipient.TARGET_PLAYER),
                         targetPlayer)
-        ), new ControllerHasCommanderAsCast()));
+        ), new ControlledCommanderAsCast()));
     }
 }

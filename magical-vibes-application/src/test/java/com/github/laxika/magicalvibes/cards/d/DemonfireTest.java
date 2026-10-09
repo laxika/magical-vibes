@@ -254,7 +254,6 @@ class DemonfireTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1, player2.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, demonfire.getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

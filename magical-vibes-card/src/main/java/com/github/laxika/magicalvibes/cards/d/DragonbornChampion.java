@@ -11,7 +11,7 @@ public class DragonbornChampion extends Card {
 
     public DragonbornChampion() {
         // Whenever a source you control deals 5 or more damage to a player, draw a card.
-        addEffect(EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
+        addEffect(EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER,
                 new DrawCardIfEventValueAtLeastEffect(5));
     }
 }

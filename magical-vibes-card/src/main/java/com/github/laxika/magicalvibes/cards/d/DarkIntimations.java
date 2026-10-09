@@ -45,6 +45,7 @@ public class DarkIntimations extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardTypePredicate(CardType.PLANESWALKER)
                 )))
+                .mandatory(true)
                 .build());
         addEffect(EffectSlot.SPELL, new DrawCardEffect());
 

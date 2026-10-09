@@ -75,6 +75,10 @@ public class CreatureControlService {
 
     @Autowired
     @Lazy
+    private CreaturePositioningSupport creaturePositioningSupport;
+
+    @Autowired
+    @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.AscendEffectHandler ascendEffectHandler;
 
     @Autowired
@@ -231,6 +235,9 @@ public class CreatureControlService {
         gameData.playerBattlefields.get(derived).add(permanent);
         permanent.recordControlChange();
         permanent.setSummoningSick(true);
+        if (creaturePositioningSupport != null) {
+            creaturePositioningSupport.onControlChange(gameData, derived, permanent);
+        }
         boolean retainsFaceDownExileAccess = permanent.getCard().getActivatedAbilities().stream()
                 .flatMap(ability -> ability.getEffects().stream())
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect

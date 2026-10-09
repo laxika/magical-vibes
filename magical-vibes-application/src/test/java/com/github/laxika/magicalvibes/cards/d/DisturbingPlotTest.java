@@ -142,6 +142,7 @@ class DisturbingPlotTest extends BaseCardTest {
     @Test
     @DisplayName("Conspire can retarget its copy to a creature in the opponent's graveyard")
     void conspireCopyReturnsOpponentCardToOwner() {
+        harness.setHand(player2, List.of());
         Card originalTarget = new Cinderbones();
         Card copyTarget = new CinderhazeWretch();
         harness.setGraveyard(player1, List.of(originalTarget));

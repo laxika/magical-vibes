@@ -22,6 +22,7 @@ class DreamcatcherTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new ArabaMothrider()));
 
         harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -37,6 +38,7 @@ class DreamcatcherTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new ArabaMothrider()));
 
         harness.castFromHand(player1, new Dreamcatcher(), "{U}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -52,6 +54,7 @@ class DreamcatcherTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new ArabaMothrider()));
 
         harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -123,8 +126,6 @@ class DreamcatcherTest extends BaseCardTest {
         harness.castFromHand(player1, new SpiritualVisit(), "{W}");
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, dreamcatcher));
-        resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Dreamcatcher");

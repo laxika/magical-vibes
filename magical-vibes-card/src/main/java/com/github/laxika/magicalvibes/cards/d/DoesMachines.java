@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -43,8 +44,8 @@ public class DoesMachines extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{U}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {1}{U} ({1}{U}: Put a level counter on this. Level up only as a sorcery.)",
+                List.of(new ClassLevelUpEffect(2)),
+                "{1}{U}: Gain the next level as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
@@ -52,8 +53,8 @@ public class DoesMachines extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{U}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
-                "Level up {4}{U} ({4}{U}: Put a level counter on this. Level up only as a sorcery.)",
+                List.of(new ClassLevelUpEffect(3)),
+                "{4}{U}: Gain the next level as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new AllOf(List.of(
@@ -70,10 +71,12 @@ public class DoesMachines extends Card {
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact you control"))
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3))
+                        new ConditionalEffect(new SourceClassLevelAtLeast(3),
+                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)))
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                         new ConditionalEffect(
-                                new NotCondition(new TargetPermanentMatches(new PermanentIsCreaturePredicate())),
+                                new AllOf(List.of(new SourceClassLevelAtLeast(3),
+                                        new NotCondition(new TargetPermanentMatches(new PermanentIsCreaturePredicate())))),
                                 new AnimatePermanentsEffect(
                                         0,
                                         0,

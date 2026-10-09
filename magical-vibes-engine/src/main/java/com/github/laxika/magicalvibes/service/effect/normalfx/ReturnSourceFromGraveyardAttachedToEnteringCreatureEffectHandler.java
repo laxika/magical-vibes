@@ -45,13 +45,22 @@ public class ReturnSourceFromGraveyardAttachedToEnteringCreatureEffectHandler im
             return;
         }
 
-        permanentRemovalService.removeCardFromGraveyardById(gameData, sourceCardId);
-        Permanent attachment = new Permanent(sourceCard);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), attachment);
-
         Permanent enteringCreature = entry.getTargetId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (sourceCard.isAura() && (enteringCreature == null
+                || !auraAttachmentService.canEnchant(gameData, sourceCard,
+                        entry.getControllerId(), enteringCreature))) {
+            return;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, sourceCardId);
+        Permanent attachment = new Permanent(sourceCard);
+        if (sourceCard.isAura()) {
+            attachment.setAttachedTo(enteringCreature.getId());
+        }
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), attachment);
+
         boolean canAttach = enteringCreature != null && (sourceCard.isAura()
                 ? auraAttachmentService.canEnchant(gameData, sourceCard, entry.getControllerId(), enteringCreature)
                 : equipSupport.canAttachEquipment(gameData, attachment, enteringCreature));

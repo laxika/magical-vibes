@@ -205,6 +205,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Hope", Keyword.HOPE);
         KEYWORD_MAP.put("Grazing type", Keyword.GRAZING);
         KEYWORD_MAP.put("Flurry", Keyword.FLURRY);
+        KEYWORD_MAP.put("Positioning", Keyword.POSITIONING);
         KEYWORD_MAP.put("Intensity", Keyword.INTENSITY);
         KEYWORD_MAP.put("Pray", Keyword.PRAY);
     }

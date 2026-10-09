@@ -120,12 +120,14 @@ class DireWolfProwlerTest extends BaseCardTest {
 
     @Test
     void canActivateAgainDuringOpponentsNextTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         Permanent prowler = addReadyProwler();
         addActivationMana();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, prowler)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, prowler, Keyword.HASTE)).isFalse();
         addActivationMana();

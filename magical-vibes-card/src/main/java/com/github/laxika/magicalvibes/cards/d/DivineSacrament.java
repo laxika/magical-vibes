@@ -19,9 +19,9 @@ public class DivineSacrament extends Card {
 
     public DivineSacrament() {
         PermanentColorInPredicate whiteCreatures = new PermanentColorInPredicate(Set.of(CardColor.WHITE));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES, whiteCreatures));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF, whiteCreatures));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES, whiteCreatures)));
+                new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF, whiteCreatures)));
     }
 }

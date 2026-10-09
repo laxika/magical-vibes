@@ -147,7 +147,7 @@ class DaredevilDragsterTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, dragster)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, dragster)).isFalse();
     }

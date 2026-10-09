@@ -45,7 +45,7 @@ public class DownDirty extends Card {
                         "Fuse — Down and then Dirty",
                         List.of(down, dirty),
                         List.of(player, graveyardCard)
-                ).withManaCost("{5}{B}{G}")
+                ).withManaCost("{5}{B}{G}").onlyFromHand()
         )));
     }
 }

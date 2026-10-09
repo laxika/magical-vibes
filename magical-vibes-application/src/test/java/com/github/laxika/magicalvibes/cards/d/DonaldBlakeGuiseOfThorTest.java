@@ -122,13 +122,15 @@ class DonaldBlakeGuiseOfThorTest extends BaseCardTest {
     @Test
     @DisplayName("Power-up counters and creature types persist into the next turn")
     void powerUpChangesDoNotExpireAtEndOfTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         Permanent donald = addCreatureReady(player1, new DonaldBlakeGuiseOfThor());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(donald.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(donald.getCounterCount(CounterType.FLYING)).isEqualTo(1);

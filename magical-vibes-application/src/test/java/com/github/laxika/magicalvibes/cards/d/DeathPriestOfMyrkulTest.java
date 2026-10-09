@@ -158,8 +158,8 @@ class DeathPriestOfMyrkulTest extends BaseCardTest {
     void earlierMultipleDeathsProduceOnlyOneToken() {
         Permanent firstVictim = harness.addToBattlefieldAndReturn(player2, new DeathPriestOfMyrkul());
         Permanent secondVictim = harness.addToBattlefieldAndReturn(player2, new DeathPriestOfMyrkul());
-        firstVictim.setMarkedDamage(2);
-        secondVictim.setMarkedDamage(2);
+        firstVictim.setMarkedDamage(3);
+        secondVictim.setMarkedDamage(3);
         harness.runStateBasedActions();
         harness.addToBattlefield(player1, new DeathPriestOfMyrkul());
 
@@ -167,7 +167,7 @@ class DeathPriestOfMyrkulTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(findPermanents(player1, "Skeleton")).hasSize(1);
         Permanent token = findPermanent(player1, "Skeleton");

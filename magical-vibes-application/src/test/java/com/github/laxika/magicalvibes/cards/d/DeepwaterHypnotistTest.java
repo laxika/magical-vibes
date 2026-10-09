@@ -152,5 +152,6 @@ class DeepwaterHypnotistTest extends BaseCardTest {
         harness.forceActivePlayer(opponent);
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(untappingPlayer, TurnStep.UPKEEP);
+        harness.passPriority(untappingPlayer);
     }
 }

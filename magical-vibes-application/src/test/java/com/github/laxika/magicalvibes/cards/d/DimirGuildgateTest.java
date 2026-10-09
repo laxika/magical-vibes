@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -48,25 +49,18 @@ class DimirGuildgateTest extends BaseCardTest {
         assertThat(choice.options()).containsExactlyInAnyOrder("BLUE", "BLACK");
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"BLUE", "BLACK"})
     @DisplayName("Choosing a color adds one mana of that color and taps the land")
-    void choosingColorAddsThatMana() {
-        for (String color : new String[]{"BLUE", "BLACK"}) {
-            harness = new GameTestHarness();
-            player1 = harness.getPlayer1();
-            harness.skipMulligan();
+    void choosingColorAddsThatMana(ManaColor manaColor) {
+        Permanent guildgate = addGuildgateReady(player1);
 
-            Permanent guildgate = addGuildgateReady(player1);
-            GameData gd = harness.getGameData();
-            ManaColor manaColor = ManaColor.valueOf(color);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, manaColor.name());
 
-            harness.activateAbility(player1, 0, 0, null, null);
-            harness.handleListChoice(player1, color);
-
-            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(1);
-            assertThat(guildgate.isTapped()).isTrue();
-            assertThat(gd.interaction.activeInteraction()).isNull();
-        }
+        assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(1);
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent addGuildgateReady(Player player) {

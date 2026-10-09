@@ -51,6 +51,8 @@ class DigSiteInventoryTest extends BaseCardTest {
     @Test
     @DisplayName("Vigilance expires at end of turn while the counter remains")
     void vigilanceExpiresButCounterRemains() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         Permanent creature = addCreatureReady(player1, new UlnaAlleyShopkeep());
         harness.setHand(player1, List.of(new DigSiteInventory()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -59,7 +61,7 @@ class DigSiteInventoryTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

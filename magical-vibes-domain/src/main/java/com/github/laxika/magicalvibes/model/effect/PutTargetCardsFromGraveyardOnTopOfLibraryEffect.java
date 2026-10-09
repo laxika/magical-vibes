@@ -17,8 +17,14 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record PutTargetCardsFromGraveyardOnTopOfLibraryEffect(
         CardPredicate filter,
         int maxTargets,
-        GraveyardSearchScope source
+        GraveyardSearchScope source,
+        boolean targetPlayer
 ) implements TargetedGraveyardCardsEffect {
+
+    public PutTargetCardsFromGraveyardOnTopOfLibraryEffect(CardPredicate filter, int maxTargets,
+                                                         GraveyardSearchScope source) {
+        this(filter, maxTargets, source, false);
+    }
 
     /** Sentinel for "any number of target cards" (capped only by the graveyard contents). */
     public static final int ANY_NUMBER = 0;
@@ -52,6 +58,7 @@ public record PutTargetCardsFromGraveyardOnTopOfLibraryEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCards(filter, source));
+        return TargetSpec.benign(targetPlayer ? TargetPredicates.player()
+                : TargetPredicates.graveyardCards(filter, source));
     }
 }

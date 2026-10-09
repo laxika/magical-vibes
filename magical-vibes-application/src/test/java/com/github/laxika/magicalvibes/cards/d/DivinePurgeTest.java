@@ -153,7 +153,7 @@ class DivinePurgeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castCreature(player2, 0);
         harness.passBothPriorities();

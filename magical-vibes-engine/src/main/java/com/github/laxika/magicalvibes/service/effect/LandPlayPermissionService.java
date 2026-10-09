@@ -18,6 +18,9 @@ import java.util.UUID;
 public class LandPlayPermissionService {
 
     private final StaticEffectConditionResolver staticEffectConditionResolver;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
 
     public LandPlayPermissionService(StaticEffectConditionResolver staticEffectConditionResolver) {
         this.staticEffectConditionResolver = staticEffectConditionResolver;
@@ -34,10 +37,18 @@ public class LandPlayPermissionService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
+                List<CardEffect> activeStatics = gameQueryService.getActiveStaticEffects(gameData, permanent);
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (!(effect instanceof ConditionalEffect) && !activeStatics.contains(effect)) {
+                        if (effect instanceof EachPlayerPlaysAdditionalLandEffect) conditionalExtra--;
+                        else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional
+                                && controllerId.equals(playerId)) conditionalExtra -= additional.amount();
+                        continue;
+                    }
                     if (!(effect instanceof ConditionalEffect)) continue;
                     CardEffect activeEffect = staticEffectConditionResolver.resolve(
                             gameData, permanent, controllerId, effect);
+                    if (!activeStatics.contains(activeEffect)) continue;
                     if (activeEffect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         conditionalExtra = Math.min(Integer.MAX_VALUE, conditionalExtra + 1);
                     } else if (activeEffect instanceof PlaysAdditionalLandEachTurnEffect additional

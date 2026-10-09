@@ -224,6 +224,8 @@ class DeadMansChestTest extends BaseCardTest {
 
     @Test
     void castingPermissionSurvivesAuraLeavingAndLaterTurns() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
         Permanent chest = harness.addToBattlefieldAndReturn(player1, new DeadMansChest());
         chest.setAttachedTo(spider.getId());

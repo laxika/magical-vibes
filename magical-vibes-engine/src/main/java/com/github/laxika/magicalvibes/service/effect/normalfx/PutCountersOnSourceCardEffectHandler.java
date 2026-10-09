@@ -31,7 +31,11 @@ public class PutCountersOnSourceCardEffectHandler implements NormalEffectHandler
             return;
         }
 
-        Permanent source = findSourcePermanent(gameData, sourceCard);
+        Permanent source = entry.getSourcePermanentId() == null
+                ? findSourcePermanent(gameData, sourceCard)
+                : gameData.playerBattlefields.values().stream().flatMap(java.util.Collection::stream)
+                .filter(permanent -> permanent.getId().equals(entry.getSourcePermanentId()))
+                .findFirst().orElse(null);
         if (source != null) {
             PutCountersOnSourceCardEffect counters = (PutCountersOnSourceCardEffect) effect;
             int count = counters.amount() == null

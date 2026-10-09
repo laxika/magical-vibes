@@ -36,29 +36,21 @@ public class ExchangeTargetAnteCardWithTopOfLibraryEffectHandler implements Norm
 
         ExiledCardEntry anteEntry = gameData.findExiledCard(entry.getTargetId());
         List<Card> library = gameData.playerDecks.get(controllerId);
-        if (anteEntry == null || !gameData.antedCardIds.contains(entry.getTargetId())
-                || !controllerId.equals(anteEntry.ownerId())) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (the target is no longer a card you own in the ante)."));
+        if (anteEntry == null || !gameData.antedCardIds.contains(entry.getTargetId())) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (the target is no longer in the ante)."));
             return;
         }
-        if (library == null) {
-            return;
-        }
-
         Card anteCard = anteEntry.card();
-        gameData.removeFromExile(anteCard.getId());
-        if (library.isEmpty()) {
-            library.addFirst(anteCard);
-            gameLogService.append(gameData, GameLog.builder()
-                    .card(anteCard)
-                    .text(" is moved from the ante to the empty library of ")
-                    .text(gameData.playerIdToName.get(controllerId))
-                    .text(" by ")
-                    .card(entry.getCard())
-                    .text(".")
-                    .build());
+        if (!controllerId.equals(anteEntry.ownerId())) {
+            gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(anteCard.getId())
+                    ? new ExiledCardEntry(exiled.card(), controllerId, exiled.sourcePermanentId(),
+                            exiled.faceDown(), exiled.exilerId(), exiled.exiledTurnNumber(),
+                            exiled.controllerTurnsTakenAtExile(), exiled.abilityLink()) : exiled);
+        }
+        if (library == null || library.isEmpty()) {
             return;
         }
+        gameData.removeFromExile(anteCard.getId());
 
         Card libraryTop = library.removeFirst();
         library.addFirst(anteCard);

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -35,21 +36,18 @@ public class DeathbringerLiege extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK))));
 
         // Whenever you cast a white spell, you may tap target creature.
-        // (No target filter needed — the may-target path defaults to creatures.)
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardColorPredicate(CardColor.WHITE),
-                        List.of(new TapPermanentsEffect(TapUntapScope.TARGET))),
-                "Tap target creature?"
-        ));
+                        List.of(new MayEffect(new TapPermanentsEffect(TapUntapScope.TARGET),
+                                "Tap target creature?")), null, TargetFilters.creature()));
 
         // Whenever you cast a black spell, you may destroy target creature if it's tapped.
         // Targets any creature; the tapped check happens at resolution (Gatherer ruling).
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardColorPredicate(CardColor.BLACK),
-                        List.of(new ConditionalEffect(
+                        List.of(new MayEffect(new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentIsTappedPredicate()),
-                                new DestroyTargetPermanentEffect()))),
-                "Destroy target creature (if it's tapped)?"
-        ));
+                                new DestroyTargetPermanentEffect()),
+                                "Destroy target creature (if it's tapped)?")), null, TargetFilters.creature()));
     }
 }

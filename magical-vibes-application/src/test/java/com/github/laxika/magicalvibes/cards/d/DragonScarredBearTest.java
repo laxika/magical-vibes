@@ -125,14 +125,17 @@ class DragonScarredBearTest extends BaseCardTest {
 
         assertThat(bear.getRegenerationShield()).isEqualTo(2);
         bear.setMarkedDamage(1);
-        assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, bear)).isFalse();
+        harness.inMutationScope(() ->
+                assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, bear)).isFalse());
         assertThat(bear.getRegenerationShield()).isEqualTo(1);
         assertThat(bear.getMarkedDamage()).isZero();
         assertThat(bear.isTapped()).isTrue();
-        assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, bear)).isFalse();
+        harness.inMutationScope(() ->
+                assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, bear)).isFalse());
         assertThat(bear.getRegenerationShield()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
-        assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, bear)).isTrue();
+        harness.inMutationScope(() ->
+                assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, bear)).isTrue());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
     }
 

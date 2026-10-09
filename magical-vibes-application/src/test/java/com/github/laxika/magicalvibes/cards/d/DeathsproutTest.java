@@ -101,6 +101,7 @@ class DeathsproutTest extends BaseCardTest {
     void searchesWhenTargetIsIndestructible() {
         gd.activePlayerId = player1.getId();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GideonBlackblade());
+        target.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 4);
         harness.setLibrary(player1, List.of(new Forest()));
 
         castDeathsprout(target);

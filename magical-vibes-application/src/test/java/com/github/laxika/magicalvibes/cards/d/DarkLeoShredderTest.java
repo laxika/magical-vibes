@@ -130,7 +130,7 @@ class DarkLeoShredderTest extends BaseCardTest {
         source.setAttacking(true);
         source.setAttackTarget(player2.getId());
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         for (int i = 0; i < 3; i++) {
             addCreatureReady(player1, new FootNinjas());
         }
@@ -152,7 +152,7 @@ class DarkLeoShredderTest extends BaseCardTest {
         source.setAttacking(true);
         source.setAttackTarget(player2.getId());
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         gd.playerBattlefields.get(player1.getId()).remove(source);
         gd.playerGraveyards.get(player1.getId()).add(source.getCard());
         resolveAllTriggers();

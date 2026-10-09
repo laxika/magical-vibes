@@ -29,6 +29,7 @@ import java.util.Set;
 public class DromokasCommand extends Card {
 
     public DromokasCommand() {
+        setAllowSharedTargets(true);
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Prevent all damage target instant or sorcery spell would deal this turn",

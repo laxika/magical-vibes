@@ -44,7 +44,8 @@ public class SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffectHandle
 
                 String cardName = entry.getCard().getName();
 
-                List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, targetPlayerId, p -> true);
+                List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, targetPlayerId,
+                        p -> !gameQueryService.cantBeSacrificed(gameData, p));
 
                 if (creatureIds.isEmpty()) {
                     String playerName = gameData.playerIdToName.get(targetPlayerId);

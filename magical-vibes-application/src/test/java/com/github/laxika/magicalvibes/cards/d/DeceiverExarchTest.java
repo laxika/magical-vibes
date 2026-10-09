@@ -193,7 +193,6 @@ class DeceiverExarchTest extends BaseCardTest {
     }
 
     private void chooseMode(String mode) {
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1, mode);
     }
 }

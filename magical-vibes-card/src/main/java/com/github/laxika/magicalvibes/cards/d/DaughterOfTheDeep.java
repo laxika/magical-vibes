@@ -27,13 +27,11 @@ public class DaughterOfTheDeep extends Card {
 
         // {U}, {T}: Target Merfolk can't be blocked this turn.
         addActivatedAbility(new ActivatedAbility(
-                true, "{U}", List.of(new MakeCreatureUnblockableEffect()),
+                true, "{U}", List.of(MakeCreatureUnblockableEffect.forTargetPermanent(
+                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK)))),
                 "{U}, {T}: Target Merfolk can't be blocked this turn.",
                 new PermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK))
-                        )),
+                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK)),
                         "Target must be a Merfolk creature"
                 )));
     }

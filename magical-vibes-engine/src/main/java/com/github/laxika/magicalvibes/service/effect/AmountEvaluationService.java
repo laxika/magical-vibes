@@ -1245,7 +1245,10 @@ public class AmountEvaluationService {
                     && se.getTargetableId().equals(triggeringCardId);
             if (isTargetedSpell || isTriggeringSpell) {
                 Card spellCard = se.getTargetingCard();
-                return (spellCard == null ? se.getCard() : spellCard).getManaValue() + se.getXValue();
+                Card effectiveSpell = spellCard == null ? se.getCard() : spellCard;
+                int xSymbols = effectiveSpell.getParsedManaCost() == null ? 0
+                        : effectiveSpell.getParsedManaCost().getXSymbolCount();
+                return se.isCastFaceDown() ? 0 : effectiveSpell.getManaValue() + xSymbols * se.getXValue();
             }
         }
         return ctx.stackEntry() == null ? 0 : ctx.stackEntry().getEventValue();
@@ -2610,9 +2613,7 @@ public class AmountEvaluationService {
         if (ctx.controllerId() == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
-        FilterContext filterContext = (GameQueryService.isStaticEvaluationActive()
-                ? FilterContext.empty()
-                : FilterContext.of(gameData))
+        FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceControllerId(ctx.controllerId());
         int greatest = 0;
         for (Permanent permanent : battlefield) {
@@ -2620,8 +2621,10 @@ public class AmountEvaluationService {
                     && permanent.getId().equals(ctx.sourcePermanent().getId())) {
                 continue;
             }
-            if (!predicateEvaluationService.matchesPermanentPredicate(
-                    permanent, amount.filter(), filterContext)) {
+            boolean matches = GameQueryService.isStaticEvaluationActive()
+                    ? predicateEvaluationService.matchesStaticFilter(permanent, amount.filter(), filterContext)
+                    : predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext);
+            if (!matches) {
                 continue;
             }
             greatest = Math.max(greatest, permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue());
@@ -3453,12 +3456,12 @@ public class AmountEvaluationService {
         Card imprinted = gameData.getImprintedCard(ctx.sourcePermanent().getCard());
         if (imprinted == null
                 || gameData.findExiledCard(imprinted.getId()) == null
-                || !imprinted.hasType(CardType.CREATURE)
-                || imprinted.getPower() == null
-                || imprinted.getToughness() == null) {
+                || !imprinted.hasType(CardType.CREATURE)) {
             return 0;
         }
-        return power ? imprinted.getPower() : imprinted.getToughness();
+        Integer value = power ? gameQueryService.getEffectiveCardPower(gameData, imprinted)
+                : gameQueryService.getEffectiveCardToughness(gameData, imprinted);
+        return value == null ? 0 : value;
     }
 
     private int damageDealtToOpponentsThisTurn(GameData gameData, AmountContext ctx) {

@@ -2946,6 +2946,8 @@ public class GameData {
     public final Map<UUID, Permanent> simultaneousDyingCreatures = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> simultaneousDyingControllers = new ConcurrentHashMap<>();
     public final Map<UUID, Permanent> simultaneousDyingPermanents = new ConcurrentHashMap<>();
+    /** Last departure snapshots by card identity, retained for sacrifice-event collection this turn. */
+    public final Map<UUID, Permanent> departedPermanentSnapshots = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> simultaneousDyingPermanentControllers = new ConcurrentHashMap<>();
     /** Last-known effective powers of creatures in the current simultaneous death event. */
     public final Map<UUID, Integer> simultaneousDyingPowers = new ConcurrentHashMap<>();
@@ -5606,7 +5608,7 @@ public class GameData {
                     if (transformed != entry.card()) {
                         exiledCards.set(i, new ExiledCardEntry(transformed, entry.ownerId(),
                                 entry.sourcePermanentId(), entry.faceDown(), entry.exilerId(),
-                                entry.exiledTurnNumber(), entry.controllerTurnsTakenAtExile()));
+                                entry.exiledTurnNumber(), entry.controllerTurnsTakenAtExile(), entry.abilityLink()));
                     }
                 }
             }
@@ -5727,7 +5729,7 @@ public class GameData {
                 if (original != null) {
                     exiledCards.set(i, new ExiledCardEntry(original, entry.ownerId(), entry.sourcePermanentId(),
                             entry.faceDown(), entry.exilerId(), entry.exiledTurnNumber(),
-                            entry.controllerTurnsTakenAtExile()));
+                            entry.controllerTurnsTakenAtExile(), entry.abilityLink()));
                 }
             }
         }
@@ -5792,7 +5794,7 @@ public class GameData {
                 if (oldSourcePermanentId.equals(entry.sourcePermanentId())) {
                     exiledCards.set(i, new ExiledCardEntry(
                             entry.card(), entry.ownerId(), newSourcePermanentId, entry.faceDown(),
-                            entry.exilerId(), entry.exiledTurnNumber(), entry.controllerTurnsTakenAtExile()));
+                            entry.exilerId(), entry.exiledTurnNumber(), entry.controllerTurnsTakenAtExile(), entry.abilityLink()));
                 }
             }
         }
@@ -5839,7 +5841,7 @@ public class GameData {
                 if (exiled.card().getId().equals(cardId)) {
                     exiledCards.set(i, new ExiledCardEntry(exiled.card(), exiled.ownerId(),
                             sourcePermanentId, exiled.faceDown(), exiled.exilerId(),
-                            exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile()));
+                            exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile(), exiled.abilityLink()));
                     return true;
                 }
             }
@@ -5855,7 +5857,7 @@ public class GameData {
                 if (exiled.card().getId().equals(cardId)) {
                     exiledCards.set(i, new ExiledCardEntry(exiled.card(), exiled.ownerId(),
                             exiled.sourcePermanentId(), exiled.faceDown(), exilerId,
-                            exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile()));
+                            exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile(), exiled.abilityLink()));
                     exiledCardsWithFetchCounters.add(cardId);
                     return true;
                 }
@@ -6305,7 +6307,7 @@ public class GameData {
             if (e.sourcePermanentId() != null) {
                 it.remove();
                 updated.add(new ExiledCardEntry(e.card(), e.ownerId(), null, e.faceDown(), e.exilerId(),
-                        e.exiledTurnNumber(), e.controllerTurnsTakenAtExile()));
+                        e.exiledTurnNumber(), e.controllerTurnsTakenAtExile(), e.abilityLink()));
             }
         }
         exiledCards.addAll(updated);
@@ -7587,6 +7589,8 @@ public class GameData {
         copy.simultaneousDyingCreatures.putAll(this.simultaneousDyingCreatures);
         copy.simultaneousDyingControllers.putAll(this.simultaneousDyingControllers);
         copy.simultaneousDyingPermanents.putAll(this.simultaneousDyingPermanents);
+        this.departedPermanentSnapshots.forEach((cardId, permanent) ->
+                copy.departedPermanentSnapshots.put(cardId, new Permanent(permanent)));
         copy.simultaneousDyingPermanentControllers.putAll(this.simultaneousDyingPermanentControllers);
         copy.simultaneousDyingPowers.putAll(this.simultaneousDyingPowers);
         this.simultaneousDyingGrantedCreatureDeathEffects.forEach((permanentId, effects) ->
@@ -8078,7 +8082,9 @@ public class GameData {
 
         // --- Deques ---
         this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
-                pending instanceof PendingInteraction.ColorChoice choice
+                pending instanceof PendingInteraction.LandManaDrainContinuation drain
+                        ? new PendingInteraction.LandManaDrainContinuation(drain.entry(), drain.remainingLandIds())
+                        : pending instanceof PendingInteraction.ColorChoice choice
                         ? choice.copyCardTypeOnEnterPermanent()
                         : pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
                         ? trigger.copyPlanarSnapshot()

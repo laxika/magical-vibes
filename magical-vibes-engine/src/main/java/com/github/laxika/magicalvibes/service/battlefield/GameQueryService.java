@@ -1481,9 +1481,10 @@ public class GameQueryService {
         List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
         if (bf != null) {
             for (Permanent perm : bf) {
+                if (hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GraveyardAbilityGrantingEffect g) {
-                        if (!g.appliesTo(card)) continue;
+                        if (!graveyardGrantApplies(gameData, ownerId, card, g)) continue;
                         ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
                         if (granted != null) {
                             result.add(granted);
@@ -1496,7 +1497,7 @@ public class GameQueryService {
             for (var planar : gameData.planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GraveyardAbilityGrantingEffect g) {
-                        if (!g.appliesTo(card)) continue;
+                        if (!graveyardGrantApplies(gameData, ownerId, card, g)) continue;
                         ActivatedAbility granted = g.grantedGraveyardAbilityFor(card);
                         if (granted != null) {
                             result.add(granted);
@@ -1555,9 +1556,10 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
+                if (hasLostAllAbilities(gameData, permanent)) continue;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GraveyardAbilityGrantingEffect grant
-                            && grant.appliesTo(card)) {
+                            && graveyardGrantApplies(gameData, ownerId, card, grant)) {
                         ActivatedAbility ability = grant.grantedGraveyardAbilityFor(card);
                         if (ability != null) abilities.add(ability);
                     }
@@ -1568,7 +1570,7 @@ public class GameQueryService {
             for (var planar : gameData.planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GraveyardAbilityGrantingEffect grant
-                            && grant.appliesTo(card)) {
+                            && graveyardGrantApplies(gameData, ownerId, card, grant)) {
                         ActivatedAbility ability = grant.grantedGraveyardAbilityFor(card);
                         if (ability != null) abilities.add(ability);
                     }
@@ -1576,6 +1578,15 @@ public class GameQueryService {
             }
         }
         return abilities;
+    }
+
+    private boolean graveyardGrantApplies(GameData gameData, UUID ownerId, Card card,
+                                         GraveyardAbilityGrantingEffect grant) {
+        if (grant instanceof com.github.laxika.magicalvibes.model.effect.GrantGraveyardAbilityToCreatureCardsOfSubtypeEffect subtypeGrant) {
+            return cardHasType(card, CardType.CREATURE, gameData, ownerId)
+                    && cardHasSubtype(card, subtypeGrant.subtype(), gameData, ownerId);
+        }
+        return grant.appliesTo(card);
     }
 
     /** Whether Highway Reaver currently permits this player's first unearth activation to be free. */
@@ -2571,6 +2582,12 @@ public class GameQueryService {
 
     /** Returns whether the source has an activated-ability color permission. */
     public boolean canSpendManaAsAnyColorForActivatedAbilities(GameData gameData, Permanent source) {
+        return canSpendManaAsAnyColorForActivatedAbilities(gameData, source, null);
+    }
+
+    /** Checks color permission for the particular ability being activated. */
+    public boolean canSpendManaAsAnyColorForActivatedAbilities(GameData gameData, Permanent source,
+                                                               ActivatedAbility ability) {
         if (source == null) {
             return false;
         }
@@ -2592,7 +2609,11 @@ public class GameQueryService {
                 .filter(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance)
                 .map(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::cast)
                 .anyMatch(effect -> effect.scope() == GrantScope.SELF)) {
-            return true;
+            boolean borrowsOpponentAbilities = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect.class::isInstance);
+            if (!borrowsOpponentAbilities || ability == null || isBorrowedOpponentAbility(gameData, controllerId, ability)) {
+                return true;
+            }
         }
         if (!isCreature(gameData, source)) {
             return false;
@@ -2607,6 +2628,22 @@ public class GameQueryService {
                         .filter(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::isInstance)
                         .map(SpendManaAsAnyColorForActivatedAbilitiesEffect.class::cast)
                         .anyMatch(effect -> effect.scope() == GrantScope.ALL_OWN_CREATURES));
+    }
+
+    private boolean isBorrowedOpponentAbility(GameData gameData, UUID controllerId, ActivatedAbility ability) {
+        for (UUID opponentId : gameData.orderedPlayerIds) {
+            if (opponentId.equals(controllerId)) continue;
+            for (Permanent creature : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+                if (!isCreature(gameData, creature)) continue;
+                var supplied = com.github.laxika.magicalvibes.service.effect.staticfx.GainActivatedAbilitiesOfCreaturesOpponentsControlSelfEffectHandler
+                        .effectiveActivatedAbilities(gameData, creature, this);
+                if (supplied.stream().anyMatch(candidate -> candidate == ability
+                        || java.util.Objects.equals(candidate.getManaCost(), ability.getManaCost())
+                        && candidate.isRequiresTap() == ability.isRequiresTap()
+                        && candidate.getEffects().equals(ability.getEffects()))) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -3320,7 +3357,7 @@ public class GameQueryService {
                             && !hasLostAllAbilities(gameData, permanent)
                             && grant.grantedAbility() == ability
                             && grant.appliesToSourceZone(sourceZone)
-                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null, gameData, playerId)
                             && (!grant.appliesOnlyToFirstMatchingSpellEachTurn()
                             || gameData.getSpellsCastThisTurn(playerId).stream().noneMatch(previousSpell ->
                             predicateEvaluationService.matchesCardPredicate(
@@ -3338,7 +3375,7 @@ public class GameQueryService {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == ability
                         && grant.appliesToSourceZone(sourceZone)
-                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null, gameData, playerId)) {
                     return true;
                 }
             }
@@ -3351,7 +3388,7 @@ public class GameQueryService {
                             && (grant.appliesToAllPlayers() || Objects.equals(planarControllerId, playerId))
                             && grant.grantedAbility() == ability
                             && grant.appliesToSourceZone(sourceZone)
-                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null, gameData, playerId)) {
                         return true;
                     }
                 }
@@ -3393,7 +3430,7 @@ public class GameQueryService {
                             && !hasLostAllAbilities(gameData, permanent)
                             && grant.grantedAbility() == ability
                             && grant.appliesToSourceZone(sourceZone)
-                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null, gameData, playerId)
                             && (!grant.appliesOnlyToFirstMatchingSpellEachTurn()
                             || gameData.getSpellsCastThisTurn(playerId).stream().noneMatch(previousSpell ->
                             predicateEvaluationService.matchesCardPredicate(
@@ -3411,7 +3448,7 @@ public class GameQueryService {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == ability
                         && grant.appliesToSourceZone(sourceZone)
-                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null, gameData, playerId)) {
                     values.add(grant.abilityValue());
                 }
             }
@@ -3424,7 +3461,7 @@ public class GameQueryService {
                             && (grant.appliesToAllPlayers() || Objects.equals(planarControllerId, playerId))
                             && grant.grantedAbility() == ability
                             && grant.appliesToSourceZone(sourceZone)
-                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                            && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null, gameData, playerId)) {
                         values.add(grant.abilityValue());
                     }
                 }
@@ -5849,6 +5886,23 @@ public class GameQueryService {
             StaticEffectContext context = new StaticEffectContext(
                     source, target, sourceSlot.controllerId(), sourceSlot.sameBattlefieldAsTarget(), gameData);
             AccumulatorSnapshot beforeSource = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
+            if (sourceState != null) {
+                for (CardEffect grantedEffect : sourceState.getGrantedStaticEffects()) {
+                    if (!(grantedEffect instanceof com.github.laxika.magicalvibes.model.effect.StaticBoostEffect)) {
+                        continue;
+                    }
+                    StaticEffectHandler grantedHandler = staticEffectRegistry.getHandler(grantedEffect);
+                    if (grantedHandler != null) {
+                        boolean managed = board.isManagedL56(grantedEffect);
+                        accumulator.setLayeredOutputsSuppressed(managed);
+                        try {
+                            grantedHandler.apply(context, grantedEffect, accumulator);
+                        } finally {
+                            accumulator.setLayeredOutputsSuppressed(false);
+                        }
+                    }
+                }
+            }
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (source.isFaceDown()) {
                     continue;
@@ -5914,7 +5968,8 @@ public class GameQueryService {
                 for (CardEffect effect : sourceState.getGrantedStaticEffects()) {
                     // This wrapper marks the triggered ability now possessed by the source;
                     // it is not another static ability that can grant itself onward.
-                    if (effect instanceof GrantTriggeredAbilityEffect) {
+                    if (effect instanceof GrantTriggeredAbilityEffect
+                            || effect instanceof StaticBoostEffect) {
                         continue;
                     }
                     StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);
@@ -6269,16 +6324,21 @@ public class GameQueryService {
                 mergedAbilities.addAll(accumulator.getGrantedActivatedAbilities());
             }
             grantedActivatedAbilities = mergedAbilities;
-            Set<CardEffect> seenGrantedEffects = Collections.newSetFromMap(new IdentityHashMap<>());
-            List<CardEffect> mergedEffects = new ArrayList<>();
-            state.getGrantedStaticEffects().stream()
-                    .filter(seenGrantedEffects::add)
-                    .forEach(mergedEffects::add);
+            List<CardEffect> mergedEffects = new ArrayList<>(state.getGrantedStaticEffects());
+            Map<CardEffect, Integer> layeredOccurrences = new IdentityHashMap<>();
+            for (CardEffect effect : state.getGrantedStaticEffects()) {
+                layeredOccurrences.merge(effect, 1, Integer::sum);
+            }
             if (!abilityGainProhibited && !state.isLosesAllAbilities()
                     && !state.isLosesAllNonManaAbilities()) {
-                accumulator.getGrantedEffects().stream()
-                        .filter(seenGrantedEffects::add)
-                        .forEach(mergedEffects::add);
+                for (CardEffect effect : accumulator.getGrantedEffects()) {
+                    int overlap = layeredOccurrences.getOrDefault(effect, 0);
+                    if (overlap > 0) {
+                        layeredOccurrences.put(effect, overlap - 1);
+                    } else {
+                        mergedEffects.add(effect);
+                    }
+                }
             }
             grantedEffects = mergedEffects;
             Set<Keyword> blockedKeywords = mergedEffects.stream()

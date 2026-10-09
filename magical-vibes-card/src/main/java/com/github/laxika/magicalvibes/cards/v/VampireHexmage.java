@@ -19,7 +19,7 @@ public class VampireHexmage extends Card {
     public VampireHexmage() {
         // Sacrifice this creature: Remove all counters from target permanent.
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 null,
                 List.of(new SacrificeSelfCost(), new RemoveAllCountersFromTargetPermanentEffect()),
                 "Sacrifice this creature: Remove all counters from target permanent.",

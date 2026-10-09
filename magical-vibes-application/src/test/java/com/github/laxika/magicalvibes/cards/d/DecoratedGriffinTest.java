@@ -114,6 +114,8 @@ class DecoratedGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("An unused shield expires at the end of the turn")
     void unusedShieldExpires() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new DecoratedGriffin());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -123,7 +125,7 @@ class DecoratedGriffinTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UNTAP);
 
         Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         attacker.setSummoningSick(false);

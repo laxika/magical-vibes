@@ -307,6 +307,7 @@ public enum CardSubtype {
     LANDER("Lander"),
     FOOD("Food"),
     POWERSTONE("Powerstone"),
+    VIBRANIUM("Vibranium"),
     JUNK("Junk"),
     TOY("Toy"),
     SHARD("Shard"),

@@ -144,6 +144,7 @@ public class CopySupport {
         copy.setKicked(source.isKicked());
         copy.setAlternateCost(source.isAlternateCost());
         copy.setRepeatedAdditionalCosts(source.getRepeatedAdditionalCosts());
+        copy.setRevealCardFromHandCostPaid(source.isRevealCardFromHandCostPaid());
         copy.setAdditionalEnterCounters(source.getAdditionalEnterCounters());
         copy.setTargetFilters(source.getTargetFilters());
         copy.getGrantedKeywordsOnEntry().addAll(source.getGrantedKeywordsOnEntry());

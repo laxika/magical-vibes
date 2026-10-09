@@ -139,6 +139,7 @@ class DistortingWakeTest extends BaseCardTest {
     @Test
     @DisplayName("X=101 can return 101 distinct nonland permanents")
     void canReturnMoreThanOneHundredPermanents() {
+        harness.setHand(player2, List.of());
         List<UUID> targets = new ArrayList<>();
         for (int i = 0; i < 101; i++) {
             targets.add(harness.addToBattlefieldAndReturn(player2, new AncientKavu()).getId());

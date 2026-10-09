@@ -708,7 +708,8 @@ public sealed interface MultiPermanentChoiceContext {
                                                        PermanentPredicate filter,
                                                        UUID sourceCardId,
                                                        UUID sourceControllerId,
-                                                       String sourceName) implements MultiPermanentChoiceContext {
+                                                       String sourceName,
+                                                       boolean opponentsOfSourceController) implements MultiPermanentChoiceContext {
 
         public EachPlayerChoosesOpponentPermanentToDestroy {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
@@ -1140,8 +1141,18 @@ public sealed interface MultiPermanentChoiceContext {
      * restriction.
      */
     record StaticOrbUntap(UUID activePlayerId,
-                          com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter)
+                          com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter,
+                          List<com.github.laxika.magicalvibes.model.effect.StaticOrbEffect> remainingRestrictions,
+                          List<UUID> excludedIds)
             implements MultiPermanentChoiceContext {
+        public StaticOrbUntap {
+            remainingRestrictions = List.copyOf(remainingRestrictions);
+            excludedIds = List.copyOf(excludedIds);
+        }
+        public StaticOrbUntap(UUID activePlayerId,
+                com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
+            this(activePlayerId, filter, List.of(), List.of());
+        }
     }
 
     /**

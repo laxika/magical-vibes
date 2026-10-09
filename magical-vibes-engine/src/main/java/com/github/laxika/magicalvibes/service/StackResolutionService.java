@@ -1683,7 +1683,7 @@ public class StackResolutionService {
                     entry.getCard(), " is put on the bottom of its owner's library."));
         } else if (entry.isExileInsteadOfGraveyard()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
-            gameData.addToExile(ownerId, physicalCard);
+            if (gameData.findExiledCard(physicalCard.getId()) == null) gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (plotOnResolution) {
             exileService.exileCard(gameData, ownerId, physicalCard);

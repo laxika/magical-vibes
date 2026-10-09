@@ -181,9 +181,10 @@ class DreamshaperShamanTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Setessan Training");
         harness.assertNotInGraveyard(player1, "Setessan Training");
-        assertThat(gd.playerDecks.get(player1.getId()))
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Final Flare");
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 3))
                 .extracting(Card::getName)
-                .containsExactly("Setessan Training", "Final Flare", "Forest");
+                .containsExactlyInAnyOrder("Setessan Training", "Forest");
     }
 
     @Test

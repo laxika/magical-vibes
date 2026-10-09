@@ -183,9 +183,9 @@ class DwarvenArmoryTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.handlePermanentChosen(player1, first.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
         harness.activateAbility(player1, 0, 0, null, bears.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(2);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

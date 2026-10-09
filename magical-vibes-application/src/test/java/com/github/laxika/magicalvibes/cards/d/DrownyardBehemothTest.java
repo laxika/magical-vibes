@@ -89,7 +89,7 @@ class DrownyardBehemothTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 9);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.assertOnBattlefield(player1, "Drownyard Behemoth");
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Drownyard Behemoth"), Keyword.HEXPROOF)).isTrue();

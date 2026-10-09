@@ -140,7 +140,9 @@ class DoubtlessOneTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        resolveCombat();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
 
         harness.assertLife(player2, 19);
         harness.assertLife(player1, 20);

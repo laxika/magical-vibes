@@ -99,7 +99,7 @@ class DaghatarTheAdamantTest extends BaseCardTest {
         Permanent daghatar = harness.enterBattlefieldAndReturn(player1, new DaghatarTheAdamant());
         daghatar.setSummoningSick(false);
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(daghatar.isAttacking()).isTrue();
         assertThat(daghatar.isTapped()).isFalse();

@@ -20,6 +20,6 @@ public class DruidOfPurification extends Card {
                 new EachPlayerChoosesOpponentPermanentToDestroyEffect(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
-                                new PermanentIsEnchantmentPredicate()))));
+                                new PermanentIsEnchantmentPredicate())), false, true));
     }
 }

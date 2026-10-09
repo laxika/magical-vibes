@@ -25,8 +25,8 @@ import java.util.List;
 public class DimensionXPizzasaur extends Card {
 
     public DimensionXPizzasaur() {
-        PermanentCounterSum controlledPlusOneCounters = new PermanentCounterSum(
-                CounterType.PLUS_ONE_PLUS_ONE,
+        PermanentCounterSum controlledCounters = new PermanentCounterSum(
+                null,
                 new PermanentTruePredicate(),
                 CountScope.CONTROLLER);
         PermanentAllOfPredicate eligibleDestructionTarget = new PermanentAllOfPredicate(List.of(
@@ -37,7 +37,7 @@ public class DimensionXPizzasaur extends Card {
                 new PutCountersOnTargetPermanentThenReflexiveEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         2,
-                        controlledPlusOneCounters,
+                        controlledCounters,
                         new DestroyTargetPermanentEffect(eligibleDestructionTarget),
                         true));
 

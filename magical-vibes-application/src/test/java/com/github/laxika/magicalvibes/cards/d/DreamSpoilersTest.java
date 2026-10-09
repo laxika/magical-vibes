@@ -147,6 +147,7 @@ class DreamSpoilersTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, player1.getId());
         }
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

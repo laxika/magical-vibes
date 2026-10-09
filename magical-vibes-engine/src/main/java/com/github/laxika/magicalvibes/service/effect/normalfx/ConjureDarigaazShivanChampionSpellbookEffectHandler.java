@@ -17,12 +17,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDarigaazShivanChampionSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -123,8 +125,10 @@ public class ConjureDarigaazShivanChampionSpellbookEffectHandler implements Norm
         card.setToughness(toughness);
         card.setKeywords(keywords);
         card.setOwnerId(ownerId);
-        card.setToken(true);
+        card.setToken(false);
         card.setTokenCard(true);
+        card.addEffect(EffectSlot.EXILED_UPKEEP_TRIGGERED,
+                new RemoveEggCounterFromExileAndReturnEffect(card.getId(), false));
         card.freeze();
         return card;
     }

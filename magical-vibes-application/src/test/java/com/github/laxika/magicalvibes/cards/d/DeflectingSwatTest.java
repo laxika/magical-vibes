@@ -10,6 +10,11 @@ import com.github.laxika.magicalvibes.cards.s.SeedsOfStrength;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -181,8 +186,11 @@ class DeflectingSwatTest extends BaseCardTest {
         EdgarMarkov commander = new EdgarMarkov();
         gd.makeCommander(player1.getId(), commander);
         harness.addToBattlefield(player1, commander);
-        Permanent stolenCommander = gd.playerBattlefields.get(player1.getId()).removeFirst();
-        gd.playerBattlefields.get(player2.getId()).add(stolenCommander);
+        Permanent stolenCommander = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), stolenCommander,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
 
         Shock shock = new Shock();
         harness.setHand(player1, List.of(shock));

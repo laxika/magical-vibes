@@ -122,7 +122,7 @@ class DiscoverTheFormulaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> harness.castSorcery(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castSorcery(player1, 0);
         assertThat(gd.stack).hasSize(1);
@@ -140,7 +140,7 @@ class DiscoverTheFormulaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.castSorcery(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castSorcery(player1, 0);
         assertThat(gd.stack).hasSize(1);

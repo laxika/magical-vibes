@@ -43,7 +43,7 @@ public class DowsingDagger extends Card {
 
         // Whenever equipped creature deals combat damage to a player, you may transform
         // Dowsing Dagger.
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 new MayEffect(new TransformSelfEffect(), "Transform Dowsing Dagger into Lost Vale?"));
 
         // Equip {2}

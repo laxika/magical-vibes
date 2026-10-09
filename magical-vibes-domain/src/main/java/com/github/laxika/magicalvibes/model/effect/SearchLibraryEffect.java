@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * then shuffle.
  *
  * <p>A {@code null} filter is an unrestricted search (any card): the cards are not revealed and the
- * search cannot fail to find. A non-null filter restricts the search: the chosen cards are revealed
+ * search cannot fail to find unless {@code optionalCount} permits choosing fewer cards. A non-null
+ * filter restricts the search: the chosen cards are revealed
  * (for {@code HAND}, {@code HAND_OR_GRAVEYARD}, or {@code TOP_OF_LIBRARY} destinations) and the
  * search may fail to find. The prompt and log text are derived from the filter (via
  * {@code CardPredicateUtils.describeFilter}).
@@ -67,8 +68,32 @@ public record SearchLibraryEffect(
         EnterWithCountersEffect enterWithCounters,
         int topLibraryPosition,
         boolean battlefieldIfOpponentControlsMoreLands,
-        int topLibraryFractionDenominator
+        int topLibraryFractionDenominator,
+        boolean optionalCount
 ) implements CardEffect {
+
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, int castFromGraveyardCount,
+                               boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
+                               boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
+                               LibrarySearchPlayer searchPlayer, boolean onlyIfSacrificed,
+                               boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
+                               CounterType battlefieldCounter, EnterWithCountersEffect enterWithCounters,
+                               int topLibraryPosition, boolean battlefieldIfOpponentControlsMoreLands,
+                               int topLibraryFractionDenominator) {
+        this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
+                grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, searchPlayer,
+                onlyIfSacrificed, battlefieldIfChosenBeholdType, shuffleAfterSelection,
+                battlefieldCounter, enterWithCounters, topLibraryPosition,
+                battlefieldIfOpponentControlsMoreLands, topLibraryFractionDenominator, false);
+    }
+
+    /** Unrestricted search for any number of cards up to the supplied count, without revealing them. */
+    public static SearchLibraryEffect upToCountToHand(DynamicAmount count) {
+        return new SearchLibraryEffect(count, null, LibrarySearchDestination.HAND, null, 1,
+                false, false, false, false, null, LibrarySearchPlayer.CONTROLLER, false, false,
+                true, null, null, 0, false, 0, true);
+    }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, int castFromGraveyardCount,

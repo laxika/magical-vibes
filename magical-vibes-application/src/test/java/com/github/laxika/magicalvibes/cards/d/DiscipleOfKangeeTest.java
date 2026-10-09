@@ -36,6 +36,8 @@ class DiscipleOfKangeeTest extends BaseCardTest {
     @Test
     @DisplayName("Granted flying and blue color wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         addCreatureReady(player1, new DiscipleOfKangee());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -45,7 +47,7 @@ class DiscipleOfKangeeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.GREEN);

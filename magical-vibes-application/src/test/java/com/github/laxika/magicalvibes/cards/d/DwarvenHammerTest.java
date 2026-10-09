@@ -104,12 +104,16 @@ class DwarvenHammerTest extends BaseCardTest {
     }
 
     private Permanent castHammerWithMana(int colorless) {
+        java.util.Set<java.util.UUID> existingIds = gd.playerBattlefields.get(player1.getId()).stream()
+                .map(Permanent::getId)
+                .collect(java.util.stream.Collectors.toSet());
         harness.castFromHand(player1, new DwarvenHammer(), "{2}{R}");
         harness.addMana(player1, ManaColor.COLORLESS, colorless - 2);
         harness.passBothPriorities();
         harness.passBothPriorities();
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof DwarvenHammer)
+                .filter(permanent -> !existingIds.contains(permanent.getId()))
                 .findFirst()
                 .orElseThrow();
     }

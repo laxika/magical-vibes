@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link FlipCoinDoubleOrPreventNextDamageFromChosenSourceEffect}: offers controlled
- * permanents and spells on the stack as damage sources, then hands off to
+ * permanents, spells, and sources of pending abilities as damage sources, then hands off to
  * {@code PermanentChoiceBattlefieldHandlerService}, which flips the coin and installs the doubling or
  * prevention shield.
  */
@@ -41,12 +41,17 @@ public class FlipCoinDoubleOrPreventNextDamageFromChosenSourceEffectHandler impl
                 validIds.add(perm.getId());
             }
         });
-        for (StackEntry spell : gameData.stack) {
-            if (controllerId.equals(spell.getControllerId())
-                    && spell.getEntryType() != StackEntryType.ACTIVATED_ABILITY
-                    && spell.getEntryType() != StackEntryType.TRIGGERED_ABILITY
-                    && !validIds.contains(spell.getCard().getId())) {
-                validIds.add(spell.getCard().getId());
+        for (StackEntry stackEntry : gameData.stack) {
+            boolean ability = stackEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                    || stackEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+            UUID sourceController = ability && stackEntry.getDamageSourceControllerId() != null
+                    ? stackEntry.getDamageSourceControllerId() : stackEntry.getControllerId();
+            UUID sourceId = ability ? stackEntry.getSourcePermanentId() : stackEntry.getTargetableId();
+            if (sourceId == null && ability && stackEntry.getSourcePermanentSnapshot() != null) {
+                sourceId = stackEntry.getSourcePermanentSnapshot().getId();
+            }
+            if (controllerId.equals(sourceController) && sourceId != null && !validIds.contains(sourceId)) {
+                validIds.add(sourceId);
             }
         }
         if (validIds.isEmpty()) {

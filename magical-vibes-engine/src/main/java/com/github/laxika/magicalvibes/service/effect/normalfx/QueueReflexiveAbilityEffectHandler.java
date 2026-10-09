@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +37,10 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     private final GraveyardTargetingSupport graveyardTargetingSupport;
     private final ETBTokenTargetService etbTokenTargetService;
     private final GameQueryService gameQueryService;
+
+    @Autowired
+    @Lazy
+    private TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -125,7 +132,9 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                    if (targetPredicateEvaluationService.matchesPermanent(predicate, permanent, filterContext)) {
+                    if (targetPredicateEvaluationService.matchesPermanent(predicate, permanent, filterContext)
+                            && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                            gameData, permanent, entry.getCard(), entry.getControllerId()).isEmpty()) {
                         validPermanentIds.add(permanent.getId());
                     }
                 }

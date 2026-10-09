@@ -23,6 +23,9 @@ public class TargetSpellControllerDrawsCardEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID spellControllerId = findTargetSpellControllerId(gameData, entry.getTargetId());
+        if (spellControllerId == null) {
+            spellControllerId = entry.getCounteredSpellControllerId();
+        }
         if (spellControllerId != null) {
             drawService.resolveDrawCard(gameData, spellControllerId);
         }

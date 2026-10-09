@@ -670,7 +670,7 @@ public class GraveyardService {
 
         OpponentExileReplacement opponentExileReplacement = opponentHasExileReplacementEffect(
                 gameData, ownerId);
-        if (opponentExileReplacement != null) {
+        if (opponentExileReplacement != null && !isToken(gameData, card)) {
             if (opponentExileReplacement.effect().addVoidCounter()) {
                 gameData.addToExileWithVoidCounter(ownerId, card,
                         opponentExileReplacement.effect().trackWithSource()
@@ -722,7 +722,9 @@ public class GraveyardService {
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card, sourceZone);
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
-        collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
+        if (!isToken(gameData, card)) {
+            collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
+        }
         if (sourceZone == Zone.HAND) {
             collectPutIntoGraveyardFromHandTriggers(gameData, ownerId, card);
         }
@@ -927,7 +929,7 @@ public class GraveyardService {
             if (watcher.controllerId().equals(ownerId)) {
                 continue;
             }
-            gameData.stack.add(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     watcher.sourceCard(),
                     watcher.controllerId(),
@@ -935,7 +937,9 @@ public class GraveyardService {
                     new ArrayList<>(List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))),
                     ownerId,
                     (UUID) null
-            ));
+            );
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} triggers (card put into an opponent's graveyard)",
                     gameData.id, watcher.sourceCard().getName());
@@ -1623,7 +1627,7 @@ public class GraveyardService {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (p.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (gameQueryService.getActiveStaticEffects(gameData, p).stream()
                         .anyMatch(ExileInstantSorceryCardsInsteadOfGraveyardEffect.class::isInstance)) {
                     return true;
                 }
@@ -1790,7 +1794,9 @@ public class GraveyardService {
             } else {
                 tracked.remove(card.getId());
             }
-            if (card.hasType(CardType.CREATURE) && !creatureDeathTriggersSuppressed) {
+            if ((card.hasType(CardType.CREATURE)
+                    || battlefieldSnapshot != null && gameQueryService.isCreature(gameData, battlefieldSnapshot))
+                    && !creatureDeathTriggersSuppressed) {
                 triggerDamagedCreatureDiesAbilities(gameData, card, ownerId, battlefieldSnapshot);
             }
         } else {

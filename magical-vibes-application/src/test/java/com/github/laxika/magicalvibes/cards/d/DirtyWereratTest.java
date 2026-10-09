@@ -155,7 +155,7 @@ class DirtyWereratTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No valid card to discard");
+                .hasMessageContaining("Must discard a card");
         assertThat(gd.stack).isEmpty();
     }
 

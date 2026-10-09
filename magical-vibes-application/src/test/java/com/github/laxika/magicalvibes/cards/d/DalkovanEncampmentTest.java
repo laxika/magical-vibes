@@ -7,6 +7,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -70,7 +75,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         List<Permanent> tokens = warriorTokens();
         assertThat(tokens).hasSize(2).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
         });
     }
 
@@ -88,6 +93,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(warriorTokens()).isEmpty();
     }
@@ -100,8 +106,10 @@ class DalkovanEncampmentTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveTokenAttackTargetChoices();
         Permanent stolenToken = warriorTokens().getFirst();
-        gd.playerBattlefields.get(player1.getId()).remove(stolenToken);
-        gd.playerBattlefields.get(player2.getId()).add(stolenToken);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), stolenToken,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -202,9 +210,11 @@ class DalkovanEncampmentTest extends BaseCardTest {
     }
 
     private void resolveTokenAttackTargetChoices() {
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.handlePermanentChosen(player1, player2.getId());
+        });
     }
 
     private List<Permanent> warriorTokens() {

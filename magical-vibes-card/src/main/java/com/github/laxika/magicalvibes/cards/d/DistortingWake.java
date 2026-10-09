@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class DistortingWake extends Card {
 
     public DistortingWake() {
-        targetExactlyX(TargetFilters.nonlandPermanent(), 100)
+        targetExactlyX(TargetFilters.nonlandPermanent(), Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
     }
 }

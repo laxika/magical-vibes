@@ -30,7 +30,7 @@ public class DwarvenMattock extends Card {
                         new AttachSourceEquipmentToTargetCreatureEffect());
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
+                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

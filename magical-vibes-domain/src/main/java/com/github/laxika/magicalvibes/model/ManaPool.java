@@ -357,9 +357,131 @@ public class ManaPool {
         }
     }
 
-    /**
-     * Copy constructor for deep-copying game state during AI simulation.
-     */
+    /** Merges mana with its restrictions, original sources and associated effects (CR 106.13). */
+    public void addManaFrom(ManaPool source) {
+        if (source == this) return;
+        mergeMana(pool, source.pool);
+        mergeMana(creatureSpellManaValueAtLeastFourOrXOnlyMana, source.creatureSpellManaValueAtLeastFourOrXOnlyMana);
+        mergeMana(snowMana, source.snowMana);
+        mergeMana(caveMana, source.caveMana);
+        mergeMana(desertMana, source.desertMana);
+        mergeMana(treasureMana, source.treasureMana);
+        mergeMana(artifactSourceMana, source.artifactSourceMana);
+        mergeMana(basicLandMana, source.basicLandMana);
+        mergeMana(multicoloredSourceMana, source.multicoloredSourceMana);
+        mergeMana(legendarySourceMana, source.legendarySourceMana);
+        mergeMana(creatureMana, source.creatureMana);
+        mergeMana(spellOnlyMana, source.spellOnlyMana);
+        mergeMana(commanderOnlyMana, source.commanderOnlyMana);
+        mergeMana(abilityOnlyMana, source.abilityOnlyMana);
+        mergeMana(promotedAbilityOnlyMana, source.promotedAbilityOnlyMana);
+        mergeMana(powerUpAbilityOnlyMana, source.powerUpAbilityOnlyMana);
+        mergeMana(promotedPowerUpAbilityOnlyMana, source.promotedPowerUpAbilityOnlyMana);
+        mergeMana(landAbilityOnlyMana, source.landAbilityOnlyMana);
+        mergeMana(promotedLandAbilityOnlyMana, source.promotedLandAbilityOnlyMana);
+        mergeMana(artifactSpellOrAbilityOnlyMana, source.artifactSpellOrAbilityOnlyMana);
+        mergeMana(promotedArtifactSpellOrAbilityOnlyMana, source.promotedArtifactSpellOrAbilityOnlyMana);
+        mergeMana(persistentMana, source.persistentMana);
+        mergeMana(combatMana, source.combatMana);
+        mergeMana(hasteGrantingMana, source.hasteGrantingMana);
+        mergeMana(uncounterableGrantingMana, source.uncounterableGrantingMana);
+        mergeMana(additionalCounterGrantingMana, source.additionalCounterGrantingMana);
+        mergeMana(nonHumanAdditionalCounterGrantingMana, source.nonHumanAdditionalCounterGrantingMana);
+        mergeMana(creatureAdditionalCounterGrantingMana, source.creatureAdditionalCounterGrantingMana);
+        mergeMana(commanderCounterGrantingMana, source.commanderCounterGrantingMana);
+        mergeMana(riotGrantingMana, source.riotGrantingMana);
+        mergeMana(pathOfAncestryMana, source.pathOfAncestryMana);
+        mergeMana(flashbackOnlyMana, source.flashbackOnlyMana);
+        mergeMana(graveyardOnlyMana, source.graveyardOnlyMana);
+        mergeMana(promotedGraveyardOnlyMana, source.promotedGraveyardOnlyMana);
+        mergeMana(nonHandSpellOnlyMana, source.nonHandSpellOnlyMana);
+        mergeMana(promotedNonHandSpellOnlyMana, source.promotedNonHandSpellOnlyMana);
+        mergeMana(nonOwnedSpellOnlyMana, source.nonOwnedSpellOnlyMana);
+        mergeMana(promotedNonOwnedSpellOnlyMana, source.promotedNonOwnedSpellOnlyMana);
+        mergeMana(outsideStartingDeckSpellOnlyMana, source.outsideStartingDeckSpellOnlyMana);
+        mergeMana(promotedOutsideStartingDeckSpellOnlyMana, source.promotedOutsideStartingDeckSpellOnlyMana);
+        mergeMana(artifactOnlyMana, source.artifactOnlyMana);
+        mergeMana(artifactSpellOnlyMana, source.artifactSpellOnlyMana);
+        mergeMana(artifactAbilityOnlyMana, source.artifactAbilityOnlyMana);
+        mergeMana(colorlessSubtypeSpellOrAbilityMana, source.colorlessSubtypeSpellOrAbilityMana);
+        mergeMana(legendarySpellOnlyMana, source.legendarySpellOnlyMana);
+        mergeMana(kickedOnlyMana, source.kickedOnlyMana);
+        mergeMana(kickedOrInstantSorceryOnlyColored, source.kickedOrInstantSorceryOnlyColored);
+        mergeMana(xCostOnlyMana, source.xCostOnlyMana);
+        mergeMana(coloredCostOnlyMana, source.coloredCostOnlyMana);
+        mergeMana(instantSorceryOnlyColored, source.instantSorceryOnlyColored);
+        mergeMana(foretellOrInstantSorceryOnlyColored, source.foretellOrInstantSorceryOnlyColored);
+        mergeMana(instantSorceryOrClassLevelOnlyColored, source.instantSorceryOrClassLevelOnlyColored);
+        mergeMana(disturbOrInstantSorceryOnlyColored, source.disturbOrInstantSorceryOnlyColored);
+        mergeMana(foretellSpellOnlyColored, source.foretellSpellOnlyColored);
+        mergeMana(cumulativeUpkeepOnlyColored, source.cumulativeUpkeepOnlyColored);
+        mergeMana(partySpellOrAbilityMana, source.partySpellOrAbilityMana);
+        mergeMana(creatureSpellOnlyMana, source.creatureSpellOnlyMana);
+        mergeMana(creatureSpellWithoutAbilitiesOnlyMana, source.creatureSpellWithoutAbilitiesOnlyMana);
+        mergeMana(noncreatureSpellOnlyMana, source.noncreatureSpellOnlyMana);
+        mergeMana(exactlyThreeColorSpellOnlyMana, source.exactlyThreeColorSpellOnlyMana);
+        mergeMana(multicoloredSpellOnlyMana, source.multicoloredSpellOnlyMana);
+        mergeMana(monocoloredSpellOnlyMana, source.monocoloredSpellOnlyMana);
+        mergeMana(creatureSourceCreatureSpellOnlyMana, source.creatureSourceCreatureSpellOnlyMana);
+        mergeMana(creatureOrEnchantmentSpellOnlyMana, source.creatureOrEnchantmentSpellOnlyMana);
+        mergeMana(creatureSpellOrAbilityMana, source.creatureSpellOrAbilityMana);
+        mergeMana(creatureAbilityOnlyMana, source.creatureAbilityOnlyMana);
+        mergeMana(manaValueAtLeastFourOnlyMana, source.manaValueAtLeastFourOnlyMana);
+        mergeMana(manaValueAtLeastFiveOrXOnlyMana, source.manaValueAtLeastFiveOrXOnlyMana);
+        mergeMana(faceDownSpellsOrTurnFaceUpMana, source.faceDownSpellsOrTurnFaceUpMana);
+        mergeMana(enchantmentOrRoomUnlockOrTurnFaceUpMana, source.enchantmentOrRoomUnlockOrTurnFaceUpMana);
+        mergeMana(roomSpellsOrUnlocksMana, source.roomSpellsOrUnlocksMana);
+        mergeMana(turnPermanentsFaceUpMana, source.turnPermanentsFaceUpMana);
+        mergeMana(exiledSpellOnlyMana, source.exiledSpellOnlyMana);
+        mergeMana(devoidSpellOnlyMana, source.devoidSpellOnlyMana);
+        mergeTrackedMana(spellCastTriggerMana, source.spellCastTriggerMana);
+        mergeTrackedMana(subtypeHasteGrantingMana, source.subtypeHasteGrantingMana);
+        mergeTrackedMana(subtypeOrLegendaryCreatureMana, source.subtypeOrLegendaryCreatureMana);
+        mergeTrackedMana(subtypeCreatureMana, source.subtypeCreatureMana);
+        mergeTrackedMana(uncounterableSubtypeCreatureMana, source.uncounterableSubtypeCreatureMana);
+        mergeTrackedMana(subtypeSpellOrAbilityMana, source.subtypeSpellOrAbilityMana);
+        mergeTrackedMana(subtypeSetSpellOrAbilityMana, source.subtypeSetSpellOrAbilityMana);
+        mergeTrackedMana(subtypeSpellOnlyMana, source.subtypeSpellOnlyMana);
+        mergeTrackedMana(instantSorceryOrSubtypeSpellOnlyMana, source.instantSorceryOrSubtypeSpellOnlyMana);
+        mergeTrackedMana(subtypeCreatureSourceSpellOrAbilityMana, source.subtypeCreatureSourceSpellOrAbilityMana);
+        mergeTrackedMana(subtypeOrPlaneswalkerSpellMana, source.subtypeOrPlaneswalkerSpellMana);
+        mergeTrackedMana(exiledCardOnlyMana, source.exiledCardOnlyMana);
+        artifactOnlyColorless += source.artifactOnlyColorless;
+        artifactSpellOnlyColorless += source.artifactSpellOnlyColorless;
+        artifactAbilityOnlyColorless += source.artifactAbilityOnlyColorless;
+        powerstoneOnlyColorless += source.powerstoneOnlyColorless;
+        persistentPowerstoneOnlyColorless += source.persistentPowerstoneOnlyColorless;
+        myrOnlyColorless += source.myrOnlyColorless;
+        promotedColorlessSpellOrPermanentAbilityMana += source.promotedColorlessSpellOrPermanentAbilityMana;
+        colorlessSpellOnlyColorless += source.colorlessSpellOnlyColorless;
+        promotedColorlessSpellOnlyColorless += source.promotedColorlessSpellOnlyColorless;
+        legendarySpellOnlyColorless += source.legendarySpellOnlyColorless;
+        restrictedRed += source.restrictedRed;
+        kickedOnlyGreen += source.kickedOnlyGreen;
+        kickedOrInstantSorceryOnlyColorless += source.kickedOrInstantSorceryOnlyColorless;
+        instantSorceryOnlyColorless += source.instantSorceryOnlyColorless;
+        foretellOrInstantSorceryOnlyColorless += source.foretellOrInstantSorceryOnlyColorless;
+        instantSorceryOrClassLevelOnlyColorless += source.instantSorceryOrClassLevelOnlyColorless;
+        disturbOrInstantSorceryOnlyColorless += source.disturbOrInstantSorceryOnlyColorless;
+        foretellSpellOnlyColorless += source.foretellSpellOnlyColorless;
+        xCostOnlyColorless += source.xCostOnlyColorless;
+        xSpellOnlyColorless += source.xSpellOnlyColorless;
+        coloredSpellWithoutXOnlyColorless += source.coloredSpellWithoutXOnlyColorless;
+        coloredCostOnlyColorless += source.coloredCostOnlyColorless;
+        cumulativeUpkeepOnlyColorless += source.cumulativeUpkeepOnlyColorless;
+    }
+
+    private static <K> void mergeMana(Map<K, Integer> recipient, Map<K, Integer> source) {
+        source.forEach((key, amount) -> recipient.merge(key, amount, Integer::sum));
+    }
+
+    private static <K> void mergeTrackedMana(Map<K, EnumMap<ManaColor, Integer>> recipient,
+                                             Map<K, EnumMap<ManaColor, Integer>> source) {
+        source.forEach((key, mana) -> mergeMana(
+                recipient.computeIfAbsent(key, ignored -> new EnumMap<>(ManaColor.class)), mana));
+    }
+
+    /** Copy constructor for deep-copying game state during AI simulation. */
     public ManaPool(ManaPool source) {
         pool.putAll(source.pool);
         snowMana.putAll(source.snowMana);

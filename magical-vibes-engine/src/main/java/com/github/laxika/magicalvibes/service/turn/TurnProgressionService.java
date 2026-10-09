@@ -94,6 +94,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class TurnProgressionService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
 
     private final CombatService combatService;
     private final GameLogService gameLogService;
@@ -1263,6 +1266,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnLibraryPlayPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
+        gameData.departedPermanentSnapshots.clear();
         gameData.firstCardCycledFreeUsesThisTurn.clear();
         gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
         gameData.keyedOncePerTurnTriggersFiredThisTurn.clear();
@@ -1512,7 +1516,38 @@ public class TurnProgressionService {
     public void resumeStaticOrbUntap(GameData gameData, UUID activePlayerId,
                                      java.util.Set<UUID> chosenUntapIds,
                                      com.github.laxika.magicalvibes.model.filter.PermanentPredicate staticOrbFilter) {
-        untapStepService.untapChosenPermanents(gameData, activePlayerId, chosenUntapIds, staticOrbFilter);
+        resumeStaticOrbUntap(gameData, activePlayerId, chosenUntapIds, staticOrbFilter, List.of(), List.of());
+    }
+
+    public void resumeStaticOrbUntap(GameData gameData, UUID activePlayerId,
+            java.util.Set<UUID> chosenUntapIds,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate staticOrbFilter,
+            List<com.github.laxika.magicalvibes.model.effect.StaticOrbEffect> remainingRestrictions,
+            List<UUID> previouslyExcludedIds) {
+        var excluded = new java.util.LinkedHashSet<>(previouslyExcludedIds);
+        gameData.playerBattlefields.getOrDefault(activePlayerId, List.of()).stream()
+                .filter(permanent -> permanent.isTapped()
+                        && (staticOrbFilter == null || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, staticOrbFilter)))
+                .map(Permanent::getId).filter(id -> !chosenUntapIds.contains(id)).forEach(excluded::add);
+        for (int index = 0; index < remainingRestrictions.size(); index++) {
+            var restriction = remainingRestrictions.get(index);
+            var candidates = untapStepService.staticOrbUntapCandidates(gameData, activePlayerId, restriction)
+                    .stream().filter(id -> !excluded.contains(id)).toList();
+            if (candidates.size() <= restriction.maxUntap()) continue;
+            playerInputService.beginMultiPermanentChoice(gameData, activePlayerId, candidates, restriction.maxUntap(),
+                    new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.StaticOrbUntap(
+                            activePlayerId, restriction.filter(),
+                            remainingRestrictions.subList(index + 1, remainingRestrictions.size()),
+                            List.copyOf(excluded)),
+                    "Choose up to " + restriction.maxUntap() + " permanents to untap.");
+            return;
+        }
+        var excludedPredicate = new com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate(
+                excluded.stream().map(id -> (com.github.laxika.magicalvibes.model.filter.PermanentPredicate)
+                        new com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate(id)).toList());
+        untapStepService.untapPermanents(gameData, activePlayerId,
+                excluded.isEmpty() ? null : new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(excludedPredicate));
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);

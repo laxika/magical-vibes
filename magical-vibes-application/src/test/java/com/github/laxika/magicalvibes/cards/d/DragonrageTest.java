@@ -46,13 +46,13 @@ class DragonrageTest extends BaseCardTest {
         assertThat(attacker.isAttacking()).isTrue();
         int basePower = gqs.getEffectivePower(gd, attacker);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(basePower + 1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 2, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
         assertThat(nonAttacker.isAttacking()).isFalse();
     }
 
@@ -70,7 +70,7 @@ class DragonrageTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -85,7 +85,7 @@ class DragonrageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -101,7 +101,7 @@ class DragonrageTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -120,7 +120,7 @@ class DragonrageTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -166,12 +166,12 @@ class DragonrageTest extends BaseCardTest {
 
         removedFromCombat.setAttacking(false);
         removedFromCombat.setAttackTarget(null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
         int basePower = gqs.getEffectivePower(gd, remainingAttacker);
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
@@ -194,6 +194,6 @@ class DragonrageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Dragonrage()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castAndResolveInstant(player1, 0);
+        harness.withAutoStop(gd.currentStep, () -> harness.castAndResolveInstant(player1, 0));
     }
 }

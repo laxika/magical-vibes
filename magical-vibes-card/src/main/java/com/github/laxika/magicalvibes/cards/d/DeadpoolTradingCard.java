@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTextBoxesEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 
@@ -17,11 +15,7 @@ import java.util.List;
 public class DeadpoolTradingCard extends Card {
 
     public DeadpoolTradingCard() {
-        ExchangeTextBoxesEffect exchangeTextBoxes = new ExchangeTextBoxesEffect();
-        target(new PermanentPredicateTargetFilter(
-                exchangeTextBoxes.targetPredicate(), "Target must be another creature"))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new MayEffect(exchangeTextBoxes, "Exchange text boxes?"));
+        addEffect(EffectSlot.STATIC, new ExchangeTextBoxesEffect());
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new LoseLifeEffect(3));
 

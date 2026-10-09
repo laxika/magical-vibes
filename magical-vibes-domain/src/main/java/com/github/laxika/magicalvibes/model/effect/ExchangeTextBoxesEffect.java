@@ -25,6 +25,6 @@ public record ExchangeTextBoxesEffect(PermanentPredicate targetPredicate)
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.creature(), targetPredicate);
+        return TargetSpec.NONE;
     }
 }

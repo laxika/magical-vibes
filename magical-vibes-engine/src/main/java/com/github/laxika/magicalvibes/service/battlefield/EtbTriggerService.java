@@ -309,12 +309,13 @@ public class EtbTriggerService {
         List<CardEffect> triggeredEffects = enteringPermanentTriggersSuppressed || printedAbilitiesRemoved
                 ? new ArrayList<>()
                 : new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+        List<CardEffect> independentlyGrantedEffects = new ArrayList<>();
         if (!enteringPermanentTriggersSuppressed && enteringPermanent != null) {
-            triggeredEffects.addAll(enteringPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
-            triggeredEffects.addAll(enteringPermanent.getPersistentTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+            independentlyGrantedEffects.addAll(enteringPermanent.getTemporaryTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
+            independentlyGrantedEffects.addAll(enteringPermanent.getPersistentTriggeredEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
         }
         if (!enteringPermanentTriggersSuppressed && !printedAbilitiesRemoved) {
-            triggeredEffects.addAll(gameData.perpetualEnterEffectsByCardId
+            independentlyGrantedEffects.addAll(gameData.perpetualEnterEffectsByCardId
                     .getOrDefault(card.getId(), List.of()));
         }
         int additionalElementalTriggers = enteringPermanent == null ? 0
@@ -324,12 +325,13 @@ public class EtbTriggerService {
         if (!enteringPermanentTriggersSuppressed && battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (permanent.getCard() == card) {
-                    triggeredEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
+                    independentlyGrantedEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
                             gameData, permanent, EffectSlot.ON_ENTER_BATTLEFIELD));
                     break;
                 }
             }
         }
+        triggeredEffects.addAll(independentlyGrantedEffects);
         triggeredEffects = triggeredEffects.stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof ChooseCardTypeOnEnterEffect))
@@ -403,13 +405,20 @@ public class EtbTriggerService {
                     .toList();
 
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
-            List<CardEffect> independentEffects = card.getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+            List<CardEffect> independentEffects = new ArrayList<>(card.getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                     .filter(registration -> registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)
                     .filter(registration -> !(registration.effect() instanceof MayEffect))
                     .filter(registration -> !(registration.effect() instanceof ChooseOneAtTriggerTimeEffect))
                     .filter(registration -> !(registration.effect() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect))
                     .map(registration -> etbEffectResolver.resolve(etbCtx, registration.effect()))
-                    .filter(Objects::nonNull).toList();
+                    .filter(Objects::nonNull).toList());
+            independentlyGrantedEffects.stream()
+                    .filter(effect -> !(effect instanceof MayEffect))
+                    .filter(effect -> !(effect instanceof ChooseOneAtTriggerTimeEffect))
+                    .filter(effect -> !isEntryReplacementEffect(effect))
+                    .map(effect -> etbEffectResolver.resolve(etbCtx, effect))
+                    .filter(Objects::nonNull)
+                    .forEach(independentEffects::add);
             if (!independentEffects.isEmpty()) {
                 List<CardEffect> combinedEffects = new ArrayList<>(mandatoryEffects);
                 independentEffects.forEach(combinedEffects::remove);
@@ -493,6 +502,17 @@ public class EtbTriggerService {
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
+                if (may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect) {
+                    Permanent source = findEnteringPermanent(gameData, card);
+                    if (source == null || source.getPairedWithId() != null
+                            || !gameQueryService.isCreature(gameData, source)
+                            || gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                            .noneMatch(partner -> !partner.getId().equals(source.getId())
+                                    && partner.getPairedWithId() == null
+                                    && gameQueryService.isCreature(gameData, partner))) {
+                        continue;
+                    }
+                }
                 if (may.wrapped() instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect shuffle) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {
                         graveyardTargetingService.handleShuffleIntoLibraryETBTargeting(
@@ -864,7 +884,7 @@ public class EtbTriggerService {
 
             boolean auraETBTargetNeedsSelection = card.isAura()
                     && targetIds.isEmpty()
-                    && otherEffects.stream().anyMatch(e -> card.getEffectTargetIndex(e) > 0
+                    && otherEffects.stream().anyMatch(e -> card.getEffectTargetIndex(e) != 0
                     && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
@@ -909,7 +929,9 @@ public class EtbTriggerService {
                     log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
                             gameData.id, card.getName());
                 } else {
-                    TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
+                    TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter
+                            : card.isAura() && otherEffects.stream().noneMatch(effect -> card.getEffectTargetIndex(effect) >= 0)
+                            ? null : card.getTargetFilter();
 
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                             card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter, xValue));

@@ -47,8 +47,9 @@ class DirgeOfDreadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        cycleWithFearTarget(target);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isTrue();
         harness.assertInGraveyard(player1, "Dirge of Dread");
@@ -65,8 +66,9 @@ class DirgeOfDreadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        cycleWithFearTarget(target);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isTrue();
 
@@ -118,7 +120,7 @@ class DirgeOfDreadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        cycleWithFearTarget(target);
         harness.castAndResolveInstant(player2, 0, target.getId());
         harness.assertInGraveyard(player2, "Glory Seeker");
         harness.passBothPriorities();
@@ -163,5 +165,11 @@ class DirgeOfDreadTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, original, Keyword.FEAR)).isTrue();
         assertThat(gqs.hasKeyword(gd, later, Keyword.FEAR)).isFalse();
+    }
+
+    private void cycleWithFearTarget(Permanent target) {
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
     }
 }

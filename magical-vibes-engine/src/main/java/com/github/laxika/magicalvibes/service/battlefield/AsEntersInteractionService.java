@@ -164,6 +164,29 @@ public class AsEntersInteractionService {
                         || permanent.getOriginalCard().getId().equals(card.getId()))) {
             return;
         }
+        Permanent enteringPermanent = controllerBattlefield.stream()
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId())
+                        || permanent.getOriginalCard().getId().equals(card.getId()))
+                .findFirst().orElseThrow();
+        if (enteringPermanent.isFaceDown()) {
+            etbTriggerService.processFaceDownCreatureETBTriggers(gameData, controllerId, card);
+            return;
+        }
+
+        boolean exchangesTextOnEntry = card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.ExchangeTextBoxesEffect.class::isInstance);
+        if (exchangesTextOnEntry && enteringPermanent.getChosenPermanentId() == null) {
+            List<UUID> choices = gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                    .filter(p -> p != enteringPermanent && gameQueryService.isCreature(gameData, p))
+                    .map(Permanent::getId).toList();
+            if (!choices.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChooseCreatureAsEnter(
+                        enteringPermanent.getId(), controllerId, card, targetId, wasCastFromHand, etbMode, kicked));
+                playerInputService.beginPermanentChoice(gameData, controllerId, choices,
+                        "Choose another creature whose text box you may exchange.");
+                return;
+            }
+        }
 
         boolean turnsOtherCreaturesFaceDown = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(TurnOtherNontokenCreaturesFaceDownOnEnterEffect.class::isInstance);

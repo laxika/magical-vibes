@@ -28,6 +28,8 @@ public class LookAtTopCardMayRevealMatchingToHandEffectHandler
 
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,6 +60,9 @@ public class LookAtTopCardMayRevealMatchingToHandEffectHandler
                 GameLog.text(playerName + " looks at the top card of their library (" + sourceName + ")."));
 
         Card topCard = deck.getFirst();
+        cardRevealService.revealToPlayer(gameData, controllerId,
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.LIBRARY,
+                List.of(topCard), controllerId);
         boolean matches = predicateEvaluationService.matchesCardPredicate(
                 topCard, e.predicate(), entry.getCard().getId(), gameData, controllerId);
 

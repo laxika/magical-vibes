@@ -4,8 +4,15 @@ package com.github.laxika.magicalvibes.model.effect;
 public record CreateTokenCopyOfEnteringPermanentEffect(
         boolean grantHaste,
         boolean exileAtEndStep,
-        boolean sacrificeAtEndStep
+        boolean sacrificeAtEndStep,
+        boolean trackWithSource,
+        boolean createForEnteringController
 ) implements CardEffect {
+
+    public CreateTokenCopyOfEnteringPermanentEffect(boolean grantHaste, boolean exileAtEndStep,
+                                                    boolean sacrificeAtEndStep) {
+        this(grantHaste, exileAtEndStep, sacrificeAtEndStep, false, false);
+    }
 
     public CreateTokenCopyOfEnteringPermanentEffect() {
         this(false, false, false);

@@ -30,17 +30,7 @@ public class DecreeOfSilence extends Card {
                                 new SacrificeSelfEffect())
                 )
         ));
-        addHandActivatedAbility(new ActivatedAbility(
-                false,
-                "{4}{U}{U}",
-                List.of(new MayEffect(new CounterSpellEffect(), "Counter target spell?"), new DrawCardEffect(1)),
-                "Cycling {4}{U}{U} ({4}{U}{U}, Discard this card: Draw a card.)",
-                null,
-                null,
-                null,
-                null,
-                List.of(),
-                0,
-                1));
+        addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(new CounterSpellEffect(), "Counter target spell?"));
+        addCycling("{4}{U}{U}");
     }
 }

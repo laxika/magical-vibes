@@ -32,7 +32,7 @@ import java.util.Set;
 public class DisaTheRestless extends Card {
 
     public DisaTheRestless() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
                 new TriggeringCardConditionalEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardIsPermanentPredicate(),

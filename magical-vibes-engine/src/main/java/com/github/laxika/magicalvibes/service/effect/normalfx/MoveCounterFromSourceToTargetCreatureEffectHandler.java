@@ -33,7 +33,8 @@ public class MoveCounterFromSourceToTargetCreatureEffectHandler implements Norma
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (source == null || target == null || source.getCounterCount(counterType) <= 0) {
+        if (source == null || target == null || source.getId().equals(target.getId())
+                || source.getCounterCount(counterType) <= 0) {
             return;
         }
         if (gameQueryService.cantHaveCounters(gameData, target)

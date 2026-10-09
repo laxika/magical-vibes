@@ -86,7 +86,7 @@ class DreadedBatCloudTest extends BaseCardTest {
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
     }
 
     @Test
@@ -100,7 +100,7 @@ class DreadedBatCloudTest extends BaseCardTest {
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
     }
 
     @Test
@@ -114,7 +114,7 @@ class DreadedBatCloudTest extends BaseCardTest {
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
     }
 
     @Test
@@ -128,7 +128,7 @@ class DreadedBatCloudTest extends BaseCardTest {
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
     }
 
     @Test

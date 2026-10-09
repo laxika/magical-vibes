@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
 import java.util.List;
 
@@ -28,7 +30,8 @@ public class DisplacerKitten extends Card {
                 .addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                         new SpellCastTriggerEffect(
                                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                                List.of(FlickerEffect.flickerTarget()),
+                                List.of(FlickerEffect.flickerTarget(new PermanentAllOfPredicate(List.of(
+                                        targetFilter.predicate(), new PermanentControlledBySourceControllerPredicate())))),
                                 null,
                                 targetFilter));
     }

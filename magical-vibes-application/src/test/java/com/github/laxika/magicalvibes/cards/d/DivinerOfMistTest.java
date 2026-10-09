@@ -33,10 +33,6 @@ class DivinerOfMistTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-
-        harness.handleMayAbilityChosen(player1, true);
-
         var choice = gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.cardPool()).containsExactlyInAnyOrder(shock, secondShock);
@@ -53,7 +49,9 @@ class DivinerOfMistTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(diviner)));
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -94,7 +92,6 @@ class DivinerOfMistTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(diviner)));
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         var choice = gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);

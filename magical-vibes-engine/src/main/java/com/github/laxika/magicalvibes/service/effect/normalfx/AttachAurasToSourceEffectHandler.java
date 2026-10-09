@@ -63,7 +63,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
         UUID hostId = auraEffect.hostPermanentId() == null
                 ? entry.getSourcePermanentId() : auraEffect.hostPermanentId();
         Permanent host = gameQueryService.findPermanentById(gameData, hostId);
-        if (host == null) {
+        if (host == null && !auraEffect.includeEquipment()) {
             return;
         }
 
@@ -72,14 +72,14 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
                 auraEffect.includeBattlefield(), auraEffect.includeLibrary(), auraEffect.includeEquipment());
         if (choosableIds.isEmpty()) {
             gameLogService.append(gameData,
-                    GameLog.cardThen(host.getCard(), " has no "
+                    GameLog.cardThen(entry.getCard(), " has no "
                             + (auraEffect.includeEquipment() ? "Auras or Equipment" : "Auras")
                             + " it could gain."));
             return;
         }
 
         playerInputService.beginAttachAurasChoice(gameData, new PendingInteraction.AttachAurasChoice(
-                controllerId, choosableIds, host.getId(), host.getCard().getName(),
+                controllerId, choosableIds, hostId, entry.getCard().getName(),
                 auraEffect.maxCount(), auraEffect.includeEquipment()));
     }
 
@@ -91,7 +91,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     public void completeChoice(GameData gameData, List<UUID> chosenCardIds,
             PendingInteraction.AttachAurasChoice interaction) {
         Permanent host = gameQueryService.findPermanentById(gameData, interaction.hostPermanentId());
-        if (host == null) {
+        if (host == null && !interaction.includeEquipment()) {
             return;
         }
 
@@ -126,7 +126,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
                     || attachFromLibrary(gameData, host, controllerId, cardId);
         }
 
-        if (movedAny) {
+        if (movedAny && host != null) {
             // A control Aura (e.g. Control Magic) that moved grants control of the host to its controller.
             creatureControlService.recomputeControl(gameData, host);
         }
@@ -136,7 +136,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private List<UUID> choosableAttachmentCardIds(GameData gameData, Permanent host, UUID controllerId,
             boolean includeBattlefield, boolean includeLibrary, boolean includeEquipment) {
         List<UUID> ids = new ArrayList<>();
-        if (includeBattlefield) {
+        if (includeBattlefield && host != null) {
             gameData.forEachPermanent((playerId, permanent) -> {
                 if ((!permanent.getCard().isAura()
                         && !(includeEquipment && isEquipment(permanent.getCard())))
@@ -172,9 +172,9 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private void addEnchantableCards(GameData gameData, Permanent host, UUID controllerId,
             List<Card> cards, List<UUID> ids, boolean includeEquipment) {
         for (Card card : cards) {
-            if ((card.isAura() && auraAttachmentService.canEnchant(gameData, card, controllerId, host))
+            if ((host != null && card.isAura() && auraAttachmentService.canEnchant(gameData, card, controllerId, host))
                     || (includeEquipment && isEquipment(card)
-                    && equipSupport.canAttachEquipment(gameData, new Permanent(card), host))) {
+                    && (host == null || equipSupport.canAttachEquipment(gameData, new Permanent(card), host)))) {
                 ids.add(card.getId());
             }
         }
@@ -207,7 +207,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private boolean attachFromGraveyard(GameData gameData, Permanent host, UUID controllerId, UUID cardId) {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         Card card = findCard(graveyard, cardId);
-        if (card == null || (card.isAura()
+        if (card == null || (host == null && !isEquipment(card)) || (card.isAura()
                 && !auraAttachmentService.canEnchant(gameData, card, controllerId, host))) {
             return false;
         }
@@ -225,7 +225,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private boolean attachFromHand(GameData gameData, Permanent host, UUID controllerId, UUID cardId) {
         List<Card> hand = gameData.playerHands.get(controllerId);
         Card card = findCard(hand, cardId);
-        if (card == null || (card.isAura()
+        if (card == null || (host == null && !isEquipment(card)) || (card.isAura()
                 && !auraAttachmentService.canEnchant(gameData, card, controllerId, host))) {
             return false;
         }
@@ -237,7 +237,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private boolean attachFromLibrary(GameData gameData, Permanent host, UUID controllerId, UUID cardId) {
         List<Card> library = gameData.playerDecks.get(controllerId);
         Card card = findCard(library, cardId);
-        if (card == null || (card.isAura()
+        if (card == null || (host == null && !isEquipment(card)) || (card.isAura()
                 && !auraAttachmentService.canEnchant(gameData, card, controllerId, host))) {
             return false;
         }
@@ -251,13 +251,17 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private void putAttachmentOntoBattlefieldAttached(GameData gameData, Permanent host, UUID controllerId,
             Card card, String zoneName, Zone origin) {
         Permanent attachment = new Permanent(card, origin);
-        attachment.setAttachedTo(host.getId());
+        attachment.setAttachedTo(host == null ? null : host.getId());
         if (origin == Zone.GRAVEYARD) {
             attachment.setEnteredFromGraveyardOwnerId(controllerId);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, attachment);
-        if (isEquipment(card) && gameQueryService.findPermanentById(gameData, attachment.getId()) != null) {
+        if (host != null && isEquipment(card) && gameQueryService.findPermanentById(gameData, attachment.getId()) != null) {
             equipSupport.notifyEquipmentAttached(gameData, attachment, null);
+        }
+        if (host == null) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " enters from " + zoneName + "."));
+            return;
         }
         gameLogService.append(gameData, GameLog.builder()
                 .card(card)

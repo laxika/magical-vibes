@@ -108,6 +108,7 @@ class DuskDawnTest extends BaseCardTest {
     @Test
     @DisplayName("Dawn resolves and exiles even with no creatures to return")
     void dawnResolvesWithNoEligibleCards() {
+        harness.setHand(player1, List.of());
         DuskDawn spell = new DuskDawn();
         harness.setGraveyard(player1, List.of(spell));
         harness.addMana(player1, ManaColor.WHITE, 5);

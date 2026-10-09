@@ -35,7 +35,8 @@ class DevotedDuelistTest extends BaseCardTest {
     @Test
     void countsItsOwnCastBeforeEnteringTheBattlefield() {
         harness.setHand(player1, List.of(new DevotedDuelist(), new DarkRitual()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         int opponentLifeBefore = gd.getLife(player2.getId());
 
@@ -92,7 +93,7 @@ class DevotedDuelistTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
         harness.assertLife(player2, opponentLifeBefore - 1);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 

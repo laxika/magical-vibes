@@ -13,6 +13,6 @@ public class DarkestHour extends Card {
 
     public DarkestHour() {
         // All creatures are black. Layer-5 color setter (overriding) over every creature.
-        addEffect(EffectSlot.STATIC, new GrantColorEffect(CardColor.BLACK, GrantScope.ALL_CREATURES, true));
+        addEffect(EffectSlot.STATIC, new GrantColorEffect(CardColor.BLACK, GrantScope.ALL_CREATURES_INCLUDING_SELF, true));
     }
 }

@@ -155,7 +155,7 @@ class DreamshackleGeistTest extends BaseCardTest {
             advanceToCombat(player1);
             harness.handleListChoice(player1, LOCK_MODE);
             harness.handlePermanentChosen(player1, target.getId());
-            harness.passBothPriorities();
+            harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
         }
 
         harness.performUntapStep(player2);

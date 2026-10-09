@@ -28,6 +28,7 @@ public class DoomsdayEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final LibrarySearchSupport librarySearchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +44,8 @@ public class DoomsdayEffectHandler implements NormalEffectHandlerBean {
         // Combine the library and graveyard into a single pool, held out of both zones.
         List<Card> pool = new ArrayList<>();
         List<Card> library = gameData.playerDecks.get(controllerId);
-        if (library != null) {
+        boolean canSearchLibrary = !librarySearchSupport.isSearchPrevented(gameData, controllerId, false);
+        if (library != null && canSearchLibrary) {
             pool.addAll(library);
             library.clear();
         }
@@ -54,6 +56,10 @@ public class DoomsdayEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (pool.isEmpty()) {
+            if (library != null) {
+                library.forEach(card -> gameData.addToExile(controllerId, card));
+                library.clear();
+            }
             gameLogService.append(gameData, GameLog.text(controllerName + " has no cards in their library or graveyard (" + cardName + ")."));
             return;
         }

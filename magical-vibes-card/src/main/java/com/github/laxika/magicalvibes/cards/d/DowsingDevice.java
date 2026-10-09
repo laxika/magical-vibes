@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,20 +25,15 @@ public class DowsingDevice extends Card {
     public DowsingDevice() {
         setBackFaceCard(new GeodeGrotto());
 
-        CardEffect transformIfFourArtifacts = ConditionalEffect.unless(
+        CardEffect transformIfFourArtifacts = new ConditionalEffect(
                 new AllOf(List.of(new ControlsPermanentCount(4, new PermanentIsArtifactPredicate()))),
                 new TransformSelfEffect());
 
+        CardEffect enterEffect = SequenceEffect.of(new BoostTargetCreatureEffect(1, 0),
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), transformIfFourArtifacts);
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, transformIfFourArtifacts)
-                .addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-                        new BoostTargetCreatureEffect(1, 0))
-                .addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, transformIfFourArtifacts);
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, enterEffect)
+                .addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, enterEffect);
     }
 
     @Override

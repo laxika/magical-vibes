@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryDecisionMaker;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -20,6 +22,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @Component
@@ -30,6 +33,12 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private CardRevealService cardRevealService;
+
+    @Autowired
+    void setCardRevealService(CardRevealService cardRevealService) {
+        this.cardRevealService = cardRevealService;
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,6 +74,15 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         }
 
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
+        if (count == 1) {
+            if (cardRevealService != null) {
+                cardRevealService.revealToPlayer(gameData, deckOwnerId,
+                        GameEventFact.RevealZone.LIBRARY, topCards, decisionMakerId);
+            }
+            gameLogService.append(gameData, GameLog.text(
+                    decisionMakerName + " looks at the top card of " + libraryOf + "."));
+            return;
+        }
         deck.subList(0, count).clear();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(

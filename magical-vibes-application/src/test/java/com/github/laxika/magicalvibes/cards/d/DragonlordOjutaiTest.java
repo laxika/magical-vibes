@@ -206,8 +206,10 @@ class DragonlordOjutaiTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.setHand(player1, List.of());
 
-        resolveCombat(player2);
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                () -> resolveCombat(player2));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                () -> harness.passBothPriorities());
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(controllersCard);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

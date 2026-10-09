@@ -4,8 +4,13 @@ import com.github.laxika.magicalvibes.cards.m.MoorlandInquisitor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -147,8 +152,11 @@ class DemonlordOfAshmouthTest extends BaseCardTest {
     @Test
     @DisplayName("The controller at death controls undying and the owner controls the return entry trigger")
     void stolenDemonlordReturnsToOwnerWithCorrectTriggerControllers() {
-        var demon = harness.addToBattlefieldAndReturn(player2, new DemonlordOfAshmouth());
-        gd.stolenCreatures.put(demon.getId(), player1.getId());
+        var demon = harness.addToBattlefieldAndReturn(player1, new DemonlordOfAshmouth());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), demon,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
         harness.addToBattlefield(player1, new MoorlandInquisitor());
         harness.setHand(player2, List.of(new DeathWind()));
         harness.addMana(player2, ManaColor.BLACK, 5);

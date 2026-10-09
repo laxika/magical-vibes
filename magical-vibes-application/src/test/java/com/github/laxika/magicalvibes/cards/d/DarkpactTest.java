@@ -31,7 +31,8 @@ class DarkpactTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(antedCard.getId());
-        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+        assertThat(gd.exiledCards.stream().filter(entry -> player1.getId().equals(entry.ownerId())
+                && gd.antedCardIds.contains(entry.card().getId())).map(entry -> entry.card()).toList()).extracting(Card::getId)
                 .containsExactly(libraryTop.getId());
         assertThat(gd.antedCardIds).containsExactly(libraryTop.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
@@ -50,7 +51,8 @@ class DarkpactTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, antedCard.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+        assertThat(gd.exiledCards.stream().filter(entry -> player1.getId().equals(entry.ownerId())
+                && gd.antedCardIds.contains(entry.card().getId())).map(entry -> entry.card()).toList()).extracting(Card::getId)
                 .containsExactly(antedCard.getId());
         assertThat(gd.antedCardIds).containsExactly(antedCard.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
@@ -85,7 +87,8 @@ class DarkpactTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(antedCard.getId());
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+        assertThat(gd.exiledCards.stream().filter(entry -> player1.getId().equals(entry.ownerId())
+                && gd.antedCardIds.contains(entry.card().getId())).map(entry -> entry.card()).toList()).extracting(Card::getId)
                 .containsExactly(libraryTop.getId());
         assertThat(gd.antedCardIds).containsExactly(libraryTop.getId());
     }
@@ -103,7 +106,8 @@ class DarkpactTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+        assertThat(gd.exiledCards.stream().filter(entry -> player1.getId().equals(entry.ownerId())
+                && gd.antedCardIds.contains(entry.card().getId())).map(entry -> entry.card()).toList()).extracting(Card::getId)
                 .containsExactly(antedCard.getId());
         assertThat(gd.findExiledCard(antedCard.getId()).ownerId()).isEqualTo(player1.getId());
         assertThat(gd.antedCardIds).containsExactly(antedCard.getId());
@@ -126,7 +130,8 @@ class DarkpactTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(antedCard.getId(), libraryBottom.getId());
-        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
+        assertThat(gd.exiledCards.stream().filter(entry -> player1.getId().equals(entry.ownerId())
+                && gd.antedCardIds.contains(entry.card().getId())).map(entry -> entry.card()).toList()).extracting(Card::getId)
                 .containsExactlyInAnyOrder(otherAnteCard.getId(), libraryTop.getId());
         assertThat(gd.antedCardIds).containsExactlyInAnyOrder(otherAnteCard.getId(), libraryTop.getId());
     }
@@ -149,7 +154,8 @@ class DarkpactTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(libraryTop.getId());
-        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards.stream().filter(entry -> player1.getId().equals(entry.ownerId())
+                && gd.antedCardIds.contains(entry.card().getId())).map(entry -> entry.card()).toList()).isEmpty();
         assertThat(gd.antedCardIds).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(antedCard, spell);
     }

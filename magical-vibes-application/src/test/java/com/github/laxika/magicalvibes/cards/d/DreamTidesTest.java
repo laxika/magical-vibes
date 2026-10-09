@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -152,7 +153,8 @@ class DreamTidesTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactlyInAnyOrder(chosen.getId(), unchosen.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId())));
 
         assertThat(chosen.isTapped()).isFalse();
         assertThat(unchosen.isTapped()).isTrue();
@@ -177,8 +179,8 @@ class DreamTidesTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactly(creature.getId());
-        harness.tapPermanent(player1, 2);
-        harness.tapPermanent(player1, 3);
+        harness.activateAbility(player1, 2, 0, null);
+        harness.activateAbility(player1, 3, 0, null);
         harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
 
         assertThat(creature.isTapped()).isFalse();

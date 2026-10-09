@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -48,11 +50,13 @@ public class DruidClass extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, "{4}{G}", List.of(new ClassLevelUpEffect(3, List.of(
                         new AnimatePermanentsEffect(
-                                landsYouControl, landsYouControl, List.of(), Set.of(Keyword.HASTE), null,
+                                null, null, List.of(), Set.of(Keyword.HASTE), null,
                                 Set.of(), GrantScope.TARGET, EffectDuration.PERMANENT,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsLandPredicate(),
-                                        new PermanentControlledBySourceControllerPredicate())))
+                                        new PermanentControlledBySourceControllerPredicate()))),
+                        new GrantStaticEffectToTargetEffect(
+                                new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl))
                 ))),
                 "Gain the next level as a sorcery.", ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(new AllOf(List.of(

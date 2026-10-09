@@ -155,12 +155,12 @@ class DragonWhelpTest extends BaseCardTest {
         for (int i = 0; i < 4; i++) {
             harness.activateAbility(player1, 0, null, null);
         }
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-        assertThat(gd.stack).hasSize(4);
+        assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Dragon Whelp");

@@ -58,7 +58,8 @@ public class AnyPlayerMayPayLifeToCounterSpellEffectHandler implements NormalEff
         int lifeCost = lifeCost(gameData, playerId, amount);
         return lifeCost > 0
                 && gameData.playerIds.contains(playerId)
-                && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                && gameQueryService.canPlayerLoseLife(gameData, playerId)
+                && gameQueryService.canPayLifeForCosts(gameData)
                 && gameData.getLife(playerId) >= lifeCost;
     }
 

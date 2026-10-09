@@ -63,12 +63,12 @@ class DictateOfErebosTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
 
-        harness.handlePermanentChosen(player2, spiderId);
+        harness.handleMultiplePermanentsChosen(player2, List.of( spiderId));
 
         harness.assertInGraveyard(player2, "Giant Spider");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -103,7 +103,7 @@ class DictateOfErebosTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player2, bearsId);
+        harness.handleMultiplePermanentsChosen(player2, List.of( bearsId));
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Giant Spider");
         harness.passBothPriorities();

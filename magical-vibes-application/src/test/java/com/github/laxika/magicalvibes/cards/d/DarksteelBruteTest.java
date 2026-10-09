@@ -110,10 +110,12 @@ class DarksteelBruteTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
-        harness.activateAbility(player1, indexOf(brute), 0, null, null);
-        harness.passBothPriorities();
-        harness.activateAbility(player1, indexOf(brute), 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, indexOf(brute), 0, null, null);
+            harness.passBothPriorities();
+            harness.activateAbility(player1, indexOf(brute), 0, null, null);
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.isCreature(gd, brute)).isTrue();
         assertThat(gqs.getEffectivePower(gd, brute)).isEqualTo(2);

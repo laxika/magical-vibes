@@ -161,6 +161,7 @@ class DovinHandOfControlTest extends BaseCardTest {
     void minusOnePreventsNoncombatDamageToPlaneswalker() {
         addReadyDovin(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new JayaVeneratedFiremage());
+        target.setCounterCount(CounterType.LOYALTY, 5);
         int loyalty = target.getCounterCount(CounterType.LOYALTY);
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
@@ -176,6 +177,7 @@ class DovinHandOfControlTest extends BaseCardTest {
     void minusOnePreventsCombatDamageToPlaneswalker() {
         addReadyDovin(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new JayaVeneratedFiremage());
+        target.setCounterCount(CounterType.LOYALTY, 5);
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new IronBully());
         int loyalty = target.getCounterCount(CounterType.LOYALTY);
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -193,6 +195,7 @@ class DovinHandOfControlTest extends BaseCardTest {
     void minusOnePreventsNoncombatDamageDealtByPlaneswalker() {
         addReadyDovin(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new JayaVeneratedFiremage());
+        target.setCounterCount(CounterType.LOYALTY, 5);
         harness.setLife(player1, 20);
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
@@ -206,6 +209,8 @@ class DovinHandOfControlTest extends BaseCardTest {
 
     @Test
     void preventionSurvivesDovinLeavingAndExpiresOnControllersNextTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         Permanent dovin = addReadyDovin(player1);
         dovin.setCounterCount(CounterType.LOYALTY, 1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -216,13 +221,13 @@ class DovinHandOfControlTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dovin);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
 
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());

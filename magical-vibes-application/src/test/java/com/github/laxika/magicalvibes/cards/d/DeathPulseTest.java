@@ -56,7 +56,9 @@ class DeathPulseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GustcloakSentinel()));
         addCyclingMana();
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        cycleTarget(target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(-1);
@@ -68,12 +70,14 @@ class DeathPulseTest extends BaseCardTest {
     @Test
     @DisplayName("Cycling may be declined and still draws a card")
     void cyclingMayBeDeclined() {
-        harness.addToBattlefield(player2, new GustcloakSentinel());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GustcloakSentinel());
         harness.setHand(player1, List.of(new DeathPulse()));
         harness.setLibrary(player1, List.of(new GustcloakSentinel()));
         addCyclingMana();
 
-        harness.activateHandAbility(player1, 0, null);
+        cycleTarget(target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Gustcloak Sentinel");
@@ -102,7 +106,9 @@ class DeathPulseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GustcloakSentinel()));
         addCyclingMana();
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        cycleTarget(target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
@@ -131,9 +137,10 @@ class DeathPulseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new KrosanColossus()));
         addCyclingMana();
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        cycleTarget(target.getId());
         harness.assertInGraveyard(player1, "Death Pulse");
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
@@ -152,7 +159,7 @@ class DeathPulseTest extends BaseCardTest {
         addCyclingMana();
         addSpellMana();
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        cycleTarget(target.getId());
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player2, "Gustcloak Sentinel");
@@ -178,6 +185,11 @@ class DeathPulseTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(9);
         assertThat(target.getEffectiveToughness()).isEqualTo(9);
+    }
+
+    private void cycleTarget(java.util.UUID targetId) {
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, targetId);
     }
 
     private void addSpellMana() {

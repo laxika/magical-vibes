@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -113,6 +114,7 @@ class DispersalTechnicianTest extends BaseCardTest {
     @Test
     @DisplayName("An artifact that leaves before resolution is not returned from another zone")
     void doesNotReturnDepartedTarget() {
+        harness.setHand(player2, List.of());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PlanarBridge());
 
         castDispersalTechnician();

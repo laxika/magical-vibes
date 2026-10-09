@@ -19,12 +19,11 @@ public class Dreamcatcher extends Card {
     public Dreamcatcher() {
         // Whenever you cast a Spirit or Arcane spell, you may sacrifice this creature. If you do,
         // draw a card.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.SPIRIT),
-                                new CardSubtypePredicate(CardSubtype.ARCANE))),
-                        List.of(new SacrificeSelfThenEffect(new DrawCardEffect(1)))),
-                "Sacrifice Dreamcatcher to draw a card?"));
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+                new CardAnyOfPredicate(List.of(
+                        new CardSubtypePredicate(CardSubtype.SPIRIT),
+                        new CardSubtypePredicate(CardSubtype.ARCANE))),
+                List.of(new MayEffect(new SacrificeSelfThenEffect(new DrawCardEffect(1)),
+                        "Sacrifice Dreamcatcher to draw a card?"))));
     }
 }

@@ -1041,8 +1041,11 @@ public class ConditionEvaluationService {
                     activePlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case ActivePlayerControlsMoreLandsThanEachOtherPlayer ignored ->
                     activePlayerControlsMoreLandsThanEachOtherPlayer(gameData);
-            case ControllerControlsMorePermanentsThanEachOtherPlayer ignored ->
-                    controllerControlsMorePermanentsThanEachOtherPlayer(gameData, ctx.controllerId());
+            case ControllerControlsMorePermanentsThanEachOtherPlayer c ->
+                    controllerControlsMorePermanentsThanEachOtherPlayer(gameData, ctx.controllerId())
+                            && (!c.requireDampingRestrictionActive()
+                            || ctx.sourcePermanent() != null
+                            && !ctx.sourcePermanent().isDampingEngineEffectIgnoredThisTurn(ctx.controllerId()));
             case ActivePlayerHandAtLeast c ->
                     countCardsInHand(gameData, gameData.activePlayerId) >= c.threshold();
             case ActivePlayerHandAtMost c ->
@@ -2319,7 +2322,7 @@ public class ConditionEvaluationService {
             GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null || ctx.targetId() == null) return false;
         StackEntry targetSpell = gameData.stack.stream()
-                .filter(entry -> entry.getCard().getId().equals(ctx.targetId()))
+                .filter(entry -> entry.getTargetableId().equals(ctx.targetId()))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) return false;
@@ -2330,7 +2333,13 @@ public class ConditionEvaluationService {
                 .mapToInt(permanent -> permanent.getCard().getManaValue())
                 .max()
                 .orElse(0);
-        return targetSpell.getCard().getManaValue() + targetSpell.getXValue() <= greatestManaValue;
+        Card spellFace = targetSpell.isCastWithAdventure()
+                && targetSpell.getPhysicalCard().getBackFaceCard() != null
+                ? targetSpell.getPhysicalCard().getBackFaceCard() : targetSpell.getCard();
+        com.github.laxika.magicalvibes.model.ManaCost spellCost = spellFace.getParsedManaCost();
+        int targetManaValue = spellCost == null ? targetSpell.getCard().getManaValue()
+                : spellCost.getManaValue() + targetSpell.getXValue() * spellCost.getXSymbolCount();
+        return targetManaValue <= greatestManaValue;
     }
 
     private boolean isMostCommonPermanentColor(GameData gameData, CardColor color) {
@@ -2813,24 +2822,16 @@ public class ConditionEvaluationService {
     }
 
     private boolean isSourceEnchanted(GameData gameData, ConditionContext ctx) {
-        UUID sourcePermanentId = ctx.sourcePermanentId();
-        if (sourcePermanentId == null) return false;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (perm.getCard().getSubtypes().contains(CardSubtype.AURA)
-                        && sourcePermanentId.equals(perm.getAttachedTo())) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return countAurasAttachedToSource(gameData, ctx) > 0;
     }
 
     private int countAurasAttachedToSource(GameData gameData, ConditionContext ctx) {
         UUID sourcePermanentId = ctx.sourcePermanentId();
         if (sourcePermanentId == null) return 0;
+        if (gameQueryService.findPermanentById(gameData, sourcePermanentId) == null
+                && ctx.sourcePermanent() != null && ctx.sourcePermanent().getLastKnownAuraCount() != null) {
+            return ctx.sourcePermanent().getLastKnownAuraCount();
+        }
         int count = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);

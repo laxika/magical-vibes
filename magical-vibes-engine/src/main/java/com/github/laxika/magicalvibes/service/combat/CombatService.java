@@ -44,11 +44,9 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -92,8 +90,6 @@ public class CombatService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final TriggerCollectionService triggerCollectionService;
     private final PermanentControlSupport permanentControlSupport;
-    private final DamageSupport damageSupport;
-    private final StateBasedActionService stateBasedActionService;
     private final TapUntapSupport tapUntapSupport;
     private final ExileAndReturnTransformedService exileAndReturnTransformedService;
     private final PhasingService phasingService;
@@ -528,7 +524,7 @@ public class CombatService {
     }
 
     /** Idempotent grant of Dread Wight's "{4}: Remove a paralyzation counter from this creature." */
-    private static void grantParalyzationRemoveAbility(Permanent perm) {
+    public static void grantParalyzationRemoveAbility(Permanent perm) {
         boolean alreadyGranted = perm.getPersistentGrantedActivatedAbilities().stream()
                 .anyMatch(a -> a.getEffects().stream().anyMatch(e ->
                         e.equals(REMOVE_PARALYZATION_COUNTER_EFFECT)));
@@ -543,11 +539,10 @@ public class CombatService {
     }
 
     /**
-     * Deals the scheduled damage to all permanents marked for end-of-combat damage (Dwarven Sea
+     * Queues delayed damage triggers for permanents marked for end-of-combat damage (Dwarven Sea
      * Clan's "This creature deals 2 damage to that creature at end of combat"). The source card is
      * carried on the action, so the damage is still dealt with last-known information when the
-     * source already left the battlefield. Lethal damage is cleaned up by the caller's state-based
-     * action check.
+     * source already left the battlefield. Players may respond before each trigger resolves.
      */
     public void processEndOfCombatDamage(GameData gameData) {
         List<DealDamageToPermanentAtEndOfCombat> toDamage =
@@ -558,11 +553,12 @@ public class CombatService {
                 continue;
             }
             StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, action.sourceCard(),
-                    action.controllerId(), action.sourceCard().getName(), List.<CardEffect>of(),
-                    action.permanentId(), action.sourcePermanentId());
-            damageSupport.resolveCreatureTargetDamage(gameData, damageEntry, action.damage());
+                    action.controllerId(), action.sourceCard().getName(),
+                    List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect(
+                            action.damage())), action.permanentId(), action.sourcePermanentId());
+            damageEntry.setNonTargeting(true);
+            gameData.enqueueTrigger(damageEntry);
         }
-        stateBasedActionService.performStateBasedActions(gameData);
     }
 
     /**

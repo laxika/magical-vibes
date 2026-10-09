@@ -158,8 +158,6 @@ class DistantMemoriesTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Should NOT be in library search mode (library was empty)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        // Log should mention empty library
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }

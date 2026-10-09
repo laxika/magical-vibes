@@ -32,13 +32,32 @@ import java.util.UUID;
  * @param grantPlayPermissionUntilEndOfTurn whether exiled targeted controller-graveyard cards
  *                                           may be played by the controller this turn
  * @param allowZeroTargets whether a targeted graveyard choice may contain zero cards
+ * @param defendingPlayerOnly whether an attack trigger searches only the defending player's graveyard
  */
 public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter, UUID affectedPlayerId,
         boolean exactTargetCount, boolean trackWithSource, boolean fromBattlefieldThisTurn,
         CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
         boolean allowZeroTargets, boolean putKickCounters,
-        boolean returnExiledCardsToGraveyardOnSourceLeave) implements GraveyardCardChoosingEffect {
+        boolean returnExiledCardsToGraveyardOnSourceLeave,
+        boolean defendingPlayerOnly) implements GraveyardCardChoosingEffect {
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
+                                     UUID affectedPlayerId, boolean exactTargetCount,
+                                     boolean trackWithSource, boolean fromBattlefieldThisTurn,
+                                     CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
+                                     boolean allowZeroTargets, boolean putKickCounters,
+                                     boolean returnExiledCardsToGraveyardOnSourceLeave) {
+        this(count, scope, filter, affectedPlayerId, exactTargetCount, trackWithSource,
+                fromBattlefieldThisTurn, eventValueFilter, grantPlayPermissionUntilEndOfTurn,
+                allowZeroTargets, putKickCounters, returnExiledCardsToGraveyardOnSourceLeave, false);
+    }
+
+    /** Exiles a targeted card from the defending player's graveyard when attacking. */
+    public static ExileGraveyardCardsEffect fromDefendingPlayerGraveyard() {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,
+                null, null, false, false, false, null, false, false, false, false, true);
+    }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
                                      UUID affectedPlayerId, boolean exactTargetCount,

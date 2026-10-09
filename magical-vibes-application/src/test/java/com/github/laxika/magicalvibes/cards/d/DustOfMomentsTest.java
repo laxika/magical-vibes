@@ -62,6 +62,8 @@ class DustOfMomentsTest extends BaseCardTest {
 
         assertThat(permanent.getCounterCount(CounterType.TIME)).isEqualTo(1);
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(suspended.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 

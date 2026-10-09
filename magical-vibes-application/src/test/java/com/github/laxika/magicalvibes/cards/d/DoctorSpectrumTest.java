@@ -87,8 +87,9 @@ class DoctorSpectrumTest extends BaseCardTest {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
         harness.setHand(player1, List.of(new DoctorSpectrum()));
         addDoctorMana();
-        harness.castCreature(player1, 0, 2, enchantment.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        chooseModeAndTarget(2, enchantment.getId());
 
         gd.playerBattlefields.get(player2.getId()).remove(enchantment);
         gd.playerHands.get(player2.getId()).add(enchantment.getCard());
@@ -123,13 +124,23 @@ class DoctorSpectrumTest extends BaseCardTest {
     private void castDoctorSpectrum(int mode, UUID targetId) {
         harness.setHand(player1, List.of(new DoctorSpectrum()));
         addDoctorMana();
-        if (targetId == null) {
-            harness.castCreature(player1, 0, mode);
-        } else {
-            harness.castCreature(player1, 0, mode, targetId);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        chooseModeAndTarget(mode, targetId);
+        harness.passBothPriorities();
+    }
+
+    private void chooseModeAndTarget(int mode, UUID targetId) {
+        String label = switch (mode) {
+            case 0 -> "Create a 0/4 colorless Wall creature token with defender";
+            case 1 -> "Put a +1/+1 counter on each other Hero you control";
+            case 2 -> "Destroy target enchantment";
+            default -> throw new IllegalArgumentException("Unknown Doctor Spectrum mode");
+        };
+        harness.handleListChoice(player1, label);
+        if (targetId != null) {
+            harness.handlePermanentChosen(player1, targetId);
         }
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     private void addDoctorMana() {

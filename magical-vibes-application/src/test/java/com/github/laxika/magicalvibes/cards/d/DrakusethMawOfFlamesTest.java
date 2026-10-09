@@ -32,9 +32,8 @@ class DrakusethMawOfFlamesTest extends BaseCardTest {
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
         harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
-        harness.handlePermanentChosen(player1, thirdTarget.getId());
-        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(secondTarget.getId(), thirdTarget.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(firstTarget.getMarkedDamage()).isEqualTo(4);
         assertThat(secondTarget.getMarkedDamage()).isEqualTo(3);
@@ -52,7 +51,7 @@ class DrakusethMawOfFlamesTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -67,8 +66,7 @@ class DrakusethMawOfFlamesTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         harness.assertLife(player2, 16);
@@ -85,8 +83,7 @@ class DrakusethMawOfFlamesTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
-        harness.handlePermanentChosen(player1, thirdTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(secondTarget.getId(), thirdTarget.getId()));
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, firstTarget.getId());
@@ -109,8 +106,7 @@ class DrakusethMawOfFlamesTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, drakuseth.getId());

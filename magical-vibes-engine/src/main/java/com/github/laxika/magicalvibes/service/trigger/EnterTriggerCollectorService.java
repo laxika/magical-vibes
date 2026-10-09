@@ -570,6 +570,13 @@ public class EnterTriggerCollectorService {
     })
     private boolean handleEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        while (effect instanceof TriggeringCardConditionalEffect conditional) {
+            if (!predicateEvaluationService.matchesCardPredicate(pe.enteringCard(), conditional.predicate(),
+                    match.sourceCard().getId(), match.gameData(), match.controllerId())) {
+                return false;
+            }
+            effect = conditional.wrapped();
+        }
         if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 && !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
@@ -2580,6 +2587,9 @@ public class EnterTriggerCollectorService {
             if (enteringPermanent != null) {
                 entry.setTriggeringPermanentId(enteringPermanentId);
                 entry.setTriggeringCardId(enteringPermanent.getCard().getId());
+                entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
+                entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(
+                        match.gameData(), enteringPermanentId));
                 entry.setTriggeringPermanentPowerAtTrigger(
                         gameQueryService.getEffectivePower(match.gameData(), enteringPermanent));
                 entry.setTriggeringPermanentToughnessAtTrigger(

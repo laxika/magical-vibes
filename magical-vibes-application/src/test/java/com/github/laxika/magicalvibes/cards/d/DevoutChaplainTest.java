@@ -97,8 +97,6 @@ class DevoutChaplainTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ScrollOfAvacyn());
 
         harness.activateAbility(player1, 0, 0, null, artifact.getId());
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
 
         assertThat(chaplain.isTapped()).isTrue();
         assertThat(first.isTapped()).isTrue();
@@ -121,8 +119,6 @@ class DevoutChaplainTest extends BaseCardTest {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new FavorableWinds());
 
         harness.activateAbility(player1, 0, 0, null, enchantment.getId());
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enchantment);

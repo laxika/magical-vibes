@@ -16,7 +16,7 @@ public class DivineResilience extends Card {
 
     public DivineResilience() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
-        targetWhenKicked(TargetFilters.creatureYouControl(), 1, 1, 0, 99)
+        targetWhenKicked(TargetFilters.creatureYouControl(), 1, 1, 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                         new Kicked(),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET),

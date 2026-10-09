@@ -142,12 +142,12 @@ public class EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEff
         List<Permanent> eligible = battlefield.stream()
                 .filter(permanent -> !gameQueryService.isLand(gameData, permanent))
                 .toList();
-        int greatestManaValue = eligible.stream()
-                .mapToInt(permanent -> permanent.getCard().getManaValue())
+        int greatestManaValue = battlefield.stream()
+                .mapToInt(gameQueryService::getPermanentManaValue)
                 .max()
                 .orElse(Integer.MIN_VALUE);
         return eligible.stream()
-                .filter(permanent -> permanent.getCard().getManaValue() == greatestManaValue)
+                .filter(permanent -> gameQueryService.getPermanentManaValue(permanent) == greatestManaValue)
                 .toList();
     }
 

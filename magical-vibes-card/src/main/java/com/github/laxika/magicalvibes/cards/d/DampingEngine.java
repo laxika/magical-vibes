@@ -20,8 +20,8 @@ public class DampingEngine extends Card {
         addActivatedAbility(new ActivatedAbility(false, null,
                         List.of(new SacrificePermanentCost(new PermanentTruePredicate(), "a permanent", false),
                                 new IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect()),
-                        "Sacrifice a permanent: Ignore this effect until end of turn.", 1)
-                .withActivationCondition(new ControllerControlsMorePermanentsThanEachOtherPlayer(),
+                        "Sacrifice a permanent: Ignore this effect until end of turn.")
+                .withActivationCondition(new ControllerControlsMorePermanentsThanEachOtherPlayer(true),
                         "Activate only if you control more permanents than each other player.")
                 .withActivatableByAnyPlayer());
     }

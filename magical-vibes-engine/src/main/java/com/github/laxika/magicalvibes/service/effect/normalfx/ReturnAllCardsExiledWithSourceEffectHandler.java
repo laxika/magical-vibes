@@ -68,7 +68,8 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                         && exiledEntry.faceDown()) {
                     gameData.exiledCards.set(i, new ExiledCardEntry(exiledEntry.card(),
                             exiledEntry.ownerId(), exiledEntry.sourcePermanentId(), false,
-                            exiledEntry.exilerId()));
+                            exiledEntry.exilerId(), exiledEntry.exiledTurnNumber(),
+                            exiledEntry.controllerTurnsTakenAtExile(), exiledEntry.abilityLink()));
                 }
             }
         }

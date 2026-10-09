@@ -47,7 +47,7 @@ class DarksteelReactorTest extends BaseCardTest {
         Permanent reactor = harness.addToBattlefieldAndReturn(player2, new DarksteelReactor());
         reactor.setCounterCount(CounterType.CHARGE, 21);
 
-        advanceToUpkeep(player1);
+        harness.runStateBasedActions();
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -62,7 +62,7 @@ class DarksteelReactorTest extends BaseCardTest {
         Permanent reactor = harness.addToBattlefieldAndReturn(player1, new DarksteelReactor());
         reactor.setCounterCount(CounterType.CHARGE, 20);
 
-        advanceToUpkeep(player2);
+        harness.runStateBasedActions();
         assertThat(gd.stack).hasSize(1);
         reactor.setCounterCount(CounterType.CHARGE, 0);
         harness.passBothPriorities();

@@ -1904,7 +1904,9 @@ public class StepTriggerService {
             if (!exiledCards.isEmpty()) {
                 for (Card card : new ArrayList<>(exiledCards)) {
                     Integer eggCounters = gameData.exiledCardEggCounters.get(card.getId());
-                    if (eggCounters != null && eggCounters > 0) {
+                    if (eggCounters != null && eggCounters > 0
+                            && card.getEffects(EffectSlot.EXILED_UPKEEP_TRIGGERED).stream()
+                            .noneMatch(RemoveEggCounterFromExileAndReturnEffect.class::isInstance)) {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 card,
@@ -4468,10 +4470,12 @@ public class StepTriggerService {
                     DamageForCardsStillExiledAtNextEndStep.class,
                     action -> action.controllerId().equals(gameData.activePlayerId));
             for (DamageForCardsStillExiledAtNextEndStep action : pendingDamage) {
-                long stillExiled = action.cardIds().stream()
-                        .filter(cardId -> gameData.findExiledCard(cardId) != null)
-                        .count();
-                int damage = Math.toIntExact(stillExiled * action.damagePerCard());
+                var damage = new com.github.laxika.magicalvibes.model.amount.Scaled(
+                        new com.github.laxika.magicalvibes.model.amount.CardsInExile(
+                                new com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate(
+                                        java.util.Set.copyOf(action.cardIds())),
+                                com.github.laxika.magicalvibes.model.amount.CountScope.ANY_PLAYER),
+                        action.damagePerCard());
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         action.sourceCard(),
@@ -4484,9 +4488,9 @@ public class StepTriggerService {
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
-                        "'s delayed trigger deals " + damage + " damage to each opponent."));
-                log.info("Game {} - {} delayed trigger deals {} damage to each opponent",
-                        gameData.id, action.sourceCard().getName(), damage);
+                        "'s delayed damage trigger is put onto the stack."));
+                log.info("Game {} - {} delayed damage trigger pushed onto stack",
+                        gameData.id, action.sourceCard().getName());
             }
         }
 

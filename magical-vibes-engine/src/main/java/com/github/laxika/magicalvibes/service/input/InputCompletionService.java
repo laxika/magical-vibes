@@ -30,6 +30,9 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 @Service
 @RequiredArgsConstructor
 public class InputCompletionService {
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.DrainTargetPlayersLandManaEffectHandler
+            landManaDrainHandler;
     @Autowired private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
 
 
@@ -96,6 +99,11 @@ public class InputCompletionService {
             gameData.pendingInteractions.removeFirstOccurrence(queuedManaChoice);
             interactionHandlerRegistry.begin(gameData, queuedManaChoice);
             return;
+        }
+        var pendingDrain = gameData.pollPendingInteraction(PendingInteraction.LandManaDrainContinuation.class);
+        if (pendingDrain != null) {
+            landManaDrainHandler.continueDrain(gameData, pendingDrain.entry(), pendingDrain.remainingLandIds());
+            if (gameData.interaction.isAwaitingInput()) return;
         }
         if (gameData.pendingInteractions.stream().anyMatch(pending ->
                 pending instanceof PendingInteraction.ColorChoice choice

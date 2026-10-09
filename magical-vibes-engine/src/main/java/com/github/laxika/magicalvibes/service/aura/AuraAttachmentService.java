@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -102,9 +103,10 @@ public class AuraAttachmentService {
                 boolean attachmentIsMissing = p.isAttached()
                         && !gameData.playerIds.contains(p.getAttachedTo())
                         && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null
-                        && (isAura
-                            || gameQueryService.findCardInGraveyardById(gameData, p.getAttachedTo()) == null
-                                && !isCardInHand(gameData, p.getAttachedTo()));
+                        && !(gameQueryService.findCardInGraveyardById(gameData, p.getAttachedTo()) != null
+                                && (!isAura || enchantsCardInZone(p, TargetPredicate.Kind.GRAVEYARD_CARD)))
+                        && !(isCardInHand(gameData, p.getAttachedTo())
+                                && (!isAura || enchantsCardInZone(p, TargetPredicate.Kind.HAND_CARD)));
                 if ((isAura && !p.isAttached()) || attachmentIsMissing) {
                     if (p.isBestow()) {
                         p.setCard(p.getOriginalCard());
@@ -161,6 +163,11 @@ public class AuraAttachmentService {
     private boolean isCardInHand(GameData gameData, UUID cardId) {
         return gameData.playerHands.values().stream()
                 .anyMatch(hand -> hand.stream().anyMatch(card -> card.getId().equals(cardId)));
+    }
+
+    private boolean enchantsCardInZone(Permanent aura, TargetPredicate.Kind kind) {
+        return aura.getChosenPermanentId() == null && aura.getCard().getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(effect -> effect.targetSpec().admits(kind));
     }
 
     private boolean isAwaitingDayNightAttachment(GameData gameData, UUID permanentId) {

@@ -109,7 +109,7 @@ class DauthiGhoulTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player2)).doesNotContain(drake);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(drake);
         assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

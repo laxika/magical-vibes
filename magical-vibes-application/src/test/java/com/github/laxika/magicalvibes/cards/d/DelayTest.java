@@ -70,7 +70,7 @@ class DelayTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(phantasm);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
     }
 

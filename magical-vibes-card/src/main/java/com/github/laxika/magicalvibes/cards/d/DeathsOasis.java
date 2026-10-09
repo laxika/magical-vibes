@@ -10,9 +10,11 @@ import com.github.laxika.magicalvibes.model.amount.DyingPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
+import com.github.laxika.magicalvibes.model.effect.DyingPermanentWasCreatureConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -30,7 +32,8 @@ public class DeathsOasis extends Card {
     public DeathsOasis() {
         CardEffect deathEffect = nontokenCreatureDeathEffect();
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, deathEffect);
-        addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(new SourceIsCreature(), deathEffect));
+        addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(new TriggeringCardConditionalEffect(
+                new CardNotPredicate(new CardIsTokenPredicate()), deathEffect)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -47,6 +50,7 @@ public class DeathsOasis extends Card {
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))
+                        .mandatory(true)
                         .dynamicMaxManaValue(new Sum(new DyingPermanentManaValue(), new Fixed(-1)))
                         .build());
     }

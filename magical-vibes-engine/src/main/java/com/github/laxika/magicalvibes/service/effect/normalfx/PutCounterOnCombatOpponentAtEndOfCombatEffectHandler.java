@@ -1,15 +1,21 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.combat.CombatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -52,6 +58,22 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
                 if (combatOpponent != null && gameQueryService.isCreature(gameData, combatOpponent)) {
                     permanentCounterSupport.placeCounterOnPermanent(gameData, entry, combatOpponent,
                             counterEffect.counterType(), counterEffect.amount());
+                    if (counterEffect.alsoTap()) {
+                        combatOpponent.tap();
+                    }
+                    if (counterEffect.counterType() == CounterType.PARALYZATION) {
+                        CombatService.grantParalyzationRemoveAbility(combatOpponent);
+                        if (combatOpponent.getCounterCount(CounterType.PARALYZATION) > 0) {
+                            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                                    UUID.randomUUID(), entry.getCard().getName(), null,
+                                    entry.getControllerId(), DoesntUntapEffect.self(),
+                                    combatOpponent.getId(), null,
+                                    new PermanentHasCountersPredicate(CounterType.PARALYZATION,
+                                            combatOpponent.getLastCounterRemovalVersions()
+                                                    .getOrDefault(CounterType.PARALYZATION, 0L)),
+                                    EffectDuration.PERMANENT, 0));
+                        }
+                    }
                 }
             }
             return;

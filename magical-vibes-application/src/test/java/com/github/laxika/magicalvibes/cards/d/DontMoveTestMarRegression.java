@@ -81,9 +81,11 @@ class DontMoveTestMarRegression extends BaseCardTest {
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         harness.forceActivePlayer(currentActivePlayer);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(currentActivePlayer == player1 ? player2 : player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(currentActivePlayer == player1 ? player2 : player1, TurnStep.UPKEEP);
     }
 }

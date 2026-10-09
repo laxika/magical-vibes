@@ -91,7 +91,8 @@ public class ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndS
     private void replaceExiledCard(GameData gameData, ExiledCardEntry original, Card replacement) {
         gameData.exiledCards.replaceAll(entry -> entry.card().getId().equals(original.card().getId())
                 ? new ExiledCardEntry(replacement, original.ownerId(), original.sourcePermanentId(),
-                original.faceDown(), original.exilerId(), original.exiledTurnNumber())
+                original.faceDown(), original.exilerId(), original.exiledTurnNumber(),
+                original.controllerTurnsTakenAtExile(), original.abilityLink())
                 : entry);
     }
 }

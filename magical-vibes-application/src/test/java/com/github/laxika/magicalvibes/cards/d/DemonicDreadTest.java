@@ -168,7 +168,7 @@ class DemonicDreadTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(target.isCantBlockThisTurn()).isTrue();
         assertThat(other.isCantBlockThisTurn()).isFalse();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(target.isCantBlockThisTurn()).isFalse();
     }
 

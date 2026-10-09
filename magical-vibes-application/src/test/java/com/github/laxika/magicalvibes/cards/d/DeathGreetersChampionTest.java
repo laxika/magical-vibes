@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -74,13 +73,13 @@ class DeathGreetersChampionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(champion.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(champion.getId())
-                        && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
+        assertThat(gd.getDelayedActions(DelayedEndStepTrigger.class))
+                .anyMatch(action -> action.affectedPermanentId().equals(champion.getId()));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Death-Greeter's Champion");
         harness.assertNotOnBattlefield(player1, "Death-Greeter's Champion");
@@ -111,9 +110,8 @@ class DeathGreetersChampionTest extends BaseCardTest {
         Permanent champion = findPermanent(player1, "Death-Greeter's Champion");
         harness.handlePermanentChosen(player1, champion.getId());
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(champion.getId())
-                        && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
+        assertThat(gd.getDelayedActions(DelayedEndStepTrigger.class))
+                .anyMatch(action -> action.affectedPermanentId().equals(champion.getId()));
     }
 
     @Test

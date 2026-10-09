@@ -25,6 +25,6 @@ public class DeadlyWanderings extends Card {
                                 new ControlsPermanentCount(1, new PermanentIsCreaturePredicate()),
                                 new ControlsPermanentCountAtMost(1, new PermanentIsCreaturePredicate()))),
                         new StaticBoostEffect(2, 0,
-                                Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.OWN_CREATURES)));
+                                Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES)));
     }
 }

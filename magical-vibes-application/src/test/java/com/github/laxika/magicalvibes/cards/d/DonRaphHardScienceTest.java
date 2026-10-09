@@ -96,13 +96,15 @@ class DonRaphHardScienceTest extends BaseCardTest {
 
     @Test
     void unusedAffinityExpiresAtEndOfTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         harness.addToBattlefield(player1, new MindStone());
         harness.addToBattlefield(player1, new MindStone());
         addCreatureReady(player1, new DonRaphHardScience());
         declareAttackers(List.of(2));
         resolveAllTriggers();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new MindStone()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

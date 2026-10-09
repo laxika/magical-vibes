@@ -206,7 +206,7 @@ class DefenderEnVecTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.activateAbility(player2, 0, null, player2.getId());
         harness.passBothPriorities();
 

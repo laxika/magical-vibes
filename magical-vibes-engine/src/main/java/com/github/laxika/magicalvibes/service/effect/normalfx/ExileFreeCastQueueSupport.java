@@ -425,7 +425,7 @@ public class ExileFreeCastQueueSupport {
 
         Card runtimeCard = card.createRuntimeCopy();
         List<CardEffect> effects = new ArrayList<>(runtimeCard.getEffects(EffectSlot.SPELL));
-        additionalSpellCostService.extractAndRemove(gameData, controllerId, runtimeCard, effects);
+        additionalSpellCostService.extractAndRemove(gameData, controllerId, runtimeCard, effects, false);
         int effectiveXValue = spellCastingService.prepareModalSpellCast(
                 gameData, controllerId, runtimeCard, effects, modeEncoding);
         return new PreparedModalCast(runtimeCard, effects, effectiveXValue);
@@ -504,6 +504,14 @@ public class ExileFreeCastQueueSupport {
     /** Pauses a prepared free cast for a required creature sacrifice, after target selection. */
     public boolean beginSacrificeCostIfNeeded(GameData gameData, StackEntry entry) {
         List<CardEffect> costs = entry.getEffectsToResolve().stream().filter(CostEffect.class::isInstance).toList();
+        if (costs.size() == 1 && costs.getFirst() instanceof com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost) {
+            List<UUID> candidates = spellCastingService.beholdCostCandidates(gameData, entry);
+            if (candidates.isEmpty()) throw new IllegalStateException("No object can pay the behold cost");
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.FreeCastBeholdCost(entry));
+            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidates,
+                    "Choose a permanent or hand card to behold for " + entry.getCard().getName() + ".");
+            return true;
+        }
         if (costs.size() == 1 && costs.stream().allMatch(cost -> cost instanceof DiscardCardTypeCost
                 || cost instanceof com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost)) {
             var discardOrPay = costs.stream()
@@ -578,6 +586,13 @@ public class ExileFreeCastQueueSupport {
     public void completeSacrificeCost(GameData gameData, UUID permanentId,
                                       PermanentChoiceContext.FreeCastSacrificeCost context) {
         spellCastingService.paySacrificeCreatureCostForFreeCast(gameData, context.entry(), permanentId);
+        completeCastAfterDiscard(gameData, context.entry());
+        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+    }
+
+    public void completeBeholdCost(GameData gameData, UUID objectId,
+                                  PermanentChoiceContext.FreeCastBeholdCost context) {
+        spellCastingService.payBeholdCostForPreparedCast(gameData, context.entry(), objectId);
         completeCastAfterDiscard(gameData, context.entry());
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
     }

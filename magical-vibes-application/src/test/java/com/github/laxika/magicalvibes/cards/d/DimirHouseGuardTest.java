@@ -86,7 +86,6 @@ class DimirHouseGuardTest extends BaseCardTest {
         Permanent houseGuard = addCreatureReady(player1, new DimirHouseGuard());
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, houseGuard.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Dimir House Guard");

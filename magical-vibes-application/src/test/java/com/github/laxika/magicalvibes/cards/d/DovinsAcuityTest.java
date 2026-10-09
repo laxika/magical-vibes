@@ -125,6 +125,7 @@ class DovinsAcuityTest extends BaseCardTest {
     @Test
     @DisplayName("Entering without being cast still gains life and draws a card")
     void enteringWithoutCastingTriggersAbility() {
+        harness.setHand(player1, List.of());
         SauroformHybrid drawn = new SauroformHybrid();
         harness.setLibrary(player1, List.of(drawn));
 

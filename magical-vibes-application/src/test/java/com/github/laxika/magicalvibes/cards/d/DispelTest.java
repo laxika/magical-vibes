@@ -65,9 +65,9 @@ class DispelTest extends BaseCardTest {
         MightOfOaks might = new MightOfOaks();
         harness.setHand(player1, List.of(might, new Dispel()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, bears.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, might.getId());
 
         harness.assertInGraveyard(player1, "Might of Oaks");
@@ -83,14 +83,13 @@ class DispelTest extends BaseCardTest {
         MightOfOaks might = new MightOfOaks();
         harness.setHand(player1, List.of(might, new Dispel()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setHand(player2, List.of(new Dispel()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, bears.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, might.getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, might.getId());
 
         harness.assertInGraveyard(player1, "Might of Oaks");

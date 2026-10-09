@@ -11,6 +11,6 @@ public class DeathlessKnight extends Card {
 
     public DeathlessKnight() {
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE,
-                new OncePerTurnTriggerEffect(new ReturnSourceCardFromGraveyardToOwnerHandEffect()));
+                OncePerTurnTriggerEffect.firstLifeGain(new ReturnSourceCardFromGraveyardToOwnerHandEffect()));
     }
 }

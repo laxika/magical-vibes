@@ -15,7 +15,7 @@ public class DesperateStand extends Card {
     public DesperateStand() {
         setAdditionalManaCostPerExtraTarget("{R}{W}");
 
-        target(TargetFilters.creature(), 0, 99)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 0))
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET))
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));

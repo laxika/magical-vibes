@@ -105,6 +105,7 @@ class DarkIntimationsTest extends BaseCardTest {
     @Test
     void opponentCanChoosePlaneswalkerInsteadOfCreature() {
         Permanent bolas = harness.addToBattlefieldAndReturn(player2, new NicolBolasGodPharaoh());
+        bolas.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 7);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player2, List.of());

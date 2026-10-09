@@ -49,6 +49,12 @@ public class Permanent {
     /** Null until the controller has chosen the cards to reveal for Amplify. */
     @Setter private Integer amplifyRevealedCards;
     @Setter private Boolean chosenTappedEntryState;
+    /** Chosen slot among controlled creatures for the current battlefield entry or control change. */
+    @Setter private Integer chosenCreaturePosition;
+    /** Whether a control change still requires the controller to position this creature. */
+    @Setter private boolean creaturePositionPending;
+    /** Whether the native simultaneous-entry devour choice has already finished. */
+    @Setter private boolean nativeDevourResolved;
     private boolean attacking;
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     private UUID attackTarget;
@@ -182,6 +188,8 @@ public class Permanent {
     /** Whether an as-enters color choice has been completed, including an optional empty choice. */
     @Setter private boolean chosenColorChoiceMade;
     @Setter private String chosenName;
+    /** Names chosen by resolving abilities of this permanent during its current battlefield visit. */
+    private final Set<String> chosenNamesAtResolution = new HashSet<>();
     /** Second card name chosen "as this enters" when two players each name a card
      *  (Null Chamber: the controller's pick → {@link #chosenName}, the opponent's → here). */
     @Setter private String secondChosenName;
@@ -283,8 +291,16 @@ public class Permanent {
      *  {@code IgnoreSourceAuraEffectsUntilEndOfTurnEffect}). Read by
      *  {@code GameQueryService.hasAuraWithEffect}. Cleared at end of turn. */
     @Setter private boolean auraEffectsIgnoredThisTurn;
-    /** When true, this Damping Engine's restriction is ignored until end of turn. */
-    @Setter private boolean dampingEngineEffectIgnoredThisTurn;
+    /** Players who have paid to ignore this Damping Engine's restriction this turn. */
+    private final Set<UUID> dampingEngineIgnoredByPlayersThisTurn = new HashSet<>();
+    public boolean isDampingEngineEffectIgnoredThisTurn() {
+        return !dampingEngineIgnoredByPlayersThisTurn.isEmpty();
+    }
+
+    public boolean isDampingEngineEffectIgnoredThisTurn(UUID playerId) {
+        return dampingEngineIgnoredByPlayersThisTurn.contains(playerId);
+    }
+
     @Setter private boolean cantRegenerateThisTurn;
     /** If true, damage that would be dealt to this creature can't be prevented or redirected this turn. */
     @Setter private boolean damageCantBePreventedOrRedirectedThisTurn;
@@ -804,6 +820,9 @@ public class Permanent {
         this.entryCostResolved = source.entryCostResolved;
         this.amplifyRevealedCards = source.amplifyRevealedCards;
         this.chosenTappedEntryState = source.chosenTappedEntryState;
+        this.chosenCreaturePosition = source.chosenCreaturePosition;
+        this.creaturePositionPending = source.creaturePositionPending;
+        this.nativeDevourResolved = source.nativeDevourResolved;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
@@ -855,6 +874,7 @@ public class Permanent {
         this.chosenColors.addAll(source.chosenColors);
         this.chosenColorChoiceMade = source.chosenColorChoiceMade;
         this.chosenName = source.chosenName;
+        this.chosenNamesAtResolution.addAll(source.chosenNamesAtResolution);
         this.secondChosenName = source.secondChosenName;
         this.chosenSubtype = source.chosenSubtype;
         this.buddyListChoiceMade = source.buddyListChoiceMade;
@@ -899,7 +919,7 @@ public class Permanent {
         this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
         this.mustBeBlockedByAllThisTurn = source.mustBeBlockedByAllThisTurn;
         this.blockedWithoutBlockers = source.blockedWithoutBlockers;
-        this.dampingEngineEffectIgnoredThisTurn = source.dampingEngineEffectIgnoredThisTurn;
+        this.dampingEngineIgnoredByPlayersThisTurn.addAll(source.dampingEngineIgnoredByPlayersThisTurn);
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.damageCantBePreventedOrRedirectedThisTurn = source.damageCantBePreventedOrRedirectedThisTurn;
         this.damagedCreaturesCantRegenerateThisTurn = source.damagedCreaturesCantRegenerateThisTurn;
@@ -1882,7 +1902,7 @@ public class Permanent {
         this.blockedWithoutBlockers = false;
         this.creaturesThatCrewedThisTurn.clear();
         this.auraEffectsIgnoredThisTurn = false;
-        this.dampingEngineEffectIgnoredThisTurn = false;
+        this.dampingEngineIgnoredByPlayersThisTurn.clear();
         this.cantRegenerateThisTurn = false;
         this.damageCantBePreventedOrRedirectedThisTurn = false;
         this.damagedCreaturesCantRegenerateThisTurn = false;

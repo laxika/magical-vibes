@@ -1588,9 +1588,10 @@ public class DeathTriggerCollectorService {
     boolean handleExileTopCardsFromEnchantedCreatureOwnerAndAllowCast(TriggerMatchContext match,
             ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect effect, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
-        UUID libraryOwnerId = epd.dyingCreatureCardId() == null
-                ? null
-                : gameQueryService.findGraveyardOwnerById(match.gameData(), epd.dyingCreatureCardId());
+        UUID libraryOwnerId = epd.dyingPermanentOwnerId();
+        if (libraryOwnerId == null && epd.dyingCreatureCardId() != null) {
+            libraryOwnerId = gameQueryService.findGraveyardOwnerById(match.gameData(), epd.dyingCreatureCardId());
+        }
         CardEffect baked = new ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect(
                 Math.max(0, epd.dyingCreaturePower()), libraryOwnerId);
         addEnchantedPermanentDeathEntry(match, baked);
@@ -2685,7 +2686,7 @@ public class DeathTriggerCollectorService {
                 match.permanent().getId()
         );
         if (amountEvaluationService.referencesEventValue(effect.amount())) {
-            entry.setEventValue(Math.max(0, death.dyingCreaturePower()));
+            entry.setEventValue(death.dyingCreaturePower());
         }
         match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
@@ -2801,8 +2802,14 @@ public class DeathTriggerCollectorService {
             DyingCreatureControllerMayDrawCardEffect effect, TriggerContext ctx) {
         // Fecundity: the dying creature's controller (not the source's controller) may draw.
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(),
-                new MayEffect(new DrawCardEffect(), "Draw a card?"));
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(), match.permanent().getCard().getName() + "'s ability",
+                List.of(MayEffect.forPlayer(new com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect(1),
+                        "Draw a card?", cd.dyingCreatureControllerId())),
+                cd.dyingCreatureControllerId(), match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        match.gameData().enqueueTrigger(entry);
         logAnyCreatureDeath(match);
         return true;
     }

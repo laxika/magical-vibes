@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DeadpoolTradingCard.class, TidalWarrior.class})
@@ -20,21 +22,22 @@ class DeadpoolTradingCardTest extends BaseCardTest {
         harness.castFromHand(player1, new DeadpoolTradingCard(), "{2}{B}{R}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, accept);
     }
 
     @Test
     @DisplayName("Exchanging text boxes transfers the upkeep life loss to the other controller")
     void exchangesTextBoxes() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent tidalWarrior = harness.addToBattlefieldAndReturn(player2, new TidalWarrior());
         castAndChoose(tidalWarrior, true);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passBothPriorities();
         harness.assertLife(player2, 17);
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
         harness.assertLife(player1, 20);
         harness.assertOnBattlefield(player1, "Deadpool, Trading Card");
@@ -44,10 +47,12 @@ class DeadpoolTradingCardTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the exchange preserves Deadpool's upkeep life loss")
     void declinesExchange() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent tidalWarrior = harness.addToBattlefieldAndReturn(player1, new TidalWarrior());
         castAndChoose(tidalWarrior, false);
         harness.setLife(player1, 20);
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         harness.passBothPriorities();
         harness.assertLife(player1, 17);
     }

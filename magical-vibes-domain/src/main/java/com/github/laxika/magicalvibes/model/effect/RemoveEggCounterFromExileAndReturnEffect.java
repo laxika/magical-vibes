@@ -12,5 +12,10 @@ import java.util.UUID;
  * <p>Resolution is handled by {@code RemoveEggCounterFromExileAndReturnEffectHandler}. The
  * {@code cardId} identifies which exiled card to process.</p>
  */
-public record RemoveEggCounterFromExileAndReturnEffect(UUID cardId) implements CardEffect {
+public record RemoveEggCounterFromExileAndReturnEffect(UUID cardId, boolean requiresEggCounter)
+        implements CardEffect {
+
+    public RemoveEggCounterFromExileAndReturnEffect(UUID cardId) {
+        this(cardId, true);
+    }
 }

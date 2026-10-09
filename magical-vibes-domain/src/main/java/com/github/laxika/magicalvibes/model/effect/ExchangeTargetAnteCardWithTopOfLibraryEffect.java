@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Exchanges a targeted card the controller owns in the ante with the top card of their library. */
+/** Grants ownership of a targeted card in the ante, then exchanges it with the top card of the controller's library. */
 public record ExchangeTargetAnteCardWithTopOfLibraryEffect() implements CardEffect {
 
     @Override

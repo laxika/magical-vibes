@@ -127,7 +127,6 @@ class DwindleTest extends BaseCardTest {
                 () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
         harness.activateAbility(player1, 1, 1, null, aura.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, recipient.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Giant Spider");

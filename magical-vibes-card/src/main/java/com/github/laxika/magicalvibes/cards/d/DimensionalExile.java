@@ -30,13 +30,10 @@ public class DimensionalExile extends Card {
         ));
 
         // When this Aura enters, exile target creature an opponent controls until this Aura leaves.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ExileTargetPermanentUntilSourceLeavesEffect(false, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
-                )),
-                "Target must be a creature an opponent controls"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExileTargetPermanentUntilSourceLeavesEffect());
+                ))));
     }
 }

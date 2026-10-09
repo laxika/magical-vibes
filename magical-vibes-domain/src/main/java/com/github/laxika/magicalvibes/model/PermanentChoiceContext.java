@@ -51,6 +51,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** Pays a matching permanent or hand card exiled as a prepared spell's behold cost. */
+    record FreeCastBeholdCost(StackEntry entry) implements PermanentChoiceContext {
+        public FreeCastBeholdCost deepCopy() {
+            return new FreeCastBeholdCost(new StackEntry(entry));
+        }
+    }
+
     record BackdraftPlayerChoice() implements PermanentChoiceContext {}
     record BackdraftSorceryChoice() implements PermanentChoiceContext {}
 

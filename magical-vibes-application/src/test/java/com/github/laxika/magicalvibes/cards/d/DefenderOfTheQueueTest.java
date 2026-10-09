@@ -72,12 +72,19 @@ class DefenderOfTheQueueTest extends BaseCardTest {
 
     @Test
     void enteringCreatureRequiresPositionChoiceWhileDefenderIsControlled() {
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent left = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new DefenderOfTheQueue());
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent right = addCreatureReady(player1, new GrizzlyBears());
 
         harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, "Between Grizzly Bears (1) and Defender of the Queue (2)");
+
+        assertThat(gqs.getEffectivePower(gd, left)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, left, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, right)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, right, Keyword.VIGILANCE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(4);
     }
 }

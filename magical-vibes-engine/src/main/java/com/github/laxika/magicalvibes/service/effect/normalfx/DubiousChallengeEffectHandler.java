@@ -42,6 +42,7 @@ public class DubiousChallengeEffectHandler implements NormalEffectHandlerBean {
         int actualLookCount = Math.min(LOOK_COUNT, deck.size());
 
         if (actualLookCount == 0) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 

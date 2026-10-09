@@ -80,6 +80,7 @@ class DeviousCoverUpTest extends BaseCardTest {
         harness.castInstant(player2, 0, target.getId());
         harness.handleMultipleCardsChosen(player2, List.of());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(buried);
@@ -100,6 +101,7 @@ class DeviousCoverUpTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
         harness.assertInGraveyard(player2, "Devious Cover-Up");
@@ -213,7 +215,6 @@ class DeviousCoverUpTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castInstant(player2, 0, target.getId());
         harness.handleMultipleCardsChosen(player2, List.of(buried.getId()));
-        harness.passPriority(player2);
 
         harness.setHand(player1, List.of(new DeviousCoverUp()));
         harness.addMana(player1, ManaColor.BLUE, 2);

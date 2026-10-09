@@ -314,7 +314,16 @@ public class ActivatedAbility {
     }
 
     private ActivatedAbility copyWith(UUID sourcePermanentId, Integer maxActivations) {
-        ActivatedAbility copy = new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
+        return copyWith(sourcePermanentId, maxActivations, effects);
+    }
+
+    /** Returns a copy whose effects replace this ability's effects, preserving its costs and restrictions. */
+    public ActivatedAbility withEffects(List<CardEffect> replacementEffects) {
+        return copyWith(grantSourcePermanentId, maxActivationsPerTurn, List.copyOf(replacementEffects));
+    }
+
+    private ActivatedAbility copyWith(UUID sourcePermanentId, Integer maxActivations, List<CardEffect> replacementEffects) {
+        ActivatedAbility copy = new ActivatedAbility(requiresTap, manaCost, replacementEffects, description, targetFilter, loyaltyCost,
                 maxActivations, timingRestriction, multiTargetFilters, minTargets, maxTargets,
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;

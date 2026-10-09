@@ -127,10 +127,12 @@ class DispersingOrbTest extends BaseCardTest {
     void canActivateDuringOpponentsTurn() {
         addOrb();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
-        addAbilityMana();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        harness.passPriority(player2);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.ensurePriority(player1);
 
         activate(target);
         harness.passBothPriorities();

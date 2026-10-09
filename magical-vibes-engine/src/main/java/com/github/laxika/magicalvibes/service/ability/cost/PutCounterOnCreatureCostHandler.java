@@ -49,6 +49,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
         if (battlefield == null) return List.of();
         return battlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
+                .filter(p -> canReceiveCounters(gameData, p))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -57,6 +58,9 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Must choose a creature");
+        }
+        if (!canReceiveCounters(gameData, chosen)) {
+            throw new IllegalStateException("The chosen creature cannot receive these counters");
         }
         CounterType type = cost.counterType();
         int count = cost.count();
@@ -91,5 +95,13 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
             case CHARGE -> "charge";
             default -> "";
         };
+    }
+
+    private boolean canReceiveCounters(GameData gameData, Permanent creature) {
+        return !gameQueryService.cantHaveCounters(gameData, creature)
+                && (cost.counterType() != CounterType.PLUS_ONE_PLUS_ONE
+                || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, creature))
+                && (cost.counterType() != CounterType.MINUS_ONE_MINUS_ONE
+                || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, creature));
     }
 }

@@ -76,6 +76,7 @@ class DeathlessPilotTest extends BaseCardTest {
     @Test
     @DisplayName("The graveyard ability returns only the activated copy")
     void returnsOnlyActivatedCopy() {
+        harness.setHand(player1, List.of());
         DeathlessPilot activated = new DeathlessPilot();
         DeathlessPilot other = new DeathlessPilot();
         DeathlessPilot opponentCopy = new DeathlessPilot();
@@ -95,6 +96,7 @@ class DeathlessPilotTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple activations of one copy do not return another copy")
     void repeatedActivationsDoNotReturnOtherCopy() {
+        harness.setHand(player1, List.of());
         DeathlessPilot activated = new DeathlessPilot();
         DeathlessPilot other = new DeathlessPilot();
         harness.setGraveyard(player1, List.of(activated, other));

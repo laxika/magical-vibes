@@ -1977,6 +1977,10 @@ public class PermanentRemovalService {
     private RemovedPermanentInfo processRemovalCleanup(
             GameData gameData, Permanent target, UUID controllerId, boolean wasCreature, boolean wasLand,
             boolean hadPrintedAbilities, Card lastKnownCard) {
+        Permanent departureSnapshot = new Permanent(target);
+        departureSnapshot.setLosesAllAbilitiesUntilEndOfTurn(!hadPrintedAbilities);
+        gameData.departedPermanentSnapshots.put(target.getCard().getId(), departureSnapshot);
+        gameData.departedPermanentSnapshots.put(target.getOriginalCard().getId(), departureSnapshot);
         notifyPermanentLeftBattlefield(gameData, target, controllerId);
         gameData.playersWhosePermanentsLeftBattlefieldThisTurn.add(controllerId);
         if (!wasLand) {
@@ -2472,8 +2476,10 @@ public class PermanentRemovalService {
             if (wasCreature) graveyardEventSnapshot.getGrantedCardTypes().add(CardType.CREATURE);
             if (wasArtifact) graveyardEventSnapshot.getGrantedCardTypes().add(CardType.ARTIFACT);
             if (wasEnchantment) graveyardEventSnapshot.getGrantedCardTypes().add(CardType.ENCHANTMENT);
-            triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(
-                    gameData, graveyardEventSnapshot, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
+            if (!creatureDeathTriggersSuppressed) {
+                triggerCollectionService.checkAnyPermanentPutIntoGraveyardTriggers(
+                        gameData, graveyardEventSnapshot, controllerId, ownerId, dyingPowerAtDeath, dyingToughnessAtDeath);
+            }
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
                 gameData.creaturePermanentIdsDiedThisTurn.add(target.getId());
@@ -2551,10 +2557,12 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkNoncreaturePermanentDestroyedByOpponentTriggers(
                         gameData, target, controllerId, gameData.currentlyResolvingControllerId);
             }
-            triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId,
+            if (!creatureDeathTriggersSuppressed) {
+                triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId,
                     target.getCard().getId(), dyingPowerAtDeath, dyingToughnessAtDeath,
                     target.getCard().getManaValue(), wasCreature,
-                    target.cardsLeavingBattlefield().stream().map(Card::getId).toList());
+                    target.cardsLeavingBattlefield().stream().map(Card::getId).toList(), ownerId);
+            }
             // Check if the dying permanent was an Aura or Equipment (Tiana, Ship's Caretaker)
             if ((target.getCard().isAura() || target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))
                     && !creatureDeathTriggersSuppressed) {

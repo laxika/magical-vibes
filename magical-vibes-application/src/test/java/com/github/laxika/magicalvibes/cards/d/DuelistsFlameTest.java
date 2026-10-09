@@ -24,6 +24,7 @@ class DuelistsFlameTest extends BaseCardTest {
     void boostsBlockedCreatureAndGrantsTrampleUntilEndOfTurn() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
         blockAttacker();
 
         harness.setHand(player1, List.of(new DuelistsFlame()));

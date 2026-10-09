@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -36,7 +35,7 @@ public class DuelistsConvocationInternationalTriggerEffectHandler implements Nor
             return;
         }
 
-        int manaValue = manaValueOfTriggeredEvent(gameData, entry);
+        int manaValue = entry.getEventValue();
         List<Integer> digits = source.getChosenNumberDigits();
         int crossedPosition = -1;
         for (int i = 0; i < digits.size(); i++) {
@@ -61,26 +60,6 @@ public class DuelistsConvocationInternationalTriggerEffectHandler implements Nor
             followUps.add(new WinGameEffect());
         }
         entry.insertEffectsToResolve(effectIndex + 1, followUps);
-    }
-
-    private int manaValueOfTriggeredEvent(GameData gameData, StackEntry entry) {
-        if (entry.getTriggeringCardId() == null) {
-            return 0;
-        }
-
-        Card spell = gameQueryService.findCardById(gameData, entry.getTriggeringCardId());
-        if (spell == null) {
-            return 0;
-        }
-        StackEntry spellEntry = gameQueryService.findStackEntryByCardId(gameData, spell.getId());
-        if (spellEntry != null && spellEntry.isCastFaceDown()) {
-            return 0;
-        }
-        if (spellEntry == null || spell.getParsedManaCost() == null) {
-            return spell.getManaValue();
-        }
-        return spell.getManaValue()
-                + spellEntry.getXValue() * spell.getParsedManaCost().getXSymbolCount();
     }
 
     private int effectIndex(StackEntry entry, CardEffect effect) {

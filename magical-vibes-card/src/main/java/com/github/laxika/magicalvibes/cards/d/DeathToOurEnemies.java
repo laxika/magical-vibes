@@ -51,7 +51,7 @@ public class DeathToOurEnemies extends Card {
                 2, true, false, true);
 
         target(anyTarget, 1, 2).addEffect(EffectSlot.ON_SELF_COUNTERS_PUT,
-                new ConditionalEffect(
+                ConditionalEffect.atTriggerTime(
                         new SourceCounterThreshold(4, CounterType.PLAN),
                         SacrificeSelfThenEffect.reflexive(damage)));
     }

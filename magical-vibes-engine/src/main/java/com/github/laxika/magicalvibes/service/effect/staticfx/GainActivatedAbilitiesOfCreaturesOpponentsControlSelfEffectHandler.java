@@ -54,9 +54,16 @@ public class GainActivatedAbilitiesOfCreaturesOpponentsControlSelfEffectHandler 
 
     private void addEffectiveActivatedAbilities(GameData gameData, Permanent permanent,
                                                 StaticBonusAccumulator accumulator) {
+        effectiveActivatedAbilities(gameData, permanent, gameQueryService).forEach(accumulator::addActivatedAbility);
+    }
+
+    /** The activated abilities a creature currently supplies to an opponent's ability borrower. */
+    public static List<ActivatedAbility> effectiveActivatedAbilities(GameData gameData, Permanent permanent,
+                                                                    GameQueryService gameQueryService) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities = new ArrayList<>();
-        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                || permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else if (staticBonus.losesAllNonManaAbilities()) {
             abilities.addAll(permanent.getCard().getActivatedAbilities().stream()
@@ -70,14 +77,13 @@ public class GainActivatedAbilitiesOfCreaturesOpponentsControlSelfEffectHandler 
         abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
         abilities.addAll(permanent.getTemporaryActivatedAbilities());
         abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
-        if (!staticBonus.losesAllAbilities() && !permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (!staticBonus.losesAllAbilities() && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && !permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
             List<CardEffect> onTapEffects = permanent.getCard().getEffects(EffectSlot.ON_TAP);
             if (!onTapEffects.isEmpty()) {
                 abilities.add(new ActivatedAbility(true, null, onTapEffects, "{T}: Add mana."));
             }
         }
-        for (ActivatedAbility ability : abilities) {
-            accumulator.addActivatedAbility(ability);
-        }
+        return abilities;
     }
 }

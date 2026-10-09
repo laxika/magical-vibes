@@ -133,7 +133,7 @@ class DenOfTheBugbearTest extends BaseCardTest {
     void animationExpiresAtEndOfTurn() {
         Permanent den = animateDen();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, den)).isFalse();
         assertThat(gqs.isLand(gd, den)).isTrue();

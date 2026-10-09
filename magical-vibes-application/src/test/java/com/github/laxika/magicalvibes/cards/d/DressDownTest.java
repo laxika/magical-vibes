@@ -101,8 +101,8 @@ class DressDownTest extends BaseCardTest {
         addDressDownMana();
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.assertInHand(player1, "Jewel-Eyed Cobra");
         harness.assertOnBattlefield(player1, "Dress Down");
@@ -111,7 +111,7 @@ class DressDownTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         harness.assertInGraveyard(player1, "Dress Down");
     }
 

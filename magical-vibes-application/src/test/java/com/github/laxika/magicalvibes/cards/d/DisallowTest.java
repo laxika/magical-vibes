@@ -98,6 +98,7 @@ class DisallowTest extends BaseCardTest {
     @Test
     @DisplayName("Counters the selected trigger without countering another ability from the same source")
     void countersOnlySelectedAbilityFromSameSource() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player2, new ImplementOfExamination());
         harness.setLibrary(player2, List.of(new Ornithopter(), new Ornithopter()));
         harness.addMana(player2, ManaColor.BLUE, 1);

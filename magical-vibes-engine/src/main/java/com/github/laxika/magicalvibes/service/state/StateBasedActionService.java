@@ -632,9 +632,16 @@ public class StateBasedActionService {
                 continue;
             }
 
+            if (permanent == null && watch.sourceCard().getEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+                    .stream().anyMatch(ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect.class::isInstance)) {
+                gameData.exiledCardsToGraveyardOnControlLossWatch.remove(permanentId);
+                continue;
+            }
+
             boolean hasLinkedCards = gameData.exiledCards.stream()
                     .anyMatch(exiled -> permanentId.equals(exiled.sourcePermanentId()));
-            if (hasLinkedCards) {
+            if ((hasLinkedCards || permanent != null)
+                    && (permanent == null || !gameQueryService.hasLostAllAbilities(gameData, permanent))) {
                 Card sourceCard = watch.sourceCard();
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -649,7 +656,13 @@ public class StateBasedActionService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
                 anyQueued = true;
             }
-            gameData.exiledCardsToGraveyardOnControlLossWatch.remove(permanentId);
+            if (permanent == null) {
+                gameData.exiledCardsToGraveyardOnControlLossWatch.remove(permanentId);
+            } else {
+                gameData.exiledCardsToGraveyardOnControlLossWatch.put(permanentId,
+                        new com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch(
+                                currentController, watch.sourceCard()));
+            }
         }
         return anyQueued;
     }

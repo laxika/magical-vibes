@@ -3294,7 +3294,7 @@ public class TargetLegalityService {
                             && !exiledTargetEffects.isEmpty()
                             && isExiledCardLegalOnResolution(gameData, entry, targetId, exiledTargetEffects);
                 } else if (!exiledTargetEffects.isEmpty()
-                        && gameQueryService.findCardInExileById(gameData, targetId) != null) {
+                        && exileTargetExists(gameData, entry, targetId)) {
                     legal = isExiledCardLegalOnResolution(gameData, entry, targetId, exiledTargetEffects);
                 } else if (!exiledTargetEffects.isEmpty()
                         && exiledTargetEffects.stream().noneMatch(effect ->
@@ -3484,7 +3484,7 @@ public class TargetLegalityService {
         boolean targetFizzled = false;
         if (entry.getTargetId() != null) {
             if (entry.getTargetZone() == Zone.EXILE) {
-                targetFizzled = gameQueryService.findCardInExileById(gameData, entry.getTargetId()) == null;
+                targetFizzled = !exileTargetExists(gameData, entry, entry.getTargetId());
                 if (!targetFizzled) {
                     List<CardEffect> exileTargetEffects = entry.getEffectsToResolve().stream()
                             .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
@@ -3653,6 +3653,15 @@ public class TargetLegalityService {
                 .isEmpty();
     }
 
+    private boolean exileTargetExists(GameData gameData, StackEntry entry, UUID targetId) {
+        if (gameQueryService.findCardInExileById(gameData, targetId) != null) {
+            return true;
+        }
+        return gameData.antedCardIds.contains(targetId) && gameData.findExiledCard(targetId) != null
+                && entry.getEffectsToResolve().stream().anyMatch(
+                com.github.laxika.magicalvibes.model.effect.ExchangeTargetAnteCardWithTopOfLibraryEffect.class::isInstance);
+    }
+
     private List<CardEffect> exiledCardTargetEffectsForDeclaredPosition(GameData gameData, StackEntry entry,
                                                                          int targetPosition) {
         Card targetingCard = entry.getTargetingCard();
@@ -3795,7 +3804,7 @@ public class TargetLegalityService {
 
     public boolean isPrimaryTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId) {
         if (entry.getTargetZone() == Zone.EXILE) {
-            if (gameQueryService.findCardInExileById(gameData, targetId) == null) {
+            if (!exileTargetExists(gameData, entry, targetId)) {
                 return false;
             }
             List<CardEffect> exileTargetEffects = entry.getEffectsToResolve().stream()
@@ -4033,7 +4042,9 @@ public class TargetLegalityService {
             }
             return null;
         }
-        return targetingCard.getTargetFilter(entry.isKicked());
+        return targetingCard.getSubtypes().contains(CardSubtype.AURA)
+                ? targetingCard.getDeclaredTargetFilter(entry.isKicked())
+                : targetingCard.getTargetFilter(entry.isKicked());
     }
 
     private List<TargetFilter> targetFiltersForDeclaredPositions(GameData gameData, StackEntry entry,
@@ -4962,7 +4973,7 @@ public class TargetLegalityService {
             return manaValue == manaValuePredicate.manaValue();
         }
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
-            int manaValue = stackEntry.getCard().getManaValue()
+            int manaValue = stackEntry.isCastFaceDown() ? 0 : stackEntry.getCard().getManaValue()
                     + (stackEntry.getCard().getParsedManaCost() == null ? 0
                     : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return manaValue <= maxManaValuePredicate.maxManaValue();
@@ -5067,7 +5078,13 @@ public class TargetLegalityService {
                 return false;
             }
             int count = countCardsInGraveyard(gameData, targetControllerId);
-            return stackEntry.getCard().getManaValue() + stackEntry.getXValue() <= count;
+            Card spellCard = stackEntry.getTargetingCard() == null
+                    ? stackEntry.getCard() : stackEntry.getTargetingCard();
+            int xSymbols = spellCard.getParsedManaCost() == null ? 0
+                    : spellCard.getParsedManaCost().getXSymbolCount();
+            int manaValue = stackEntry.isCastFaceDown() ? 0
+                    : spellCard.getManaValue() + xSymbols * stackEntry.getXValue();
+            return manaValue <= count;
         }
         if (predicate instanceof StackEntrySharesColorOrManaValueWithImprintedCardPredicate) {
             if (source == null) {

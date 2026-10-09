@@ -80,7 +80,7 @@ class DarksteelForgeTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castModalInstant(player2, 0, 0, List.of(golem.getId()));
+        harness.castModalInstantWithModes(player2, 0, 1, 2, new int[]{0}, List.of(golem.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Dross Golem");
@@ -150,7 +150,7 @@ class DarksteelForgeTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castModalInstant(player2, 0, 0, List.of(golem.getId()));
+        harness.castModalInstantWithModes(player2, 0, 1, 2, new int[]{0}, List.of(golem.getId()));
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Dross Golem");
         assertThat(golem.getMarkedDamage()).isEqualTo(3);

@@ -285,9 +285,12 @@ public class LibraryChoiceHandlerService {
             }
             var next = followUp.withRemainingSameNamePicks(queue);
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, next)) return;
+            UUID queuedBattlefieldControllerId = queue.battlefieldControllerId() != null
+                    ? queue.battlefieldControllerId() : playerId;
+            boolean enterTapped = queue.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
             battlefieldEntryBatchSupport.begin(gameData, queue.selectedCards().stream()
                             .map(selected -> new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
-                                    playerId, deckOwnerId, selected, Zone.LIBRARY, null).withTapped(true))
+                                    queuedBattlefieldControllerId, deckOwnerId, selected, Zone.LIBRARY, null).withTapped(enterTapped))
                             .toList(),
                     List.of(new com.github.laxika.magicalvibes.model.BattlefieldEntryLibraryRemainder(
                             deckOwnerId, List.of(), true)));
@@ -3734,10 +3737,11 @@ public class LibraryChoiceHandlerService {
 
         // Handle remaining cards
         if (remainingToGraveyard) {
-            for (Card card : remainingCards) {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
+            List<Card> entered = graveyardService.addCardsFromLibraryToGraveyard(gameData, controllerId, remainingCards);
+            if (sourceEntry != null && sourceEntry.isRecordLibraryGraveyardCount()) {
+                sourceEntry.setEventValue(entered.size());
             }
-            gainLifeForGreatestPowerOfGraveyardCards(gameData, controllerId, remainingCards, sourceEntry);
+            gainLifeForGreatestPowerOfGraveyardCards(gameData, controllerId, entered, sourceEntry);
             applySelectionLifeLoss(gameData, controllerId, selectedCards.size(),
                     lifeLossPerSelectedCard, sourceEntry);
             applySelectionLifePayment(gameData, controllerId, selectedCards.size(),
@@ -3803,7 +3807,7 @@ public class LibraryChoiceHandlerService {
         }
         int greatestPower = cards.stream()
                 .filter(card -> card.hasType(CardType.CREATURE))
-                .map(Card::getPower)
+                .map(card -> gameQueryService.getEffectiveCardPower(gameData, card))
                 .filter(java.util.Objects::nonNull)
                 .mapToInt(power -> Math.max(0, power))
                 .max()
@@ -4422,7 +4426,7 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        castCardWithoutPaying(gameData, player, discovered, discoverValue);
+        castCardWithoutPaying(gameData, player, discovered, discoverValue, false, false, Zone.EXILE);
     }
 
     /**
@@ -4810,6 +4814,8 @@ public class LibraryChoiceHandlerService {
      * {@link #castCardWithoutPaying}.
      */
     private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card) {
+        Zone sourceZone = gameData.findExiledCard(card.getId()) == null ? Zone.LIBRARY : Zone.EXILE;
+        if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)) return false;
         if (!castingPermissionService.isSpellCastingAllowed(gameData, controllerId, card)) return false;
         if (!castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, card)) {
             return false;

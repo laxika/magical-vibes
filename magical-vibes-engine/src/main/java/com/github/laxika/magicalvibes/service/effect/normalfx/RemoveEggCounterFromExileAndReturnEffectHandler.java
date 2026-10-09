@@ -37,7 +37,7 @@ public class RemoveEggCounterFromExileAndReturnEffectHandler implements NormalEf
 
         // Intervening-if re-check at resolution: card must still be exiled with an egg counter
         Integer counters = gameData.exiledCardEggCounters.get(cardId);
-        if (counters == null || counters <= 0) {
+        if (e.requiresEggCounter() && (counters == null || counters <= 0)) {
             log.info("Game {} - Egg counter ability fizzles (card no longer exiled with egg counters)", gameData.id);
             return;
         }
@@ -50,7 +50,7 @@ public class RemoveEggCounterFromExileAndReturnEffectHandler implements NormalEf
         }
 
         // Remove one egg counter
-        int remaining = counters - 1;
+        int remaining = Math.max(0, (counters == null ? 0 : counters) - 1);
         if (remaining > 0) {
             gameData.exiledCardEggCounters.put(cardId, remaining);
             

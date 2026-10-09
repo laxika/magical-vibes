@@ -93,4 +93,26 @@ class DiamondLionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.assertInGraveyard(player1, "Ornithopter of Paradise");
     }
+
+    @Test
+    void ordinaryManaAbilityCanActivateDuringCounterspellManaPayment() {
+        addCreatureReady(player1, new OrnithopterOfParadise());
+        OrnithopterOfParadise spell = new OrnithopterOfParadise();
+        harness.castFromHand(player1, spell, "{2}");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player2, List.of(new LoseFocus()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castInstantWithRepeatedCosts(player2, 0, spell.getId(), List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        gs.activateAbility(gd, player1, 0, 0, null, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Ornithopter of Paradise");
+    }
 }

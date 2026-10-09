@@ -61,7 +61,7 @@ public class PerpetuallySetTargetExiledCreatureBasePowerToughnessAndLoseAbilitie
                         gameData.exiledCards.set(i, new ExiledCardEntry(modified,
                                 current.ownerId(), current.sourcePermanentId(), current.faceDown(),
                                 current.exilerId(), current.exiledTurnNumber(),
-                                current.controllerTurnsTakenAtExile()));
+                                current.controllerTurnsTakenAtExile(), current.abilityLink()));
                         break;
                     }
                 }

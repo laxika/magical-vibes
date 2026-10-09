@@ -80,6 +80,7 @@ class DisappearTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple activations resolve after the Aura and creature have left")
     void multipleActivationsDoNotReturnCardsTwice() {
+        harness.setHand(player2, List.of());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CapashenTemplar());
         harness.setHand(player1, List.of(new Disappear()));
         harness.addMana(player1, ManaColor.BLUE, 4);

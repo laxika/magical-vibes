@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEff
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "59")
 public class WizardsStaff extends Card {
@@ -18,7 +19,9 @@ public class WizardsStaff extends Card {
     public WizardsStaff() {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.PROWESS, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC,
-                new AdditionalTriggeredAbilityEffect(new PermanentIsEquippedPredicate()));
+                new AdditionalTriggeredAbilityEffect(
+                        new PermanentHasAttachedPermanentPredicate(new PermanentIsSourcePermanentPredicate()),
+                        null, false, true));
         addActivatedAbility(new EquipActivatedAbility(
                 "{1}", new PermanentHasSubtypePredicate(CardSubtype.WIZARD),
                 "Target must be a Wizard creature you control"));

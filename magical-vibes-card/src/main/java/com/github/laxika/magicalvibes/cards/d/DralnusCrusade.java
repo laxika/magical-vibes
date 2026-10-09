@@ -19,8 +19,8 @@ public class DralnusCrusade extends Card {
         var goblins = new PermanentHasSubtypePredicate(CardSubtype.GOBLIN);
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES, goblins));
         addEffect(EffectSlot.STATIC,
-                new GrantColorEffect(CardColor.BLACK, GrantScope.ALL_CREATURES, false, goblins));
+                new GrantColorEffect(CardColor.BLACK, GrantScope.ALL_PERMANENTS, true, goblins));
         addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.ZOMBIE, GrantScope.ALL_CREATURES, false, goblins));
+                new GrantSubtypeEffect(CardSubtype.ZOMBIE, GrantScope.ALL_PERMANENTS, false, goblins));
     }
 }

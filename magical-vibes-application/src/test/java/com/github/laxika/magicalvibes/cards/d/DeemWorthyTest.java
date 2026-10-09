@@ -53,7 +53,7 @@ class DeemWorthyTest extends BaseCardTest {
         addCyclingMana(player1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateHandAbility(player1, 0, targetId);
+        cycleWithDamageTarget(targetId);
         harness.passBothPriorities();
         if (gd.interaction.isAwaitingInput()) {
             harness.handleMayAbilityChosen(player1, true);
@@ -92,7 +92,7 @@ class DeemWorthyTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateHandAbility(player1, 0, targetId);
+        cycleWithDamageTarget(targetId);
         harness.ensurePriority(player2);
         harness.castAndResolveInstant(player2, 0, targetId);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -113,7 +113,7 @@ class DeemWorthyTest extends BaseCardTest {
         addCyclingMana(player1);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateHandAbility(player1, 0, targetId);
+        cycleWithDamageTarget(targetId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -121,6 +121,12 @@ class DeemWorthyTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Serra Angel");
         harness.passBothPriorities();
         harness.assertInHand(player1, "Serra Angel");
+    }
+
+    private void cycleWithDamageTarget(UUID targetId) {
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
     }
 
     private void addCyclingMana(Player player) {

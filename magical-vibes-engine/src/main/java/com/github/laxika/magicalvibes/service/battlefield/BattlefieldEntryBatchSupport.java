@@ -149,6 +149,12 @@ public class BattlefieldEntryBatchSupport {
         return request != null && completeNativeChoice(gameData, request.withPermanent(permanent, List.of()));
     }
 
+    /** Resumes the native entry choices after the devour replacement choice has finished. */
+    public void completeNativeDevourChoice(GameData gameData, Permanent permanent) {
+        permanent.setNativeDevourResolved(true);
+        completeNativeChoice(gameData, permanent);
+    }
+
     /** Removes a declined entry from its original zone before its replacement destination is applied. */
     public void removeRejectedCardFromOrigin(GameData gameData, Permanent permanent) {
         var batch = gameData.pendingBattlefieldEntryBatch;
@@ -209,7 +215,11 @@ public class BattlefieldEntryBatchSupport {
             deck.removeIf(card -> revealedIds.contains(card.getId()));
             if (!remainder.shuffleLibrary()) Collections.shuffle(cards);
             deck.addAll(cards);
-            if (remainder.shuffleLibrary()) LibraryShuffleHelper.shuffleLibrary(gameData, remainder.playerId());
+            if (remainder.shuffleLibrary()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, remainder.playerId());
+                String playerName = gameData.playerIdToName.getOrDefault(remainder.playerId(), "Player");
+                gameLogService.append(gameData, GameLog.text(playerName + "'s library is shuffled."));
+            }
         }
     }
 
@@ -252,9 +262,16 @@ public class BattlefieldEntryBatchSupport {
                 battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, permanent.getCard(), null, false);
             }
         }
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<UUID> tokenIds = entered.stream().filter(permanent -> permanent.getCard().isToken())
+                    .filter(permanent -> controllerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                    .map(Permanent::getId).toList();
+            if (!tokenIds.isEmpty()) battlefieldEntryService.checkAllyTokenEntersTriggers(gameData, controllerId, tokenIds);
+        }
     }
 
     private boolean removeFromOrigin(GameData gameData, BattlefieldEntryCard candidate) {
+        if (candidate.card().isToken() && candidate.origin() == Zone.STACK) return true;
         List<Card> zone = switch (candidate.origin()) {
             case GRAVEYARD -> gameData.playerGraveyards.get(candidate.zoneOwnerId());
             case LIBRARY -> gameData.playerDecks.get(candidate.zoneOwnerId());

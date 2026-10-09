@@ -57,6 +57,7 @@ public class DebrisFieldCrusher extends Card {
                 "{1}{R}",
                 List.of(new BoostSelfEffect(2, 0)),
                 "{1}{R}: This Spacecraft gets +2/+0 until end of turn."
-        ));
+        ).withActivationCondition(new SourceCounterThreshold(8, CounterType.CHARGE),
+                "Debris Field Crusher needs eight or more charge counters"));
     }
 }

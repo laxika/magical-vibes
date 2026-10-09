@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -15,15 +16,16 @@ import java.util.List;
 public class DiscoveryDispersal extends Card {
 
     public DiscoveryDispersal() {
-        CardEffect discovery = new SurveilThenEffect(2, new DrawCardEffect(1));
+        CardEffect discovery = SurveilThenEffect.direct(2, new DrawCardEffect(1));
         CardEffect dispersal = new EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffect();
 
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
-                        "Discovery — Surveil 2, then draw a card", discovery).withManaCost("{1}{U/B}"),
+                        "Discovery — Surveil 2, then draw a card", discovery).withManaCost("{1}{U/B}")
+                        .withSpellType(CardType.SORCERY),
                 new ChooseOneEffect.ChooseOneOption(
                         "Dispersal — Each opponent returns a nonland permanent they control with the greatest mana value among permanents they control to its owner's hand, then discards a card",
-                        dispersal).withManaCost("{3}{U}{B}")
+                        dispersal).withManaCost("{3}{U}{B}").withSpellType(CardType.INSTANT)
         )));
     }
 }

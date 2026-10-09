@@ -26,9 +26,9 @@ public class CreateTokenCopyOfEnteringPermanentEffectHandler implements NormalEf
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CreateTokenCopyOfEnteringPermanentEffect) effect;
-        UUID enteringPermanentId = entry.getTargetId() != null
-                ? entry.getTargetId()
-                : entry.getTriggeringPermanentId();
+        UUID enteringPermanentId = entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId()
+                : entry.getTargetId();
         if (enteringPermanentId == null) {
             return;
         }
@@ -38,9 +38,22 @@ public class CreateTokenCopyOfEnteringPermanentEffectHandler implements NormalEf
             entering = entry.getAttachedPermanentSnapshot();
         }
         if (entering == null) return;
+        UUID controllerId = entry.getControllerId();
+        if (copyEffect.createForEnteringController()) {
+            UUID enteringControllerId = gameQueryService.findPermanentController(gameData, enteringPermanentId);
+            if (enteringControllerId == null) {
+                enteringControllerId = entry.getTriggeringPermanentControllerId();
+            }
+            if (enteringControllerId != null) {
+                controllerId = enteringControllerId;
+            }
+        }
+        var options = new CreateTokenCopyOfTargetPermanentEffect(
+                java.util.List.of(), java.util.Set.of(), null, null, java.util.Map.of(),
+                copyEffect.grantHaste(), copyEffect.exileAtEndStep(), copyEffect.sacrificeAtEndStep(),
+                false, copyEffect.trackWithSource(), false, null, java.util.Set.of());
         tokenCopySupport.createTokenCopies(gameData, entry,
                 java.util.List.of(permanentCopierService.copiableCard(entering)),
-                entering, entry.getControllerId(), new CreateTokenCopyOfTargetPermanentEffect(
-                        copyEffect.grantHaste(), copyEffect.exileAtEndStep(), copyEffect.sacrificeAtEndStep()));
+                entering, controllerId, options);
     }
 }

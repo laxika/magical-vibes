@@ -179,6 +179,8 @@ class DomriAnarchOfBolasTest extends BaseCardTest {
     @Test
     @DisplayName("Creature spells can be countered again on the next turn")
     void protectionExpiresAtEndOfTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         addReadyDomri(player1);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -186,8 +188,8 @@ class DomriAnarchOfBolasTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));

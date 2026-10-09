@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnThenDealManaValueDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ public class ExileTopCardMayPlayThisTurnThenDealManaValueDamageToControllerEffec
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
-    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
+    private final DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,9 +48,8 @@ public class ExileTopCardMayPlayThisTurnThenDealManaValueDamageToControllerEffec
                 .text(" from the top of their library and may play it this turn.").build());
 
         if (topCard.getManaValue() > 0) {
-            queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
-                    new QueueReflexiveAbilityEffect(
-                            new DealDamageToPlayersEffect(topCard.getManaValue(), DamageRecipient.CONTROLLER)));
+            dealDamageToPlayersEffectHandler.resolve(gameData, entry,
+                    new DealDamageToPlayersEffect(topCard.getManaValue(), DamageRecipient.CONTROLLER));
         }
     }
 }

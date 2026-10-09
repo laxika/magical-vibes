@@ -255,9 +255,6 @@ public class UntapStepService {
                         && (p.getSkipUntapControllerId() == null || activePlayerId.equals(p.getSkipUntapControllerId()));
                 // A global static (e.g. Marble Titan) can lock this permanent based on a predicate.
                 boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
-                // Paralyzation counters (Dread Wight): doesn't untap during the untap step for as
-                // long as it has such a counter — source-independent continuous rule.
-                boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
                 // Depletion lands (Land Cap): a self-scoped static lock conditioned on a counter.
                 boolean hasCounterLock = counterLockPreventsUntap(gameData, p);
                 boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);
@@ -280,11 +277,11 @@ public class UntapStepService {
                 } else if (cannotBecomeUntapped) {
                     // A hard prevention effect such as Blossombind also suppresses optional untap choices.
                 } else if (hasMayNotUntap && !hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock
-                        && !hasMatchingDoesntUntap && !hasParalyzationLock && !hasCounterLock) {
+                        && !hasMatchingDoesntUntap && !hasCounterLock) {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
                 } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock
-                        && !hasMatchingDoesntUntap && !hasParalyzationLock && !hasCounterLock) {
+                        && !hasMatchingDoesntUntap && !hasCounterLock) {
                     // Freyalise's Winds: the untap is replaced by removing all counters of the
                     // named type, so the permanent stays tapped this step.
                     if (!replaceUntap(gameData, p, activePlayerId)) {
@@ -521,6 +518,11 @@ public class UntapStepService {
      * skipped. When several restrictions are active the first that binds is returned.
      */
     public java.util.Optional<StaticOrbEffect> bindingUntapRestriction(GameData gameData, UUID activePlayerId) {
+        return bindingUntapRestrictions(gameData, activePlayerId).stream().findFirst();
+    }
+
+    /** All binding untap caps, retaining the strictest cap for each affected-permanent filter. */
+    public List<StaticOrbEffect> bindingUntapRestrictions(GameData gameData, UUID activePlayerId) {
         List<StaticOrbEffect> active = new ArrayList<>();
         gameData.forEachPermanent((controllerId, p) -> {
             for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
@@ -541,12 +543,13 @@ public class UntapStepService {
                 }
             }
         }
+        var byFilter = new java.util.LinkedHashMap<PermanentPredicate, StaticOrbEffect>();
         for (StaticOrbEffect effect : active) {
-            if (staticOrbUntapCandidates(gameData, activePlayerId, effect).size() > effect.maxUntap()) {
-                return java.util.Optional.of(effect);
-            }
+            byFilter.merge(effect.filter(), effect, (first, second) ->
+                    first.maxUntap() <= second.maxUntap() ? first : second);
         }
-        return java.util.Optional.empty();
+        return byFilter.values().stream().filter(effect ->
+                staticOrbUntapCandidates(gameData, activePlayerId, effect).size() > effect.maxUntap()).toList();
     }
 
     private boolean appliesToUntapStep(StaticOrbEffect effect, UUID activePlayerId, UUID sourceControllerId) {
@@ -597,11 +600,10 @@ public class UntapStepService {
             boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
                     || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
             boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
-            boolean hasParalyzationLock = p.getCounterCount(CounterType.PARALYZATION) > 0;
             boolean hasCounterLock = counterLockPreventsUntap(gameData, p);
             boolean cannotBecomeUntapped = gameQueryService.cantBecomeUntapped(gameData, p);
             if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasMayNotUntap
-                    && !hasUntapLock && !hasMatchingDoesntUntap && !hasParalyzationLock
+                    && !hasUntapLock && !hasMatchingDoesntUntap
                     && !hasCounterLock && !cannotBecomeUntapped) {
                 candidates.add(p.getId());
             }

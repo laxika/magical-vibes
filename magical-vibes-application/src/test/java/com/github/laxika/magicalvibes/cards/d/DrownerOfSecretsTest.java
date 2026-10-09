@@ -102,7 +102,7 @@ class DrownerOfSecretsTest extends BaseCardTest {
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(drowner);
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No untapped matching creature to tap");
+                .hasMessageContaining("Not enough untapped permanents to tap");
     }
 
     @Test
@@ -115,7 +115,7 @@ class DrownerOfSecretsTest extends BaseCardTest {
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(drowner);
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No untapped matching creature to tap");
+                .hasMessageContaining("Not enough untapped permanents to tap");
         assertThat(knight.isTapped()).isFalse();
     }
 

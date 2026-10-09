@@ -36,6 +36,6 @@ public class DrizztDoUrden extends Card {
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentPowerAtMostSourcePowerPredicate()),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new Max(
-                        new Fixed(0), new Sum(new EventValue(), new Scaled(new SourcePower(), -1))))));
+                        new Fixed(0), new Sum(new EventValue(), new Scaled(new SourcePower(true), -1))))));
     }
 }

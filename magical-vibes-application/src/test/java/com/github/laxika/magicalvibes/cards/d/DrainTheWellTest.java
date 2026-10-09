@@ -69,7 +69,7 @@ class DrainTheWellTest extends BaseCardTest {
         UUID land = harness.getPermanentId(player2, "Forest");
         harness.setLife(player1, 10);
         harness.setHand(player1, List.of(new DrainTheWell(), new Boomerang()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castSorcery(player1, 0, List.of(land));

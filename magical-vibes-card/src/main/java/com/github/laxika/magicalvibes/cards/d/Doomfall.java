@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesCreatureExileEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -18,11 +21,13 @@ import java.util.List;
 public class Doomfall extends Card {
 
     public Doomfall() {
-        // Both modes target an opponent (player-targeting spec on each effect).
-        addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+        var opponentTarget = new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent");
+        target(opponentTarget)
+                .addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneOption("Target opponent exiles a creature they control.",
-                        new TargetPlayerChoosesCreatureExileEffect()),
+                        new TargetPlayerChoosesCreatureExileEffect(), opponentTarget),
                 new ChooseOneOption("Target opponent reveals their hand. You choose a nonland card from it. Exile that card.",
-                        new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE)))));
+                        new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE), opponentTarget))));
     }
 }

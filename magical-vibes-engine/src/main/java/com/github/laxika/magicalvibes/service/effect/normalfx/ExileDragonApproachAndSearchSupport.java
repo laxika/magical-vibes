@@ -85,6 +85,7 @@ public class ExileDragonApproachAndSearchSupport {
         }
 
         entry.setExileInsteadOfGraveyard(true);
+        if (!entry.isCopy()) gameData.addToExile(entry.getOwnerId(), entry.getCard());
         return librarySearchSupport.performLibrarySearch(
                 gameData,
                 controllerId,

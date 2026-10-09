@@ -109,6 +109,7 @@ class DrixFatemakerTest extends BaseCardTest {
     @Test
     @DisplayName("Warped Drix can be recast for its normal cost on a later turn")
     void recastWarpedDrixFromExile() {
+        harness.setHand(player2, List.of());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Hullcarver());
         DrixFatemaker drix = new DrixFatemaker();
         harness.setHand(player1, List.of(drix));
@@ -117,11 +118,11 @@ class DrixFatemakerTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(drix.getId())).isNotNull();
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castFromExile(player1, drix.getId(), target.getId());
@@ -129,7 +130,7 @@ class DrixFatemakerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Drix Fatemaker");
     }

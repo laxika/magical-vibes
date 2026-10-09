@@ -68,7 +68,7 @@ class DevilishValetTest extends BaseCardTest {
         harness.castFromHand(player1, new Goldhound(), "{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, valet)).isEqualTo(1);
     }

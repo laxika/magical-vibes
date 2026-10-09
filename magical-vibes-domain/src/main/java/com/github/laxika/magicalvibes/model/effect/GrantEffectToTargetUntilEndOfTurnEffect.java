@@ -19,8 +19,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 public record GrantEffectToTargetUntilEndOfTurnEffect(
         EffectSlot slot,
         CardEffect grantedEffect,
-        boolean delayedTrigger
+        boolean delayedTrigger,
+        boolean anyPermanent
 ) implements CardEffect {
+
+    public GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot slot, CardEffect grantedEffect, boolean delayedTrigger) {
+        this(slot, grantedEffect, delayedTrigger, false);
+    }
 
     public GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot slot, CardEffect grantedEffect) {
         this(slot, grantedEffect, false);
@@ -28,6 +33,6 @@ public record GrantEffectToTargetUntilEndOfTurnEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.creature());
+        return TargetSpec.benign(anyPermanent ? TargetPredicates.permanent() : TargetPredicates.creature());
     }
 }

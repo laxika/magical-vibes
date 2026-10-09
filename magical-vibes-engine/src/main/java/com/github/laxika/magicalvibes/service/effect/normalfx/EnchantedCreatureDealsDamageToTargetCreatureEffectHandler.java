@@ -31,10 +31,15 @@ public class EnchantedCreatureDealsDamageToTargetCreatureEffectHandler implement
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EnchantedCreatureDealsDamageToTargetCreatureEffect) effect;
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null) aura = entry.getSourcePermanentSnapshot();
         if (aura == null || !aura.isAttached()) return;
 
         Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
-        if (enchantedCreature == null || !gameQueryService.isCreature(gameData, enchantedCreature)) return;
+        if (enchantedCreature == null && entry.getAttachedPermanentSnapshot() != null
+                && aura.getAttachedTo().equals(entry.getAttachedPermanentSnapshot().getId())) {
+            enchantedCreature = entry.getAttachedPermanentSnapshot();
+        }
+        if (enchantedCreature == null) return;
 
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, enchantedCreature));

@@ -5,7 +5,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * via {@code GameData.permanentExiledCards}. Used by cards like Karn Liberated
  * whose abilities refer to cards "exiled with" it.
  */
-public record ExileTargetPermanentAndTrackWithSourceEffect() implements CardEffect {
+public record ExileTargetPermanentAndTrackWithSourceEffect(String abilityLink) implements CardEffect {
+
+    public ExileTargetPermanentAndTrackWithSourceEffect() {
+        this(null);
+    }
 
     @Override
     public TargetSpec targetSpec() {

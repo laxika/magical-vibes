@@ -6,7 +6,7 @@
 
 Guided Passage's full-library reveal with category-constrained opponent choice is implemented by `g/GuidedPassage.java` and `GuidedPassageEffect()`.
 
-| Graveyard creature to top plus power damage | `d/DeadReckoning.java` | `PutTargetCreatureCardFromGraveyardOnTopAndDealPowerDamageEffect()` with `GraveyardCardPredicateTargetFilter(CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD)` and `TargetFilters.creature()` — both target groups are required; capture the card's power before moving it and resolve the two targets independently |
+| Graveyard creature to top plus power damage | `d/DeadReckoning.java` | `MayEffect(PutTargetCreatureCardFromGraveyardOnTopAndDealPowerDamageEffect(), prompt)` with `GraveyardCardPredicateTargetFilter(CardTypePredicate(CREATURE), CONTROLLERS_GRAVEYARD)` and `TargetFilters.creature()` — both target groups are required; capture the card's power before moving it and resolve the two targets independently |
 All paths relative to `cards/`.
 
 ## Lands

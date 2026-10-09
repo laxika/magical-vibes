@@ -118,18 +118,20 @@ class DihadaBinderOfWillsTest extends BaseCardTest {
 
     @Test
     void plusTwoKeywordsLastThroughOpponentsTurnAndExpireAtYourNextTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         addReadyDihada(player1, 5);
         Permanent sisay = harness.addToBattlefieldAndReturn(player1, new CaptainSisay());
 
         harness.activateAbility(player1, 0, 0, null, sisay.getId());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, sisay, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, sisay, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, sisay, Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, sisay, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, sisay, Keyword.LIFELINK)).isFalse();
@@ -201,6 +203,8 @@ class DihadaBinderOfWillsTest extends BaseCardTest {
 
     @Test
     void minusElevenControlAndHasteExpireAndLandsRemainUnaffected() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         addReadyDihada(player1, 12);
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -219,7 +223,7 @@ class DihadaBinderOfWillsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opposingLand, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);

@@ -17,7 +17,7 @@ public class DayOfTheMoon extends Card {
                 EffectSlot.SAGA_CHAPTER_I, EffectSlot.SAGA_CHAPTER_II, EffectSlot.SAGA_CHAPTER_III}) {
             addEffect(chapter, new ChooseCardNameAtResolutionEffect(CardType.CREATURE));
             addEffect(chapter, new GoadCreaturesUntilNextTurnSnapshotEffect(
-                    new PermanentHasSourceChosenNamePredicate()));
+                    new PermanentHasSourceChosenNamePredicate(true)));
         }
     }
 }

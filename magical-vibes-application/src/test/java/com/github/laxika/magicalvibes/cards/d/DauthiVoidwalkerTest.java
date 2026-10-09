@@ -120,7 +120,8 @@ class DauthiVoidwalkerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(exiled.getId()));
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMultipleCardsChosen(player1, List.of(exiled.getId())));
 
         assertThatThrownBy(() -> harness.castFromExile(player1, exiled.getId()))
                 .isInstanceOf(IllegalStateException.class);

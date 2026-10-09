@@ -243,14 +243,16 @@ class DoomskarWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Backup's granted ability expires after the turn while the counter remains")
     void backupAbilityExpiresAfterTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         castWarriorTargeting(bears);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of());
         Card land = new Forest();
         Card creature = new GrizzlyBears();

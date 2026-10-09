@@ -56,6 +56,9 @@ public class ShuffleReferencedPermanentIntoLibraryEffectHandler implements Norma
             case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
             case ATTACHED -> {
                 Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
+                if (source == null) {
+                    source = entry.getSourcePermanentSnapshot();
+                }
                 yield source == null || !source.isAttached()
                         ? null
                         : findPermanent(gameData, source.getAttachedTo());

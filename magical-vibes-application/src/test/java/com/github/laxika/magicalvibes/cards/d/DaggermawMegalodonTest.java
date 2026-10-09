@@ -94,7 +94,7 @@ class DaggermawMegalodonTest extends BaseCardTest {
     void vigilanceKeepsAttackerUntapped() {
         Permanent megalodon = addCreatureReady(player1, new DaggermawMegalodon());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(megalodon.isAttacking()).isTrue();
         assertThat(megalodon.isTapped()).isFalse();

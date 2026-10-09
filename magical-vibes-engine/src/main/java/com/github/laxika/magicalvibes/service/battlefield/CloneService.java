@@ -830,6 +830,15 @@ public class CloneService {
             copy.setSupertypes(supertypes);
         }
         if (additionalKeywords != null && !additionalKeywords.isEmpty()) {
+            if (additionalKeywords.contains(Keyword.DETHRONE) && copy.getKeywords().contains(Keyword.DETHRONE)) {
+                copy.addEffect(EffectSlot.ON_ATTACK,
+                        new com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect(
+                                new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
+                                        new com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate(),
+                                        new com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate(Keyword.DETHRONE))),
+                                new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1)),
+                        com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT);
+            }
             EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
             keywords.addAll(copy.getKeywords());
             keywords.addAll(additionalKeywords);

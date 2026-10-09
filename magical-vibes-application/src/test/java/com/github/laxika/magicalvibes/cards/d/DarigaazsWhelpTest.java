@@ -138,6 +138,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -193,7 +194,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
 
     private Permanent findPermanent(Player player, Card card) {
         return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard() == card)
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
                 .findFirst()
                 .orElseThrow();
     }

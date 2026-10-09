@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class DwarvenSong extends Card {
 
     public DwarvenSong() {
-        target(TargetFilters.creature(), 1, 99)
+        target(TargetFilters.creature(), 1, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL,
                         new GrantColorUntilEndOfTurnEffect(CardColor.RED, GrantScope.TARGETS));
     }

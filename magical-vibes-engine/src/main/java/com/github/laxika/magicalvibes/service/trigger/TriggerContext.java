@@ -596,7 +596,14 @@ public sealed interface TriggerContext {
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
                                    int dyingCreatureToughness, int dyingCreatureManaValue,
                                    boolean wasCreature,
-                                   List<UUID> dyingPermanentCardIds) implements TriggerContext {
+                                   List<UUID> dyingPermanentCardIds, UUID dyingPermanentOwnerId) implements TriggerContext {
+        public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
+                                       UUID dyingCreatureCardId, int dyingCreaturePower,
+                                       int dyingCreatureToughness, int dyingCreatureManaValue,
+                                       boolean wasCreature, List<UUID> dyingPermanentCardIds) {
+            this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId, dyingCreaturePower,
+                    dyingCreatureToughness, dyingCreatureManaValue, wasCreature, dyingPermanentCardIds, null);
+        }
         public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                        UUID dyingCreatureCardId, int dyingCreaturePower,
                                        int dyingCreatureToughness) {
@@ -815,6 +822,11 @@ public sealed interface TriggerContext {
             implements TriggerContext {
         public CreatureCardPutIntoGraveyard(Card creatureCard, UUID graveyardOwnerId) {
             this(creatureCard, graveyardOwnerId, null);
+        }
+
+        @Override
+        public boolean causedByCreatureDying() {
+            return sourceZone == Zone.BATTLEFIELD;
         }
     }
 

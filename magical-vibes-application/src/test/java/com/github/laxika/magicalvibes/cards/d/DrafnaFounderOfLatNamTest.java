@@ -118,8 +118,13 @@ class DrafnaFounderOfLatNamTest extends BaseCardTest {
         Permanent drafna = harness.addToBattlefieldAndReturn(player1, new DrafnaFounderOfLatNam());
         drafna.setSummoningSick(true);
         drafna.tap();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new EnergyRefractor());
-        gd.stolenCreatures.put(artifact.getId(), player2.getId());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new EnergyRefractor());
+        harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), artifact,
+                        new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
+                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "borrowed artifact"));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -178,9 +183,12 @@ class DrafnaFounderOfLatNamTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 0, null, artifact.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(artifact);
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
-        gd.stolenCreatures.put(artifact.getId(), player1.getId());
+        harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), artifact,
+                        new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
+                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "changed control"));
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Energy Refractor");

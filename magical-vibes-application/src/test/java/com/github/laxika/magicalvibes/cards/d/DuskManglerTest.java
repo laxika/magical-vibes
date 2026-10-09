@@ -136,7 +136,7 @@ class DuskManglerTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new DuskMangler());
         harness.passBothPriorities();
         harness.assertLife(player2, 20);
-        harness.handlePermanentChosen(player2, chosen.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
         harness.assertNotOnBattlefield(player2, "Chrome Cat");
         harness.assertOnBattlefield(player2, "Dusk Mangler");
         harness.assertLife(player2, 20);

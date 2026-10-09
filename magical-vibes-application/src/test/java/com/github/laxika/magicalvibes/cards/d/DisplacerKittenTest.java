@@ -13,6 +13,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -107,6 +112,9 @@ class DisplacerKittenTest extends BaseCardTest {
         bears.setOwnerId(player2.getId());
         Permanent target = harness.addToBattlefieldAndReturn(player1, bears);
         gd.stolenCreatures.put(target.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Borrowed creature", null,
+                player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                target.getId(), null, null, EffectDuration.PERMANENT, 0));
         castNoncreatureSpell();
 
         harness.handlePermanentChosen(player1, target.getId());
@@ -146,6 +154,9 @@ class DisplacerKittenTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(target);
         gd.playerBattlefields.get(player2.getId()).add(target);
         gd.stolenCreatures.put(target.getId(), player1.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control change", null,
+                player2.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                target.getId(), null, null, EffectDuration.PERMANENT, 0));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");

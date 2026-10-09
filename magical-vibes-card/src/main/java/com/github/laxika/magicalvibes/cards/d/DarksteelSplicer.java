@@ -33,6 +33,6 @@ public class DarksteelSplicer extends Card {
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.PHYREXIAN), golemToken));
 
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0, Set.of(Keyword.INDESTRUCTIBLE),
-                GrantScope.OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
+                GrantScope.ALL_OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }
 }

@@ -129,7 +129,7 @@ class DrainpipeVerminTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(gd.currentStep, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);

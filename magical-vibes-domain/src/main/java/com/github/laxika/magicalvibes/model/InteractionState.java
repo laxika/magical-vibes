@@ -80,6 +80,7 @@ public class InteractionState {
             return trigger.copyPlanarSnapshot();
         }
         if (context instanceof PermanentChoiceContext.FreeCastSacrificeCost cost) return cost.deepCopy();
+        if (context instanceof PermanentChoiceContext.FreeCastBeholdCost cost) return cost.deepCopy();
         if (context instanceof PermanentChoiceContext.AuraEntryBatchChoice batch) return batch.deepCopy();
         if (context instanceof PermanentChoiceContext.PreparedTokenCopyAttachments copies) return copies.deepCopy();
         if (context instanceof PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking copies) return copies.deepCopy();

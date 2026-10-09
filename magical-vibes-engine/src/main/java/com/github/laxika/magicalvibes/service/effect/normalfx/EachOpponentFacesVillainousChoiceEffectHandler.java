@@ -110,25 +110,12 @@ public class EachOpponentFacesVillainousChoiceEffectHandler implements NormalEff
             }
             state.currentPlayerId = opponentId;
 
-            boolean canDiscard = hasCardToDiscard(gameData, opponentId);
-            boolean canPut = hasMatchingCard(gameData, entry, effect, entry.getControllerId());
-            if (!canDiscard && !canPut) {
-                continue;
-            }
-            if (canDiscard && canPut) {
-                String putOption = "Let the controller put a " + effect.label()
-                        + " card onto the battlefield";
-                gameData.rerunCurrentEffectAfterInteraction = true;
-                villainousChoiceSupport.beginChoice(gameData, opponentId, entry.getCard().getName(), putOption,
-                        List.of(ChoiceContext.VillainousChoice.DISCARD, putOption),
-                        entry.getCard().getName() + " — Choose a villainous choice.");
-                return;
-            }
-            if (canDiscard) {
-                discard(gameData, entry, effect);
-            } else {
-                queueControllerMayPut(gameData, entry, effect);
-            }
+            String putOption = "Let the controller put a " + effect.label()
+                    + " card onto the battlefield";
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            villainousChoiceSupport.beginChoice(gameData, opponentId, entry.getCard().getName(), putOption,
+                    List.of(ChoiceContext.VillainousChoice.DISCARD, putOption),
+                    entry.getCard().getName() + " — Choose a villainous choice.");
             return;
         }
 
@@ -167,11 +154,6 @@ public class EachOpponentFacesVillainousChoiceEffectHandler implements NormalEff
                         "Put a " + effect.label() + " card onto the battlefield?"),
                 null, entry.getSourcePermanentId(), entry.getControllerId(),
                 entry.getSourcePermanentSnapshot());
-    }
-
-    private boolean hasCardToDiscard(GameData gameData, UUID playerId) {
-        List<Card> hand = gameData.playerHands.get(playerId);
-        return hand != null && !hand.isEmpty();
     }
 
     private boolean hasMatchingCard(GameData gameData, StackEntry entry,

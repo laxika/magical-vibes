@@ -20,7 +20,7 @@ public class DavrielRogueShadowmage extends Card {
     public DavrielRogueShadowmage() {
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new ConditionalEffect(
                 new ActivePlayerHandAtMost(1),
-                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER)));
+                new DealDamageToPlayersEffect(2, DamageRecipient.ACTIVE_PLAYER)));
 
         addActivatedAbility(new ActivatedAbility(
                 -1,

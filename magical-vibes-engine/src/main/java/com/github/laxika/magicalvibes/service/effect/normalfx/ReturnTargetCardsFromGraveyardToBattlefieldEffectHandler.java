@@ -50,6 +50,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
     private final AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
     private final EquipSupport equipSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    private AnimationSupport animationSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -117,6 +121,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                     permanent.tap();
                 }
                 permanent.setEnteredFromGraveyardOwnerId(graveyardCard.ownerId());
+                applyEntryAnimation(gameData, entry, permanent, effect);
                 UUID battlefieldControllerId = effect.underOwnersControl()
                         ? graveyardCard.ownerId() : controllerId;
                 battlefieldEntryService.putPermanentOntoBattlefield(
@@ -209,6 +214,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                 graveyardReturnSupport.applyPermanentGrants(prepared, e.grantColor(), e.grantSubtype());
                 if (e.enterTapped()) prepared.tap();
                 prepared.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+                applyEntryAnimation(gameData, entry, prepared, e);
                 applyReturnRiders(gameData, prepared, e);
                 preparedPermanents.add(prepared);
                 entry.rememberReturnedPermanent(prepared.getId());
@@ -245,6 +251,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                     permanent.setAttachedTo(sourceHost.getId());
                 }
                 permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
+                applyEntryAnimation(gameData, entry, permanent, e);
                 battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, graveyardOwnerId, permanent, enterTappedTypes, simultaneouslyEntered,
                         enteringCounters(e));
@@ -276,6 +283,21 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                     gameData.playerIdToName.get(graveyardOwnerId) + " returns " + returnedCards.size()
                             + " card(s) from the graveyard to the battlefield."));
         }
+    }
+
+    private void applyEntryAnimation(GameData gameData, StackEntry entry, Permanent permanent,
+                                     ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
+        var animation = effect.entryAnimation();
+        if (animation == null || (effect.entryAnimationCondition() != null
+                && !conditionEvaluationService.isMet(gameData, effect.entryAnimationCondition(),
+                com.github.laxika.magicalvibes.service.effect.ConditionContext.forStackEntry(entry)))) return;
+        AmountContext context = AmountContext.forStackEntry(entry, permanent);
+        int power = animation.power() == null ? permanent.getBasePower()
+                : amountEvaluationService.evaluate(gameData, animation.power(), context);
+        int toughness = animation.toughness() == null ? permanent.getBaseToughness()
+                : amountEvaluationService.evaluate(gameData, animation.toughness(), context);
+        animationSupport.animatePermanently(gameData, permanent, animation, power, toughness,
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
     }
 
     private void resolveRandomTwoAndPutRestOnBottom(

@@ -124,7 +124,7 @@ class DrakeHatcherTest extends BaseCardTest {
 
         assertThat(hatcher.isAttacking()).isTrue();
         assertThat(hatcher.isTapped()).isFalse();
-        resolveCombat();
+        gs.declareBlockers(gd, player2, List.of());
         resolveAllTriggers();
         assertThat(hatcher.getCounterCount(CounterType.INCUBATION)).isEqualTo(1);
     }

@@ -57,10 +57,12 @@ class DeathleaperTerrorWeaponTest extends BaseCardTest {
 
     @Test
     void doubleStrikeStopsOnTheNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent deathleaper = harness.enterBattlefieldAndReturn(player1, new DeathleaperTerrorWeapon());
         assertThat(gqs.hasKeyword(gd, deathleaper, Keyword.DOUBLE_STRIKE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, deathleaper, Keyword.DOUBLE_STRIKE)).isFalse();
     }
@@ -97,6 +99,7 @@ class DeathleaperTerrorWeaponTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThat(deathleaper.isAttacking()).isTrue();
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat(player1);
         harness.assertLife(player2, 14);
     }

@@ -341,6 +341,8 @@ public class StackEntry {
     @Setter private Integer combatOpponentPowerAtTrigger;
     @Setter private Integer combatOpponentToughnessAtTrigger;
     @Setter private boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
+    /** Records the cards actually moved to the graveyard by the current library choice. */
+    @Setter private boolean recordLibraryGraveyardCount;
     @Setter private boolean markSourceOncePerTurnOnAcceptance;
     /** The mana type produced by the tap event that created this triggered ability. */
     @Setter private ManaColor producedManaColor;
@@ -906,6 +908,7 @@ public class StackEntry {
         this.combatOpponentPowerAtTrigger = source.combatOpponentPowerAtTrigger;
         this.combatOpponentToughnessAtTrigger = source.combatOpponentToughnessAtTrigger;
         this.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard = source.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
+        this.recordLibraryGraveyardCount = source.recordLibraryGraveyardCount;
         this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
         this.producedManaColor = source.producedManaColor;
         this.dyingPermanentManaValue = source.dyingPermanentManaValue;

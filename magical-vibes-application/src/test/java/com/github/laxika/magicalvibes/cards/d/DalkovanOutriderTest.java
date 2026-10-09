@@ -21,14 +21,16 @@ class DalkovanOutriderTest extends BaseCardTest {
     void attackingCreatesTwoTappedAndAttackingWarriors() {
         addCreatureReady(player1, new DalkovanOutrider());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(2);
-        assertThat(tokens).allMatch(permanent -> permanent.isTapped() && permanent.isAttackedThisTurn());
+        assertThat(tokens).allMatch(permanent -> permanent.isTapped() && permanent.isAttacking());
     }
 
     @Test
@@ -39,8 +41,10 @@ class DalkovanOutriderTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Mountain());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

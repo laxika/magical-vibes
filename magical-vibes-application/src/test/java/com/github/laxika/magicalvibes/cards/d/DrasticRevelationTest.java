@@ -116,7 +116,7 @@ class DrasticRevelationTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4)
-                .containsOnlyElementsOf(drawnCards).doesNotContain(original);
+                .isSubsetOf(drawnCards).doesNotContain(original);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(original);
         assertThat(gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(drawnCards::contains).toList()).hasSize(3);

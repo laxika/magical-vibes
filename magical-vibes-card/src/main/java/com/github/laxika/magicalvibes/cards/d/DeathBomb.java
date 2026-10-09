@@ -29,7 +29,7 @@ public class DeathBomb extends Card {
                 "Target must be a nonblack creature"
         ))
                 .addEffect(EffectSlot.SPELL, new SacrificeCreatureCost())
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true));
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect(true))
+                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

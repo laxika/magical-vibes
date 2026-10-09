@@ -81,9 +81,9 @@ class DemolitionStomperTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, stomper)).isTrue();
         assertThat(stomper.isTapped()).isFalse();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         assertThat(gqs.isCreature(gd, stomper)).isTrue();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.isCreature(gd, stomper)).isFalse();
     }
 

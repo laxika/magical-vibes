@@ -208,7 +208,7 @@ public class EffectResolutionService {
                     && !may.resolvesWhenTargetIllegal()
                     && may.targetSpec().declaredTarget() != null
                     && resolvingTargetGroup >= 0
-                    && entry.targetsForGroup(resolvingTargetGroup).isEmpty()
+                    && entry.targetsForEffect(effect).isEmpty()
                     && !(entry.getTargetId() != null && entry.getTargetIds().isEmpty()
                     && entry.getCard().getSpellTargets().size() == 1)) {
                 continue;

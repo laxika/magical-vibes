@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -34,16 +33,15 @@ public class DropkickBomber extends Card {
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
-                                new SacrificeSelfEffect())
+                                new SacrificeSelfEffect(), false, true)
                 ),
                 "{R}: Until end of turn, another target Goblin you control gains flying and \"When this creature deals combat damage, sacrifice it.\"",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         )),
-                        "Target must be another Goblin creature you control"
+                        "Target must be another Goblin you control"
                 )
         ));
     }

@@ -18,7 +18,7 @@ public class DevoutInvocation extends Card {
     public DevoutInvocation() {
         addEffect(EffectSlot.SPELL, new TapCreaturesCreateTokensPerCreatureEffect(new CreateTokenEffect(
                 1, "Angel", 4, 4, CardColor.WHITE, List.of(CardSubtype.ANGEL),
-                Set.of(Keyword.FLYING), true, true
+                Set.of(Keyword.FLYING), false, false
         )));
     }
 }

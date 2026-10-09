@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.Set;
 
@@ -22,8 +23,9 @@ public class DeathBaron extends Card {
 
     public DeathBaron() {
         // Skeletons you control and other Zombies you control get +1/+1 and have deathtouch.
-        // OWN_CREATURES excludes this Zombie itself ("other Zombies"); the source isn't a Skeleton.
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SKELETON, CardSubtype.ZOMBIE))));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.SELF,
+                new PermanentHasSubtypePredicate(CardSubtype.SKELETON)));
     }
 }

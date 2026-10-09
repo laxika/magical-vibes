@@ -1579,12 +1579,10 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Capture effective toughness before removing from battlefield (static bonuses still apply)
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
 
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
-
-        String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
-        log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
-
+        if (gameQueryService.cantBeSacrificed(gameData, target)) {
+            throw new IllegalStateException("This creature cannot be sacrificed");
+        }
+        destructionSupport.sacrificeAndLog(gameData, target, sacrificingPlayerId);
         lifeSupport.applyGainLife(gameData, context.lifeGainerId(), toughness, context.sourceCardName());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -2279,10 +2277,14 @@ public class PermanentChoiceBattlefieldHandlerService {
             return permanentController;
         }
         return gameData.stack.stream()
-                .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
-                        && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .filter(entry -> entry.getTargetableId().equals(sourceId))
-                .map(StackEntry::getControllerId)
+                .filter(entry -> sourceId.equals(entry.getSourcePermanentId())
+                        || entry.getSourcePermanentSnapshot() != null
+                        && sourceId.equals(entry.getSourcePermanentSnapshot().getId())
+                        || entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                        && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                        && sourceId.equals(entry.getTargetableId()))
+                .map(entry -> entry.getDamageSourceControllerId() != null
+                        ? entry.getDamageSourceControllerId() : entry.getControllerId())
                 .findFirst()
                 .orElse(null);
     }
@@ -3113,6 +3115,15 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         entering.setChosenPermanentId(chosenCreatureId);
+        if (entering.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(
+                com.github.laxika.magicalvibes.model.effect.ExchangeTextBoxesEffect.class::isInstance)) {
+            gameData.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                    entering.getCard(), context.controllerId(),
+                    List.of(new com.github.laxika.magicalvibes.model.effect.ExchangeTextBoxesEffect()),
+                    "Exchange text boxes?", chosenCreatureId, null, entering.getId()));
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
 
         gameLogService.append(gameData, GameLog.cardTextCard(entering.getCard(), " chooses ", chosen.getCard(), "."));
         log.info("Game {} - {} chooses {}", gameData.id,

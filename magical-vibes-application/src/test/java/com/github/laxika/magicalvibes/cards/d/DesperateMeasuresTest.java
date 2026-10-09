@@ -39,7 +39,7 @@ class DesperateMeasuresTest extends BaseCardTest {
     }
 
     @Test
-    void doesNotDrawWhenTargetDiesUnderOpponentsControl() {
+    void opponentDrawsWhenTheirTargetedCreatureDies() {
         harness.setHand(player2, List.of());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
@@ -48,7 +48,7 @@ class DesperateMeasuresTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
 
     @Test

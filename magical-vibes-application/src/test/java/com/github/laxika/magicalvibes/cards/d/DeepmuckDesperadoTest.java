@@ -84,7 +84,8 @@ class DeepmuckDesperadoTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName).containsExactly("Shock");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
         harness.assertLife(player1, 18);
     }
 

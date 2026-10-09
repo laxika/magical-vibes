@@ -51,9 +51,11 @@ class DeathforgeShamanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, creature.getId()))
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid target");
+                .hasMessageContaining("Invalid permanent");
     }
 
     @Test

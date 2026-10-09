@@ -11,6 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "ECL", collectorNumber = "214")
 @CardRegistration(set = "ECL", collectorNumber = "370")
@@ -18,8 +23,10 @@ public class DeepwayNavigator extends Card {
 
     public DeepwayNavigator() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new UntapPermanentsEffect(
-                TapUntapScope.OTHER_CONTROLLED_CREATURES,
-                new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)));
+                TapUntapScope.CONTROLLED,
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))));
 
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new AttackedWithCreaturesOfSubtypeThisTurn(3, CardSubtype.MERFOLK),

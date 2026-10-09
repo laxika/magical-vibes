@@ -41,6 +41,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class PermanentControlSupport {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
@@ -243,6 +246,15 @@ public class PermanentControlSupport {
             tokenBlueprints.add(additionalSquirrel);
         }
 
+        boolean hasNativeDevour = tokenBlueprints.stream().anyMatch(blueprint ->
+                blueprint.tokenEffects() != null && blueprint.tokenEffects().get(EffectSlot.ON_ENTER_BATTLEFIELD)
+                        instanceof com.github.laxika.magicalvibes.model.effect.DevourEffect);
+        List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> nativeEntries = new ArrayList<>();
+        if (hasNativeDevour) {
+            for (int index = 0; index < addedClueTokens; index++) {
+                tokenBlueprints.add(CreateTokenEffect.ofClueToken(1));
+            }
+        }
         for (CreateTokenEffect originalTokenBlueprint : tokenBlueprints) {
             boolean originalBlueprint = originalTokenBlueprint == evaluatedToken;
             CreateTokenEffect tokenBlueprint = TokenCreationReplacementSupport.replaceTokenSubtypeIfApplicable(
@@ -273,8 +285,10 @@ public class PermanentControlSupport {
                     tokenPermanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, initial);
                 }
             }
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, batch);
+            if (!hasNativeDevour) {
+                battlefieldEntryService.putPermanentOntoBattlefield(
+                        gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, batch);
+            }
             batch.add(tokenPermanent);
             createdIds.add(tokenPermanent.getId());
             UUID enteringControllerId = gameQueryService.findPermanentController(gameData, tokenPermanent.getId());
@@ -312,28 +326,35 @@ public class PermanentControlSupport {
             if (blueprintIsCreature) {
                 String tappedAttackingDesc = tokenBlueprint.tappedAndAttacking() ? " tapped and attacking" : (tokenBlueprint.tapped() ? " tapped" : "");
                 String logEntry = "A " + blueprintPower + "/" + blueprintToughness + " " + colorDesc + tokenBlueprint.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
-                gameLogService.append(gameData, GameLog.text(logEntry));
+            if (!hasNativeDevour) gameLogService.append(gameData, GameLog.text(logEntry));
 
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-                if (!gameData.interaction.isAwaitingInput()) {
+                if (!hasNativeDevour) battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+                if (!hasNativeDevour && !gameData.interaction.isAwaitingInput()) {
                     legendRuleService.checkLegendRule(gameData, controllerId);
                 }
             } else {
                 String tokenTypeDesc = tokenBlueprint.primaryType().name().charAt(0) + tokenBlueprint.primaryType().name().substring(1).toLowerCase();
                 String logEntry = "A " + colorDesc + tokenBlueprint.tokenName() + " " + tokenTypeDesc.toLowerCase() + " token enters the battlefield.";
-                gameLogService.append(gameData, GameLog.text(logEntry));
+                if (!hasNativeDevour) gameLogService.append(gameData, GameLog.text(logEntry));
 
                 // Fire ally-artifact / equipment / etc. enters triggers (e.g. Voldaren Bloodcaster
                 // watching Blood tokens). Same entry pipeline as creature tokens — type checks
                 // inside BattlefieldEntryService gate creature-only slots.
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-                if (!gameData.interaction.isAwaitingInput()) {
+                if (!hasNativeDevour) battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+                if (!hasNativeDevour && !gameData.interaction.isAwaitingInput()) {
                     legendRuleService.checkLegendRule(gameData, controllerId);
                 }
             }
+            if (hasNativeDevour) {
+                nativeEntries.add(new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                        controllerId, controllerId, tokenCard, com.github.laxika.magicalvibes.model.Zone.STACK,
+                        null, null, tokenPermanent, List.of(), tokenBlueprint.tapped() || tokenBlueprint.tappedAndAttacking()));
+            }
         }
 
-        if (addedClueTokens > 0) {
+        if (hasNativeDevour) battlefieldEntryBatchSupport.begin(gameData, nativeEntries);
+
+        if (addedClueTokens > 0 && !hasNativeDevour) {
             createdIds.addAll(applyCreateToken(gameData, controllerId, CreateTokenEffect.ofClueToken(1),
                     addedClueTokens, sourceSetCode, 0, 0, false, false, false));
         }
@@ -341,7 +362,7 @@ public class PermanentControlSupport {
         UUID tokenControllerId = createdIds.isEmpty()
                 ? controllerId
                 : gameQueryService.findPermanentController(gameData, createdIds.get(createdIds.size() - 1));
-        if (fireTokenTriggers) {
+        if (fireTokenTriggers && !hasNativeDevour) {
             battlefieldEntryService.checkAllyTokenEntersTriggers(
                     gameData, tokenControllerId != null ? tokenControllerId : controllerId, createdIds);
         }

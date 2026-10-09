@@ -154,7 +154,8 @@ public enum Keyword {
     HOPE,
     GRAZING,
     PRAY,
-    FLURRY;
+    FLURRY,
+    POSITIONING;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

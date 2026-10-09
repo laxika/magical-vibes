@@ -8,10 +8,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -21,11 +24,11 @@ import java.util.List;
 public class DivinersWand extends Card {
 
     public DivinersWand() {
-        // Equipped creature has "Whenever you draw a card, this creature gets +1/+1 and gains
-        // flying until end of turn". Modeled as a draw trigger on the Equipment that boosts the
-        // attached creature.
-        addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
-                new BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect(1, 1, Keyword.FLYING));
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_CONTROLLER_DRAWS,
+                SequenceEffect.of(new BoostSelfEffect(1, 1),
+                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                GrantScope.EQUIPPED_CREATURE));
 
         // Equipped creature has "{4}: Draw a card."
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(

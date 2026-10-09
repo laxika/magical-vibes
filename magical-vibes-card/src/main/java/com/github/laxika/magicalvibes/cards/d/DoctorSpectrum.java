@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -26,7 +27,7 @@ import java.util.Set;
 public class DoctorSpectrum extends Card {
 
     public DoctorSpectrum() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 0/4 colorless Wall creature token with defender",
                         new CreateTokenEffect("Wall", 0, 4, null,
@@ -45,6 +46,6 @@ public class DoctorSpectrum extends Card {
                         "Destroy target enchantment",
                         new DestroyTargetPermanentEffect(),
                         TargetFilters.enchantment())
-        )));
+        ))));
     }
 }

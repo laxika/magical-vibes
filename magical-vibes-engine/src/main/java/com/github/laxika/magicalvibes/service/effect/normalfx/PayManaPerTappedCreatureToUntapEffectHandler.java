@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaPerTappedCreatureToUntapEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public class PayManaPerTappedCreatureToUntapEffectHandler implements NormalEffec
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,7 +65,7 @@ public class PayManaPerTappedCreatureToUntapEffectHandler implements NormalEffec
             return;
         }
 
-        ManaPool pool = gameData.playerManaPools.get(actingPlayerId);
+        ManaPool pool = potentialManaService.buildVirtualManaPool(gameData, actingPlayerId);
         int affordable = affordableCount(pool, new ManaCost(e.manaCost()), tappedMatchingIds.size());
         int maxCount = Math.min(tappedMatchingIds.size(), affordable);
 

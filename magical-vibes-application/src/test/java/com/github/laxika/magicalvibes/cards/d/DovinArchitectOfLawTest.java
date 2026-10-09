@@ -41,7 +41,7 @@ class DovinArchitectOfLawTest extends BaseCardTest {
         addReadyDovin(3);
         Permanent creature = addReadyPermanent(player2, new GrizzlyBears());
 
-        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(creature.getId()));
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();
 
         assertThat(creature.isTapped()).isTrue();
@@ -59,8 +59,8 @@ class DovinArchitectOfLawTest extends BaseCardTest {
     void minusOneRejectsNoncreatureTarget() {
         Permanent dovin = addReadyDovin(3);
 
-        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
-                player1, 0, 1, List.of(dovin.getId())))
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 1, null, dovin.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(dovin.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
@@ -73,7 +73,7 @@ class DovinArchitectOfLawTest extends BaseCardTest {
         Permanent opposingCreature = addReadyPermanent(player2, new GrizzlyBears());
         Permanent opposingLand = addReadyPermanent(player2, new Forest());
 
-        harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(player2.getId()));
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(ownPermanent.isTapped()).isFalse();
@@ -95,8 +95,8 @@ class DovinArchitectOfLawTest extends BaseCardTest {
     void minusNineRejectsControllerAsTarget() {
         addReadyDovin(9);
 
-        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
-                player1, 0, 2, List.of(player1.getId())))
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 2, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
     }
@@ -122,8 +122,6 @@ class DovinArchitectOfLawTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(currentActivePlayer == player1 ? player2 : player1, TurnStep.UPKEEP);
     }
 }

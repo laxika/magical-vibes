@@ -113,7 +113,7 @@ public class BronzeTabletAnteExchangeEffectHandler implements NormalEffectHandle
             copy.setOwnerId(ownerId);
             copy.freeze();
             gameData.exiledCards.set(i, new ExiledCardEntry(copy, ownerId, exiled.sourcePermanentId(),
-                    exiled.faceDown(), exiled.exilerId(), exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile()));
+                    exiled.faceDown(), exiled.exilerId(), exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile(), exiled.abilityLink()));
             return;
         }
     }

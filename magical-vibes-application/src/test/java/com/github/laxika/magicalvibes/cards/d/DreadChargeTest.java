@@ -95,7 +95,7 @@ class DreadChargeTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         prepareDeclareBlockers(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

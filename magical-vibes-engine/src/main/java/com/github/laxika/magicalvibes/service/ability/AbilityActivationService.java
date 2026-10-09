@@ -300,8 +300,9 @@ public class AbilityActivationService {
         }
         // Check for land type override (e.g. Evil Presence / Lush Growth)
         List<ManaColor> overriddenManaColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
+        Set<ManaColor> effectiveIntrinsicManaColors = gameQueryService.intrinsicBasicLandManaColors(gameData, permanent);
         Set<ManaColor> intrinsicBasicLandManaColors = permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()
-                ? gameQueryService.intrinsicBasicLandManaColors(gameData, permanent) : Set.of();
+                || effectiveIntrinsicManaColors.size() > 1 ? effectiveIntrinsicManaColors : Set.of();
 
         if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()
                 && overriddenManaColors.isEmpty() && intrinsicBasicLandManaColors.isEmpty()) {
@@ -528,22 +529,32 @@ public class AbilityActivationService {
                         }
                     }
                 }
-                if (totalMana >= 2) {
+                if (totalMana * manaMultiplier >= 2) {
                     dampingReplacement = true;
-                    manaPool.add(ManaColor.COLORLESS, manaMultiplier);
+                    int replacedAmount = totalMana >= 2 ? manaMultiplier : 1;
+                    manaPool.add(ManaColor.COLORLESS, replacedAmount);
                     if (caveSource) {
-                        manaPool.addCaveManaTag(ManaColor.COLORLESS, manaMultiplier);
+                        manaPool.addCaveManaTag(ManaColor.COLORLESS, replacedAmount);
                     }
                     if (desertSource) {
-                        manaPool.addDesertManaTag(ManaColor.COLORLESS, manaMultiplier);
+                        manaPool.addDesertManaTag(ManaColor.COLORLESS, replacedAmount);
                     }
                     if (basicLandSource) {
-                        manaPool.addBasicLandManaTag(ManaColor.COLORLESS, manaMultiplier);
+                        manaPool.addBasicLandManaTag(ManaColor.COLORLESS, replacedAmount);
                     }
                 }
             }
             if (!dampingReplacement) {
-                if (!intrinsicBasicLandManaColors.isEmpty()) {
+                if (intrinsicBasicLandManaColors.size() > 1) {
+                    ChoiceContext.ManaColorChoice choiceContext =
+                            new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
+                                    .withCaveSource(caveSource).withDesertSource(desertSource)
+                                    .withBasicLandSource(basicLandSource).withArtifactSource(nonTreasureArtifactSource);
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext,
+                            intrinsicBasicLandManaColors.stream().map(Enum::name).toList(),
+                            "Choose a color of mana from a basic land type."));
+                } else if (!intrinsicBasicLandManaColors.isEmpty()) {
                     for (ManaColor color : intrinsicBasicLandManaColors) {
                         manaPool.add(color, manaMultiplier);
                         if (basicLandSource) {
@@ -554,7 +565,8 @@ public class AbilityActivationService {
                         }
                     }
                 }
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                for (CardEffect effect : intrinsicBasicLandManaColors.size() > 1 ? List.<CardEffect>of()
+                        : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect awardMana) {
                         int amount = onTapManaAmount(awardMana) * manaMultiplier;
                         ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId,
@@ -1515,8 +1527,7 @@ public class AbilityActivationService {
         if (ability.getDescription() != null && ability.getDescription().startsWith("Scavenge ")) {
             Integer sourcePower = gameQueryService.getEffectiveCardPower(gameData, card);
             List<CardEffect> scavengedEffects = ability.getEffects().stream().map(effect -> {
-                if (effect instanceof com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect counter
-                        && counter.amount() instanceof com.github.laxika.magicalvibes.model.amount.SourceCardPower) {
+                if (effect instanceof com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect counter) {
                     return (CardEffect) new com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect(
                             counter.counterType(), new Fixed(sourcePower == null ? 0 : Math.max(0, sourcePower)));
                 }
@@ -3943,6 +3954,10 @@ public class AbilityActivationService {
 
         int effectiveIndex = effectiveAbilityIndex(abilityIndex);
         ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
+        if (activationPool != null) {
+            activationPool.setAllManaSpendableAsAnyColorForActivatedAbilities(
+                    gameQueryService.canSpendManaAsAnyColorForActivatedAbilities(gameData, permanent, ability));
+        }
         if (ability.getRequiredXSourceCounterType() != null
                 && effectiveXValue != permanent.getCounterCount(ability.getRequiredXSourceCounterType())) {
             throw new IllegalStateException("X must equal the number of counters on the source");
@@ -4272,6 +4287,10 @@ public class AbilityActivationService {
         boolean usesTargetCardGroups = activationEffects.stream()
                 .anyMatch(effect -> effect instanceof TargetCardGroupEffect groupedEffect
                         && !groupedEffect.targetGroups().isEmpty());
+        if (targetsGraveyard && !usesTargetCardGroups && targetIds != null
+                && new java.util.HashSet<>(targetIds).size() != targetIds.size()) {
+            throw new IllegalStateException("Cannot target the same graveyard card twice");
+        }
         if (targetsGraveyard && ability.isExactXTargets()
                 && (targetIds == null ? 0 : targetIds.size()) != targetValidationXValue) {
             throw new IllegalStateException("Ability requires exactly X graveyard targets");
@@ -6951,7 +6970,7 @@ public class AbilityActivationService {
                 affordabilityPool.setBlueSpendableAsAnyColorForActivatedAbilities(true);
             }
             if (manaPool != null
-                    && gameQueryService.canSpendManaAsAnyColorForActivatedAbilities(gameData, permanent)
+                    && gameQueryService.canSpendManaAsAnyColorForActivatedAbilities(gameData, permanent, ability)
                     && !manaPool.isAllManaSpendableAsAnyColorForActivatedAbilities()) {
                 affordabilityPool = copyManaPool(affordabilityPool);
                 affordabilityPool.setAllManaSpendableAsAnyColorForActivatedAbilities(true);
@@ -7958,6 +7977,11 @@ public class AbilityActivationService {
 
     private void validateTimingRestrictions(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability) {
         if (ability.getTimingRestriction() != null) {
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.INSTANT_SPEED
+                    && (gameData.interaction.isAwaitingInput()
+                    || !playerId.equals(gameQueryService.getPriorityPlayerId(gameData)))) {
+                throw new IllegalStateException("This ability can only be activated as an instant with priority");
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.COVEN) {
                 if (!gameQueryService.isCovenMet(gameData, playerId)) {
                     throw new IllegalStateException("Coven — activate only if you control three or more creatures with different powers");
@@ -10060,6 +10084,7 @@ public class AbilityActivationService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf != null) {
                 for (Permanent perm : bf) {
+                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof ReplaceLandExcessManaWithColorlessEffect) {
                             return true;
@@ -10076,9 +10101,8 @@ public class AbilityActivationService {
     }
 
     public boolean isManaAbilityAt(GameData gameData, UUID playerId, int permanentIndex, Integer abilityIndex) {
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null || permanentIndex < 0 || permanentIndex >= bf.size()) return false;
-        Permanent perm = bf.get(permanentIndex);
+        Permanent perm = resolveActivationSource(gameData, playerId, permanentIndex, abilityIndex);
+        if (perm == null) return false;
         ActivatedAbility ability = resolveAbility(gameData, perm, abilityIndex);
         return isManaAbility(ability);
     }

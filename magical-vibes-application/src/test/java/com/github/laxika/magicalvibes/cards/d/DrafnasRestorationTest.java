@@ -31,7 +31,7 @@ class DrafnasRestorationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DrafnasRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, player1.getId());
 
         PendingInteraction.MultiGraveyardChoice choice = gd.interaction
                 .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -54,7 +54,7 @@ class DrafnasRestorationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DrafnasRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, player2.getId());
 
         PendingInteraction.MultiGraveyardChoice choice = gd.interaction
                 .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -84,7 +84,7 @@ class DrafnasRestorationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DrafnasRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, player1.getId());
 
         List<UUID> targets = List.of(ownArtifact.getId(), opponentArtifact.getId());
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, targets))
@@ -102,7 +102,7 @@ class DrafnasRestorationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DrafnasRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0);
+        harness.castSorcery(player1, 0, player1.getId());
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
@@ -139,7 +139,7 @@ class DrafnasRestorationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DrafnasRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0);
+        harness.castSorcery(player1, 0, player2.getId());
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -158,7 +158,7 @@ class DrafnasRestorationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DrafnasRestoration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0);
+        harness.castSorcery(player1, 0, player2.getId());
         harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
         harness.setGraveyard(player2, List.of(remaining));
         harness.setHand(player2, List.of(removed));

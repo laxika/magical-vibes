@@ -127,7 +127,7 @@ class DamiaSageOfStoneTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         assertThat(gd.stack).isEmpty();
-        harness.passUntil(player2, TurnStep.DRAW);
+        harness.passUntilWithNoAttackers(player2, TurnStep.DRAW);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -162,8 +162,8 @@ class DamiaSageOfStoneTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castInstant(player2, 0, damia.getId());
-        harness.passBothPriorities();
-        harness.passUntil(player1, TurnStep.DRAW);
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
+        harness.passUntilWithNoAttackers(player1, TurnStep.DRAW);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

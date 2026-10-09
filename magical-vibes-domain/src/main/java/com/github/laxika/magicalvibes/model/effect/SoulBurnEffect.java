@@ -11,7 +11,11 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
  * <p>Implements both {@link DamageDealingEffect} and {@link LifeGainEffect} so the AI sees both
  * facts; {@link #lifeGainAmount()} reports X (upper bound before caps).
  */
-public record SoulBurnEffect() implements DamageDealingEffect, LifeGainEffect {
+public record SoulBurnEffect(boolean capLifeByBlackManaSpent) implements DamageDealingEffect, LifeGainEffect {
+
+    public SoulBurnEffect() {
+        this(true);
+    }
 
     @Override
     public TargetSpec targetSpec() {

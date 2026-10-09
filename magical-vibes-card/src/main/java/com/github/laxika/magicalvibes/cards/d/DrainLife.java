@@ -19,6 +19,6 @@ public class DrainLife extends Card {
 
     public DrainLife() {
         setXColorRestrictions(ManaColor.BLACK);
-        addEffect(EffectSlot.SPELL, new SoulBurnEffect());
+        addEffect(EffectSlot.SPELL, new SoulBurnEffect(false));
     }
 }

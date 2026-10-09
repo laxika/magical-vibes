@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
@@ -38,10 +36,8 @@ public class DanceOfTheManse extends Card {
                 artifactOrNonAuraEnchantment, new CardMaxManaValueXPredicate()));
 
         addEffect(EffectSlot.SPELL, new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
-                eligibleCard, new XValue()));
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new SpellXAtLeast(6), new AnimateReturnedPermanentsEffect(
+                eligibleCard, new XValue()).withEntryAnimation(
                 new AnimatePermanentsEffect(4, 4, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.PERMANENT))));
+                        GrantScope.TARGET, EffectDuration.PERMANENT), new SpellXAtLeast(6)));
     }
 }

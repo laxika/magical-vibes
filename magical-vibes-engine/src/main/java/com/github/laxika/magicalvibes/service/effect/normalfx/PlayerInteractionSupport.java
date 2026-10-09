@@ -195,7 +195,7 @@ public class PlayerInteractionSupport {
                 ? "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix
                 + " (or decline to finish)."
                 : "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix + ".";
-        UUID attachEquipmentCardId = effect.attachSourceEquipment() ? sourceEquipmentCardId : null;
+        UUID attachEquipmentCardId = effect.attachSourceEquipment() ? sourcePermanentId : null;
         UUID returnExiledSourceCardId = effect.returnExiledSourceIfSacrificed()
                 && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getCard().getId() : null;

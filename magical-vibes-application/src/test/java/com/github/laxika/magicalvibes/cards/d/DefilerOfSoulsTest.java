@@ -157,9 +157,8 @@ class DefilerOfSoulsTest extends BaseCardTest {
         Permanent defiler = addCreatureReady(player1, new DefilerOfSouls());
         addCreatureReady(player2, new LlanowarElves());
         harness.setHand(player2, List.of(new Unsummon()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.castInstant(player2, 0, defiler.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Defiler of Souls");

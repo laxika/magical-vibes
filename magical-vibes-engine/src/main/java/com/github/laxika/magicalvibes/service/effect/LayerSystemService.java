@@ -1435,6 +1435,9 @@ public class LayerSystemService {
         if (state == null) {
             return false;
         }
+        if (state.getGrantedStaticEffects().stream().anyMatch(effect -> effect == instance.original())) {
+            return false;
+        }
         return state.isPrintedAbilitiesRemoved() || (includeLoseAll
                 && (state.isLosesAllAbilities() || state.isLosesAllNonManaAbilities()));
     }
@@ -2911,6 +2914,14 @@ public class LayerSystemService {
                     }
                     board.recordGrantedEffect(target.permanent().getId(),
                             provenanceSourceName(instance), effect);
+                    LayerClassifier.LayerClassification classification = classifyOrNull(effect);
+                    if (effect instanceof com.github.laxika.magicalvibes.model.effect.StaticBoostEffect
+                            && classification != null && classification.layers().contains(Layer.L6_ABILITIES)
+                            && staticEffectRegistry.getHandler(effect) != null) {
+                        EffectInstance grantedInstance = new EffectInstance(target, effect, effect, null,
+                                classification.characteristicDefining(), instance.timestamp(), target.position());
+                        applyL6Instance(gameData, grantedInstance, slots, slotsById, board);
+                    }
                 });
                 touched = true;
             }
@@ -2925,11 +2936,7 @@ public class LayerSystemService {
                                            Map<UUID, PermanentSlot> slotsById,
                                            LayeredBoardState board) {
         PermanentSlot source = instance.source();
-        if (source == null || !source.permanent().isAttached()) {
-            return;
-        }
-        PermanentSlot target = slotsById.get(source.permanent().getAttachedTo());
-        if (target == null) {
+        if (source == null) {
             return;
         }
         StaticEffectHandler handler = staticEffectRegistry.getHandler(grant.staticEffect());
@@ -2939,6 +2946,15 @@ public class LayerSystemService {
         CardEffect transformed = TextChangeTransformer.transform(
                 grant.staticEffect(), source.permanent().getTextReplacements(),
                 TextChangeTransformer.globalColorWordReplacements(gameData));
+        for (PermanentSlot target : slotsById.values()) {
+            applyFloatingStaticGrantToTarget(gameData, instance, source, target, handler, transformed, board);
+        }
+    }
+
+    private void applyFloatingStaticGrantToTarget(GameData gameData, EffectInstance instance,
+                                                  PermanentSlot source, PermanentSlot target,
+                                                  StaticEffectHandler handler, CardEffect transformed,
+                                                  LayeredBoardState board) {
         StaticBonusAccumulator harvested = new StaticBonusAccumulator();
         handler.apply(new StaticEffectContext(source.permanent(), target.permanent(), source.controllerId(),
                 source.controllerId().equals(target.controllerId()), gameData), transformed, harvested);

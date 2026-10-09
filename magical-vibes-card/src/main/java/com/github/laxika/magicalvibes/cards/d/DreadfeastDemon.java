@@ -24,6 +24,6 @@ public class DreadfeastDemon extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DEMON))
                 )),
                 new CreateTokenCopyOfSourceEffect(),
-                "a non-Demon creature"));
+                "a non-Demon creature", false, false));
     }
 }

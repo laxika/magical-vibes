@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 
 import java.util.List;
 
@@ -23,7 +25,8 @@ public class Drumhunter extends Card {
         // At the beginning of your end step, if you control a creature with power 5 or greater,
         // you may draw a card.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(5)),
+                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastPredicate(5)))),
                 new MayEffect(new DrawCardEffect(), "Draw a card?")));
 
         // {T}: Add {C}.

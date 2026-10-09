@@ -49,6 +49,9 @@ public class DichotomancyEffectHandler implements NormalEffectHandlerBean {
 
         LibrarySearchFollowUp followUp = LibrarySearchFollowUp.sameNamePicks(
                 names, false, LibrarySearchDestination.BATTLEFIELD, targetPlayerId, controllerId, false);
+        followUp = followUp.withRemainingSameNamePicks(new LibrarySearchFollowUp.SameNamePickQueue(
+                names, false, LibrarySearchDestination.BATTLEFIELD, targetPlayerId, controllerId,
+                false, true, List.of()));
         if (librarySearchSupport.startNextSameNamePick(gameData, controllerId, followUp)) {
             return;
         }

@@ -156,6 +156,7 @@ class DampingFieldTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.withAutoStop(TurnStep.UNTAP,
+                () -> harness.passUntilWithNoAttackers(newActivePlayer, TurnStep.UNTAP));
     }
 }

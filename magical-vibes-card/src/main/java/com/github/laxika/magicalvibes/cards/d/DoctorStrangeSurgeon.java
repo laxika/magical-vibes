@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -20,7 +19,7 @@ public class DoctorStrangeSurgeon extends Card {
         addEffect(EffectSlot.STATIC, new DoubleLifeGainEffect());
         addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(
-                        new ControllerLifeAtLeast(GameData.STARTING_LIFE_TOTAL + 10),
+                        new ControllerLifeAtLeast(10, true),
                         SequenceEffect.of(
                                 new BoostAllOwnCreaturesEffect(2, 2),
                                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES))));

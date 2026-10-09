@@ -17,7 +17,7 @@ public class DeepglowSkate extends Card {
     public DeepglowSkate() {
         // When this creature enters, double the number of each kind of counter on any number
         // of target permanents.
-        target(TargetFilters.permanent(), 0, 99)
+        target(TargetFilters.permanent(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DoubleCountersOnTargetPermanentEffect());
     }
 }

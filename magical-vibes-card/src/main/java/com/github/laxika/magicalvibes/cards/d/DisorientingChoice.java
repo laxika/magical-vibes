@@ -26,7 +26,7 @@ public class DisorientingChoice extends Card {
                         new PermanentIsEnchantmentPredicate())),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
-        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
+        setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(new PermanentPredicateTargetFilter(artifactOrEnchantmentOpponentControls,
                 "Target must be an artifact or enchantment an opponent controls"), 0, 99)
                 .addEffect(EffectSlot.SPELL, new DisorientingChoiceEffect());

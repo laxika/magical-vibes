@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.List;
@@ -24,11 +25,8 @@ public class DegaSanctuary extends Card {
         var controlsBlackAndRed = new AllOf(List.of(controlsBlack, controlsRed));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
-                controlsBlackAndRed, new GainLifeEffect(4)));
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
-                new AllOf(List.of(
-                        new AnyOf(List.of(controlsBlack, controlsRed)),
-                        new NotCondition(controlsBlackAndRed))),
-                new GainLifeEffect(2)));
+                new AnyOf(List.of(controlsBlack, controlsRed)), new SequenceEffect(List.of(
+                        ConditionalEffect.unless(controlsBlackAndRed, new GainLifeEffect(4)),
+                        ConditionalEffect.unless(new NotCondition(controlsBlackAndRed), new GainLifeEffect(2))))));
     }
 }

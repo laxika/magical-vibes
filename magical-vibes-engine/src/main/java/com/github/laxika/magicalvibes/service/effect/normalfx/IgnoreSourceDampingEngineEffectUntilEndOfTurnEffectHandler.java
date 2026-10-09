@@ -24,7 +24,7 @@ public class IgnoreSourceDampingEngineEffectUntilEndOfTurnEffectHandler implemen
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source != null) {
-            source.setDampingEngineEffectIgnoredThisTurn(true);
+            source.getDampingEngineIgnoredByPlayersThisTurn().add(entry.getControllerId());
         }
     }
 }

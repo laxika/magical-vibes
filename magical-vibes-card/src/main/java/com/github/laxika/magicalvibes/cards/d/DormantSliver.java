@@ -19,12 +19,15 @@ public class DormantSliver extends Card {
         PermanentHasSubtypePredicate sliver = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.DEFENDER,
-                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                GrantScope.ALL_PERMANENTS,
                 sliver));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, sliver));
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DrawCardEffect(1),
-                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                GrantScope.ALL_PERMANENTS,
                 sliver));
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1), GrantScope.SELF, sliver));
     }
 }

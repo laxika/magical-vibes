@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekDragonAndPerpetuallyBoostEffect;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 @RequiredArgsConstructor
 public class SeekDragonAndPerpetuallyBoostEffectHandler implements NormalEffectHandlerBean {
-
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +39,6 @@ public class SeekDragonAndPerpetuallyBoostEffectHandler implements NormalEffectH
                 library.remove(found);
                 gameData.playerHands.get(controllerId).add(found);
             }
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
         }
 
         PerpetualCardPowerToughnessSupport.remember(
@@ -48,6 +47,7 @@ public class SeekDragonAndPerpetuallyBoostEffectHandler implements NormalEffectH
             PerpetualCardPowerToughnessSupport.remember(
                     gameData, found, seek.powerBoost(), seek.toughnessBoost());
         }
-
+        triggerCollectionService.checkSeekTriggers(gameData, controllerId,
+                found == null ? List.of() : List.of(found));
     }
 }

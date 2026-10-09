@@ -144,6 +144,9 @@ public class ChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.combat.CombatDamageService combatDamageService;
     private final com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
     private final LegendRuleService legendRuleService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.CreaturePositioningSupport creaturePositioningSupport;
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
@@ -242,6 +245,13 @@ public class ChoiceHandlerService {
     private AbilityActivationService abilityActivationService;
 
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.DrainTargetPlayersLandManaEffectHandler
+            landManaDrainHandler;
+
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.spell.SpellCastingService spellCastingService;
+
+    @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.MutationSupport mutationSupport;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
@@ -250,6 +260,23 @@ public class ChoiceHandlerService {
         }
         PendingInteraction.ColorChoice colorChoice =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (colorChoice.context() instanceof ChoiceContext.LandManaDrainAbilityChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) throw new IllegalStateException("Not your turn to choose");
+            int optionIndex = colorChoice.options().indexOf(colorName);
+            if (optionIndex < 0) throw new IllegalArgumentException("Invalid mana ability");
+            gameData.interaction.clearAwaitingInput();
+            landManaDrainHandler.activateLandAbility(gameData, choice.entry(), choice.landId(),
+                    choice.abilityIndices().get(optionIndex), choice.remainingLandIds());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ExileCastCounterTypeChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) throw new IllegalStateException("Not your turn to choose");
+            if (!colorChoice.options().contains(colorName)) throw new IllegalArgumentException("Invalid counter type");
+            gameData.interaction.clearAwaitingInput();
+            spellCastingService.completeExileCounterTypeChoice(gameData, player, choice, colorName);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.CreaturePreventionLifeGainChoice choice) {
             if (!player.getId().equals(colorChoice.playerId())) {
                 throw new IllegalStateException("Not your turn to choose");
@@ -461,6 +488,15 @@ public class ChoiceHandlerService {
             var request = ctx.request();
             request.permanent().setChosenTappedEntryState("Tapped".equals(colorName));
             libraryChoiceHandlerService.completeTappedEntryStateChoice(gameData, request);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.CreaturePositionChoice ctx) {
+            var request = creaturePositioningSupport.completeChoice(gameData, ctx, colorName);
+            if (request != null) {
+                libraryChoiceHandlerService.completeTappedEntryStateChoice(gameData, request);
+            } else if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.UnlockRoomDoorChoice ctx) {
@@ -2899,8 +2935,16 @@ public class ChoiceHandlerService {
 
         if (ctx.sourcePermanentId() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+            StackEntry resolving = gameData.pendingEffectResolutionEntry;
+            if (source == null && resolving != null) {
+                source = resolving.getSourcePermanentSnapshot();
+            }
             if (source != null) {
                 source.setChosenName(cardName);
+                source.getChosenNamesAtResolution().add(cardName);
+                if (resolving != null) {
+                    resolving.setSourcePermanentSnapshot(new Permanent(source));
+                }
             }
         }
 
@@ -3496,6 +3540,9 @@ public class ChoiceHandlerService {
                             gameData, gameData.pendingEffectResolutionEntry, target, ctx.counterType(), 1);
                 } else if (target.getCounterCount(ctx.counterType()) > 0) {
                     target.setCounterCount(ctx.counterType(), target.getCounterCount(ctx.counterType()) - 1);
+                    permanentCounterSupport.notifyLastCounterRemoved(gameData, target, ctx.counterType(),
+                            1, gameData.pendingEffectResolutionEntry == null ? null
+                                    : gameData.pendingEffectResolutionEntry.getControllerId());
                     if (ctx.counterType() == CounterType.OIL) {
                         gameData.recordOilCounterRemoved(target, 1);
                     }
@@ -7050,6 +7097,12 @@ public class ChoiceHandlerService {
     private void handleChooseNameRevealTopCardsToHandRestToExileChoice(
             GameData gameData, Player player, String cardName,
             ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active != null && active.options().stream().noneMatch(cardName::equalsIgnoreCase)
+                && libraryRevealSupport.isCatalogCardNameAllowed(cardName, List.of())) {
+            throw new IllegalArgumentException("Choose a card name other than a basic land card name");
+        }
         gameData.interaction.clearAwaitingInput();
 
         UUID controllerId = ctx.controllerId();
@@ -7345,7 +7398,8 @@ public class ChoiceHandlerService {
         }
 
         // Present matching cards for "any number" selection
-        playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards, ctx.maxCount(),
+        playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards,
+                Math.min(ctx.maxCount(), matchingCards.size()),
                 targetPlayerId, cardName, ctx.drawForHandExiled(), ctx.tokenTemplate(), ctx.sourceSetCode());
         inputCompletionService.publishStateAfterInput(gameData);
     }

@@ -1,22 +1,17 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawGameEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 
 /**
  * Resolves {@link RemoveAllCountersFromAllPermanentsEffect}.
@@ -27,6 +22,7 @@ import java.util.List;
 public class RemoveAllCountersFromAllPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,17 +46,8 @@ public class RemoveAllCountersFromAllPermanentsEffectHandler implements NormalEf
                     permanent.setCounterCount(counterType, 0);
                 }
                 gameData.recordOilCounterRemoved(permanent, oilRemoved);
-                if (interventionRemoved > 0
-                        && entry.getControllerId().equals(gameData.findControllerOf(permanent))
-                        && permanent.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED).stream()
-                        .anyMatch(trigger -> trigger instanceof RemoveCounterFromSourceThenEffect remove
-                                && remove.counterType() == CounterType.INTERVENTION
-                                && remove.thenEffect() instanceof DrawGameEffect)) {
-                    gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                            permanent.getCard(), entry.getControllerId(),
-                            permanent.getCard().getName() + "'s ability",
-                            List.of(new DrawGameEffect()), null, permanent.getId()));
-                }
+                permanentCounterSupport.notifyLastCounterRemoved(gameData, permanent,
+                        CounterType.INTERVENTION, interventionRemoved, entry.getControllerId());
                 if (removedFromPermanent > 0) {
                     affected++;
                     removed += removedFromPermanent;

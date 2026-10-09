@@ -43,12 +43,9 @@ public class RemoveCounterAndSacrificeSelfOnLastEffectHandler implements NormalE
             return;
         }
 
-        source.setCounterCount(e.counterType(), current - 1);
-        if (e.counterType() == CounterType.OIL) {
-            gameData.recordOilCounterRemoved(source, 1);
-        }
-        gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
-                " loses a " + permanentCounterSupport.counterTypeName(e.counterType()) + " counter."));
+        permanentCounterSupport.removeCounterFromPermanent(gameData, source, e.counterType(), 1);
+        if (e.counterType() == CounterType.TIME && gameQueryService.hasKeyword(gameData, source,
+                com.github.laxika.magicalvibes.model.Keyword.VANISHING)) return;
 
         if (current != 1) {
             return;

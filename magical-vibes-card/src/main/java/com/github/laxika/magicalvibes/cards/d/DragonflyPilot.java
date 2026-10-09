@@ -12,6 +12,6 @@ public class DragonflyPilot extends Card {
     public DragonflyPilot() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConjureCardNamedIntoHandEffect("Dragonfly Suit", false));
-        addEffect(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2));
+        addEffect(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2, true));
     }
 }

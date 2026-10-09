@@ -81,11 +81,11 @@ class DeathRattleOniTest extends BaseCardTest {
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
         harness.setHand(player1, List.of(new DeathRattleOni(), new Shock(), new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.BLACK, 7);
-        harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent oni = findPermanent(player1, "Death-Rattle Oni");
+        harness.addMana(player1, ManaColor.RED, 3);
         for (Permanent creature : List.of(own, opposing, oni)) {
             harness.castInstant(player1, 0, creature.getId());
             harness.passBothPriorities();

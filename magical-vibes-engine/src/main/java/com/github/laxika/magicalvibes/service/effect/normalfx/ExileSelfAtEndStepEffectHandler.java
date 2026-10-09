@@ -46,7 +46,8 @@ public class ExileSelfAtEndStepEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.EXILE_AT_END_STEP));
+        gameData.queueDelayedAction(new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.EXILE_AT_END_STEP,
+                false, null, null, entry.getControllerId()));
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " will be exiled at the beginning of the next end step."));
         log.info("Game {} - {} scheduled for exile at end step", gameData.id, source.getCard().getName());

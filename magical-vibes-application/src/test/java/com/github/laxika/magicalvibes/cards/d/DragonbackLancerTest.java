@@ -23,7 +23,7 @@ class DragonbackLancerTest extends BaseCardTest {
         addCreatureReady(player1, new DragonbackLancer());
 
         declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
         List<Permanent> tokens = findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -35,7 +35,7 @@ class DragonbackLancerTest extends BaseCardTest {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.WARRIOR);
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
         });
     }
 

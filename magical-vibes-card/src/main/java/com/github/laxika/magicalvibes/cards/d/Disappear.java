@@ -16,7 +16,7 @@ public class Disappear extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(ReturnToHandEffect.self(), ReturnToHandEffect.enchanted()),
+                List.of(ReturnToHandEffect.enchanted(), ReturnToHandEffect.self()),
                 "{U}: Return enchanted creature and this Aura to their owners' hands."
         ));
     }

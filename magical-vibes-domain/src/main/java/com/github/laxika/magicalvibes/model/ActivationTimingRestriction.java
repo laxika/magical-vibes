@@ -65,6 +65,8 @@ public enum ActivationTimingRestriction {
     ONLY_WHILE_CREATURE,
     POWER_4_OR_GREATER,
     RAID,
+    /** Activate only with priority, including for mana abilities. */
+    INSTANT_SPEED,
     SORCERY_SPEED,
     ONLY_DURING_YOUR_TURN_BEFORE_END_STEP
 }

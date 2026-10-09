@@ -52,7 +52,8 @@ public class PutTargetCreatureCardFromGraveyardOnTopAndDealPowerDamageEffectHand
             return;
         }
 
-        int power = graveyardCard.getPower() == null ? 0 : Math.max(0, graveyardCard.getPower());
+        Integer effectivePower = gameQueryService.getEffectiveCardPower(gameData, graveyardCard);
+        int power = effectivePower == null ? 0 : Math.max(0, effectivePower);
         graveyard.remove(graveyardCard);
         graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, graveyardCard);
         graveyardReturnSupport.moveCardToDestination(gameData, controllerId, graveyardCard,

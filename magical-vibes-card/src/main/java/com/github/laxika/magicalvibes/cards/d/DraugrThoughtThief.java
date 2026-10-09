@@ -13,8 +13,8 @@ public class DraugrThoughtThief extends Card {
 
     public DraugrThoughtThief() {
         target(new PlayerPredicateTargetFilter(
-                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                "Target must be an opponent"
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LookAtTargetPlayerTopCardMayGraveyardEffect());
     }

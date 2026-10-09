@@ -43,7 +43,8 @@ class DuneBroodNephilimTest extends BaseCardTest {
         nephilim.setAttacking(true);
         addLands(player1, 1);
 
-        resolveCombat();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                this::resolveCombat);
         addLands(player1, 2);
         harness.passBothPriorities();
 

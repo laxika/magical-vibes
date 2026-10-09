@@ -141,7 +141,7 @@ class DroolingGroodionTest extends BaseCardTest {
         assertThat(source.getPowerModifier()).isEqualTo(-2);
         assertThat(source.getToughnessModifier()).isEqualTo(-2);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Drooling Groodion");
         harness.assertOnBattlefield(player2, "Selesnya Guildmage");

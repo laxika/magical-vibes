@@ -17,7 +17,7 @@ public class DurkwoodTracker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{G}",
-                List.of(new ConditionalEffect(new SourceIsOnBattlefield(), new SourceFightsTargetCreatureEffect())),
+                List.of(new ConditionalEffect(new SourceIsOnBattlefield(), new SourceFightsTargetCreatureEffect(false))),
                 "{1}{G}, {T}: If this creature is on the battlefield, it deals damage equal to its power to target attacking creature. "
                         + "That creature deals damage equal to its power to this creature.",
                 TargetFilters.attackingCreature()

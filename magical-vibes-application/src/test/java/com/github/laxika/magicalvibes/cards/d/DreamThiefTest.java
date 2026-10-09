@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +17,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DreamThief.class, GlenElendraArchmage.class, NettleSentinel.class, OonasGrace.class})
 class DreamThiefTest extends BaseCardTest {
+
+    @BeforeEach
+    void clearHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
 
     @Test
     @DisplayName("Draws a card when another blue spell was cast this turn")

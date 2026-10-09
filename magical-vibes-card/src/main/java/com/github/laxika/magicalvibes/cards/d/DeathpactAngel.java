@@ -33,6 +33,7 @@ public class DeathpactAngel extends Card {
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardNamedPredicate(NAME))
+                                .mandatory(true)
                                 .build()
                 ),
                 "{3}{W}{B}{B}, {T}, Sacrifice this token: Return a card named " + NAME

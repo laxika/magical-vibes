@@ -546,7 +546,16 @@ public class AdditionalSpellCostService {
                 removeFirst(effects, PutCountersOnControlledCreatureOrPayManaCost.class);
         boolean payXLife = effects.removeIf(PayXLifeCost.class::isInstance);
         PayLifeCost payLifeCost = removeFirst(effects, PayLifeCost.class);
-        PayLifeOrPayManaCost payLifeOrPayManaCost = removeFirst(effects, PayLifeOrPayManaCost.class);
+        List<PayLifeOrPayManaCost> lifeOrManaCosts = effects.stream()
+                .filter(PayLifeOrPayManaCost.class::isInstance)
+                .map(PayLifeOrPayManaCost.class::cast).toList();
+        effects.removeIf(PayLifeOrPayManaCost.class::isInstance);
+        PayLifeOrPayManaCost payLifeOrPayManaCost = lifeOrManaCosts.isEmpty() ? null
+                : new PayLifeOrPayManaCost(lifeOrManaCosts.stream()
+                        .mapToInt(PayLifeOrPayManaCost::lifeAmount).sum(),
+                        lifeOrManaCosts.stream().map(PayLifeOrPayManaCost::manaCost)
+                                .collect(java.util.stream.Collectors.joining()), lifeOrManaCosts,
+                        lifeOrManaCosts.stream().anyMatch(PayLifeOrPayManaCost::baseManaCostWaived));
         ExileAnyNumberOfCardsFromHandCost exileAnyNumberOfCardsFromHandCost =
                 removeFirst(effects, ExileAnyNumberOfCardsFromHandCost.class);
         ExileAnyNumberOfCardsFromGraveyardCost exileAnyNumberOfCardsFromGraveyardCost =
@@ -616,6 +625,12 @@ public class AdditionalSpellCostService {
     /** Adds additional costs granted by permanents before extracting the spell's cast costs. */
     public ExtractedCosts extractAndRemove(GameData gameData, UUID playerId, Card card,
                                            List<CardEffect> effects) {
+        return extractAndRemove(gameData, playerId, card, effects, true);
+    }
+
+    /** Extracts granted costs, optionally omitting life payments that reduce the base mana cost. */
+    public ExtractedCosts extractAndRemove(GameData gameData, UUID playerId, Card card,
+                                           List<CardEffect> effects, boolean includeBaseManaReduction) {
         if (effects.stream().noneMatch(DelveCost.class::isInstance)
                 && gameQueryService.hasSpellCastingAbilityGrant(gameData, playerId, card, Keyword.DELVE)) {
             effects.add(new DelveCost());
@@ -631,12 +646,14 @@ public class AdditionalSpellCostService {
                     .forEach(replicateCost ->
                             effects.add(new RepeatableAdditionalManaCost(List.of(replicateCost))));
         }
-        addPayLifeToReduceColoredCastCost(gameData, playerId, card, effects);
+        addPayLifeToReduceColoredCastCost(gameData, playerId, card, effects, includeBaseManaReduction);
         return extractAndRemove(effects);
     }
 
     private void addPayLifeToReduceColoredCastCost(GameData gameData, UUID playerId, Card card,
-                                                   List<CardEffect> effects) {
+                                                   List<CardEffect> effects, boolean includeBaseManaReduction) {
+        ManaCost remaining = new ManaCost(includeBaseManaReduction && card.getManaCost() != null
+                ? card.getManaCost() : "");
         for (var entry : gameData.playerBattlefields.entrySet()) {
             UUID sourceControllerId = entry.getKey();
             for (Permanent permanent : entry.getValue()) {
@@ -644,14 +661,24 @@ public class AdditionalSpellCostService {
                         gameData, permanent, PayLifeToReduceColoredCastCostEffect.class)) {
                     continue;
                 }
-                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                List<PayLifeToReduceColoredCastCostEffect> applicable = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(PayLifeToReduceColoredCastCostEffect.class::isInstance)
                         .map(PayLifeToReduceColoredCastCostEffect.class::cast)
                         .filter(effect -> appliesToCaster(effect.scope(), sourceControllerId, playerId))
                         .filter(effect -> predicateEvaluationService.matchesCardPredicate(
                                 card, effect.spellFilter(), permanent.getCard().getId(), gameData, playerId))
-                        .forEach(effect -> effects.add(new PayLifeOrPayManaCost(
-                                effect.lifeAmount(), effect.reductionManaCost())));
+                        .toList();
+                for (PayLifeToReduceColoredCastCostEffect effect : applicable) {
+                    ManaCost reduced = remaining.reducedByColoredOnly(new ManaCost(effect.reductionManaCost()));
+                    StringBuilder restored = new StringBuilder();
+                    for (var color : remaining.getColoredCosts().entrySet()) {
+                        int count = color.getValue() - reduced.getColoredCosts().getOrDefault(color.getKey(), 0);
+                        restored.append(("{" + color.getKey().getCode() + "}").repeat(Math.max(0, count)));
+                    }
+                    effects.add(new PayLifeOrPayManaCost(effect.lifeAmount(), restored.toString(),
+                            List.of(), !includeBaseManaReduction));
+                    remaining = reduced;
+                }
             }
         }
     }
@@ -1227,15 +1254,10 @@ public class AdditionalSpellCostService {
             PayLifeOrPayManaCost cost = costs.payLifeOrPayManaCost();
             if (Boolean.TRUE.equals(selection.payLifeForAdditionalCost())) {
                 validateCanPayLifeForCost(gameData, card);
-                int life = gameData.getLife(player.getId());
-                if (life < cost.lifeAmount()) {
-                    throw new IllegalStateException("Not enough life to pay " + cost.lifeAmount()
-                            + " life for " + card.getName());
-                }
-            } else if (!canAffordManaOption(gameData, player.getId(), card, cost.manaCost())) {
-                throw new IllegalStateException("Must pay " + cost.lifeAmount() + " life or "
-                        + cost.manaCost() + " to cast " + card.getName());
             }
+            chooseLifeOrManaPayment(gameData, player.getId(), card, cost,
+                    Boolean.TRUE.equals(selection.payLifeForAdditionalCost()),
+                    gameData.playerManaPools.get(player.getId()));
         }
         if (costs.discardCardOrSacrificePermanentCost() != null) {
             DiscardCardOrSacrificePermanentCost cost = costs.discardCardOrSacrificePermanentCost();
@@ -2043,12 +2065,63 @@ public class AdditionalSpellCostService {
                 gameData.playerManaPools.get(playerId));
     }
 
+    /** The selected independent life payments and the mana owed for the remaining units. */
+    public record LifeOrManaPayment(int lifeAmount, String manaCost) {}
+
+    /**
+     * A request to pay life chooses the smallest affordable nonempty set of independent payments.
+     * Declining pays the mana alternative for every unit, including any printed additional cost.
+     */
+    public LifeOrManaPayment chooseLifeOrManaPayment(GameData gameData, UUID playerId, Card card,
+            PayLifeOrPayManaCost cost, boolean payLife, ManaPool pool) {
+        if (!payLife) {
+            if (canAffordManaOption(gameData, playerId, card, cost.manaCost(), pool, cost.baseManaCostWaived())) {
+                return new LifeOrManaPayment(0, cost.manaCost());
+            }
+        } else {
+            if (!gameQueryService.canPayLifeForCosts(gameData) || !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+                throw new IllegalStateException("Life cannot be paid for " + card.getName());
+            }
+            List<PayLifeOrPayManaCost> units = cost.paymentUnits().isEmpty() ? List.of(cost) : cost.paymentUnits();
+            for (int count = 1; count <= units.size(); count++) {
+                LifeOrManaPayment payment = findLifeOrManaPayment(gameData, playerId, card, cost, units,
+                        pool, 0, count, 0, "");
+                if (payment != null) return payment;
+            }
+        }
+        throw new IllegalStateException("Cannot pay the selected life or mana costs for " + card.getName());
+    }
+
+    private LifeOrManaPayment findLifeOrManaPayment(GameData gameData, UUID playerId, Card card,
+            PayLifeOrPayManaCost cost, List<PayLifeOrPayManaCost> units, ManaPool pool,
+            int index, int paymentsLeft, int lifeAmount, String manaCost) {
+        if (lifeAmount > gameData.getLife(playerId) || paymentsLeft > units.size() - index) return null;
+        if (index == units.size()) {
+            return paymentsLeft == 0
+                    && canAffordManaOption(gameData, playerId, card, manaCost, pool, cost.baseManaCostWaived())
+                    ? new LifeOrManaPayment(lifeAmount, manaCost) : null;
+        }
+        PayLifeOrPayManaCost unit = units.get(index);
+        if (paymentsLeft > 0) {
+            LifeOrManaPayment paid = findLifeOrManaPayment(gameData, playerId, card, cost, units, pool,
+                    index + 1, paymentsLeft - 1, lifeAmount + unit.lifeAmount(), manaCost);
+            if (paid != null) return paid;
+        }
+        return findLifeOrManaPayment(gameData, playerId, card, cost, units, pool,
+                index + 1, paymentsLeft, lifeAmount, manaCost + unit.manaCost());
+    }
+
     private boolean canAffordManaOption(GameData gameData, UUID playerId, Card card,
                                         String optionManaCost, ManaPool pool) {
+        return canAffordManaOption(gameData, playerId, card, optionManaCost, pool, false);
+    }
+
+    private boolean canAffordManaOption(GameData gameData, UUID playerId, Card card,
+                                        String optionManaCost, ManaPool pool, boolean baseManaCostWaived) {
         if (pool == null) {
             return false;
         }
-        ManaCost baseCost = new ManaCost(card.getManaCost() != null ? card.getManaCost() : "");
+        ManaCost baseCost = new ManaCost(!baseManaCostWaived && card.getManaCost() != null ? card.getManaCost() : "");
         for (var entry : gameData.playerBattlefields.entrySet()) {
             UUID sourceControllerId = entry.getKey();
             for (Permanent permanent : entry.getValue()) {

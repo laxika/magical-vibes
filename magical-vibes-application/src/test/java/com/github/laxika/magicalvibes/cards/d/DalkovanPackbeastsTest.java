@@ -22,8 +22,10 @@ class DalkovanPackbeastsTest extends BaseCardTest {
     void attackingCreatesWarriorTokens() {
         addCreatureReady(player1, new DalkovanPackbeasts());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -35,7 +37,7 @@ class DalkovanPackbeastsTest extends BaseCardTest {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.WARRIOR);
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
         });
     }
 
@@ -44,8 +46,10 @@ class DalkovanPackbeastsTest extends BaseCardTest {
     void attackTokensAreSacrificedAtNextEndStep() {
         addCreatureReady(player1, new DalkovanPackbeasts());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
         assertThat(findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .count()).isEqualTo(3);
@@ -63,8 +67,10 @@ class DalkovanPackbeastsTest extends BaseCardTest {
     void vigilanceAndWarriorCombatDamage() {
         Permanent packbeasts = addCreatureReady(player1, new DalkovanPackbeasts());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
         resolveCombat();
 
         assertThat(packbeasts.isTapped()).isFalse();
@@ -94,8 +100,10 @@ class DalkovanPackbeastsTest extends BaseCardTest {
     void sacrificesWarriorsInOneDelayedTrigger() {
         addCreatureReady(player1, new DalkovanPackbeasts());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
         harness.passUntil(TurnStep.END_STEP);
 
         assertThat(countPermanents(player1, "Warrior")).isEqualTo(3);

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
+import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -132,6 +134,9 @@ public class BattlefieldPlacementService {
     private final EnchantedPlayerCreaturesEnterTappedEffectHandler enchantedPlayerCreaturesEnterTappedEffectHandler;
     private com.github.laxika.magicalvibes.service.effect.normalfx.NoteControllerLifeTotalEffectHandler noteControllerLifeTotalEffectHandler;
     private LandEquilibriumSupport landEquilibriumSupport;
+    @Autowired
+    @Lazy
+    private CreaturePositioningSupport creaturePositioningSupport;
     private com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler opponentEntryControlHandler;
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -228,6 +233,7 @@ public class BattlefieldPlacementService {
         if (beginAmplifyChoice(gameData, request)) return;
         if (beginUnleashChoice(gameData, request)) return;
         if (beginRiotChoices(gameData, request)) return;
+        if (creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request)) return;
         UUID puttingPlayerId = request.controllerId();
         UUID controllerId = request.controllerId();
         Permanent permanent = request.permanent();
@@ -390,6 +396,15 @@ public class BattlefieldPlacementService {
             permanent.setPersistentPowerModifier(perpetualPowerModifier);
         }
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        if (creaturePositioningSupport != null) {
+            creaturePositioningSupport.applyChosenPosition(gameData, controllerId, permanent);
+        }
+        if (permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(effect -> effect instanceof ExileTopCardsToSourceEffect exile
+                        && exile.toGraveyardOnControlLoss())) {
+            gameData.exiledCardsToGraveyardOnControlLossWatch.put(permanent.getId(),
+                    new ExiledCardsControlLossWatch(controllerId, permanent.getCard()));
+        }
         permanentCounterSupport.fireLoyaltyCountersPutOnPlaneswalkerTriggers(
                 gameData, permanent, permanent.getCounterCount(CounterType.LOYALTY));
         synchronized (gameData.targetSpellDamagePreventionShields) {
@@ -519,7 +534,7 @@ public class BattlefieldPlacementService {
         if (!applyRequiredGraveyardExileReplacement(gameData, controllerId, request.permanent(), request.xValue())
                 || !applyEntryCostReplacement(gameData, controllerId, request.permanent())) return true;
         request.permanent().setEntryCostResolved(true);
-        if (request.permanent().getChosenTappedEntryState() != null) return false;
+        if (request.permanent().getChosenTappedEntryState() != null) return beginNativeDevourChoice(gameData, request);
         Permanent preview = new Permanent(request.permanent());
         preview.enterUntapped();
         applyPerpetualEnterTapped(gameData, preview);
@@ -544,7 +559,38 @@ public class BattlefieldPlacementService {
                             + " enters tapped or untapped."));
             return true;
         }
-        return false;
+        return beginNativeDevourChoice(gameData, request);
+    }
+
+    private boolean beginNativeDevourChoice(GameData gameData, BattlefieldEntryRequest request) {
+        Permanent entering = request.permanent();
+        if (entering.isNativeDevourResolved()) {
+            return creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request);
+        }
+        var devour = entering.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::cast)
+                .findFirst().orElse(null);
+        if (devour == null && entering.getGrantedDevour() > 0) {
+            devour = new com.github.laxika.magicalvibes.model.effect.DevourEffect(entering.getGrantedDevour());
+        }
+        if (devour == null || entering.isFaceDown()) {
+            return creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request);
+        }
+        List<UUID> candidates = gameData.playerBattlefields.getOrDefault(request.controllerId(), List.of()).stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeSacrificed(gameData, permanent))
+                .map(Permanent::getId).toList();
+        if (candidates.isEmpty()) {
+            entering.setNativeDevourResolved(true);
+            return creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request);
+        }
+        playerInputService.beginMultiPermanentChoice(gameData, request.controllerId(), candidates, candidates.size(),
+                new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.DevourSacrifice(
+                        entering.getId(), devour.multiplier(), request.controllerId(), entering.getCard(),
+                        null, false, 0, false),
+                entering.getCard().getName() + " — Devour: sacrifice any number of creatures.");
+        return true;
     }
 
     private void applyRandomNumberChoiceOnEnter(Permanent permanent) {

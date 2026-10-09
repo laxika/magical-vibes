@@ -88,8 +88,14 @@ class DreamStalkerTest extends BaseCardTest {
     @Test
     @DisplayName("A controlled permanent owned by the opponent returns to the opponent's hand")
     void returnsBorrowedPermanentToOwner() {
-        UUID lensId = harness.addToBattlefieldAndReturn(player1, new PrismaticLens()).getId();
-        gd.stolenCreatures.put(lensId, player2.getId());
+        var lens = harness.addToBattlefieldAndReturn(player2, new PrismaticLens());
+        UUID lensId = lens.getId();
+        harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), lens,
+                        new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
+                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "borrowed permanent"));
         castAndResolveSpell();
         resolveTriggerToChoice();
 

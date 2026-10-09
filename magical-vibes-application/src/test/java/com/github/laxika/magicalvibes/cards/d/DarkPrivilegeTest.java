@@ -150,7 +150,6 @@ class DarkPrivilegeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.activateAbility(player1, 1, null, null);
-        harness.handlePermanentChosen(player1, fodder.getId());
         harness.assertInGraveyard(player1, "Longbow Archer");
         harness.passBothPriorities();
 
@@ -167,7 +166,6 @@ class DarkPrivilegeTest extends BaseCardTest {
         aura.setAttachedTo(creature.getId());
 
         harness.activateAbility(player1, 1, null, null);
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Longbow Archer");

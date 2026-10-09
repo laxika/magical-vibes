@@ -145,6 +145,8 @@ class DollhouseOfHorrorsTest extends BaseCardTest {
 
     @Test
     void hasteExpiresButTokenAndConstructBonusRemain() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         harness.addToBattlefield(player1, new DollhouseOfHorrors());
         harness.setGraveyard(player1, List.of(new ForebodingStatue()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -155,7 +157,7 @@ class DollhouseOfHorrorsTest extends BaseCardTest {
         Permanent token = token();
         assertThat(token.getGrantedKeywords()).contains(Keyword.HASTE);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(token.getGrantedKeywords()).doesNotContain(Keyword.HASTE);

@@ -86,7 +86,7 @@ public class EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPerma
             return;
         }
 
-        sacrificeAndQueueReturns(gameData, playerIds, choices, sourceName);
+        sacrificeAndQueueReturns(gameData, effectControllerId, playerIds, choices, sourceName);
     }
 
     private List<UUID> eligiblePermanentIds(GameData gameData, UUID playerId) {
@@ -95,7 +95,7 @@ public class EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPerma
                         || gameQueryService.isPlaneswalker(gameData, permanent));
     }
 
-    private void sacrificeAndQueueReturns(GameData gameData, List<UUID> playerIds,
+    private void sacrificeAndQueueReturns(GameData gameData, UUID effectControllerId, List<UUID> playerIds,
             Map<UUID, UUID> choices, String sourceName) {
         List<UUID> permanentIds = new ArrayList<>();
         Map<UUID, UUID> sacrificedCardIds = new LinkedHashMap<>();
@@ -103,7 +103,7 @@ public class EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPerma
             UUID permanentId = choices.get(playerId);
             Permanent permanent = permanentId == null
                     ? null : gameQueryService.findPermanentById(gameData, permanentId);
-            if (permanent == null) {
+            if (permanent == null || gameQueryService.cantBeSacrificed(gameData, permanent)) {
                 continue;
             }
             permanentIds.add(permanentId);
@@ -117,6 +117,9 @@ public class EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnAnotherPerma
 
         destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
         for (UUID playerId : playerIds) {
+            if (!playerId.equals(effectControllerId)) {
+                continue;
+            }
             UUID sacrificedCardId = sacrificedCardIds.get(playerId);
             if (sacrificedCardId != null) {
                 gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(

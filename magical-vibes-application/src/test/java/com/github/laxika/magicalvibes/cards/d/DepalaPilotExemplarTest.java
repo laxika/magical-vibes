@@ -21,7 +21,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DepalaPilotExemplar.class, Card.class, SkySkiff.class, ToolcraftExemplar.class,
+@CardUsed({DepalaPilotExemplar.class, SkySkiff.class, ToolcraftExemplar.class,
         TrustyCompanion.class, SwiftReconfiguration.class, MishrasWorkshop.class})
 class DepalaPilotExemplarTest extends BaseCardTest {
 

@@ -60,6 +60,7 @@ class DuskriderPeregrineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -78,6 +79,7 @@ class DuskriderPeregrineTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
@@ -203,5 +205,6 @@ class DuskriderPeregrineTest extends BaseCardTest {
     private void removeOneTimeCounter() {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

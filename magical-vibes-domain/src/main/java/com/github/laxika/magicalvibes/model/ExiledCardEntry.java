@@ -14,7 +14,18 @@ import java.util.UUID;
  */
 public record ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown,
                               UUID exilerId, int exiledTurnNumber,
-                              int controllerTurnsTakenAtExile) {
+                              int controllerTurnsTakenAtExile, String abilityLink) {
+
+    public ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId, boolean faceDown,
+                           UUID exilerId, int exiledTurnNumber, int controllerTurnsTakenAtExile) {
+        this(card, ownerId, sourcePermanentId, faceDown, exilerId, exiledTurnNumber,
+                controllerTurnsTakenAtExile, null);
+    }
+
+    public ExiledCardEntry withAbilityLink(String link) {
+        return new ExiledCardEntry(card, ownerId, sourcePermanentId, faceDown, exilerId,
+                exiledTurnNumber, controllerTurnsTakenAtExile, link);
+    }
 
     public ExiledCardEntry(Card card, UUID ownerId, UUID sourcePermanentId) {
         this(card, ownerId, sourcePermanentId, false, null, -1, -1);

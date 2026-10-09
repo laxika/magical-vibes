@@ -1239,7 +1239,8 @@ public class PermanentChoiceTriggerHandlerService {
         if (context.sacrificeAtEndStep()) {
             for (UUID createdId : createdIds) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
-                        createdId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                        createdId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, null, context.controllerId()));
             }
         }
 
@@ -2423,6 +2424,7 @@ public class PermanentChoiceTriggerHandlerService {
                     gameData, etbTtt.sourcePermanentId());
             if (sourcePermanent != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+                entry.setRepeatedAdditionalCosts(sourcePermanent.getRepeatedAdditionalCosts());
                 entry.setSpectacle(sourcePermanent.isSpectacle());
                 if (sourcePermanent.isEvoked()
                         && etbTtt.sourceCard().getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()

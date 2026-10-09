@@ -17,6 +17,35 @@ import java.util.UUID;
 
 public sealed interface ChoiceContext {
 
+    /** The affected player selects the mana ability used by a resolving land drain. */
+    record LandManaDrainAbilityChoice(StackEntry entry, UUID landId,
+                                      List<Integer> abilityIndices, List<UUID> remainingLandIds)
+            implements ChoiceContext {
+        public LandManaDrainAbilityChoice {
+            entry = new StackEntry(entry);
+            abilityIndices = List.copyOf(abilityIndices);
+            remainingLandIds = List.copyOf(remainingLandIds);
+        }
+    }
+
+
+    /** Retains an exile cast while its controller chooses the types of counters to remove. */
+    record ExileCastCounterTypeChoice(UUID exileCardId, Integer xValue, UUID targetId,
+                                      List<UUID> counterPermanentIds, List<UUID> convokeCreatureIds,
+                                      List<UUID> waterbendPermanentIds, boolean waterbendPaid,
+                                      List<UUID> targetIds, boolean resolutionCast, boolean autoPass,
+                                      boolean copy, boolean putOnBottom, boolean flashforwardCast,
+                                      Zone sourceZoneOverride, boolean fromBattlefield,
+                                      List<CounterType> chosenTypes) implements ChoiceContext {
+        public ExileCastCounterTypeChoice {
+            counterPermanentIds = List.copyOf(counterPermanentIds);
+            convokeCreatureIds = List.copyOf(convokeCreatureIds);
+            waterbendPermanentIds = List.copyOf(waterbendPermanentIds);
+            targetIds = List.copyOf(targetIds);
+            chosenTypes = List.copyOf(chosenTypes);
+        }
+    }
+
     /** A controller chooses which of their exiled permanents is replaced next. */
     record PermanentReplacementOrder(List<UUID> permanentIds) implements ChoiceContext {
         public PermanentReplacementOrder {
@@ -131,6 +160,15 @@ public sealed interface ChoiceContext {
     record TappedEntryStateChoice(BattlefieldEntryRequest request) implements ChoiceContext {
         public TappedEntryStateChoice {
             request = request.deepCopy();
+        }
+    }
+
+    /** Positions an entering creature, or an existing creature whose controller has changed. */
+    record CreaturePositionChoice(BattlefieldEntryRequest request, UUID permanentId,
+                                  List<String> options) implements ChoiceContext {
+        public CreaturePositionChoice {
+            request = request == null ? null : request.deepCopy();
+            options = List.copyOf(options);
         }
     }
 

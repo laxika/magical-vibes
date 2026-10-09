@@ -88,6 +88,7 @@ class DoomskarOracleTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        resolveAllTriggers();
         harness.assertLife(player1, 22);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
@@ -129,6 +130,8 @@ class DoomskarOracleTest extends BaseCardTest {
     @Test
     @DisplayName("The second-spell count resets when the next turn begins")
     void secondSpellCountResetsEachTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         addCreatureReady(player1, new DoomskarOracle());
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.setLibrary(player2, List.of(new DoomskarOracle(), new DoomskarOracle()));
@@ -139,13 +142,14 @@ class DoomskarOracleTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.assertLife(player1, 22);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.assertLife(player1, 22);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
+        resolveAllTriggers();
         harness.assertLife(player1, 24);
     }
 
@@ -165,6 +169,7 @@ class DoomskarOracleTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        resolveAllTriggers();
         harness.assertLife(player1, 24);
     }
 
@@ -215,6 +220,7 @@ class DoomskarOracleTest extends BaseCardTest {
         harness.castFromExile(player1, foretold.getId());
         harness.passBothPriorities();
 
+        resolveAllTriggers();
         harness.assertLife(player1, 24);
         assertThat(gd.findExiledCard(foretold.getId())).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);

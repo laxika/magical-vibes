@@ -12,6 +12,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,6 +58,7 @@ class DocOcksHenchmenTest extends BaseCardTest {
     @Test
     @DisplayName("Flash allows casting during the opponent's end step without conniving on entry")
     void castsDuringOpponentsEndStep() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.UPKEEP));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -117,6 +123,10 @@ class DocOcksHenchmenTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(henchmen);
         gd.playerBattlefields.get(player2.getId()).add(henchmen);
+        gd.stolenCreatures.put(henchmen.getId(), player1.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control change", null,
+                player2.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                henchmen.getId(), null, null, EffectDuration.PERMANENT, 0));
         henchmen.setAttacking(false);
         henchmen.setSummoningSick(true);
         harness.passBothPriorities();

@@ -20,6 +20,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DefilerOfDreamsTest extends BaseCardTest {
 
     @Test
+    void mayPayLifeWhenCastingWithoutPayingManaCost() {
+        addCreatureReady(player1, new DefilerOfDreams());
+        harness.addToBattlefield(player1, new Omniscience());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new CloudfinRaptor()));
+
+        harness.castInstantWithLifeOrManaAdditionalCost(player1, 0, null, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertOnBattlefield(player1, "Cloudfin Raptor");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("paying 2 life reduces a blue permanent spell by {U} and draws a card")
     void paysLifeForBluePermanentSpell() {
         addCreatureReady(player1, new DefilerOfDreams());

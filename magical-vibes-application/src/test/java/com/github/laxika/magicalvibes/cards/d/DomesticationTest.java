@@ -125,6 +125,7 @@ class DomesticationTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(creature), 1, null, null);
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);

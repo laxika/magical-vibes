@@ -5,6 +5,11 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SorinTheMirthless;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,6 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,6 +37,7 @@ class DorotheaVengefulVictimTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dorothea);
     }
@@ -45,6 +52,7 @@ class DorotheaVengefulVictimTest extends BaseCardTest {
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dorothea);
     }
@@ -61,6 +69,7 @@ class DorotheaVengefulVictimTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()).toList())
                 .contains("A 4/4 Spirit creature token enters the battlefield tapped and attacking.");
@@ -127,16 +136,21 @@ class DorotheaVengefulVictimTest extends BaseCardTest {
 
     @Test
     void frontFaceCannotBeSacrificedByItsFormerController() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         Permanent dorothea = addCreatureReady(player1, new DorotheaVengefulVictim());
-        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             declareAttackers(player1, List.of(0));
-            harness.passUntil(player1, TurnStep.COMBAT_DAMAGE);
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         });
         gd.playerBattlefields.get(player1.getId()).remove(dorothea);
         gd.playerBattlefields.get(player2.getId()).add(dorothea);
         gd.stolenCreatures.put(dorothea.getId(), player1.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control change", null,
+                player2.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                dorothea.getId(), null, null, EffectDuration.PERMANENT, 0));
 
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(dorothea);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -203,7 +217,8 @@ class DorotheaVengefulVictimTest extends BaseCardTest {
     void spiritControllerChoosesBetweenDefendingPlayerAndPlaneswalker() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         castWithDisturb(creature);
-        harness.addToBattlefield(player2, new SorinTheMirthless());
+        Permanent sorin = harness.addToBattlefieldAndReturn(player2, new SorinTheMirthless());
+        sorin.addCounters(CounterType.LOYALTY, 4);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(player1, List.of(0));

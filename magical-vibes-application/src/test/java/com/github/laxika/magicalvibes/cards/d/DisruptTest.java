@@ -151,6 +151,7 @@ class DisruptTest extends BaseCardTest {
     @Test
     @DisplayName("Can counter its controller's own sorcery and draw for that controller")
     void canCounterOwnSorcery() {
+        harness.setHand(player2, List.of());
         stockLibrary(player1, 2);
         ParadigmShift paradigmShift = new ParadigmShift();
         harness.setHand(player1, List.of(paradigmShift, new Disrupt()));

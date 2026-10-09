@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
@@ -37,8 +38,33 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         int sacrificeAtEndStepIfManaValueAtLeast,
         boolean attachToSourceHost,
         boolean underOwnersControl,
-        boolean randomlyReturnTwoAndPutRestOnBottom
+        boolean randomlyReturnTwoAndPutRestOnBottom,
+        AnimatePermanentsEffect entryAnimation,
+        Condition entryAnimationCondition
 ) implements AggregateManaValueTargetEffect {
+
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,
+            boolean fromBattlefieldThisTurn, boolean enterTapped, DynamicAmount dynamicMaxTargets,
+            int maxTotalManaValue, DynamicAmount dynamicMaxTotalManaValue, CardColor grantColor,
+            CardSubtype grantSubtype, CounterType counterType, int counterCount, GraveyardSearchScope source,
+            boolean singleGraveyard, boolean grantHaste, boolean sacrificeAtEndStep, int minTargets,
+            int sacrificeAtEndStepIfManaValueAtLeast, boolean attachToSourceHost, boolean underOwnersControl,
+            boolean randomlyReturnTwoAndPutRestOnBottom) {
+        this(filter, maxTargets, fromBattlefieldThisTurn, enterTapped, dynamicMaxTargets, maxTotalManaValue,
+                dynamicMaxTotalManaValue, grantColor, grantSubtype, counterType, counterCount, source,
+                singleGraveyard, grantHaste, sacrificeAtEndStep, minTargets, sacrificeAtEndStepIfManaValueAtLeast,
+                attachToSourceHost, underOwnersControl, randomlyReturnTwoAndPutRestOnBottom, null, null);
+    }
+
+    /** Animates only the permanents returned by this instruction, before they enter the battlefield. */
+    public ReturnTargetCardsFromGraveyardToBattlefieldEffect withEntryAnimation(
+            AnimatePermanentsEffect animation, Condition condition) {
+        return new ReturnTargetCardsFromGraveyardToBattlefieldEffect(filter, maxTargets, fromBattlefieldThisTurn,
+                enterTapped, dynamicMaxTargets, maxTotalManaValue, dynamicMaxTotalManaValue, grantColor,
+                grantSubtype, counterType, counterCount, source, singleGraveyard, grantHaste, sacrificeAtEndStep,
+                minTargets, sacrificeAtEndStepIfManaValueAtLeast, attachToSourceHost, underOwnersControl,
+                randomlyReturnTwoAndPutRestOnBottom, animation, condition);
+    }
 
     /** Creates the X-scaled form used by Return to the Ranks. */
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter) {

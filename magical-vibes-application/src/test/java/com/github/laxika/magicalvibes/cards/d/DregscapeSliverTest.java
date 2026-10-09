@@ -33,7 +33,7 @@ class DregscapeSliverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Bonescythe Sliver");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Bonescythe Sliver");
     }
 
@@ -58,7 +58,7 @@ class DregscapeSliverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Dregscape Sliver");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Dregscape Sliver");
     }
 
@@ -87,7 +87,7 @@ class DregscapeSliverTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.passBothPriorities();
 

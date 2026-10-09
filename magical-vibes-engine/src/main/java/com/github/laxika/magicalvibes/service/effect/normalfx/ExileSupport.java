@@ -90,6 +90,12 @@ public class ExileSupport {
     /** Exiles a permanent and keeps the card associated with the source permanent. */
     public boolean exilePermanentAndTrackWithSource(GameData gameData, Permanent permanent,
                                                     UUID sourcePermanentId, Card sourceCard) {
+        return exilePermanentAndTrackWithSource(gameData, permanent, sourcePermanentId, sourceCard, null);
+    }
+
+    /** Associates the exile with one linked ability of the source permanent. */
+    public boolean exilePermanentAndTrackWithSource(GameData gameData, Permanent permanent,
+                                                    UUID sourcePermanentId, Card sourceCard, String abilityLink) {
         Card exiledCard = permanent.getOriginalCard();
         UUID fallbackOwnerId = gameData.findControllerOf(permanent);
         if (!permanentRemovalService.removePermanentToExile(gameData, permanent)) {
@@ -106,6 +112,12 @@ public class ExileSupport {
         UUID ownerId = exiledEntry != null ? exiledEntry.ownerId() : fallbackOwnerId;
         gameData.removeFromExile(exiledCard.getId());
         gameData.addToExile(ownerId, exiledCard, sourcePermanentId);
+        if (abilityLink != null) {
+            synchronized (gameData.exiledCards) {
+                gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(exiledCard.getId())
+                        ? exiled.withAbilityLink(abilityLink) : exiled);
+            }
+        }
 
         gameLogService.append(gameData, GameLog.cardTextCard(exiledCard, " is exiled by ", sourceCard, "."));
         log.info("Game {} - {} exiles {} (tracked with source)",

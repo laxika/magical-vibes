@@ -42,6 +42,8 @@ class DoomskarTitanTest extends BaseCardTest {
     @Test
     @DisplayName("The ETB boost and haste wear off at end of turn")
     void etbEffectWearsOffAtEndOfTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         harness.addToBattlefield(player1, new GrizzledOutrider());
         harness.setHand(player1, List.of(new DoomskarTitan()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -50,7 +52,7 @@ class DoomskarTitanTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         Permanent bears = findPermanent(player1, "Grizzled Outrider");
         Permanent titan = findPermanent(player1, "Doomskar Titan");

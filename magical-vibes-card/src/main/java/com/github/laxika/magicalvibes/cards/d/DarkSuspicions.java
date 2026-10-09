@@ -24,6 +24,6 @@ public class DarkSuspicions extends Card {
                         new Max(new Fixed(0), new Sum(
                                 new CardsInHand(CountScope.TARGET_PLAYER),
                                 new Scaled(new CardsInHand(CountScope.CONTROLLER), -1))),
-                        LoseLifeRecipient.TARGET_PLAYER));
+                        LoseLifeRecipient.TRIGGERING_PLAYER));
     }
 }

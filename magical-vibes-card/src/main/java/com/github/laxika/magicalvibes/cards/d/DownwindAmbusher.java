@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -20,7 +21,7 @@ import java.util.List;
 public class DownwindAmbusher extends Card {
 
     public DownwindAmbusher() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature an opponent controls gets -1/-1 until end of turn",
                         new BoostTargetCreatureEffect(-1, -1),
@@ -35,6 +36,6 @@ public class DownwindAmbusher extends Card {
                                         new PermanentDealtDamageThisTurnPredicate()
                                 )),
                                 "Target must be a creature an opponent controls that was dealt damage this turn")
-        ))));
+        )))));
     }
 }

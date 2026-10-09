@@ -98,7 +98,7 @@ class DawnBlessedPennantTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Dawn-Blessed Pennant");
+        assertThat(gd.stack).isEmpty();
         harness.handleListChoice(player1, "ELF");
 
         harness.assertOnBattlefield(player1, "Dawn-Blessed Pennant");

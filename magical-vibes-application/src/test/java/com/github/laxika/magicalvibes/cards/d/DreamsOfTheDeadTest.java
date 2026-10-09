@@ -210,7 +210,7 @@ class DreamsOfTheDeadTest extends BaseCardTest {
 
         assertThat(spirit.getCounterCount(CounterType.AGE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(spirit);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test

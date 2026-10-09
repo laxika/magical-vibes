@@ -209,7 +209,7 @@ class DampingEngineTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("once each turn");
+                .hasMessageContaining("Activate only");
     }
 
     @Test
@@ -336,7 +336,7 @@ class DampingEngineTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DampingEngine());
         Permanent firstSacrifice = harness.addToBattlefieldAndReturn(player1, new ForbiddingWatchtower());
         harness.addToBattlefield(player1, new ForbiddingWatchtower());
-        harness.addToBattlefield(player2, new ForbiddingWatchtower());
+        harness.addToBattlefield(player2, new GiantCockroach());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handlePermanentChosen(player1, firstSacrifice.getId());

@@ -168,9 +168,6 @@ public class ExileTargetValidators {
         if (anteEntry == null || !ctx.gameData().antedCardIds.contains(ctx.targetId())) {
             throw new IllegalStateException("Target card must be in the ante");
         }
-        if (ctx.sourceControllerId() != null && !ctx.sourceControllerId().equals(anteEntry.ownerId())) {
-            throw new IllegalStateException("Target card must be one you own in the ante");
-        }
     }
 
     @ValidatesTarget(AdjustTimeCountersOnTargetEffect.class)

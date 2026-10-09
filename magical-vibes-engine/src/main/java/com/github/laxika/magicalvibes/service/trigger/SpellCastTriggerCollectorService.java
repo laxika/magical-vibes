@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTur
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.DuelistsConvocationInternationalTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CardAdvantageSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
@@ -1004,6 +1005,38 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = DuelistsConvocationInternationalTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    @CollectsTrigger(value = DuelistsConvocationInternationalTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_PLAYS_LAND)
+    private boolean handleDuelistsConvocationInternational(TriggerMatchContext match,
+            DuelistsConvocationInternationalTriggerEffect trigger, TriggerContext ctx) {
+        Permanent source = match.permanent();
+        if (source == null || source.getChosenNumberDigits().size() != 10) {
+            return false;
+        }
+        Card eventCard = ctx instanceof TriggerContext.SpellCast spellCast
+                ? spellCast.spellCard() : ((TriggerContext.LandPlayed) ctx).landCard();
+        StackEntry spell = ctx instanceof TriggerContext.SpellCast
+                ? gameQueryService.findStackEntryByCardId(match.gameData(), eventCard.getId()) : null;
+        int manaValue = spell != null && spell.isCastFaceDown() ? 0 : eventCard.getManaValue()
+                + (spell == null || eventCard.getParsedManaCost() == null ? 0
+                : spell.getXValue() * eventCard.getParsedManaCost().getXSymbolCount());
+        boolean matchesDigit = java.util.stream.IntStream.range(0, source.getChosenNumberDigits().size())
+                .anyMatch(index -> !source.getCrossedNumberDigitPositions().contains(index)
+                        && source.getChosenNumberDigits().get(index) == manaValue);
+        if (!matchesDigit) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(),
+                match.controllerId(), source.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)), null, source.getId());
+        entry.setSourcePermanentSnapshot(new Permanent(source));
+        entry.setTriggeringCardId(eventCard.getId());
+        entry.setEventValue(manaValue);
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
     @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
     @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
@@ -1025,6 +1058,7 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(new LoseLifeEffect(amount, LoseLifeRecipient.TARGET_PLAYER)))
         );
         entry.setTargetId(sc.castingPlayerId());
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }
@@ -2450,7 +2484,7 @@ public class SpellCastTriggerCollectorService {
             RemoveTimeCounterWhenOpponentCastsSpellEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         Card sourceCard = match.sourceCard();
-        if (sourceCard == null) {
+        if (sourceCard == null || match.permanent() != null) {
             return false;
         }
 

@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprin
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -38,18 +36,13 @@ public class ExileTargetPermanentAndImprintEffectHandler implements NormalEffect
         }
 
         Card exiledCard = target.getOriginalCard();
-        permanentRemovalService.removePermanentToExile(gameData, target);
+        if (!permanentRemovalService.removePermanentToExile(gameData, target, entry.getSourcePermanentId())) {
+            return;
+        }
 
-        // Find the source permanent on the controller's battlefield and imprint
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (p.getCard() == entry.getCard()) {
-                    gameData.setImprintedCard(p.getCard(), exiledCard);
-                    break;
-                }
-            }
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source != null && !target.getCard().isToken()) {
+            gameData.setImprintedCard(source.getCard(), exiledCard);
         }
 
         

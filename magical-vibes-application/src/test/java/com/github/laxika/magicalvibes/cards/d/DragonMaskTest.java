@@ -119,7 +119,7 @@ class DragonMaskTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, 0, null, bears.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -205,8 +205,8 @@ class DragonMaskTest extends BaseCardTest {
         // Still on the battlefield during the main phase.
         harness.assertOnBattlefield(player1, "Grizzly Bears");
 
-        // Advance to the end step — the creature should be bounced to its owner's hand.
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
@@ -279,7 +279,8 @@ class DragonMaskTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, after)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, after)).isEqualTo(4);
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
@@ -321,7 +322,8 @@ class DragonMaskTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");

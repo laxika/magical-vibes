@@ -149,10 +149,9 @@ class DireFleetWarmongerTest extends BaseCardTest {
         Permanent original = addCreatureReady(player1, new DireFleetWarmonger());
         Permanent sacrifice = addCreatureReady(player1, new AlpineWatchdog());
         harness.setHand(player1, List.of(new FlickerOfFate()));
+        advanceToCombat(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        advanceToCombat(player1);
         harness.castInstant(player1, 0, original.getId());
         harness.passBothPriorities();
 
@@ -175,10 +174,9 @@ class DireFleetWarmongerTest extends BaseCardTest {
     void oldTriggerCanSacrificeReturnedWarmonger() {
         Permanent original = addCreatureReady(player1, new DireFleetWarmonger());
         harness.setHand(player1, List.of(new FlickerOfFate()));
+        advanceToCombat(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        advanceToCombat(player1);
         harness.castInstant(player1, 0, original.getId());
         harness.passBothPriorities();
         Permanent returned = findPermanent(player1, "Dire Fleet Warmonger");

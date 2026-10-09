@@ -187,6 +187,13 @@ class DawnhandDissidentTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(costCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(costCreature.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        harness.handleListChoice(player1, CounterType.CHARGE.name());
+        harness.handleListChoice(player1, CounterType.CHARGE.name());
+        harness.handleListChoice(player1, CounterType.CHARGE.name());
+
+        assertThat(costCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(costCreature.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
@@ -194,7 +201,7 @@ class DawnhandDissidentTest extends BaseCardTest {
         Permanent dawnhand = addCreatureReady(player1, new DawnhandDissident());
         Permanent counterCreature = addCreatureReady(player1, new DawnhandDissident());
         counterCreature.setCounterCount(CounterType.CHARGE, 3);
-        addCreatureReady(player1, new SizzlingChangeling());
+        Permanent beheld = addCreatureReady(player1, new SizzlingChangeling());
         Card exiledCreature = new ChampionOfTheWeird();
         gd.addToExile(player1.getId(), exiledCreature, dawnhand.getId());
         harness.forceActivePlayer(player1);
@@ -207,6 +214,12 @@ class DawnhandDissidentTest extends BaseCardTest {
                 List.of(counterCreature.getId(), counterCreature.getId(), counterCreature.getId())))
                 .doesNotThrowAnyException();
         assertThat(gd.interaction.isAwaitingInput() || !gd.stack.isEmpty()).isTrue();
+        harness.handlePermanentChosen(player1, beheld.getId());
+
+        assertThat(counterCreature.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.findExiledCard(beheld.getCard().getId())).isNotNull();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getBeheldCard()).isEqualTo(beheld.getOriginalCard());
     }
 
     @Test

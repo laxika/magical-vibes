@@ -201,8 +201,9 @@ class DjinnOfTheFountainTest extends BaseCardTest {
     @Test
     @DisplayName("A borrowed Djinn returns untapped under its owner's control")
     void flickerReturnsToOwner() {
-        Permanent djinn = addReadyDjinn();
-        djinn.getCard().setOwnerId(player2.getId());
+        DjinnOfTheFountain card = new DjinnOfTheFountain();
+        card.setOwnerId(player2.getId());
+        Permanent djinn = addCreatureReady(player1, card);
         gd.stolenCreatures.put(djinn.getId(), player2.getId());
         djinn.tap();
         castShock();

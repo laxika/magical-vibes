@@ -76,7 +76,8 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
                 // "Other untapped creatures" excludes the source permanent.
                 .filter(p -> sourcePermanentId == null || !p.getId().equals(sourcePermanentId))
                 .filter(p -> gameQueryService.isCreature(gameData, p))
-                .filter(p -> !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantCrewEffect.class))
+                .filter(p -> !(cost instanceof CrewCost)
+                        || !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantCrewEffect.class))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -95,7 +96,8 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Permanent is not a creature");
         }
-        if (gameQueryService.hasAuraWithEffect(gameData, chosen, EnchantedCreatureCantCrewEffect.class)) {
+        if (cost instanceof CrewCost
+                && gameQueryService.hasAuraWithEffect(gameData, chosen, EnchantedCreatureCantCrewEffect.class)) {
             throw new IllegalStateException("Creature can't crew Vehicles");
         }
         Permanent sourcePermanent = sourcePermanentId == null

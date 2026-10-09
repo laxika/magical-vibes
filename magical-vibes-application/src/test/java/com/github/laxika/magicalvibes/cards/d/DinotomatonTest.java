@@ -34,14 +34,16 @@ class DinotomatonTest extends BaseCardTest {
     @Test
     @DisplayName("ETB menace remains through the end step and wears off during cleanup")
     void etbMenaceWearsOffAtEndOfTurn() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         Permanent target = addCreatureReady(player1, new ArmoredKincaller());
         castDinotomaton();
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
     }
 

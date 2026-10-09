@@ -28,11 +28,12 @@ class DruidicRitualTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(creature.getId(), land.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
+        assertThat(choice.validIndices()).containsExactly(0);
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(creature));
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(land));
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrderElementsOf(
@@ -51,7 +52,7 @@ class DruidicRitualTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleGraveyardCardChosen(player1, -1);
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature, spell);
@@ -70,11 +71,12 @@ class DruidicRitualTest extends BaseCardTest {
         harness.castFromHand(player1, spell, "{2}{G}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(creature.getId(), land.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
+        assertThat(choice.validIndices()).containsExactly(0);
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(creature));
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(land));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(creature, land);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(other, spell);
@@ -94,7 +96,8 @@ class DruidicRitualTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(creature));
+        harness.handleGraveyardCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(land, spell);

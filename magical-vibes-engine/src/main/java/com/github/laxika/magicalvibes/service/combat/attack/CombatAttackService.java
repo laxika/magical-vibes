@@ -2060,8 +2060,14 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             for (Permanent perm : battlefield) {
-                List<CardEffect> perCreatureAttackEffects = new ArrayList<>(
-                        perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+                List<CardEffect> perCreatureAttackEffects = new ArrayList<>();
+                if (!perm.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+                    perCreatureAttackEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+                }
+                if (!gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    perCreatureAttackEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+                    perCreatureAttackEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+                }
                 perCreatureAttackEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                         gameData, perm, EffectSlot.ON_ALLY_CREATURE_ATTACKS));
                 if (perCreatureAttackEffects.isEmpty()) continue;

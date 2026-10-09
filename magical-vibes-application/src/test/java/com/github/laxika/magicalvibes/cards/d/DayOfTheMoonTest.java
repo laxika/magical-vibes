@@ -92,7 +92,8 @@ class DayOfTheMoonTest extends BaseCardTest {
         assertThat(gd.stack).isNotEmpty();
         gd.playerBattlefields.get(player1.getId()).remove(saga);
         resolveAllTriggers();
-        harness.handleListChoice(player1, "Grizzly Bears");
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.handleListChoice(player1, "Grizzly Bears"));
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)

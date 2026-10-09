@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureOrDiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SNC", collectorNumber = "77")
@@ -18,10 +17,10 @@ public class DuskMangler extends Card {
 
     public DuskMangler() {
         addEffect(EffectSlot.SPELL, new SacrificeCreatureOrDiscardCardOrPayLifeCost(4));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SacrificePermanentsEffect(
-                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT),
-                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
-                new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT)));
+                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(4, LoseLifeRecipient.EACH_OPPONENT));
     }
 }

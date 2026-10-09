@@ -2644,7 +2644,7 @@ public class TriggeredAbilityQueueService {
                     describedTarget.maximumTargetCount(),
                     new AmountContext(pending.controllerId(), null, null, pending.xValue(), 0)))
                     : describedTarget.maxTargets();
-            if (pending.maxCount() == 0 && declaredGroup != null
+            if (oneOfEachFilterEffect == null && pending.maxCount() == 0 && declaredGroup != null
                     && (describedTarget == null || describedTarget.maximumTargetCount() == null)) {
                 requestedMaxTargets = declaredGroup.getMaxTargets();
             }

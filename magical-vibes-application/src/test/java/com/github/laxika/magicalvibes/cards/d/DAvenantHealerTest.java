@@ -158,16 +158,18 @@ class DAvenantHealerTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        activatePrevention(attacker.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            activatePrevention(attacker.getId());
 
-        harness.activateAbility(player1, 1, null, attacker.getId());
-        harness.passBothPriorities();
-        assertThat(attacker.getMarkedDamage()).isZero();
-        assertThat(attacker.getDamagePreventionShield()).isZero();
+            harness.activateAbility(player1, 1, null, attacker.getId());
+            harness.passBothPriorities();
+            assertThat(attacker.getMarkedDamage()).isZero();
+            assertThat(attacker.getDamagePreventionShield()).isZero();
 
-        harness.activateAbility(player1, 2, null, attacker.getId());
-        harness.passBothPriorities();
-        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+            harness.activateAbility(player1, 2, null, attacker.getId());
+            harness.passBothPriorities();
+            assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        });
     }
 
     @Test

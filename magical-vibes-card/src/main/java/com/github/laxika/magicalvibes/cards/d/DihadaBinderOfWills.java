@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Scaled;
-import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -21,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -51,8 +49,8 @@ public class DihadaBinderOfWills extends Card {
                         GrantDuration.UNTIL_YOUR_NEXT_TURN,
                         null)),
                 "+2: Up to one target legendary creature gains vigilance, lifelink, and indestructible until your next turn.",
-                new ControlledPermanentPredicateTargetFilter(
-                        legendaryCreature, "Target must be a legendary creature you control"),
+                new PermanentPredicateTargetFilter(
+                        legendaryCreature, "Target must be a legendary creature"),
                 +2,
                 null,
                 null,
@@ -74,9 +72,8 @@ public class DihadaBinderOfWills extends Card {
                                 false,
                                 null,
                                 null,
-                                true),
-                        CreateTokenEffect.ofTreasureToken(new Sum(
-                                new Fixed(4), new Scaled(new EventValue(), -1)))),
+                                false).withRecordGraveyardCount(),
+                        CreateTokenEffect.ofTreasureToken(new EventValue())),
                 "−3: Reveal the top four cards of your library. Put any number of legendary cards from among them into your hand and the rest into your graveyard. Create a Treasure token for each card put into your graveyard this way."));
 
         PermanentPredicate nonlandPermanent = new PermanentNotPredicate(new PermanentIsLandPredicate());

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -15,6 +15,7 @@ public class DesperateMeasures extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, -1))
                 .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
-                        EffectSlot.ON_DEATH, new DrawCardEffect(2)));
+                        EffectSlot.ON_ANY_CREATURE_DIES,
+                        new DrawCardForTargetPlayerEffect(2), true));
     }
 }

@@ -158,7 +158,7 @@ class DichotomancyTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
@@ -257,7 +257,7 @@ class DichotomancyTest extends BaseCardTest {
         Dichotomancy card = suspendDichotomancy();
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
 
         harness.handleMayAbilityChosen(player1, false);

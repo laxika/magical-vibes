@@ -393,7 +393,7 @@ public class CombatTriggerService {
                         StackEntry trigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
-                                finalControllerId,
+                                ownerId,
                                 perm.getCard().getName() + "'s triggered ability",
                                 transformedEffects,
                                 autoTargetBlocker ? blocker.getId() : null,

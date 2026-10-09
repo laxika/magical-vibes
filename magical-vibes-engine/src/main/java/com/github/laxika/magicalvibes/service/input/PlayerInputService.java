@@ -54,6 +54,9 @@ import java.util.stream.IntStream;
 @Component
 @RequiredArgsConstructor
 public class PlayerInputService {
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private UntapStepService untapStepService;
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -2256,7 +2259,10 @@ public class PlayerInputService {
                                           com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
         String prompt = "Choose up to " + maxUntap + " permanent" + (maxUntap == 1 ? "" : "s") + " to untap.";
         beginMultiPermanentChoice(gameData, playerId, candidateIds, maxUntap,
-                new MultiPermanentChoiceContext.StaticOrbUntap(playerId, filter),
+                new MultiPermanentChoiceContext.StaticOrbUntap(playerId, filter,
+                        untapStepService == null ? List.of() : untapStepService.bindingUntapRestrictions(gameData, playerId).stream()
+                                .filter(effect -> !java.util.Objects.equals(effect.filter(), filter)).toList(),
+                        List.of()),
                 prompt);
 
         String playerName = gameData.playerIdToName.get(playerId);

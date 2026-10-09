@@ -1193,7 +1193,7 @@ public class ActivatedAbilityExecutionService {
                 && permanent.getCard().hasType(CardType.LAND)
                 && isDampingManaReplacementActive(gameData)) {
             int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue);
-            if (totalMana >= 2) {
+            if (totalMana * manaMultiplier >= 2) {
                 dampingReplacement = true;
                 gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
                 if (caveSource) {
@@ -1426,7 +1426,7 @@ public class ActivatedAbilityExecutionService {
                 for (ManaColor color : ManaColor.values()) {
                     int current = manaBeforeDoubling.getOrDefault(color, 0);
                     for (int i = 1; i < multiplier; i++) {
-                        pool.add(color, current);
+                        pool.add(color, current * manaMultiplier);
                     }
                 }
             } else if (effect instanceof RegisterNextRedInstantSorceryCopyEffect) {
@@ -1958,6 +1958,7 @@ public class ActivatedAbilityExecutionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf != null) {
                 for (Permanent perm : bf) {
+                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof ReplaceLandExcessManaWithColorlessEffect) {
                             return true;
@@ -2064,8 +2065,8 @@ public class ActivatedAbilityExecutionService {
                     total += amount;
                 }
             } else if (effect instanceof DoubleManaPoolEffect) {
-                total += gameData.playerManaPools.get(playerId).getTotal()
-                        * MaroGoneNutsSupport.apply(gameData, effect, 2);
+                total += gameData.playerManaPools.get(playerId).getTotalAllMana()
+                        * (MaroGoneNutsSupport.apply(gameData, effect, 2) - 1);
             } else {
                 ManaAbilityEffectHandler handler = manaAbilityEffectHandlerRegistry.getHandler(effect);
                 if (handler != null) {
@@ -2308,6 +2309,12 @@ public class ActivatedAbilityExecutionService {
                 ability, snapshotEffects, effectiveTargetIds, effectiveTargetZone));
         stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
         stackEntry.setSourcePermanentControllerId(activatedPermanentControllerId);
+        if (permanent.getAttachedTo() != null) {
+            Permanent attached = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
+            if (attached != null) {
+                stackEntry.setAttachedPermanentSnapshot(new Permanent(attached));
+            }
+        }
         List<UUID> trackedIds = chosenCostPermanentIds == null ? List.of() : List.copyOf(chosenCostPermanentIds);
         stackEntry.setChosenCostPermanentIds(trackedIds);
         List<Permanent> trackedSnapshots = new ArrayList<>();

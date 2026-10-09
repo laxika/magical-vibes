@@ -25,6 +25,7 @@ import java.util.UUID;
  * {@code Pending*} / {@code ChoiceContext} shapes, so every queued decision has one type.
  */
 public sealed interface PendingInteraction permits PermanentChoiceContext,
+        PendingInteraction.LandManaDrainContinuation,
         PendingMemoriesReturningChoice,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
@@ -2888,6 +2889,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         /** Isolates a prepared as-entry permanent when this choice is copied for simulation. */
         public ColorChoice copyCardTypeOnEnterPermanent() {
+            if (context instanceof ChoiceContext.LandManaDrainAbilityChoice drain) {
+                return new ColorChoice(playerId, permanentId, etbTargetId,
+                        new ChoiceContext.LandManaDrainAbilityChoice(drain.entry(), drain.landId(),
+                                drain.abilityIndices(), drain.remainingLandIds()), options, prompt, disabledOptions);
+            }
             if (context instanceof ChoiceContext.TappedEntryStateChoice tapped) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,
                         new ChoiceContext.TappedEntryStateChoice(tapped.request().deepCopy()),
@@ -6402,4 +6408,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             return new InteractionOptions.MultiCardPick(validIds, 1, 1);
         }
     }
+    /** Resumes a land drain after the current mana ability's choices finish. */
+    record LandManaDrainContinuation(StackEntry entry, java.util.List<UUID> remainingLandIds)
+            implements PendingInteraction {
+        public LandManaDrainContinuation {
+            entry = new StackEntry(entry);
+            remainingLandIds = java.util.List.copyOf(remainingLandIds);
+        }
+    }
+
 }

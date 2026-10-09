@@ -21,7 +21,7 @@ public class DeathPriestOfMyrkul extends Card {
 
     public DeathPriestOfMyrkul() {
         // Skeletons, Vampires, and Zombies you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(
                         CardSubtype.SKELETON, CardSubtype.VAMPIRE, CardSubtype.ZOMBIE))));
 

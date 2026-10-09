@@ -85,6 +85,12 @@ public class DoomsdayChoiceInteractionHandler
 
         gameData.interaction.clearAwaitingInput();
 
+        List<Card> remainingLibrary = gameData.playerDecks.get(controllerId);
+        if (remainingLibrary != null) {
+            rest.addAll(remainingLibrary);
+            remainingLibrary.clear();
+        }
+
         // Exile everything not kept.
         for (Card card : rest) {
             gameData.addToExile(controllerId, card);

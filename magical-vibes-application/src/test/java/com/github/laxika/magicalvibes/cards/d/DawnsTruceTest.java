@@ -55,7 +55,7 @@ class DawnsTruceTest extends BaseCardTest {
         cast(false);
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
@@ -123,7 +123,7 @@ class DawnsTruceTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
 
         cast(true);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
         assertThat(gqs.hasKeyword(gd, land, Keyword.HEXPROOF)).isFalse();

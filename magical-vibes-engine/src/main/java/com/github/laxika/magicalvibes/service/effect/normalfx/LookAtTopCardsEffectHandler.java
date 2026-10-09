@@ -68,6 +68,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LookAtTopCardsEffect e = (LookAtTopCardsEffect) effect;
+        entry.setRecordLibraryGraveyardCount(e.recordGraveyardCount());
+        if (e.recordGraveyardCount()) {
+            entry.setEventValue(0);
+        }
         if (e.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard()) {
             entry.setGainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard(true);
         }
@@ -533,8 +537,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 entry.setEventValue(0);
             }
             if (toGraveyard) {
-                for (Card card : topCards) {
-                    graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
+                List<Card> entered = graveyardService.addCardsFromLibraryToGraveyard(gameData, controllerId, topCards);
+                if (e.recordGraveyardCount()) {
+                    entry.setEventValue(entered.size());
                 }
                 GameLog.Builder restBuilder = GameLog.builder().text(playerName + " puts ");
                 appendCardList(restBuilder, topCards);
@@ -827,10 +832,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 entry, gameData, controllerId);
 
         if (eligibleCards.isEmpty()) {
-            for (Card card : topCards) {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
-            }
-            gainLifeForGreatestPowerOfGraveyardCards(gameData, entry, topCards);
+            List<Card> entered = graveyardService.addCardsFromLibraryToGraveyard(gameData, controllerId, topCards);
+            gainLifeForGreatestPowerOfGraveyardCards(gameData, entry, entered);
             GameLog.Builder restBuilder = GameLog.builder().text(playerName + " puts ");
             appendCardList(restBuilder, topCards);
             restBuilder.text(" into their graveyard.");
@@ -849,10 +852,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             }
             List<Card> remainingCards = new ArrayList<>(topCards);
             remainingCards.removeAll(eligibleCards);
-            for (Card card : remainingCards) {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
-            }
-            gainLifeForGreatestPowerOfGraveyardCards(gameData, entry, remainingCards);
+            List<Card> entered = graveyardService.addCardsFromLibraryToGraveyard(gameData, controllerId, remainingCards);
+            gainLifeForGreatestPowerOfGraveyardCards(gameData, entry, entered);
 
             GameLog.Builder handBuilder = GameLog.builder().text(playerName + " puts ");
             appendCardList(handBuilder, eligibleCards);
@@ -917,7 +918,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         ? Math.min(toHandCount, topCards.size())
                         : effect.gainLifeEqualToChosenCardManaValue() ? 1 : 0,
                 effect.gainLifeEqualToChosenCardManaValue())
-                .withSelectedCardFollowUp(effect.selectedCardPredicate(), effect.effectIfSelectedCardMatches()));
+                .withSelectedCardFollowUp(effect.selectedCardPredicate(), effect.effectIfSelectedCardMatches())
+                .withRevealSelected(effect.reveal()));
 
         gameLogService.append(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
@@ -989,7 +991,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
         int greatestPower = cards.stream()
                 .filter(card -> card.hasType(CardType.CREATURE))
-                .map(Card::getPower)
+                .map(card -> gameQueryService.getEffectiveCardPower(gameData, card))
                 .filter(java.util.Objects::nonNull)
                 .mapToInt(power -> Math.max(0, power))
                 .max()

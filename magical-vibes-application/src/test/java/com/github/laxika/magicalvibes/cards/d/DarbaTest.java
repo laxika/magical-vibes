@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,7 +23,7 @@ class DarbaTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertOnBattlefield(player1, "Darba");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
@@ -35,7 +36,7 @@ class DarbaTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, false));
 
         harness.assertNotOnBattlefield(player1, "Darba");
         harness.assertInGraveyard(player1, "Darba");
@@ -49,7 +50,7 @@ class DarbaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertNotOnBattlefield(player1, "Darba");
         harness.assertInGraveyard(player1, "Darba");
@@ -75,7 +76,7 @@ class DarbaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, false));
 
         harness.assertNotOnBattlefield(player1, "Darba");
         harness.assertInGraveyard(player1, "Darba");
@@ -91,7 +92,7 @@ class DarbaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertNotOnBattlefield(player1, "Darba");
         harness.assertInGraveyard(player1, "Darba");
@@ -107,7 +108,7 @@ class DarbaTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertNotOnBattlefield(player1, "Darba");
         harness.assertInGraveyard(player1, "Darba");

@@ -13,6 +13,6 @@ public class DevilishValet extends Card {
 
     public DevilishValet() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new BoostSelfEffect(new SourcePower(), new Fixed(0)));
+                new BoostSelfEffect(new SourcePower(true), new Fixed(0)));
     }
 }

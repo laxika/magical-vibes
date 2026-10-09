@@ -87,6 +87,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class MultiPermanentChoiceHandlerService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
@@ -3264,6 +3267,10 @@ public class MultiPermanentChoiceHandlerService {
     private void handleDevourSacrifice(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                        MultiPermanentChoiceContext.DevourSacrifice context) {
         Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
+        var nativeRequest = gameData.pendingBattlefieldEntryRequests.values().stream()
+                .filter(request -> request.permanent().getId().equals(context.enteringPermanentId()))
+                .findFirst().orElse(null);
+        if (entering == null && nativeRequest != null) entering = nativeRequest.permanent();
 
         int devoured = 0;
         for (UUID permId : permanentIds) {
@@ -3272,10 +3279,10 @@ public class MultiPermanentChoiceHandlerService {
                 if (entering != null) {
                     entering.recordDevouredCreature(perm.getCard());
                 }
-                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
                 devoured++;
             }
         }
+        destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (entering != null && devoured > 0) {
@@ -3294,6 +3301,14 @@ public class MultiPermanentChoiceHandlerService {
                         " devours " + devoured + " creature" + (devoured == 1 ? "" : "s")
                                 + " and enters with " + added + " +1/+1 counter" + (added == 1 ? "" : "s") + "."));
             }
+        }
+
+        if (nativeRequest != null && gameData.pendingBattlefieldEntryBatch != null) {
+            battlefieldEntryBatchSupport.completeNativeDevourChoice(gameData, entering);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            }
+            return;
         }
 
         // Resume the entry: run ETB triggers now that the devour counters/count are set.
@@ -3326,9 +3341,8 @@ public class MultiPermanentChoiceHandlerService {
                 sacrificed.add(perm);
             }
         }
-        for (Permanent perm : sacrificed) {
-            destructionSupport.sacrificeAndLog(gameData, perm, playerId);
-        }
+        destructionSupport.performSimultaneousSacrifice(gameData,
+                sacrificed.stream().map(Permanent::getId).toList());
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (entering != null) {
@@ -4008,7 +4022,7 @@ public class MultiPermanentChoiceHandlerService {
         // untap; permanents the filter excludes untap normally, and the rest of the untap-step
         // bookkeeping and turn advance proceed as normal.
         turnProgressionService.resumeStaticOrbUntap(gameData, activePlayerId, new HashSet<>(permanentIds),
-                context.filter());
+                context.filter(), context.remainingRestrictions(), context.excludedIds());
     }
 
     private void handleCapriciousEfreetOpponentTargets(GameData gameData, List<UUID> permanentIds) {

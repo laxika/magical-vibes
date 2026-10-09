@@ -149,7 +149,8 @@ class DeadapultTest extends BaseCardTest {
 
         harness.activateAbility(player1, 2, null, deadapult.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, CardSubtype.ZOMBIE.name());
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN,
+                () -> harness.handleListChoice(player1, CardSubtype.ZOMBIE.name()));
 
         activateDeadapult(player2.getId());
         harness.assertInGraveyard(player1, "Deadapult");

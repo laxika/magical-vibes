@@ -76,7 +76,7 @@ public class MayPayManaAndSacrificePermanentHandler implements MayEffectHandlerB
                         + effect.permanentDescription() + " for ", ability.sourceCard(), "."));
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificePermanentThen(
-                        controllerId, ability.sourceCard(), effect.thenEffect()));
+                        controllerId, ability.sourceCard(), effect.thenEffect(), ability.sourcePermanentId(), false));
         playerInputService.beginPermanentChoice(
                 gameData,
                 controllerId,

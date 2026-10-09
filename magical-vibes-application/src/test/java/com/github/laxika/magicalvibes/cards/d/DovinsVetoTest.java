@@ -89,13 +89,13 @@ class DovinsVetoTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(might, secondVeto));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setHand(player2, List.of(firstVeto));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, might.getId());
         harness.castAndResolveInstant(player1, 0, firstVeto.getId());
@@ -120,12 +120,12 @@ class DovinsVetoTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(might, new Cancel()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.setHand(player2, List.of(veto));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, might.getId());
         harness.castAndResolveInstant(player1, 0, might.getId());

@@ -42,7 +42,9 @@ public class SoulBurnEffectHandler implements NormalEffectHandlerBean {
         }
 
         int x = entry.getXValue();
-        int blackOnX = gameData.getSpellCastManaSpentOnX(entry.getCard().getId(), ManaColor.BLACK);
+        int blackOnX = ((SoulBurnEffect) effect).capLifeByBlackManaSpent()
+                ? gameData.getSpellCastManaSpentOnX(entry.getCard().getId(), ManaColor.BLACK)
+                : Integer.MAX_VALUE;
 
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
         Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);

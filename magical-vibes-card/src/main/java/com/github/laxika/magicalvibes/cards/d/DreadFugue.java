@@ -22,12 +22,12 @@ public class DreadFugue extends Card {
         addCastingOption(AlternateHandCast.cleave("{2}{B}", null));
 
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new CastForAlternateCost(),
+                new NotCondition(new CastForAlternateCost()),
                 new ChooseCardsFromTargetHandEffect(
                         1, List.of(CardType.LAND), new CardMaxManaValuePredicate(2),
                         HandChoiceDestination.DISCARD)));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new NotCondition(new CastForAlternateCost()),
+                new CastForAlternateCost(),
                 new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND),
                         HandChoiceDestination.DISCARD)));
     }

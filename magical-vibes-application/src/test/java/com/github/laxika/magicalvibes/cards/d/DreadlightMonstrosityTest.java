@@ -144,7 +144,7 @@ class DreadlightMonstrosityTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(monstrosity.isCantBeBlocked()).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(monstrosity.isCantBeBlocked()).isFalse();
     }

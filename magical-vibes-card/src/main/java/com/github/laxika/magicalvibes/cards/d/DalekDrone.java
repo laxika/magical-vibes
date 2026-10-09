@@ -16,8 +16,8 @@ public class DalekDrone extends Card {
 
     public DalekDrone() {
         target(TargetFilters.creatureAnOpponentControls())
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

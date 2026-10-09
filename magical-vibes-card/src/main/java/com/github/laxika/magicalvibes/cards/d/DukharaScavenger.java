@@ -19,6 +19,7 @@ public class DukharaScavenger extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)
+                        .targetGraveyard(true)
                         .filter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardTypePredicate(CardType.CREATURE)

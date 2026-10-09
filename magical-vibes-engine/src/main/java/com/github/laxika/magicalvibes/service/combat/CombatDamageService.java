@@ -583,14 +583,12 @@ public class CombatDamageService {
             }
         });
 
-        // Collect ON_DEALT_DAMAGE trigger data before dead creatures are removed from battlefield
-        List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
-
         // All combat damage of this step is applied as one simultaneous recording (CR 510.4):
         // marked damage + deathtouch flags on creatures, life loss on the player, loyalty on
         // planeswalkers. Nothing dies here — the state-based action check below is the single
         // place combat casualties are determined (CR 704.5f/5g/5h/5i).
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
+        List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
         gameData.combatSharedDamagePreventionAllocations.clear();
         applyPendingDralnuReplacements(gameData, state);
         applyPlaneswalkerDamage(gameData, state);
@@ -677,6 +675,11 @@ public class CombatDamageService {
             }
         });
         Map<UUID, Permanent> damagedCreatureSnapshots = snapshotCombatDamagedCreatures(gameData, state);
+        int beforeGlobalDamageTriggers = gameData.stack.size();
+        processAnyCreatureDealtDamageTriggers(gameData, state, damagedCreatureSnapshots);
+        List<StackEntry> globalDamageTriggers = new ArrayList<>(
+                gameData.stack.subList(beforeGlobalDamageTriggers, gameData.stack.size()));
+        gameData.stack.subList(beforeGlobalDamageTriggers, gameData.stack.size()).clear();
         snapshotDelayedCombatDamageDrawSources(gameData, state);
         snapshotDelayedCombatDamageLookAtHandAndDrawSources(gameData, state, defenderId);
         snapshotSelfDealsDamageEffects(gameData, state);
@@ -720,6 +723,7 @@ public class CombatDamageService {
                 gameData.id, state.damageToDefendingPlayer, deadCreatureIds.size());
 
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
+        gameData.stack.addAll(globalDamageTriggers);
 
         // Death triggers were already collected by the SBA pass above. They must remain on the
         // stack for normal priority rather than being folded into the engine's auto-resolved
@@ -756,8 +760,7 @@ public class CombatDamageService {
         // Process combat-damage-received triggers (e.g. Wall of Essence)
         processCombatDamageReceivedTriggers(gameData, dealtDamageTriggerData);
 
-        // Process ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
-        processAnyCreatureDealtDamageTriggers(gameData, state, damagedCreatureSnapshots);
+
 
         // Process ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
         for (var entry : state.defDamageTaken.entrySet()) {
@@ -1072,7 +1075,10 @@ public class CombatDamageService {
                 && gameQueryService.isCreature(gameData, def))));
         if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)
                 && assignments.getOrDefault(overflowTargetId, 0) > 0
-                && !usesDefendingPlayerOrCreatureAssignment) {
+                && !usesDefendingPlayerOrCreatureAssignment
+                && !(assignsCombatDamageAsThoughUnblocked(gameData, atk)
+                && assignments.entrySet().stream().noneMatch(e ->
+                        !e.getKey().equals(overflowTargetId) && e.getValue() > 0))) {
             boolean atkHasDeathtouchForValidation = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
             for (int blkIdx : livingBlockers) {
                 Permanent blk = defBf.get(blkIdx);
@@ -2990,6 +2996,7 @@ public class CombatDamageService {
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
                         List.of(delayed.triggerEffect()));
+                trigger.setSourcePermanentId(delayed.sourcePermanentId());
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
@@ -3865,8 +3872,9 @@ public class CombatDamageService {
             int idx = entry.getKey();
             if (idx >= battlefield.size()) continue;
             Permanent perm = battlefield.get(idx);
-            if (entry.getValue() > 0 && damageSupport.hasDralnuDamageReplacement(perm)) {
+            if (entry.getValue() > 0 && damageSupport.hasDralnuDamageReplacement(gameData, perm)) {
                 queueDralnuReplacement(state, perm, entry.getValue());
+                reconcileCombatDamageToCreature(state, perm.getId(), Map.of());
                 processPendingRedirectDamage(gameData);
                 continue;
             }
@@ -3874,7 +3882,8 @@ public class CombatDamageService {
             // sources whose damage can't be prevented.
             int unpreventable = Math.min(entry.getValue(), unpreventableDamageTaken.getOrDefault(idx, 0));
             int sourceSpecificDamage = entry.getValue();
-            Map<UUID, Integer> bySource = damageTakenBySource.getOrDefault(idx, Map.of());
+            Map<UUID, Integer> bySource = new LinkedHashMap<>(
+                    damageTakenBySource.getOrDefault(idx, Map.of()));
             if (!perm.isDamageCantBePreventedOrRedirectedThisTurn() && !bySource.isEmpty()) {
                 sourceSpecificDamage = 0;
                 boolean shufflePermanent = false;
@@ -3892,12 +3901,15 @@ public class CombatDamageService {
                         sourceDamage = damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
                                 gameData, perm, damageSource, sourceDamage, true);
                     }
-                    sourceSpecificDamage += sourceDamagePreventable
+                    int damageAfterPrevention = sourceDamagePreventable
                             ? damagePreventionService.applySelfDamagePreventionShield(gameData, perm, sourceDamage)
                             : sourceDamage;
+                    sourceEntry.setValue(damageAfterPrevention);
+                    sourceSpecificDamage += damageAfterPrevention;
                 }
                 if (shufflePermanent) {
                     permanentsToShuffle.put(perm.getId(), perm);
+                    reconcileCombatDamageToCreature(state, perm.getId(), Map.of());
                     continue;
                 }
             }
@@ -3916,9 +3928,9 @@ public class CombatDamageService {
                     perm.setToughnessAsLoyalty(
                             gameQueryService.getToughnessAsLoyalty(perm) - dmg);
                 }
-                Map<UUID, Integer> attributedDamage = toughnessAsLoyalty
-                        ? Map.of()
-                        : recordCombatMarkedDamage(perm, dmg, bySource);
+                Map<UUID, Integer> attributedDamage = recordCombatMarkedDamage(
+                        perm, dmg, bySource, !toughnessAsLoyalty);
+                reconcileCombatDamageToCreature(state, perm.getId(), attributedDamage);
                 gameData.recordDamageToPermanent(perm.getId(), dmg);
                 triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, perm, dmg);
                 attributedDamage.forEach((sourceId, amount) -> {
@@ -3943,10 +3955,34 @@ public class CombatDamageService {
                     perm.setDamagedByDeathtouch(true);
                 }
             }
+            if (dmg == 0) {
+                reconcileCombatDamageToCreature(state, perm.getId(), Map.of());
+            }
             processPendingRedirectDamage(gameData);
         }
         for (Permanent permanent : permanentsToShuffle.values()) {
             permanentRemovalService.removePermanentToLibraryShuffled(gameData, permanent);
+        }
+    }
+
+    /** Updates damage-trigger and lifelink totals after creature damage prevention. */
+    private static void reconcileCombatDamageToCreature(CombatDamageState state, UUID targetId,
+                                                        Map<UUID, Integer> actualBySource) {
+        for (var sourceEntry : state.combatDamageAmountsToCreatures.entrySet()) {
+            Permanent source = sourceEntry.getKey();
+            Map<UUID, Integer> amounts = sourceEntry.getValue();
+            Integer assigned = amounts.get(targetId);
+            if (assigned == null) continue;
+            int dealt = actualBySource.getOrDefault(source.getId(), 0);
+            state.combatDamageDealt.computeIfPresent(source,
+                    (ignored, total) -> Math.max(0, total - assigned + dealt));
+            if (dealt == 0) {
+                amounts.remove(targetId);
+                List<UUID> recipients = state.combatDamageDealtToCreatures.get(source);
+                if (recipients != null) recipients.removeIf(targetId::equals);
+            } else {
+                amounts.put(targetId, dealt);
+            }
         }
     }
 
@@ -3969,18 +4005,19 @@ public class CombatDamageService {
      * prevention shield reduced the step total below the sum of per-source contributions).
      */
     private static Map<UUID, Integer> recordCombatMarkedDamage(Permanent perm, int dmg,
-                                                                Map<UUID, Integer> bySource) {
+                                                                Map<UUID, Integer> bySource,
+                                                                boolean markDamage) {
         if (bySource.isEmpty()) {
-            perm.addMarkedDamage(null, dmg);
+            if (markDamage) perm.addMarkedDamage(null, dmg);
             return Map.of();
         }
         int sourceSum = bySource.values().stream().mapToInt(Integer::intValue).sum();
         if (sourceSum <= 0) {
-            perm.addMarkedDamage(null, dmg);
+            if (markDamage) perm.addMarkedDamage(null, dmg);
             return Map.of();
         }
         if (sourceSum == dmg) {
-            bySource.forEach(perm::addMarkedDamage);
+            if (markDamage) bySource.forEach(perm::addMarkedDamage);
             return Map.copyOf(bySource);
         }
         int remaining = dmg;
@@ -3993,12 +4030,12 @@ public class CombatDamageService {
                     : (int) Math.round((double) e.getValue() * dmg / sourceSum);
             portion = Math.max(0, Math.min(portion, remaining));
             if (portion > 0) {
-                perm.addMarkedDamage(e.getKey(), portion);
+                if (markDamage) perm.addMarkedDamage(e.getKey(), portion);
                 attributedDamage.put(e.getKey(), portion);
                 remaining -= portion;
             }
         }
-        if (remaining > 0) {
+        if (remaining > 0 && markDamage) {
             perm.addMarkedDamage(null, remaining);
         }
         return Map.copyOf(attributedDamage);
@@ -4469,42 +4506,7 @@ public class CombatDamageService {
      * life handling to avoid re-entering combat damage accumulation.
      */
     private void processEyeForAnEyeReflections(GameData gameData) {
-        if (gameData.pendingEyeForAnEyeReflections.isEmpty()) return;
-
-        List<com.github.laxika.magicalvibes.model.EyeForAnEyeReflection> toProcess =
-                new ArrayList<>(gameData.pendingEyeForAnEyeReflections);
-        gameData.pendingEyeForAnEyeReflections.clear();
-
-        for (var reflection : toProcess) {
-            UUID targetId = reflection.targetPlayerId();
-            String targetName = gameData.playerIdToName.get(targetId);
-            gameLogService.append(gameData, GameLog.cardThen(reflection.eyeCard(),
-                    " deals " + reflection.amount() + " damage to " + targetName + "."));
-
-            int effective = damagePreventionService.applyChannelHarmPrevention(
-                    gameData, targetId, reflection.eyeControllerId(), reflection.amount());
-            effective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, effective);
-            processPendingRedirectDamage(gameData);
-            effective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                    gameData, targetId, effective);
-
-            if (effective > 0) {
-                if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
-                    int lifeLoss = effective
-                            * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
-                    gameData.playerLifeTotals.put(targetId,
-                            gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
-                }
-                gameData.recordDamageToPlayer(targetId, effective,
-                        reflection.eyeCard().hasType(CardType.ARTIFACT) ? effective : 0);
-                triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
-                        gameData, targetId, effective);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(
-                        gameData, targetId, null, effective);
-                triggerCollectionService.checkControllerDealtDamageTriggers(
-                        gameData, targetId, reflection.eyeControllerId(), effective);
-            }
-        }
+        damageSupport.processEyeForAnEyeReflections(gameData);
     }
 
     private void accumulatePlayerDamage(GameData gameData, Permanent atk, CombatantStats atkStats,
@@ -5104,7 +5106,7 @@ public class CombatDamageService {
                                                    Set<Integer> deathtouchDamagedSet,
                                                    Map<Integer, Map<UUID, Integer>> damageTakenBySourceMap) {
         if (target.isDamageCantBePreventedOrRedirectedThisTurn()) {
-            if (damage > 0 && damageSupport.hasDralnuDamageReplacement(target)) {
+            if (damage > 0 && damageSupport.hasDralnuDamageReplacement(gameData, target)) {
                 queueDralnuReplacement(state, target, damage);
                 return;
             }
@@ -5170,7 +5172,7 @@ public class CombatDamageService {
         damage = damagePreventionService.applyCreatureRedirectShields(
                 gameData, target.getId(), source.getId(), damage, true);
         processSourceRedirectDamage(gameData, state);
-        if (damage > 0 && damageSupport.hasDralnuDamageReplacement(target)) {
+        if (damage > 0 && damageSupport.hasDralnuDamageReplacement(gameData, target)) {
             queueDralnuReplacement(state, target, damage);
             return;
         }
@@ -5528,7 +5530,7 @@ public class CombatDamageService {
         if (defBf == null) {
             return activeId;
         }
-        if (defendingPlayerAssignsCombatDamage(attacker, defBf, defenderId)) {
+        if (defendingPlayerAssignsCombatDamage(gameData, attacker, defBf, defenderId)) {
             return defenderId;
         }
         for (int blkIdx : livingBlockers) {
@@ -5543,17 +5545,16 @@ public class CombatDamageService {
         return activeId;
     }
 
-    private boolean defendingPlayerAssignsCombatDamage(Permanent attacker, List<Permanent> defBf,
+    private boolean defendingPlayerAssignsCombatDamage(GameData gameData, Permanent attacker, List<Permanent> defBf,
                                                         UUID defenderId) {
         UUID attackTarget = attacker.getAttackTarget();
         if (attackTarget != null && !attackTarget.equals(defenderId)) {
             return false;
         }
         for (Permanent permanent : defBf) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof DefendingPlayerAssignsCombatDamageEffect) {
-                    return true;
-                }
+            if (gameQueryService.hasActiveStaticEffect(gameData, permanent,
+                    DefendingPlayerAssignsCombatDamageEffect.class)) {
+                return true;
             }
         }
         return false;

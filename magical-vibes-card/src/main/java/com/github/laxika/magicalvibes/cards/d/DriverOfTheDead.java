@@ -18,11 +18,9 @@ import java.util.List;
 public class DriverOfTheDead extends Card {
 
     public DriverOfTheDead() {
-        // When this creature dies, return target creature card with mana value 2 or less from your
-        // graveyard to the battlefield. The creature card is chosen from the controller's graveyard
-        // when the death trigger resolves.
         addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .targetGraveyard(true)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardMaxManaValuePredicate(2))))

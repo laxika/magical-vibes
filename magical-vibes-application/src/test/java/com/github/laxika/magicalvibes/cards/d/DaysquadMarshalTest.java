@@ -26,7 +26,7 @@ class DaysquadMarshalTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(1);
     }
 
     @Test

@@ -60,7 +60,8 @@ public class ExileTargetCreatureAndSameNameControlledByItsControllerThenInvestig
         }
 
         String targetName = target.getCard().getName();
-        List<Permanent> toExile = collectSameNameCreatures(gameData, controllerId, targetName);
+        List<Permanent> toExile = target.isFaceDown()
+                ? List.of(target) : collectSameNameCreatures(gameData, controllerId, targetName);
         int nontokenCount = (int) toExile.stream().filter(permanent -> !permanent.getCard().isToken()).count();
 
         for (Permanent permanent : toExile) {
@@ -71,9 +72,9 @@ public class ExileTargetCreatureAndSameNameControlledByItsControllerThenInvestig
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        if (nontokenCount > 0) {
+        for (int i = 0; i < nontokenCount; i++) {
             permanentControlSupport.applyCreateToken(gameData, controllerId,
-                    CreateTokenEffect.ofClueToken(nontokenCount), entry.getCard().getSetCode());
+                    CreateTokenEffect.ofClueToken(1), entry.getCard().getSetCode());
             triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
         }
     }
@@ -88,6 +89,7 @@ public class ExileTargetCreatureAndSameNameControlledByItsControllerThenInvestig
         List<Permanent> matches = new ArrayList<>();
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)
+                    && !permanent.isFaceDown()
                     && permanent.getCard().getName().equals(targetName)) {
                 matches.add(permanent);
             }

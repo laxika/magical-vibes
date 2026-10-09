@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffec
 public class DeepcavernImp extends Card {
 
     public DeepcavernImp() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addEffect(EffectSlot.STATIC,
                 new RegisterEchoAtNextUpkeepEffect(new DiscardCardTypeCost(null, null)));
     }
 }

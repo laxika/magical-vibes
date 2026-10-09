@@ -14,6 +14,6 @@ public class DeviousCoverUp extends Card {
 
     public DeviousCoverUp() {
         addEffect(EffectSlot.SPELL, new CounterSpellEffect(CounteredSpellDestination.EXILE));
-        addEffect(EffectSlot.SPELL, new ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect(null, 4));
+        addEffect(EffectSlot.SPELL, ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect.optional(null, 4));
     }
 }

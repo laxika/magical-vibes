@@ -29,8 +29,31 @@ public record SacrificePermanentThenEffect(
         CardEffect thenEffect,
         String permanentDescription,
         boolean targetBeforeSacrifice,
-        boolean reflexive
-) implements CardEffect {
+        boolean reflexive,
+        boolean excludeGrantingPermanent
+) implements GrantingPermanentAwareEffect {
+
+    public SacrificePermanentThenEffect(PermanentPredicate filter, CardEffect thenEffect,
+                                        String permanentDescription, boolean targetBeforeSacrifice,
+                                        boolean reflexive) {
+        this(filter, thenEffect, permanentDescription, targetBeforeSacrifice, reflexive, false);
+    }
+
+    /** Excludes only the permanent granting this ability, even when another copy has the same name. */
+    public SacrificePermanentThenEffect excludingGrantingPermanent() {
+        return new SacrificePermanentThenEffect(filter, thenEffect, permanentDescription,
+                targetBeforeSacrifice, reflexive, true);
+    }
+
+    @Override
+    public CardEffect withGrantingPermanentId(java.util.UUID permanentId) {
+        if (!excludeGrantingPermanent) return this;
+        PermanentPredicate boundFilter = new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(
+                java.util.List.of(filter, new com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate(
+                        new com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate(permanentId))));
+        return new SacrificePermanentThenEffect(boundFilter, thenEffect, permanentDescription,
+                targetBeforeSacrifice, reflexive, false);
+    }
 
     public SacrificePermanentThenEffect(
         PermanentPredicate filter, CardEffect thenEffect, String permanentDescription) {

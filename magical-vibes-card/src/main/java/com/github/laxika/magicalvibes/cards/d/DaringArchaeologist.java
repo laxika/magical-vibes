@@ -25,6 +25,7 @@ public class DaringArchaeologist extends Card {
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.ARTIFACT))
+                        .targetGraveyard(true)
                         .build(),
                 "Return an artifact card from your graveyard to your hand?"
         ));

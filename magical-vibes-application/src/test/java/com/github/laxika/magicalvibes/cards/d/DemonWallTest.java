@@ -36,7 +36,8 @@ class DemonWallTest extends BaseCardTest {
         wall.setCounterCount(CounterType.CHARGE, 1);
         beginDeclareAttackers();
 
-        gs.declareAttackers(gd, player1, List.of(indexOf(wall)));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(indexOf(wall))));
 
         assertThat(wall.isAttacking()).isTrue();
     }
@@ -54,7 +55,8 @@ class DemonWallTest extends BaseCardTest {
         assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
         beginDeclareAttackers();
-        gs.declareAttackers(gd, player1, List.of(indexOf(wall)));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(indexOf(wall))));
 
         assertThat(wall.isAttacking()).isTrue();
     }

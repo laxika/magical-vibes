@@ -34,8 +34,8 @@ public class DoranBesiegedByTime extends Card {
                 CostModificationScope.SELF));
 
         DynamicAmount difference = new Max(
-                new Sum(new TargetPower(), new Scaled(new TargetToughness(), -1)),
-                new Sum(new TargetToughness(), new Scaled(new TargetPower(), -1)));
+                new Sum(new TargetPower(true), new Scaled(new TargetToughness(), -1)),
+                new Sum(new TargetToughness(), new Scaled(new TargetPower(true), -1)));
         BoostTargetCreatureEffect boost = new BoostTargetCreatureEffect(difference, difference);
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, boost);
         addEffect(EffectSlot.ON_ANY_CREATURE_BLOCKS, new TriggeringPermanentConditionalEffect(

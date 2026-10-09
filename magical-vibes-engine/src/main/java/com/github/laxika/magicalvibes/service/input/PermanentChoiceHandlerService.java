@@ -637,6 +637,8 @@ public class PermanentChoiceHandlerService {
             spellHandler.handleLibraryCastSpellTarget(gameData, permanentId, lct);
         } else if (context instanceof PermanentChoiceContext.FreeCastSacrificeCost sacrificeCost) {
             exileFreeCastQueueSupport.completeSacrificeCost(gameData, permanentId, sacrificeCost);
+        } else if (context instanceof PermanentChoiceContext.FreeCastBeholdCost beholdCost) {
+            exileFreeCastQueueSupport.completeBeholdCost(gameData, permanentId, beholdCost);
         } else if (context instanceof PermanentChoiceContext.ExileCastSpellTarget ect) {
             spellHandler.handleExileCastSpellTarget(gameData, permanentId, ect);
         } else if (context instanceof PermanentChoiceContext.ChandraTorchCastSpellTarget ctc) {

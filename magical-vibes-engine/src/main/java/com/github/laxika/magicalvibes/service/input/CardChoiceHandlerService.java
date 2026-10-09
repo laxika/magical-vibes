@@ -2815,7 +2815,7 @@ public class CardChoiceHandlerService {
     }
 
     private void attachSourceEquipmentToPermanent(GameData gameData, UUID equipmentCardId, Permanent target) {
-        Permanent equipment = equipSupport.findEquipmentByCardId(gameData, equipmentCardId);
+        Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentCardId);
         if (equipment == null) {
             return;
         }

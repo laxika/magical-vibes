@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class DragonsEyeSavants extends Card {
 
     public DragonsEyeSavants() {
-        addMorph("{1}{U}", new CardColorPredicate(CardColor.BLUE), "blue");
+        addMorphWithRevealCost(new CardColorPredicate(CardColor.BLUE), "blue");
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

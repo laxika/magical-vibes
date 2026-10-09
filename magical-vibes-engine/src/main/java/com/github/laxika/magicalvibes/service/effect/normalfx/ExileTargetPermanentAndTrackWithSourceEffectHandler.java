@@ -43,7 +43,8 @@ public class ExileTargetPermanentAndTrackWithSourceEffectHandler implements Norm
         }
 
         if (sourcePermanentId != null) {
-            exileSupport.exilePermanentAndTrackWithSource(gameData, target, sourcePermanentId, entry.getCard());
+            exileSupport.exilePermanentAndTrackWithSource(gameData, target, sourcePermanentId, entry.getCard(),
+                    ((ExileTargetPermanentAndTrackWithSourceEffect) effect).abilityLink());
         } else {
             exileSupport.exilePermanentAndLog(gameData, target, entry.getCard().getName());
         }

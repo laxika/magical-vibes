@@ -16,7 +16,7 @@ class DaringThunderThiefTest extends BaseCardTest {
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
         harness.castFromHand(player1, new DaringThunderThief(), "{3}{U}");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         Permanent thief = findPermanent(player1, "Daring Thunder-Thief");
         assertThat(thief.isTapped()).isTrue();
@@ -41,7 +41,7 @@ class DaringThunderThiefTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castFromHand(player1, new DaringThunderThief(), "{3}{U}");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(findPermanent(player1, "Daring Thunder-Thief").isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();

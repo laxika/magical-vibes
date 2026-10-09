@@ -39,14 +39,15 @@ public class DistantMemoriesEffectHandler implements NormalEffectHandlerBean {
 
     private void doResolve(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
-        if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
+        boolean searchPrevented = librarySearchSupport.isSearchPrevented(gameData, controllerId);
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        if (deck == null || deck.isEmpty()) {
+        if (searchPrevented || deck == null || deck.isEmpty()) {
+            com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             // Empty library: no card to exile, but the "if no player does" clause still triggers — draw 3
-            String logMsg = playerName + " searches their library but it is empty. " + playerName + " draws three cards.";
+            String logMsg = playerName + " finds no card, shuffles, and draws three cards.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             for (int i = 0; i < 3; i++) {
                 drawService.resolveDrawCard(gameData, controllerId);

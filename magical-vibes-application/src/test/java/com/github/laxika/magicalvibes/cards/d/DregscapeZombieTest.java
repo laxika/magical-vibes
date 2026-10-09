@@ -30,7 +30,7 @@ class DregscapeZombieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Dregscape Zombie");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Dregscape Zombie");
     }
 
@@ -44,7 +44,7 @@ class DregscapeZombieTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Dregscape Zombie");

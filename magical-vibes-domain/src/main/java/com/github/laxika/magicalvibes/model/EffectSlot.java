@@ -1533,6 +1533,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers}.
      *  Used by Night Dealings. */
     ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
+
+    /** A controlled source deals damage to any player, including its controller. */
+    ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER,
     /** Triggers whenever one or more creatures the controller controls deal damage to a player. */
     ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER,
     /** Triggers whenever one or more creatures the controller controls deal damage to an opponent. */

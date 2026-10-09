@@ -18,9 +18,10 @@ public class DreamspoilerWitches extends Card {
         // Flying (auto-loaded from Scryfall).
         // Whenever you cast a spell during an opponent's turn, you may have target creature get
         // -1/-1 until end of turn.
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(null, List.of(new BoostTargetCreatureEffect(-1, -1)), true),
-                "Have target creature get -1/-1 until end of turn?"
-        ));
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
+                new SpellCastTriggerEffect(null, List.of(new MayEffect(
+                        new BoostTargetCreatureEffect(-1, -1),
+                        "Have target creature get -1/-1 until end of turn?")),
+                        null, TargetFilters.creature(), null, true, false));
     }
 }

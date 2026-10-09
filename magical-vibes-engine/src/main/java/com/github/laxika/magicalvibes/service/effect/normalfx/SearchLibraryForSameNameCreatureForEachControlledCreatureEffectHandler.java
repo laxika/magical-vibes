@@ -58,18 +58,20 @@ public class SearchLibraryForSameNameCreatureForEachControlledCreatureEffectHand
         if (names.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " controls no creatures."));
             log.info("Game {} - {} controls no creatures for Doubling Chant", gameData.id, playerName);
-            return;
         }
 
+        var followUp = LibrarySearchFollowUp.sameNamePicks(
+                names, true, LibrarySearchDestination.BATTLEFIELD);
+        followUp = followUp.withRemainingSameNamePicks(new LibrarySearchFollowUp.SameNamePickQueue(
+                names, true, LibrarySearchDestination.BATTLEFIELD, controllerId, controllerId,
+                true, true, List.of()));
         if (librarySearchSupport.startNextSameNamePick(gameData, controllerId,
-                LibrarySearchFollowUp.sameNamePicks(names, true, LibrarySearchDestination.BATTLEFIELD))) {
+                followUp)) {
             return;
         }
 
-        if (!librarySearchSupport.isSearchPrevented(gameData, controllerId)) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameLogService.append(gameData, GameLog.text(
-                    playerName + " finds no matching creature cards. Library is shuffled."));
-        }
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        gameLogService.append(gameData, GameLog.text(
+                playerName + " finds no matching creature cards. Library is shuffled."));
     }
 }

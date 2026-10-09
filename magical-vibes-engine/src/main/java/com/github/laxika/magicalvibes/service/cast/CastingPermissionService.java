@@ -430,7 +430,7 @@ public class CastingPermissionService {
 
     private void addDampingEngineRestrictedTypes(GameData gameData, UUID playerId, Set<CardType> restricted) {
         if (!controlsMorePermanentsThanEachOtherPlayer(gameData, playerId)) return;
-        if (hasActiveDampingEngine(gameData)) {
+        if (hasActiveDampingEngine(gameData, playerId)) {
             restricted.addAll(DAMPING_ENGINE_SPELL_TYPES);
         }
     }
@@ -468,7 +468,7 @@ public class CastingPermissionService {
                 return true;
             }
         }
-        if (controlsMorePermanentsThanEachOtherPlayer(gameData, playerId) && hasActiveDampingEngine(gameData)) {
+        if (controlsMorePermanentsThanEachOtherPlayer(gameData, playerId) && hasActiveDampingEngine(gameData, playerId)) {
             return true;
         }
         return false;
@@ -489,11 +489,11 @@ public class CastingPermissionService {
                 .anyMatch(affectedPlayers -> affectedPlayers.contains(playerId));
     }
 
-    private boolean hasActiveDampingEngine(GameData gameData) {
+    private boolean hasActiveDampingEngine(GameData gameData, UUID playerId) {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (permanent.isDampingEngineEffectIgnoredThisTurn()) continue;
+                if (permanent.isDampingEngineEffectIgnoredThisTurn(playerId)) continue;
                 if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(DampingEngineEffect.class::isInstance)) {

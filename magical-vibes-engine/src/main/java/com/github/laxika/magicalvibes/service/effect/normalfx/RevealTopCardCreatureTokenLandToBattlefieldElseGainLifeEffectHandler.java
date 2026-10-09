@@ -56,14 +56,15 @@ public class RevealTopCardCreatureTokenLandToBattlefieldElseGainLifeEffectHandle
 
         if (topCard.hasType(CardType.CREATURE)) {
             createTokenEffectHandler.resolve(gameData, entry, e.creatureToken());
-        } else if (topCard.hasType(CardType.LAND)) {
+        }
+        if (topCard.hasType(CardType.LAND)) {
             deck.removeFirst();
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, new Permanent(topCard));
             gameLogService.append(gameData, GameLog.entersBattlefieldUnder(topCard, playerName));
 
             log.info("Game {} - {} puts {} onto the battlefield ({})",
                     gameData.id, playerName, topCard.getName(), sourceName);
-        } else {
+        } else if (!topCard.hasType(CardType.CREATURE)) {
             lifeSupport.applyGainLife(gameData, controllerId, e.lifeGain(), sourceName,
                     entry.getCard(), entry.getEntryType());
         }

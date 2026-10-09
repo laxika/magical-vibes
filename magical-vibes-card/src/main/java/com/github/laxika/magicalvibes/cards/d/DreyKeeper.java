@@ -30,7 +30,7 @@ public class DreyKeeper extends Card {
                 "{3}{B}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 0, squirrels),
-                        new GrantKeywordEffect(Set.of(Keyword.MENACE), GrantScope.OWN_CREATURES, squirrels)
+                        new GrantKeywordEffect(Set.of(Keyword.MENACE), GrantScope.ALL_OWN_CREATURES, squirrels)
                 ),
                 "{3}{B}: Squirrels you control get +1/+0 and gain menace until end of turn."
         ));

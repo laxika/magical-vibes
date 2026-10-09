@@ -33,7 +33,7 @@ public class DreadshipReef extends Card {
 
         // {1}, Remove X storage counters from this land: Add X mana in any combination of {U} and/or {B}.
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{1}",
                 List.of(new RemoveCountersForManaEffect(
                         List.of(ManaColor.BLUE, ManaColor.BLACK), CounterType.STORAGE)),

@@ -1150,6 +1150,11 @@ public class DamageTriggerCollectorService {
                 null,
                 aura.getId());
         entry.setEventValue(dc.damageDealt());
+        entry.setTriggeringPermanentId(dc.damagedCreature().getId());
+        entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(
+                match.gameData(), dc.damagedCreature().getId()));
+        entry.setSourcePermanentSnapshot(new Permanent(aura));
+        entry.setNonTargeting(true);
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(aura.getCard()));
@@ -1442,6 +1447,8 @@ public class DamageTriggerCollectorService {
 
     @CollectsTrigger(value = DrawCardIfEventValueAtLeastEffect.class,
             slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT)
+    @CollectsTrigger(value = DrawCardIfEventValueAtLeastEffect.class,
+            slot = EffectSlot.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER)
     private boolean handleAllySourceDealtDamageToOpponentThresholdDraw(
             TriggerMatchContext match, DrawCardIfEventValueAtLeastEffect effect, TriggerContext ctx) {
         return queueAllySourceDealtDamageToOpponentTrigger(match, effect, ctx);

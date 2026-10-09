@@ -60,7 +60,7 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
             Card imprintedCard = exiled.card();
             gameData.exiledCards.replaceAll(card -> card.card().getId().equals(imprintedCard.getId())
                     ? new ExiledCardEntry(card.card(), card.ownerId(), card.sourcePermanentId(), false,
-                            card.exilerId(), card.exiledTurnNumber(), card.controllerTurnsTakenAtExile())
+                            card.exilerId(), card.exiledTurnNumber(), card.controllerTurnsTakenAtExile(), card.abilityLink())
                     : card);
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " turns the exiled card face up: ", imprintedCard, "."));

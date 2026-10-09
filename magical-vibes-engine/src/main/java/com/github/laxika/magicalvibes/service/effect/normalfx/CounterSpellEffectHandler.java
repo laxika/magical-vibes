@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,7 +39,10 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
                 .orElse(null);
         if (targetOnStack != null) {
             entry.setCounteredSpellControllerId(targetOnStack.getControllerId());
-            entry.setEventValue(targetOnStack.getTargetingCard().getManaValue() + targetOnStack.getXValue());
+            Card targetingCard = targetOnStack.getTargetingCard();
+            int xSymbols = targetingCard.getManaCost() == null
+                    ? 0 : new ManaCost(targetingCard.getManaCost()).getXSymbolCount();
+            entry.setEventValue(targetingCard.getManaValue() + targetOnStack.getXValue() * xSymbols);
         }
 
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);

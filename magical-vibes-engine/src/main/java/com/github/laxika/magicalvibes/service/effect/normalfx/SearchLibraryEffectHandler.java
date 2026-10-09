@@ -210,7 +210,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         LibrarySearchParams.Builder params = LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
                         .remainingCount(count)
                         .reveals(reveals(restricted, destination))
-                        .canFailToFind(restricted)
+                        .canFailToFind(restricted || effect.optionalCount())
                         .destination(destination)
                         .topLibraryPosition(effect.topLibraryPosition())
                         .topLibraryCardLimit(topLibraryCardLimit)

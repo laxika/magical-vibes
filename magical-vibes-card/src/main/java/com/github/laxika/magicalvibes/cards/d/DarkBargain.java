@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class DarkBargain extends Card {
 
     public DarkBargain() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 2));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 2));
         addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
     }
 }

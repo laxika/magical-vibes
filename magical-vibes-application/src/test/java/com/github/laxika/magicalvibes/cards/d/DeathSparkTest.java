@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AgentOfStromgald;
 import com.github.laxika.magicalvibes.cards.a.ArcaneDenial;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -149,7 +150,7 @@ class DeathSparkTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(eligibleSpark).doesNotContain(buriedSpark);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(buriedSpark).doesNotContain(eligibleSpark);

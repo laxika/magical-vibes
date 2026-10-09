@@ -153,6 +153,7 @@ class DisruptorOfCurrentsTest extends BaseCardTest {
     @Test
     @DisplayName("A permanent controlled by an opponent returns to its actual owner's hand")
     void returnsStolenPermanentToOwner() {
+        harness.setHand(player2, List.of());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DisruptorOfCurrents());
         gd.stolenCreatures.put(target.getId(), player1.getId());
         harness.setHand(player1, List.of(new DisruptorOfCurrents()));
@@ -169,6 +170,7 @@ class DisruptorOfCurrentsTest extends BaseCardTest {
     @Test
     @DisplayName("The entering creature cannot choose itself but can choose another copy")
     void cannotTargetItselfOnEntering() {
+        harness.setHand(player2, List.of());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DisruptorOfCurrents());
         Permanent source = harness.enterBattlefieldAndReturn(player1, new DisruptorOfCurrents());
 

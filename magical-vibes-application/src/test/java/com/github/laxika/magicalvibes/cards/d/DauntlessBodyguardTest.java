@@ -152,8 +152,8 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, plains.getId());
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.isCreature(gd, plains)).isFalse();
         assertThat(gqs.hasKeyword(gd, plains, Keyword.INDESTRUCTIBLE)).isFalse();
 
@@ -194,7 +194,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 }

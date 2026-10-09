@@ -1753,14 +1753,14 @@ public class CastingCostService {
      * The source is symmetric: the effect is available to every spell controller.
      */
     public boolean hasSharedColorDiscardAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card) {
-        if (card.getColors() == null || card.getColors().isEmpty()) {
+        if (gameQueryService.getEffectiveCardColors(gameData, card).isEmpty()) {
             return false;
         }
         for (UUID controllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                         .anyMatch(SharedColorDiscardAlternativeCostEffect.class::isInstance)) {
                     return true;
                 }
@@ -1781,7 +1781,8 @@ public class CastingCostService {
             if (candidate.getId().equals(card.getId())) {
                 continue;
             }
-            if (candidate.getColors() != null && candidate.getColors().stream().anyMatch(card.getColors()::contains)) {
+            if (gameQueryService.getEffectiveCardColors(gameData, candidate).stream()
+                    .anyMatch(gameQueryService.getEffectiveCardColors(gameData, card)::contains)) {
                 return true;
             }
         }
@@ -1803,7 +1804,7 @@ public class CastingCostService {
         }
         boolean spellStillInHand = spellCardIndex >= 0 && spellCardIndex < hand.size()
                 && hand.get(spellCardIndex).getId().equals(card.getId());
-        int effectiveIndex = !spellStillInHand && discardHandCardIndex > spellCardIndex
+        int effectiveIndex = spellCardIndex >= 0 && !spellStillInHand && discardHandCardIndex > spellCardIndex
                 ? discardHandCardIndex - 1 : discardHandCardIndex;
         int selectedIndex = spellStillInHand ? discardHandCardIndex : effectiveIndex;
         if (selectedIndex < 0 || selectedIndex >= hand.size()) {
@@ -1811,8 +1812,8 @@ public class CastingCostService {
         }
         Card selected = hand.get(selectedIndex);
         if (selected.getId().equals(card.getId())
-                || selected.getColors() == null
-                || selected.getColors().stream().noneMatch(card.getColors()::contains)) {
+                || gameQueryService.getEffectiveCardColors(gameData, selected).stream()
+                .noneMatch(gameQueryService.getEffectiveCardColors(gameData, card)::contains)) {
             throw new IllegalStateException("Discarded card must share a color with " + card.getName());
         }
         return selectedIndex;

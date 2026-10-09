@@ -1163,7 +1163,8 @@ public class DamagePreventionService {
      * source permanent is currently an attacking creature.
      */
     public boolean isNoncombatDamageFromAttackerPreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId) {
-        if (!isCombatDamageFromAttackersPreventedForPlayer(gameData, playerId)) return false;
+        if (!gameQueryService.isDamagePreventable(gameData)
+                || !gameData.playersWithDamageFromAttackersPrevented.contains(playerId)) return false;
         if (sourcePermanentId == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         return source != null && source.isAttacking();

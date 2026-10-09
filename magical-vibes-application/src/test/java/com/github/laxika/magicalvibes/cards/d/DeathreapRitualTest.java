@@ -31,7 +31,7 @@ class DeathreapRitualTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
@@ -81,7 +81,7 @@ class DeathreapRitualTest extends BaseCardTest {
         advanceToEndStep(player2);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1).contains(topCard);
     }
@@ -89,6 +89,7 @@ class DeathreapRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple creatures dying still offer only one draw at the controller's end step")
     void multipleDeathsDrawOnlyOneCard() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new DeathreapRitual());
         SakuraTribeElder ownCreature = new SakuraTribeElder();
         SakuraTribeElder opponentCreature = new SakuraTribeElder();
@@ -105,7 +106,7 @@ class DeathreapRitualTest extends BaseCardTest {
         advanceToEndStep(player1);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
@@ -116,6 +117,8 @@ class DeathreapRitualTest extends BaseCardTest {
     @Test
     @DisplayName("A creature dying after the end step begins does not trigger Ritual retroactively")
     void deathDuringEndStepIsTooLate() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new DeathreapRitual());
         var creature = harness.addToBattlefieldAndReturn(player2, new SakuraTribeElder());
         harness.setLibrary(player1, List.of(new Forest()));
@@ -136,7 +139,7 @@ class DeathreapRitualTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
 
 }

@@ -32,6 +32,9 @@ class DonalHeraldOfWingsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castCreature(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -60,6 +63,7 @@ class DonalHeraldOfWingsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 10);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveCastAndCopy();
 
@@ -93,9 +97,7 @@ class DonalHeraldOfWingsTest extends BaseCardTest {
     }
 
     private void resolveCastAndCopy() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Card legendaryFlyingCreature() {

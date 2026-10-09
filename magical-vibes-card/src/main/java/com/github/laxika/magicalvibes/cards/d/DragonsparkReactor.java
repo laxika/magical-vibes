@@ -27,7 +27,7 @@ public class DragonsparkReactor extends Card {
                 new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{4}",
                 List.of(
                         new SacrificeSelfCost(),

@@ -22,7 +22,7 @@ public class DescentOfTheDragons extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
-        ), 0, 99).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+        ), 0, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
         addEffect(EffectSlot.SPELL,
                 new CreateTokenForEachDestroyedPermanentControllerEffect(
                         new CreateTokenEffect("Dragon", 4, 4, CardColor.RED,

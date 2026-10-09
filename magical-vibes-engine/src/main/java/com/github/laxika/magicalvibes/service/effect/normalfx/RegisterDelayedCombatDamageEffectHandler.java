@@ -19,6 +19,6 @@ public class RegisterDelayedCombatDamageEffectHandler implements NormalEffectHan
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RegisterDelayedCombatDamageEffect delayed = (RegisterDelayedCombatDamageEffect) effect;
         gameData.queueDelayedAction(new DelayedCombatDamageEffect(
-                entry.getControllerId(), entry.getCard(), delayed.triggerEffect()));
+                entry.getControllerId(), entry.getCard(), delayed.triggerEffect(), entry.getSourcePermanentId()));
     }
 }

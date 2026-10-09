@@ -20,11 +20,11 @@ public class DeadDrop extends Card {
     public DeadDrop() {
         addEffect(EffectSlot.SPELL, new DelveCost());
         target(new PlayerPredicateTargetFilter(
-                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                "Target must be an opponent"
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player"
         )).addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
                 2,
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                SacrificeRecipient.TARGET_PLAYER));
+                SacrificeRecipient.TARGET_PLAYER).withSimultaneousChoices());
     }
 }

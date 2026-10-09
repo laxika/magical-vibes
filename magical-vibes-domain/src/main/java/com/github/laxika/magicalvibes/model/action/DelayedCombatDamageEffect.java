@@ -9,6 +9,10 @@ import java.util.UUID;
 public record DelayedCombatDamageEffect(
         UUID controllerId,
         Card sourceCard,
-        CardEffect triggerEffect
+        CardEffect triggerEffect,
+        UUID sourcePermanentId
 ) implements DelayedAction {
+    public DelayedCombatDamageEffect(UUID controllerId, Card sourceCard, CardEffect triggerEffect) {
+        this(controllerId, sourceCard, triggerEffect, null);
+    }
 }

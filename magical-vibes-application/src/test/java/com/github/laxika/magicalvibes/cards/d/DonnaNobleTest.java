@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.o.OneWithTheStars;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -120,6 +121,8 @@ class DonnaNobleTest extends BaseCardTest {
     void stopsReflectingPartnerDamageWhenDonnaStopsBeingCreature() {
         Permanent bears = pairWithDonna();
         Permanent donna = findPermanent(player1, "Donna Noble");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new OneWithTheStars()));
         harness.addMana(player2, ManaColor.BLUE, 4);
         harness.castEnchantment(player2, 0, donna.getId());

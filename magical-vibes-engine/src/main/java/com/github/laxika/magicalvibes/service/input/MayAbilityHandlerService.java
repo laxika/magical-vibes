@@ -173,6 +173,10 @@ public class MayAbilityHandlerService {
         this.ragingRiverEffectHandler = ragingRiverEffectHandler;
     }
 
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
+
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null) {
             throw new IllegalStateException("Not awaiting may ability choice");
@@ -185,6 +189,24 @@ public class MayAbilityHandlerService {
 
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
+
+        if (!gameData.resolvingMayEffectFromStack && ability.effects().stream().anyMatch(
+                com.github.laxika.magicalvibes.model.effect.ExchangeTextBoxesEffect.class::isInstance)) {
+            Permanent entering = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+            if (entering != null) {
+                if (accepted) {
+                    StackEntry exchange = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                            ability.sourceCard(), ability.controllerId(), ability.description(),
+                            ability.effects(), ability.targetCardId(), entering.getId());
+                    exchange.setNonTargeting(true);
+                    effectResolutionService.resolveEffects(gameData, exchange);
+                }
+                battlefieldEntryService.processCreatureETBEffects(gameData, ability.controllerId(),
+                        entering.getCard(), null, entering.isCast(), 0, false);
+            }
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         boolean exertChoice = !gameData.resolvingMayEffectFromStack && ability.effects().stream().anyMatch(effect ->
                 (effect instanceof SequenceEffect sequence ? sequence.steps() : List.of(effect)).stream().anyMatch(step ->

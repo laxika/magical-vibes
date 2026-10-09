@@ -30,7 +30,8 @@ public class DerangedOutcast extends Card {
                                 "Sacrifice a Human",
                                 false
                         ),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
+                        PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate())
                 ),
                 "{1}{G}, Sacrifice a Human: Put two +1/+1 counters on target creature."
         ));

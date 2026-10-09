@@ -110,10 +110,9 @@ class DarkRemedyTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DarkRemedy(), new Unsummon()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, bearId);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, bearId);
         harness.passBothPriorities();
 

@@ -207,6 +207,9 @@ class DancingSwordTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         sword.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player2, 0, null, sword.getId());

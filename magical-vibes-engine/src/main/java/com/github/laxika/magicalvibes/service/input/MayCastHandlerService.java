@@ -320,10 +320,14 @@ public class MayCastHandlerService {
             return;
         }
 
-        if (cardToPlay.isCastOnlyFromGraveyard()) {
+        if (cardToPlay.isCastOnlyFromGraveyard()
+                || !cardToPlay.hasType(CardType.LAND)
+                && (!gameQueryService.canCastSpellFromZone(gameData, cardToPlay, Zone.LIBRARY, player.getId())
+                || !additionalSpellCostService.satisfiableWithoutManaCost(gameData, player.getId(), cardToPlay))) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
                     " cannot be cast from the library."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            handlePlayFromLibraryOrExileChoice(gameData, player, false, ability,
+                    notPlayedDestination, publiclyRevealed);
             return;
         }
 
@@ -365,7 +369,8 @@ public class MayCastHandlerService {
                     || cardToPlay.hasType(CardType.ENCHANTMENT)
                     || cardToPlay.hasType(CardType.PLANESWALKER);
             List<CardEffect> spellEffects = isPermanentSpell
-                    ? List.of()
+                    ? cardToPlay.getEffects(EffectSlot.SPELL).stream()
+                            .filter(com.github.laxika.magicalvibes.model.effect.CostEffect.class::isInstance).toList()
                     : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));
 
             if (EffectResolution.needsTarget(cardToPlay) || EffectResolution.needsSpellTarget(cardToPlay)) {
@@ -410,10 +415,16 @@ public class MayCastHandlerService {
                 }
             } else {
                 // Non-targeted spell — put directly on stack
-                gameData.stack.add(new StackEntry(
+                StackEntry freeCast = new StackEntry(
                         spellType, cardToPlay, player.getId(), cardToPlay.getName(),
                         spellEffects, 0, (UUID) null, null
-                ));
+                );
+                freeCast.setSourceZone(Zone.LIBRARY);
+                freeCast.setOwnerIdOverride(libraryOwnerId);
+                if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, freeCast)) {
+                    return;
+                }
+                gameData.stack.add(freeCast);
 
                 gameData.recordSpellCast(player.getId(), cardToPlay);
                 gameData.priorityPassedBy.clear();
@@ -534,6 +545,8 @@ public class MayCastHandlerService {
     List<UUID> buildValidSpellTargets(GameData gameData, Card card, List<CardEffect> spellEffects,
                                       UUID controllerId, int xValue, boolean castForMadnessCost) {
         List<UUID> validTargets = new ArrayList<>();
+        List<UUID> legalPermanentTargets = validTargetService.computeValidTargetsForSpell(
+                gameData, card, controllerId, List.of(), xValue, null).validPermanentIds();
         boolean canTargetPermanent = spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                 || card.getTargetFilter() instanceof PermanentPredicateTargetFilter;
         if (canTargetPermanent) {
@@ -541,6 +554,7 @@ public class MayCastHandlerService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
+                    if (!legalPermanentTargets.contains(p.getId())) continue;
                     if (card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
                         FilterContext filterContext = FilterContext.of(gameData)
                                 .withSourceCardId(card.getId())
@@ -1631,6 +1645,11 @@ public class MayCastHandlerService {
         }
 
         List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, sideboardOwnerId);
+        if (!gameQueryService.canCastSpellFromZone(gameData, cardToCast, Zone.OUTSIDE_GAME, player.getId())) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast, " cannot be cast from outside the game."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         int cardIndex = -1;
         if (sideboard != null) {
             for (int i = 0; i < sideboard.size(); i++) {

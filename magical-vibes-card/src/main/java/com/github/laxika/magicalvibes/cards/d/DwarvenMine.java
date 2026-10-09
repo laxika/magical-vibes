@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -23,7 +24,7 @@ public class DwarvenMine extends Card {
 
     public DwarvenMine() {
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
-                new ControlsPermanentCount(3, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),
+                new NotCondition(new ControlsPermanentCount(3, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
                 new EntersTappedEffect()));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));

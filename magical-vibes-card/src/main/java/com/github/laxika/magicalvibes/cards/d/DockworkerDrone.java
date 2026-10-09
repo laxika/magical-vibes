@@ -6,17 +6,15 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 
 @CardRegistration(set = "EOE", collectorNumber = "11")
 public class DockworkerDrone extends Card {
 
     public DockworkerDrone() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addEffect(EffectSlot.STATIC,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
 
-        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_DEATH,
-                new PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType.PLUS_ONE_PLUS_ONE));
+        addEffect(EffectSlot.ON_DEATH, MoveDyingSourceCountersToTargetCreatureEffect.alwaysTriggers(true));
     }
 }

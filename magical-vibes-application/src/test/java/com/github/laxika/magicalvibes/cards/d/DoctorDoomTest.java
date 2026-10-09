@@ -217,6 +217,7 @@ class DoctorDoomTest extends BaseCardTest {
     @Test
     @DisplayName("The end-step ability draws and loses life for its controller only")
     void endStepAbilityAffectsItsControllerOnly() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.UPKEEP));
         harness.addToBattlefield(player2, new DoctorDoom());
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

@@ -78,6 +78,7 @@ class DuskTest extends BaseCardTest {
     @Test
     @DisplayName("Dawn returns every eligible card only from its controller's graveyard")
     void dawnReturnsAllOnlyFromControllersGraveyard() {
+        harness.setHand(player1, List.of());
         Card firstBear = new GrizzlyBears();
         Card secondBear = new GrizzlyBears();
         Card opponentsBear = new GrizzlyBears();

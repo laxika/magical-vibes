@@ -149,6 +149,8 @@ class DistortionStrikeTest extends BaseCardTest {
 
     @Test
     void decliningReboundLeavesCardExiledWithoutAnotherOpportunity() {
+        harness.setHand(player1, java.util.List.of());
+        harness.setHand(player2, java.util.List.of());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new NestInvader());
         DistortionStrike card = new DistortionStrike();
         harness.setHand(player1, List.of(card));
@@ -156,7 +158,7 @@ class DistortionStrikeTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, creature.getId());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -165,7 +167,7 @@ class DistortionStrikeTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Distortion Strike");
         assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 

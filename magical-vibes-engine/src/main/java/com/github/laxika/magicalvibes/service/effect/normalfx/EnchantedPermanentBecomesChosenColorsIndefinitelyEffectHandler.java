@@ -29,6 +29,7 @@ public class EnchantedPermanentBecomesChosenColorsIndefinitelyEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null) aura = entry.getSourcePermanentSnapshot();
         if (aura == null || !aura.isAttached()) {
             return;
         }

@@ -22,7 +22,8 @@ public class DigsiteConservator extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new ExileGraveyardCardsEffect(4, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)
+                        new ExileGraveyardCardsEffect(4, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                                null, null, false, false, false, null, false, true)
                 ),
                 "Sacrifice this creature: Exile up to four target cards from a single graveyard. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED

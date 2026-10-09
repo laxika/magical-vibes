@@ -95,7 +95,7 @@ class DecreeOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
-        harness.activateHandAbility(player1, 0, shock.getId());
+        cycleWithCounterTarget(shock.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -122,7 +122,7 @@ class DecreeOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
-        harness.activateHandAbility(player1, 0, shock.getId());
+        cycleWithCounterTarget(shock.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -143,7 +143,7 @@ class DecreeOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
-        harness.activateHandAbility(player1, 0, shock.getId());
+        cycleWithCounterTarget(shock.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.assertNotInHand(player1, "Serra Angel");
@@ -189,8 +189,7 @@ class DecreeOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
-        harness.activateHandAbility(player1, 0, shock.getId());
-        harness.passPriority(player1);
+        cycleWithCounterTarget(shock.getId());
 
         harness.castAndResolveInstant(player2, 0, gd.stack.getLast().getTargetableId());
         harness.assertNotInHand(player1, "Serra Angel");
@@ -215,7 +214,7 @@ class DecreeOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
-        harness.activateHandAbility(player1, 0, shock.getId());
+        cycleWithCounterTarget(shock.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -243,8 +242,7 @@ class DecreeOfSilenceTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
-        harness.activateHandAbility(player1, 0, shock.getId());
-        harness.passPriority(player1);
+        cycleWithCounterTarget(shock.getId());
 
         harness.castAndResolveInstant(player2, 0, shock.getId());
         harness.passBothPriorities();
@@ -255,5 +253,10 @@ class DecreeOfSilenceTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertInGraveyard(player1, "Decree of Silence");
         assertThat(gd.stack).isEmpty();
+    }
+    private void cycleWithCounterTarget(java.util.UUID spellId) {
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, spellId);
     }
 }

@@ -20,7 +20,7 @@ import java.util.List;
 public class DomriAnarchOfBolas extends Card {
 
     public DomriAnarchOfBolas() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

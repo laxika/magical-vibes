@@ -28,7 +28,7 @@ class DreadWightTest extends BaseCardTest {
     void blockerIsNotParalyzedBeforeEndOfCombat() {
         Permanent wight = addCreatureReady(player1, new DreadWight());
         wight.setAttacking(true);
-        Permanent spider = addCreatureReady(player2, new BalduvianBears());
+        Permanent spider = addCreatureReady(player2, new GlacialWall());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -51,6 +51,7 @@ class DreadWightTest extends BaseCardTest {
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
         harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, java.util.Map.of(firstWall.getId(), 3));
 
         leaveEndOfCombat();
 
@@ -65,7 +66,7 @@ class DreadWightTest extends BaseCardTest {
     void blockerParalyzedAtEndOfCombat() {
         Permanent wight = addCreatureReady(player1, new DreadWight());
         wight.setAttacking(true);
-        Permanent spider = addCreatureReady(player2, new BalduvianBears());
+        Permanent spider = addCreatureReady(player2, new GlacialWall());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -100,7 +101,7 @@ class DreadWightTest extends BaseCardTest {
     private Permanent resolveSolemnityCombat() {
         Permanent wight = addCreatureReady(player1, new DreadWight());
         wight.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        Permanent blocker = addCreatureReady(player2, new GlacialWall());
         harness.addToBattlefield(player1, new Solemnity());
 
         prepareDeclareBlockers();
@@ -172,7 +173,7 @@ class DreadWightTest extends BaseCardTest {
     void grantsExactRemovalAbilityWhenDifferentAmountAlreadyExists() {
         Permanent wight = addCreatureReady(player1, new DreadWight());
         wight.setAttacking(true);
-        Permanent spider = addCreatureReady(player2, new BalduvianBears());
+        Permanent spider = addCreatureReady(player2, new GlacialWall());
         spider.getPersistentGrantedActivatedAbilities().add(new ActivatedAbility(
                 false,
                 "{8}",
@@ -213,7 +214,7 @@ class DreadWightTest extends BaseCardTest {
     void untapsAfterCounterRemoved() {
         Permanent wight = addCreatureReady(player1, new DreadWight());
         wight.setAttacking(true);
-        Permanent spider = addCreatureReady(player2, new BalduvianBears());
+        Permanent spider = addCreatureReady(player2, new GlacialWall());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -235,7 +236,7 @@ class DreadWightTest extends BaseCardTest {
     @DisplayName("Does nothing when Dread Wight neither blocks nor is blocked")
     void noEffectWhenNotInCombat() {
         addCreatureReady(player1, new DreadWight());
-        Permanent spider = addCreatureReady(player2, new BalduvianBears());
+        Permanent spider = addCreatureReady(player2, new GlacialWall());
 
         leaveEndOfCombat();
 
@@ -244,9 +245,10 @@ class DreadWightTest extends BaseCardTest {
     }
 
     private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
     }
 
     private void activateRemovalAbility(Permanent creature) {
@@ -299,7 +301,7 @@ class DreadWightTest extends BaseCardTest {
     @Test
     @DisplayName("A paralyzation counter alone does not prevent untapping")
     void counterWithoutDreadWightEffectDoesNotPreventUntapping() {
-        Permanent bears = addCreatureReady(player2, new BalduvianBears());
+        Permanent bears = addCreatureReady(player2, new GlacialWall());
         bears.setCounterCount(CounterType.PARALYZATION, 1);
         bears.tap();
 
