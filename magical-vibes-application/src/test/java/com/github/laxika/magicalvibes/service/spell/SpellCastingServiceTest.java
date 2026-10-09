@@ -246,7 +246,7 @@ class SpellCastingServiceTest {
         svc = new SpellCastingService(cardRevealService, battlefieldEntryService, cloneService, graveyardTargetingService,
                 gameQueryService, predicateEvaluationService, actionAvailabilityService, gameLogService,
                 castingCostService, castingPermissionService, turnProgressionService,
-                targetLegalityService, new TargetGroupAssignmentService(gameQueryService),
+                targetLegalityService, new TargetGroupAssignmentService(gameQueryService, predicateEvaluationService),
                 permanentRemovalService, triggerCollectionService,
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
