@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 import java.util.UUID;
 
@@ -23,6 +25,8 @@ import static org.mockito.Mockito.when;
 
 /** Consolidated tests for the merged {@link DealDamageToPlayersEffectHandler} (one handler, all recipients). */
 class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
+
+    @Mock private PlayerInputService playerInputService;
 
     private DealDamageToPlayersEffectHandler handler;
 
@@ -85,7 +89,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
     @Override
     protected void setUpHandler() {
         handler = new DealDamageToPlayersEffectHandler(
-                damageSupport, gameQueryService, gameLogService, gameOutcomeService, amountEvaluationService);
+                damageSupport, playerInputService, gameQueryService, gameLogService, gameOutcomeService, amountEvaluationService);
     }
 
     @Nested

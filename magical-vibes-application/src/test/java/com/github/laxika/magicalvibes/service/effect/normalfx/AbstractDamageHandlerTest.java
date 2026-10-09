@@ -158,6 +158,9 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(damagePreventionService.applyComeuppancePrevention(
                         eq(gd), any(), anyInt(), any(), any(), any(), anyBoolean()))
                 .thenAnswer(inv -> inv.getArgument(2));
+        lenient().when(damagePreventionService.applyJudgmentOfAlexanderPrevention(
+                        eq(gd), any(), anyInt(), any(), any(), any(), anyBoolean()))
+                .thenAnswer(inv -> inv.getArgument(2));
         setUpHandler();
     }
 
