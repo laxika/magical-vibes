@@ -121,6 +121,7 @@ class DefilerOfInstinctTest extends BaseCardTest {
     @DisplayName("an opponent's red permanent spell receives neither reduction nor damage trigger")
     void opponentsSpellIsUnaffected() {
         addCreatureReady(player1, new DefilerOfInstinct());
+        harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new DefilerOfInstinct()));
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.addMana(player2, ManaColor.RED, 2);
@@ -143,7 +144,7 @@ class DefilerOfInstinctTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Omniscience());
         harness.setHand(player1, List.of(new DefilerOfInstinct()));
 
-        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.castCreature(player1, 0);
         chooseTriggerTarget(player2.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);

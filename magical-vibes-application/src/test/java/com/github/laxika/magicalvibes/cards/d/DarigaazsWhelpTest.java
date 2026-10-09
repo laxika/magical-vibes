@@ -140,7 +140,7 @@ class DarigaazsWhelpTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, gd.playerHands.get(player1.getId()).indexOf(dragon));
         harness.passBothPriorities();
 
         Permanent drawnDragon = findPermanent(player1, dragon);

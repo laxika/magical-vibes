@@ -3927,7 +3927,7 @@ public class StepTriggerService {
                         GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
                 log.info("Game {} - {} chapter {} triggers (awaiting graveyard target selection)", gameData.id, card.getName(), chapterName);
             } else {
-                gameData.stack.add(new StackEntry(
+                StackEntry chapterEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         activePlayerId,
@@ -3935,7 +3935,9 @@ public class StepTriggerService {
                         new ArrayList<>(chapterEffects),
                         null,
                         saga.getId()
-                ));
+                );
+                chapterEntry.setSourcePermanentSnapshot(new Permanent(saga));
+                gameData.stack.add(chapterEntry);
 
                 gameLogService.append(gameData,
                         GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
@@ -5925,6 +5927,37 @@ public class StepTriggerService {
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     }
+                }
+            }
+        }
+
+        // COMMAND_ZONE_EACH_END_STEP_TRIGGERED: "At the beginning of each end step" from a face-up
+        // card in any player's command zone — fires at every end step, in APNAP order.
+        for (UUID playerId : triggerOrder) {
+            List<Card> playerCommandZone = gameData.playerCommandZones.get(playerId);
+            if (playerCommandZone == null) continue;
+
+            for (Card card : new ArrayList<>(playerCommandZone)) {
+                if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
+                    continue;
+                }
+                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_EACH_END_STEP_TRIGGERED)) {
+                    if (effect instanceof ConditionalEffect conditional
+                            && conditional.interveningIf()
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forCard(card, playerId))) {
+                        continue;
+                    }
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            playerId,
+                            card.getName() + "'s end step ability",
+                            new ArrayList<>(List.of(effect))));
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(card, "'s end step ability triggers."));
+                    log.info("Game {} - {} command-zone each-end-step trigger pushed onto stack",
+                            gameData.id, card.getName());
                 }
             }
         }

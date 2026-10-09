@@ -32,6 +32,6 @@ public class DelneyStreetwiseLookout extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtMostPredicate(2),
                         new PermanentControlledBySourceControllerPredicate()
-                ))));
+                )), null, false, true, false, false));
     }
 }

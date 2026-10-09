@@ -5063,6 +5063,7 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         for (Permanent source : battlefield) {
+            if (hasLostAllAbilities(gameData, source)) continue;
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ControlledCreaturesMatchingCantBeBlockedEffect restriction
                         && predicateEvaluationService.matchesPermanentPredicate(
@@ -9002,6 +9003,11 @@ public class GameQueryService {
                             .withSourceControllerId(staticControllerId)
                             .withSourcePermanentId(staticSource.getId())
                             .withSourcePermanentSnapshot(staticSource);
+                    if (triggerContext != null && triggerContext.causedByCreatureDying()) {
+                        filterContext = filterContext
+                                .withTriggeringPermanentId(triggeringPermanent.getId())
+                                .withTriggeringPermanentControllerId(controllerId);
+                    }
                     if (predicateEvaluationService.matchesPermanentPredicate(
                             triggeringPermanent, additional.sourcePredicate(), filterContext)
                             && (additional.condition() == null

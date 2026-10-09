@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileRepl
 import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
@@ -65,6 +66,7 @@ import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -2824,11 +2826,19 @@ public class PermanentRemovalService {
         gameData.hauntingCardToPermanentId.entrySet()
                 .removeIf(entry -> removedPermanent.getId().equals(entry.getValue()));
         List<PendingExileReturn> pendingReturns = gameData.exileReturnOnPermanentLeave.remove(removedPermanent.getId());
-        if (pendingReturns == null) {
+        boolean returnsOnSourceLeavesTrigger = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+                .stream()
+                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
+                .anyMatch(effect -> effect instanceof ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect same
+                        && same.returnsOnSourceLeavesTrigger());
+        if (pendingReturns == null && !returnsOnSourceLeavesTrigger) {
             triggerCollectionService.processDelayedExileReturnCounterTriggers(
                     gameData, removedPermanent.getId(), List.of(), List.of());
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
             return;
+        }
+        if (pendingReturns == null) {
+            pendingReturns = List.of();
         }
 
         boolean returnsThroughLeavesTrigger = java.util.stream.Stream.of(
@@ -2836,6 +2846,7 @@ public class PermanentRemovalService {
                 .flatMap(slot -> removedPermanent.getCard().getEffects(slot).stream()).anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect exile
                         && exile.returnToHand()
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect);
+        returnsThroughLeavesTrigger |= returnsOnSourceLeavesTrigger;
         returnsThroughLeavesTrigger |= removedPermanent.getCard().getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost.class::isInstance);
         if (returnsThroughLeavesTrigger) {
@@ -2843,7 +2854,10 @@ public class PermanentRemovalService {
                 phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
                 return;
             }
-            List<CardEffect> effects = pendingReturns.stream()
+            List<PendingExileReturn> returnBatches = returnsOnSourceLeavesTrigger
+                    ? mergeSameControllerReturns(pendingReturns)
+                    : pendingReturns;
+            List<CardEffect> effects = returnBatches.stream()
                     .map(pending -> (CardEffect) new ResolvePendingExileReturnEffect(pending,
                             gameData.exileEntryVersions.getOrDefault(pending.card().getId(), 0L)))
                     .toList();
@@ -2875,6 +2889,33 @@ public class PermanentRemovalService {
         triggerCollectionService.processDelayedExileReturnCounterTriggers(
                 gameData, removedPermanent.getId(), pendingReturns, returnedPermanentIds);
         phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
+    }
+
+    /**
+     * Folds pending returns that share a controller into one pending return, so cards that return
+     * from a single leaves-the-battlefield ability enter the battlefield simultaneously.
+     */
+    private List<PendingExileReturn> mergeSameControllerReturns(List<PendingExileReturn> pendingReturns) {
+        List<PendingExileReturn> merged = new ArrayList<>();
+        for (PendingExileReturn pending : pendingReturns) {
+            int index = -1;
+            for (int i = 0; i < merged.size(); i++) {
+                if (Objects.equals(merged.get(i).controllerId(), pending.controllerId())) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index < 0) {
+                merged.add(pending);
+                continue;
+            }
+            PendingExileReturn head = merged.get(index);
+            List<Card> additionalCards = new ArrayList<>(head.additionalCards());
+            additionalCards.add(pending.card());
+            additionalCards.addAll(pending.additionalCards());
+            merged.set(index, head.withAdditionalCards(additionalCards));
+        }
+        return merged;
     }
 
     /** Resolves only the pending returns captured by one source-untap trigger. */

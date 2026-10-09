@@ -1700,13 +1700,6 @@ public class CombatAttackService {
                         EffectSlot.ON_ALLY_CREATURES_ATTACK, combinedEffects));
             }
         }
-        List<Card> commandZone = gameData.playerCommandZones.get(playerId);
-        if (commandZone != null) {
-            for (Card card : new ArrayList<>(commandZone)) {
-                attackTriggerSources.add(new AttackTriggerSource(
-                        new Permanent(card), EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK));
-            }
-        }
         for (AttackTriggerSource triggerSource : attackTriggerSources) {
             Permanent perm = triggerSource.permanent();
             EffectSlot effectSlot = triggerSource.effectSlot();

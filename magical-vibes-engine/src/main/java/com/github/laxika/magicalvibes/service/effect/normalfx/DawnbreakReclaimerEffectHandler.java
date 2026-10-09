@@ -53,6 +53,19 @@ public class DawnbreakReclaimerEffectHandler implements NormalEffectHandlerBean 
         DawnbreakReclaimerEffect reclaimerEffect = (DawnbreakReclaimerEffect) effect;
         GraveyardTargetOperationState state = gameData.graveyardTargetOperation;
 
+        if (gameData.resolvedMayAccepted != null) {
+            boolean accepted = gameData.resolvedMayAccepted;
+            gameData.resolvedMayAccepted = null;
+            UUID opponentCardId = state.dawnbreakReclaimerChosenOpponentCardId;
+            UUID ownCardId = state.dawnbreakReclaimerChosenOwnCardId;
+            clearState(gameData);
+            if (accepted) {
+                returnSelectedCards(gameData, entry, new DawnbreakReclaimerEffect(
+                        reclaimerEffect.filter(), opponentCardId, ownCardId));
+            }
+            return;
+        }
+
         if (reclaimerEffect.opponentCardId() != null || reclaimerEffect.ownCardId() != null) {
             returnSelectedCards(gameData, entry, reclaimerEffect);
             return;
@@ -174,7 +187,16 @@ public class DawnbreakReclaimerEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        clearState(gameData);
+        // Resolution-time choice: the chosen ids stay in the operation state so that the parked
+        // entry re-runs this effect once the may choice is answered (resolvedMayAccepted), and the
+        // return then happens inside the same resolution rather than as a separate stack entry.
+        GraveyardTargetOperationState state = gameData.graveyardTargetOperation;
+        state.resolutionTimeDawnbreakReclaimerOpponentCardChoiceResume = false;
+        state.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume = false;
+        state.dawnbreakReclaimerChosenOpponentCardId = opponentCardId;
+        state.dawnbreakReclaimerChosenOwnCardId = ownCardId;
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), entry.getControllerId(),
                 List.of(new DawnbreakReclaimerEffect(effect.filter(), opponentCardId, ownCardId)),

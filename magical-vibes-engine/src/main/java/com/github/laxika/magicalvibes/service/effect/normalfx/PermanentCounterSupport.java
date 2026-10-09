@@ -357,7 +357,8 @@ public class PermanentCounterSupport {
     public void notifySelfCountersPlaced(GameData gameData, StackEntry entry, Permanent target,
                                          CounterType counterType, int previousCount, int amount) {
         if (target != null && amount > 0) {
-            fireSelfCountersPutTriggers(gameData, target, counterType, previousCount);
+            boolean firstPlacementThisTurn = gameData.permanentsWithCountersPutThisTurn.add(target.getId());
+            fireSelfCountersPutTriggers(gameData, target, counterType, previousCount, firstPlacementThisTurn);
             if (counterType == CounterType.LEVEL) {
                 fireSelfReachesLevelTwoTriggers(gameData, target, previousCount);
                 fireSelfReachesLevelThreeTriggers(gameData, target, previousCount);
@@ -1763,7 +1764,8 @@ public class PermanentCounterSupport {
     }
 
     private void fireSelfCountersPutTriggers(GameData gameData, Permanent target,
-                                              CounterType counterType, int previousCount) {
+                                              CounterType counterType, int previousCount,
+                                              boolean firstPlacementThisTurn) {
         Card card = target.getCard();
         List<CardEffect> effects = new ArrayList<>(card.getEffects(EffectSlot.ON_SELF_COUNTERS_PUT));
         gameQueryService.getGrantedEffects(gameData, target).stream()
@@ -1771,6 +1773,7 @@ public class PermanentCounterSupport {
                 .map(GrantTriggeredAbilityEffect.class::cast)
                 .filter(grant -> grant.slot() == EffectSlot.ON_SELF_COUNTERS_PUT)
                 .map(GrantTriggeredAbilityEffect::grantedEffect)
+                .filter(granted -> firstPlacementThisTurn || !(granted instanceof OncePerTurnTriggerEffect))
                 .forEach(effects::add);
         if (effects.isEmpty()) {
             return;

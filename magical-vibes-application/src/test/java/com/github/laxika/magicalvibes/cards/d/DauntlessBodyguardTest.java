@@ -142,6 +142,8 @@ class DauntlessBodyguardTest extends BaseCardTest {
     void protectsChosenLandAfterAnimationExpires() {
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
         harness.setHand(player1, List.of(new SylvanAwakening(), new DauntlessBodyguard()));
+        // Player2's default hand would exceed the maximum hand size at their turn-2 cleanup.
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castAndResolveSorcery(player1, 0, 0);

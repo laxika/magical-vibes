@@ -407,6 +407,14 @@ public class BattlefieldPlacementService {
         }
         permanentCounterSupport.fireLoyaltyCountersPutOnPlaneswalkerTriggers(
                 gameData, permanent, permanent.getCounterCount(CounterType.LOYALTY));
+        for (Map.Entry<CounterType, Integer> counter : new EnumMap<>(permanent.getCounters()).entrySet()) {
+            int previousCount = countersBeforeEntry.getOrDefault(counter.getKey(), 0);
+            int placed = counter.getValue() - previousCount;
+            if (placed > 0) {
+                permanentCounterSupport.notifySelfCountersPlaced(
+                        gameData, null, permanent, counter.getKey(), previousCount, placed);
+            }
+        }
         synchronized (gameData.targetSpellDamagePreventionShields) {
             gameData.targetSpellDamagePreventionShields.replaceAll(shield ->
                     shield.sourcePermanentId() == null && !shield.requiredColors().isEmpty()

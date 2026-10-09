@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.CreatureDeathsThisTurnAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TurnFaceDownCommandZoneCardEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -19,13 +19,13 @@ import java.util.Set;
 public class DarkWingsBringYourDownfall extends Card {
 
     public DarkWingsBringYourDownfall() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addEffect(EffectSlot.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK,
                 new CreateTokenEffect(1, "Demon", 5, 5, CardColor.BLACK,
                         List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING), true, false));
 
-        addEffect(EffectSlot.END_STEP_TRIGGERED,
+        addEffect(EffectSlot.COMMAND_ZONE_EACH_END_STEP_TRIGGERED,
                 new ConditionalEffect(
                         new CreatureDeathsThisTurnAtLeast(2, CountScope.CONTROLLER),
-                        new SacrificeSelfEffect()));
+                        new TurnFaceDownCommandZoneCardEffect()));
     }
 }

@@ -186,6 +186,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     CONTROLLER_END_STEP_TRIGGERED,
     /** End-step trigger fired from a card in its owner's command zone. */
     COMMAND_ZONE_END_STEP_TRIGGERED,
+    /** "At the beginning of each end step" trigger fired from a face-up card in any player's command
+     *  zone (ongoing schemes such as Dark Wings Bring Your Downfall). Fires at every end step, not just
+     *  the card owner's, and is scanned across all players' command zones by
+     *  {@code StepTriggerService.handleEndStepTriggers}. Supports an intervening-if
+     *  {@link com.github.laxika.magicalvibes.model.effect.ConditionalEffect} gate checked at trigger
+     *  time. Contrast {@link #COMMAND_ZONE_END_STEP_TRIGGERED}, which is the owner's end step only. */
+    COMMAND_ZONE_EACH_END_STEP_TRIGGERED,
     /** "At the beginning of each opponent's end step" — fires during the end step of any player who
      *  is an opponent of this permanent's controller (i.e. not the controller's own end step).
      *  Checked in {@code StepTriggerService.handleEndStepTriggers}, which bakes the end-step player

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -20,7 +21,7 @@ import java.util.List;
 public class DeceiverExarch extends Card {
 
     public DeceiverExarch() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap target permanent you control",
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
@@ -37,6 +38,6 @@ public class DeceiverExarch extends Card {
                                 "Target must be a permanent an opponent controls"
                         )
                 )
-        )));
+        ))));
     }
 }

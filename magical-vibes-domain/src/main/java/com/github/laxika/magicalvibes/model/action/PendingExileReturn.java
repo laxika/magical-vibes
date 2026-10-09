@@ -80,6 +80,17 @@ public record PendingExileReturn(
                 false, triggerSourceCard, triggerControllerId);
     }
 
+    /** Returns a copy whose additional cards are replaced, used to return several cards as one batch. */
+    public PendingExileReturn withAdditionalCards(List<Card> cards) {
+        return new PendingExileReturn(card, controllerId, returnTapped, returnToHand, returnStep,
+                plusOnePlusOneCounters, cards, onlyOnControllersTurn, grantHaste,
+                returnAttacking, returnToGraveyard, timingControllerId, followUpSourceCard,
+                discardControllerCardsEqualToReturnedToughness, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkers, cardsToAttachToPrimary, counterTypeOnReturn,
+                counterAmountOnReturn, countersOnReturn, returnLandsTapped,
+                returnCantBeBlockedUntilEndOfCombat, triggerSourceCard, triggerControllerId);
+    }
+
     /** Remembers the spell or ability that created this delayed return independently of its recipient. */
     public PendingExileReturn withTriggerSource(Card sourceCard, UUID sourceControllerId) {
         return new PendingExileReturn(card, controllerId, returnTapped, returnToHand, returnStep,

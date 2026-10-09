@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.k.KraulWarrior;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,12 +11,23 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeputyOfAcquittals.class, KraulWarrior.class})
+@CardUsed({DeputyOfAcquittals.class, KraulWarrior.class, ControlMagic.class})
 class DeputyOfAcquittalsTest extends BaseCardTest {
+
+    private void stealWithControlMagic(UUID creatureId) {
+        harness.setHand(player1, List.of(new ControlMagic()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castEnchantment(player1, 0, creatureId);
+        harness.passBothPriorities();
+    }
 
     private void castDeputy() {
         harness.forceActivePlayer(player1);
@@ -53,8 +66,8 @@ class DeputyOfAcquittalsTest extends BaseCardTest {
     @Test
     @DisplayName("A creature controlled by you returns to its owner's hand")
     void returnsBorrowedCreatureToOwner() {
-        UUID warriorId = harness.addToBattlefieldAndReturn(player1, new KraulWarrior()).getId();
-        gd.stolenCreatures.put(warriorId, player2.getId());
+        UUID warriorId = harness.addToBattlefieldAndReturn(player2, new KraulWarrior()).getId();
+        stealWithControlMagic(warriorId);
         castDeputy();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, warriorId);

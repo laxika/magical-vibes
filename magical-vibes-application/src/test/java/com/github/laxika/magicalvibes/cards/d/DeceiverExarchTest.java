@@ -84,6 +84,7 @@ class DeceiverExarchTest extends BaseCardTest {
         island.tap();
 
         harness.enterBattlefieldAndReturn(player1, new DeceiverExarch());
+        harness.passPriority(player1);
         chooseMode("Untap target permanent you control");
         harness.handlePermanentChosen(player1, island.getId());
         resolveAllTriggers();
@@ -96,6 +97,7 @@ class DeceiverExarchTest extends BaseCardTest {
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
 
         harness.enterBattlefieldAndReturn(player1, new DeceiverExarch());
+        harness.passPriority(player1);
         chooseMode("Tap target permanent an opponent controls");
         harness.handlePermanentChosen(player1, island.getId());
         resolveAllTriggers();
@@ -119,6 +121,7 @@ class DeceiverExarchTest extends BaseCardTest {
     void untapModeRejectsOpponentsPermanent() {
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
         harness.enterBattlefieldAndReturn(player1, new DeceiverExarch());
+        harness.passPriority(player1);
         chooseMode("Untap target permanent you control");
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, island.getId()))
@@ -130,6 +133,7 @@ class DeceiverExarchTest extends BaseCardTest {
         Permanent ownIsland = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.addToBattlefield(player2, new Island());
         harness.enterBattlefieldAndReturn(player1, new DeceiverExarch());
+        harness.passPriority(player1);
         chooseMode("Tap target permanent an opponent controls");
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownIsland.getId()))

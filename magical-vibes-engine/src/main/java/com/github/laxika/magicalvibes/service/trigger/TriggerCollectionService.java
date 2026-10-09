@@ -4845,6 +4845,8 @@ public class TriggerCollectionService {
     private void collectSelfSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId,
                                                Card sacrificedCard, Card castingSpell) {
         if (sacrificedCard == null) return;
+        Permanent departed = gameData.departedPermanentSnapshots.get(sacrificedCard.getId());
+        if (departed != null && (departed.isLosesAllAbilitiesUntilEndOfTurn() || departed.isFaceDown())) return;
         List<CardEffect> deathEffects = effectivePrintedDeathEffects(gameData, sacrificedCard);
         if (deathEffects == null || deathEffects.isEmpty()) return;
 

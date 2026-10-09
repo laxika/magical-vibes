@@ -1266,6 +1266,7 @@ public class TurnProgressionService {
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnLibraryPlayPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnTriggersFiredThisTurn.clear();
+        gameData.permanentsWithCountersPutThisTurn.clear();
         gameData.departedPermanentSnapshots.clear();
         gameData.firstCardCycledFreeUsesThisTurn.clear();
         gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();

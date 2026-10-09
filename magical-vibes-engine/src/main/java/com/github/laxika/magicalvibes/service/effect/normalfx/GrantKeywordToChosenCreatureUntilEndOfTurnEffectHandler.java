@@ -68,7 +68,8 @@ public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements 
         }
 
         Permanent target = gameQueryService.findPermanentById(gameData, chosenCreatureId);
-        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+        // Linked abilities: "the chosen creature" is the chosen object even if it stopped being a creature.
+        if (target == null) {
             log.info("Game {} - Chosen creature no longer on battlefield", gameData.id);
             return;
         }

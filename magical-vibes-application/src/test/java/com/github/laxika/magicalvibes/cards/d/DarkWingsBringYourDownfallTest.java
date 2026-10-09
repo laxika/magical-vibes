@@ -33,7 +33,7 @@ class DarkWingsBringYourDownfallTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(demon.isTapped()).isTrue();
-        assertThat(demon.isAttackedThisTurn()).isTrue();
+        assertThat(gameLogContains("tapped and attacking")).isTrue();
         assertThat(demon.getCard().getPower()).isEqualTo(5);
         assertThat(demon.getCard().getToughness()).isEqualTo(5);
         assertThat(demon.getCard().getColor()).isEqualTo(CardColor.BLACK);

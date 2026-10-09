@@ -35,21 +35,26 @@ public class SeekLibraryForOwnerOfCardExiledWithSourceEffectHandler implements N
             return;
         }
 
-        ExiledCardEntry exiled = gameData.exiledCards.stream()
+        List<ExiledCardEntry> exiledWithSource = gameData.exiledCards.stream()
                 .filter(candidate -> sourcePermanentId.equals(candidate.sourcePermanentId()))
-                .findFirst()
-                .orElse(null);
-        if (exiled == null || exiled.ownerId() == null) {
+                .toList();
+        if (exiledWithSource.isEmpty() || exiledWithSource.getFirst().ownerId() == null) {
             return;
         }
+        UUID ownerId = exiledWithSource.getFirst().ownerId();
+        List<Card> exiledCards = exiledWithSource.stream()
+                .filter(candidate -> ownerId.equals(candidate.ownerId()))
+                .map(ExiledCardEntry::card)
+                .toList();
 
-        List<Card> library = gameData.playerDecks.get(exiled.ownerId());
+        List<Card> library = gameData.playerDecks.get(ownerId);
         if (library == null || library.isEmpty()) {
             return;
         }
 
         List<Card> matchingCards = new ArrayList<>(library.stream()
-                .filter(card -> sharesCardType(card, exiled.card(), gameData, exiled.ownerId()))
+                .filter(card -> exiledCards.stream()
+                        .anyMatch(exiledCard -> sharesCardType(card, exiledCard, gameData, ownerId)))
                 .toList());
         if (matchingCards.isEmpty()) {
             return;
@@ -57,7 +62,7 @@ public class SeekLibraryForOwnerOfCardExiledWithSourceEffectHandler implements N
 
         Card chosen = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
         library.removeIf(card -> card.getId().equals(chosen.getId()));
-        gameData.addCardToHand(exiled.ownerId(), chosen);
+        gameData.addCardToHand(ownerId, chosen);
     }
 
     private boolean sharesCardType(Card candidate, Card exiledCard, GameData gameData, UUID ownerId) {

@@ -242,6 +242,9 @@ public class SagaChapterService {
                         new ArrayList<>(chapterEffects),
                         null,
                         sourcePermanentId);
+                if (sagaPermanent != null) {
+                    chapterEntry.setSourcePermanentSnapshot(new Permanent(sagaPermanent));
+                }
             }
             chapterEntry.setCopy(copied);
             gameData.stack.add(chapterEntry);

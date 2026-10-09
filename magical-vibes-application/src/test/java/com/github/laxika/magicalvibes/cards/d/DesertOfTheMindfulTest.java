@@ -74,7 +74,7 @@ class DesertOfTheMindfulTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(gd.stack).hasSize(1);
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInHand(player1, "Proven Combatant");

@@ -48,7 +48,7 @@ class DemonicTormentTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new AzureDrake());
 
         declareAttackersAndPrepareBlockers(player1, List.of(1));
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
 
         assertThat(attacker.getMarkedDamage()).isZero();

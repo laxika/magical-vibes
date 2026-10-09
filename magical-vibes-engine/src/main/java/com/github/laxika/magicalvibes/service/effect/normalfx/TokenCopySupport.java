@@ -471,8 +471,15 @@ public class TokenCopySupport {
 
         Card tokenCard = new Card();
         tokenCard.setName(effect.nameOverride() != null ? effect.nameOverride() : sourceCard.getName());
-        tokenCard.setType(sourceCard.getType());
-        tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+        boolean creatureSubtypesReplaced = effect.creatureSubtypeOverride() != null
+                && !effect.creatureSubtypeOverride().isEmpty();
+        if (creatureSubtypesReplaced) {
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setAdditionalTypes(EnumSet.noneOf(CardType.class));
+        } else {
+            tokenCard.setType(sourceCard.getType());
+            tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+        }
         tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
         tokenCard.setToken(true);
         if (sourceCard.getBackFaceCard() != null && !sourceCard.isModalDoubleFaced()
@@ -565,6 +572,9 @@ public class TokenCopySupport {
         }
         if (effect.additionalKeywords() != null) {
             keywords.addAll(effect.additionalKeywords());
+        }
+        if (creatureSubtypesReplaced) {
+            keywords.remove(Keyword.CHANGELING);
         }
         if (!keywords.isEmpty()) {
             tokenCard.setKeywords(keywords);
