@@ -277,6 +277,24 @@ public class LibraryChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        if (followUp.remainingSameNamePicks() != null && followUp.remainingSameNamePicks().simultaneous()) {
+            var queue = followUp.remainingSameNamePicks();
+            if (cardIndex >= 0) {
+                if (cardIndex >= searchCards.size()) throw new IllegalStateException("Invalid card index: " + cardIndex);
+                queue = queue.withSelectedCard(searchCards.get(cardIndex));
+            }
+            var next = followUp.withRemainingSameNamePicks(queue);
+            if (librarySearchSupport.startNextSameNamePick(gameData, playerId, next)) return;
+            battlefieldEntryBatchSupport.begin(gameData, queue.selectedCards().stream()
+                            .map(selected -> new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                                    playerId, deckOwnerId, selected, Zone.LIBRARY, null).withTapped(true))
+                            .toList(),
+                    List.of(new com.github.laxika.magicalvibes.model.BattlefieldEntryLibraryRemainder(
+                            deckOwnerId, List.of(), true)));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
         if (followUp.basicLandSearchQueue() != null
                 && followUp.basicLandSearchQueue().enterAfterAllSearches()
                 && (librarySearch.decisionPlayerId() == null
@@ -1919,6 +1937,7 @@ public class LibraryChoiceHandlerService {
         // treats an absent empty descriptor queue as an exhausted queue and would shuffle here.
         return !alreadyShuffled && followUp.basicLandSearchQueue() == null
                 && followUp.eachPlayerToHandCount() == 0
+                && !followUp.remainingToHandPicks().isEmpty()
                 && librarySearchSupport.startNextToHandPick(gameData, playerId, followUp);
     }
 

@@ -75,7 +75,7 @@ public class CounterlashEffectHandler implements NormalEffectHandlerBean {
                 Card c = eligible.get(i);
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         c, controllerId,
-                        List.of(new MayCastFromHandWithoutPayingManaCostEffect()),
+                        List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
                         "Cast " + c.getName() + " without paying its mana cost?"
                 ));
             }

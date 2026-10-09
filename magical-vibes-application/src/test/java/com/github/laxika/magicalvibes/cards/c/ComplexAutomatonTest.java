@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ComplexAutomaton.class, FlowstoneWall.class, BelbesArmor.class})
+@CardUsed({ComplexAutomaton.class, FlowstoneWall.class, BelbesArmor.class, ControlMagic.class})
 class ComplexAutomatonTest extends BaseCardTest {
 
     @Test
@@ -129,9 +129,13 @@ class ComplexAutomatonTest extends BaseCardTest {
     @DisplayName("Returns to its owner's hand when controlled by another player")
     void returnsToOwnerRatherThanController() {
         ComplexAutomaton automaton = new ComplexAutomaton();
-        Permanent stolen = harness.addToBattlefieldAndReturn(player2, automaton);
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, automaton);
+        gd.playerBattlefields.get(player1.getId()).remove(stolen);
+        gd.playerBattlefields.get(player2.getId()).add(stolen);
         gd.stolenCreatures.put(stolen.getId(), player1.getId());
-        addFillerPermanents(player2, 6);
+        Permanent control = harness.addToBattlefieldAndReturn(player2, new ControlMagic());
+        control.setAttachedTo(stolen.getId());
+        addFillerPermanents(player2, 5);
 
         advanceToUpkeep(player2);
         assertThat(gd.stack).hasSize(1);

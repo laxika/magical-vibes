@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.List;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Component;
 public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
+    private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
@@ -50,6 +54,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                 case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER,
                      TRIGGERING_PLAYER, CHOSEN_PLAYER ->
                         resolveSingleTargetPlayer(gameData, entry, e);
+                case ENCHANTED_PLAYER_OR_PLANESWALKER -> resolveEnchantedPlayerOrPlaneswalker(gameData, entry, e);
                 case TRIGGERING_PERMANENT_CONTROLLER -> resolveTriggeringPermanentController(gameData, entry, e);
                 case CONTROLLER -> resolveController(gameData, entry, e);
                 case DEFENDING_PLAYER -> resolveDefendingPlayer(gameData, entry, e);
@@ -68,6 +73,36 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             gameOutcomeService.checkWinCondition(gameData);
         } finally {
             gameData.unpreventableDamageInProgress = previousUnpreventable;
+        }
+    }
+
+    private void resolveEnchantedPlayerOrPlaneswalker(GameData gameData, StackEntry entry,
+                                                     DealDamageToPlayersEffect effect) {
+        UUID enchantedPlayer = entry.getOpponentChosenTargetPlayerId();
+        if (enchantedPlayer == null) {
+            enchantedPlayer = entry.getTargetId();
+            if (enchantedPlayer == null || !gameData.playerIds.contains(enchantedPlayer)) return;
+            entry.setOpponentChosenTargetPlayerId(enchantedPlayer);
+            List<UUID> planeswalkers = gameData.playerBattlefields.getOrDefault(enchantedPlayer, List.of()).stream()
+                    .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                    .map(Permanent::getId).toList();
+            if (!planeswalkers.isEmpty()) {
+                entry.setTargetId(null);
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.RandomOpponentDamageChoice(entry.getCard(), entry.getControllerId()));
+                playerInputService.beginAnyTargetChoice(gameData, entry.getControllerId(), planeswalkers,
+                        List.of(enchantedPlayer), entry.getCard().getName()
+                                + " ? Choose the enchanted player or a planeswalker they control.");
+                return;
+            }
+        }
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        UUID recipient = entry.getTargetId() == null ? enchantedPlayer : entry.getTargetId();
+        if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
+            int amount = evaluateAmount(gameData, entry, effect, enchantedPlayer);
+            damageSupport.resolveAnyTargetDamage(gameData, entry, recipient,
+                    gameQueryService.applyDamageMultiplier(gameData, amount, entry), false);
         }
     }
 

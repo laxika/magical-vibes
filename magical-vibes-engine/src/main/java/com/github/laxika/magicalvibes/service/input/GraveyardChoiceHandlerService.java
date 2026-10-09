@@ -1312,6 +1312,15 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        if (gameData.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsResume) {
+            gameData.interaction.clearAwaitingInput();
+            gameData.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsResume = false;
+            gameData.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsChoiceMade = true;
+            gameData.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsChosenCardId = cardIds.getFirst();
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
+
         if (gameData.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsResume) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsResume = false;

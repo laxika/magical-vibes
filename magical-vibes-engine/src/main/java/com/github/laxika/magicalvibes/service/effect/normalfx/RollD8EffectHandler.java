@@ -56,7 +56,11 @@ public class RollD8EffectHandler implements NormalEffectHandlerBean {
             }
         }
         if (effectIndex >= 0) {
-            entry.insertEffectsToResolve(effectIndex + 1, List.of(rollEffect.onResult()));
+            if (rollEffect.activationCost()) {
+                entry.replaceEffectToResolve(effectIndex, rollEffect.onResult());
+            } else {
+                entry.insertEffectsToResolve(effectIndex + 1, List.of(rollEffect.onResult()));
+            }
         }
     }
 }

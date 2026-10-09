@@ -16,6 +16,6 @@ public class CoalitionFlag extends Card {
         addEffect(EffectSlot.STATIC, new RequireFlagbearerTargetEffect());
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.STATIC,
-                        new GrantSubtypeEffect(CardSubtype.FLAGBEARER, GrantScope.ENCHANTED_CREATURE));
+                        new GrantSubtypeEffect(CardSubtype.FLAGBEARER, GrantScope.ENCHANTED_CREATURE, true));
     }
 }

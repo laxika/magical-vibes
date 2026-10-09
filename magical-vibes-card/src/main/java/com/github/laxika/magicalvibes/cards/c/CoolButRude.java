@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class CoolButRude extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(new ClassLevelUpEffect(2)),
                 "Level up {1}{R} ({1}{R}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
@@ -42,7 +43,7 @@ public class CoolButRude extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",
-                List.of(new PutCountersOnSelfEffect(CounterType.LEVEL)),
+                List.of(new ClassLevelUpEffect(3)),
                 "Level up {1}{R} ({1}{R}: Put a level counter on this. Level up only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(

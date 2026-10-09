@@ -227,10 +227,10 @@ class CurseOfHospitalityTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(topCard));
         harness.setHand(player2, List.of(new ActOfAggression()));
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         harness.addMana(player2, ManaColor.RED, 5);
         harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         resolveAllTriggers();
 

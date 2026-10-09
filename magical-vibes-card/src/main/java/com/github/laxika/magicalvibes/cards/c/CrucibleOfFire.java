@@ -21,7 +21,7 @@ public class CrucibleOfFire extends Card {
 
     public CrucibleOfFire() {
         // Dragon creatures you control get +3/+3.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, Set.of(), GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, Set.of(), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.DRAGON))));
     }
 }

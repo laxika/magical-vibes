@@ -34,7 +34,7 @@ public class ConstructACosmicCube extends Card {
                         Set.of()),
                 new PutCountersOnSelfEffect(CounterType.PLAN)));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, new ConditionalEffect(
+        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(7, CounterType.PLAN),
                 SacrificeSelfThenEffect.reflexive(
                         new ControlTargetPlayerNextTurnEffect(PlayerRelation.OPPONENT))));

@@ -198,6 +198,7 @@ class CroakingCounterpartTest extends BaseCardTest {
 
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);

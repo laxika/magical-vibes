@@ -14,7 +14,7 @@ public class CodecrackerHound extends Card {
 
     public CodecrackerHound() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1));
+                LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1));
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{U}"))));
     }
 }

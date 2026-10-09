@@ -41,6 +41,7 @@ public class AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler implement
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var move = (AttachTargetAuraToAnotherPermanentOfSameTypeEffect) effect;
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (aura == null) {
             return;
@@ -62,7 +63,8 @@ public class AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler implement
             if (permanent.getId().equals(aura.getId()) || permanent.getId().equals(currentHost.getId())) {
                 return;
             }
-            if (sameType(gameData, currentHost, permanent)
+            if ((!move.creaturesOnly() || gameQueryService.isCreature(gameData, permanent))
+                    && sameType(gameData, currentHost, permanent)
                     && canMoveAuraTo(aura, permanent)
                     && auraAttachmentService.canEnchant(gameData, aura.getCard(), auraControllerId, permanent)
                     && !gameQueryService.hasProtectionFromSource(gameData, permanent, aura)) {
@@ -75,7 +77,7 @@ public class AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler implement
         }
         if (validTargetIds.size() > 1) {
             gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.AttachTargetAuraToAnotherPermanentOfSameType(aura.getId()));
+                    new PermanentChoiceContext.AttachTargetAuraToAnotherPermanentOfSameType(aura.getId(), move.creaturesOnly()));
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validTargetIds,
                     "Choose another permanent to attach " + aura.getCard().getName() + " to.");
             return;
@@ -98,6 +100,7 @@ public class AttachTargetAuraToAnotherPermanentOfSameTypeEffectHandler implement
         if (aura == null || target == null || currentHost == null || auraControllerId == null
                 || target.getId().equals(currentHost.getId()) || target.getId().equals(aura.getId())
                 || !aura.getCard().isAura() || !isCreatureOrLand(gameData, currentHost)
+                || (context.creaturesOnly() && !gameQueryService.isCreature(gameData, target))
                 || !sameType(gameData, currentHost, target)
                 || !canMoveAuraTo(aura, target)
                 || !auraAttachmentService.canEnchant(gameData, aura.getCard(), auraControllerId, target)

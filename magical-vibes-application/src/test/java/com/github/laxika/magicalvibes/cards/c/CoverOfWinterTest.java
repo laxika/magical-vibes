@@ -129,6 +129,12 @@ class CoverOfWinterTest extends BaseCardTest {
 
         resolveCombat(player2);
 
+        harness.handleCombatDamageAssigned(player2, 0,
+                java.util.Map.of(blocker.getId(), 2, player1.getId(), 7));
+        var preventionChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, preventionChoice.options().stream()
+                .filter(option -> option.startsWith("Kjeldoran Outrider")).findFirst().orElseThrow());
+
         // The controller can divide prevention, but only one of the nine damage is prevented.
         int damageToPlayer = 20 - gd.getLife(player1.getId());
         assertThat(damageToPlayer + blocker.getMarkedDamage()).isEqualTo(8);

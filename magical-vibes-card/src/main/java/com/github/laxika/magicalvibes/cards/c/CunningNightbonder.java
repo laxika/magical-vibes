@@ -16,6 +16,6 @@ public class CunningNightbonder extends Card {
         CardKeywordPredicate flash = new CardKeywordPredicate(Keyword.FLASH);
         addEffect(EffectSlot.STATIC,
                 new ReduceCastCostForMatchingSpellsEffect(flash, 1, CostModificationScope.SELF));
-        addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect(flash));
+        addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect(flash, true));
     }
 }

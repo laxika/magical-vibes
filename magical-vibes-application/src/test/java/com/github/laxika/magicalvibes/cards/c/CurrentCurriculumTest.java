@@ -164,9 +164,9 @@ class CurrentCurriculumTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CurrentCurriculum());
         harness.setHand(player1, List.of(new GrizzlyBears(), new CoralMerfolk()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         Permanent convoker = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof GrizzlyBears)
                 .findFirst().orElseThrow();

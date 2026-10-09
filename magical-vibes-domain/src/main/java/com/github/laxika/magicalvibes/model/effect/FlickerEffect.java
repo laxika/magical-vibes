@@ -447,6 +447,12 @@ public record FlickerEffect(
                 TurnStep.END_STEP, false, null, null, 0, true, false);
     }
 
+    /** Immediately returns a target matching the filter under the effect controller's control. */
+    public static FlickerEffect flickerTargetUnderYourControl(PermanentPredicate filter) {
+        return new FlickerEffect(FlickerScope.TARGET, filter, ReturnTiming.IMMEDIATE,
+                TurnStep.END_STEP, false, null, null, 0, true, false);
+    }
+
     /** Immediately returns the target under your control, tapped and attacking the current defender. */
     public static FlickerEffect flickerTargetUnderYourControlTappedAndAttacking() {
         return new FlickerEffect(FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE,

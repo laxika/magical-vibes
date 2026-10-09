@@ -22,6 +22,6 @@ public class ClericOfLifesBond extends Card {
 
         // Whenever you gain life for the first time each turn, put a +1/+1 counter on this creature.
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
-                new OncePerTurnTriggerEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                OncePerTurnTriggerEffect.firstLifeGain(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

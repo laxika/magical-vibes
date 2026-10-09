@@ -14,7 +14,7 @@ public class CogworkAssembler extends Card {
 
     public CogworkAssembler() {
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{7}",
                 List.of(new CreateTokenCopyOfTargetPermanentEffect(true, true)),
                 "{7}: Create a token that's a copy of target artifact. That token gains haste. "

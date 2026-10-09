@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.s.ShelteringBoughs;
 import com.github.laxika.magicalvibes.cards.s.SporeCrawler;
 import com.github.laxika.magicalvibes.cards.v.VelaTheNightClad;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ConsumingTide.class, SporeCrawler.class, Island.class, ShelteringBoughs.class, VelaTheNightClad.class})
+@CardUsed({ConsumingTide.class, SporeCrawler.class, Island.class, ShelteringBoughs.class, VelaTheNightClad.class, ControlMagic.class})
 class ConsumingTideTest extends BaseCardTest {
 
     @Test
@@ -176,19 +177,24 @@ class ConsumingTideTest extends BaseCardTest {
     @Test
     void returnsAControlledOpponentsCreatureToItsOwnerBeforeComparingHands() {
         Permanent kept = harness.addToBattlefieldAndReturn(player1, new SporeCrawler());
-        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new SporeCrawler());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, new SporeCrawler());
+        gd.playerBattlefields.get(player2.getId()).remove(stolen);
+        gd.playerBattlefields.get(player1.getId()).add(stolen);
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        Permanent control = harness.addToBattlefieldAndReturn(player1, new ControlMagic());
+        control.setAttachedTo(stolen.getId());
         Island drawn = new Island();
         harness.setLibrary(player1, List.of(drawn));
         harness.setHand(player1, List.of(new ConsumingTide()));
-        harness.setHand(player2, List.of());
+        Island opponentHandCard = new Island();
+        harness.setHand(player2, List.of(opponentHandCard));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMultiplePermanentsChosen(player1, List.of(kept.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(kept);
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(stolen.getCard());
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(stolen.getCard(), opponentHandCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(drawn, control.getCard());
     }
 }

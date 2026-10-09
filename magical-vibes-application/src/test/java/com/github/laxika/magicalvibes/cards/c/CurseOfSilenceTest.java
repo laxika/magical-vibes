@@ -48,7 +48,8 @@ class CurseOfSilenceTest extends BaseCardTest {
 
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castCreature(player2, 0);
-        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.handleMayAbilityChosen(player1, false));
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -83,6 +84,7 @@ class CurseOfSilenceTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player2, ManaColor.GREEN, 4);
         harness.castCreature(player2, 0);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -141,6 +143,7 @@ class CurseOfSilenceTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.addMana(player2, ManaColor.GREEN, 4);
         harness.castCreature(player2, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -161,8 +164,9 @@ class CurseOfSilenceTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock(), new Shock()));
         harness.addMana(player2, ManaColor.RED, 6);
         harness.castInstant(player2, 0, player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.castInstant(player2, 0, player1.getId());
+        assertThat(gd.stack).hasSize(4);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

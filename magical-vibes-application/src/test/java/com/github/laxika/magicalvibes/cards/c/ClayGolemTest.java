@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.BrazenDwarf;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ClayGolem.class})
+@CardUsed({ClayGolem.class, BrazenDwarf.class})
 class ClayGolemTest extends BaseCardTest {
 
     private RollD8EffectHandler effectHandler;
@@ -120,6 +121,29 @@ class ClayGolemTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Clay Golem");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void diceRollTriggerResolvesBeforeMonstrosity() {
+        ReflectionTestUtils.setField(effectHandler, "diceRollService", new FixedDiceRollService(4));
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new ClayGolem());
+        Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new BrazenDwarf());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(golem.isMonstrous()).isFalse();
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+        assertThat(golem.isMonstrous()).isTrue();
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        harness.handlePermanentChosen(player1, dwarf.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Brazen Dwarf");
     }
 
     private static final class FixedDiceRollService extends DiceRollService {

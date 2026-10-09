@@ -62,10 +62,10 @@ class CosmicSpiderManTest extends BaseCardTest {
 
         advanceToCombatAndResolve(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertGrantedKeywords(spider, true);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertGrantedKeywords(spider, false);
     }
 
@@ -86,7 +86,7 @@ class CosmicSpiderManTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CosmicSpiderMan());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(player1, TurnStep.BEGINNING_OF_COMBAT);
         assertThat(gd.stack).hasSize(1);
 
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new AraAHeartOfTheSpider());
@@ -103,7 +103,7 @@ class CosmicSpiderManTest extends BaseCardTest {
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new AraAHeartOfTheSpider());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(player1, TurnStep.BEGINNING_OF_COMBAT);
         assertThat(gd.stack).hasSize(1);
 
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source);

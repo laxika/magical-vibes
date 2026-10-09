@@ -22,9 +22,17 @@ import java.util.UUID;
 
 @Getter
 public class ActivatedAbility {
+    /** The optional discard from hand is a special action and creates no stack object. */
+    private boolean discardSourceAsSpecialAction;
+
+    public ActivatedAbility withDiscardSourceAsSpecialAction() {
+        discardSourceAsSpecialAction = true;
+        return this;
+    }
+
     /** Special-action payments share the action menu but are not activated abilities. */
     public boolean isSpecialAction() {
-        return effects.stream().anyMatch(CardEffect::isSpecialAction)
+        return discardSourceAsSpecialAction || effects.stream().anyMatch(CardEffect::isSpecialAction)
                 && effects.stream().allMatch(effect -> effect instanceof CostEffect || effect.isSpecialAction());
     }
 
@@ -342,6 +350,7 @@ public class ActivatedAbility {
         copy.exhaustAbility = this.exhaustAbility;
         copy.powerUpAbility = this.powerUpAbility;
         copy.exilesSourceFromHand = this.exilesSourceFromHand;
+        copy.discardSourceAsSpecialAction = this.discardSourceAsSpecialAction;
         copy.revealsSourceFromHand = this.revealsSourceFromHand;
         copy.ninjutsuAbility = this.ninjutsuAbility;
         copy.ninjutsuAttackerPredicate = this.ninjutsuAttackerPredicate;

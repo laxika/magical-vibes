@@ -14,7 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ConjurersCloset.class, Vorstclaw.class})
+@CardUsed({ControlMagic.class, ConjurersCloset.class, Vorstclaw.class})
 class ConjurersClosetTest extends BaseCardTest {
 
     @Test
@@ -129,9 +129,11 @@ class ConjurersClosetTest extends BaseCardTest {
     void returnsOpponentOwnedCreatureUnderYourControl() {
         harness.addToBattlefield(player1, new ConjurersCloset());
         Vorstclaw card = new Vorstclaw();
-        card.setOwnerId(player2.getId());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, card);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, card);
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player1.getId()).add(creature);
         gd.stolenCreatures.put(creature.getId(), player2.getId());
+        harness.addToBattlefieldAndReturn(player1, new ControlMagic()).setAttachedTo(creature.getId());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -163,6 +165,7 @@ class ConjurersClosetTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(creature);
         gd.playerBattlefields.get(player2.getId()).add(creature);
         gd.stolenCreatures.put(creature.getId(), player1.getId());
+        harness.addToBattlefieldAndReturn(player2, new ControlMagic()).setAttachedTo(creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

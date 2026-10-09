@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
+import com.github.laxika.magicalvibes.model.condition.AttackingPlayerIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
@@ -19,6 +21,6 @@ public class CurseOfVerbosity extends Card {
                         new AttacksEnchantedPlayer(),
                         SequenceEffect.of(
                                 new DrawCardEffect(),
-                                new DrawCardForTriggeringPlayerEffect())));
+                                new ConditionalEffect(new AllOf(java.util.List.of(new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())), new DrawCardForTriggeringPlayerEffect()))));
     }
 }

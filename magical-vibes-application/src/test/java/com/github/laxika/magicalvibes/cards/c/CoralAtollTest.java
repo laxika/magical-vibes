@@ -142,7 +142,7 @@ class CoralAtollTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CoralAtoll()));
         harness.playLand(player1, 0);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.tapPermanent(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();

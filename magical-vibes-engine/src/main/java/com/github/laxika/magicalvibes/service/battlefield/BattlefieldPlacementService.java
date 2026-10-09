@@ -245,7 +245,7 @@ public class BattlefieldPlacementService {
         if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             becomeDayAsEntersEffectHandler.applyDayboundEntryFace(gameData, permanent);
         }
-        if (applyExileUncastEnteringCreature(gameData, controllerId, permanent)) {
+        if (applyExileUncastEnteringCreature(gameData, controllerId, permanent, simultaneouslyEntered)) {
             return;
         }
         if (applyShuffleCreatureEnteringFromExile(gameData, controllerId, permanent, request.sourceStackEntry())) {
@@ -766,16 +766,21 @@ public class BattlefieldPlacementService {
      * (CR 111.7), so it is simply dropped rather than added to the exile zone. Mistcaller's narrower
      * "nontoken creature" wording is tracked separately and leaves entering tokens alone.
      */
-    private boolean applyExileUncastEnteringCreature(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (!permanent.getCard().hasType(CardType.CREATURE)) {
-            return false;
-        }
+    private boolean applyExileUncastEnteringCreature(GameData gameData, UUID controllerId, Permanent permanent,
+                                                      List<Permanent> simultaneouslyEntered) {
         Card card = permanent.getCard();
-        boolean selfReplacementApplies = UncastEnteringCreatureExileSupport.hasSelfEntryReplacement(permanent);
-        boolean applies = selfReplacementApplies
-                || (!permanent.isCast() && (!gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
-                || (!card.isToken() && !gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.isEmpty())
-                || UncastEnteringCreatureExileSupport.hasActiveStaticReplacement(gameData, card)));
+        boolean applies;
+        Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
+        try {
+            if (!isCreatureAsEntering(gameData, controllerId, permanent)) return false;
+            boolean selfReplacementApplies = UncastEnteringCreatureExileSupport.hasSelfEntryReplacement(permanent);
+            applies = selfReplacementApplies
+                    || (!permanent.isCast() && (!gameData.playersExilingUncastEnteringCreaturesThisTurn.isEmpty()
+                    || (!card.isToken() && !gameData.playersExilingUncastEnteringNontokenCreaturesThisTurn.isEmpty())
+                    || UncastEnteringCreatureExileSupport.hasActiveStaticReplacement(gameData, card, gameQueryService)));
+        } finally {
+            restoreHiddenBattlefields(gameData, hidden);
+        }
         if (!applies) {
             return false;
         }
@@ -787,6 +792,22 @@ public class BattlefieldPlacementService {
         gameLogService.append(gameData, GameLog.cardThen(card, " is exiled instead of entering the battlefield."));
         log.info("Game {} - {} exiled instead of entering due to an entry replacement", gameData.id, card.getName());
         return true;
+    }
+
+    /** Evaluates the creature's characteristics in isolation as though it were on the battlefield. */
+    private boolean isCreatureAsEntering(GameData gameData, UUID controllerId, Permanent permanent) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        List<Permanent> preview = new ArrayList<>(battlefield);
+        preview.add(permanent);
+        Object previousBoardCache = gameData.layeredBoardCache;
+        gameData.playerBattlefields.put(controllerId, preview);
+        try {
+            return gameQueryService.withFreshQueryScope(gameData,
+                    () -> gameQueryService.isCreature(gameData, permanent, controllerId));
+        } finally {
+            gameData.playerBattlefields.put(controllerId, battlefield);
+            gameData.layeredBoardCache = previousBoardCache;
+        }
     }
 
     /** Don't Blink replacement effect: creatures entering from exile are shuffled into their owners' libraries instead. */
@@ -1619,7 +1640,8 @@ public class BattlefieldPlacementService {
         // Solemnity and Tatterkite/Melira's Keepers-style locks also replace "enters with N counters".
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
-        if (!gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)) {
+        if (!permanent.isFaceDown()
+                && !gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)) {
             List<CardEffect> entryEffects = new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
             // A perpetual "this creature enters with ..." grant is stored as a static effect on
             // the runtime card so it survives zone changes.
@@ -1662,7 +1684,7 @@ public class BattlefieldPlacementService {
         }
 
         applyGrantedBloodthirst(gameData, controllerId, permanent);
-        applySpellAdditionalEnterCounters(gameData, controllerId, permanent);
+        applySpellAdditionalEnterCounters(gameData, controllerId, permanent, sourceStackEntry);
         applySpellGrantedHaste(gameData, permanent);
     }
 
@@ -1811,8 +1833,11 @@ public class BattlefieldPlacementService {
      * and consumed here, so it applies only to the permanent that spell becomes.
      */
     private void applySpellAdditionalEnterCounters(
-            GameData gameData, UUID controllerId, Permanent permanent) {
+            GameData gameData, UUID controllerId, Permanent permanent, StackEntry sourceStackEntry) {
         Integer granted = gameData.spellAdditionalEnterCounters.remove(permanent.getCard().getId());
+        if (granted == null && sourceStackEntry != null && sourceStackEntry.isCopy()) {
+            granted = sourceStackEntry.getAdditionalEnterCounters();
+        }
         if (granted == null || granted <= 0) return;
 
         granted = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, controllerId, granted);

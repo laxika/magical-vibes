@@ -64,7 +64,8 @@ class CloseEncounterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP));
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         assertThat(gd.findExiledCard(warpedCreature.getId())).isNotNull();
         Permanent target = addTargetCreature();
 
@@ -179,7 +180,7 @@ class CloseEncounterTest extends BaseCardTest {
 
     private void castCloseEncounter(java.util.UUID chosenObjectId, java.util.UUID targetId) {
         castCloseEncounterWithoutResolving(chosenObjectId, targetId);
-        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
     }
 
     private void castCloseEncounterWithoutResolving(java.util.UUID chosenObjectId, java.util.UUID targetId) {

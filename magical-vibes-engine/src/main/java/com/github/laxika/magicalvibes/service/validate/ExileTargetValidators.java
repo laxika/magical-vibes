@@ -57,8 +57,8 @@ public class ExileTargetValidators {
                     .map(com.github.laxika.magicalvibes.model.GameData.SuspendedSpellExile::counters)
                     .findFirst().orElse(null);
         }
-        if (timeCounters == null || timeCounters <= 0
-                || ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId())) {
+        if (!com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler
+                .isSuspended(ctx.gameData(), exiled)) {
             throw new IllegalStateException("Target card must be suspended");
         }
         if (effect.suspendedCardOwnedOnly()) {

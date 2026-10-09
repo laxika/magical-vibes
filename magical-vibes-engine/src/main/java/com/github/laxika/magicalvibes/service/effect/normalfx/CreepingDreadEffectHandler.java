@@ -20,8 +20,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CreepingDreadEffectHandler implements NormalEffectHandlerBean {
 
-    private final PlayerInteractionSupport playerInteractionSupport;
+    private final com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
     private final LifeSupport lifeSupport;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService cardChoiceHandlerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,11 +48,6 @@ public class CreepingDreadEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (state.currentPlayerId != null) {
-            state.discardedCardTypes.put(state.currentPlayerId,
-                    Set.copyOf(gameData.lastDiscardedCardTypes));
-            state.currentPlayerId = null;
-        }
         beginNextDiscard(gameData, entry, state);
     }
 
@@ -64,7 +63,9 @@ public class CreepingDreadEffectHandler implements NormalEffectHandlerBean {
 
             gameData.discardCausedByOpponent = !playerId.equals(state.controllerId);
             gameData.rerunCurrentEffectAfterInteraction = true;
-            playerInteractionSupport.resolveDiscardCards(gameData, playerId, 1, DiscardFollowUp.NONE);
+            var indices = java.util.stream.IntStream.range(0, hand.size()).boxed().toList();
+            playerInputService.beginDiscardChoice(gameData, playerId, indices,
+                    "Choose a card to discard.", 1, DiscardFollowUp.NONE);
             return;
         }
 
@@ -87,7 +88,9 @@ public class CreepingDreadEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
+        var selectedDiscards = List.copyOf(state.selectedDiscards);
         state.reset();
+        cardChoiceHandlerService.discardCollectedCards(gameData, selectedDiscards, controllerId);
         gameData.rerunCurrentEffectAfterInteraction = false;
         for (UUID playerId : lifeLossPlayers) {
             lifeSupport.applyLifeLoss(gameData, playerId, 3, entry.getCard().getName());

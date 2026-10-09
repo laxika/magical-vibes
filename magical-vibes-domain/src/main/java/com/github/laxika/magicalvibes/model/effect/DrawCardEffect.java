@@ -16,9 +16,18 @@ import com.github.laxika.magicalvibes.model.amount.SourceToughness;
  * "whenever you draw" triggers see each individual draw).
  */
 public record DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed,
-                             DynamicAmount castTimeXValue)
+                             DynamicAmount castTimeXValue, boolean rememberAmount)
         implements ManaAbilityCardDrawingEffect, CombatDamageTriggerContextEffect,
         CastTimeXValueEffect {
+
+    public DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed, DynamicAmount castTimeXValue) {
+        this(amount, onlyIfSacrificed, castTimeXValue, false);
+    }
+
+    /** Saves the evaluated count for subsequent effects before drawing can change the game state. */
+    public static DrawCardEffect rememberingAmount(DynamicAmount amount) {
+        return new DrawCardEffect(amount, false, null, true);
+    }
 
     public DrawCardEffect(DynamicAmount amount, boolean onlyIfSacrificed) {
         this(amount, onlyIfSacrificed, null);

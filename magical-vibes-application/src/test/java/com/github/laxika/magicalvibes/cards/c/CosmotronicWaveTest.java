@@ -83,7 +83,7 @@ class CosmotronicWaveTest extends BaseCardTest {
         assertThat(bls.canBlockAttacker(gd, opposingCreature, ownCreature,
                 gd.playerBattlefields.get(player2.getId()))).isFalse();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(bls.canBlockAttacker(gd, opposingCreature, ownCreature,
                 gd.playerBattlefields.get(player2.getId()))).isTrue();

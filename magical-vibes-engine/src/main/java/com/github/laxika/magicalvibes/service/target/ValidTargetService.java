@@ -177,6 +177,12 @@ public class ValidTargetService {
     }
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked) {
+        return computeValidTargetsForSpell(gameData, card, controllerId, alreadySelectedIds, xValue, kicked, true);
+    }
+
+    private ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId,
+                                                              List<UUID> alreadySelectedIds, Integer xValue,
+                                                              Boolean kicked, boolean applyFlagbearerRequirement) {
         int effectiveXValue = resolveCastTimeXValue(gameData, card, controllerId, xValue);
 
         // For modal spells (and modal ETB creatures) the request's xValue carries the encoded
@@ -481,9 +487,6 @@ public class ValidTargetService {
                     handPositionFilter));
         }
 
-        enforceFlagbearerTargetChoice(gameData, controllerId, alreadySelectedIds,
-                validPermanentIds, validPlayerIds);
-
         String prompt = "Select a target for " + card.getName();
         if (isMultiTarget) {
             prompt = "Select targets for " + card.getName();
@@ -511,8 +514,59 @@ public class ValidTargetService {
             responseMaxTargets = targetLegalityService.getEffectiveMaxTargets(
                     gameData, card, controllerId, effectiveX, isKicked);
         }
+        if (applyFlagbearerRequirement) {
+            enforceSpellFlagbearerTargetChoice(gameData, card, controllerId, alreadySelectedIds, xValue,
+                    kicked, responseMaxTargets, validPermanentIds, validPlayerIds);
+        }
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds,
                 validExiledCardIds, validHandCardIds, responseMinTargets, responseMaxTargets, prompt);
+    }
+
+    private void enforceSpellFlagbearerTargetChoice(GameData gameData, Card card, UUID controllerId,
+                                                     List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked,
+                                                     int maxTargets, List<UUID> validPermanentIds,
+                                                     List<UUID> validPlayerIds) {
+        List<UUID> selected = alreadySelectedIds == null ? List.of() : alreadySelectedIds;
+        if (!gameQueryService.hasFlagbearerTargetRequirementFromOpponent(gameData, controllerId)
+                || selected.stream().anyMatch(id -> isFlagbearerTarget(gameData, id))) return;
+        if (selected.size() + 1 >= maxTargets) {
+            enforceFlagbearerTargetChoice(gameData, controllerId, selected, validPermanentIds, validPlayerIds);
+            return;
+        }
+        boolean flagbearerAvailableNow = validPermanentIds.stream().anyMatch(id -> isFlagbearerTarget(gameData, id))
+                || validPlayerIds.stream().anyMatch(id -> isFlagbearerTarget(gameData, id));
+        if (!flagbearerAvailableNow) return;
+        java.util.function.Predicate<UUID> cannotSatisfyRequirement = candidateId -> {
+            if (isFlagbearerTarget(gameData, candidateId)) return false;
+            List<UUID> trial = new ArrayList<>(selected);
+            trial.add(candidateId);
+            return !canChooseFlagbearerInLaterSpellSlot(gameData, card, controllerId, trial, xValue, kicked, maxTargets);
+        };
+        validPermanentIds.removeIf(cannotSatisfyRequirement);
+        validPlayerIds.removeIf(cannotSatisfyRequirement);
+    }
+
+    private boolean canChooseFlagbearerInLaterSpellSlot(GameData gameData, Card card, UUID controllerId,
+                                                        List<UUID> selected, Integer xValue, Boolean kicked,
+                                                        int maxTargets) {
+        if (selected.size() >= maxTargets) return false;
+        ValidTargetsResponse next = computeValidTargetsForSpell(
+                gameData, card, controllerId, selected, xValue, kicked, false);
+        List<UUID> candidates = new ArrayList<>(next.validPermanentIds());
+        candidates.addAll(next.validPlayerIds());
+        if (candidates.stream().anyMatch(id -> isFlagbearerTarget(gameData, id))) return true;
+        if (selected.size() + 1 >= maxTargets) return false;
+        candidates.addAll(next.validGraveyardCardIds());
+        candidates.addAll(next.validExiledCardIds());
+        candidates.addAll(next.validHandCardIds());
+        for (UUID candidate : candidates) {
+            List<UUID> trial = new ArrayList<>(selected);
+            trial.add(candidate);
+            if (canChooseFlagbearerInLaterSpellSlot(gameData, card, controllerId, trial, xValue, kicked, maxTargets)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<UUID> computeValidHandTargetsForSpell(GameData gameData, Card card,

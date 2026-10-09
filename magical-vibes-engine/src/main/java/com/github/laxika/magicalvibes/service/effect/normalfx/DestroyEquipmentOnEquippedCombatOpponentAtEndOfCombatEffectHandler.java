@@ -19,6 +19,7 @@ public class DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffectHandler 
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,17 +29,39 @@ public class DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffectHandler 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID targetId = entry.getTargetId();
-                if (targetId == null) {
-                    return;
+        if (targetId == null) return;
+        var equipmentEffect = (DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect) effect;
+        if (equipmentEffect.schedule()) {
+            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger(
+                    entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), targetId,
+                    new DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect(false,
+                            equipmentEffect.lastKnownEquipmentIds())));
+            return;
+        }
+        java.util.List<UUID> equipmentIds = new java.util.ArrayList<>();
+        Permanent creature = gameQueryService.findPermanentById(gameData, targetId);
+        if (creature == null) {
+            equipmentIds.addAll(equipmentEffect.lastKnownEquipmentIds());
+        } else {
+            gameData.forEachPermanent((controller, permanent) -> {
+                if (targetId.equals(permanent.getAttachedTo())
+                        && gameQueryService.hasEffectiveSubtype(gameData, permanent,
+                                com.github.laxika.magicalvibes.model.CardSubtype.EQUIPMENT)) {
+                    equipmentIds.add(permanent.getId());
                 }
-                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-                if (target != null) {
-                    gameData.queueDelayedAction(new DestroyEquipmentAtEndOfCombat(targetId));
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text("Equipment attached to ")
-                            .card(target.getCard())
-                            .text(" will be destroyed at end of combat.")
-                            .build());
+            });
+        }
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            for (UUID equipmentId : equipmentIds) {
+                Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
+                if (equipment != null && permanentRemovalService.tryDestroyPermanent(gameData, equipment)) {
+                    gameLogService.append(gameData, GameLog.isDestroyed(equipment.getCard()));
                 }
+            }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }

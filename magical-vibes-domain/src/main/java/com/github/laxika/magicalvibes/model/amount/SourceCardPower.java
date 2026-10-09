@@ -8,5 +8,13 @@ package com.github.laxika.magicalvibes.model.amount;
  * creature"), because the scavenged card is exiled as an activation cost and never was a permanent.
  * Evaluates to 0 when there is no source card or it has no power (a noncreature card).
  */
-public record SourceCardPower() implements DynamicAmount {
+public record SourceCardPower(boolean exiledCostCard) implements DynamicAmount {
+    public SourceCardPower() {
+        this(false);
+    }
+
+    /** Reads the card exiled to pay this spell's additional cost. */
+    public static SourceCardPower ofExiledCostCard() {
+        return new SourceCardPower(true);
+    }
 }

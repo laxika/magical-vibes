@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.t.TheWanderer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -114,7 +115,8 @@ class CommandTheDreadhordeTest extends BaseCardTest {
 
     @Test
     void preventedDamageDoesNotStopReanimation() {
-        harness.addToBattlefield(player1, new TheWanderer());
+        Permanent wanderer = harness.addToBattlefieldAndReturn(player1, new TheWanderer());
+        wanderer.setCounterCount(CounterType.LOYALTY, wanderer.getCard().getLoyalty());
         Card creature = new CharmedStray();
         harness.setGraveyard(player2, List.of(creature));
         harness.setHand(player1, List.of(new CommandTheDreadhorde()));

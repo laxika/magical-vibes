@@ -159,10 +159,25 @@ public class CardChoiceHandlerService {
         }
 
         Card modifiedCard = hand.get(cardIndex).createRuntimeCopy();
-        modifiedCard.addEffect(EffectSlot.STATIC,
-                new KickerEffect(choice.offspringCost()));
+        com.github.laxika.magicalvibes.model.condition.Condition offspringPaid;
+        if (modifiedCard.getEffects(EffectSlot.STATIC).stream().noneMatch(KickerEffect.class::isInstance)) {
+            modifiedCard.addEffect(EffectSlot.STATIC, new KickerEffect(choice.offspringCost(), false));
+            offspringPaid = new Kicked();
+        } else {
+            int paymentOrdinal = 1 + (int) modifiedCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(ConditionalEffect.class::isInstance).map(ConditionalEffect.class::cast)
+                    .map(ConditionalEffect::condition)
+                    .filter(com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid.class::isInstance)
+                    .map(com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid.class::cast)
+                    .filter(paid -> paid.manaCost().equals(choice.offspringCost())).count();
+            modifiedCard.addEffect(EffectSlot.SPELL,
+                    com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost.singlePayment(
+                            List.of(choice.offspringCost())));
+            offspringPaid = new com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid(
+                    choice.offspringCost(), paymentOrdinal);
+        }
         modifiedCard.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new Kicked(),
+                new ConditionalEffect(offspringPaid,
                         new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
 
         gameData.interaction.clearAwaitingInput();
@@ -729,8 +744,16 @@ public class CardChoiceHandlerService {
                         repeatEffect = repeatEffect.untapSourceIfEnteredCardHasAnySubtype(
                                 untapSourceIfEnteredCardHasAnySubtype);
                     }
-                    playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId, repeatEffect, 0,
-                            null, null, untapSourcePermanentId);
+                    if (gameData.interaction.isAwaitingInput()) {
+                        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                        if (pendingEntry != null) {
+                            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                                    List.of(repeatEffect));
+                        }
+                    } else {
+                        playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId, repeatEffect, 0,
+                                null, null, untapSourcePermanentId);
+                    }
                 }
             }
         }
@@ -803,6 +826,21 @@ public class CardChoiceHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
 
+        if (gameData.creepingDread.active
+                && player.getId().equals(gameData.creepingDread.currentPlayerId)) {
+            if (!discardChoice.validIndices().contains(cardIndex)) {
+                throw new IllegalStateException("Invalid card index: " + cardIndex);
+            }
+            Card chosen = gameData.playerHands.get(player.getId()).get(cardIndex);
+            gameData.creepingDread.selectedDiscards.add(new EachPlayerRummageState.SelectedDiscard(
+                    player.getId(), chosen.getId()));
+            gameData.creepingDread.discardedCardTypes.put(player.getId(), java.util.Arrays.stream(CardType.values()).filter(chosen::hasType)
+                    .collect(java.util.stream.Collectors.toSet()));
+            gameData.creepingDread.currentPlayerId = null;
+            gameData.interaction.clearAwaitingInput();
+            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+            return;
+        }
         if (discardChoice.followUp().plaguecrafter()) {
             handlePlaguecrafterDiscardCardChosen(gameData, player, cardIndex, discardChoice);
             return;
@@ -2860,16 +2898,12 @@ public class CardChoiceHandlerService {
                 log.info("Game {} - {} untaps (creature discarded)", gameData.id, source.getCard().getName());
             }
 
-            // Transform
-            Card originalCard = source.getOriginalCard();
-            Card backFace = originalCard.getBackFaceCard();
-            if (backFace != null && !source.isTransformed()) {
-                Card frontCard = source.getCard();
-                source.setCard(backFace);
-                source.setTransformed(true);
-                gameLogService.append(gameData,
-                        GameLog.cardTextCard(frontCard, " transforms into ", backFace, "."));
-                log.info("Game {} - {} transforms into {}", gameData.id, frontCard.getName(), backFace.getName());
+            if (!source.isTransformed()) {
+                var transform = new com.github.laxika.magicalvibes.model.effect.TransformSelfEffect();
+                StackEntry transformEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY,
+                        source.getCard(), gameQueryService.findPermanentController(gameData, source.getId()),
+                        source.getCard().getName() + " transforms", List.of(transform), null, source.getId());
+                effectHandlerRegistry.getHandler(transform).resolve(gameData, transformEntry, transform);
             }
         }
     }

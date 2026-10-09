@@ -49,7 +49,7 @@ public class ForageFollowUpEffectHandler implements NormalEffectHandlerBean {
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(controllerId, List.of());
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < graveyard.size(); i++) {
-            if (predicateEvaluationService.matchesCardPredicate(
+            if (!graveyard.get(i).isToken() && predicateEvaluationService.matchesCardPredicate(
                     graveyard.get(i), target.filter(), entry.getCard().getId())) {
                 matchingIndices.add(i);
             }

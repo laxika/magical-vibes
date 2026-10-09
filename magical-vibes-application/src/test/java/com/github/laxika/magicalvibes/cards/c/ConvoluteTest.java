@@ -168,7 +168,7 @@ class ConvoluteTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.assertNotInGraveyard(player1, "Watchwolf");
         for (int i = 0; i < 4; i++) {
-            harness.tapPermanent(player1, i);
+            gs.tapPermanent(gd, player1, i);
         }
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

@@ -20,7 +20,7 @@ import java.util.List;
 public class TheTenthDoctor extends Card {
 
     public TheTenthDoctor() {
-        addEffect(EffectSlot.ON_ATTACK, new ExileTopUntilNonlandWithSuspendEffect(3));
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ExileTopUntilNonlandWithSuspendEffect(3));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{7}",

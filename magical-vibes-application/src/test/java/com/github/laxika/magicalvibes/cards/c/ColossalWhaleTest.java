@@ -19,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ColossalWhale.class, CoralMerfolk.class, Shock.class, Island.class})
+@CardUsed({ControlMagic.class, ColossalWhale.class, CoralMerfolk.class, Shock.class, Island.class})
 class ColossalWhaleTest extends BaseCardTest {
 
     @Test
@@ -115,8 +115,11 @@ class ColossalWhaleTest extends BaseCardTest {
     @DisplayName("Exiled stolen creature returns to its owner rather than its former controller")
     void stolenCreatureReturnsToOwner() {
         addReadyWhale(player1);
-        Permanent merfolk = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        gd.playerBattlefields.get(player1.getId()).remove(merfolk);
+        gd.playerBattlefields.get(player2.getId()).add(merfolk);
         gd.stolenCreatures.put(merfolk.getId(), player1.getId());
+        harness.addToBattlefieldAndReturn(player2, new ControlMagic()).setAttachedTo(merfolk.getId());
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, merfolk.getId());

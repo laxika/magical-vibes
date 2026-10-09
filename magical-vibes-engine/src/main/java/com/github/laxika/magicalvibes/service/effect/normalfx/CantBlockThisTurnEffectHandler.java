@@ -19,6 +19,8 @@ import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Slf4j
@@ -108,25 +110,16 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             if (affectedPlayerId == null) return;
         }
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(affectedPlayerId);
-        if (battlefield == null) return;
-
-        String playerName = gameData.playerIdToName.get(affectedPlayerId);
-        int count = 0;
-        for (Permanent p : battlefield) {
-            if (gameQueryService.isCreature(gameData, p)
-                    && (e.filter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
-                p.setCantBlockThisTurn(true);
-                count++;
-            }
-        }
-
-        if (count > 0) {
-            String logEntry = "Creatures controlled by " + playerName + " can't block this turn.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} creatures controlled by {} can't block this turn", gameData.id, count, playerName);
-        }
+        var controlled = new PermanentControlledByPlayerPredicate(affectedPlayerId);
+        var predicate = e.filter() == null ? controlled
+                : new PermanentAllOfPredicate(List.of(controlled, e.filter()));
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(),
+                new MatchingCreaturesCantBlockMatchingCreaturesEffect(predicate,
+                        new PermanentTruePredicate(), "can't block this turn"),
+                null, null, predicate, EffectDuration.UNTIL_END_OF_TURN, 0));
+        gameLogService.append(gameData, GameLog.text("Creatures controlled by "
+                + gameData.playerIdToName.get(affectedPlayerId) + " can't block this turn."));
     }
 
     /**

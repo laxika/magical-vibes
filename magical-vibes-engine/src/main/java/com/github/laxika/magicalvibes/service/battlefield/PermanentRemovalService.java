@@ -104,6 +104,8 @@ public class PermanentRemovalService {
     private final PhasingService phasingService;
     @org.springframework.beans.factory.annotation.Autowired @Lazy
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @org.springframework.beans.factory.annotation.Autowired @Lazy
+    private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     public PermanentRemovalService(GraveyardService graveyardService,
                                    BattlefieldEntryService battlefieldEntryService,
@@ -396,8 +398,8 @@ public class PermanentRemovalService {
         UUID ownerId = destinationPlayerId == null ? removed.get().ownerId() : destinationPlayerId;
 
         if (!creatureDeathTriggersSuppressed) {
-            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD);
-            triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD, removed.get().lastKnownCard());
+            triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.GRAVEYARD, false, removed.get().hadPrintedAbilities());
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -561,11 +563,12 @@ public class PermanentRemovalService {
         boolean creatureDeathTriggersSuppressed = gameQueryService.areCreatureDeathTriggersSuppressed(gameData, target);
         boolean selfGraveyardTriggerSuppressed = selfGraveyardTriggerSuppressed(gameData, target);
         RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId, wasCreature, wasLand,
-                hadPrintedAbilitiesBeforeRemoval(gameData, target));
+                hadPrintedAbilitiesBeforeRemoval(gameData, target),
+                gameData.simultaneousDyingPermanents.getOrDefault(target.getId(), target).getCard());
 
         if (!creatureDeathTriggersSuppressed) {
-            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD);
-            triggerCollectionService.checkSelfLeavesTriggered(gameData, target, info.controllerId());
+            triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.GRAVEYARD, info.lastKnownCard());
+            triggerCollectionService.checkSelfLeavesTriggered(gameData, target, info.controllerId(), Zone.GRAVEYARD, false, info.hadPrintedAbilities());
             triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
             triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
             triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -626,8 +629,8 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        if (!commanderChoice) triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.HAND);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.HAND);
+        if (!commanderChoice) triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.HAND, removed.get().lastKnownCard());
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.HAND, false, removed.get().hadPrintedAbilities());
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -669,8 +672,8 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.COMMAND);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.COMMAND);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.COMMAND, removed.get().lastKnownCard());
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.COMMAND, false, removed.get().hadPrintedAbilities());
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -716,8 +719,8 @@ public class PermanentRemovalService {
             return false;
         }
         UUID controllerId = removed.get().controllerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, destination);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, destination);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, destination, removed.get().lastKnownCard());
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, destination, false, removed.get().hadPrintedAbilities());
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -809,8 +812,8 @@ public class PermanentRemovalService {
             gameData.creatureExileCountThisTurn.merge(controllerId, 1, Integer::sum);
         }
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.EXILE,
-                exiledWhileActivatingCraftAbility);
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.EXILE);
+                exiledWhileActivatingCraftAbility, removed.get().hadPrintedAbilities());
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.EXILE, removed.get().lastKnownCard());
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -924,8 +927,8 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.LIBRARY);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY, removed.get().lastKnownCard());
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.LIBRARY, false, removed.get().hadPrintedAbilities());
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -988,8 +991,8 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.LIBRARY);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY, removed.get().lastKnownCard());
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.LIBRARY, false, removed.get().hadPrintedAbilities());
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -1077,8 +1080,8 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.LIBRARY);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY, removed.get().lastKnownCard());
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.LIBRARY, false, removed.get().hadPrintedAbilities());
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -1144,8 +1147,8 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
         Card werewhatCompanion = detachWerewhatCompanion(gameData, target);
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY);
-        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId, Zone.LIBRARY, removed.get().lastKnownCard());
+        triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId, Zone.GRAVEYARD, false, removed.get().hadPrintedAbilities());
         triggerCollectionService.processDelayedSacrificeSourceWhenTargetLeaves(gameData, target);
         triggerCollectionService.processDelayedSacrificeTargetWhenSourceLeaves(gameData, target);
         triggerCollectionService.processDelayedDestroyTargetWhenSourceLeaves(gameData, target);
@@ -1367,6 +1370,8 @@ public class PermanentRemovalService {
                 if (completed && kind == DelayedPermanentActionKind.EXILE_WARPED_AT_END_STEP) {
                     ExiledCardEntry exiled = gameData.findExiledCard(exiledCard.getId());
                     if (exiled != null) {
+                        gameData.warpExileEntryVersions.put(exiled.card().getId(),
+                                gameData.exileEntryVersions.getOrDefault(exiled.card().getId(), 0L));
                         gameData.queueDelayedAction(new GrantExilePlayPermissionAtNextTurn(
                                 exiled.card().getId(), exiled.ownerId(), exiled.exiledTurnNumber()));
                     }
@@ -1704,7 +1709,7 @@ public class PermanentRemovalService {
         return exiled;
     }
 
-    private record RemovedPermanentInfo(UUID controllerId, UUID ownerId, boolean hadPrintedAbilities) {}
+    private record RemovedPermanentInfo(UUID controllerId, UUID ownerId, boolean hadPrintedAbilities, Card lastKnownCard) {}
 
     /** Captures a permanent's effective types, subtypes, colors, and keywords before departure. */
     public Card snapshotEffectivePermanentCard(GameData gameData, Permanent permanent) {
@@ -1738,6 +1743,14 @@ public class PermanentRemovalService {
             }
         }
         lastKnownCard.setSubtypes(lastKnownSubtypes);
+        java.util.EnumSet<com.github.laxika.magicalvibes.model.CardSupertype> lastKnownSupertypes =
+                java.util.EnumSet.noneOf(com.github.laxika.magicalvibes.model.CardSupertype.class);
+        for (var supertype : com.github.laxika.magicalvibes.model.CardSupertype.values()) {
+            if (gameQueryService.hasEffectiveSupertype(gameData, permanent, supertype)) {
+                lastKnownSupertypes.add(supertype);
+            }
+        }
+        lastKnownCard.setSupertypes(lastKnownSupertypes);
         List<CardColor> lastKnownColors = List.copyOf(gameQueryService.getEffectiveColors(gameData, permanent));
         lastKnownCard.setColors(lastKnownColors);
         lastKnownCard.setColor(lastKnownColors.isEmpty() ? null : lastKnownColors.getFirst());
@@ -1760,6 +1773,37 @@ public class PermanentRemovalService {
      * Finds and removes the given permanent from whatever battlefield it's on, cleans up
      * stolen-creature and permanent-exiled-cards tracking, and returns controller/owner info.
      */
+    private void rememberCombatEquipmentAttachments(GameData gameData, Permanent target) {
+        List<UUID> equipmentIds = new ArrayList<>();
+        gameData.forEachPermanent((controller, attachment) -> {
+            if (target.getId().equals(attachment.getAttachedTo())
+                    && gameQueryService.hasEffectiveSubtype(gameData, attachment, CardSubtype.EQUIPMENT)) {
+                equipmentIds.add(attachment.getId());
+            }
+        });
+        synchronized (gameData.delayedActions) {
+            for (int i = 0; i < gameData.delayedActions.size(); i++) {
+                var action = gameData.delayedActions.get(i);
+                if (action instanceof com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger delayed
+                        && target.getId().equals(delayed.affectedPermanentId())
+                        && delayed.effect() instanceof com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect effect) {
+                    gameData.delayedActions.set(i, new com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger(
+                            delayed.controllerId(), delayed.sourceCard(), delayed.sourcePermanentId(),
+                            delayed.affectedPermanentId(), new com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect(
+                                    effect.schedule(), equipmentIds)));
+                }
+            }
+        }
+        for (StackEntry entry : gameData.stack) {
+            if (!target.getId().equals(entry.getTargetId())) continue;
+            List<CardEffect> updated = new ArrayList<>(entry.getEffectsToResolve());
+            updated.replaceAll(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect equipmentEffect
+                    ? new com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect(
+                            equipmentEffect.schedule(), equipmentIds) : effect);
+            entry.replaceEffectsToResolve(updated);
+        }
+    }
+
     private Optional<RemovedPermanentInfo> removeFromBattlefield(GameData gameData, Permanent target) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -1779,6 +1823,7 @@ public class PermanentRemovalService {
                     if (gameQueryService.hasEffectiveSubtype(gameData, attachment, CardSubtype.AURA)) attachmentCounts[0]++;
                     if (gameQueryService.hasEffectiveSubtype(gameData, attachment, CardSubtype.EQUIPMENT)) attachmentCounts[1]++;
                 });
+                rememberCombatEquipmentAttachments(gameData, target);
                 target.setLastKnownAuraCount(attachmentCounts[0]);
                 target.setLastKnownEquipmentCount(attachmentCounts[1]);
                 Card lastKnownCard = removalSnapshot != null ? removalSnapshot.getCard()
@@ -1803,6 +1848,7 @@ public class PermanentRemovalService {
                     if (target.getId().equals(entry.getTargetId())
                             || entry.getDeclaredTargetIds().contains(target.getId())) {
                         entry.rememberLastKnownPermanentCard(target.getId(), lastKnownCard);
+                        entry.getLastKnownPermanentPowers().put(target.getId(), target.getLastKnownPower());
                         entry.getLastKnownTargetColors().put(target.getId(),
                                 Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
                     }
@@ -1823,6 +1869,12 @@ public class PermanentRemovalService {
                     watchingEntries.add(gameData.pendingEffectResolutionEntry);
                 }
                 for (StackEntry entry : watchingEntries) {
+                    for (Permanent chosenCostSnapshot : entry.getChosenCostPermanentSnapshots()) {
+                        if (target.getId().equals(chosenCostSnapshot.getId())) {
+                            chosenCostSnapshot.setCard(lastKnownCard);
+                            chosenCostSnapshot.setLastKnownSubtypes(Set.copyOf(lastKnownCard.getSubtypes()));
+                        }
+                    }
                     if (target.getId().equals(entry.getTargetId())
                             || entry.getDeclaredTargetIds().contains(target.getId())) {
                         entry.rememberRemovedPermanentController(target.getId(), playerId);
@@ -1872,7 +1924,7 @@ public class PermanentRemovalService {
                 battlefield.remove(target);
                 ZoneChangeCounterSupport.preserve(gameData, target);
                 preserveBlockedStatusWhenBlockerLeaves(gameData, target);
-                return Optional.of(processRemovalCleanup(gameData, target, playerId, wasCreature, wasLand, hadPrintedAbilities));
+                return Optional.of(processRemovalCleanup(gameData, target, playerId, wasCreature, wasLand, hadPrintedAbilities, lastKnownCard));
             }
         }
         return Optional.empty();
@@ -1924,7 +1976,7 @@ public class PermanentRemovalService {
      */
     private RemovedPermanentInfo processRemovalCleanup(
             GameData gameData, Permanent target, UUID controllerId, boolean wasCreature, boolean wasLand,
-            boolean hadPrintedAbilities) {
+            boolean hadPrintedAbilities, Card lastKnownCard) {
         notifyPermanentLeftBattlefield(gameData, target, controllerId);
         gameData.playersWhosePermanentsLeftBattlefieldThisTurn.add(controllerId);
         if (!wasLand) {
@@ -1955,7 +2007,7 @@ public class PermanentRemovalService {
         handleSourceLinkedAnimationCleanup(gameData, target);
         handlePreparedSpellCleanup(gameData, target);
         clearSoulbondPairing(gameData, target);
-        return new RemovedPermanentInfo(controllerId, ownerId, hadPrintedAbilities);
+        return new RemovedPermanentInfo(controllerId, ownerId, hadPrintedAbilities, lastKnownCard);
     }
 
     private void notifyPermanentLeftBattlefield(GameData gameData, Permanent leavingPermanent,
@@ -2790,6 +2842,21 @@ public class PermanentRemovalService {
             gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, removedPermanent.getCard(),
                     controllerId, removedPermanent.getCard().getName() + "'s leaves-the-battlefield ability",
                     new ArrayList<>(effects)));
+            phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
+            return;
+        }
+        boolean simultaneousReturn = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+                .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect.class::isInstance);
+        if (simultaneousReturn) {
+            List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> cards = new ArrayList<>();
+            for (PendingExileReturn pending : pendingReturns) {
+                ExiledCardEntry exiled = gameData.findExiledCard(pending.card().getId());
+                if (exiled == null || !removedPermanent.getId().equals(exiled.sourcePermanentId())) continue;
+                cards.add(new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                        pending.controllerId(), exiled.ownerId(), pending.card(), Zone.EXILE, null)
+                        .withTapped(pending.returnTapped()));
+            }
+            battlefieldEntryBatchSupport.begin(gameData, cards);
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
             return;
         }

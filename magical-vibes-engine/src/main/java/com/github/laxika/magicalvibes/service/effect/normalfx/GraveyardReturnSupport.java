@@ -1510,7 +1510,10 @@ public class GraveyardReturnSupport {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
-                if ((!effect.eventCardIdsOnly() || eventCardIds.contains(card.getId()))
+                if ((!effect.eventCardIdsOnly() || (eventCardIds.contains(card.getId())
+                        && entry.getEventCardGraveyardEntryVersions().getOrDefault(card.getId(),
+                                gameData.graveyardEntryVersion(card.getId()))
+                        == gameData.graveyardEntryVersion(card.getId())))
                         && matchesReturnCardFilter(gameData, entry, effect, card, sourceCardId)) {
                     cardPool.add(card);
                 }

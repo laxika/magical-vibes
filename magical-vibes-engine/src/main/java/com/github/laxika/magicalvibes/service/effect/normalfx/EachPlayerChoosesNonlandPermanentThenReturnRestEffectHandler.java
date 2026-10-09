@@ -93,6 +93,8 @@ public class EachPlayerChoosesNonlandPermanentThenReturnRestEffectHandler
                 .filter(permanent -> !gameQueryService.isLand(gameData, permanent))
                 .toList()));
 
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
         for (Permanent permanent : toReturn) {
             Card card = permanent.getCard();
             if (permanentRemovalService.removePermanentToHand(gameData, permanent)) {
@@ -100,6 +102,10 @@ public class EachPlayerChoosesNonlandPermanentThenReturnRestEffectHandler
                 log.info("Game {} - {} returns {} to its owner's hand", gameData.id, sourceName,
                         card.getName());
             }
+        }
+
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
 
         if (!toReturn.isEmpty()) {

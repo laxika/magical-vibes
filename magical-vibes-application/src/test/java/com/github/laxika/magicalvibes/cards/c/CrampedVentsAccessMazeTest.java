@@ -122,12 +122,13 @@ class CrampedVentsAccessMazeTest extends BaseCardTest {
 
     @Test
     void accessMazeCanBeUsedAgainOnTheNextControllerTurn() {
+        harness.setHand(player2, List.of());
         castRoom(1);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.castCreature(player1, 0);
 
@@ -151,7 +152,7 @@ class CrampedVentsAccessMazeTest extends BaseCardTest {
     void accessMazeDoesNotAllowLifePaymentDuringAnOpponentsTurn() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         castRoom(1);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new GiantGrowth()));
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))

@@ -77,7 +77,7 @@ class CutthroatCenturionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(centurion.getPowerModifier()).isZero();
         assertThat(centurion.getToughnessModifier()).isZero();
@@ -119,7 +119,7 @@ class CutthroatCenturionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new PropheticPrism());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

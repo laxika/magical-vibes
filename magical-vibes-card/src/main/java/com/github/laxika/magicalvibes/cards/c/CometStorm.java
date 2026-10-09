@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+
+import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "76")
 @CardRegistration(set = "MM2", collectorNumber = "111")
@@ -17,6 +20,7 @@ public class CometStorm extends Card {
 
     public CometStorm() {
         setAdditionalCostPerExtraTarget(1);
-        target(1, 100).addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new XValue()));
+        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.multikicker(List.of("{1}")));
+        target(1, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new XValue()));
     }
 }

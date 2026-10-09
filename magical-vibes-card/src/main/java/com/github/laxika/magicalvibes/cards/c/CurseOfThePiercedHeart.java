@@ -11,6 +11,6 @@ public class CurseOfThePiercedHeart extends Card {
 
     public CurseOfThePiercedHeart() {
         addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
-                new DealDamageToPlayersEffect(1, DamageRecipient.ENCHANTED_PLAYER));
+                new DealDamageToPlayersEffect(1, DamageRecipient.ENCHANTED_PLAYER_OR_PLANESWALKER));
     }
 }

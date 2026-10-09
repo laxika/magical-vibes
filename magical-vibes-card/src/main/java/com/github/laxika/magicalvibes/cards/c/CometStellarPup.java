@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
@@ -41,9 +40,9 @@ public class CometStellarPup extends Card {
                         .mandatory(true)
                         .build());
 
-        CardEffect damage = new QueueReflexiveAbilityEffect(SequenceEffect.of(
-                new DealDamageToTargetCreatureOrPlayerEffect(new CountersOnSource(CounterType.LOYALTY)),
-                new RemoveCounterFromSourceEffect(CounterType.LOYALTY, 2)));
+        CardEffect damage = SequenceEffect.of(
+                DealDamageToTargetCreatureOrPlayerEffect.chooseDuringResolution(new CountersOnSource(CounterType.LOYALTY)),
+                new RemoveCounterFromSourceEffect(CounterType.LOYALTY, 2));
 
         CardEffect extraActivations = SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.LOYALTY, 1),

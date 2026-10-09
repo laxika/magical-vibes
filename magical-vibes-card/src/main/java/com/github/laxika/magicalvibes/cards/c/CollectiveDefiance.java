@@ -25,6 +25,7 @@ import java.util.List;
 public class CollectiveDefiance extends Card {
 
     public CollectiveDefiance() {
+        setAllowSharedTargets(true);
         // Escalate {1} (Pay this cost for each mode chosen beyond the first.)
         addEffect(EffectSlot.SPELL, new EscalateManaCost("{1}"));
 

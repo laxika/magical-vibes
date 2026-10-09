@@ -50,6 +50,18 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
             }
         }
 
+        Card targetedCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        if (targetedCard != null && targetedCard.isAura()) {
+            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, targetedCard.getId());
+            if (ownerId == null || ownerId.equals(controllerId)) return;
+            var prepared = new com.github.laxika.magicalvibes.model.Permanent(targetedCard);
+            prepared.setEnteredFromGraveyardOwnerId(ownerId);
+            if (e.tapped()) prepared.tap();
+            graveyardReturnSupport.returnPreparedPermanentsWithAuraChoices(
+                    gameData, controllerId, List.of(prepared), null);
+            return;
+        }
+
         GraveyardReturnSupport.StolenCreatureResult result = graveyardReturnSupport.stealFromOpponentGraveyard(gameData, entry, controllerId);
         if (result == null) return;
 

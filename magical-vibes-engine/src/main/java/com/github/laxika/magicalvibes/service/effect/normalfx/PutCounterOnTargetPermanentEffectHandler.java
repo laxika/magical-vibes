@@ -86,6 +86,9 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         // lone targetId for single-target entries. An empty group (optional target not chosen)
         // does nothing.
         List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (targetIds.isEmpty() && entry.targetsForBoundEffectGroup(effect) != null) {
+            return;
+        }
         if (!targetIds.isEmpty()) {
             resolveTargets(gameData, entry, targetIds, e, count);
             return;

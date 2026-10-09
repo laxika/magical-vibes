@@ -48,8 +48,10 @@ public class PerpetuallyGrantTriggeredAbilityToRandomMatchingHandCardEffectHandl
             if (existing != null) {
                 existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
             }
-            updated.computeIfAbsent(grant.slot(), ignoredSlot -> new ArrayList<>())
-                    .addAll(grant.grantedEffects());
+            CardEffect grantedAbility = grant.grantedEffects().size() == 1
+                    ? grant.grantedEffects().getFirst()
+                    : new com.github.laxika.magicalvibes.model.effect.SequenceEffect(grant.grantedEffects());
+            updated.computeIfAbsent(grant.slot(), ignoredSlot -> new ArrayList<>()).add(grantedAbility);
             updated.replaceAll((slot, effects) -> List.copyOf(effects));
             return Map.copyOf(updated);
         });

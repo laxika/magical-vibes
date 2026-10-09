@@ -83,7 +83,7 @@ class CombustionTechniqueTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         cast(target);
 
-        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, target);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, target));
 
         assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getId().equals(target.getCard().getId()));
         harness.assertNotInGraveyard(player2, "Hill Giant");
@@ -95,7 +95,7 @@ class CombustionTechniqueTest extends BaseCardTest {
         cast(target);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, target);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, target));
 
         harness.assertInGraveyard(player2, "Hill Giant");
         assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card().getId().equals(target.getCard().getId()));

@@ -42,7 +42,10 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         var e = (CopyControllerCastSpellEffect) effect;
         if (e.spellSnapshot() == null) return;
 
-        StackEntry spellSnapshot = e.spellSnapshot();
+        StackEntry spellSnapshot = gameData.stack.stream()
+                .filter(candidate -> candidate != entry)
+                .filter(candidate -> candidate.getTargetableId().equals(e.spellSnapshot().getTargetableId()))
+                .findFirst().orElse(e.spellSnapshot());
         UUID castingPlayerId = e.castingPlayerId();
         Card spellCard = spellSnapshot.getCard();
 

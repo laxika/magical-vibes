@@ -144,8 +144,9 @@ class CrackedSkullTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CrackedSkull(), new Peek(), new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castEnchantment(player1, 0, List.of(enchanted.getId(), player1.getId()));
+        harness.castEnchantment(player1, 0, enchanted.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
@@ -184,8 +185,9 @@ class CrackedSkullTest extends BaseCardTest {
     private void castAndResolveAura(Permanent enchanted) {
         harness.setHand(player1, List.of(new CrackedSkull()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castEnchantment(player1, 0, List.of(enchanted.getId(), player2.getId()));
+        harness.castEnchantment(player1, 0, enchanted.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
     }
 

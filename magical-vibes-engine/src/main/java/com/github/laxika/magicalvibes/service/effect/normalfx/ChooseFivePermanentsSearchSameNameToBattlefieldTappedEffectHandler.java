@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link ChooseFivePermanentsSearchSameNameToBattlefieldTappedEffect} (Clarion Ultimatum):
- * prompts the controller to choose up to five different permanents they control. The follow-up
+ * prompts the controller to choose five different permanents they control, or all if fewer exist. The follow-up
  * same-name searches are completed in {@code MultiPermanentChoiceHandlerService} once the choice
  * is answered.
  */
@@ -49,6 +49,7 @@ public class ChooseFivePermanentsSearchSameNameToBattlefieldTappedEffectHandler
         }
 
         if (permanentIds.isEmpty()) {
+            com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logEntry = gameData.playerIdToName.get(controllerId) + " controls no permanents to choose.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no permanents for {}",
@@ -59,7 +60,7 @@ public class ChooseFivePermanentsSearchSameNameToBattlefieldTappedEffectHandler
         int maxCount = Math.min(5, permanentIds.size());
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, permanentIds, maxCount,
                 new MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped(),
-                "Choose up to five different permanents you control. For each, you may search your library"
+                "Choose " + maxCount + " different permanents you control. Search your library"
                         + " for a card with the same name and put it onto the battlefield tapped.");
     }
 }

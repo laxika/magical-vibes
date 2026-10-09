@@ -493,6 +493,13 @@ public class EtbTriggerService {
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
+                if (may.wrapped() instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect shuffle) {
+                    for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        graveyardTargetingService.handleShuffleIntoLibraryETBTargeting(
+                                gameData, controllerId, card, List.of(may), shuffle);
+                    }
+                    continue;
+                }
                 if (may.wrapped() instanceof ExileCardsFromGraveyardEffect exile) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {
                         graveyardTargetingService.handleGraveyardExileETBTargeting(
@@ -599,13 +606,17 @@ public class EtbTriggerService {
     private void processCreatureEntersTriggers(GameData gameData, UUID controllerId, Card card,
                                                int extraEtbTriggers, boolean faceDown) {
         triggerCollectionService.checkAllyPermanentEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkAllyPermanentEntersTransformedTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
         triggerCollectionService.checkAllyNontokenCreatureEntersTriggers(gameData, controllerId, card);
-        if (!faceDown) {
+        Permanent enteringPermanent = findEnteringPermanent(gameData, card);
+        if (!faceDown || enteringPermanent != null && gameQueryService.isArtifact(gameData, enteringPermanent)) {
             triggerCollectionService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
+            triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
+        }
+        if (!faceDown) {
             triggerCollectionService.checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyEnchantmentEntersTriggers(gameData, controllerId, card);
-            triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
         }
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
@@ -619,7 +630,6 @@ public class EtbTriggerService {
         triggerCollectionService.checkPermanentEntersFromExileTriggers(gameData, controllerId, card);
         triggerCollectionService.checkSelfEntersFromGraveyardTriggers(gameData, controllerId, card);
         triggerCollectionService.checkGraveyardCreatureEntersFromGraveyardTriggers(gameData, controllerId, card);
-        Permanent enteringPermanent = findEnteringPermanent(gameData, card);
         if (!faceDown && (enteringPermanent == null ? card.hasType(CardType.LAND)
                 : gameQueryService.isLand(gameData, enteringPermanent))) {
             triggerCollectionService.checkEnchantedPlayerLandEntersTriggers(gameData, controllerId, card);

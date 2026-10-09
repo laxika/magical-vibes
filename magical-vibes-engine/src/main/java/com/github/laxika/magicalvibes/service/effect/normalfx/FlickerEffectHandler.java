@@ -513,7 +513,10 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
     private void returnAfterImmediateExile(
             GameData gameData, StackEntry entry, FlickerEffect e, FlickeredPermanent flickered) {
-        if (e.equals(FlickerEffect.flickerTarget()) && flickered.card().isAura()) {
+        if ((e.equals(FlickerEffect.flickerTarget()) || e.equals(FlickerEffect.flickerTargetUnderYourControl()))
+                && (flickered.card().isAura()
+                || flickered.card().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD)
+                .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect.class::isInstance))) {
             returnAuraBatch(gameData, List.of(flickered));
             return;
         }
@@ -530,8 +533,11 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                         || flickered.card().getAdditionalTypes().stream().anyMatch(CardType::isPermanentType))
                         && gameData.findExiledCard(flickered.card().getId()) != null)
                 .toList();
-        if (effect.equals(FlickerEffect.flickerTarget())
-                && returning.stream().anyMatch(flickered -> flickered.card().isAura())) {
+        if ((effect.equals(FlickerEffect.flickerTarget())
+                || effect.equals(FlickerEffect.flickerTargetUnderYourControl()))
+                && returning.stream().anyMatch(flickered -> flickered.card().isAura()
+                || flickered.card().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD)
+                .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect.class::isInstance))) {
             returnAuraBatch(gameData, returning);
             return;
         }

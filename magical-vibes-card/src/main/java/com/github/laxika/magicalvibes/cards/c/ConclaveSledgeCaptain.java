@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -44,9 +47,10 @@ public class ConclaveSledgeCaptain extends Card {
                             new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                             new ConditionalEffect(
                                     new TargetPermanentMatches(anotherCreature),
-                                    new GrantEffectToTargetUntilEndOfTurnEffect(
+                                    SequenceEffect.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                                            new GrantEffectToTargetUntilEndOfTurnEffect(
                                             EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                            combatDamageTrigger)
+                                            combatDamageTrigger))
                             )
                     ));
         }

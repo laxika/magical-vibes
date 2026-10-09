@@ -42,7 +42,11 @@ public class SacrificeSelfAtNextCleanupEffectHandler implements NormalEffectHand
             return;
         }
 
-        source.setSacrificeAtNextCleanup(true);
+        gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger(
+                entry.getControllerId(), entry.getCard(),
+                new com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect(1,
+                        new com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate(sourceId),
+                        com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER)));
         gameLogService.append(gameData, GameLog.text(source.getCard().getName()
                 + " will be sacrificed at the beginning of the next cleanup step."));
         log.info("Game {} - {} scheduled for sacrifice at next cleanup", gameData.id, source.getCard().getName());

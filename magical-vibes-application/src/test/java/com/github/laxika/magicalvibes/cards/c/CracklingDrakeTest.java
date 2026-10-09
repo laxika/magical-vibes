@@ -85,7 +85,7 @@ class CracklingDrakeTest extends BaseCardTest {
     void powerUpdatesWhenSpellsMoveBetweenZones() {
         Permanent drake = addDrakeReady(player1);
         harness.setGraveyard(player1, List.of());
-        harness.setExile(player1, List.of());
+        gd.exiledCards.removeIf(entry -> entry.ownerId().equals(player1.getId()));
         assertThat(gqs.getEffectivePower(gd, drake)).isZero();
 
         ChemistersInsight spell = new ChemistersInsight();
@@ -96,7 +96,7 @@ class CracklingDrakeTest extends BaseCardTest {
         harness.setExile(player1, List.of(spell));
         assertThat(gqs.getEffectivePower(gd, drake)).isEqualTo(1);
 
-        harness.setExile(player1, List.of());
+        gd.exiledCards.removeIf(entry -> entry.ownerId().equals(player1.getId()));
         harness.setHand(player1, List.of(spell));
         assertThat(gqs.getEffectivePower(gd, drake)).isZero();
     }
@@ -116,6 +116,7 @@ class CracklingDrakeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveCardPower(gd, drake)).isEqualTo(2);
 
         harness.setGraveyard(player1, List.of(instant));
+        gd.exiledCards.removeIf(entry -> entry.ownerId().equals(player1.getId()));
         harness.setExile(player1, List.of(sorcery, drake));
         assertThat(gqs.getEffectiveCardPower(gd, drake)).isEqualTo(2);
     }

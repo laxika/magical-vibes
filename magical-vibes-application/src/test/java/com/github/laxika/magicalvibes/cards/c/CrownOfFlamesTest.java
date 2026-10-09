@@ -51,7 +51,7 @@ class CrownOfFlamesTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
     }
@@ -125,6 +125,7 @@ class CrownOfFlamesTest extends BaseCardTest {
     @Test
     @DisplayName("A resolved pump persists after the Aura returns to hand")
     void resolvedPumpPersistsWithoutAura() {
+        harness.setHand(player1, java.util.List.of());
         Permanent creature = addCreatureReady(player1, new TrainedArmodon());
         attachTo(creature);
         harness.addMana(player1, ManaColor.RED, 2);
@@ -138,7 +139,7 @@ class CrownOfFlamesTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Crown of Flames");
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
     }

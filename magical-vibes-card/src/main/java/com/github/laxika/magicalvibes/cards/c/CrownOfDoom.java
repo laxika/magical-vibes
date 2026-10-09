@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 
@@ -23,7 +23,7 @@ public class CrownOfDoom extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect()),
+                List.of(new TargetPlayerGainsControlOfSourceCreatureEffect()),
                 "{2}: Target player other than this artifact's owner gains control of Crown of Doom.",
                 new PlayerPredicateTargetFilter(
                         new PlayerOtherThanSourceOwnerPredicate(),

@@ -139,6 +139,9 @@ public class ChoiceHandlerService {
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final TurnProgressionService turnProgressionService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.combat.CombatDamageService combatDamageService;
     private final com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
     private final LegendRuleService legendRuleService;
     private final EffectResolutionService effectResolutionService;
@@ -314,6 +317,16 @@ public class ChoiceHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.CombatSharedDamagePreventionChoice choice) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid prevention recipient");
+            }
+            gameData.interaction.clearAwaitingInput();
+            if (combatDamageService.completeSharedCombatPreventionChoice(gameData, choice, colorName)) {
+                turnProgressionService.handleCombatResult(combatDamageService.resolveCombatDamage(gameData), gameData);
+            }
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SpellDamageModifierOrder order) {
             if (!colorChoice.options().contains(colorName)) {
                 throw new IllegalArgumentException("Invalid damage replacement effect");
@@ -407,6 +420,13 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx
+                && !ctx.excludedTypes().isEmpty()
+                && (playerInputService.isNameExcludedByType(gameData, colorName, ctx.excludedTypes())
+                || !colorChoice.options().contains(colorName)
+                && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, ctx.excludedTypes()))) {
+            throw new IllegalArgumentException("Invalid card name for the required card types: " + colorName);
+        }
         if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx
                 && (ctx.nonbasicLandOnly() || ctx.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect choice
@@ -2823,6 +2843,9 @@ public class ChoiceHandlerService {
     }
 
     private void handleCardNameChosen(GameData gameData, Player player, String cardName, ChoiceContext.CardNameChoice ctx) {
+        if (!libraryRevealSupport.isCardNameAllowed(gameData, cardName)) {
+            throw new IllegalArgumentException("Invalid card name: " + cardName);
+        }
         gameData.interaction.clearAwaitingInput();
 
         Card card = ctx.card();
@@ -6520,6 +6543,9 @@ public class ChoiceHandlerService {
     private void handleChooseNameRevealRandomHandCardDamageChoice(
             GameData gameData, Player player, String cardName,
             ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice ctx) {
+        if (!libraryRevealSupport.isCardNameAllowed(gameData, cardName)) {
+            throw new IllegalArgumentException("Invalid card name: " + cardName);
+        }
         gameData.interaction.clearAwaitingInput();
 
         gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));

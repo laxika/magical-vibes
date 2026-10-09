@@ -104,6 +104,11 @@ public class CulturalExchangeSupport {
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         List<Permanent> firstCreatures = findPermanents(gameData, context.firstChosenIds());
         List<Permanent> secondCreatures = findPermanents(gameData, secondChosenIds);
+        if (firstCreatures.stream().anyMatch(permanent -> gameQueryService.cantBeControlledByOtherPlayers(gameData, permanent))
+                || secondCreatures.stream().anyMatch(permanent -> gameQueryService.cantBeControlledByOtherPlayers(gameData, permanent))) {
+            finish(gameData);
+            return;
+        }
         for (Permanent permanent : firstCreatures) {
             creatureControlService.applyControlEffect(gameData, context.secondPlayerId(), permanent,
                     controlEffect, ControlDuration.PERMANENT.toEffectDuration(), null,

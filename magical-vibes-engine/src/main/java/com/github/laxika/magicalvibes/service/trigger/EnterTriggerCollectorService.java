@@ -191,6 +191,7 @@ public class EnterTriggerCollectorService {
             entry.setNonTargeting(true);
             entry.setTriggeringPermanentId(enteringPermanentId);
             entry.setTriggeringCardId(pe.enteringCard().getId());
+            entry.setTriggeringCardSnapshot(pe.enteringCard());
             match.gameData().stack.add(entry);
         }
         logTriggered(match);
@@ -454,6 +455,7 @@ public class EnterTriggerCollectorService {
             entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
             entry.setTriggeringPermanentControllerId(pe.enteringControllerId());
             entry.setTriggeringCardId(pe.enteringCard().getId());
+            entry.setTriggeringCardSnapshot(pe.enteringCard());
             match.gameData().stack.add(entry);
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
@@ -505,6 +507,7 @@ public class EnterTriggerCollectorService {
             entry.setNonTargeting(true);
             entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
             entry.setTriggeringCardId(pe.enteringCard().getId());
+            entry.setTriggeringCardSnapshot(pe.enteringCard());
             if (usesTriggeringPermanentManaValue(effect)) {
                 entry.setEventValue(pe.enteringCard().getManaValue());
                 entry.setTriggeringCardSnapshot(pe.enteringCard());
@@ -1128,6 +1131,9 @@ public class EnterTriggerCollectorService {
             if (gainLifeEqualToEnteringPower || may.wrapped().usesEnteringPermanentReference()) {
                 StackEntry entry = match.gameData().stack.getLast();
                 entry.setNonTargeting(true);
+                entry.setTriggeringPermanentId(enteringPermanentId);
+                entry.setTriggeringCardId(pe.enteringCard().getId());
+                entry.setTriggeringCardSnapshot(pe.enteringCard());
                 if (enteringPermanent != null) {
                     entry.setTriggeringPermanentPowerAtTrigger(gameQueryService.getEffectivePower(
                             match.gameData(), enteringPermanent));
@@ -2395,21 +2401,26 @@ public class EnterTriggerCollectorService {
     private boolean handleAllyLookAtTopEqualToEnteringPower(TriggerMatchContext match,
             LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        int power = Math.max(0, pe.enteringCard().getPower());
         Card sourceCard = match.permanent().getCard();
-        // X = 0: looking at zero cards accomplishes nothing, so skip the "you may" prompt entirely.
-        if (power <= 0) {
-            logTriggered(match);
-            return true;
-        }
-        var look = LookAtTopCardsEffect.putOneOnTopRestOnBottom(power);
-        var may = new MayEffect(look, "Look at the top " + power + " card(s) of your library?");
+        var look = new LookAtTopCardsEffect(
+                new com.github.laxika.magicalvibes.model.amount.TargetPower(),
+                new com.github.laxika.magicalvibes.model.amount.Fixed(1), null,
+                com.github.laxika.magicalvibes.model.effect.LookDestination.BOTTOM_OF_LIBRARY,
+                false, com.github.laxika.magicalvibes.model.LibrarySearchDestination.TOP_OF_LIBRARY, false);
+        var may = new MayEffect(look, "Look at cards equal to the entering creature's power?");
+        Permanent entering = gameQueryService.findPermanentById(match.gameData(), pe.mayPayTargetCardId());
+        int power = entering == null ? pe.enteringCard().getPower()
+                : gameQueryService.getEffectivePower(match.gameData(), entering);
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may, null, match.permanent().getId());
+            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
+                    match.controllerId(), sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(may)), pe.mayPayTargetCardId(), match.permanent().getId());
+            trigger.setNonTargeting(true);
+            trigger.setTriggeringPermanentId(pe.mayPayTargetCardId());
+            trigger.setTriggeringPermanentPowerAtTrigger(power);
+            match.gameData().enqueueTrigger(trigger);
         }
         logTriggered(match);
-        log.info("Game {} - {} triggers for {} entering (look at top {})",
-                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), power);
         return true;
     }
 
@@ -2439,8 +2450,12 @@ public class EnterTriggerCollectorService {
             var may = new MayEffect(new AttachSourceEquipmentToTargetCreatureEffect(),
                     "Attach " + sourceCard.getName() + " to " + pe.enteringCard().getName() + "?");
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-                match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                        enteringPermanentId, match.permanent().getId());
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard, match.controllerId(), sourceCard.getName() + "'s ability",
+                        List.of(may), enteringPermanentId, match.permanent().getId());
+                entry.setNonTargeting(true);
+                entry.setTriggeringPermanentId(enteringPermanentId);
+                match.gameData().stack.add(entry);
             }
         } else {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
@@ -2554,6 +2569,9 @@ public class EnterTriggerCollectorService {
                     match.permanent() == null ? null : match.permanent().getId()
             );
             entry.setNonTargeting(!isTargeting(effect));
+            entry.setMarkSourceOncePerTurnOnAcceptance(match.rawEffect() instanceof
+                    com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect once
+                    && once.markOnAcceptance());
             entry.setSourcePlanarObject(match.sourcePlanarObject() == null
                     ? null : match.sourcePlanarObject().copy());
             if (match.permanent() != null) {

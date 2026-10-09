@@ -85,7 +85,12 @@ public class PutTargetSpellOrPermanentIntoLibraryNFromTopEffectHandler implement
         // Copies cease to exist when leaving the stack (approx. CR 704.5e); tokens put into the
         // library are cleaned up by state-based actions.
         if (!target.isCopy()) {
-            Card spell = target.getCard();
+            Card spell = target.getPhysicalCard();
+            if (target.isCastWithFlashback()) {
+                gameData.addToExile(target.getOwnerId(), spell);
+                gameLogService.append(gameData, GameLog.cardThen(spell, " is exiled instead of leaving the stack for another zone."));
+                return;
+            }
             UUID ownerId = spell.getOwnerId() != null ? spell.getOwnerId() : target.getOwnerId();
             List<Card> library = gameData.playerDecks.get(ownerId);
             int insertIndex = Math.min(position, library.size());

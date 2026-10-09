@@ -22,6 +22,7 @@ public class CorpseCur extends Card {
                 new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
+                                .targetGraveyard(true)
                                 .filter(new CardAllOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),
                                         new CardKeywordPredicate(Keyword.INFECT)

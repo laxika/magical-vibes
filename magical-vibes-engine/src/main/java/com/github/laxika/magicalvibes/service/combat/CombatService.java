@@ -182,6 +182,7 @@ public class CombatService {
         gameData.declaredAttackerIdsThisCombat.clear();
         gameData.ragingRiverBlockRestrictionsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();
+        gameData.combatSharedDamagePreventionAllocations.clear();
         gameData.combatDamagePendingIndices.clear();
         gameData.combatDamageBlockerAssignments.clear();
         gameData.combatDamagePendingBlockerIndices.clear();
@@ -229,17 +230,17 @@ public class CombatService {
                 gameData.enqueueTrigger(delayed);
                 continue;
             }
-            if (perm != null) {
-                UUID sacrificingPlayerId = gameQueryService.findPermanentController(gameData, action.permanentId());
-                permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                gameLogService.append(gameData, GameLog.isSacrificed(perm.getCard()));
-                log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
-                // "If the player does, they create a … token" (Basalt Golem) — only on an actual sacrifice.
-                if (action.tokenForSacrificingPlayer() != null && sacrificingPlayerId != null) {
-                    permanentControlSupport.applyCreateToken(gameData, sacrificingPlayerId,
-                            action.tokenForSacrificingPlayer(),
-                            action.sourceCard() != null ? action.sourceCard().getSetCode() : null);
-                }
+            if (perm != null && source != null) {
+                UUID controllerId = action.controllerId() != null ? action.controllerId()
+                        : gameQueryService.findPermanentController(gameData, action.permanentId());
+                if (controllerId == null) continue;
+                StackEntry delayed = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        source, controllerId, source.getName() + "'s delayed ability",
+                        List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect()),
+                        (UUID) null, action.permanentId());
+                delayed.setNonTargeting(true);
+                delayed.setSourcePermanentSnapshot(new Permanent(perm));
+                gameData.enqueueTrigger(delayed);
             }
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
@@ -565,9 +566,7 @@ public class CombatService {
     }
 
     /**
-     * Removes the scheduled counters from all permanents marked for end-of-combat counter removal
-     * (e.g. Clockwork Beast's "At end of combat, if this creature attacked or blocked this combat,
-     * remove a +1/+0 counter from it"). Clamped at zero — a permanent with none is unaffected.
+     * Queues the delayed counter-removal abilities at end of combat so players can respond.
      */
     public void processEndOfCombatCounterRemovals(GameData gameData) {
         List<RemoveCounterFromSourceAtEndOfCombat> toRemove =
@@ -577,19 +576,14 @@ public class CombatService {
             if (perm == null || action.amount() <= 0) {
                 continue;
             }
-            int current = perm.getCounterCount(action.counterType());
-            if (current <= 0) {
-                continue;
-            }
-            int removed = Math.min(action.amount(), current);
-            perm.setCounterCount(action.counterType(), current - removed);
-            if (action.counterType() == CounterType.OIL) {
-                gameData.recordOilCounterRemoved(perm, removed);
-            }
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                    " loses " + removed + " counter(s)."));
-            log.info("Game {} - {} loses {} {} counter(s) at end of combat",
-                    gameData.id, perm.getCard().getName(), removed, action.counterType());
+            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(), gameQueryService.findPermanentController(gameData, perm.getId()),
+                    perm.getCard().getName() + "'s delayed ability",
+                    List.of(new com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect(
+                            action.counterType(), action.amount())), null, perm.getId());
+            trigger.setNonTargeting(true);
+            trigger.setSourcePermanentSnapshot(new Permanent(perm));
+            gameData.enqueueTrigger(trigger);
         }
     }
 

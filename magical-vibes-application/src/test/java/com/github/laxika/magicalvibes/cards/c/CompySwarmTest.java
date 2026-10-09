@@ -114,6 +114,9 @@ class CompySwarmTest extends BaseCardTest {
         assertThat(tokenCopies()).hasSize(1);
         assertThat(gd.stack).isEmpty();
 
+        gd.turnNumber++;
+        harness.forceActivePlayer(player1);
+        gd.creatureDeathCountThisTurn.put(player2.getId(), 1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(2);

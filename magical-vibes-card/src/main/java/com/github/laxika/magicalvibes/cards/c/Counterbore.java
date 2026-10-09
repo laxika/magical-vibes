@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSa
 public class Counterbore extends Card {
 
     public Counterbore() {
-        addEffect(EffectSlot.SPELL, new CounterSpellAndExileAllWithSameNameEffect());
+        addEffect(EffectSlot.SPELL, new CounterSpellAndExileAllWithSameNameEffect(false, false, true));
     }
 }

@@ -36,7 +36,7 @@ public class PrivateInformationProjectionFactory {
         String playerName = gameData.playerIdToName.get(reveal.subjectPlayerId());
         return switch (reveal.zone()) {
             case HAND -> new RevealHandMessage(cards, playerName);
-            case LIBRARY -> new RevealLibraryTopMessage(cards, playerName);
+            case LIBRARY, OUTSIDE_GAME -> new RevealLibraryTopMessage(cards, playerName);
             case PERMANENT -> new RevealPermanentMessage(cards.getFirst(), playerName);
         };
     }
@@ -46,6 +46,8 @@ public class PrivateInformationProjectionFactory {
             Card card = findIn(gameData.playerHands.get(playerId), cardId);
             if (card != null) return card;
             card = findIn(gameData.playerDecks.get(playerId), cardId);
+            if (card != null) return card;
+            card = findIn(gameData.playerSideboards.get(playerId), cardId);
             if (card != null) return card;
             card = findIn(gameData.playerGraveyards.get(playerId), cardId);
             if (card != null) return card;

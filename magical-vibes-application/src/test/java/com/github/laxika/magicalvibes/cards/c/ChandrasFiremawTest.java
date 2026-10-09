@@ -34,6 +34,9 @@ class ChandrasFiremawTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMultipleCardsChosen(player1,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
+
         harness.assertInHand(player1, "Chandra, Flame's Catalyst");
         harness.assertNotInGraveyard(player1, "Chandra, Flame's Catalyst");
     }
@@ -47,8 +50,9 @@ class ChandrasFiremawTest extends BaseCardTest {
 
         resolveMay(true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(chandra.getId()));
 
         harness.assertInHand(player1, "Chandra, Flame's Catalyst");
     }

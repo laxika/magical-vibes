@@ -128,6 +128,8 @@ public class StackEntry {
     @Setter private boolean activationUsedTreasureMana;
     /** Mana spent to cast this spell, retained until a permanent spell enters the battlefield. */
     @Setter private int manaSpentToCast;
+    /** Additional entry counters granted by costs paid for the spell, also retained by copies. */
+    @Setter private int additionalEnterCounters;
     @Setter private Zone targetZone;
     @Setter private List<UUID> targetCardIds;
     /** Target counts per independently optional graveyard target group, in group order. */
@@ -210,7 +212,11 @@ public class StackEntry {
 
     /** Whether this spell paid a kicker or multikicker cost. */
     public boolean wasKicked() {
-        if (kicked) {
+        if (kicked && card.getEffects(EffectSlot.STATIC).stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.KickerEffect.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.effect.KickerEffect.class::cast)
+                .findFirst().map(com.github.laxika.magicalvibes.model.effect.KickerEffect::countsAsKicker)
+                .orElse(true)) {
             return true;
         }
         if (repeatedAdditionalCosts.isEmpty()) {
@@ -357,6 +363,7 @@ public class StackEntry {
     @Setter private List<UUID> eventNontokenPlayerIds = List.of();
     /** Card ids of the permanents actually destroyed by the event that produced this entry. */
     @Setter private List<UUID> eventCardIds = List.of();
+    private final Map<UUID, Long> eventCardGraveyardEntryVersions = new HashMap<>();
     /** Cards exiled during this entry's resolution, excluding earlier uses of the same source. */
     private List<UUID> resolutionExiledCardIds = List.of();
 
@@ -803,6 +810,7 @@ public class StackEntry {
         this.activationTreasureManaSpent = source.activationTreasureManaSpent;
         this.activationUsedTreasureMana = source.activationUsedTreasureMana;
         this.manaSpentToCast = source.manaSpentToCast;
+        this.additionalEnterCounters = source.additionalEnterCounters;
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
         this.targetCardGroupSizes = source.targetCardGroupSizes.isEmpty()
@@ -907,6 +915,7 @@ public class StackEntry {
         this.eventNontokenPlayerIds = source.eventNontokenPlayerIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.eventNontokenPlayerIds);
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
+        this.eventCardGraveyardEntryVersions.putAll(source.eventCardGraveyardEntryVersions);
         this.resolutionExiledCardIds = source.resolutionExiledCardIds;
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
@@ -1674,9 +1683,11 @@ public class StackEntry {
             return List.of(targetId);
         }
         if (targetIds.isEmpty()) {
-            // On an aura the lone targetId is the enchant target (group 0), never a later
-            // group's target — an effect bound to a later group simply has no target chosen.
-            if (entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura() && group != 0) {
+            // A spell's lone target belongs to its first group; later groups were omitted.
+            if (group != 0 && (entryType != StackEntryType.TRIGGERED_ABILITY
+                    && entryType != StackEntryType.ACTIVATED_ABILITY
+                    && targeting.getSpellTargets().size() > 1
+                    || entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura())) {
                 return List.of();
             }
             return targetId != null ? List.of(targetId) : List.of();
@@ -1707,7 +1718,10 @@ public class StackEntry {
             return List.of(targetId);
         }
         if (targetIds.isEmpty()) {
-            if (entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura() && group != 0) {
+            if (group != 0 && (entryType != StackEntryType.TRIGGERED_ABILITY
+                    && entryType != StackEntryType.ACTIVATED_ABILITY
+                    && targeting.getSpellTargets().size() > 1
+                    || entryType == StackEntryType.ENCHANTMENT_SPELL && targeting.isAura())) {
                 return List.of();
             }
             return targetId != null ? List.of(targetId) : List.of();

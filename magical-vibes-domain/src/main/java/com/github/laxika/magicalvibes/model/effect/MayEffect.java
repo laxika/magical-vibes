@@ -18,12 +18,21 @@ import java.util.UUID;
  * @param choicePlayer identifies the player who makes the choice; {@code DEFENDING_PLAYER} uses
  *                            the player attacked by an attack trigger
  */
-public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer)
+public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer, UUID choicePlayerId)
         implements GrantingPermanentAwareEffect, CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
         TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
         SacrificedPermanentManaValueAwareEffect, DyingCreaturePermanentAwareEffect,
         TriggeringPermanentManaValueEffect, TriggeringPermanentEntryExclusionEffect,
         DyingCreatureCountersAwareEffect, LeavingPermanentCountersAwareEffect {
+
+    public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer) {
+        this(wrapped, prompt, elseEffect, choicePlayer, null);
+    }
+
+    /** A resolution-time decision by an explicitly identified player. */
+    public static MayEffect forPlayer(CardEffect wrapped, String prompt, UUID playerId) {
+        return new MayEffect(wrapped, prompt, null, MayChoicePlayer.CONTROLLER, playerId);
+    }
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect) {
         this(wrapped, prompt, elseEffect, MayChoicePlayer.CONTROLLER);
@@ -74,7 +83,7 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         CardEffect boundWrapped = wrapped instanceof CombatDamageDealerAwareEffect aware
                 ? aware.withCombatDamageDealerIds(dealerIds)
                 : wrapped;
-        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer);
+        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer, choicePlayerId);
     }
 
     @Override
@@ -85,7 +94,7 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         CardEffect boundElse = elseEffect instanceof GrantingPermanentAwareEffect aware
                 ? aware.withGrantingPermanentId(permanentId)
                 : elseEffect;
-        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer);
+        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer, choicePlayerId);
     }
 
     @Override
@@ -119,7 +128,7 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         CardEffect boundWrapped = wrapped instanceof SacrificedPermanentManaValueAwareEffect aware
                 ? aware.boundToSacrificedPermanentManaValue(manaValue)
                 : wrapped;
-        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer);
+        return new MayEffect(boundWrapped, prompt, elseEffect, choicePlayer, choicePlayerId);
     }
 
     @Override
@@ -133,7 +142,7 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         if (boundWrapped == wrapped && boundElse == elseEffect) {
             return this;
         }
-        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer);
+        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer, choicePlayerId);
     }
 
     @Override
@@ -147,7 +156,7 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         if (boundWrapped == wrapped && boundElse == elseEffect) {
             return this;
         }
-        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer);
+        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer, choicePlayerId);
     }
 
     @Override
@@ -161,6 +170,6 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         if (boundWrapped == wrapped && boundElse == elseEffect) {
             return this;
         }
-        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer);
+        return new MayEffect(boundWrapped, prompt, boundElse, choicePlayer, choicePlayerId);
     }
 }

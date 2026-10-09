@@ -50,6 +50,7 @@ class ConsumeTheMeekTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys zero-mana-value creature tokens")
     void destroysSpawnTokens() {
+        harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new NestInvader(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();

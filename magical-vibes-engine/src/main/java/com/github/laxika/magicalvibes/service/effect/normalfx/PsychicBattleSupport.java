@@ -148,6 +148,10 @@ public class PsychicBattleSupport {
                     candidates.add(stackEntry.getTargetableId());
                 }
             }
+            StackEntry resolving = gameData.pendingEffectResolutionEntry;
+            if (resolving != null && !resolving.getTargetableId().equals(entry.getTargetableId())) {
+                candidates.add(resolving.getTargetableId());
+            }
         } else if (entry.getTargetZone() == Zone.GRAVEYARD) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 gameData.playerGraveyards.getOrDefault(playerId, List.of())

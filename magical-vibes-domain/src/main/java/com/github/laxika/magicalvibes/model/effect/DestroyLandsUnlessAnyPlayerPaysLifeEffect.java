@@ -8,8 +8,14 @@ public record DestroyLandsUnlessAnyPlayerPaysLifeEffect(
         int lifeCost,
         List<UUID> remainingLandIds,
         UUID currentLandId,
-        List<UUID> remainingPayerIds
+        List<UUID> remainingPayerIds,
+        List<UUID> unprotectedLandIds
 ) implements CardEffect {
+
+    public DestroyLandsUnlessAnyPlayerPaysLifeEffect(int lifeCost, List<UUID> remainingLandIds,
+            UUID currentLandId, List<UUID> remainingPayerIds) {
+        this(lifeCost, remainingLandIds, currentLandId, remainingPayerIds, List.of());
+    }
 
     public DestroyLandsUnlessAnyPlayerPaysLifeEffect(int lifeCost) {
         this(lifeCost, List.of(), null, List.of());
@@ -18,5 +24,6 @@ public record DestroyLandsUnlessAnyPlayerPaysLifeEffect(
     public DestroyLandsUnlessAnyPlayerPaysLifeEffect {
         remainingLandIds = remainingLandIds == null ? List.of() : List.copyOf(remainingLandIds);
         remainingPayerIds = remainingPayerIds == null ? List.of() : List.copyOf(remainingPayerIds);
+        unprotectedLandIds = unprotectedLandIds == null ? List.of() : List.copyOf(unprotectedLandIds);
     }
 }

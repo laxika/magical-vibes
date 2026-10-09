@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.d.DruidOfTheAnima;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +19,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClarionUltimatum.class, Forest.class, Island.class, DruidOfTheAnima.class})
+@CardUsed({ClarionUltimatum.class, Forest.class, Island.class, DruidOfTheAnima.class, CosisTrickster.class, Clone.class})
 class ClarionUltimatumTest extends BaseCardTest {
 
     @Test
@@ -166,20 +167,21 @@ class ClarionUltimatumTest extends BaseCardTest {
     @DisplayName("The library is shuffled once after all same-name picks, never between picks")
     void shufflesOnlyAfterAllPicks() {
         List<Permanent> forests = setupForests(2);
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
         setupLibrary();
         castClarion();
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, forests.stream().map(Permanent::getId).toList());
-        int logStart = gd.gameLog.size();
-
-        harness.handleCardChosen(player1, 0);
-
-        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size()).stream()
-                .map(GameLogEntry::plainText)).noneMatch(text -> text.toLowerCase().contains("shuffled"));
-        harness.handleCardChosen(player1, 0);
-        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size()).stream()
-                .map(GameLogEntry::plainText)
-                .filter(text -> text.toLowerCase().contains("shuffled")).count()).isEqualTo(1);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.handleCardChosen(player1, 0);
+            assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(gd.stack).isEmpty();
+            harness.handleCardChosen(player1, 0);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+        });
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -202,16 +204,41 @@ class ClarionUltimatumTest extends BaseCardTest {
     @Test
     @DisplayName("The library is still shuffled when no permanents are controlled")
     void shufflesWithNoControlledPermanents() {
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
         setupLibrary();
         castClarion();
-        int logStart = gd.gameLog.size();
-
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+        });
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size()).stream()
-                .map(GameLogEntry::plainText)).anyMatch(text -> text.toLowerCase().contains("shuffled"));
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    void foundCloneChoosesItsCopyBeforeTheCardsEnterTogetherTapped() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new DruidOfTheAnima());
+        Permanent originalClone = harness.addToBattlefieldAndReturn(player1, new Clone());
+        originalClone.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new DruidOfTheAnima(), new Clone()));
+        castClarion();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(druid.getId(), originalClone.getId()));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(druid, originalClone);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, druid.getId());
+
+        List<Permanent> entering = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent != druid && permanent != originalClone).toList();
+        assertThat(entering).hasSize(2).allMatch(Permanent::isTapped);
+        assertThat(entering).allMatch(permanent -> "Druid of the Anima".equals(permanent.getCard().getName()));
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private List<Permanent> setupForests(int count) {

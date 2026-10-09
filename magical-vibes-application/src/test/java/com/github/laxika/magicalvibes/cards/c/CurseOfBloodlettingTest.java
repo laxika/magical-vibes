@@ -227,6 +227,28 @@ class CurseOfBloodlettingTest extends BaseCardTest {
         // Neither outcome may be imposed before the affected player chooses.
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.handleListChoice(player2, "Prevent the next 1 damage to you");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Doubling before prevention deals one damage and consumes the shield")
+    void doublingBeforePreventionDealsOneDamage() {
+        placeCurseOnPlayer(player1, player2);
+        Permanent healer = harness.addToBattlefieldAndReturn(player2, new SamiteHealer());
+        healer.setSummoningSick(false);
+        harness.setLife(player2, 20);
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player2, "Multiply damage to enchanted player by 2");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
 
     private Permanent placeCurseOnPlayer(Player controller, Player enchantedPlayer) {

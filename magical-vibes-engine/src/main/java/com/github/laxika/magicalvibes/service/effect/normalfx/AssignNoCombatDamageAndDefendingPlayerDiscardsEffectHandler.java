@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link AssignNoCombatDamageAndDefendingPlayerDiscardsEffect} (Cloak of Confusion). The
  * enchanted attacker is the stack entry's {@code sourcePermanentId} and the defending player its
- * {@code targetId}: the attacker is added to {@code creaturesPreventedFromDealingCombatDamage} so it
+ * {@code targetId}: the attacker is added to {@code creaturesAssigningNoCombatDamage} so it
  * deals no combat damage this turn (cleared at turn cleanup), and the defending player discards a
  * card at random.
  */
@@ -42,7 +42,7 @@ public class AssignNoCombatDamageAndDefendingPlayerDiscardsEffectHandler impleme
             return;
         }
 
-        gameData.creaturesPreventedFromDealingCombatDamage.add(attackerId);
+        gameData.creaturesAssigningNoCombatDamage.add(attackerId);
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
         String attackerName = attacker != null ? attacker.getCard().getName() : "the attacking creature";
         gameLogService.append(gameData,

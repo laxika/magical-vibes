@@ -50,6 +50,7 @@ class ClingToDustTest extends BaseCardTest {
 
     @Test
     void escapeExilesFiveOtherCardsAndReturnsClingToDustToGraveyard() {
+        harness.setHand(player1, List.of());
         ClingToDust clingToDust = new ClingToDust();
         List<NyxbornCourser> otherCards = List.of(
                 new NyxbornCourser(), new NyxbornCourser(), new NyxbornCourser(),
@@ -103,6 +104,7 @@ class ClingToDustTest extends BaseCardTest {
 
     @Test
     void escapeCanTargetOneOfTheCardsExiledToPayItsCost() {
+        harness.setHand(player1, List.of());
         ClingToDust clingToDust = new ClingToDust();
         Forest target = new Forest();
         Forest drawnCard = new Forest();

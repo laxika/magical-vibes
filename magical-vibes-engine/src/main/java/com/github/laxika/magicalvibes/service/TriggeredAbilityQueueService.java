@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -1756,7 +1757,11 @@ public class TriggeredAbilityQueueService {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.isCreature(gameData, p)) {
+                        if (gameQueryService.isCreature(gameData, p)
+                                && !gameQueryService.hasKeyword(gameData, p, Keyword.SHROUD)
+                                && (!gameQueryService.hasKeyword(gameData, p, Keyword.HEXPROOF)
+                                || pid.equals(pending.controllerId()))
+                                && !gameQueryService.hasProtectionFromSource(gameData, p, pending.sourceCard())) {
                             validPermanentTargets.add(p.getId());
                         }
                     }

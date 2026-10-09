@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param filter       which permanents to exile
  * @param returnTapped whether the returned permanents enter tapped
  */
-public record ExileAllPermanentsUntilSourceLeavesEffect(PermanentPredicate filter, boolean returnTapped)
+public record ExileAllPermanentsUntilSourceLeavesEffect(PermanentPredicate filter, boolean returnTapped,
+                                                       boolean requiresSourcePresent)
         implements CardEffect {
+    public ExileAllPermanentsUntilSourceLeavesEffect(PermanentPredicate filter, boolean returnTapped) {
+        this(filter, returnTapped, false);
+    }
 }

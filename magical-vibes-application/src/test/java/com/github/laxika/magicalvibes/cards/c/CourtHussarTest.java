@@ -137,7 +137,7 @@ class CourtHussarTest extends BaseCardTest {
         harness.castFromHand(player1, new CourtHussar(), "{2}{U}");
         harness.setLibrary(player1, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Court Hussar");
         harness.assertInGraveyard(player1, "Court Hussar");

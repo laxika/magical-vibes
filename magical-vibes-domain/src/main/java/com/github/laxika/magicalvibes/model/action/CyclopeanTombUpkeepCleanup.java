@@ -11,8 +11,18 @@ public record CyclopeanTombUpkeepCleanup(
         Card sourceCard,
         UUID controllerId,
         Set<UUID> trackedLandIds,
-        Set<UUID> removedLandIds
+        Set<UUID> removedLandIds,
+        UUID sourcePermanentId
 ) implements DelayedAction {
+
+    public CyclopeanTombUpkeepCleanup(UUID actionId, Card sourceCard, UUID controllerId,
+                                    Set<UUID> trackedLandIds, Set<UUID> removedLandIds) {
+        this(actionId, sourceCard, controllerId, trackedLandIds, removedLandIds, null);
+    }
+
+    public CyclopeanTombUpkeepCleanup withTrackedLandIds(Set<UUID> ids) {
+        return new CyclopeanTombUpkeepCleanup(actionId, sourceCard, controllerId, ids, removedLandIds, sourcePermanentId);
+    }
 
     public CyclopeanTombUpkeepCleanup {
         trackedLandIds = Set.copyOf(trackedLandIds);
@@ -22,6 +32,6 @@ public record CyclopeanTombUpkeepCleanup(
     public CyclopeanTombUpkeepCleanup withLandRemoved(UUID landId) {
         java.util.HashSet<UUID> removed = new java.util.HashSet<>(removedLandIds);
         removed.add(landId);
-        return new CyclopeanTombUpkeepCleanup(actionId, sourceCard, controllerId, trackedLandIds, removed);
+        return new CyclopeanTombUpkeepCleanup(actionId, sourceCard, controllerId, trackedLandIds, removed, sourcePermanentId);
     }
 }

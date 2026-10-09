@@ -68,7 +68,6 @@ class CruelUltimatumTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         // Controller returns the creature from their graveyard.
-        harness.handleMayAbilityChosen(player1, true);
         harness.handleGraveyardCardChosen(player1, 0);
 
         // Opponent lost its only creature and three cards, and lost 5 life.
@@ -113,7 +112,6 @@ class CruelUltimatumTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No sacrifice/discard prompt; the controller half (return, draw, gain) is the only interaction.
-        harness.handleMayAbilityChosen(player1, true);
         harness.handleGraveyardCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Cylian Elf");

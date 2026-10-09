@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 
@@ -20,7 +20,8 @@ public class CurseOfChaos extends Card {
                         new AttacksEnchantedPlayer(),
                         new MayEffect(
                                 new DiscardCardThenEffect(
-                                        null, new DrawCardEffect(), "a card", DiscardRecipient.TARGET_PLAYER),
+                                        null, new DrawCardForTriggeringPlayerEffect(), "a card", null, false, null, null,
+                                        DiscardRecipient.TARGET_PLAYER, true),
                                 "Discard a card to draw a card?",
                                 null,
                                 MayChoicePlayer.TARGET_PLAYER)));

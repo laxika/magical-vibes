@@ -595,7 +595,7 @@ public class StackResolutionService {
             gameData.playerDecks.get(ownerId).add(physicalCard);
             triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
         } else if (entry.isCastWithFlashback() || entry.isCastWithDisturb()
-                || entry.isCastWithEscape() || entry.isExileInsteadOfGraveyard()) {
+                || entry.isExileInsteadOfGraveyard()) {
             exileService.exileCard(gameData, ownerId, physicalCard);
         } else {
             graveyardService.addCardToGraveyardFromSpell(gameData, ownerId, physicalCard,
@@ -1378,7 +1378,7 @@ public class StackResolutionService {
                 if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
                     gameData.playerDecks.get(entry.getOwnerId()).add(dispositionCard);
                     triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, entry.getOwnerId(), 1);
-                } else if (entry.isCastWithFlashback() || entry.isCastWithEscape()
+                } else if (entry.isCastWithFlashback()
                         || entry.isExileInsteadOfGraveyard()) {
                     exileService.exileCard(gameData, entry.getOwnerId(), dispositionCard);
                     gameLogService.append(gameData, GameLog.isExiled(dispositionCard));
@@ -1584,10 +1584,6 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
-        } else if (entry.isCastWithEscape()) {
-            gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
-            gameData.addToExile(ownerId, physicalCard);
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (escape)."));
         } else if (entry.isCastWithOmen()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.playerDecks.get(ownerId).add(physicalCard);

@@ -20,6 +20,8 @@ public enum DamageRecipient {
     CONTROLLER,
     /** The enchanted player of a curse ({@code entry.getTargetId()} baked at trigger time; not chosen). */
     ENCHANTED_PLAYER,
+    /** The enchanted player or a planeswalker they control, chosen without targeting at resolution. */
+    ENCHANTED_PLAYER_OR_PLANESWALKER,
     /** The controller of the permanent an Aura is attached to ({@code entry.getTargetId()} baked at trigger time; e.g. Feedback). */
     ENCHANTED_PERMANENT_CONTROLLER,
     /** The player being attacked, or the controller of an attacked planeswalker. */

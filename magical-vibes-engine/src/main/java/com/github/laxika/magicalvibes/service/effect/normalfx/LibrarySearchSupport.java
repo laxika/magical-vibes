@@ -288,6 +288,7 @@ public class LibrarySearchSupport {
                 return false;
             }
             List<Card> matches = deck.stream()
+                    .filter(card -> !queue.selectedCards().contains(card))
                     .filter(card -> card.hasAllCardNames() || name.equals(card.getName()))
                     .filter(card -> !queue.creatureOnly() || card.hasType(CardType.CREATURE))
                     .toList();
@@ -310,6 +311,7 @@ public class LibrarySearchSupport {
                             .filterCardName(name)
                             .destination(queue.destination())
                             .battlefieldControllerId(queue.battlefieldControllerId())
+                            .shuffleAfterSelection(!queue.simultaneous())
                             .followUp(followUp.withRemainingSameNamePicks(queue.withNames(remaining)))
                             .build(), prompt, true);
             return true;
@@ -427,7 +429,7 @@ public class LibrarySearchSupport {
                     .reveals(true)
                     .canFailToFind(true)
                     .destination(LibrarySearchDestination.HAND)
-                    .shuffleAfterSelection(false)
+                    .shuffleAfterSelection(remaining.isEmpty())
                     .followUp(followUp.withRemainingToHandPicks(remaining));
             if (pick.cardName() != null) {
                 builder.filterCardName(pick.cardName());

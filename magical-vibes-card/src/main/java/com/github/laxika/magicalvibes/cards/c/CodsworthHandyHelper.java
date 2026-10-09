@@ -30,8 +30,12 @@ public class CodsworthHandyHelper extends Card {
     public CodsworthHandyHelper() {
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(0, 2),
+                new CounterUnlessPaysEffect(2),
                 GrantScope.OWN_PERMANENTS,
+                new PermanentIsCommanderPredicate()));
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+                new CounterUnlessPaysEffect(2), GrantScope.SELF,
                 new PermanentIsCommanderPredicate()));
 
         addActivatedAbility(new ActivatedAbility(

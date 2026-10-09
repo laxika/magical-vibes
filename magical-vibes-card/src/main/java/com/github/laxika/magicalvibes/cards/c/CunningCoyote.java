@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -20,6 +22,7 @@ import java.util.List;
 public class CunningCoyote extends Card {
 
     public CunningCoyote() {
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{R}"))));
         // When this creature enters, another target creature you control gets +1/+1 and gains haste until end of turn.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

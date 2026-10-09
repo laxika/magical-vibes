@@ -128,7 +128,7 @@ class ContractHeroTest extends BaseCardTest {
         Permanent hero = addCreatureReady(player1, new ContractHero());
         addCreatureReady(player2, new Ornithopter());
 
-        attackAndAcceptMay();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::attackAndAcceptMay);
 
         assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(3);

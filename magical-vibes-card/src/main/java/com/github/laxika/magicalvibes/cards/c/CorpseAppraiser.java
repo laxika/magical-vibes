@@ -21,6 +21,6 @@ public class CorpseAppraiser extends Card {
                 new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
                         creatureCard, null, false, false, true, creatureCard, false, true),
                 new ConditionalEffect(new EventValueAtLeast(1),
-                        LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1))));
+                        LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1))));
     }
 }

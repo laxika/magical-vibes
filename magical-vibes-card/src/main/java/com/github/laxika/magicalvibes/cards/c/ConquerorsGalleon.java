@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfAtEndOfCombatAndReturnTransformedEffect;
+import com.github.laxika.magicalvibes.model.effect.DelayedEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class ConquerorsGalleon extends Card {
 
         // When Conqueror's Galleon attacks, exile it at end of combat, then return it to the
         // battlefield transformed under your control.
-        addEffect(EffectSlot.ON_ATTACK, new ExileSelfAtEndOfCombatAndReturnTransformedEffect());
+        addEffect(EffectSlot.ON_ATTACK, new DelayedEndOfCombatEffect(new ExileSelfAndReturnTransformedEffect(true)));
 
         // Crew 4
         addActivatedAbility(new ActivatedAbility(

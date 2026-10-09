@@ -33,6 +33,9 @@ public class PutTargetOnBottomOfLibraryEffectHandler implements NormalEffectHand
                 Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (target == null) return;
 
+                entry.setEventValue(gameQueryService.getEffectiveToughness(gameData, target));
+                entry.getRemovedPermanentControllers().put(target.getId(),
+                        gameQueryService.findPermanentController(gameData, target.getId()));
                 if (permanentRemovalService.removePermanentToLibraryBottom(gameData, target)) {
                     gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is put on the bottom of its owner's library."));
                     log.info("Game {} - {} put on bottom of library", gameData.id, target.getCard().getName());

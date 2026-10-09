@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTopCardOfTargetLibraryOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
@@ -142,7 +143,7 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                     targetPlayerId, deck, actual, controllerName, targetName, false, e.graveyardCount());
             case REVEAL_AND_PUT_ONE_INTO_GRAVEYARD -> resolvePutOneIntoGraveyard(gameData, entry,
                     controllerId, targetPlayerId, deck, actual, controllerName, targetName, true, e.graveyardCount());
-            case MAY_PUT_TOP_ON_BOTTOM -> resolveMayPutTopOnBottom(gameData, entry, controllerId,
+            case MAY_PUT_TOP_ON_BOTTOM -> resolveMayPutTopOnBottom(gameData, entry, e, controllerId,
                     targetPlayerId, deck, controllerName, targetName);
             case KEEP_ONE_ON_TOP_EXILE_REST -> resolveKeepOneOnTopExileRest(gameData, entry,
                     targetPlayerId, deck, actual, targetName);
@@ -336,19 +337,16 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
      * Coral Fighters: the controller sees the single top card in the prompt (that is the "look")
      * and may send it to the bottom of that player's library; declining leaves it on top.
      */
-    private void resolveMayPutTopOnBottom(GameData gameData, StackEntry entry, UUID controllerId,
+    private void resolveMayPutTopOnBottom(GameData gameData, StackEntry entry, LookAtTopCardsOfTargetLibraryEffect effect, UUID controllerId,
             UUID targetPlayerId, List<Card> deck, String controllerName, String targetName) {
         String sourceName = entry.getCard().getName();
         gameLogService.append(gameData, GameLog.text(
                 controllerName + " looks at the top card of " + targetName + "'s library."));
         String prompt = sourceName + " — Top card of " + targetName + "'s library: " + deck.getFirst().getName()
                 + ". Put it on the bottom of that library?";
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                entry.getCard(),
-                controllerId,
-                List.of(new PutTopCardOfTargetLibraryOnBottomEffect()),
-                prompt,
-                targetPlayerId));
+        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        entry.insertEffectsToResolve(effectIndex + 1, List.of(
+                new MayEffect(new PutTopCardOfTargetLibraryOnBottomEffect(), prompt)));
         log.info("Game {} - {} looks at the top card of {}'s library ({})",
                 gameData.id, controllerName, targetName, sourceName);
     }

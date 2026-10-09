@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,9 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
     private final GameLogService gameLogService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private EffectResolutionService effectResolutionService;
 
     @Override
     public Class<PendingInteraction.PutCardsFromHandOnLibraryCardChoice> handledType() {
@@ -79,13 +83,14 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             shuffleIntoLibrary(gameData, player, validated);
             if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
                 Card sourceCard = interaction.thenEffectSourceCard();
-                gameData.stack.add(new StackEntry(
+                StackEntry followUp = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         sourceCard,
                         player.getId(),
                         sourceCard.getName() + "'s effect",
                         List.of(interaction.thenEffect())
-                ));
+                );
+                effectResolutionService.resolveEffects(gameData, followUp);
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;

@@ -31,6 +31,7 @@ public class ClutchOfCurrents extends Card {
     }
 
     public ClutchOfCurrents() {
+        setAllowSharedTargets(true);
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{U}"))));
 
         target(TargetFilters.creature())

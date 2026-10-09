@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CrescentIslandTemple.class, Shock.class, NorthernAirTemple.class, Card.class})
+@CardUsed({CrescentIslandTemple.class, Shock.class, NorthernAirTemple.class})
 class CrescentIslandTempleTest extends BaseCardTest {
 
     @Test

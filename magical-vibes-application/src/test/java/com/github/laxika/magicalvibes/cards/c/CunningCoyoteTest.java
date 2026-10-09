@@ -47,7 +47,8 @@ class CunningCoyoteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(armadillo.getPowerModifier()).isZero();
         assertThat(armadillo.getToughnessModifier()).isZero();
@@ -102,7 +103,7 @@ class CunningCoyoteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0, 1)));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .allSatisfy(creature -> assertThat(creature.isAttacking()).isTrue());
@@ -128,8 +129,9 @@ class CunningCoyoteTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("turn it became plotted");
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromExile(player1, coyote.getId(), armadillo.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

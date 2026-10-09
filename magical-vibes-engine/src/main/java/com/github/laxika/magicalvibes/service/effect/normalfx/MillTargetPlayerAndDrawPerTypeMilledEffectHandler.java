@@ -40,25 +40,9 @@ public class MillTargetPlayerAndDrawPerTypeMilledEffectHandler implements Normal
             return;
         }
 
-        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        int cardsToMill = Math.min(Math.max(0, e.count()), deck == null ? 0 : deck.size());
-
-        // Snapshot before milling so "put into their graveyard this way" can be counted afterwards,
-        // excluding cards a replacement effect diverted somewhere other than the graveyard.
-        List<Card> preview = cardsToMill == 0 ? List.of() : new ArrayList<>(deck.subList(0, cardsToMill));
-
-        if (cardsToMill > 0) {
-            graveyardService.resolveMillPlayer(gameData, targetPlayerId, e.count());
-        }
-
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        Set<Card> inGraveyard = graveyard == null ? Set.of() : new HashSet<>(graveyard);
-        int matchCount = 0;
-        for (Card card : preview) {
-            if (card.hasType(e.cardType()) && inGraveyard.contains(card)) {
-                matchCount++;
-            }
-        }
+        List<Card> milled = graveyardService.resolveMillPlayer(gameData, targetPlayerId, e.count());
+        int cardsToMill = milled.size();
+        int matchCount = (int) milled.stream().filter(card -> card.hasType(e.cardType())).count();
 
         UUID controllerId = entry.getControllerId();
         for (int i = 0; i < matchCount; i++) {

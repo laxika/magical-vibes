@@ -48,7 +48,8 @@ public class AwardManaOfColorsInGraveyardEffectHandler implements ManaAbilityEff
         }
 
         ChoiceContext.ManaColorChoice choiceContext =
-                new ChoiceContext.ManaColorChoice(playerId, creatureSource, manaMultiplier);
+                new ChoiceContext.ManaColorChoice(playerId, creatureSource, manaMultiplier,
+                        null, false, false, false, availableColors, false);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext,
                 availableColors.stream().map(Enum::name).sorted().toList(),

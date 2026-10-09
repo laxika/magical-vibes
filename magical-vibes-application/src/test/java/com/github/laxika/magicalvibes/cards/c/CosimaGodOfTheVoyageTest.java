@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CosimaGodOfTheVoyage.class, TheOmenkeel.class, Forest.class,
+@CardUsed({ControlMagic.class, CosimaGodOfTheVoyage.class, TheOmenkeel.class, Forest.class,
         GrizzlyBears.class, SerraAngel.class, FuneralLongboat.class})
 class CosimaGodOfTheVoyageTest extends BaseCardTest {
 
@@ -141,8 +141,12 @@ class CosimaGodOfTheVoyageTest extends BaseCardTest {
 
     @Test
     void exiledStolenCosimaTriggersForItsOwnersLand() {
-        Permanent cosima = harness.addToBattlefieldAndReturn(player1, new CosimaGodOfTheVoyage());
+        Permanent cosima = harness.addToBattlefieldAndReturn(player2, new CosimaGodOfTheVoyage());
+        gd.playerBattlefields.get(player2.getId()).remove(cosima);
+        gd.playerBattlefields.get(player1.getId()).add(cosima);
         gd.stolenCreatures.put(cosima.getId(), player2.getId());
+        harness.addToBattlefieldAndReturn(player1,
+                new com.github.laxika.magicalvibes.cards.c.ControlMagic()).setAttachedTo(cosima.getId());
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -173,8 +177,12 @@ class CosimaGodOfTheVoyageTest extends BaseCardTest {
 
     @Test
     void exiledStolenCosimaDoesNotTriggerForItsFormerControllersLand() {
-        Permanent cosima = harness.addToBattlefieldAndReturn(player1, new CosimaGodOfTheVoyage());
+        Permanent cosima = harness.addToBattlefieldAndReturn(player2, new CosimaGodOfTheVoyage());
+        gd.playerBattlefields.get(player2.getId()).remove(cosima);
+        gd.playerBattlefields.get(player1.getId()).add(cosima);
         gd.stolenCreatures.put(cosima.getId(), player2.getId());
+        harness.addToBattlefieldAndReturn(player1,
+                new com.github.laxika.magicalvibes.cards.c.ControlMagic()).setAttachedTo(cosima.getId());
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

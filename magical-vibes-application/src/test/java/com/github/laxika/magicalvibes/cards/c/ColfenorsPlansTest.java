@@ -232,6 +232,8 @@ class ColfenorsPlansTest extends BaseCardTest {
     @CardUsed({ColfenorsPlans.class, Forest.class, LeafGilder.class, Donate.class})
     @DisplayName("A former controller retains permission to look at the exiled cards")
     void formerControllerCanStillLookAfterDonate() throws Exception {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Card exiled = new LeafGilder();
         List<Card> library = new ArrayList<>();
         library.add(exiled);

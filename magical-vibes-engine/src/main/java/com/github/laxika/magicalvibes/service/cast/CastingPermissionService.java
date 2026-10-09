@@ -169,7 +169,7 @@ public class CastingPermissionService {
         if (isPlayerPreventedFromCasting(gameData, playerId)) return false;
         if (isSpellTypeRestricted(gameData, playerId, card)) return false;
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
-        if (forbidden.contains(card.getName())) return false;
+        if (forbidden.stream().anyMatch(card::hasName)) return false;
         if (isNoncreatureSpellCastRestricted(gameData, playerId, card)) return false;
         // Aurelia's Fury etc.: per-turn "can't cast noncreature spells" restriction on a player.
         if (!card.hasType(CardType.CREATURE)
@@ -1013,7 +1013,7 @@ public class CastingPermissionService {
         for (CardType type : card.getAdditionalTypes()) {
             if (restrictedSpellTypes.contains(type)) return true;
         }
-        return forbiddenCardNames.contains(card.getName());
+        return forbiddenCardNames.stream().anyMatch(card::hasName);
     }
 
     private boolean isNoncreatureSpellCastRestrictedUntilNextTurn(GameData gameData, UUID playerId) {

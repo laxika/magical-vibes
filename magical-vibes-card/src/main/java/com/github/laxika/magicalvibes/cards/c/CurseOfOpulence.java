@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttackingPlayerIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -30,7 +31,7 @@ public class CurseOfOpulence extends Card {
                         SequenceEffect.of(
                                 gold,
                                 new ConditionalEffect(
-                                        new AttackingPlayerIsOpponent(),
+                                        new AllOf(java.util.List.of(new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())),
                                         new CreateTokenForTriggeringPlayerEffect(gold)))));
     }
 

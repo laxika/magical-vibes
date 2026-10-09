@@ -55,8 +55,28 @@ public sealed interface ChoiceContext {
     /** Chooses between a card's shuffle replacement and an applicable graveyard exile replacement. */
     record GraveyardShuffleOrExileReplacementChoice(UUID ownerId, Card card) implements ChoiceContext {}
 
+    /** Divides one source's shared combat-damage prevention among its recipients. */
+    record CombatSharedDamagePreventionChoice(UUID preventionSourceId, UUID damageSourceId,
+                                             UUID controllerId, int remaining,
+                                             List<UUID> recipients, Map<UUID, Integer> damage)
+            implements ChoiceContext {
+        public CombatSharedDamagePreventionChoice {
+            recipients = List.copyOf(recipients);
+            damage = Map.copyOf(damage);
+        }
+    }
+
     /** One independently applicable change to an impending spell-damage event. */
-    record SpellDamageModifier(String label, int amount, boolean multiply) {}
+    record SpellDamageModifier(String label, int amount, boolean multiply, boolean replacesWithExile,
+                               boolean playerPreventionShield) {
+        public SpellDamageModifier(String label, int amount, boolean multiply, boolean replacesWithExile) {
+            this(label, amount, multiply, replacesWithExile, false);
+        }
+
+        public SpellDamageModifier(String label, int amount, boolean multiply) {
+            this(label, amount, multiply, false, false);
+        }
+    }
 
     /** A separately applicable counter replacement, identified by its source. */
     record CounterReplacement(String label, CardEffect effect) {}

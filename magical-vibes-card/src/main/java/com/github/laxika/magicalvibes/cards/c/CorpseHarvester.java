@@ -21,7 +21,7 @@ public class CorpseHarvester extends Card {
                 "{1}{B}",
                 List.of(
                         new SacrificeCreatureCost(),
-                        new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.ZOMBIE), LibrarySearchDestination.HAND),
+                        new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.ZOMBIE), LibrarySearchDestination.HAND, null, false),
                         new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SWAMP), LibrarySearchDestination.HAND)
                 ),
                 "{1}{B}, {T}, Sacrifice a creature: Search your library for a Zombie card and a Swamp card, reveal them, put them into your hand, then shuffle."

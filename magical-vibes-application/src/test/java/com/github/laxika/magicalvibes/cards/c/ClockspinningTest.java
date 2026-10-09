@@ -74,6 +74,8 @@ class ClockspinningTest extends BaseCardTest {
         harness.handleListChoice(player1, "REMOVE");
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 

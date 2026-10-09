@@ -878,7 +878,15 @@ public class AmountEvaluationService {
                     imprintedCreaturePT(gameData, ctx, false);
             case LandsMatchingImprintedName ignored ->
                     countLandsMatchingImprintedName(gameData, ctx);
-            case SourceCardPower ignored -> sourceCardPower(gameData, ctx);
+            case SourceCardPower cardPower -> {
+                if (!cardPower.exiledCostCard()) yield sourceCardPower(gameData, ctx);
+                StackEntry entry = ctx.stackEntry();
+                if (entry == null || entry.getExiledCostCardSnapshot() == null) yield 0;
+                var exiled = gameData.findExiledCard(entry.getExiledCostCardId());
+                Integer power = gameQueryService.getEffectiveCardPower(gameData,
+                        exiled == null ? entry.getExiledCostCardSnapshot() : exiled.card());
+                yield power == null ? 0 : Math.max(0, power);
+            }
             case SourceCardManaValue ignored ->
                     ctx.sourceCard() == null ? 0 : ctx.sourceCard().getManaValue();
             case SourceIntensity ignored -> {
@@ -895,12 +903,23 @@ public class AmountEvaluationService {
             }
             case SourceManaValueMinusOne ignored ->
                     ctx.sourcePermanent() == null ? -1 : ctx.sourcePermanent().getCard().getManaValue() - 1;
-            case SourcePower ignored ->
-                    ctx.sourcePermanent() == null ? 0
-                            : Math.max(0, gameQueryService.findPermanentById(gameData, ctx.sourcePermanent().getId()) == null
-                            && ctx.sourcePermanent().getLastKnownPower() != null
-                            ? ctx.sourcePermanent().getLastKnownPower()
-                            : gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent()));
+            case SourcePower power -> {
+                Permanent source = ctx.sourcePermanent();
+                if (source == null && ctx.stackEntry() != null) {
+                    source = ctx.stackEntry().getSourcePermanentSnapshot();
+                }
+                if (source == null) yield 0;
+                if (power.baseOnly()) {
+                    var bonus = gameQueryService.computeStaticBonus(gameData, source);
+                    int base = bonus.basePTOverridden() ? bonus.basePowerOverride() : source.getBasePower();
+                    yield power.allowNegative() ? base : Math.max(0, base);
+                }
+                int value = gameQueryService.findPermanentById(gameData, source.getId()) == null
+                        && source.getLastKnownPower() != null
+                        ? source.getLastKnownPower()
+                        : gameQueryService.getEffectivePower(gameData, source);
+                yield power.allowNegative() ? value : Math.max(0, value);
+            }
             case SourceToughness ignored ->
                     ctx.sourcePermanent() == null ? 0
                             : Math.max(0, gameQueryService.findPermanentById(gameData, ctx.sourcePermanent().getId()) == null
@@ -919,8 +938,8 @@ public class AmountEvaluationService {
                     totalPowerOfTargetGroup(gameData, targetGroup, ctx);
             case TargetManaValue ignored ->
                     targetManaValue(gameData, ctx);
-            case TargetCardsManaValueSum ignored ->
-                    targetCardsManaValueSum(gameData, ctx);
+            case TargetCardsManaValueSum sum ->
+                    targetCardsManaValueSum(gameData, ctx, sum.graveyardOnly());
             case TargetGroupCount count ->
                     targetGroupCount(count, ctx);
             case TopCardOfLibraryManaValue ignored ->
@@ -1339,7 +1358,7 @@ public class AmountEvaluationService {
         return count;
     }
 
-    private int targetCardsManaValueSum(GameData gameData, AmountContext ctx) {
+    private int targetCardsManaValueSum(GameData gameData, AmountContext ctx, boolean graveyardOnly) {
         List<java.util.UUID> targetCardIds = ctx.targetCardIds();
         if (targetCardIds == null || targetCardIds.isEmpty()) {
             targetCardIds = ctx.targetPermanentId() == null ? List.of() : List.of(ctx.targetPermanentId());
@@ -1350,11 +1369,11 @@ public class AmountEvaluationService {
         return targetCardIds.stream()
                 .map(id -> {
                     Card card = gameQueryService.findCardInGraveyardById(gameData, id);
-                    if (card == null) {
+                    if (card == null && !graveyardOnly) {
                         var exiledCard = gameData.findExiledCard(id);
                         card = exiledCard == null ? null : exiledCard.card();
                     }
-                    if (card == null) {
+                    if (card == null && !graveyardOnly) {
                         card = gameData.playerHands.values().stream()
                                 .flatMap(List::stream)
                                 .filter(handCard -> handCard.getId().equals(id))

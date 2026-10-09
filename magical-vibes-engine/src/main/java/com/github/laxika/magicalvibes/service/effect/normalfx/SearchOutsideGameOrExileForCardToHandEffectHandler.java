@@ -40,7 +40,7 @@ public class SearchOutsideGameOrExileForCardToHandEffectHandler implements Norma
         Map<UUID, Card> candidates = new LinkedHashMap<>();
 
         for (Card card : com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, controllerId)) {
-            if (matches(gameData, card, search.filter(), controllerId)) {
+            if (matches(null, card, search.filter(), controllerId)) {
                 candidates.put(card.getId(), card);
             }
         }

@@ -88,7 +88,7 @@ class CreepyDollTest extends BaseCardTest {
         doll.setBlocking(true);
         doll.addBlockingTarget(0);
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
@@ -115,7 +115,7 @@ class CreepyDollTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         harness.assertInGraveyard(player2, "Selfless Cathar");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -136,7 +136,7 @@ class CreepyDollTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         harness.assertOnBattlefield(player2, "Lumberknot");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -163,7 +163,7 @@ class CreepyDollTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 

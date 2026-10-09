@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,6 +20,7 @@ public class ConsumingFervor extends Card {
         .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
 
         // ...and has "At the beginning of your upkeep, put a -1/-1 counter on this creature."
-        .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE));
+        .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(EffectSlot.UPKEEP_TRIGGERED,
+                new PutCountersOnSelfEffect(CounterType.MINUS_ONE_MINUS_ONE, 1), GrantScope.ENCHANTED_CREATURE));
     }
 }

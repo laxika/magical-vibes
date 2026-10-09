@@ -1122,7 +1122,8 @@ public class StepTriggerService {
                     }
                 } else if (effect instanceof MayEffect may
                         && !(may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect)) {
-                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
+                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId(),
+                            activePlayerId, new Permanent(perm));
                 } else if (effect instanceof MayRevealSubtypeFromHandEffect mayReveal) {
                     List<Card> hand = gameData.playerHands.get(activePlayerId);
                     boolean hasSubtype = hand != null && hand.stream()
@@ -1700,7 +1701,7 @@ public class StepTriggerService {
                             perm.getId()
                     );
                     entry.setActivePlayerId(activePlayerId);
-                    entry.setNonTargeting(activePlayerPayment);
+                    entry.setNonTargeting(activePlayerPayment || effect.targetSpec() == TargetSpec.NONE);
                     entry.setSourcePermanentSnapshot(new Permanent(perm));
                     gameData.stack.add(entry);
                 }
@@ -3002,10 +3003,11 @@ public class StepTriggerService {
     private record DrawStepReplacementSource(Card card, DrawReplacementKind kind) {
     }
 
-    private boolean controlsSkipDrawStep(GameData gameData, UUID playerId) {
+    public boolean controlsSkipDrawStep(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof SkipDrawStepEffect) {
                     return true;
@@ -6475,6 +6477,11 @@ public class StepTriggerService {
             UUID enchantedPlayerId = perm.getAttachedTo();
 
             for (CardEffect effect : enchantedPlayerEndStepEffects) {
+                if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(perm, auraOwnerId).withTargetId(enchantedPlayerId))) {
+                    continue;
+                }
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),

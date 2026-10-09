@@ -1,11 +1,17 @@
 package com.github.laxika.magicalvibes.model.amount;
 
 /**
- * The source permanent's effective power at evaluation time, never negative (matches
- * the engine's power-based-damage clamp). Evaluation uses the live source permanent
- * when it is still on the battlefield, else its last-known snapshot (CR 608.2h
- * last-known information, e.g. the source was sacrificed or died in response).
- * Evaluates to 0 when no source is known at all.
+ * The source permanent's effective power, using its last-known snapshot after departure.
+ * By default negative power evaluates to zero; effects that apply power as a modifier can
+ * retain a negative value with {@code allowNegative}.
  */
-public record SourcePower() implements DynamicAmount {
+public record SourcePower(boolean allowNegative, boolean baseOnly) implements DynamicAmount {
+
+    public SourcePower(boolean allowNegative) {
+        this(allowNegative, false);
+    }
+
+    public SourcePower() {
+        this(false, false);
+    }
 }

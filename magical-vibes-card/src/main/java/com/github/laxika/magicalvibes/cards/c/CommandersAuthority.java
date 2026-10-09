@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,14 +19,9 @@ import java.util.Set;
 public class CommandersAuthority extends Card {
 
     public CommandersAuthority() {
-        // Enchant creature. Enchanted creature has "At the beginning of your upkeep, create a
-        // 1/1 white Human creature token." The granted ability belongs to the creature, so it
-        // triggers on the enchanted creature's controller's upkeep and the token is theirs —
-        // ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED bakes that player as the stack targetId,
-        // which CreateTokenForTargetPlayerEffect creates the token for.
-        target(TargetFilters.creature()).addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
-                new CreateTokenForTargetPlayerEffect(new CreateTokenEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC,
+                new GrantTriggeredAbilityEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
                         "Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN),
-                        Set.<Keyword>of(), Set.<CardType>of())));
+                        Set.<Keyword>of(), Set.<CardType>of()), GrantScope.ENCHANTED_CREATURE));
     }
 }

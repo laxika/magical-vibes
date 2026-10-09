@@ -71,8 +71,9 @@ class CompassionateHealerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(topCard);
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> gs.handleInteractionAnswer(gd, player1,
+                        new InteractionAnswer.ScryOrder(List.of(), List.of(0))));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard, topCard);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);

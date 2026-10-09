@@ -87,7 +87,7 @@ class CrackdownConstructTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.assertLife(player2, 19);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(construct.getPowerModifier()).isZero();
         assertThat(construct.getToughnessModifier()).isZero();
     }

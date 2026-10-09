@@ -49,6 +49,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
     private final PredicateEvaluationService predicateEvaluationService;
     private final BounceSupport bounceSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -260,18 +261,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (controllerId != null && e.lifeLoss() > 0) {
-            if (!gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
-            } else {
-                int lifeLoss = e.lifeLoss()
-                        * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
-                int currentLife = gameData.getLife(controllerId);
-                gameData.playerLifeTotals.put(controllerId, currentLife - lifeLoss);
-
-                String playerName = gameData.playerIdToName.get(controllerId);
-                gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + lifeLoss + " life (" , entry.getCard(), ")."));
-                log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, lifeLoss, entry.getCard().getName());
-            }
+            lifeSupport.applyLifeLoss(gameData, controllerId, e.lifeLoss(), entry.getCard().getName());
         }
     }
 

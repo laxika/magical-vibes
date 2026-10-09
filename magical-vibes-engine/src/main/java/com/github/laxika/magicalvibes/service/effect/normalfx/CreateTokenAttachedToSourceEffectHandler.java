@@ -39,8 +39,7 @@ public class CreateTokenAttachedToSourceEffectHandler implements NormalEffectHan
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (target == null
-                || !gameQueryService.isCreature(gameData, target)
-                || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, target.getId()))) {
+                || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
 

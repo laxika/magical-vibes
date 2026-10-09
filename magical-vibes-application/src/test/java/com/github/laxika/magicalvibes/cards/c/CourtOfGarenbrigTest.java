@@ -16,7 +16,8 @@ class CourtOfGarenbrigTest extends BaseCardTest {
     @Test
     @DisplayName("Becomes the monarch when it enters")
     void becomesMonarchOnEntry() {
-        harness.addToBattlefield(player1, new CourtOfGarenbrig());
+        harness.enterBattlefieldAndReturn(player1, new CourtOfGarenbrig());
+        resolveAllTriggers();
 
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
     }
@@ -24,7 +25,8 @@ class CourtOfGarenbrigTest extends BaseCardTest {
     @Test
     @DisplayName("Distributes counters among up to two creatures and doubles controlled counters as monarch")
     void distributesCountersAndDoublesControlledCountersAsMonarch() {
-        harness.addToBattlefield(player1, new CourtOfGarenbrig());
+        harness.enterBattlefieldAndReturn(player1, new CourtOfGarenbrig());
+        resolveAllTriggers();
         Permanent ownFirst = addCreatureReady(player1, new GrizzlyBears());
         Permanent ownSecond = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
@@ -45,7 +47,8 @@ class CourtOfGarenbrigTest extends BaseCardTest {
     @Test
     @DisplayName("Still doubles controlled counters when no creatures are targeted")
     void doublesControlledCountersWithNoTargets() {
-        harness.addToBattlefield(player1, new CourtOfGarenbrig());
+        harness.enterBattlefieldAndReturn(player1, new CourtOfGarenbrig());
+        resolveAllTriggers();
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
@@ -59,14 +62,14 @@ class CourtOfGarenbrigTest extends BaseCardTest {
     @Test
     @DisplayName("Does not double counters when its controller is not the monarch")
     void doesNotDoubleCountersWhenNotMonarch() {
-        harness.addToBattlefield(player1, new CourtOfGarenbrig());
+        harness.enterBattlefieldAndReturn(player1, new CourtOfGarenbrig());
+        resolveAllTriggers();
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         ownCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.monarchPlayerId = player2.getId();
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, ownCreature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

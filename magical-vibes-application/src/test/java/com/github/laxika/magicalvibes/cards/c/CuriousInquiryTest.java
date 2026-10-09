@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -70,8 +71,10 @@ class CuriousInquiryTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachInquiry(creature);
 
-        declareAttackers(player2, List.of(0));
-        resolveCombat(player2);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveCombat(player2);
+        });
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());

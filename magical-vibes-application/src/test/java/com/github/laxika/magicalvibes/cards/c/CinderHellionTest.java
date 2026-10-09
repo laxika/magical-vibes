@@ -81,6 +81,7 @@ class CinderHellionTest extends BaseCardTest {
     @Test
     void doesNotRedirectDamageWhenTargetPlaneswalkerLeaves() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         castCinderHellion();
         harness.handlePermanentChosen(player1, planeswalker.getId());
         gd.playerBattlefields.get(player2.getId()).remove(planeswalker);

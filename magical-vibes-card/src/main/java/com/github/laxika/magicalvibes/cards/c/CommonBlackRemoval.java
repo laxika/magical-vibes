@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -37,7 +38,7 @@ public class CommonBlackRemoval extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature, then put a menace counter on a creature you control",
                         destroyThen(new PutCounterOnChosenOwnPermanentEffect(
-                                CounterType.MENACE, 1, new PermanentIsCreaturePredicate()),
+                                CounterType.MENACE, new Fixed(1), new PermanentIsCreaturePredicate(), false, true),
                                 ThenEffectRecipient.CONTROLLER),
                         creatureTargetFilter()),
                 new ChooseOneEffect.ChooseOneOption(

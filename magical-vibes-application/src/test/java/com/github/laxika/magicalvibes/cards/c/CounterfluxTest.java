@@ -210,7 +210,8 @@ class CounterfluxTest extends BaseCardTest {
         Counterflux opponentFlux = new Counterflux();
         Cancel cancel = new Cancel();
         harness.setHand(player1, List.of(bears, opponentFlux));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player2, List.of(cancel, new Counterflux()));

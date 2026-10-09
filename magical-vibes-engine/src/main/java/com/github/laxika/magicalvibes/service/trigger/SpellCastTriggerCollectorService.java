@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyEnchantedHandCardOnCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.FlurryCopyOrDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantOrSorceryEffect;
@@ -1034,7 +1035,8 @@ public class SpellCastTriggerCollectorService {
             CasterLosesLifeOnChosenColorSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (match.permanent().getChosenColor() == null
-                || !sc.spellCard().getColors().contains(match.permanent().getChosenColor())) {
+                || !gameQueryService.getEffectiveCardColors(match.gameData(), sc.spellCard())
+                        .contains(match.permanent().getChosenColor())) {
             return false;
         }
         StackEntry entry = new StackEntry(
@@ -1042,9 +1044,10 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new LoseLifeEffect(trigger.amount(), LoseLifeRecipient.TARGET_PLAYER)))
+                new ArrayList<>(List.of(new LoseLifeEffect(trigger.amount(), LoseLifeRecipient.TRIGGERING_PLAYER)))
         );
         entry.setTargetId(sc.castingPlayerId());
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }
@@ -1588,7 +1591,7 @@ public class SpellCastTriggerCollectorService {
         // prompt; accepting puts the copy-creating ability on the stack.
         MayEffect optionalMay = optionalMayEffect(match.rawEffect());
         if (trigger.tapCost() == null && trigger.manaCost() == null && optionalMay != null) {
-            if (trigger.requiredCastWithAdventure()) {
+            if (trigger.requiredCastWithAdventure() || trigger.permanentSpellToken()) {
                 match.gameData().stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(),
                         match.controllerId(), match.permanent().getCard().getName() + "'s ability",
@@ -1874,24 +1877,27 @@ public class SpellCastTriggerCollectorService {
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
 
         if (match.rawEffect() instanceof MayEffect may) {
-            match.gameData().pendingMayAbilities.add(new PendingMayAbility(
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    resolved,
-                    match.permanent().getCard().getName() + " â€” " + may.prompt(),
-                    null,
-                    null,
-                    match.permanent().getId(),
-                    null,
-                    0,
-                    0,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    sc.spellCard().getId(),
-                    kickCount));
+            CardEffect resolution = resolved.size() == 1 ? resolved.getFirst()
+                    : com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(
+                            resolved.toArray(CardEffect[]::new));
+            List<CardEffect> mayEffects = List.of(new MayEffect(resolution, may.prompt()));
+            boolean needsTarget = resolution.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                    || resolution.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+            if (needsTarget) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        match.permanent().getCard(), match.controllerId(), mayEffects,
+                        false, null, 0, match.permanent().getId(), new Permanent(match.permanent()),
+                        false, null, null, match.controllerId(), kickCount, null, false, sc.spellCard().getId()));
+            } else {
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        match.permanent().getCard(), match.controllerId(),
+                        match.permanent().getCard().getName() + "'s ability", mayEffects,
+                        null, match.permanent().getId());
+                entry.setTriggeringCardId(sc.spellCard().getId());
+                entry.setEventValue(kickCount);
+                entry.setNonTargeting(true);
+                match.gameData().stack.add(entry);
+            }
             return true;
         }
 
@@ -2227,14 +2233,10 @@ public class SpellCastTriggerCollectorService {
         int manaValue = spellManaValue(match.gameData(), sc.spellCard());
         List<CardEffect> resolvedEffects = List.of(new MillEffect(manaValue, MillRecipient.TARGET_PLAYER));
         if (match.rawEffect() instanceof MayEffect may) {
-            match.gameData().pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    resolvedEffects,
-                    match.permanent().getCard().getName() + " - " + may.prompt(),
-                    null,
-                    match.permanent().getId(),
-                    sc.spellCard().getId()));
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    match.permanent().getCard(), match.controllerId(),
+                    List.of(new MayEffect(resolvedEffects.getFirst(), may.prompt())),
+                    true, null, 0, match.permanent().getId()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         } else {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -3320,6 +3322,9 @@ public class SpellCastTriggerCollectorService {
                     new Fixed(countMatchingSpellTargets(gameData, spellSnapshot, targetCount, sourceControllerId)),
                     putCounters.targetsPlayer(), putCounters.excludeDamageSource(),
                     putCounters.hasExternalPermanentTarget());
+        }
+        if (effect instanceof DemonstrateEffect demonstrate && demonstrate.spellSnapshot() == null) {
+            return new DemonstrateEffect(new StackEntry(spellSnapshot));
         }
         if (effect instanceof CopyTriggeringSpellEffect copy
                 && copy.spellSnapshot() == null) {

@@ -76,6 +76,9 @@ public class ReturnPermanentSharingTypeWithEnteringPermanentToHandEffectHandler
 
         Card enteringCard = findCardById(gameData, entry.getTriggeringCardId());
         if (enteringCard == null) {
+            enteringCard = entry.getTriggeringCardSnapshot();
+        }
+        if (enteringCard == null) {
             return Set.of();
         }
         EnumSet<CardType> types = EnumSet.noneOf(CardType.class);

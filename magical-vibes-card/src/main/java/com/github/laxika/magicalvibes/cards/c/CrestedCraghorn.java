@@ -28,7 +28,7 @@ public class CrestedCraghorn extends Card {
         )).addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),
-                        new MustBlockSourceEffect(null)
+                        new MustBlockSourceEffect(null, null, true)
                 ),
                 "Have target creature defending player controls untap and block Crested Craghorn if able?"
         ));

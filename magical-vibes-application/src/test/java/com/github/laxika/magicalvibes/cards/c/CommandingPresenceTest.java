@@ -34,7 +34,7 @@ class CommandingPresenceTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(1);
     }
 
     @Test
@@ -51,7 +51,7 @@ class CommandingPresenceTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+        assertThat(findPermanents(player1, "Human Soldier")).isEmpty();
     }
 
     private Permanent addEnchantedCreature() {

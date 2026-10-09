@@ -249,6 +249,23 @@ public class TurnProgressionService {
             }
         }
 
+        if (next == TurnStep.DRAW
+                && stepTriggerService.controlsSkipDrawStep(gameData, gameData.activePlayerId)) {
+            if (gameData.additionalBeginningPhaseReturnStep != null) {
+                if (gameData.additionalBeginningPhasesAfterPostcombatMain > 0) {
+                    next = TurnStep.UNTAP;
+                    gameData.additionalBeginningPhasesAfterPostcombatMain--;
+                    additionalBeginningPhaseUntap = true;
+                } else {
+                    next = gameData.additionalBeginningPhaseReturnStep;
+                    gameData.additionalBeginningPhaseReturnStep = null;
+                }
+            } else {
+                next = TurnStep.PRECOMBAT_MAIN;
+            }
+            logSkippedPhase(gameData, "draw");
+        }
+
         if ((gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
                 && gameData.additionalCombatPhasesAfterMain > 0) {

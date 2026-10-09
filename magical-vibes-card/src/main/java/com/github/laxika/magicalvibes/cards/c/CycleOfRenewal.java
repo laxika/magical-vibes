@@ -15,9 +15,8 @@ public class CycleOfRenewal extends Card {
 
     public CycleOfRenewal() {
         addEffect(EffectSlot.SPELL, new SacrificePermanentThenEffect(
-                new PermanentIsLandPredicate(),
-                new SearchLibraryEffect(
-                        new Fixed(2), CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                "a land", false, false));
+                new PermanentIsLandPredicate(), null, "a land", false, false));
+        addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
+                new Fixed(2), CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 }

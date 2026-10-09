@@ -48,7 +48,7 @@ public class ExileSelfForVoyageEffectHandler implements NormalEffectHandlerBean 
         }
 
         gameData.exiledVoyageCounters.put(card.getId(), 0);
-        gameData.exiledVoyageControllerIds.put(card.getId(), entry.getControllerId());
+        gameData.exiledVoyageControllerIds.put(card.getId(), exiled.ownerId());
         gameLogService.append(gameData, GameLog.cardThen(card, " is exiled for its voyage."));
     }
 }

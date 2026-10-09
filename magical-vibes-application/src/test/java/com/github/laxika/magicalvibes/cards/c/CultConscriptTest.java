@@ -130,7 +130,7 @@ class CultConscriptTest extends BaseCardTest {
     @DisplayName("Can return during an opponent's end step after your non-Skeleton creature died")
     void returnsDuringOpponentsTurn() {
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setGraveyard(player1, List.of(new CultConscript()));
         harness.setHand(player1, List.of(new Shock()));

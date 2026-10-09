@@ -45,7 +45,7 @@ class CombatCourierTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent courier = findPermanent(player1, "Combat Courier");
-        assertThat(courier.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, courier, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Combat Courier");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

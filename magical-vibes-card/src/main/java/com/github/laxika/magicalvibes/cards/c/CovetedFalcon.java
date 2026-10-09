@@ -41,7 +41,7 @@ public class CovetedFalcon extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentTruePredicate(),
                 "Target must be a permanent you control"
-        ), 0, 99).addEffect(EffectSlot.ON_TURNED_FACE_UP,
+        ), 0, Integer.MAX_VALUE).addEffect(EffectSlot.ON_TURNED_FACE_UP,
                 new TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect(2));
     }
 }

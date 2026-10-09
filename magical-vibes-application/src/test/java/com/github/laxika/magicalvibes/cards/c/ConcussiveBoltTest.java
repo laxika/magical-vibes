@@ -67,7 +67,8 @@ class ConcussiveBoltTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, creature, new Permanent(new GrizzlyBears()),
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
@@ -83,8 +84,10 @@ class ConcussiveBoltTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(creature1.isCantBlockThisTurn()).isTrue();
-        assertThat(creature2.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, creature1, new Permanent(new GrizzlyBears()),
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, creature2, new Permanent(new GrizzlyBears()),
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
@@ -168,7 +171,8 @@ class ConcussiveBoltTest extends BaseCardTest {
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, creature, new Permanent(new GrizzlyBears()),
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 
     @Test
@@ -198,6 +202,7 @@ class ConcussiveBoltTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, creature, new Permanent(new GrizzlyBears()),
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 }

@@ -36,7 +36,7 @@ class ComeBackWrongTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(returned);
         assertThat(returned.getId()).isNotEqualTo(target.getId());
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Cautious Survivor");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -55,7 +55,7 @@ class ComeBackWrongTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
@@ -148,7 +148,7 @@ class ComeBackWrongTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(returned);
         gd.playerBattlefields.get(player2.getId()).add(returned);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
@@ -164,12 +164,12 @@ class ComeBackWrongTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Cautious Survivor");
         assertThat(gd.stack).isEmpty();
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Cautious Survivor");
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -183,6 +183,7 @@ class ComeBackWrongTest extends BaseCardTest {
         harness.addToBattlefield(player2, new DredgingClaw());
 
         castComeBackWrong(addSurvivor(player2));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         PendingInteraction.MayAbilityChoice choice =

@@ -18,17 +18,13 @@ import java.util.Set;
 public class Countersquall extends Card {
 
     public Countersquall() {
-        // Counter target noncreature spell. Its controller loses 2 life.
-        //
-        // The controller life loss is listed before the counter so the targeted spell is still on
-        // the stack, letting TargetSpellControllerLosesLifeEffect resolve its controller.
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryNotPredicate(
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))
                 ),
                 "Target must be a noncreature spell."
         ))
-                .addEffect(EffectSlot.SPELL, new TargetSpellControllerLosesLifeEffect(2))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
+                .addEffect(EffectSlot.SPELL, new TargetSpellControllerLosesLifeEffect(2));
     }
 }

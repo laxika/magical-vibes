@@ -110,7 +110,7 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 Map<UUID, Integer> assignments = new LinkedHashMap<>();
                 for (int i = 0; i < Math.min(targets.size(), amounts.size()); i++) {
                     if (entry.isTargetLegal(i)) {
-                        assignments.put(targets.get(i), amounts.get(i));
+                        assignments.merge(targets.get(i), amounts.get(i), Integer::sum);
                     }
                 }
                 dealToAssignments(gameData, entry, e, assignments);

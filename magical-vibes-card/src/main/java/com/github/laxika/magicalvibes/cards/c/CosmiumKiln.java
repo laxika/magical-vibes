@@ -17,6 +17,6 @@ public class CosmiumKiln extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 2, "Gnome", 1, 1, null, List.of(CardSubtype.GNOME), Set.of(),
                 Set.of(CardType.ARTIFACT)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
     }
 }

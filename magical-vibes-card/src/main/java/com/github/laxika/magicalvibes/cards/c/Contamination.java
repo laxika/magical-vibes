@@ -18,6 +18,6 @@ public class Contamination extends Card {
                 new PermanentIsCreaturePredicate(), "a creature"));
 
         // If a land is tapped for mana, it produces {B} instead of any other type and amount.
-        addEffect(EffectSlot.STATIC, new ReplaceLandManaWithColorEffect(ManaColor.BLACK));
+        addEffect(EffectSlot.STATIC, new ReplaceLandManaWithColorEffect(ManaColor.BLACK, 1));
     }
 }

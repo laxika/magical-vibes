@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * "You may pay {@code costPerCounter} for each [counter] on this permanent. If you don't, …"
- * With zero counters the cost is empty and the fallback never fires (no prompt).
+ * When paid effects are present, a zero-mana payment is still optional.
  */
 @Component
 @RequiredArgsConstructor
@@ -34,16 +34,15 @@ public class PayPerCounterOrElseEffectHandler implements NormalEffectHandlerBean
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PayPerCounterOrElseEffect) effect;
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (self == null) {
-            return;
-        }
+        if (self == null) self = entry.getSourcePermanentSnapshot();
+        if (self == null) return;
 
         int counters = self.getCounterCount(e.counterType());
-        if (counters <= 0) {
+        if (counters <= 0 && e.paidEffects().isEmpty()) {
             return;
         }
 
-        String totalCost = e.costPerCounter().repeat(counters);
+        String totalCost = counters == 0 ? "{0}" : e.costPerCounter().repeat(counters);
         if (e.paidEffects().isEmpty()) {
             ForcedCostOrElseEffect payOrElse = new ForcedCostOrElseEffect(
                     new PayManaCost(totalCost),

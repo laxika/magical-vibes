@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -46,8 +48,12 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
         }
 
         int power = gameQueryService.getPowerBasedDamage(gameData, target);
+        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, target.getCard(),
+                gameQueryService.findPermanentController(gameData, target.getId()),
+                target.getCard().getName(), List.of(), target.getId(), List.of());
+        damageEntry.setSourcePermanentSnapshot(target);
         int rawDamage = gameQueryService.applyDamageMultiplier(
-                gameData, Math.multiplyExact(power, selfDamageEffect.powerMultiplier()), entry);
+                gameData, Math.multiplyExact(power, selfDamageEffect.powerMultiplier()), damageEntry);
         damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, target);
     }
 }

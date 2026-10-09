@@ -163,7 +163,7 @@ class CynicalLonerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         gd.additionalCombatMainPhasePairs = 1;
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();

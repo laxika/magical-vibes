@@ -37,8 +37,7 @@ class ContaminatedBondTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Contaminated Bond");
         assertThat(entry.getSourcePermanentId()).isEqualTo(aura.getId());
-        // Not a targeted ability — targetId is null
-        assertThat(entry.getTargetId()).isNull();
+        assertThat(entry.isNonTargeting()).isTrue();
     }
 
     @Test
@@ -78,8 +77,7 @@ class ContaminatedBondTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Contaminated Bond");
         assertThat(entry.getSourcePermanentId()).isEqualTo(aura.getId());
-        // Not a targeted ability — targetId is null
-        assertThat(entry.getTargetId()).isNull();
+        assertThat(entry.isNonTargeting()).isTrue();
     }
 
     @Test

@@ -28,7 +28,7 @@ class ClairvoyanceTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("looks at") && log.contains("hand"));
@@ -50,7 +50,7 @@ class ClairvoyanceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("looks at") && log.contains("hand"));
@@ -79,15 +79,15 @@ class ClairvoyanceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP));
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
@@ -105,11 +105,11 @@ class ClairvoyanceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.passUntil(player2, TurnStep.UPKEEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP));
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         harness.assertInHand(player1, "Balduvian Bears");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -120,22 +120,24 @@ class ClairvoyanceTest extends BaseCardTest {
     @DisplayName("Casting during upkeep waits until the next turn and triggers only once")
     void castDuringUpkeepWaitsUntilNextTurnAndDrawsOnlyOnce() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new Clairvoyance()));
         harness.setLibrary(player1, List.of(new BalduvianBears(), new Clairvoyance(), new BalduvianBears()));
         harness.addMana(player1, ManaColor.BLUE, 1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UPKEEP);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP));
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP));
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();

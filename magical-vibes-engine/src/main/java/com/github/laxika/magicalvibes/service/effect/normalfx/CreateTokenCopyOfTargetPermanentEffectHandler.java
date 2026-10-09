@@ -100,7 +100,11 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 : targetPermanent.getAttackTarget()
                 : null;
         List<UUID> attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
-        tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, permanentCopierService.copiableCard(targetPermanent)),
+        Card copySource = targetPermanent.isTransformed()
+                && targetPermanent.getOriginalCard().getBackFaceCard() != null
+                && targetPermanent.getOriginalCard().hasKeyword(com.github.laxika.magicalvibes.model.Keyword.DAYBOUND)
+                ? targetPermanent.getOriginalCard() : permanentCopierService.copiableCard(targetPermanent);
+        tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, copySource),
                 sourcePermanent, tokenControllerId, effect, attackTargetIds);
     }
     private List<CardSubtype> tokenSubtypes(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {

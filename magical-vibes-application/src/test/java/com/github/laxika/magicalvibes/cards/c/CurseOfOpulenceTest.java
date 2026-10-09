@@ -136,6 +136,21 @@ class CurseOfOpulenceTest extends BaseCardTest {
     }
 
     @Test
+    void triggerUsesThePlayerEnchantedWhenTheAttackWasDeclared() {
+        placeCurseOnPlayer(player1, player1);
+        Permanent curse = findPermanent(player1, "Curse of Opulence");
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        curse.setAttachedTo(player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Gold")).hasSize(1);
+        assertThat(findPermanents(player2, "Gold")).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Only the Curse controller creates Gold when all attackers leave before resolution")
     void attackingOpponentGetsNoGoldAfterAllAttackersLeave() {
         placeCurseOnPlayer(player1, player1);

@@ -118,7 +118,7 @@ class CuriousForagerTest extends BaseCardTest {
         castForager();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, food.getId());
+        harness.withAutoStop(gd.currentStep, () -> harness.handlePermanentChosen(player1, food.getId()));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getTargetId()).isEqualTo(forest.getId());

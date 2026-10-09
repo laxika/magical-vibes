@@ -275,6 +275,7 @@ class ConfessionDialTest extends BaseCardTest {
 
     @Test
     void grantedEscapeExpiresAtEndOfTurn() {
+        harness.setHand(player2, List.of());
         Permanent dial = addReadyDial();
         YoshimaruEverFaithful target = new YoshimaruEverFaithful();
         harness.setGraveyard(player1, List.of(target, new Forest(), new Forest(), new Forest()));

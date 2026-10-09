@@ -223,6 +223,7 @@ public class BattlefieldEntryBatchSupport {
                 Permanent permanent = candidate.preparedPermanent() == null
                         ? new Permanent(candidate.card(), candidate.origin()) : candidate.preparedPermanent();
                 permanent.setAttachedTo(candidate.attachmentId());
+                if (candidate.tapped()) permanent.tap();
                 if (candidate.origin() == Zone.EXILE) permanent.setEnteredFromExile(true);
                 permanent.setProtectorPlayerId(candidate.protectorPlayerId());
                 if (candidate.origin() == Zone.GRAVEYARD) {

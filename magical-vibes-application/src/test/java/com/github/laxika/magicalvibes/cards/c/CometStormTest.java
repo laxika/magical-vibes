@@ -110,6 +110,44 @@ class CometStormTest extends BaseCardTest {
     }
 
     @Test
+    void explicitMultikickerPaymentsChargeManaOnlyOnce() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GnarlidPack());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new CometStorm()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        gs.playCard(gd, player1, 0, 2, null, null,
+                List.of(creature.getId(), player1.getId(), player2.getId()), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null,
+                List.of("{1}", "{1}"), false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Gnarlid Pack");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void explicitMultikickerPaymentsMustMatchAdditionalTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GnarlidPack());
+        harness.setHand(player1, List.of(new CometStorm()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 2, null, null,
+                List.of(creature.getId(), player1.getId(), player2.getId()), List.of(), false,
+                null, null, null, null, null, false, null, null, null, null,
+                List.of("{1}"), false))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("additional target");
+        harness.assertInHand(player1, "Comet Storm");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(6);
+    }
+
+    @Test
     void multikickerTriggersRumblingAftershocksWithTheKickCount() {
         harness.addToBattlefield(player1, new RumblingAftershocks());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GnarlidPack());
@@ -121,10 +159,11 @@ class CometStormTest extends BaseCardTest {
         harness.castInstantForX(player1, 0, 2,
                 List.of(creature.getId(), player1.getId(), player2.getId()));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 16);

@@ -7,5 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  * type (amount unchanged). Infernal Darkness ({@code BLACK}). Applied via
  * {@code GameQueryService.fixedLandManaColor}.
  */
-public record ReplaceLandManaWithColorEffect(ManaColor color) implements LandManaProducesFixedColorEffect {
+public record ReplaceLandManaWithColorEffect(ManaColor color, Integer fixedAmount)
+        implements LandManaProducesFixedColorEffect {
+    public ReplaceLandManaWithColorEffect(ManaColor color) {
+        this(color, null);
+    }
 }

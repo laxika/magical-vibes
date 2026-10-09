@@ -35,7 +35,9 @@ public record ReduceActivatedAbilityCostForTargetingSourceEffect(int amount)
     @Override
     public boolean appliesTo(ActivatedAbility ability, UUID reducingPermanentId,
                              UUID targetId, List<UUID> targetIds) {
-        return reducingPermanentId != null
+        return ability.getEffects().stream().anyMatch(effect ->
+                effect instanceof EquipEffect equip && !equip.permitsCreatureEquipment())
+                && reducingPermanentId != null
                 && (reducingPermanentId.equals(targetId)
                 || targetIds != null && targetIds.contains(reducingPermanentId));
     }

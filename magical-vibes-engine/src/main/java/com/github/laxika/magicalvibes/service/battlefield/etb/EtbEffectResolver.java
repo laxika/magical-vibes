@@ -123,9 +123,6 @@ public class EtbEffectResolver {
         // re-evaluation at stack resolution, and source-untapped clauses are sampled at entry.
         register(ConditionalEffect.class, (ctx, effect) -> {
             ConditionalEffect conditional = (ConditionalEffect) effect;
-            if (!conditional.interveningIf()) {
-                return effect;
-            }
             Zone sourceZone = ctx.sourcePermanent() == null
                     ? (ctx.wasCastFromHand() ? Zone.HAND : null)
                     : (ctx.sourcePermanent().isCast() ? ctx.sourcePermanent().getCastFromZone() : null);
@@ -138,6 +135,15 @@ public class EtbEffectResolver {
                     ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
                     false, collectEvidenceCostPaid, false, 0, false);
+            if (conditional.condition() instanceof ColorSpentToCast
+                    || conditional.condition() instanceof NotCondition not
+                    && not.inner() instanceof ColorSpentToCast) {
+                boolean applies = conditionEvaluationService.isMet(
+                        ctx.gameData(), conditional.condition(), conditionContext);
+                return applies ? conditional.wrapped()
+                        : conditional.interveningIf() ? null : new DrawCardEffect(0);
+            }
+            if (!conditional.interveningIf()) return effect;
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
@@ -148,7 +154,8 @@ public class EtbEffectResolver {
                 // Independent additional-kicker clauses are intervening-if conditions whose
                 // payment list is snapshotted on the spell's stack entry.
                 case RepeatedAdditionalCostPaid paid ->
-                        ctx.repeatedAdditionalCosts().contains(paid.manaCost()) ? conditional.wrapped() : null;
+                        ctx.repeatedAdditionalCosts().stream().filter(paid.manaCost()::equals).count()
+                                >= paid.minimumPayments() ? conditional.wrapped() : null;
                 // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
                 case CastForProwlCost ignored -> ctx.prowl() ? conditional.wrapped() : null;
                 case CastForMadnessCost ignored -> ctx.madness() ? conditional.wrapped() : null;

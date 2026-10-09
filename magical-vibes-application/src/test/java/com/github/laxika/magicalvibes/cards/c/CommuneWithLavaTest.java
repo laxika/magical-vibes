@@ -141,6 +141,7 @@ class CommuneWithLavaTest extends BaseCardTest {
 
     @Test
     void permissionLastsThroughNextTurnAndUnplayedCardsRemainExiled() {
+        harness.setHand(player2, List.of());
         Card first = new Forest();
         Card second = new Forest();
         harness.setLibrary(player1, List.of(first, second,
@@ -166,6 +167,7 @@ class CommuneWithLavaTest extends BaseCardTest {
 
     @Test
     void permissionExpiresAtEndOfControllersExtraTurn() {
+        harness.setHand(player2, List.of());
         Card exiledLand = new Forest();
         harness.setLibrary(player1, List.of(exiledLand,
                 new Forest(), new Forest(), new Forest(), new Forest()));

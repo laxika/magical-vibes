@@ -17,7 +17,7 @@ public class CruelFeeding extends Card {
         setAdditionalManaCostPerExtraTarget("{2}{B}");
 
         // Any number of target creatures each get +1/+0 and gain lifelink until end of turn.
-        target(TargetFilters.creature(), 0, 99)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0))
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET));
     }

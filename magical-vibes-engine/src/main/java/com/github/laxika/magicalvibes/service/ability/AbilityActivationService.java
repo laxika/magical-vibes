@@ -387,6 +387,8 @@ public class AbilityActivationService {
                     }
                 }
             }
+            Integer fixedAmount = gameQueryService.fixedLandManaAmount(gameData);
+            if (totalMana > 0 && fixedAmount != null) totalMana = fixedAmount * manaMultiplier;
             if (totalMana > 0) {
                 if (snowSource) {
                     manaPool.addSnowMana(fixedLandColor, totalMana);
@@ -1656,6 +1658,18 @@ public class AbilityActivationService {
             throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
         }
 
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof PayLifeCost lifeCost) {
+                int needed = lifeCost.effectiveAmount(gameData.getLife(playerId));
+                if (!gameQueryService.canPayLifeForCosts(gameData)
+                        || !gameQueryService.canPlayerLoseLife(gameData, playerId)
+                        || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                        || gameData.getLife(playerId) < needed) {
+                    throw new IllegalStateException("Cannot pay life for the graveyard ability");
+                }
+            }
+        }
+
         // Pay mana cost. Static effects (Embalmer's Tools) can make a matching graveyard card's
         // ability cost {N} less to activate; the reduction is floored to the generic portion so the
         // cost never drops below its colored requirements, then threaded through as a negative
@@ -2072,6 +2086,12 @@ public class AbilityActivationService {
                                                     ActivatedAbility ability, int xValue, UUID targetId,
                                                     List<UUID> graveyardTargetIds) {
         UUID playerId = player.getId();
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof PayLifeCost lifeCost) {
+                lifeSupport.applyLifePayment(gameData, playerId,
+                        lifeCost.effectiveAmount(gameData.getLife(playerId)), card.getName());
+            }
+        }
 
         // Filter out cost effects for the snapshot
         List<CardEffect> snapshotEffects = new ArrayList<>();
@@ -2266,15 +2286,17 @@ public class AbilityActivationService {
             throw new IllegalStateException("Card has no hand-activated ability");
         }
 
-        validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
 
         int idx = abilityIndex != null ? abilityIndex : 0;
         if (idx < 0 || idx >= abilities.size()) {
             throw new IllegalStateException("Invalid ability index");
         }
         ActivatedAbility ability = abilities.get(idx);
-        validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
-        validateNotBlockedByCyclingRestriction(gameData, ability);
+        if (!ability.isSuspendsSourceFromHand() && !ability.isDiscardSourceAsSpecialAction()) {
+            validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
+            validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
+            validateNotBlockedByCyclingRestriction(gameData, ability);
+        }
         List<CardEffect> abilityEffects = ability.getEffects();
         int effectiveXValue = xValue != null ? xValue : 0;
         if (ability.isSuspendsSourceFromHand() && ability.isSuspendTimeCountersFromX()
@@ -2283,9 +2305,11 @@ public class AbilityActivationService {
         }
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
-        validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
-        validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
-        validateNotBlockedByCombatActionLock(gameData, ability);
+        if (!ability.isSuspendsSourceFromHand() && !ability.isDiscardSourceAsSpecialAction()) {
+            validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
+            validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
+            validateNotBlockedByCombatActionLock(gameData, ability);
+        }
         if (ability.isSuspendsSourceFromHand()) {
             boolean mainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                     || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
@@ -2467,6 +2491,7 @@ public class AbilityActivationService {
         ManaCost manaCost = new ManaCost(ability.getManaCost() == null ? "{0}" : ability.getManaCost());
         int genericCost = manaCost.getGenericCost();
         int additionalGenericCost = baseAdditionalGenericCost;
+        if (ability.isDiscardSourceAsSpecialAction()) return additionalGenericCost;
         additionalGenericCost += castingCostService.getActivatedAbilityActivationTax(
                 gameData, playerId, new Permanent(card), ability, isManaAbility(ability));
         AmountContext activationCostContext = new AmountContext(
@@ -2523,7 +2548,9 @@ public class AbilityActivationService {
         flushActivatedAbilityCostTriggers(gameData);
         recordHandAbilityActivationUse(gameData, card, abilityIndex);
         int insertionIndex = Math.min(Math.max(stackSizeBeforeCosts, 0), gameData.stack.size());
-        gameData.stack.add(insertionIndex, stackEntry);
+        if (!ability.isDiscardSourceAsSpecialAction()) {
+            gameData.stack.add(insertionIndex, stackEntry);
+        }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
 
         gameLogService.append(gameData, GameLog.textCardText(
@@ -2604,7 +2631,9 @@ public class AbilityActivationService {
         flushActivatedAbilityCostTriggers(gameData);
         recordHandAbilityActivationUse(gameData, card, abilityIndex);
         int insertionIndex = Math.min(Math.max(stackSizeBeforeCosts, 0), gameData.stack.size());
-        gameData.stack.add(insertionIndex, stackEntry);
+        if (!ability.isDiscardSourceAsSpecialAction()) {
+            gameData.stack.add(insertionIndex, stackEntry);
+        }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         if (discarded) {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
@@ -6172,6 +6201,8 @@ public class AbilityActivationService {
         List<ActivatedAbility> abilities;
         if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                 || gameQueryService.hasLostAllAbilities(gameData, permanent)
+                || gameQueryService.hasLostPrintedAbilities(gameData, permanent)
+                && !staticBonus.losesAllNonManaAbilities()
                 || permanent.isFaceDown()) {
             // Permanent has lost all its own abilities; only static-granted abilities remain
             abilities = permanent.getCard().getActivatedAbilities().stream()

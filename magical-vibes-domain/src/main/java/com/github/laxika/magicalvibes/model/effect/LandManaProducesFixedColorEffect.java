@@ -13,4 +13,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 public interface LandManaProducesFixedColorEffect extends CardEffect {
 
     ManaColor color();
+
+    default Integer fixedAmount() {
+        return null;
+    }
 }

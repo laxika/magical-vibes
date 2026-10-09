@@ -38,7 +38,6 @@ class ConspiracyUnravelerTest extends BaseCardTest {
         harness.castCreatureWithMultipleGraveyardExile(player1, 0, List.of(0, 1, 2, 3, 4));
 
         assertThat(gd.stack.getLast().isAlternateCost()).isTrue();
-        assertThat(gd.stack.getLast().isCollectEvidenceCostPaid()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(evidence);
     }

@@ -17,7 +17,7 @@ public class TeferiMageOfZhalfir extends Card {
 
     public TeferiMageOfZhalfir() {
         addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.CREATURE)));
+                new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.CREATURE), false, false, true));
         addEffect(EffectSlot.STATIC, new OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect());
     }
 }

@@ -37,15 +37,18 @@ public class LookAtTopCardsCreatureSharingTypeWithEquippedToHandEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var typedEffect = (LookAtTopCardsCreatureSharingTypeWithEquippedToHandEffect) effect;
-        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (equipment == null || equipment.getAttachedTo() == null) {
+        UUID creatureId = entry.getTriggeringPermanentId();
+        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, creatureId);
+        if (equippedCreature == null) {
+            Card lastKnownCard = entry.lastKnownPermanentCard(creatureId);
+            if (lastKnownCard != null) {
+                equippedCreature = new Permanent(lastKnownCard);
+            }
+        }
+        if (equippedCreature == null) {
             return;
         }
-
-        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
-        if (equippedCreature == null || !gameQueryService.isCreature(gameData, equippedCreature)) {
-            return;
-        }
+        Permanent creatureForTypes = equippedCreature;
 
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, typedEffect.count(), true);
@@ -56,7 +59,7 @@ public class LookAtTopCardsCreatureSharingTypeWithEquippedToHandEffectHandler
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         List<Card> matchingCards = topCards.stream()
-                .filter(card -> gameQueryService.shareCreatureType(gameData, equippedCreature, card))
+                .filter(card -> gameQueryService.shareCreatureType(gameData, creatureForTypes, card))
                 .toList();
 
         if (matchingCards.isEmpty()) {

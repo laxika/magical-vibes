@@ -15,6 +15,7 @@ public class CreepingDreadState {
     public UUID currentPlayerId;
     public final Deque<UUID> remaining = new ArrayDeque<>();
     public final Map<UUID, Set<CardType>> discardedCardTypes = new HashMap<>();
+    public final java.util.List<EachPlayerRummageState.SelectedDiscard> selectedDiscards = new java.util.ArrayList<>();
 
     public void reset() {
         active = false;
@@ -22,5 +23,6 @@ public class CreepingDreadState {
         currentPlayerId = null;
         remaining.clear();
         discardedCardTypes.clear();
+        selectedDiscards.clear();
     }
 }

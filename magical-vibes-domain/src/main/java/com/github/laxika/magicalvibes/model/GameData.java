@@ -1762,6 +1762,8 @@ public class GameData {
 
     /** Card IDs that have been granted Warp {0} until end of turn. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedWarpUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+    /** Exile entries created by Warp, bound to the specific stay in exile. */
+    public final Map<UUID, Long> warpExileEntryVersions = new ConcurrentHashMap<>();
 
     /** Card IDs that have been granted harmonize until end of turn. The harmonize cost for these
      * cards equals their mana cost. Cleared at end of turn. */
@@ -3129,6 +3131,8 @@ public class GameData {
 
     // Combat damage assignment state
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();
+    /** Damage source, prevention source, recipient, and the allocated prevention amount. */
+    public final Map<UUID, Map<UUID, Map<UUID, Integer>>> combatSharedDamagePreventionAllocations = new HashMap<>();
     public final List<Integer> combatDamagePendingIndices = new ArrayList<>();
     /** CR 510.1d — the defending player's damage division for creatures blocking 2+ attackers
      *  (defending-battlefield index → attacker permanent id → damage). */
@@ -5762,7 +5766,7 @@ public class GameData {
     /** Returns cards in a player's exile zone (by owner). Never null. */
     public List<Card> getPlayerExiledCards(UUID ownerId) {
         return exiledCards.stream()
-                .filter(e -> e.ownerId().equals(ownerId))
+                .filter(e -> e.ownerId().equals(ownerId) && !antedCardIds.contains(e.card().getId()))
                 .map(ExiledCardEntry::card)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
@@ -6042,6 +6046,8 @@ public class GameData {
     public boolean removeFromExile(UUID cardId) {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
         if (removed) {
+            exiledVoyageCounters.remove(cardId);
+            exiledVoyageControllerIds.remove(cardId);
             hauntingCardToPermanentId.remove(cardId);
             foretoldCardIds.remove(cardId);
             foretoldCardCosts.remove(cardId);
@@ -6549,20 +6555,28 @@ public class GameData {
     }
 
     public int getCardIntensity(Card card) {
-        return card == null ? 0 : cardIntensities.getOrDefault(card.getId(), card.getStartingIntensity());
+        return card == null ? 0 : cardIntensities.getOrDefault(card.getId(), startingIntensity(card));
     }
 
     public void initializeCardIntensity(Card card) {
-        if (card != null && card.getStartingIntensity() > 0) {
-            cardIntensities.putIfAbsent(card.getId(), card.getStartingIntensity());
+        if (card != null && startingIntensity(card) > 0) {
+            cardIntensities.putIfAbsent(card.getId(), startingIntensity(card));
         }
     }
 
     public void intensifyCard(Card card, int amount) {
         if (card != null && amount > 0) {
             cardIntensities.compute(card.getId(), (ignored, current) ->
-                    (current == null ? card.getStartingIntensity() : current) + amount);
+                    (current == null ? startingIntensity(card) : current) + amount);
         }
+    }
+
+    private int startingIntensity(Card card) {
+        return Math.max(card.getStartingIntensity(), card.getEffects(EffectSlot.SPELL).stream()
+                .filter(com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffect.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffect.class::cast)
+                .mapToInt(com.github.laxika.magicalvibes.model.effect.InitializeSourceIntensityEffect::amount)
+                .max().orElse(0));
     }
 
     public void initializeCardIntensity(Card card, int amount) {
@@ -6788,6 +6802,7 @@ public class GameData {
         copy.creepingDread.controllerId = this.creepingDread.controllerId;
         copy.creepingDread.currentPlayerId = this.creepingDread.currentPlayerId;
         copy.creepingDread.remaining.addAll(this.creepingDread.remaining);
+        copy.creepingDread.selectedDiscards.addAll(this.creepingDread.selectedDiscards);
         this.creepingDread.discardedCardTypes.forEach((playerId, types) ->
                 copy.creepingDread.discardedCardTypes.put(playerId, Set.copyOf(types)));
         copy.eachPlayerMayDiscardOneThenApplyEffects.active =
@@ -8079,6 +8094,11 @@ public class GameData {
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
 
         // --- Combat damage assignment state ---
+        this.combatSharedDamagePreventionAllocations.forEach((sourceId, preventionSources) -> {
+            Map<UUID, Map<UUID, Integer>> copiedSources = new HashMap<>();
+            preventionSources.forEach((preventionId, amounts) -> copiedSources.put(preventionId, new HashMap<>(amounts)));
+            copy.combatSharedDamagePreventionAllocations.put(sourceId, copiedSources);
+        });
         this.combatDamagePlayerAssignments.forEach((k, v) ->
                 copy.combatDamagePlayerAssignments.put(k, new HashMap<>(v)));
         copy.combatDamagePendingIndices.addAll(this.combatDamagePendingIndices);
@@ -8423,6 +8443,7 @@ public class GameData {
         copy.cardsGrantedFlashbackUntilEndOfTurn.addAll(this.cardsGrantedFlashbackUntilEndOfTurn);
         copy.cardsGrantedFlashbackCostsUntilEndOfTurn.putAll(this.cardsGrantedFlashbackCostsUntilEndOfTurn);
         copy.cardsGrantedWarpUntilEndOfTurn.addAll(this.cardsGrantedWarpUntilEndOfTurn);
+        copy.warpExileEntryVersions.putAll(this.warpExileEntryVersions);
         copy.cardsGrantedHarmonizeUntilEndOfTurn.addAll(this.cardsGrantedHarmonizeUntilEndOfTurn);
         copy.cardsGrantedJumpStartUntilEndOfTurn.addAll(this.cardsGrantedJumpStartUntilEndOfTurn);
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);

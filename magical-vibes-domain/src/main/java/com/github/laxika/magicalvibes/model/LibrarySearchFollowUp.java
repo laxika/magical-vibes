@@ -260,7 +260,14 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     public record SameNamePickQueue(List<String> names, boolean creatureOnly,
                                     LibrarySearchDestination destination,
                                     UUID libraryOwnerId, UUID battlefieldControllerId,
-                                    boolean optional) {
+                                    boolean optional, boolean simultaneous, List<Card> selectedCards) {
+
+        public SameNamePickQueue(List<String> names, boolean creatureOnly,
+                                 LibrarySearchDestination destination, UUID libraryOwnerId,
+                                 UUID battlefieldControllerId, boolean optional) {
+            this(names, creatureOnly, destination, libraryOwnerId, battlefieldControllerId,
+                    optional, false, List.of());
+        }
 
         public SameNamePickQueue(List<String> names, boolean creatureOnly,
                                  LibrarySearchDestination destination) {
@@ -269,11 +276,19 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
         public SameNamePickQueue {
             names = List.copyOf(names);
+            selectedCards = List.copyOf(selectedCards);
         }
 
         public SameNamePickQueue withNames(List<String> remaining) {
             return new SameNamePickQueue(remaining, creatureOnly, destination,
-                    libraryOwnerId, battlefieldControllerId, optional);
+                    libraryOwnerId, battlefieldControllerId, optional, simultaneous, selectedCards);
+        }
+
+        public SameNamePickQueue withSelectedCard(Card card) {
+            var selected = new java.util.ArrayList<>(selectedCards);
+            selected.add(card);
+            return new SameNamePickQueue(names, creatureOnly, destination, libraryOwnerId,
+                    battlefieldControllerId, optional, simultaneous, selected);
         }
     }
 

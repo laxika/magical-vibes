@@ -1061,8 +1061,7 @@ public class AdditionalSpellCostService {
                             .filter(entry -> playerId.equals(entry.ownerId()) && !entry.faceDown())
                             .map(ExiledCardEntry::card)
                             .anyMatch(exiledCard -> exiledCard.hasType(CardType.CREATURE)
-                                    && (exiledCard.hasKeyword(Keyword.WARP)
-                                    || gameData.cardsGrantedWarpUntilEndOfTurn.contains(exiledCard.getId())));
+                                    && isWarpedExileEntry(gameData, exiledCard.getId()));
                     if (!hasCreature && !hasWarpedCreatureCard) return false;
                 }
                 default -> { }
@@ -1544,13 +1543,18 @@ public class AdditionalSpellCostService {
         if (exiledEntry == null || !player.getId().equals(exiledEntry.ownerId())
                 || exiledEntry.faceDown()
                 || !exiledEntry.card().hasType(CardType.CREATURE)
-                || (!exiledEntry.card().hasKeyword(Keyword.WARP)
-                && !gameData.cardsGrantedWarpUntilEndOfTurn.contains(exiledEntry.card().getId()))) {
+                || !isWarpedExileEntry(gameData, exiledEntry.card().getId())) {
             throw new IllegalStateException("Must choose a warped creature card you own in exile to cast "
                     + card.getName());
         }
         Integer power = exiledEntry.card().getPower();
         return new ChosenCreatureOrWarpedCard(null, exiledEntry.card(), power == null ? 0 : Math.max(0, power));
+    }
+
+    private boolean isWarpedExileEntry(GameData gameData, UUID cardId) {
+        return gameData.warpExileEntryVersions.containsKey(cardId)
+                && gameData.warpExileEntryVersions.get(cardId).equals(
+                gameData.exileEntryVersions.getOrDefault(cardId, 0L));
     }
 
     /** Validates the creature subtype chosen as an additional cast cost. */

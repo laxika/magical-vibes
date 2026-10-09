@@ -72,6 +72,8 @@ public class MayCastHandlerService {
     private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     private final AdditionalSpellCostService additionalSpellCostService;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDividedDamageSupport dealDividedDamageSupport;
@@ -557,9 +559,12 @@ public class MayCastHandlerService {
                 }
             }
         }
-        boolean canTargetPlayer = spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean canTargetPlayer = spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                || card.isEnchantPlayer()
+                || card.getTargetFilter() instanceof com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
         if (canTargetPlayer) {
-            validTargets.addAll(gameData.orderedPlayerIds);
+            validTargets.addAll(validTargetService.computeValidTargetsForSpell(
+                    gameData, card, controllerId, List.of(), xValue, null).validPlayerIds());
         }
         boolean canTargetSpell = spellEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL));
         if (canTargetSpell) {
@@ -1047,8 +1052,9 @@ public class MayCastHandlerService {
             return;
         }
 
+        int phyrexianManaPaidWithLife;
         try {
-            spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), cardToCast, 0,
+            phyrexianManaPaidWithLife = spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), cardToCast, 0,
                     Zone.GRAVEYARD);
         } catch (IllegalStateException ex) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
@@ -1063,6 +1069,7 @@ public class MayCastHandlerService {
                 spellEffects, 0, (UUID) null, null);
         stackEntry.setOwnerIdOverride(graveyardOwnerId);
         stackEntry.setSourceZone(Zone.GRAVEYARD);
+        stackEntry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
         gameData.stack.add(stackEntry);
         gameData.recordSpellCast(player.getId(), cardToCast);
         gameData.preventAdditionalSpellCastsThisTurn(player.getId());
@@ -1640,6 +1647,15 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (pendingEffectType != null && (!additionalSpellCostService.satisfiableWithoutManaCost(
+                gameData, player.getId(), cardToCast)
+                || !paySideboardRevealOrManaCosts(gameData, player.getId(), cardToCast, false))) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " cannot be cast because its additional cost cannot be paid."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         StackEntryType spellType = switch (cardToCast.getType()) {
             case CREATURE -> StackEntryType.CREATURE_SPELL;
             case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
@@ -1668,6 +1684,7 @@ public class MayCastHandlerService {
             }
 
             if (pendingEffectType != null) {
+                paySideboardRevealOrManaCosts(gameData, player.getId(), cardToCast, true);
                 gameData.pendingMayAbilities.removeIf(pma ->
                         pma.effects().stream().anyMatch(pendingEffectType::isInstance));
             }
@@ -1685,6 +1702,7 @@ public class MayCastHandlerService {
         }
 
         if (pendingEffectType != null) {
+            paySideboardRevealOrManaCosts(gameData, player.getId(), cardToCast, true);
             gameData.pendingMayAbilities.removeIf(pma ->
                     pma.effects().stream().anyMatch(pendingEffectType::isInstance));
         }
@@ -1702,6 +1720,30 @@ public class MayCastHandlerService {
                 playerName + " casts ", cardToCast, " without paying its mana cost."));
         triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Checks or pays the additional reveal-or-mana costs on a sideboard spell. */
+    private boolean paySideboardRevealOrManaCosts(GameData gameData, UUID playerId, Card card, boolean pay) {
+        List<Card> reveals = new ArrayList<>();
+        int genericCost = Math.max(0, castingCostService.getCastCostModifier(
+                gameData, playerId, card, 0, Zone.OUTSIDE_GAME));
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostUnlessRevealSubtypeEffect cost) {
+                Card reveal = gameData.playerHands.getOrDefault(playerId, List.of()).stream()
+                        .filter(candidate -> !candidate.getId().equals(card.getId()))
+                        .filter(candidate -> gameQueryService.cardHasSubtype(candidate, cost.subtype(), gameData, playerId))
+                        .findFirst().orElse(null);
+                if (reveal != null && !reveals.contains(reveal)) reveals.add(reveal);
+            }
+        }
+        ManaCost cost = new ManaCost("{" + genericCost + "}");
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (genericCost > 0 && !cost.canPay(pool)) return false;
+        if (pay) {
+            if (genericCost > 0) cost.pay(pool);
+            if (!reveals.isEmpty()) cardRevealService.revealMatchingHandCardsToAllPlayers(gameData, playerId, reveals);
+        }
+        return true;
     }
 
     /**

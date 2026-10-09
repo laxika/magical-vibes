@@ -2559,8 +2559,6 @@ public class DrawService {
     public void checkEnchantedPlayerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
         int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
         gameData.forEachBattlefield((auraControllerId, battlefield) -> {
-            if (auraControllerId.equals(drawingPlayerId)) return;
-
             for (Permanent perm : battlefield) {
                 if (!perm.isAttached() || !drawingPlayerId.equals(perm.getAttachedTo())) continue;
 

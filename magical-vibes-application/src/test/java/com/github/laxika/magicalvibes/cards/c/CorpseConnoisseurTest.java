@@ -65,7 +65,7 @@ class CorpseConnoisseurTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // Decline the search
 
         Permanent perm = findPermanent(player1, "Corpse Connoisseur");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

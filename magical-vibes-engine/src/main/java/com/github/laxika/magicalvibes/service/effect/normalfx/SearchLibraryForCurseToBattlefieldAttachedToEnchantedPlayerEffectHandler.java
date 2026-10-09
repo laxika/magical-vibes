@@ -46,6 +46,7 @@ public class SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffectHa
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = sourcePermanentId == null ? null
                 : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) source = entry.getSourcePermanentSnapshot();
         if (source == null || !source.isAttached()) return;
         UUID enchantedPlayerId = source.getAttachedTo();
 

@@ -238,6 +238,7 @@ public sealed interface GameEventFact permits GameEventFact.StateInvalidated,
     enum RevealZone {
         HAND,
         LIBRARY,
+        OUTSIDE_GAME,
         PERMANENT
     }
 

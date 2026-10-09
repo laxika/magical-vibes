@@ -30,7 +30,7 @@ public record CantBlockThisTurnEffect(TapUntapScope scope, PermanentPredicate fi
     public TargetSpec targetSpec() {
         return switch (scope) {
             case TARGET -> TargetSpec.benign(TargetPredicates.creature());
-            case TARGET_PLAYERS_PERMANENTS -> TargetSpec.benign(TargetPredicates.player());
+            case TARGET_PLAYERS_PERMANENTS -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());
             case TARGET_CONTROLLERS_OTHER_CREATURES -> TargetSpec.benign(TargetPredicates.creature());
             default -> TargetSpec.NONE;
         };

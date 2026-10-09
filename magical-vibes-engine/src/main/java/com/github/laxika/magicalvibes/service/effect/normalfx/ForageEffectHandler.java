@@ -64,7 +64,7 @@ public class ForageEffectHandler implements NormalEffectHandlerBean {
         CardEffect exileCards = SequenceEffect.of(
                 new ExileGraveyardCardsEffect(3, GraveyardExileScope.OWN), forageTrigger);
         CardEffect sacrificeFood = new SacrificePermanentThenEffect(
-                FOOD_FILTER, forageTrigger, "a Food");
+                FOOD_FILTER, forageTrigger, "a Food", false, false);
 
         if (canExileGraveyardCards && canSacrificeFood) {
             playerInputService.beginChooseModeChoice(

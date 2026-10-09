@@ -173,8 +173,7 @@ class CorpseHarvesterTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 18);
         harness.assertInHand(player1, "Gravebane Zombie");

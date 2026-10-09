@@ -216,7 +216,7 @@ class CharforgerTest extends BaseCardTest {
         enterMainWithPriority(player1);
         harness.forceStep(TurnStep.UPKEEP);
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

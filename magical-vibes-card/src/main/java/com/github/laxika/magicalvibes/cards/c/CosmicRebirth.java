@@ -21,6 +21,7 @@ public class CosmicRebirth extends Card {
     public CosmicRebirth() {
         ReturnCardFromGraveyardEffect toBattlefield = ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .chooseAuraAttachment(true)
                 .filter(new CardIsPermanentPredicate())
                 .targetGraveyard(true)
                 .build();

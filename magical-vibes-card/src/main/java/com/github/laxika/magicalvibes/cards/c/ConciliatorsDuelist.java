@@ -22,6 +22,7 @@ import java.util.List;
 public class ConciliatorsDuelist extends Card {
 
     public ConciliatorsDuelist() {
+        target(TargetFilters.creature(), 0, 1);
         // When this creature enters, draw a card. Each player loses 1 life.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(1, LoseLifeRecipient.EACH_PLAYER));

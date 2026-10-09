@@ -237,7 +237,7 @@ class CuriousHomunculusTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, homunculus)).isEqualTo(powerBeforeCast + 1);
         assertThat(gqs.getEffectiveToughness(gd, homunculus)).isEqualTo(toughnessBeforeCast + 1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, homunculus)).isEqualTo(powerBeforeCast);
         assertThat(gqs.getEffectiveToughness(gd, homunculus)).isEqualTo(toughnessBeforeCast);
         assertThat(homunculus.isTransformed()).isTrue();

@@ -32,7 +32,9 @@ public class ConjurersCloset extends Card {
                 )),
                 "Target must be a creature you control"
         )).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new MayEffect(FlickerEffect.flickerTargetUnderYourControl(),
+                new MayEffect(FlickerEffect.flickerTargetUnderYourControl(new PermanentAllOfPredicate(List.of(
+                        new PermanentControlledBySourceControllerPredicate(),
+                        new PermanentIsCreaturePredicate()))),
                         "Exile target creature you control and return it?"));
     }
 }

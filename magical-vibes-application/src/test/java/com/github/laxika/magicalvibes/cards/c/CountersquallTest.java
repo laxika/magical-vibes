@@ -153,7 +153,8 @@ class CountersquallTest extends BaseCardTest {
     void canCounterOwnSpell() {
         Banefire banefire = new Banefire();
         harness.setHand(player1, List.of(banefire, new Countersquall()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.setLife(player1, 20);

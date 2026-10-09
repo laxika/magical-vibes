@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasKickerPredicate;
 
 import java.util.List;
 
@@ -21,6 +21,6 @@ public class CoralhelmChronicler extends Card {
                 List.of(new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
-                        5, new CardKeywordPredicate(Keyword.KICKER)));
+                        5, new CardHasKickerPredicate()));
     }
 }

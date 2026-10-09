@@ -93,12 +93,14 @@ class CovetedPeacockTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(als.getMustAttackRequirementCount(gd, target)).isEqualTo(1);
         assertThat(gqs.isGoaded(gd, target)).isTrue();
 
+        gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UPKEEP);

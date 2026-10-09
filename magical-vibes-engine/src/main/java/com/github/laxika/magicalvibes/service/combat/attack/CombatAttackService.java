@@ -130,6 +130,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotChosenDuringLastCombatEffect;
@@ -1042,6 +1043,14 @@ public class CombatAttackService {
                         allEffects.add(temp);
                     }
                 }
+
+                allEffects.replaceAll(effect -> {
+                    if (!(effect instanceof RandomChoiceEffect random)) return effect;
+                    List<CardEffect> chosen = random.options().get(java.util.concurrent.ThreadLocalRandom.current()
+                            .nextInt(random.options().size()));
+                    return chosen.size() == 1 ? chosen.getFirst()
+                            : new com.github.laxika.magicalvibes.model.effect.SequenceEffect(chosen);
+                });
 
                 // "Whenever this creature attacks for the first time each turn" (Aurelia, the
                 // Warleader): drop the wrapped effects entirely once this permanent has already
@@ -2810,7 +2819,10 @@ public class CombatAttackService {
                         if (needsTarget) {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                     perm.getCard(), permController, triggerEffects, perm.getId(),
-                                    permController, null, null, attackerIndices.size()));
+                                    triggerEffects.stream().anyMatch(effect -> effect instanceof MayEffect may
+                                            && may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.ACTIVE_PLAYER)
+                                            ? playerId : permController,
+                                    null, null, attackerIndices.size()));
                             gameLogService.append(gameData,
                                     GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                             log.info("Game {} - {} targeted ON_ANY_PLAYER_ATTACKS trigger queued for target selection",
@@ -2827,6 +2839,7 @@ public class CombatAttackService {
                             playerAttackTrigger.setTargetId(playerId);
                             playerAttackTrigger.setTriggeringPermanentControllerId(playerId);
                             playerAttackTrigger.setNonTargeting(true);
+                            playerAttackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
                             gameData.stack.add(playerAttackTrigger);
                             gameLogService.append(gameData,
                                     GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());

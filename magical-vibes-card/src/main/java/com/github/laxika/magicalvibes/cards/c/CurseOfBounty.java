@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttackingPlayerIsOpponent;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,7 +25,8 @@ public class CurseOfBounty extends Card {
                         SequenceEffect.of(
                                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, nonland),
                                 new ConditionalEffect(
-                                        new AttackingPlayerIsOpponent(),
+                                        new AllOf(java.util.List.of(
+                                                new AttackingPlayerIsOpponent(), new AttacksEnchantedPlayer())),
                                         new UntapPermanentsEffect(
                                                 TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland)))));
     }

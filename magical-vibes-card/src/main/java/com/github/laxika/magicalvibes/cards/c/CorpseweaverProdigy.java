@@ -17,7 +17,7 @@ public class CorpseweaverProdigy extends Card {
 
         // Infusion — At the beginning of your second main phase, if you gained life this turn,
         // conjure a card named Bridge from Below into your graveyard.
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.SECOND_MAIN_PHASE_TRIGGERED, new ConditionalEffect(
                 new GainedLifeThisTurn(), new ConjureCardToGraveyardEffect("FUT", "81")));
     }
 }

@@ -51,11 +51,13 @@ class CloudMidgarMercenaryTest extends BaseCardTest {
         Permanent slayer = addCreatureReady(player2, new MageSlayer());
         slayer.setAttachedTo(cloud.getId());
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS,
+                () -> declareAttackers(player1, List.of(0)));
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard() == slayer.getCard())
                 .hasSize(2);
-        resolveAllTriggers();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS,
+                this::resolveAllTriggers);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -71,11 +73,13 @@ class CloudMidgarMercenaryTest extends BaseCardTest {
         Permanent slayer = addCreatureReady(player1, new MageSlayer());
         slayer.setAttachedTo(bears.getId());
 
-        declareAttackers(player1, List.of(0, 2));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS,
+                () -> declareAttackers(player1, List.of(0, 2)));
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard() == slayer.getCard())
                 .hasSize(1);
-        resolveAllTriggers();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS,
+                this::resolveAllTriggers);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }

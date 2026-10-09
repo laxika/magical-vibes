@@ -38,7 +38,7 @@ class CrewCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent captain = findPermanent(player1, "Crew Captain");
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, captain, Keyword.INDESTRUCTIBLE)).isFalse();
     }
@@ -77,7 +77,7 @@ class CrewCaptainTest extends BaseCardTest {
         harness.castFromHand(player1, new CrewCaptain(), "{B}{R}{G}");
         harness.passBothPriorities();
         Permanent captain = findPermanent(player1, "Crew Captain");
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -95,7 +95,7 @@ class CrewCaptainTest extends BaseCardTest {
         harness.castFromHand(player1, new CrewCaptain(), "{B}{R}{G}");
         harness.passBothPriorities();
         Permanent olderCaptain = findPermanent(player1, "Crew Captain");
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         Permanent newCaptain = harness.enterBattlefieldAndReturn(player2, new CrewCaptain());
 
@@ -117,7 +117,7 @@ class CrewCaptainTest extends BaseCardTest {
         captain.setMarkedDamage(2);
         harness.runStateBasedActions();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.assertOnBattlefield(player1, "Crew Captain");
         assertThat(captain.getMarkedDamage()).isZero();

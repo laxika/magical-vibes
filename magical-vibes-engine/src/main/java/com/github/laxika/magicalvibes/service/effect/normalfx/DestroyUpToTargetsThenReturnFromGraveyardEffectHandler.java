@@ -66,7 +66,10 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
             if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
                 gameLogService.append(gameData, GameLog.cardThen(card, " is destroyed."));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, card.getName(), sourceName);
-                cardsToReturn.add(card);
+                Card originalCard = target.getOriginalCard();
+                if (!originalCard.isToken() && originalCard.hasType(CardType.CREATURE)) {
+                    cardsToReturn.add(originalCard);
+                }
             }
         }
 
@@ -76,10 +79,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
                 continue;
             }
 
-            permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-
             if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
-                gameData.playerGraveyards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(card);
                 
                 gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(controllerId) + " can't put ").card(card).text(" onto the battlefield from a graveyard; it stays in the graveyard.").build());
                 log.info("Game {} - {} blocked from entering the battlefield from a graveyard",
@@ -87,17 +87,19 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
                 continue;
             }
 
+            permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
             Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
             Permanent permanent = new Permanent(card);
             if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
                 permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
             }
-            permanent.setEnteredFromGraveyardOwnerId(controllerId);
+            permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
             if (((DestroyUpToTargetsThenReturnFromGraveyardEffect) effect).sacrificeAtEndStep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
-                        permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                        permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, controllerId, controllerId));
             }
 
             String playerName = gameData.playerIdToName.get(controllerId);

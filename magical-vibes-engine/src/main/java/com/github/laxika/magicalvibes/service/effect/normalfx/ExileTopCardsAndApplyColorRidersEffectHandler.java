@@ -88,9 +88,7 @@ public class ExileTopCardsAndApplyColorRidersEffectHandler implements NormalEffe
             riders.add(new DrawCardEffect(blueCount));
         }
         if (redCount > 0) {
-            for (int i = 0; i < redCount; i++) {
-                riders.add(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-            }
+            riders.add(new DealDamageToPlayersEffect(redCount, DamageRecipient.EACH_OPPONENT));
         }
 
         if (!riders.isEmpty()) {

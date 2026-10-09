@@ -81,8 +81,8 @@ class CoerciveImpetusTest extends BaseCardTest {
         harness.setLife(player1, 20);
         int handSize = gd.playerHands.get(player1.getId()).size();
 
-        declareAttackers(player2, List.of());
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of()));
 
         harness.assertLife(player1, 20);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);

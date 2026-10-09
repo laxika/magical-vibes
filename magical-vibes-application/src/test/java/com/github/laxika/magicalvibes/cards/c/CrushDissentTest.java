@@ -140,7 +140,6 @@ class CrushDissentTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, spell.getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, spell.getId());
 
         harness.assertInGraveyard(player1, "Prismite");

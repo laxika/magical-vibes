@@ -12,8 +12,12 @@ package com.github.laxika.magicalvibes.model.effect;
  * Used by: Counterbore, Test of Talents
  */
 public record CounterSpellAndExileAllWithSameNameEffect(boolean chooseAnyNumber,
-                                                         boolean drawCardsExiledFromHand)
+                                                         boolean drawCardsExiledFromHand, boolean chooseHiddenZoneMatches)
         implements CardEffect {
+
+    public CounterSpellAndExileAllWithSameNameEffect(boolean chooseAnyNumber, boolean drawCardsExiledFromHand) {
+        this(chooseAnyNumber, drawCardsExiledFromHand, false);
+    }
 
     public CounterSpellAndExileAllWithSameNameEffect() {
         this(false, false);

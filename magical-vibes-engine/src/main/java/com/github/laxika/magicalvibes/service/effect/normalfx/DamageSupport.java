@@ -1442,7 +1442,7 @@ public class DamageSupport {
     }
 
     private boolean beginSpellDamageModifierOrder(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
-        if (rawDamage <= 0 || gameQueryService.getSpellDamageReduction(gameData, entry) <= 0) {
+        if (rawDamage <= 0) {
             return false;
         }
         List<ChoiceContext.SpellDamageModifier> modifiers = new ArrayList<>();
@@ -1455,6 +1455,36 @@ public class DamageSupport {
                 collectSpellDamageModifiers(gameData, plane.getCard(), modifiers);
             }
         }
+        if (gameQueryService.getSpellDamageReduction(gameData, entry) <= 0) {
+            modifiers.removeIf(modifier -> !modifier.multiply());
+        }
+        int enchantedMultiplier = gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
+        if (enchantedMultiplier > 1) {
+            modifiers.add(new ChoiceContext.SpellDamageModifier(
+                    "Multiply damage to enchanted player by " + enchantedMultiplier, enchantedMultiplier, true));
+        }
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID sourceControllerId = sourcePermanent == null ? entry.getControllerId()
+                : gameQueryService.findPermanentController(gameData, sourcePermanent.getId());
+        int recipientMultiplier = gameQueryService.getDamageToRecipientMultiplier(
+                gameData, playerId, sourceControllerId);
+        if (recipientMultiplier > 1) {
+            modifiers.add(new ChoiceContext.SpellDamageModifier(
+                    "Multiply damage to recipient by " + recipientMultiplier, recipientMultiplier, true));
+        }
+        boolean sanctuary = gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                .anyMatch(permanent -> gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, CrumblingSanctuaryDamageReplacementEffect.class));
+        if (sanctuary) {
+            modifiers.add(new ChoiceContext.SpellDamageModifier(
+                    "Crumbling Sanctuary: exile library cards instead of damage", 0, false, true));
+        }
+        int preventionShield = gameData.playerDamagePreventionShields.getOrDefault(playerId, 0);
+        if (preventionShield > 0 && gameQueryService.isDamagePreventable(gameData)) {
+            modifiers.add(new ChoiceContext.SpellDamageModifier(
+                    "Prevent the next " + preventionShield + " damage to you", preventionShield,
+                    false, false, true));
+        }
         int multiplier = modifiers.stream().filter(ChoiceContext.SpellDamageModifier::multiply)
                 .mapToInt(ChoiceContext.SpellDamageModifier::amount)
                 .reduce(1, (left, right) -> left * right);
@@ -1464,7 +1494,8 @@ public class DamageSupport {
         }
         beginSpellDamageModifierChoice(gameData,
                 new ChoiceContext.SpellDamageModifierOrder(
-                        entry, playerId, rawDamage / multiplier, modifiers, gameData.unpreventableDamageInProgress));
+                        entry, playerId, rawDamage / Math.max(1, multiplier / enchantedMultiplier / recipientMultiplier),
+                        modifiers, gameData.unpreventableDamageInProgress));
         return true;
     }
 
@@ -1508,19 +1539,28 @@ public class DamageSupport {
         var selected = remaining.stream().filter(modifier -> modifier.label().equals(label)).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Invalid damage replacement effect"));
         remaining.remove(selected);
-        int damage = applySpellDamageModifier(order.damage(), selected);
+        if (selected.replacesWithExile()) {
+            applyCrumblingSanctuaryReplacement(gameData, order.recipientId(), order.damage());
+            return;
+        }
+        int damage = applySpellDamageModifier(gameData, order.recipientId(), order.damage(), selected);
         boolean onlyMultiplication = remaining.stream().allMatch(
                 ChoiceContext.SpellDamageModifier::multiply);
         boolean onlyReduction = remaining.stream().noneMatch(
                 ChoiceContext.SpellDamageModifier::multiply);
-        if (damage > 0 && !onlyMultiplication && !onlyReduction) {
+        if (damage > 0 && remaining.stream().anyMatch(ChoiceContext.SpellDamageModifier::replacesWithExile)
+                && remaining.size() > 1 || damage > 0 && !onlyMultiplication && !onlyReduction) {
             beginSpellDamageModifierChoice(gameData,
                     new ChoiceContext.SpellDamageModifierOrder(
                             order.entry(), order.recipientId(), damage, remaining, order.unpreventable()));
             return;
         }
         for (var modifier : remaining) {
-            damage = applySpellDamageModifier(damage, modifier);
+            if (modifier.replacesWithExile()) {
+                applyCrumblingSanctuaryReplacement(gameData, order.recipientId(), damage);
+                return;
+            }
+            damage = applySpellDamageModifier(gameData, order.recipientId(), damage, modifier);
         }
         boolean previousUnpreventable = gameData.unpreventableDamageInProgress;
         gameData.unpreventableDamageInProgress = order.unpreventable();
@@ -1531,8 +1571,11 @@ public class DamageSupport {
         }
     }
 
-    private int applySpellDamageModifier(int damage,
+    private int applySpellDamageModifier(GameData gameData, UUID playerId, int damage,
             ChoiceContext.SpellDamageModifier modifier) {
+        if (modifier.playerPreventionShield()) {
+            return damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
+        }
         return modifier.multiply() ? damage * modifier.amount() : Math.max(0, damage - modifier.amount());
     }
 
@@ -1597,9 +1640,10 @@ public class DamageSupport {
             return;
         }
         // Curse of Bloodletting and similar: double damage dealt to the enchanted player (replacement effect)
-        rawDamage *= gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
-        // Gisela, Blade of Goldnight: double the damage dealt to an opponent of her controller.
-        rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, playerId, sourceControllerId);
+        if (!spellDamageModifiersApplied) {
+            rawDamage *= gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
+            rawDamage *= gameQueryService.getDamageToRecipientMultiplier(gameData, playerId, sourceControllerId);
+        }
         if (rawDamage > 0) {
             rawDamage += gameQueryService.getNoncreatureSourceDamageBonus(
                     gameData, entry, playerId, null);

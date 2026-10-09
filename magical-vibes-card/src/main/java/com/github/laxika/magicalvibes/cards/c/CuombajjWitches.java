@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -35,10 +35,7 @@ public class CuombajjWitches extends Card {
         ActivatedAbility ability = new ActivatedAbility(
                 true,
                 null,
-                List.of(
-                        DealDamageToAnyTargetEffect.forTargetGroup(1, 0),
-                        DealDamageToAnyTargetEffect.forTargetGroup(1, 1)
-                ),
+                List.of(DealDividedDamageEffect.ordered(List.of(1, 1))),
                 "{T}: This creature deals 1 damage to any target and 1 damage to any target of an opponent's choice.",
                 List.of(anyTarget, anyTarget),
                 2,

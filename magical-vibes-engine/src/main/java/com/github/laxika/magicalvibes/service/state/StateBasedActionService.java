@@ -99,6 +99,10 @@ public class StateBasedActionService {
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService turnFaceUpCopyService;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
+
     public void performStateBasedActions(GameData gameData) {
         if (gameData.waitingForSubgame) return;
         // Damage and tapping can turn a masked creature face up in the domain model. Collect
@@ -133,6 +137,11 @@ public class StateBasedActionService {
         int passes = 0;
         do {
             anyPerformed = gameData.planechase != null && planechaseService.checkPhenomena(gameData);
+            List<Permanent> scopedPermanents = new ArrayList<>();
+            gameData.forEachPermanent((controllerId, permanent) -> scopedPermanents.add(permanent));
+            anyPerformed |= !gameData.expireFloatingEffects(floating -> floating.expiresWhenScopeNoLongerMatches()
+                    && scopedPermanents.stream().noneMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, floating.scope()))).isEmpty();
             anyPerformed |= enforceCounterLimits(gameData);
             anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
             if (graveyardService.hasPendingRegenerationChoice(gameData)) return;

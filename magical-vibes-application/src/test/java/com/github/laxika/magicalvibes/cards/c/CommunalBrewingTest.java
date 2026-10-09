@@ -22,6 +22,7 @@ class CommunalBrewingTest extends BaseCardTest {
     @Test
     @DisplayName("Targeted opponents draw and add ingredient counters for cards drawn")
     void targetedOpponentsDrawAndAddIngredients() {
+        harness.setHand(player2, List.of());
         Card drawnCard = new GrizzlyBears();
         harness.setLibrary(player2, List.of(drawnCard));
         castCommunalBrewing(List.of(player2.getId()));
@@ -54,7 +55,10 @@ class CommunalBrewingTest extends BaseCardTest {
     @Test
     @DisplayName("Communal Brewing can enter without choosing an opponent")
     void canChooseNoOpponents() {
+        harness.setHand(player2, List.of());
         castCommunalBrewing(List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
 
         assertThat(communalBrewing().getCounterCount(CounterType.INGREDIENT)).isEqualTo(1);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

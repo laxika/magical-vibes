@@ -263,6 +263,14 @@ public final class TextChangeTransformer {
                         : new BoostTargetCreatureEffect(power, toughness, filter, boost.duration(),
                         boost.targetGroup(), castTimeXValue);
             }
+            case com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect protection -> {
+                CardColor color = protection.color() == substitution.fromColor()
+                        ? substitution.toColor() : protection.color();
+                PermanentPredicate predicate = apply(protection.predicate(), substitution);
+                yield color == protection.color() && predicate == protection.predicate() ? protection
+                        : new com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect(
+                                color, predicate, protection.scope(), protection.declaredTarget());
+            }
             case ProtectionFromColorsEffect protection -> {
                 Set<CardColor> colors = replaceColor(protection.colors(), substitution);
                 yield colors == protection.colors() ? protection

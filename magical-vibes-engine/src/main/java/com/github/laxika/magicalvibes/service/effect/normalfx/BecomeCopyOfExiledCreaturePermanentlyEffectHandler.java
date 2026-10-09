@@ -34,13 +34,10 @@ public class BecomeCopyOfExiledCreaturePermanentlyEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Card exiledCard = source == null ? null : source.getChosenExiledCard();
+        Permanent exiledPermanent = chosenCostPermanent(gameData, entry);
+        Card exiledCard = exiledPermanent == null ? null : exiledPermanent.getCard();
         if (exiledCard == null && entry.getSourcePermanentSnapshot() != null) {
             exiledCard = entry.getSourcePermanentSnapshot().getChosenExiledCard();
-        }
-        if (exiledCard == null) {
-            Permanent exiledPermanent = chosenCostPermanent(gameData, entry);
-            exiledCard = exiledPermanent == null ? null : exiledPermanent.getCard();
         }
         if (source == null || exiledCard == null) {
             return;

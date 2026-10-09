@@ -94,7 +94,7 @@ class CourtClericTest extends BaseCardTest {
     @DisplayName("Lifelink gains life equal to the boosted combat damage")
     void lifelinkWithAjaniBoost() {
         addCreatureReady(player1, new CourtCleric());
-        harness.addToBattlefield(player1, new AjaniWiseCounselor());
+        harness.enterBattlefieldAndReturn(player1, new AjaniWiseCounselor());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 

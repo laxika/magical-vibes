@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CourtOfVantress.class, SolRing.class, GrizzlyBears.class})
@@ -17,25 +15,27 @@ class CourtOfVantressTest extends BaseCardTest {
 
     @Test
     void becomesMonarchWhenItEnters() {
-        harness.addToBattlefield(player1, new CourtOfVantress());
+        harness.enterBattlefieldAndReturn(player1, new CourtOfVantress());
+        resolveAllTriggers();
 
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
     }
 
     @Test
     void monarchCreatesTokenCopyOfTargetArtifactOrEnchantment() {
-        Permanent court = harness.addToBattlefieldAndReturn(player1, new CourtOfVantress());
+        Permanent court = harness.enterBattlefieldAndReturn(player1, new CourtOfVantress());
+        resolveAllTriggers();
         Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactly(ring.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(ring.getId(), player1.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(ring.getId()));
+        harness.handlePermanentChosen(player1, ring.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -45,7 +45,8 @@ class CourtOfVantressTest extends BaseCardTest {
 
     @Test
     void nonmonarchBecomesCopyAndRetainsItsAbility() {
-        Permanent court = harness.addToBattlefieldAndReturn(player1, new CourtOfVantress());
+        Permanent court = harness.enterBattlefieldAndReturn(player1, new CourtOfVantress());
+        resolveAllTriggers();
         Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
         harness.addToBattlefield(player1, new GrizzlyBears());
         gd.monarchPlayerId = player2.getId();
@@ -58,17 +59,17 @@ class CourtOfVantressTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        PendingInteraction.MultiPermanentChoice secondChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(secondChoice).isNotNull();
-        assertThat(secondChoice.validIds()).containsExactly(ring.getId());
+        assertThat(secondChoice.validIds()).containsExactlyInAnyOrder(ring.getId(), player1.getId());
     }
 
     private void chooseAndAcceptTarget(Permanent target) {
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
     }

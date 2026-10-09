@@ -25,7 +25,7 @@ public class ComponentPouch extends Card {
         ));
 
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 null,
                 List.of(new RollD20Effect(
                         new PutCountersOnSelfEffect(CounterType.COMPONENT),

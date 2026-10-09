@@ -2076,7 +2076,7 @@ public class PlayerInputService {
     public void beginPermanentTypeChoice(GameData gameData, UUID playerId, GraveyardChoiceDestination destination, String entryDescription) {
         ChoiceContext.PermanentTypeChoice choiceContext = new ChoiceContext.PermanentTypeChoice(playerId, destination, entryDescription);
 
-        List<String> permanentTypes = List.of("ARTIFACT", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
+        List<String> permanentTypes = List.of("ARTIFACT", "BATTLE", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, permanentTypes, "Choose a permanent type."));
 
@@ -3158,6 +3158,7 @@ public class PlayerInputService {
                                     CardPredicate stopAfterDiscardingPredicate, boolean declinable) {
         if (remainingCount > 0 && !validIndices.isEmpty()
                 && !followUp.targetOpponentsDiscardThenDraw()
+                && !gameData.creepingDread.active
                 && !(gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards)) {
             if (gameData.discardEventPlayerId == null) {
                 gameData.discardEventPlayerId = playerId;

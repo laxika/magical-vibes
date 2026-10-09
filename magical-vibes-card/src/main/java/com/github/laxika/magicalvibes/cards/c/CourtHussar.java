@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -21,6 +22,6 @@ public class CourtHussar extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
-                new NotCondition(new ColorSpentToCast(ManaColor.WHITE)), new SacrificeSelfEffect()));
+                new NotCondition(new ColorSpentToCast(ManaColor.WHITE)), new SacrificeSelfEffect()), TriggerMode.INDEPENDENT);
     }
 }

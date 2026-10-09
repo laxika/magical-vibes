@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
@@ -14,7 +15,6 @@ public class CurseOfFoolsWisdom extends Card {
     public CurseOfFoolsWisdom() {
         addCastingOption(new MadnessCast("{3}{B}"));
         addEffect(EffectSlot.ON_ENCHANTED_PLAYER_DRAWS,
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.ON_ENCHANTED_PLAYER_DRAWS, new GainLifeEffect(2));
+                SequenceEffect.of(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(2)));
     }
 }

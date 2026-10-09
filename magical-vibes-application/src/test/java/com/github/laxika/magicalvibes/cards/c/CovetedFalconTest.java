@@ -93,7 +93,6 @@ class CovetedFalconTest extends BaseCardTest {
         turnFaceUp(falcon);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, falcon.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(falcon);

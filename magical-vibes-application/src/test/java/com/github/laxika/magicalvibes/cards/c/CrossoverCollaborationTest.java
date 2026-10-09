@@ -125,6 +125,7 @@ class CrossoverCollaborationTest extends BaseCardTest {
 
     @Test
     void playPermissionLastsThroughNextTurnAndThenExpires() {
+        harness.setHand(player2, List.of());
         Card first = new CrossoverCollaboration();
         Card second = new CrossoverCollaboration();
         harness.setLibrary(player1, List.of(first, second,
@@ -135,9 +136,9 @@ class CrossoverCollaborationTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveInstant(player1, 0);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId());
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId());
 
         addMana();
@@ -145,7 +146,7 @@ class CrossoverCollaborationTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(second.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(second);
         addMana();

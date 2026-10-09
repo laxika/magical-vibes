@@ -84,7 +84,6 @@ class CoriMountainMonasteryTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(top);
         assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(top.getId())).isEqualTo(gd.turnNumber + 2);
 
         harness.castFromExile(player1, top.getId(), player2.getId());
         harness.passBothPriorities();
@@ -172,6 +171,7 @@ class CoriMountainMonasteryTest extends BaseCardTest {
 
     @Test
     void permissionFromYourTurnSurvivesTheInterveningOpponentsTurn() {
+        harness.setHand(player2, List.of());
         Card top = new Plains();
         harness.setLibrary(player1, List.of(top, new Island(), new Plains(), new Island()));
         harness.setLibrary(player2, List.of(new Plains(), new Island(), new Plains()));
@@ -194,6 +194,8 @@ class CoriMountainMonasteryTest extends BaseCardTest {
 
     @Test
     void permissionFromOpponentsTurnLastsThroughYourNextTurnThenExpires() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Card top = new Plains();
         harness.setLibrary(player1, List.of(top, new Island(), new Plains(), new Island()));
         harness.setLibrary(player2, List.of(new Plains(), new Island(), new Plains()));

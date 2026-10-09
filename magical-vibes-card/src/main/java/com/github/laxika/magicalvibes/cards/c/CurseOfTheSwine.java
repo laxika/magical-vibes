@@ -23,7 +23,7 @@ import java.util.Set;
 public class CurseOfTheSwine extends Card {
 
     public CurseOfTheSwine() {
-        targetX(TargetFilters.creature(), 100).addEffect(EffectSlot.SPELL,
+        targetExactlyX(TargetFilters.creature(), 100).addEffect(EffectSlot.SPELL,
                 new ExileTargetPermanentEffect(new CreateTokenEffect(
                         "Boar", 2, 2, CardColor.GREEN, List.of(CardSubtype.BOAR), Set.of(), Set.of())));
     }

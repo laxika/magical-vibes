@@ -20,4 +20,9 @@ public interface DamageSourceControllerAwareEffect extends CardEffect {
      * @return a bound copy carrying the event data, or {@code this} when it does not qualify
      */
     CardEffect bindDamageSourceController(UUID controllerId, int damageDealt);
+
+    /** Retains the damage source's permanent identity when resolution needs its current controller. */
+    default CardEffect bindDamageSourceController(UUID controllerId, int damageDealt, UUID sourcePermanentId) {
+        return bindDamageSourceController(controllerId, damageDealt);
+    }
 }

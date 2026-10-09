@@ -142,7 +142,7 @@ class CoastalDiscoveryTest extends BaseCardTest {
 
         gs.playCardWithAlternateCost(gd, player1, 0, 0, null, null, List.of(land.getId()));
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gqs.isCreature(gd, land)).isTrue();

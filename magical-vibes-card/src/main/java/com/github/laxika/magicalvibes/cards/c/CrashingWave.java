@@ -21,7 +21,7 @@ import java.util.List;
 public class CrashingWave extends Card {
 
     public CrashingWave() {
-        addEffect(EffectSlot.SPELL, new ChooseXValueCost(0, 100));
+        addEffect(EffectSlot.SPELL, new ChooseXValueCost(0, Integer.MAX_VALUE));
         addEffect(EffectSlot.SPELL, WaterbendCost.x());
         targetX(TargetFilters.creature(), 100)
                 .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));

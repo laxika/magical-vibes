@@ -106,7 +106,7 @@ class CrypticCavesTest extends BaseCardTest {
     void tappedCavesCannotDraw() {
         harness.addToBattlefield(player1, new CrypticCaves());
         addFourLands();
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))

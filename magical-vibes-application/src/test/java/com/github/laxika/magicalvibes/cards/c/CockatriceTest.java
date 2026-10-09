@@ -138,7 +138,7 @@ class CockatriceTest extends BaseCardTest {
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(amoeboid), 0, null, attacker.getId());
         harness.passBothPriorities();
-        assertThat(GameQueryService.permanentHasSubtype(attacker, CardSubtype.WALL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, attacker, CardSubtype.WALL)).isTrue();
 
         attacker.setAttacking(true);
         addCreatureReady(player2, new Cockatrice());
@@ -169,7 +169,7 @@ class CockatriceTest extends BaseCardTest {
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(amoeboid), 0, null, spider.getId());
         harness.passBothPriorities();
-        assertThat(GameQueryService.permanentHasSubtype(spider, CardSubtype.WALL)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, spider, CardSubtype.WALL)).isTrue();
 
         harness.passBothPriorities();
         assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))

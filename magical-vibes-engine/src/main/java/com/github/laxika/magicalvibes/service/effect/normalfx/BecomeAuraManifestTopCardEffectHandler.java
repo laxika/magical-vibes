@@ -41,11 +41,9 @@ public class BecomeAuraManifestTopCardEffectHandler implements NormalEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent aura = findSource(gameData, entry);
-        if (aura == null) {
-            return;
+        if (aura != null) {
+            becomeAura(aura);
         }
-
-        becomeAura(aura);
 
         List<Card> library = gameData.playerDecks.get(entry.getControllerId());
         if (library == null || library.isEmpty()) {
@@ -61,6 +59,10 @@ public class BecomeAuraManifestTopCardEffectHandler implements NormalEffectHandl
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), manifested);
         battlefieldEntryService.processFaceDownCreatureETBTriggers(
                 gameData, entry.getControllerId(), manifestedCard);
+
+        if (aura == null) {
+            return;
+        }
 
         gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(manifested.getId());

@@ -11,9 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class Countermand extends Card {
 
     public Countermand() {
-        // Mill before countering so TARGET_SPELL_CONTROLLER can still resolve against the spell
-        // on the stack, including when the spell can't be countered.
-        addEffect(EffectSlot.SPELL, new MillEffect(4, MillRecipient.TARGET_SPELL_CONTROLLER));
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addEffect(EffectSlot.SPELL, new MillEffect(4, MillRecipient.TARGET_SPELL_CONTROLLER));
     }
 }

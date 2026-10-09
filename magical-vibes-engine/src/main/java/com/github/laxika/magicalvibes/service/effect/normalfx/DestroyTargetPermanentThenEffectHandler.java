@@ -91,6 +91,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
 
         // Unless the card says "dies this way", the then-effect happens regardless of whether
         // destruction succeeds (indestructible / regeneration).
+        long previousGraveyardVersion = gameData.graveyardEntryVersion(target.getOriginalCard().getId());
         boolean destroyed = destructionSupport.tryDestroyAndLog(
                 gameData, target, entry.getCard().getName(), e.cannotBeRegenerated());
         // If destruction was replaced, read the surviving permanent's current characteristics.
@@ -106,7 +107,8 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             statValue = wasLand && destroyed ? 2 : 1;
         }
 
-        if (!thenApplies || (e.requiresDestruction() && !destroyed)) {
+        boolean died = gameData.graveyardEntryVersion(target.getOriginalCard().getId()) > previousGraveyardVersion;
+        if (!thenApplies || (e.requiresDestruction() && (!destroyed || !died))) {
             return;
         }
 

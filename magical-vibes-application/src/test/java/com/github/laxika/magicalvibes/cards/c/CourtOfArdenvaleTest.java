@@ -20,7 +20,8 @@ class CourtOfArdenvaleTest extends BaseCardTest {
     @Test
     @DisplayName("Its controller becomes the monarch when it enters")
     void becomesMonarchWhenItEnters() {
-        harness.addToBattlefield(player1, new CourtOfArdenvale());
+        harness.enterBattlefieldAndReturn(player1, new CourtOfArdenvale());
+        resolveAllTriggers();
 
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
     }
@@ -29,7 +30,8 @@ class CourtOfArdenvaleTest extends BaseCardTest {
     @DisplayName("As the monarch, returns a target small permanent card to the battlefield")
     void monarchReturnsPermanentToBattlefield() {
         Card target = new GrizzlyBears();
-        harness.addToBattlefield(player1, new CourtOfArdenvale());
+        harness.enterBattlefieldAndReturn(player1, new CourtOfArdenvale());
+        resolveAllTriggers();
         harness.setGraveyard(player1, List.of(target));
 
         advanceToUpkeep(player1);
@@ -49,7 +51,8 @@ class CourtOfArdenvaleTest extends BaseCardTest {
     @DisplayName("When not the monarch, returns a target small permanent card to hand")
     void nonMonarchReturnsPermanentToHand() {
         Card target = new GrizzlyBears();
-        harness.addToBattlefield(player1, new CourtOfArdenvale());
+        harness.enterBattlefieldAndReturn(player1, new CourtOfArdenvale());
+        resolveAllTriggers();
         gd.monarchPlayerId = player2.getId();
         harness.setGraveyard(player1, List.of(target));
 
@@ -67,7 +70,8 @@ class CourtOfArdenvaleTest extends BaseCardTest {
         Card legal = new GrizzlyBears();
         Card expensive = new AirElemental();
         Card nonPermanent = new LightningBolt();
-        harness.addToBattlefield(player1, new CourtOfArdenvale());
+        harness.enterBattlefieldAndReturn(player1, new CourtOfArdenvale());
+        resolveAllTriggers();
         harness.setGraveyard(player1, List.of(legal, expensive, nonPermanent));
 
         advanceToUpkeep(player1);

@@ -44,8 +44,8 @@ public class CourtOfVantress extends Card {
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                                 new ConditionalReplacementEffect(
                                         new ControllerIsMonarch(),
-                                        new CreateTokenCopyOfTargetPermanentEffect(),
-                                        copyEffect),
+                                        copyEffect,
+                                        new CreateTokenCopyOfTargetPermanentEffect()),
                         "Use Court of Vantress's upkeep ability?"));
     }
 }

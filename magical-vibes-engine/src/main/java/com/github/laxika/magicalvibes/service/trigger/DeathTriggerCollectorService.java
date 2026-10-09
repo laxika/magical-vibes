@@ -463,10 +463,6 @@ public class DeathTriggerCollectorService {
                 counters += dyingPermanent.getCounterCount(type);
             }
         }
-        if (counters < 1) {
-            return false;
-        }
-
         CreateTokenEffect resolved = effect.tokenTemplate().withAmount(counters);
 
         match.gameData().stack.add(new StackEntry(
@@ -1700,8 +1696,9 @@ public class DeathTriggerCollectorService {
     boolean handleEnchantedPermanentLeavesConditional(TriggerMatchContext match,
             EnchantedPermanentLeavesConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentLeaves epl = (TriggerContext.EnchantedPermanentLeaves) ctx;
-        if (conditional.permanentFilter() != null
-                && !predicateEvaluationService.matchesCardPredicate(epl.leavingPermanent().getCard(), conditional.permanentFilter(), null)) {
+        boolean matches = conditional.permanentFilter() == null || predicateEvaluationService.matchesCardPredicate(
+                epl.leavingPermanent().getCard(), conditional.permanentFilter(), null);
+        if (!matches) {
             return false;
         }
         match.gameData().stack.add(new StackEntry(

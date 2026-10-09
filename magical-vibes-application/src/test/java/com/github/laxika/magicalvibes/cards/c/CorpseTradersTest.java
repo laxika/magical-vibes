@@ -123,7 +123,6 @@ class CorpseTradersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.handlePermanentChosen(player1, traders.getId());
 
         harness.assertNotOnBattlefield(player1, "Corpse Traders");
         harness.assertInGraveyard(player1, "Corpse Traders");
@@ -146,7 +145,6 @@ class CorpseTradersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.handlePermanentChosen(player1, traders.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Corpse Traders");

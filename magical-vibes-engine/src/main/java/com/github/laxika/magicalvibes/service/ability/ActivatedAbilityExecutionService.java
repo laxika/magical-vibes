@@ -1222,6 +1222,8 @@ public class ActivatedAbilityExecutionService {
             if (fixedLandColor != null) {
                 int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue)
                         * manaMultiplier;
+                Integer fixedAmount = gameQueryService.fixedLandManaAmount(gameData);
+                if (totalMana > 0 && fixedAmount != null) totalMana = fixedAmount * manaMultiplier;
                 if (totalMana > 0) {
                     twistReplacement = true;
                     ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -2353,11 +2355,22 @@ public class ActivatedAbilityExecutionService {
         // Carry the creature chosen during activation (e.g. tapped for a TapCreatureCost) so
         // ChosenPermanentPower can read its power as the ability resolves (Impelled Giant).
         stackEntry.setChosenPermanentId(permanent.getChosenPermanentId());
+        int stackBeforeRollCosts = gameData.stack.size();
+        for (CardEffect effect : List.copyOf(stackEntry.getEffectsToResolve())) {
+            if (effect instanceof com.github.laxika.magicalvibes.model.effect.RollD8Effect roll
+                    && roll.activationCost()) {
+                effectHandlerRegistry.getHandler(roll).resolve(gameData, stackEntry, roll);
+            }
+        }
+        List<StackEntry> rollCostTriggers = new ArrayList<>(
+                gameData.stack.subList(stackBeforeRollCosts, gameData.stack.size()));
+        gameData.stack.subList(stackBeforeRollCosts, gameData.stack.size()).clear();
         if (ability.getTargetFilter() == null && ability.getMultiTargetFilters().isEmpty()
                 && snapshotEffects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
             stackEntry.setNonTargeting(true);
         }
         gameData.stack.add(stackEntry);
+        gameData.stack.addAll(rollCostTriggers);
         triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();

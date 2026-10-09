@@ -13,6 +13,6 @@ public class CunningManeuver extends Card {
     public CunningManeuver() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 1))
-                .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
+                .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1).withInvestigate(false));
     }
 }

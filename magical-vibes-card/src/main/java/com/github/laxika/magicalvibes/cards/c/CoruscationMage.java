@@ -20,7 +20,7 @@ import java.util.List;
 public class CoruscationMage extends Card {
 
     public CoruscationMage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addEffect(EffectSlot.STATIC, new KickerEffect("{2}", false));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

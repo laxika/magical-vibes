@@ -747,7 +747,8 @@ public class ConditionEvaluationService {
                 yield ctx.alternateCost() || (source != null && source.isAlternateCost());
             }
             case RepeatedAdditionalCostPaid c ->
-                    ctx.repeatedAdditionalCosts().contains(c.manaCost());
+                    ctx.repeatedAdditionalCosts().stream().filter(c.manaCost()::equals).count()
+                            >= c.minimumPayments();
             case CastForMadnessCost ignored ->
                     ctx.madness();
             case CastForProwlCost ignored ->
@@ -3753,7 +3754,8 @@ public class ConditionEvaluationService {
     }
 
     private boolean attacksEnchantedPlayer(GameData gameData, ConditionContext ctx) {
-        Permanent source = sourcePermanent(gameData, ctx);
+        Permanent source = ctx.sourcePermanent() != null
+                ? ctx.sourcePermanent() : sourcePermanent(gameData, ctx);
         UUID attackingPlayerId = ctx.targetId();
         if (source == null || source.getAttachedTo() == null
                 || attackingPlayerId == null

@@ -71,13 +71,19 @@ class CircuDimirLobotomistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castCreature(player1, 0);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player1.getId());
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castCreature(player1, 0);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player1.getId());
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+            PendingInteraction.ColorChoice triggerOrder = gd.interaction
+                    .activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(triggerOrder).isNotNull();
+            harness.handleListChoice(player1, triggerOrder.options().getFirst());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.getCardsExiledByPermanent(circu.getId()))
                 .containsExactlyInAnyOrder(controllerTopCard, opponentTopCard);

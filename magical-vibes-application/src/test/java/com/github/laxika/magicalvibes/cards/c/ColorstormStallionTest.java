@@ -187,7 +187,7 @@ class ColorstormStallionTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(stallion.getPowerModifier()).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(stallion.getPowerModifier()).isZero();
         assertThat(stallion.getToughnessModifier()).isZero();

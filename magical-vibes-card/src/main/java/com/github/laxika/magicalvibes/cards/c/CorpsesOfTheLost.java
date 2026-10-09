@@ -24,7 +24,7 @@ public class CorpsesOfTheLost extends Card {
 
     public CorpsesOfTheLost() {
         addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.OWN_CREATURES,
+                new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.SKELETON)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -142,6 +142,9 @@ public class CopySupport {
                 ? null : new com.github.laxika.magicalvibes.model.Permanent(source.getSourcePermanentSnapshot()));
         copy.setSourcePlanarObject(source.getSourcePlanarObject() == null ? null : source.getSourcePlanarObject().copy());
         copy.setKicked(source.isKicked());
+        copy.setAlternateCost(source.isAlternateCost());
+        copy.setRepeatedAdditionalCosts(source.getRepeatedAdditionalCosts());
+        copy.setAdditionalEnterCounters(source.getAdditionalEnterCounters());
         copy.setTargetFilters(source.getTargetFilters());
         copy.getGrantedKeywordsOnEntry().addAll(source.getGrantedKeywordsOnEntry());
         return copy;

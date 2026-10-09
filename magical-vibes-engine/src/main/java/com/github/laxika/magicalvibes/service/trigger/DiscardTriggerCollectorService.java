@@ -173,6 +173,23 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARD_EVENT)
+    private boolean handleDiscardEventMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+        TriggerContext.DiscardEvent discard = (TriggerContext.DiscardEvent) ctx;
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(), match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(may)), null, match.permanent().getId());
+        entry.setTriggeringCardIds(discard.discardedCards().stream().map(Card::getId).toList());
+        for (Card card : discard.discardedCards()) {
+            entry.getEventCardGraveyardEntryVersions().put(card.getId(),
+                    match.gameData().graveyardEntryVersion(card.getId()));
+        }
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        return true;
+    }
+
     @CollectsTrigger(value = CastDiscardedCardFromGraveyardEffect.class,
             slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleCastDiscardedCard(TriggerMatchContext match,

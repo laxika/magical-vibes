@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ public class ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPer
         implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
     @Override
@@ -37,9 +39,12 @@ public class ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPer
                 (ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect)
                         effect;
         UUID damagedPlayerId = entry.getTargetId();
-        UUID creatureControllerId = entry.getTriggeringPermanentControllerId() != null
-                ? entry.getTriggeringPermanentControllerId()
-                : entry.getControllerId();
+        UUID creatureControllerId = entry.getTriggeringPermanentId() == null ? null
+                : gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
+        if (creatureControllerId == null) {
+            creatureControllerId = entry.getTriggeringPermanentControllerId() != null
+                    ? entry.getTriggeringPermanentControllerId() : entry.getControllerId();
+        }
         if (damagedPlayerId == null || creatureControllerId == null) {
             return;
         }

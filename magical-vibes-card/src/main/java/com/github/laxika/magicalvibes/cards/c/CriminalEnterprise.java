@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -25,8 +25,8 @@ public class CriminalEnterprise extends Card {
                 "Villain", 2, 1, CardColor.BLACK,
                 List.of(CardSubtype.VILLAIN), Set.of(Keyword.MENACE), Set.of()));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.VILLAIN),
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+                new PermanentHasSubtypePredicate(CardSubtype.VILLAIN),
                 SequenceEffect.of(
                         new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
                         new GainLifeEffect(1))));

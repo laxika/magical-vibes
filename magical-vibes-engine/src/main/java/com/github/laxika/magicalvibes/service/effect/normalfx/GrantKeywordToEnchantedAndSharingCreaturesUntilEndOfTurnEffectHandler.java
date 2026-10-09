@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,10 +36,15 @@ public class GrantKeywordToEnchantedAndSharingCreaturesUntilEndOfTurnEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (GrantKeywordToEnchantedAndSharingCreaturesUntilEndOfTurnEffect) effect;
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (enchanted == null || !gameQueryService.isCreature(gameData, enchanted)) {
+        Permanent currentEnchanted = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (currentEnchanted == null) {
+            var lastKnown = entry.lastKnownPermanentCard(entry.getTargetId());
+            if (lastKnown == null || !lastKnown.hasType(CardType.CREATURE)) return;
+            currentEnchanted = new Permanent(lastKnown);
+        } else if (!gameQueryService.isCreature(gameData, currentEnchanted)) {
             return;
         }
+        Permanent enchanted = currentEnchanted;
 
         int[] count = {0};
         gameData.forEachPermanent((ignored, permanent) -> {

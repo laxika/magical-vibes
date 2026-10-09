@@ -44,6 +44,7 @@ class CitanulWoodreadersTest extends BaseCardTest {
     @Test
     @DisplayName("Entering without being cast does not trigger the kicker draw")
     void enteringWithoutCastingDoesNotDraw() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new EssenceWarden(), new EssenceWarden()));
 
         harness.enterBattlefieldAndReturn(player1, new CitanulWoodreaders());
@@ -56,6 +57,7 @@ class CitanulWoodreadersTest extends BaseCardTest {
     @Test
     @DisplayName("The kicker draw resolves even after Woodreaders leaves the battlefield")
     void kickerDrawResolvesWithoutSource() {
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new CitanulWoodreaders()));
         harness.setLibrary(player1, List.of(new EssenceWarden(), new EssenceWarden()));
         harness.addMana(player1, ManaColor.GREEN, 2);

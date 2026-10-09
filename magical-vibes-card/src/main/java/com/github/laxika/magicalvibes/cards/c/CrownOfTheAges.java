@@ -18,7 +18,7 @@ public class CrownOfTheAges extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,   // requires tap
                 "{4}",  // mana cost
-                List.of(new AttachTargetAuraToAnotherPermanentOfSameTypeEffect()),
+                List.of(new AttachTargetAuraToAnotherPermanentOfSameTypeEffect(true)),
                 "{4}, {T}: Attach target Aura attached to a creature to another creature.",
                 new PermanentPredicateTargetFilter(new PermanentIsAuraAttachedToCreaturePredicate(),
                         "Target must be an Aura attached to a creature")

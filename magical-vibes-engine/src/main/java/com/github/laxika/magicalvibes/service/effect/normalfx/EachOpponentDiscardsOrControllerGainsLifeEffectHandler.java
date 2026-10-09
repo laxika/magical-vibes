@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsOrControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class EachOpponentDiscardsOrControllerGainsLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,14 +45,8 @@ public class EachOpponentDiscardsOrControllerGainsLifeEffectHandler implements N
         followUp = playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
 
         if (!gameData.interaction.isAwaitingInput() && followUp.eachPlayerNoDiscardCount() > 0) {
-            StackEntry completion = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    entry.getControllerId(),
-                    sourceCard.getName() + "'s effect",
-                    List.of(gainLife));
-            completion.setEventValue(followUp.eachPlayerNoDiscardCount());
-            gameData.stack.add(completion);
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(),
+                    followUp.eachPlayerNoDiscardCount() * discardEffect.lifeGain());
         }
     }
 

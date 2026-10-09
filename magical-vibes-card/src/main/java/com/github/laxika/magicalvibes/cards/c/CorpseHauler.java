@@ -18,9 +18,8 @@ import java.util.List;
  * Corpse Hauler — {2}{B}, Sacrifice this creature: return another target creature card from your
  * graveyard to your hand.
  *
- * <p>The sacrifice is a cost, so Corpse Hauler is already in the graveyard when the returned card
- * is selected. "Another" is therefore modelled explicitly with a negated
- * {@link CardIsSelfPredicate} so it cannot return itself.
+ * <p>The returned card is targeted before the sacrifice cost is paid. "Another" also
+ * excludes Corpse Hauler from that target selection.
  */
 @CardRegistration(set = "M14", collectorNumber = "90")
 public class CorpseHauler extends Card {
@@ -31,6 +30,7 @@ public class CorpseHauler extends Card {
                 "{2}{B}",
                 List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
+                        .targetGraveyard(true)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardNotPredicate(new CardIsSelfPredicate()))))

@@ -14,7 +14,12 @@ import java.util.Set;
 public record ControllerSpellsCantBeCounteredEffect(boolean noncreatureOnly,
                                                     Integer minimumManaValue,
                                                     Set<CardType> cardTypes,
-                                                    CardPredicate predicate) implements CardEffect {
+                                                    CardPredicate predicate, boolean castOnly) implements CardEffect {
+
+    public ControllerSpellsCantBeCounteredEffect(boolean noncreatureOnly, Integer minimumManaValue,
+                                                Set<CardType> cardTypes, CardPredicate predicate) {
+        this(noncreatureOnly, minimumManaValue, cardTypes, predicate, false);
+    }
 
     public ControllerSpellsCantBeCounteredEffect {
         cardTypes = cardTypes == null ? Set.of() : Set.copyOf(cardTypes);
@@ -38,6 +43,10 @@ public record ControllerSpellsCantBeCounteredEffect(boolean noncreatureOnly,
 
     public ControllerSpellsCantBeCounteredEffect(Set<CardType> cardTypes) {
         this(false, null, cardTypes, null);
+    }
+
+    public ControllerSpellsCantBeCounteredEffect(CardPredicate predicate, boolean castOnly) {
+        this(false, null, Set.of(), predicate, castOnly);
     }
 
     public ControllerSpellsCantBeCounteredEffect(CardPredicate predicate) {

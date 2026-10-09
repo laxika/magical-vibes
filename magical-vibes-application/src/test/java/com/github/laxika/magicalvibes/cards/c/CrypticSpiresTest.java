@@ -18,7 +18,7 @@ class CrypticSpiresTest extends BaseCardTest {
     @Test
     @DisplayName("Enters the battlefield tapped")
     void entersTapped() {
-        harness.setHand(player1, List.of(new CrypticSpires()));
+        harness.setHand(player1, List.of(new CrypticSpires(List.of(ManaColor.WHITE, ManaColor.BLUE))));
 
         harness.playLand(player1, 0);
 
@@ -28,7 +28,7 @@ class CrypticSpiresTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate its mana ability immediately after entering tapped")
     void cannotActivateOnEnteringTapped() {
-        harness.setHand(player1, List.of(new CrypticSpires()));
+        harness.setHand(player1, List.of(new CrypticSpires(List.of(ManaColor.WHITE, ManaColor.BLUE))));
         harness.playLand(player1, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -42,7 +42,7 @@ class CrypticSpiresTest extends BaseCardTest {
     @Test
     @DisplayName("Adds one mana of a circled color")
     void addsManaOfCircledColor() {
-        harness.addToBattlefield(player1, new CrypticSpires());
+        harness.addToBattlefield(player1, new CrypticSpires(List.of(ManaColor.WHITE, ManaColor.BLUE)));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -65,13 +65,13 @@ class CrypticSpiresTest extends BaseCardTest {
     @Test
     @DisplayName("Mana choice is restricted to the two colors circled during deck construction")
     void manaChoiceOffersOnlyTwoColors() {
-        harness.addToBattlefield(player1, new CrypticSpires());
+        harness.addToBattlefield(player1, new CrypticSpires(List.of(ManaColor.WHITE, ManaColor.BLUE)));
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         var choice = (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
-        assertThat(choice.options()).hasSize(2).doesNotHaveDuplicates()
+        assertThat(choice.options()).containsExactly(ManaColor.WHITE.name(), ManaColor.BLUE.name())
                 .doesNotContain(ManaColor.COLORLESS.name());
     }
 }

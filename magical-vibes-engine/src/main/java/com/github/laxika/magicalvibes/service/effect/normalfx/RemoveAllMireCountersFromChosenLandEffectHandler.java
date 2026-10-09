@@ -95,8 +95,8 @@ public class RemoveAllMireCountersFromChosenLandEffectHandler implements NormalE
                     gameData, target, CounterType.MIRE, mireCounters);
             gameLogService.append(gameData, GameLog.text(
                     "All mire counters are removed from " + target.getCard().getName() + "."));
+            gameData.markCyclopeanTombLandRemoved(context.delayedActionId(), target.getId());
         }
-        gameData.markCyclopeanTombLandRemoved(context.delayedActionId(), target.getId());
 
         if (resumeAfterChoice) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

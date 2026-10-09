@@ -33,6 +33,12 @@ public class PutCommanderIntoHandEffectHandler implements NormalEffectHandlerBea
         if (commandZone == null || commandZone.isEmpty()) {
             return;
         }
+        List<Card> commanders = gameData.playerCommanders.getOrDefault(controllerId, List.of());
+        commandZone = commandZone.stream().filter(card -> commanders.stream()
+                .anyMatch(commander -> commander.getId().equals(card.getId()))).toList();
+        if (commandZone.isEmpty()) {
+            return;
+        }
 
         if (commandZone.size() == 1) {
             putIntoHand(gameData, controllerId, commandZone.getFirst().getId());

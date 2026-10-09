@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CryptGhast.class, GrizzlyBears.class, Swamp.class, Plains.class})
@@ -74,7 +76,10 @@ class CryptGhastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CryptGhast());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).hasSize(2);

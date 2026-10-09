@@ -112,4 +112,34 @@ class CottontailCaretakerTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(1);
     }
+
+    @Test
+    void payingOneRepeatedOffspringCostCreatesOneCopy() {
+        grantThreeOffspringInstances();
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{1}"));
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    void payingTwoRepeatedOffspringCostsCreatesTwoCopies() {
+        grantThreeOffspringInstances();
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{1}", "{1}"));
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
+    }
+
+    private void grantThreeOffspringInstances() {
+        harness.setHand(player1, List.of(new CottontailCaretaker(), new CottontailCaretaker(),
+                new CottontailCaretaker(), new GlorySeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        for (int i = 0; i < 3; i++) {
+            harness.castCreature(player1, 0);
+            resolveAllTriggers();
+            harness.handleCardChosen(player1, 2 - i);
+        }
+    }
 }

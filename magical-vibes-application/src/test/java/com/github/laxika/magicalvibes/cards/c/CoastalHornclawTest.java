@@ -87,7 +87,7 @@ class CoastalHornclawTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, hornclaw, Keyword.FLYING)).isTrue();
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, hornclaw, Keyword.FLYING)).isFalse();
     }

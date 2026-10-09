@@ -38,7 +38,9 @@ public class DemonstrateEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        StackEntry spell = gameData.stack.stream()
+        DemonstrateEffect demonstrate = (DemonstrateEffect) effect;
+        StackEntry spell = demonstrate.spellSnapshot() != null
+                ? demonstrate.spellSnapshot() : gameData.stack.stream()
                 .filter(candidate -> candidate != entry)
                 .filter(candidate -> triggeringCardId.equals(candidate.getCard().getId()))
                 .findFirst()

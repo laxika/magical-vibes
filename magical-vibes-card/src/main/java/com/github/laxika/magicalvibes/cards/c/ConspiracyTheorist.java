@@ -19,7 +19,7 @@ public class ConspiracyTheorist extends Card {
     public ConspiracyTheorist() {
         addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
                 "{1}", new DiscardAndDrawCardEffect(), "Pay {1} and discard a card to draw a card?"));
-        addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new MayEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT, new MayEffect(
                 new ExileOneOfDiscardedCardsFromGraveyardEffect(),
                 "Exile one of the discarded nonland cards?"));
         addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(

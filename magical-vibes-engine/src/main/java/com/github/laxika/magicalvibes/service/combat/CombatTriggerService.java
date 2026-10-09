@@ -272,6 +272,11 @@ public class CombatTriggerService {
                                 if (triggeringPlayerId != null) {
                                     trigger.setNonTargeting(true);
                                 }
+                                if (effectsForStack.stream().anyMatch(EnchantedCreatureControllerLosesLifeEffect.class::isInstance)) {
+                                    trigger.setTargetId(creature.getId());
+                                    trigger.setNonTargeting(true);
+                                    trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
+                                }
                                 // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
                                 // (e.g. equipment-granted Afflict) can resolve.
                                 trigger.setAttackedTargetId(creature.getAttackTarget());

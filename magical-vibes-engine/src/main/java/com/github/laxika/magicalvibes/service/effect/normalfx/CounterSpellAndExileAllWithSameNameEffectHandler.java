@@ -65,6 +65,16 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
             counterSupport.counterSpell(gameData, entry, counterable);
         }
 
+        if (counterEffect.chooseHiddenZoneMatches()) {
+            List<Card> graveyardMatches = exileMatching(gameData, targetPlayerId,
+                    gameData.playerGraveyards.get(targetPlayerId), spellName);
+            if (!graveyardMatches.isEmpty()) {
+                graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, graveyardMatches);
+            }
+            beginAnyNumberChoice(gameData, entry, targetPlayerId, spellName, counterEffect);
+            return;
+        }
+
         if (counterEffect.chooseAnyNumber()) {
             beginAnyNumberChoice(gameData, entry, targetPlayerId, spellName, counterEffect);
             return;
@@ -108,6 +118,9 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
                                       String spellName,
                                       CounterSpellAndExileAllWithSameNameEffect effect) {
         List<Card> matchingCards = collectMatchingCards(gameData, targetPlayerId, spellName);
+        if (effect.chooseHiddenZoneMatches()) {
+            matchingCards.removeAll(gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()));
+        }
         List<Card> library = gameData.playerDecks.get(targetPlayerId);
         if (matchingCards.isEmpty()) {
             if (library != null) {

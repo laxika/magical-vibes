@@ -76,7 +76,8 @@ public class DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffe
         UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
-        int power = discarded.getPower() != null ? Math.max(0, discarded.getPower()) : 0;
+        Integer effectivePower = gameQueryService.getEffectiveCardPower(gameData, discarded);
+        int power = effectivePower == null ? 0 : Math.max(0, effectivePower);
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
         damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);

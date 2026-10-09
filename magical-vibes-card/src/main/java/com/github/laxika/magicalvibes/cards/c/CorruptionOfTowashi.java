@@ -20,7 +20,7 @@ public class CorruptionOfTowashi extends Card {
 
     public CorruptionOfTowashi() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, incubatorToken());
-        OncePerTurnTriggerEffect drawTrigger = new OncePerTurnTriggerEffect(
+        OncePerTurnTriggerEffect drawTrigger = OncePerTurnTriggerEffect.markOnAcceptance(
                 new MayEffect(new DrawCardEffect(1), "Draw a card?"));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_TRANSFORMS, drawTrigger);
         addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_TRANSFORMED, drawTrigger);

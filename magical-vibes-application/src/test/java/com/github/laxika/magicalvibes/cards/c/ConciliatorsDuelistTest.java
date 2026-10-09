@@ -129,7 +129,7 @@ class ConciliatorsDuelistTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -167,7 +167,7 @@ class ConciliatorsDuelistTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Hill Giant");
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Hill Giant");
         assertThat(harness.getPermanentId(player2, "Hill Giant")).isNotEqualTo(giant.getId());

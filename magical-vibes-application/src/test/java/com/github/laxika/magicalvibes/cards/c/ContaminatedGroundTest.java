@@ -101,6 +101,7 @@ class ContaminatedGroundTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.tapPermanent(player2, 0);
+        harness.passPriority(player2);
         harness.setHand(player1, List.of(new Regress()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
@@ -130,9 +131,10 @@ class ContaminatedGroundTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Contaminated Ground");
         harness.assertLife(player1, 18);
         land.untap();
+        int greenBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN);
         harness.tapPermanent(player1, 0);
         resolveAllTriggers();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
         harness.assertLife(player1, 18);
     }
 

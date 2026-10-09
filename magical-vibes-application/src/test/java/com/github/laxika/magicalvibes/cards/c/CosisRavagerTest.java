@@ -134,6 +134,7 @@ class CosisRavagerTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

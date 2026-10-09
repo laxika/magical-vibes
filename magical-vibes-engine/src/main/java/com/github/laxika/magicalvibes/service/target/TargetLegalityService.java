@@ -4742,19 +4742,13 @@ public class TargetLegalityService {
     }
 
     private StackEntry findSpellOnStack(GameData gameData, UUID targetId) {
-        return gameData.stack.stream()
-                .filter(se -> se.getTargetableId().equals(targetId)
-                        && se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
-                        && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY)
-                .findFirst()
-                .orElse(null);
+        StackEntry entry = findAnyEntryOnStack(gameData, targetId);
+        return entry != null && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY ? entry : null;
     }
 
     StackEntry findAnyEntryOnStack(GameData gameData, UUID targetId) {
-        return gameData.stack.stream()
-                .filter(se -> se.getTargetableId().equals(targetId))
-                .findFirst()
-                .orElse(null);
+        return gameQueryService.findStackEntryByCardId(gameData, targetId);
     }
 
     /**

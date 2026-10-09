@@ -75,6 +75,7 @@ class ClockworkServantTest extends BaseCardTest {
     @Test
     @DisplayName("Entering without being cast does not trigger adamant")
     void doesNotTriggerWhenPutOntoBattlefield() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new WildwoodTracker()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 

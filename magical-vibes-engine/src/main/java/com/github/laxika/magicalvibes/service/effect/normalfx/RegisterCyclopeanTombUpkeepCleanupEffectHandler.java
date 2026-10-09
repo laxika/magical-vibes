@@ -23,7 +23,7 @@ public class RegisterCyclopeanTombUpkeepCleanupEffectHandler implements NormalEf
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = entry.getSourcePermanentSnapshot();
-        if (source == null || source.getMireCounterLandIds().isEmpty()) {
+        if (source == null) {
             return;
         }
 
@@ -32,6 +32,6 @@ public class RegisterCyclopeanTombUpkeepCleanupEffectHandler implements NormalEf
                 entry.getCard(),
                 entry.getControllerId(),
                 Set.copyOf(source.getMireCounterLandIds()),
-                Set.of()));
+                Set.of(), source.getId()));
     }
 }

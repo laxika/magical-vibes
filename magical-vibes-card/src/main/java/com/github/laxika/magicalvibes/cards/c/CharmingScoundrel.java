@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -27,10 +28,10 @@ import java.util.Set;
 public class CharmingScoundrel extends Card {
 
     public CharmingScoundrel() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Discard a card, then draw a card",
-                        new DiscardAndDrawCardEffect()),
+                        SequenceEffect.of(new DiscardEffect(1, DiscardRecipient.CONTROLLER), new DrawCardEffect())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Treasure token",
                         CreateTokenEffect.ofTreasureToken(1)),
@@ -38,7 +39,7 @@ public class CharmingScoundrel extends Card {
                         "Create a Wicked Role token attached to target creature you control",
                         new CreateTokenAttachedToTargetEffect(wickedRoleToken()),
                         TargetFilters.creatureYouControl())
-        )));
+        ))));
     }
 
     private static CreateTokenEffect wickedRoleToken() {
@@ -56,15 +57,13 @@ public class CharmingScoundrel extends Card {
                 false,
                 false,
                 Map.of(
-                        EffectSlot.STATIC, SequenceEffect.of(
-                                new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
-                                new GrantKeywordEffect(Keyword.MENACE, GrantScope.ENCHANTED_CREATURE)),
+                        EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
                         EffectSlot.ON_DEATH, new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)),
                 List.of(),
                 false,
                 false,
                 false,
                 0,
-                Set.<Keyword>of());
+                Set.of());
     }
 }

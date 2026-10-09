@@ -464,6 +464,9 @@ public class CombatBlockService {
 
             // Additional cost to declare this block (e.g. Hipparion — {1} to block power 3+).
             blockTaxTotal += gameQueryService.getBlockManaTax(gameData, blocker, attacker);
+            if (usageCount > 1) {
+                blockTaxTotal -= gameQueryService.getEnchantedCreatureBlockerTax(gameData, blocker);
+            }
 
             // Board-wide mana tax to block at all (Archangel of Tithes, War Cadence): once per
             // unique blocker, however many attackers it blocks.
@@ -1949,6 +1952,13 @@ public class CombatBlockService {
                 .toList());
         checkDelayedBecomesBlockedTriggers(gameData, attacker);
         pushRegularBecomesBlockedTriggers(gameData, attacker, controllerId, regularEffects);
+        for (CardEffect granted : triggerCollectionService.grantedTriggeredEffects(
+                gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED)) {
+            if (!(granted instanceof CombatOpponentReferencingEffect referencing)
+                    || !referencing.referencesCombatOpponent()) {
+                pushRegularBecomesBlockedTriggers(gameData, attacker, controllerId, List.of(granted));
+            }
+        }
 
         combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
         checkAllyBecomesBlockedTriggers(gameData, controllerId, attacker, TriggerMode.NORMAL);
@@ -2032,9 +2042,13 @@ public class CombatBlockService {
         List<CardEffect> grantedBecomesBlockedEffects = new ArrayList<>(
                 attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
         grantedBecomesBlockedEffects.addAll(attacker.getPersistentTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
-        grantedBecomesBlockedEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
-                gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED));
-        if (!becomesBlockedRegs.isEmpty() || !grantedBecomesBlockedEffects.isEmpty()) {
+        List<CardEffect> continuouslyGrantedEffects = triggerCollectionService.grantedTriggeredEffects(
+                gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
+        grantedBecomesBlockedEffects.addAll(continuouslyGrantedEffects.stream()
+                .filter(effect -> effect instanceof CombatOpponentReferencingEffect referencing
+                        && referencing.referencesCombatOpponent()).toList());
+        if (!becomesBlockedRegs.isEmpty() || !grantedBecomesBlockedEffects.isEmpty()
+                || !continuouslyGrantedEffects.isEmpty()) {
             List<CardEffect> blockerSpecificEffects = new ArrayList<>(becomesBlockedRegs.stream()
                     .filter(r -> r.triggerMode() == TriggerMode.PER_BLOCKER)
                     .map(EffectRegistration::effect)
@@ -2055,6 +2069,13 @@ public class CombatBlockService {
             if (newlyBlocked) {
                 pushRegularBecomesBlockedTriggers(gameData, attacker, activeId,
                         resolveCombatOpponentBoosts(gameData, regularEffects, blockers));
+                for (CardEffect granted : continuouslyGrantedEffects) {
+                    if (!(granted instanceof CombatOpponentReferencingEffect referencing)
+                            || !referencing.referencesCombatOpponent()) {
+                        pushRegularBecomesBlockedTriggers(gameData, attacker, activeId,
+                                resolveCombatOpponentBoosts(gameData, List.of(granted), blockers));
+                    }
+                }
             }
 
             if (!blockerSpecificEffects.isEmpty()) {

@@ -42,6 +42,8 @@ public class ExileOneOfDiscardedCardsFromGraveyardEffectHandler implements Norma
                 ? List.of(entry.getTriggeringCardId()) : triggeringCardIds;
         List<Card> candidates = gameData.playerGraveyards.getOrDefault(controllerId, List.of()).stream()
                 .filter(card -> candidateIds.contains(card.getId()))
+                .filter(card -> entry.getEventCardGraveyardEntryVersions().getOrDefault(card.getId(),
+                        gameData.graveyardEntryVersion(card.getId())) == gameData.graveyardEntryVersion(card.getId()))
                 .filter(card -> !card.hasType(CardType.LAND))
                 .toList();
         if (candidates.isEmpty()) {
@@ -85,6 +87,7 @@ public class ExileOneOfDiscardedCardsFromGraveyardEffectHandler implements Norma
     private void exile(GameData gameData, StackEntry entry, Card card, UUID sourcePermanentId) {
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
         gameData.addToExile(entry.getControllerId(), card, sourcePermanentId);
+        gameData.exilePlayPermissions.put(card.getId(), entry.getControllerId());
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " exiles ", card,
                 " from its controller's graveyard."));
     }

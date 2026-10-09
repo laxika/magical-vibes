@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -49,9 +50,9 @@ public class CutIn extends Card {
                 false,
                 Map.of(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK,
-                        new TriggeringPermanentConditionalEffect(
-                                new PermanentToughnessAtMostPredicate(3),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        new ConditionalEffect(
+                                new SourceMatchesPermanentPredicate(new PermanentToughnessAtMostPredicate(3)),
+                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE), true),
                         GrantScope.ENCHANTED_CREATURE)),
                 List.of(),
                 false,

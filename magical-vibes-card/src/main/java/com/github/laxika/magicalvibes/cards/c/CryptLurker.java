@@ -25,10 +25,10 @@ public class CryptLurker extends Card {
                                 new SacrificePermanentThenEffect(
                                         new PermanentIsCreaturePredicate(),
                                         new DrawCardEffect(1),
-                                        "a creature")),
+                                        "a creature", false, false)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Discard a creature card",
-                                new DiscardCardThenEffect(
+                                DiscardCardThenEffect.continuing(
                                         new CardTypePredicate(CardType.CREATURE),
                                         new DrawCardEffect(1),
                                         "a creature card"))

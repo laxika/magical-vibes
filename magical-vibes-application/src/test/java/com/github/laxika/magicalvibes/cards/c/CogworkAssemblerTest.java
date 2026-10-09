@@ -35,7 +35,7 @@ class CogworkAssemblerTest extends BaseCardTest {
         assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(assembler.isTapped()).isFalse();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(gd.stack).isNotEmpty();
         harness.passBothPriorities();

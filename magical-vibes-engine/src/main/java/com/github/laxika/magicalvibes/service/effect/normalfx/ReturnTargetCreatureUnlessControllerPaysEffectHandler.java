@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 public class ReturnTargetCreatureUnlessControllerPaysEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
     private final ReturnToHandEffectHandler returnToHandEffectHandler;
 
     @Override
@@ -46,7 +47,7 @@ public class ReturnTargetCreatureUnlessControllerPaysEffectHandler implements No
         }
 
         if (!new com.github.laxika.magicalvibes.model.ManaCost(e.manaCost())
-                .canPay(gameData.playerManaPools.get(targetControllerId))) {
+                .canPay(potentialManaService.buildVirtualManaPool(gameData, targetControllerId))) {
             returnTargetCreature(gameData, entry.getCard(), entry.getControllerId(), targetPermanentId);
             return;
         }

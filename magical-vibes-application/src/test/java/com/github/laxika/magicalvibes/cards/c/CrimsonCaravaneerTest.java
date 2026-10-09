@@ -154,6 +154,7 @@ class CrimsonCaravaneerTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, java.util.Map.of(blocker.getId(), 1));
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Junk")).isEqualTo(1);

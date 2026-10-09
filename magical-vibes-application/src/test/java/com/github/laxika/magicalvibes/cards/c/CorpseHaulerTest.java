@@ -23,13 +23,13 @@ class CorpseHaulerTest extends BaseCardTest {
         RumblingBaloth target = new RumblingBaloth();
         prepareAbility(List.of(target));
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
 
         harness.assertNotOnBattlefield(player1, "Corpse Hauler");
         harness.assertInGraveyard(player1, "Corpse Hauler");
         harness.assertInGraveyard(player1, "Rumbling Baloth");
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        assertThat(gd.stack.getFirst().getTargetCardIds()).containsExactly(target.getId());
     }
 
     @Test
@@ -37,7 +37,7 @@ class CorpseHaulerTest extends BaseCardTest {
         RumblingBaloth target = new RumblingBaloth();
         prepareAbility(List.of(target));
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Rumbling Baloth");
@@ -53,7 +53,7 @@ class CorpseHaulerTest extends BaseCardTest {
         CanyonMinotaur target = new CanyonMinotaur();
         prepareAbility(List.of(other, target));
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Canyon Minotaur");
@@ -66,7 +66,7 @@ class CorpseHaulerTest extends BaseCardTest {
         prepareAbility(List.of(new RumblingBaloth()));
         var sourceId = harness.getPermanentId(player1, "Corpse Hauler");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sourceId))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(sourceId)))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Corpse Hauler");
         assertThat(gd.stack).isEmpty();
@@ -76,7 +76,7 @@ class CorpseHaulerTest extends BaseCardTest {
     void cannotActivateWithoutACreatureCardAlreadyInGraveyard() {
         prepareAbility(List.of());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Corpse Hauler");
         harness.assertNotInGraveyard(player1, "Corpse Hauler");
@@ -87,7 +87,7 @@ class CorpseHaulerTest extends BaseCardTest {
     void cannotOmitTargetWhenCreatureIsAvailable() {
         prepareAbility(List.of(new RumblingBaloth()));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Corpse Hauler");
         assertThat(gd.stack).isEmpty();
@@ -101,7 +101,7 @@ class CorpseHaulerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
         harness.assertOnBattlefield(player1, "Corpse Hauler");
@@ -112,7 +112,7 @@ class CorpseHaulerTest extends BaseCardTest {
         Duress target = new Duress();
         prepareAbility(List.of(target));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Corpse Hauler");
     }
@@ -123,7 +123,7 @@ class CorpseHaulerTest extends BaseCardTest {
         prepareAbility(List.of(new CanyonMinotaur()));
         harness.setGraveyard(player2, List.of(target));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Corpse Hauler");
     }
@@ -133,7 +133,7 @@ class CorpseHaulerTest extends BaseCardTest {
         RumblingBaloth target = new RumblingBaloth();
         CanyonMinotaur other = new CanyonMinotaur();
         prepareAbility(List.of(target, other));
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         gd.playerGraveyards.get(player1.getId()).remove(target);
         gd.playerHands.get(player1.getId()).add(target);
 
@@ -153,7 +153,7 @@ class CorpseHaulerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Rumbling Baloth");

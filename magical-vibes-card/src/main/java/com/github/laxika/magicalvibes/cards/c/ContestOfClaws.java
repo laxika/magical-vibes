@@ -22,7 +22,7 @@ public class ContestOfClaws extends Card {
                 "First target must be a creature you control"
         ));
 
-        target(TargetFilters.creature(), 0, 1)
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, TargetDealsPowerDamageToTargetEffect.recordingExcessDamage())
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
                         new EventValueAtLeast(1),

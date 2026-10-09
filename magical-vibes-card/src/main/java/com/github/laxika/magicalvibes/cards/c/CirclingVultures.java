@@ -19,7 +19,7 @@ public class CirclingVultures extends Card {
         // only cost is the intrinsic discard the engine already pays — hence no mana cost and no
         // resolution effects.
         addHandActivatedAbility(new ActivatedAbility(false, null, List.of(),
-                "You may discard this card any time you could cast an instant."));
+                "You may discard this card any time you could cast an instant.").withDiscardSourceAsSpecialAction());
 
         // "At the beginning of your upkeep, sacrifice this creature unless you exile the top
         // creature card of your graveyard." Optional cost: with no creature card in the graveyard

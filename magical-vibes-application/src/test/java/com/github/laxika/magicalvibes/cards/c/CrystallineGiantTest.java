@@ -133,10 +133,9 @@ class CrystallineGiantTest extends BaseCardTest {
     void resolvesHarmlesslyIfTheGiantIsDestroyedInResponse() {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new CrystallineGiant());
         harness.setHand(player1, List.of(new HeartlessAct()));
+        beginCombat(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        beginCombat(player1);
         harness.castInstant(player1, 0, 0, giant.getId());
         harness.passBothPriorities();
 

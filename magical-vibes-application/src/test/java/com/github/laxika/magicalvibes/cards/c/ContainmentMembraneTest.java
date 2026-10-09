@@ -70,7 +70,7 @@ class ContainmentMembraneTest extends BaseCardTest {
 
         Permanent creature = findPermanent(player1, "Blinding Drone");
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castEnchantment(player1, 0, creature.getId());
+        harness.castWithAlternateCost(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Containment Membrane").getAttachedTo())

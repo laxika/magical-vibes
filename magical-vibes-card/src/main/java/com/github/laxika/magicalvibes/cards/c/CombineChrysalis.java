@@ -23,13 +23,13 @@ public class CombineChrysalis extends Card {
 
     public CombineChrysalis() {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.FLYING, GrantScope.OWN_CREATURES, new PermanentIsTokenPredicate()));
+                Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, new PermanentIsTokenPredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{G}{U}",
                 List.of(
-                        new SacrificePermanentCost(new PermanentIsTokenPredicate(), "a token"),
+                        new SacrificePermanentCost(new PermanentIsTokenPredicate(), "a token", false),
                         new CreateTokenEffect("Beast", 4, 4, CardColor.GREEN,
                                 List.of(CardSubtype.BEAST), Set.of(), Set.of())
                 ),

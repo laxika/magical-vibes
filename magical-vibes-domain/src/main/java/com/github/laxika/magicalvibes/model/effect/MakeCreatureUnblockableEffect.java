@@ -5,8 +5,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 /** Makes a creature unable to be blocked for the specified duration. */
 public record MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
                                             EffectDuration duration, PermanentPredicate filter,
-                                            boolean triggeringPermanent)
+                                            boolean triggeringPermanent, boolean targetAnyPermanent)
         implements CardEffect {
+
+    public MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
+                                         EffectDuration duration, PermanentPredicate filter,
+                                         boolean triggeringPermanent) {
+        this(selfTargeting, attachedPermanent, duration, filter, triggeringPermanent, false);
+    }
 
     public MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attachedPermanent,
                                          EffectDuration duration, PermanentPredicate filter) {
@@ -45,11 +51,18 @@ public record MakeCreatureUnblockableEffect(boolean selfTargeting, boolean attac
         return new MakeCreatureUnblockableEffect(false, false, EffectDuration.UNTIL_END_OF_TURN, null, true);
     }
 
+    /** Allows subtype-based wording to target noncreature permanents as well. */
+    public static MakeCreatureUnblockableEffect forTargetPermanent(PermanentPredicate filter) {
+        return new MakeCreatureUnblockableEffect(false, false, EffectDuration.UNTIL_END_OF_TURN,
+                filter, false, true);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return selfTargeting || attachedPermanent || triggeringPermanent
                 ? new TargetSpec(null, false, null, true, 1)
-                : TargetSpec.benign(TargetPredicates.creature(), filter);
+                : TargetSpec.benign(targetAnyPermanent ? TargetPredicates.permanent()
+                : TargetPredicates.creature(), filter);
     }
 
     @Override

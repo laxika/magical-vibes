@@ -34,7 +34,9 @@ class CrimsonOperativeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
         assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
         assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(top.getId()))
-                .isEqualTo(gd.turnNumber + (player1.getId().equals(gd.activePlayerId) ? 2 : 1));
+                .isEqualTo(Integer.MAX_VALUE);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+                .containsEntry(top.getId(), player1.getId());
         assertThat(gd.exilePlayPermissionsExpireEndOfTurn).doesNotContain(top.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(below);
     }
@@ -84,7 +86,7 @@ class CrimsonOperativeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castFromExile(player1, top.getId(), player2.getId());
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(null, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertLife(player2, 18);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
@@ -114,7 +116,7 @@ class CrimsonOperativeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castInstant(player2, 0, player1.getId());
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(null, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertLife(player1, 18);
         assertThat(gqs.getEffectivePower(gd, operative)).isEqualTo(3);
@@ -128,15 +130,15 @@ class CrimsonOperativeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(null, TurnStep.BEGINNING_OF_COMBAT);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(null, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, operative)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, operative)).isEqualTo(4);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, operative)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, operative)).isEqualTo(2);
@@ -145,10 +147,11 @@ class CrimsonOperativeTest extends BaseCardTest {
     @Test
     void permissionLastsThroughNextNormalTurnAndThenExpires() {
         Card top = prepareExiledSpellWithLibrariesForTurnProgression();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId(), player2.getId()))
@@ -161,9 +164,11 @@ class CrimsonOperativeTest extends BaseCardTest {
     void permissionExpiresAtEndOfControllersFirstExtraTurn() {
         Card top = prepareExiledSpellWithLibrariesForTurnProgression();
         giveExtraTurnsTo(player1);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions.get(top.getId())).isEqualTo(player1.getId());
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId(), player2.getId()))
@@ -175,17 +180,19 @@ class CrimsonOperativeTest extends BaseCardTest {
     void opponentsExtraTurnsDoNotExpirePermissionBeforeControllersNextTurn() {
         Card top = prepareExiledSpellWithLibrariesForTurnProgression();
         giveExtraTurnsTo(player2);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castFromExile(player1, top.getId(), player2.getId());
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(null, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertLife(player2, 18);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
     }
 
     private Card prepareExiledSpellWithLibrariesForTurnProgression() {
+        harness.setHand(player2, List.of());
         Card top = new Shock();
         harness.setLibrary(player1, List.of(top, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
@@ -198,7 +205,7 @@ class CrimsonOperativeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 8);
         harness.castSorcery(player1, 0, player.getId());
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(null, TurnStep.POSTCOMBAT_MAIN);
     }
 
     private void castCrimsonOperative() {

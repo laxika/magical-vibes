@@ -39,7 +39,9 @@ class ClockworkBeetleTest extends BaseCardTest {
         Permanent beetle = addCreatureReady(player1, new ClockworkBeetle());
         beetle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -60,6 +62,7 @@ class ClockworkBeetleTest extends BaseCardTest {
 
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -79,6 +82,7 @@ class ClockworkBeetleTest extends BaseCardTest {
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
         resolveCombat();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

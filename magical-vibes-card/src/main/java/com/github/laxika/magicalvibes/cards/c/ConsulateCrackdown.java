@@ -19,6 +19,6 @@ public class ConsulateCrackdown extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
-                false));
+                false, true));
     }
 }

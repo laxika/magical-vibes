@@ -26,7 +26,8 @@ class CounterboreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.setGraveyard(player1, List.of(new BriarberryCohort()));
-        harness.setLibrary(player1, List.of(new BriarberryCohort(), new Plains()));
+        Card libraryCopy = new BriarberryCohort();
+        harness.setLibrary(player1, List.of(libraryCopy, new Plains()));
 
         harness.setHand(player2, List.of(new Counterbore()));
         harness.addMana(player2, ManaColor.BLUE, 5);
@@ -34,6 +35,8 @@ class CounterboreTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, castCopy.getId());
+
+        harness.handleMultipleCardsChosen(player2, List.of(handCopy.getId(), libraryCopy.getId()));
 
         // Spell countered — not on the stack, not on the battlefield.
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Briarberry Cohort"));

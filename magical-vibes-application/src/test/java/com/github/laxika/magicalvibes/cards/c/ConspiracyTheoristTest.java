@@ -115,7 +115,7 @@ class ConspiracyTheoristTest extends BaseCardTest {
             if (gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class) != null) {
                 harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
             }
-            harness.passBothPriorities();
+            resolveAllTriggers();
 
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
             assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);

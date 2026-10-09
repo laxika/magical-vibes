@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -30,6 +35,9 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final DrawService drawService;
     private final PredicateEvaluationService predicateEvaluationService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private AuraAttachmentService auraAttachmentService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +47,40 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MayEffect) effect;
+        if (e.wrapped() instanceof ReturnCardFromGraveyardEffect battlefieldReturn
+                && battlefieldReturn.targetGraveyard()
+                && battlefieldReturn.destination() == GraveyardChoiceDestination.BATTLEFIELD
+                && e.elseEffect() instanceof ReturnCardFromGraveyardEffect handReturn
+                && handReturn.destination() == GraveyardChoiceDestination.HAND) {
+            Card card = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+            if (card != null && (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)
+                    || card.isAura() && !hasLegalAuraAttachment(gameData, card, entry.getControllerId()))) {
+                insertElseEffect(entry, e);
+                return;
+            }
+        }
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect tap
+                && tap.scope() == com.github.laxika.magicalvibes.model.effect.TapUntapScope.TRIGGERING) {
+            var permanent = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+            if (permanent == null || permanent.isTapped()) {
+                insertElseEffect(entry, e);
+                return;
+            }
+        }
+        CardEffect firstEffect = e.wrapped() instanceof SequenceEffect sequence && !sequence.steps().isEmpty()
+                ? sequence.steps().getFirst() : e.wrapped();
+        if (firstEffect instanceof com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect counters
+                && counters.predicate() == null) {
+            var target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (target == null || gameQueryService.cantHaveCounters(gameData, target)
+                    || counters.counterType() == com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE
+                    && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)
+                    || counters.counterType() == com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ONE
+                    && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
+                insertElseEffect(entry, e);
+                return;
+            }
+        }
         if (e.wrapped() instanceof PutCountersOnSourceEffect counters) {
             var source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (source == null || gameQueryService.cantHaveCounters(gameData, source)
@@ -85,7 +127,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         // CR 603.5 — "you may" choice happens at resolution time.
         // Set flag so the resolution loop re-runs this effect after the player responds.
         gameData.resolvingMayEffectFromStack = true;
-        UUID choicePlayerId = switch (e.choicePlayer()) {
+        UUID choicePlayerId = e.choicePlayerId() != null ? e.choicePlayerId() : switch (e.choicePlayer()) {
             case CONTROLLER -> entry.getControllerId();
             // Triggered abilities snapshot the active player on their stack entry. Activated
             // abilities do not need that trigger snapshot, so use the current active player for
@@ -119,6 +161,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         boolean cannotSacrifice = e.wrapped() instanceof SacrificeEnchantedCreatureEffect
                 && !canSacrificeEnchantedPermanent(gameData, entry, choicePlayerId);
+        if (optionalAction instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect) {
+            var source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            cannotSacrifice = source == null
+                    || !choicePlayerId.equals(gameQueryService.findPermanentController(gameData, source.getId()))
+                    || gameQueryService.cantBeSacrificed(gameData, source);
+        }
         if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect sacrifice
                 && sacrifice.count() instanceof com.github.laxika.magicalvibes.model.amount.Fixed count
                 && count.value() > 0
@@ -214,6 +262,16 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             }
         }
         return null;
+    }
+
+    private boolean hasLegalAuraAttachment(GameData gameData, Card aura, UUID controllerId) {
+        for (var battlefield : gameData.playerBattlefields.values()) {
+            for (var permanent : battlefield) {
+                if (auraAttachmentService.canEnchant(gameData, aura, controllerId, permanent)) return true;
+            }
+        }
+        return aura.isEnchantPlayer() && gameData.orderedPlayerIds.stream()
+                .anyMatch(playerId -> auraAttachmentService.canEnchantPlayer(gameData, aura, controllerId, playerId));
     }
 
     private UUID findDefendingPlayerId(GameData gameData, UUID attackedTargetId) {

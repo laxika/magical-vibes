@@ -105,6 +105,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingServ
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.OncePerTurnTriggerSupport;
@@ -248,6 +249,7 @@ public class CombatDamageService {
                 sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
                 return CombatResult.DONE;
             }
+            if (prepareSharedCombatPrevention(gameData, atkBf, defBf)) return CombatResult.DONE;
             resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf, activeId, defenderId,
                     redirectTarget, DamagePhase.FIRSTEST_STRIKE);
             if (parkOptionalDamageChoices(gameData, state, DamagePhase.FIRSTEST_STRIKE, redirectTarget)) {
@@ -281,6 +283,7 @@ public class CombatDamageService {
                 sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
                 return CombatResult.DONE;
             }
+            if (prepareSharedCombatPrevention(gameData, atkBf, defBf)) return CombatResult.DONE;
             resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf, activeId, defenderId,
                     redirectTarget, DamagePhase.FIRST_STRIKE);
             if (parkOptionalDamageChoices(gameData, state, DamagePhase.FIRST_STRIKE, redirectTarget)) {
@@ -309,6 +312,7 @@ public class CombatDamageService {
             return CombatResult.DONE;
         }
 
+        if (prepareSharedCombatPrevention(gameData, atkBf, defBf)) return CombatResult.DONE;
         resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf, activeId, defenderId,
                 redirectTarget, DamagePhase.REGULAR);
 
@@ -322,6 +326,110 @@ public class CombatDamageService {
         gameData.combatDamageFirstestStrikeStepComplete = false;
         gameData.combatDamageFirstStrikeStepComplete = false;
         return finishCombatDamageStep(gameData, state, atkBf, defBf, activeId, defenderId, redirectTarget);
+    }
+
+    private boolean prepareSharedCombatPrevention(GameData gameData, List<Permanent> attackers,
+                                                  List<Permanent> defenders) {
+        for (var assignment : gameData.combatDamagePlayerAssignments.entrySet()) {
+            if (assignment.getKey() < attackers.size()
+                    && prepareSharedCombatPreventionForSource(
+                            gameData, attackers.get(assignment.getKey()), assignment.getValue())) return true;
+        }
+        for (var assignment : gameData.combatDamageBlockerAssignments.entrySet()) {
+            if (assignment.getKey() < defenders.size()
+                    && prepareSharedCombatPreventionForSource(
+                            gameData, defenders.get(assignment.getKey()), assignment.getValue())) return true;
+        }
+        return false;
+    }
+
+    private boolean prepareSharedCombatPreventionForSource(GameData gameData, Permanent damageSource,
+                                                           Map<UUID, Integer> assignedDamage) {
+        if (!gameQueryService.isDamagePreventable(gameData, true)
+                || gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, true)) return false;
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            for (Permanent preventionSource : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, preventionSource)) {
+                    if (!(effect instanceof com.github.laxika.magicalvibes.model.effect.PreventXDamagePerSourceToControllerAndCreaturesEffect prevention)) continue;
+                    if (prevention.creatureSourcesOnly() && !gameQueryService.isCreature(gameData, damageSource)) continue;
+                    var preventionSources = gameData.combatSharedDamagePreventionAllocations
+                            .computeIfAbsent(damageSource.getId(), ignored -> new LinkedHashMap<>());
+                    if (preventionSources.containsKey(preventionSource.getId())) continue;
+                    Map<UUID, Integer> eligible = new LinkedHashMap<>();
+                    assignedDamage.forEach((recipientId, amount) -> {
+                        Permanent recipient = gameQueryService.findPermanentById(gameData, recipientId);
+                        if (amount > 0 && (recipientId.equals(controllerId)
+                                || recipient != null && gameQueryService.isCreature(gameData, recipient)
+                                && controllerId.equals(gameQueryService.findPermanentController(gameData, recipientId))
+                                && !recipient.isDamageCantBePreventedOrRedirectedThisTurn())) {
+                            eligible.put(recipientId, gameQueryService.applyCombatDamageMultiplier(
+                                    gameData, amount, damageSource, recipient));
+                        }
+                    });
+                    int total = eligible.values().stream().mapToInt(Integer::intValue).sum();
+                    int amount = Math.min(total, Math.max(0, amountEvaluationService.evaluate(gameData,
+                            prevention.amount(), AmountContext.forStaticEffect(preventionSource, controllerId))));
+                    if (eligible.size() < 2 || amount <= 0) continue;
+                    Map<UUID, Integer> allocations = new LinkedHashMap<>();
+                    preventionSources.put(preventionSource.getId(), allocations);
+                    if (amount >= total) {
+                        allocations.putAll(eligible);
+                    } else {
+                        beginSharedCombatPreventionChoice(gameData,
+                                new com.github.laxika.magicalvibes.model.ChoiceContext.CombatSharedDamagePreventionChoice(
+                                        preventionSource.getId(), damageSource.getId(), controllerId, amount,
+                                        new ArrayList<>(eligible.keySet()), eligible));
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private void beginSharedCombatPreventionChoice(GameData gameData,
+            com.github.laxika.magicalvibes.model.ChoiceContext.CombatSharedDamagePreventionChoice choice) {
+        Map<UUID, Integer> allocations = gameData.combatSharedDamagePreventionAllocations
+                .get(choice.damageSourceId()).get(choice.preventionSourceId());
+        List<String> options = choice.recipients().stream()
+                .filter(id -> allocations.getOrDefault(id, 0) < choice.damage().get(id))
+                .map(id -> sharedPreventionRecipientLabel(gameData, choice, id)).toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                choice.controllerId(), null, null, choice, options,
+                "Choose a recipient to prevent 1 damage to (" + choice.remaining() + " remaining)."));
+    }
+
+    private String sharedPreventionRecipientLabel(GameData gameData,
+            com.github.laxika.magicalvibes.model.ChoiceContext.CombatSharedDamagePreventionChoice choice,
+            UUID recipientId) {
+        Permanent permanent = gameQueryService.findPermanentById(gameData, recipientId);
+        String name = permanent == null ? gameData.playerIdToName.get(recipientId)
+                : permanent.getCard().getName();
+        return name + " (" + (choice.recipients().indexOf(recipientId) + 1) + ")";
+    }
+
+    /** Records one point of a shared prevention effect before combat damage is dealt. */
+    public boolean completeSharedCombatPreventionChoice(GameData gameData,
+            com.github.laxika.magicalvibes.model.ChoiceContext.CombatSharedDamagePreventionChoice choice,
+            String label) {
+        UUID recipientId = choice.recipients().stream()
+                .filter(id -> sharedPreventionRecipientLabel(gameData, choice, id).equals(label))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Invalid prevention recipient"));
+        Map<UUID, Integer> allocations = gameData.combatSharedDamagePreventionAllocations
+                .get(choice.damageSourceId()).get(choice.preventionSourceId());
+        if (!choice.recipients().contains(recipientId)
+                || allocations.getOrDefault(recipientId, 0) >= choice.damage().get(recipientId)) {
+            throw new IllegalArgumentException("Invalid prevention recipient");
+        }
+        allocations.merge(recipientId, 1, Integer::sum);
+        if (choice.remaining() > 1) {
+            beginSharedCombatPreventionChoice(gameData,
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.CombatSharedDamagePreventionChoice(
+                            choice.preventionSourceId(), choice.damageSourceId(), choice.controllerId(),
+                            choice.remaining() - 1, choice.recipients(), choice.damage()));
+            return false;
+        }
+        return true;
     }
 
     private boolean parkOptionalDamageChoices(GameData gameData, CombatDamageState state,
@@ -483,6 +591,7 @@ public class CombatDamageService {
         // planeswalkers. Nothing dies here — the state-based action check below is the single
         // place combat casualties are determined (CR 704.5f/5g/5h/5i).
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
+        gameData.combatSharedDamagePreventionAllocations.clear();
         applyPendingDralnuReplacements(gameData, state);
         applyPlaneswalkerDamage(gameData, state);
         // CR 510.2 — lifelink gains life as the simultaneous damage is dealt, so it can't change
@@ -3520,7 +3629,7 @@ public class CombatDamageService {
                     effectToAdd = aware.bindDamageSource(
                             data.sourceCard(), data.sourcePermanentId(), data.sourceControllerId(), data.damageDealt());
                 } else if (effect instanceof DamageSourceControllerAwareEffect aware) {
-                    effectToAdd = aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt());
+                    effectToAdd = aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt(), data.sourcePermanentId());
                 } else if (effect instanceof DealDamageToTargetPlayerOrPlaneswalkerEffect burn
                         && burn.playerRelation() == PlayerRelation.OPPONENT) {
                     // Targeting effect — auto-target opponent when no planeswalkers, otherwise queue for choice.
@@ -3620,7 +3729,7 @@ public class CombatDamageService {
 
             for (CardEffect effect : data.combatDamageReceivedEffects()) {
                 CardEffect effectToAdd = effect instanceof DamageSourceControllerAwareEffect aware
-                        ? aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt())
+                        ? aware.bindDamageSourceController(data.sourceControllerId(), data.damageDealt(), data.sourcePermanentId())
                         : effect;
                 if (effectToAdd.targetSpec().declaredTarget() != null) {
                     TargetFilter targetFilter = data.card().getEffectTargetIndex(effect) >= 0
@@ -4772,7 +4881,7 @@ public class CombatDamageService {
                 true,
                 gameQueryService.isArtifact(gameData, atk),
                 gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, atk)),
-                true);
+                true, atk.getId());
         if (fixedPrevented > 0) {
             damage -= fixedPrevented;
             gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", atk.getCard(), "'s combat damage to "

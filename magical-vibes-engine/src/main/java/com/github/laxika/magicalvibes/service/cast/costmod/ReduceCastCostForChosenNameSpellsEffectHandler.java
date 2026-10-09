@@ -21,7 +21,7 @@ public class ReduceCastCostForChosenNameSpellsEffectHandler implements CostModif
             return 0;
         }
         String chosenName = source.sourcePermanent().getChosenName();
-        if (chosenName == null || !chosenName.equals(context.spell().getName())) {
+        if (chosenName == null || !context.spell().hasName(chosenName)) {
             return 0;
         }
         return -((ReduceCastCostForChosenNameSpellsEffect) effect).amount();

@@ -36,7 +36,7 @@ public class GrantSubtypeToTargetWhileHasCounterEffectHandler implements NormalE
         var grant = (GrantSubtypeToTargetWhileHasCounterEffect) effect;
         for (UUID targetId : targetIds(entry, effect)) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
+            if (target == null || target.getCounterCount(grant.counterType()) == 0) {
                 continue;
             }
 
@@ -46,7 +46,7 @@ public class GrantSubtypeToTargetWhileHasCounterEffectHandler implements NormalE
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
                     new GrantSubtypeEffect(grant.subtype(), GrantScope.ALL_PERMANENTS, grant.overriding(), scope),
-                    null, null, scope, EffectDuration.PERMANENT, 0));
+                    null, null, scope, EffectDuration.PERMANENT, 0, true));
         }
     }
 

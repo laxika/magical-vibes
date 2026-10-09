@@ -85,7 +85,18 @@ class CompleteTheCircuitTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack).noneMatch(StackEntry::isCopy);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount.get(player1.getId())).isEqualTo(2);
+        resolveAllTriggers();
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        while (!gd.stack.isEmpty()) {
+            if (gd.interaction.isAwaitingInput()) {
+                harness.handleMayAbilityChosen(player1, false);
+            } else {
+                harness.passBothPriorities();
+            }
+        }
+        harness.assertLife(player2, 11);
     }
 
     private void resolveCompleteTheCircuit() {

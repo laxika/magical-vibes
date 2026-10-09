@@ -44,7 +44,7 @@ class CrazedArmodonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Crazed Armodon");
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Crazed Armodon");
@@ -70,7 +70,7 @@ class CrazedArmodonTest extends BaseCardTest {
     void survivesEndStepWithoutActivation() {
         addArmodon();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Crazed Armodon");
     }
@@ -83,7 +83,7 @@ class CrazedArmodonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Crazed Armodon");
         assertThat(gd.stack).hasSize(1);
@@ -98,21 +98,21 @@ class CrazedArmodonTest extends BaseCardTest {
     @DisplayName("Activation during the end step waits for the following turn's end step")
     void endStepActivationSurvivesCleanupAndLosesTemporaryBenefits() {
         Permanent armodon = addArmodon();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gqs.getEffectivePower(gd, armodon)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, armodon, Keyword.TRAMPLE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.assertOnBattlefield(player1, "Crazed Armodon");
         assertThat(gqs.getEffectivePower(gd, armodon)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, armodon, Keyword.TRAMPLE)).isFalse();
 
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Crazed Armodon");

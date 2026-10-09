@@ -1654,9 +1654,7 @@ public class MayPenaltyChoiceHandlerService {
             for (Card card : revealed) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
             }
-            for (int i = 0; i < 5; i++) {
-                drawService.resolveDrawCard(gameData, controllerId);
-            }
+            drawService.resolveDrawCards(gameData, controllerId, 5);
             gameLogService.append(gameData, GameLog.text(opponentName + " declines: the "
                     + revealed.size() + " revealed card(s) go to " + controllerName + "'s graveyard and they draw five cards."));
             log.info("Game {} - {} declines; {} mills {} and draws five (Covenant of Minds)",

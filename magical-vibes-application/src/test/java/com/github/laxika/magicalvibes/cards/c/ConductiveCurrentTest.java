@@ -163,7 +163,8 @@ class ConductiveCurrentTest extends BaseCardTest {
         var shock = new Shock();
         harness.setHand(player1, List.of(new ConductiveCurrent(), shock, new Regrowth()));
         harness.addMana(player1, ManaColor.RED, 5);
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);

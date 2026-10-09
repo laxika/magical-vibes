@@ -17,7 +17,7 @@ public class CuratorsWard extends Card {
 
     public CuratorsWard() {
         // Enchanted permanent has hexproof.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_PERMANENT));
         // When enchanted permanent leaves the battlefield, if it was historic, draw two cards.
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD,
                 new EnchantedPermanentLeavesConditionalEffect(

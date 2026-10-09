@@ -136,7 +136,7 @@ class CultivatorsCaravanTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isCreature(gd, caravan)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, caravan)).isFalse();
     }

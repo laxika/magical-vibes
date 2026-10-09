@@ -32,10 +32,9 @@ public class TurnTargetCreatureFaceDownEffectHandler implements NormalEffectHand
         }
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null || target.isFaceDown()) {
+            if (target == null || target.isFaceDown() || target.getOriginalCard().getBackFaceCard() != null) {
                 continue;
             }
-            target.setCard(target.getOriginalCard());
             target.setFaceDown(2, 2, turnFaceDown.faceDownCardTypes(), turnFaceDown.faceDownSubtypes());
         }
     }

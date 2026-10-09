@@ -123,6 +123,7 @@ class ConsumingOniTest extends BaseCardTest {
     }
 
     private void advanceThroughEndStep(Player activePlayer) {
+        gd.turnNumber++;
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(activePlayer, TurnStep.END_STEP);
@@ -140,6 +141,7 @@ class ConsumingOniTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, oni.getId());
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

@@ -19,6 +19,6 @@ public class CraterHellion extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MassDamageEffect(4, false, false,
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{4}{R}{R}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{4}{R}{R}"));
     }
 }

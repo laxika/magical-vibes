@@ -320,7 +320,11 @@ public class MiscTriggerCollectorService {
                 match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                         card, match.controllerId(), new ArrayList<>(triggeredEffects),
                         "unlocks a Room door", match.permanent().getId(), null,
-                        matchingEffects.stream().anyMatch(OptionalTargetEffect.class::isInstance)));
+                        triggeredEffects.stream().anyMatch(candidate ->
+                                candidate instanceof OptionalTargetEffect || candidate.hasOptionalTarget())
+                                || card.getSpellTargets().stream().anyMatch(target -> target.getMinTargets() == 0
+                                && matchingEffects.stream().anyMatch(candidate ->
+                                card.getEffectTargetIndex(candidate) == target.getIndex()))));
             }
         } else {
             StackEntry trigger = new StackEntry(
@@ -984,14 +988,18 @@ public class MiscTriggerCollectorService {
         // TARGET_PERMANENT_CONTROLLER re-derives the losing player from the entry's targetId
         // permanent; bake it to the tapped land so its controller loses life. Life loss (not
         // damage, CR 118.2) — fires "loses life" triggers via LifeSupport.
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s triggered ability",
                 new ArrayList<>(List.of(e)),
                 ept.tappedPermanent().getId(),
-                match.permanent().getId()));
+                match.permanent().getId());
+        trigger.setNonTargeting(true);
+        trigger.setTriggeringPermanentId(ept.tappedPermanent().getId());
+        trigger.setTriggeringPermanentControllerId(match.gameData().findControllerOf(ept.tappedPermanent()));
+        match.gameData().enqueueTrigger(trigger);
         String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
         gameLogService.append(match.gameData(), GameLog.text(triggerLog));
         log.info("Game {} - {} triggers, enchanted permanent's controller loses life",
@@ -1915,6 +1923,10 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId());
         entry.setEventCardIds(cardsPut.cards().stream().map(Card::getId).toList());
+        for (Card card : cardsPut.cards()) {
+            entry.getEventCardGraveyardEntryVersions().put(card.getId(),
+                    match.gameData().graveyardEntryVersion(card.getId()));
+        }
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

@@ -65,6 +65,7 @@ class ClatteringAugurTest extends BaseCardTest {
     @Test
     @DisplayName("Graveyard ability returns only the copy whose ability was activated")
     void graveyardAbilityReturnsOnlyItsSource() {
+        harness.setHand(player1, List.of());
         Card source = new ClatteringAugur();
         Card other = new ClatteringAugur();
         Card opponentsCopy = new ClatteringAugur();

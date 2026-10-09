@@ -27,7 +27,7 @@ public class CrovaxAscendantHero extends Card {
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                 ))));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE)))));
 
         addActivatedAbility(new ActivatedAbility(false, null,

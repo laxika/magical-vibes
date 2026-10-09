@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD8Effect;
@@ -18,14 +16,12 @@ import java.util.List;
 public class ClayGolem extends Card {
 
     public ClayGolem() {
-        SourceIsMonstrous monstrous = new SourceIsMonstrous();
-
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{6}",
-                List.of(new RollD8Effect(new MonstrosityEffect(new XValue()))),
+                List.of(new RollD8Effect(new MonstrosityEffect(new XValue()), true)),
                 "{6}, Roll a d8: Monstrosity X, where X is the result."
-        ).withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+        ));
 
         target(TargetFilters.permanent()).addEffect(
                 EffectSlot.ON_SELF_BECOMES_MONSTROUS,

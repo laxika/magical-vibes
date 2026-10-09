@@ -38,6 +38,13 @@ public class CostumeCloset extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
+        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                com.github.laxika.magicalvibes.model.effect.ConditionalEffect.atTriggerTime(
+                        new com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate(
+                                new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(), new PermanentIsModifiedPredicate()))),
+                        new PutCountersOnSourceEffect(1, 1, 1)));
+
         addEffect(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsModifiedPredicate(),

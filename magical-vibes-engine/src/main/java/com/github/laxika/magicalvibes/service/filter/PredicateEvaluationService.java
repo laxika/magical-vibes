@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDirection;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -637,6 +638,21 @@ public class PredicateEvaluationService {
                         || gameData.perpetualKeywords
                         .getOrDefault(card.getId(), java.util.Set.of())
                         .contains(p.keyword()));
+                if (p.keyword() == Keyword.FLASH && gameData != null && cardOwnerId != null) {
+                    granted |= gameData.playerBattlefields.entrySet().stream()
+                            .flatMap(battlefield -> battlefield.getValue().stream()
+                                    .filter(permanent -> !permanent.isFaceDown()
+                                            && !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
+                                    .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                                            .filter(GrantFlashToCardTypeEffect.class::isInstance)
+                                            .map(GrantFlashToCardTypeEffect.class::cast)
+                                            .filter(grant -> grant.grantsKeyword()
+                                                    && (grant.appliesToAllPlayers() || battlefield.getKey().equals(cardOwnerId)))
+                                            .filter(grant -> grant.filter() == null
+                                                    || matchesCardPredicate(card, grant.filter(), permanent.getCard().getId(),
+                                                    gameData, cardOwnerId))))
+                            .findAny().isPresent();
+                }
                 yield !removed && (card.getKeywords().contains(p.keyword()) || granted);
             }
             case CardHasAwakenPredicate ignored ->
@@ -2416,7 +2432,8 @@ public class PredicateEvaluationService {
             case PermanentCastBySourceControllerThisTurnPredicate ignored -> {
                 // "Target creature you cast this turn" â€” identity match against the spells the
                 // source's controller cast this turn, so tokens and non-cast arrivals never match.
-                if (gameData == null || sourceControllerId == null) {
+                if (gameData == null || sourceControllerId == null || !permanent.isCast()
+                        || !sourceControllerId.equals(permanent.getCastControllerId())) {
                     yield false;
                 }
                 UUID cardId = permanent.getCard().getId();

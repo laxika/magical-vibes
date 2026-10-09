@@ -25,7 +25,7 @@ public class CyclopsGladiator extends Card {
                 "Target must be a creature the defending player controls"
         ))
                 .addEffect(EffectSlot.ON_ATTACK, new MayEffect(
-                        new SourceFightsTargetCreatureEffect(),
+                        new SourceFightsTargetCreatureEffect(false),
                         "Deal damage equal to power to target creature? That creature deals damage equal to its power back."
                 ));
     }

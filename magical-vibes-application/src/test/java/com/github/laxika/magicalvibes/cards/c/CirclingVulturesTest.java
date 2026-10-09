@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.v.Vitalize;
+import com.github.laxika.magicalvibes.cards.s.SuppressionField;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BenalishInfantry.class, CirclingVultures.class, Vitalize.class})
+@CardUsed({BenalishInfantry.class, CirclingVultures.class, Vitalize.class, SuppressionField.class})
 class CirclingVulturesTest extends BaseCardTest {
 
     private List<String> graveyardNames(Player player) {
@@ -113,6 +114,17 @@ class CirclingVulturesTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
 
         assertThat(graveyardNames(player1)).containsExactly("Circling Vultures");
+    }
+
+    @Test
+    void discardSpecialActionIsUnaffectedByActivatedAbilityTaxes() {
+        harness.addToBattlefield(player2, new SuppressionField());
+        harness.setHand(player1, List.of(new CirclingVultures()));
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Circling Vultures");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

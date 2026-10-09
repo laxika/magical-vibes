@@ -61,8 +61,9 @@ class ChoArrimBruiserTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.stack).isEmpty();
 
         assertThat(target.isTapped()).isFalse();
     }

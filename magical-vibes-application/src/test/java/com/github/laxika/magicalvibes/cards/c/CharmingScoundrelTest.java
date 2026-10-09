@@ -31,7 +31,7 @@ class CharmingScoundrelTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseModeChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.TriggeredModalChoice.class);
     }
 
     @Test
@@ -42,8 +42,9 @@ class CharmingScoundrelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CharmingScoundrel(), discarded));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Discard a card, then draw a card");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -58,8 +59,9 @@ class CharmingScoundrelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CharmingScoundrel()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Create a Treasure token");
         harness.passBothPriorities();
 
         Permanent treasure = findPermanent(player1, "Treasure");
@@ -73,8 +75,10 @@ class CharmingScoundrelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CharmingScoundrel()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castCreature(player1, 0, 2, target.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Create a Wicked Role token attached to target creature you control");
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         Permanent role = findPermanent(player1, "Wicked");
@@ -92,7 +96,10 @@ class CharmingScoundrelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CharmingScoundrel()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 2, target.getId()))
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Create a Wicked Role token attached to target creature you control");
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -102,8 +109,9 @@ class CharmingScoundrelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CharmingScoundrel()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Discard a card, then draw a card");
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Plains");
@@ -116,13 +124,17 @@ class CharmingScoundrelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CharmingScoundrel(), new CharmingScoundrel()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castCreature(player1, 0, 2, target.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Create a Wicked Role token attached to target creature you control");
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         Permanent firstRole = findPermanent(player1, "Wicked");
 
-        harness.castCreature(player1, 0, 2, target.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Create a Wicked Role token attached to target creature you control");
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

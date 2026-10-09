@@ -86,7 +86,7 @@ class CrosstownCourierTest extends BaseCardTest {
         Permanent courier = addAttackingCourier(player1);
         setLibrary(player2, 5);
 
-        resolveCombat();
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
         courier.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);

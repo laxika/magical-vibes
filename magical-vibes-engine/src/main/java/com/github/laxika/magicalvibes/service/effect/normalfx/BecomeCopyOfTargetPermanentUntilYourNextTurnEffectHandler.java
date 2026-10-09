@@ -67,7 +67,9 @@ public class BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler implement
         List<ActivatedAbility> retainedAbilities = copyEffect.retainSourceActivatedAbilities()
                 ? List.copyOf(source.getOriginalCard().getActivatedAbilities())
                 : List.of();
-        permanentCopierService.applyCloneCopy(source, target.getCard(),
+        List<EffectRegistration> retainedTriggers = copyEffect.retainedAbilitySlot() == null ? List.of()
+                : List.copyOf(source.getCard().getEffectRegistrations(copyEffect.retainedAbilitySlot()));
+        permanentCopierService.applyCloneCopy(source, permanentCopierService.copiableCard(target),
                 copyEffect.powerOverride(), copyEffect.toughnessOverride(),
                 copyEffect.additionalTypesOverride(), retainedAbilities);
 
@@ -96,10 +98,11 @@ public class BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler implement
             source.getCard().setKeywords(keywords);
         }
         if (copyEffect.retainedAbilitySlot() != null) {
-            for (EffectRegistration registration : source.getOriginalCard()
-                    .getEffectRegistrations(copyEffect.retainedAbilitySlot())) {
-                source.getCard().addEffect(copyEffect.retainedAbilitySlot(),
-                        registration.effect(), registration.triggerMode());
+            for (EffectRegistration registration : retainedTriggers) {
+                if (!source.getCard().getEffectRegistrations(copyEffect.retainedAbilitySlot()).contains(registration)) {
+                    source.getCard().addEffect(copyEffect.retainedAbilitySlot(),
+                            registration.effect(), registration.triggerMode());
+                }
             }
         }
 

@@ -17,9 +17,8 @@ import java.util.List;
 public class Counterbalance extends Card {
 
     public Counterbalance() {
-        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(null, List.of(
-                        new RevealTopCardAndCounterTriggeringSpellIfManaValueMatchesEffect())),
-                "Reveal the top card of your library?"));
+        addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(null, List.of(
+                new MayEffect(new RevealTopCardAndCounterTriggeringSpellIfManaValueMatchesEffect(),
+                        "Reveal the top card of your library?"))));
     }
 }

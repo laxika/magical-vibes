@@ -43,6 +43,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             targetIds = entry.getTargetIds();
         }
 
+        List<UUID> tokenControllers = new java.util.ArrayList<>();
         for (UUID targetId : targetIds) {
             if (targetId == null) {
                 continue;
@@ -65,11 +66,14 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
 
             // Create a token for the exiled permanent's controller if specified
             if (exile.tokenForController() != null && controllerId != null) {
-                destructionSupport.createTokenForPlayer(gameData, controllerId, exile.tokenForController(),
-                        entry.getCard().getName(), entry.getCard().getSetCode());
+                tokenControllers.add(controllerId);
             }
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+        for (UUID controllerId : tokenControllers) {
+            destructionSupport.createTokenForPlayer(gameData, controllerId, exile.tokenForController(),
+                    entry.getCard().getName(), entry.getCard().getSetCode());
+        }
     }
 }

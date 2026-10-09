@@ -9,14 +9,20 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromSideboardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromTargetPlayerSideboardWithoutPayingManaCostEffect;
 import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 
 import java.util.List;
 import java.util.UUID;
 
 /** Resolves Command the Chaff's targeted sideboard free-cast instruction. */
 @Component
+@RequiredArgsConstructor
 public class MayCastFromTargetPlayerSideboardWithoutPayingManaCostEffectHandler
         implements NormalEffectHandlerBean {
+
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,6 +37,8 @@ public class MayCastFromTargetPlayerSideboardWithoutPayingManaCostEffectHandler
         }
 
         List<Card> sideboard = gameData.playerSideboards.getOrDefault(sideboardOwnerId, List.of());
+        cardRevealService.revealToPlayer(gameData, sideboardOwnerId,
+                GameEventFact.RevealZone.OUTSIDE_GAME, sideboard, entry.getControllerId());
         List<Card> castableCards = sideboard.stream()
                 .filter(card -> !card.hasType(CardType.LAND))
                 .toList();

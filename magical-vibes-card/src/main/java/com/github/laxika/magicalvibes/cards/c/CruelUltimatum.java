@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -40,14 +39,11 @@ public class CruelUltimatum extends Card {
                 .addEffect(EffectSlot.SPELL, new DiscardEffect(3, DiscardRecipient.TARGET_PLAYER))
                 .addEffect(EffectSlot.SPELL, new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER));
 
-        // You return a creature card from your graveyard to your hand, draw three cards, then gain 5 life.
-        // The return is a resolution-time choice from your own graveyard (not a cast-time target), so it is
-        // wrapped in MayEffect — that keeps the spell's single targetId reserved for the opponent above and
-        // routes the return through the resolution-time graveyard prompt (same pattern as Gravedigger).
-        addEffect(EffectSlot.SPELL, new MayEffect(ReturnCardFromGraveyardEffect.builder()
+        addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
-                .build(), "Return a creature card from your graveyard to your hand?"));
+                .mandatory(true)
+                .build());
         addEffect(EffectSlot.SPELL, new DrawCardEffect(3));
         addEffect(EffectSlot.SPELL, new GainLifeEffect(5));
     }

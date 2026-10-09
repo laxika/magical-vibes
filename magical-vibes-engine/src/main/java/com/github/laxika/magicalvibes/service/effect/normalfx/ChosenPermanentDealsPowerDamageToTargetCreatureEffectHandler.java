@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenPermanentDealsPowerDamageToTargetCreatureEffect;
@@ -16,6 +20,8 @@ import org.springframework.stereotype.Component;
 public class ChosenPermanentDealsPowerDamageToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
+    private final PredicateEvaluationService predicateEvaluationService;
+    private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
@@ -26,6 +32,21 @@ public class ChosenPermanentDealsPowerDamageToTargetCreatureEffectHandler implem
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var damage = (ChosenPermanentDealsPowerDamageToTargetCreatureEffect) effect;
+        if (damage.sourceFilter() != null && entry.getChosenPermanentId() == null) {
+            var context = FilterContext.of(gameData).withSourceControllerId(entry.getControllerId());
+            var eligible = gameData.playerBattlefields.get(entry.getControllerId()).stream()
+                    .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, damage.sourceFilter(), context))
+                    .map(Permanent::getId).toList();
+            if (!eligible.isEmpty()) {
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), eligible,
+                        new PermanentChoiceContext.ChosenPermanentReference(),
+                        "Choose a creature to deal damage.");
+            }
+            return;
+        }
         Permanent source = entry.getChosenPermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getChosenPermanentId());

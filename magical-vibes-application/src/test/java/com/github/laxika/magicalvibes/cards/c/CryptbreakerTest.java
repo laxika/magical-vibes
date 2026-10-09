@@ -90,9 +90,6 @@ class CryptbreakerTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handlePermanentChosen(player1, source.getId());
-        harness.handlePermanentChosen(player1, zombie1.getId());
-        harness.handlePermanentChosen(player1, zombie2.getId());
 
         assertThat(List.of(source, zombie1, zombie2)).allMatch(Permanent::isTapped);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -116,9 +113,6 @@ class CryptbreakerTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handlePermanentChosen(player1, zombie1.getId());
-        harness.handlePermanentChosen(player1, zombie2.getId());
-        harness.handlePermanentChosen(player1, zombie3.getId());
         harness.passBothPriorities();
 
         assertThat(List.of(source, zombie1, zombie2, zombie3)).allMatch(Permanent::isTapped);

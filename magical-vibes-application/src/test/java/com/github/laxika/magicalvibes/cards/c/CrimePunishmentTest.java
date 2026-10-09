@@ -118,6 +118,8 @@ class CrimePunishmentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, CRIME, aura.getId());
         harness.passBothPriorities();
 
+        harness.handlePermanentChosen(player1, host.getId());
+
         harness.assertOnBattlefield(player1, "Writ of Passage");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getId().equals(aura.getId()))

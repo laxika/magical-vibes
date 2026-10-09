@@ -27,6 +27,7 @@ public class CurseOfShakenFaith extends Card {
                 false,
                 false,
                 null,
+                0,
                 2));
 
         SpellCopyTriggerEffect copyTrigger = new SpellCopyTriggerEffect(

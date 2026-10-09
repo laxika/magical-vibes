@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
@@ -41,6 +43,18 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
         // CR 707.10 — a spell that "can't be copied" is not copied by these effects either.
         if (spellCard.isCantBeCopied()) {
             log.info("Game {} - {} can't be copied", gameData.id, spellCard.getName());
+            return;
+        }
+
+        if (e.optional()) {
+            List<CardEffect> choices = new ArrayList<>();
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (!playerId.equals(castingPlayerId)) {
+                    choices.add(MayEffect.forPlayer(new CopyControllerCastSpellEffect(spellSnapshot, playerId),
+                            "Copy " + spellCard.getName() + "?", playerId));
+                }
+            }
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, choices);
             return;
         }
 

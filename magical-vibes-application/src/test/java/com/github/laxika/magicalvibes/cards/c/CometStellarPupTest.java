@@ -67,7 +67,7 @@ class CometStellarPupTest extends BaseCardTest {
             assertThat(gqs.hasKeyword(gd, squirrel, Keyword.HASTE)).isTrue();
         });
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(squirrels).allSatisfy(squirrel ->
                 assertThat(gqs.hasKeyword(gd, squirrel, Keyword.HASTE)).isFalse());
     }

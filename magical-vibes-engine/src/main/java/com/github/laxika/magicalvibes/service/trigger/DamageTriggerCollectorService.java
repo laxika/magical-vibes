@@ -329,6 +329,7 @@ public class DamageTriggerCollectorService {
                 null,
                 match.permanent().getId());
         entry.setNonTargeting(true);
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
@@ -721,7 +722,8 @@ public class DamageTriggerCollectorService {
     private boolean handleDamageSourceControllerAware(TriggerMatchContext match,
             DamageSourceControllerAwareEffect trigger, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        CardEffect effectToAdd = trigger.bindDamageSourceController(dc.damageSourceControllerId(), dc.damageDealt());
+        CardEffect effectToAdd = trigger.bindDamageSourceController(
+                dc.damageSourceControllerId(), dc.damageDealt(), dc.sourcePermanentId());
         addDealtDamageEntry(match.gameData(), dc.damagedCreature(), effectToAdd, dc.damageDealt());
         return true;
     }

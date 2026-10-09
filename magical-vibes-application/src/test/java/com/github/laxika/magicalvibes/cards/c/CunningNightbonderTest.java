@@ -138,12 +138,12 @@ class CunningNightbonderTest extends BaseCardTest {
         DirgeBat bat = new DirgeBat();
         harness.setHand(player1, List.of(bat, new DoubleMajor()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setHand(player2, List.of(new Cancel()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, bat.getId());
         StackEntry copy = gd.stack.stream().filter(StackEntry::isCopy).findFirst().orElseThrow();
         harness.passPriority(player1);

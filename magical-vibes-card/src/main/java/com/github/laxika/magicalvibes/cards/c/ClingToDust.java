@@ -17,6 +17,6 @@ public class ClingToDust extends Card {
                 ExileGraveyardCardWithConditionalBonusEffect.creatureCardGainsLifeElseDraw(3, 1));
         addCastingOption(new GraveyardCast(null, "{3}{B}",
                 List.of(new ExileNCardsFromGraveyardCastingCost(null, "other cards", 5)),
-                null, false, true));
+                null, false, false, true));
     }
 }

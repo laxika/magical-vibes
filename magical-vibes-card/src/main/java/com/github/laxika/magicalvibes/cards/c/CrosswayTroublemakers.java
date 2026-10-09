@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -35,9 +34,10 @@ public class CrosswayTroublemakers extends Card {
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)))));
 
-        addEffect(EffectSlot.ON_DEATH, DEATH_TRIGGER);
+        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE), DEATH_TRIGGER));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.VAMPIRE), DEATH_TRIGGER));
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE), DEATH_TRIGGER));
     }
 }

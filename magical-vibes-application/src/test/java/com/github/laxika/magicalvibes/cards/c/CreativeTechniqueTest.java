@@ -25,9 +25,9 @@ class CreativeTechniqueTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof GrizzlyBears
                 && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
@@ -54,7 +54,7 @@ class CreativeTechniqueTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.findExiledCard(revealed.getId())).isNotNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

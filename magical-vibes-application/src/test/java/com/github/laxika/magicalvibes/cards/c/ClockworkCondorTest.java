@@ -39,7 +39,9 @@ class ClockworkCondorTest extends BaseCardTest {
         Permanent condor = addCreatureReady(player1, new ClockworkCondor());
         condor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -60,6 +62,7 @@ class ClockworkCondorTest extends BaseCardTest {
 
         assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -78,6 +81,7 @@ class ClockworkCondorTest extends BaseCardTest {
         assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
         resolveCombat();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         assertThat(condor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

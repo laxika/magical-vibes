@@ -28,7 +28,7 @@ public class CrudeAbattoirUnsavoryKitchen extends Card {
                         .withManaCost("{2}{R}")
         )));
 
-        target(TargetFilters.creature(), 0, 1).addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
                 new TriggeringRoomDoorConditionalEffect(0,
                         new DealDamageToTargetCreatureEffect(2)));
 

@@ -187,7 +187,6 @@ class CommandeerTest extends BaseCardTest {
         harness.castInstant(player1, 0, scimitarPermanent.getId());
         harness.passPriority(player1);
         harness.castInstant(player2, 0, boomerang.getId());
-        harness.passPriority(player2);
         harness.castInstant(player1, 0, counterspell.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

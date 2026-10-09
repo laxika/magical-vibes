@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Shared support for static abilities that grant the effect controller extra votes. */
+/** Shared support for static abilities that grant players extra votes. */
 @Component
 @RequiredArgsConstructor
 public class VotingSupport {
@@ -18,18 +18,12 @@ public class VotingSupport {
 
     public List<UUID> addAdditionalControllerVotes(GameData gameData, List<UUID> voters,
                                                      UUID effectControllerId) {
-        int additionalVotes = gameQueryService.countAdditionalVotes(gameData, effectControllerId);
-        if (additionalVotes == 0) {
-            return voters;
-        }
-
-        List<UUID> result = new ArrayList<>(voters);
-        int controllerIndex = result.indexOf(effectControllerId);
-        if (controllerIndex < 0) {
-            return result;
-        }
-        for (int i = 0; i < additionalVotes; i++) {
-            result.add(++controllerIndex, effectControllerId);
+        List<UUID> result = new ArrayList<>();
+        for (UUID voter : voters) {
+            result.add(voter);
+            for (int i = 0; i < gameQueryService.countAdditionalVotes(gameData, voter); i++) {
+                result.add(voter);
+            }
         }
         return result;
     }

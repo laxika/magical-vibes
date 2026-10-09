@@ -152,7 +152,7 @@ class CounterintelligenceTest extends BaseCardTest {
     void returnsStolenCreatureToOwner() {
         Permanent soldiers = harness.addToBattlefieldAndReturn(player1, new ShuFootSoldiers());
         gd.stolenCreatures.put(soldiers.getId(), player2.getId());
-        soldiers.getCard().setOwnerId(player2.getId());
+        com.github.laxika.magicalvibes.testutil.TestCards.mutableCard(soldiers).setOwnerId(player2.getId());
         harness.setHand(player1, List.of(new Counterintelligence()));
         giveMana();
 

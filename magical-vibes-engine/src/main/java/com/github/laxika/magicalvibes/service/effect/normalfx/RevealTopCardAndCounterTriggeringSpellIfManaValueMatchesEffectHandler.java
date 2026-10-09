@@ -51,7 +51,10 @@ public class RevealTopCardAndCounterTriggeringSpellIfManaValueMatchesEffectHandl
             return;
         }
 
-        int spellManaValue = triggeringSpell.getCard().getManaValue() + triggeringSpell.getXValue();
+        Card spellCard = triggeringSpell.getCard();
+        int spellManaValue = triggeringSpell.isCastFaceDown() ? 0 : spellCard.getManaValue()
+                + triggeringSpell.getXValue() * (spellCard.getParsedManaCost() == null
+                ? 0 : spellCard.getParsedManaCost().getXSymbolCount());
         if (topCard.getManaValue() == spellManaValue) {
             counterSupport.counterSpell(gameData, entry, triggeringSpell);
         }

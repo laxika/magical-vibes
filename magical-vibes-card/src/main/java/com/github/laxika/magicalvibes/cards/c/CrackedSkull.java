@@ -28,9 +28,9 @@ public class CrackedSkull extends Card {
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCardsFromTargetHandEffect(
                         new Fixed(1), List.of(CardType.LAND), List.of(), HandChoiceDestination.DISCARD,
-                        false, null, 0, true, false, false, true, false, false));
+                        false, null, 0, true, false, false, false, false, false));
 
         addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
-                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

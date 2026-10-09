@@ -42,7 +42,7 @@ class CutADealTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new CutADeal()));
         harness.setLibrary(player2, List.of(new CutADeal(), new CutADeal()));
-        harness.addToBattlefield(player1, new NarsetParterOfVeils());
+        harness.enterBattlefieldAndReturn(player1, new NarsetParterOfVeils());
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 

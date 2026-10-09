@@ -158,7 +158,9 @@ public record AmountContext(
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static AmountContext forStackEntry(StackEntry entry, Permanent sourcePermanent) {
-        return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),
+        Permanent effectiveSource = sourcePermanent != null
+                ? sourcePermanent : entry.getSourcePermanentSnapshot();
+        return new AmountContext(entry.getControllerId(), effectiveSource, entry.getTargetId(),
                 entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId(),
                 entry.getRepeatedAdditionalCosts(), entry.getCard(), entry, entry.getChosenPermanentPowerAtLastKnown(),
                 entry.getTriggeringPermanentPowerAtTrigger(),

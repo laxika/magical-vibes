@@ -174,10 +174,10 @@ class CrypticPursuitTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player1.getId());
         resolveAllTriggers();
-        harness.passUntil(player1, TurnStep.END_STEP);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.END_STEP);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, instant.getId(), player2.getId()))

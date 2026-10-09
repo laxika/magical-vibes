@@ -56,6 +56,8 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
+        if (e.rememberAmount()) entry.setEventValue(amount);
+
         List<Card> hand = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of());
         Set<UUID> cardsInHandBeforeDraw = new HashSet<>();
         hand.forEach(card -> cardsInHandBeforeDraw.add(card.getId()));

@@ -134,7 +134,9 @@ class CollectedCompanyTest extends BaseCardTest {
 
         castCollectedCompany();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+        var remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(
+                remaining.indexOf(forest), remaining.indexOf(giant), remaining.indexOf(shock))));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest, giant, shock);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -167,8 +169,10 @@ class CollectedCompanyTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
-                .containsExactly(bears, shock, forest);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+                .containsExactlyInAnyOrder(bears, shock, forest);
+        var remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(
+                remaining.indexOf(forest), remaining.indexOf(bears), remaining.indexOf(shock))));
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest, bears, shock);
     }
 

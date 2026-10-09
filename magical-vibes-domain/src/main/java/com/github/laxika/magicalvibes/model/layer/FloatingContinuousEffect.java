@@ -45,7 +45,15 @@ public record FloatingContinuousEffect(
         UUID affectedPlayerId,
         PermanentPredicate scope,
         EffectDuration duration,
-        long timestamp) {
+        long timestamp,
+        boolean expiresWhenScopeNoLongerMatches) {
+
+    public FloatingContinuousEffect(UUID id, String sourceCardName, UUID sourcePermanentId, UUID controllerId,
+                                    CardEffect effect, UUID affectedPermanentId, UUID affectedPlayerId,
+                                    PermanentPredicate scope, EffectDuration duration, long timestamp) {
+        this(id, sourceCardName, sourcePermanentId, controllerId, effect, affectedPermanentId,
+                affectedPlayerId, scope, duration, timestamp, false);
+    }
 
     /** Whether this is a CR 613 layer-2 control-changing effect. All floating control effects
      *  wrap one of these effect types (see {@code CreatureControlService}). */
@@ -63,6 +71,6 @@ public record FloatingContinuousEffect(
      *  {@code GameData.addFloatingEffect} to stamp the effect on insertion). */
     public FloatingContinuousEffect withTimestamp(long timestamp) {
         return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
-                effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp);
+                effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp, expiresWhenScopeNoLongerMatches);
     }
 }

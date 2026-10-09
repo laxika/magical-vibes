@@ -231,11 +231,17 @@ public class CreatureControlService {
         gameData.playerBattlefields.get(derived).add(permanent);
         permanent.recordControlChange();
         permanent.setSummoningSick(true);
-        if (!permanent.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, permanent)
-                && permanent.getCard().getActivatedAbilities().stream()
+        boolean retainsFaceDownExileAccess = permanent.getCard().getActivatedAbilities().stream()
                 .flatMap(ability -> ability.getEffects().stream())
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
-                        .ExileCardFromHandFaceDownWithSourceEffect exile && !exile.toGraveyardOnControlLoss())) {
+                        .ExileCardFromHandFaceDownWithSourceEffect exile && !exile.toGraveyardOnControlLoss());
+        retainsFaceDownExileAccess |= java.util.Arrays.stream(EffectSlot.values())
+                .flatMap(slot -> permanent.getCard().getEffects(slot).stream())
+                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
+                        .ExileTopCardsToSourceEffect exile && exile.faceDown()
+                        && exile.mayLookAtFaceDownCards() && !exile.toGraveyardOnControlLoss());
+        if (!permanent.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, permanent)
+                && retainsFaceDownExileAccess) {
             for (var exiled : gameData.getExiledWithPermanentEntries(permanent.getId(), permanent.getCard().getId())) {
                 if (!exiled.faceDown()) continue;
                 Set<UUID> viewers = gameData.additionalExileLookPermissions.computeIfAbsent(

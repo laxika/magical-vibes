@@ -42,7 +42,7 @@ public class ChooseNameRevealRandomCardFromHandDealDamageEffectHandler implement
                 entry.getControllerId(), entry.getTargetId(), entry.getSourcePermanentId(),
                 entry.getCard(), e.damage());
 
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, cardNames, "Choose a card name."));
 

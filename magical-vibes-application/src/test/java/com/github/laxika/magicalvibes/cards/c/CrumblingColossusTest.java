@@ -27,6 +27,7 @@ class CrumblingColossusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 13);
+        resolveAllTriggers();
         harness.assertNotOnBattlefield(player1, "Crumbling Colossus");
         harness.assertInGraveyard(player1, "Crumbling Colossus");
     }

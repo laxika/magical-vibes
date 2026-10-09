@@ -565,6 +565,10 @@ public class GameService {
                 triggerCollectionService.checkAllyRoomFullyUnlockedTriggers(
                         gameData, player.getId(), room);
             }
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            }
             gameData.priorityPassedBy.clear();
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " unlocks a door of ", room.getCard(), "."));

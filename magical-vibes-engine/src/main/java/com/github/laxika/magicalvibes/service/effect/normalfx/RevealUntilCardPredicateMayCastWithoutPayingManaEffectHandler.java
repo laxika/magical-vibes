@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateMayCastWithoutPayingManaEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final ExileService exileService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -91,6 +95,20 @@ public class RevealUntilCardPredicateMayCastWithoutPayingManaEffectHandler
         }
 
         String prompt = "You may cast " + foundCard.getName() + " without paying its mana cost.";
+        if (typedEffect.exileFoundCard()) {
+            revealedCards.remove(foundCard);
+            Collections.shuffle(revealedCards);
+            deck.addAll(revealedCards);
+            exileService.exileCard(gameData, controllerId, foundCard);
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(), controllerId,
+                    List.of(new MayPlayExiledCardWithoutPayingManaCostEffect()),
+                    prompt, foundCard.getId()));
+            if (typedEffect.shuffleLibrary()) {
+                Collections.shuffle(deck);
+            }
+            return;
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, List.of(foundCard))
                         .reveals(true)

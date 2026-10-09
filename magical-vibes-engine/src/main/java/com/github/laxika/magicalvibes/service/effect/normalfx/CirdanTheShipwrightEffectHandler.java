@@ -39,6 +39,11 @@ public class CirdanTheShipwrightEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var cirdan = (CirdanTheShipwrightEffect) effect;
+        if (cirdan.noVotePlayers() != null) {
+            beginNextHandChoice(gameData, cirdan.noVotePlayers(), List.of(), entry.getCard().getName());
+            return;
+        }
         beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
                 entry.getControllerId(), new LinkedHashMap<>(), entry.getCard().getName());
     }
@@ -79,17 +84,22 @@ public class CirdanTheShipwrightEffectHandler implements NormalEffectHandlerBean
 
     private void resolveVotes(GameData gameData, UUID effectControllerId,
                                Map<UUID, Integer> votes, String sourceName) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        List<UUID> playerOrder = orderStartingWith(gameData, gameData.activePlayerId);
+        List<CardEffect> results = new ArrayList<>();
+        for (UUID playerId : playerOrder) {
             int voteCount = votes.getOrDefault(playerId, 0);
             if (voteCount > 0) {
-                playerInteractionSupport.applyDrawCards(gameData, playerId, voteCount);
+                for (int i = 0; i < voteCount; i++) {
+                    results.add(new com.github.laxika.magicalvibes.model.effect.DrawCardForPlayerEffect(playerId));
+                }
             }
         }
 
-        List<UUID> noVotePlayers = gameData.orderedPlayerIds.stream()
+        List<UUID> noVotePlayers = playerOrder.stream()
                 .filter(playerId -> !votes.containsKey(playerId))
                 .toList();
-        beginNextHandChoice(gameData, noVotePlayers, List.of(), sourceName);
+        results.add(new CirdanTheShipwrightEffect(noVotePlayers));
+        gameData.pendingEffectResolutionEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, results);
     }
 
     private void beginNextHandChoice(GameData gameData, List<UUID> remainingPlayerIds,

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -118,6 +120,8 @@ class ChronatogTotemTest extends BaseCardTest {
     @Test
     @DisplayName("The next controller turn is skipped and the animation expires")
     void actuallySkipsNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent totem = addReadyTotem();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -126,9 +130,9 @@ class ChronatogTotemTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         assertThat(gqs.isCreature(gd, totem)).isFalse();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();

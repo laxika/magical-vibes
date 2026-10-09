@@ -72,6 +72,9 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
                 int count = evaluateCount(gameData, entry, mill, source, null);
                 UUID spellControllerId = findTargetSpellControllerId(gameData, entry.getTargetId());
                 if (spellControllerId == null) {
+                    spellControllerId = entry.getCounteredSpellControllerId();
+                }
+                if (spellControllerId == null) {
                     spellControllerId = entry.getRemovedPermanentControllers().get(entry.getTargetId());
                 }
                 if (spellControllerId != null) {

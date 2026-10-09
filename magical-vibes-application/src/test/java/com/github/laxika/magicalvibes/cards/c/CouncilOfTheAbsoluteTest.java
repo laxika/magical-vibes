@@ -187,13 +187,16 @@ class CouncilOfTheAbsoluteTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new BeckCall()));
+        BeckCall physicalCard = new BeckCall();
+        harness.setHand(player2, List.of(physicalCard));
         harness.addMana(player2, ManaColor.WHITE, 5);
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castModalSorcery(player2, 0, 1, List.of());
 
         assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).singleElement().isSameAs(physicalCard);
     }
 
     @Test

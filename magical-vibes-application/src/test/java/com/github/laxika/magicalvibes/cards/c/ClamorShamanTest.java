@@ -21,9 +21,11 @@ class ClamorShamanTest extends BaseCardTest {
     @Test
     @DisplayName("Riot can put a +1/+1 counter on Clamor Shaman")
     void riotAddsCounter() {
-        Permanent shaman = castShaman();
+        castShaman();
 
         harness.handleMayAbilityChosen(player1, true);
+
+        Permanent shaman = findPermanent(player1, "Clamor Shaman");
 
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(shaman.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
@@ -32,9 +34,11 @@ class ClamorShamanTest extends BaseCardTest {
     @Test
     @DisplayName("Declining Riot gives Clamor Shaman haste")
     void riotGivesHasteWhenDeclined() {
-        Permanent shaman = castShaman();
+        castShaman();
 
         harness.handleMayAbilityChosen(player1, false);
+
+        Permanent shaman = findPermanent(player1, "Clamor Shaman");
 
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(shaman.getGrantedKeywords()).contains(Keyword.HASTE);
@@ -64,8 +68,9 @@ class ClamorShamanTest extends BaseCardTest {
     @DisplayName("Riot haste allows Clamor Shaman to attack the turn it enters")
     void riotHasteAllowsImmediateAttack() {
         Permanent opponentCreature = addCreatureReady(player2, new SauroformHybrid());
-        Permanent shaman = castShaman();
+        castShaman();
         harness.handleMayAbilityChosen(player1, false);
+        Permanent shaman = findPermanent(player1, "Clamor Shaman");
 
         declareAttackers(List.of(0));
 
@@ -107,11 +112,13 @@ class ClamorShamanTest extends BaseCardTest {
     @DisplayName("Two instances of riot can each give a +1/+1 counter")
     void rhythmGrantsSecondIndependentRiotCounter() {
         harness.addToBattlefield(player1, new RhythmOfTheWild());
-        Permanent shaman = castShaman();
+        castShaman();
 
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+
+        Permanent shaman = findPermanent(player1, "Clamor Shaman");
 
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(shaman.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
@@ -121,21 +128,23 @@ class ClamorShamanTest extends BaseCardTest {
     @DisplayName("Two instances of riot can give both a counter and haste")
     void rhythmAllowsCounterAndHaste() {
         harness.addToBattlefield(player1, new RhythmOfTheWild());
-        Permanent shaman = castShaman();
+        castShaman();
 
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
+        Permanent shaman = findPermanent(player1, "Clamor Shaman");
+
         assertThat(shaman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(shaman.getGrantedKeywords()).contains(Keyword.HASTE);
     }
 
-    private Permanent castShaman() {
+    private void castShaman() {
         harness.castFromHand(player1, new ClamorShaman(), "{2}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        return gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.assertNotOnBattlefield(player1, "Clamor Shaman");
     }
 }

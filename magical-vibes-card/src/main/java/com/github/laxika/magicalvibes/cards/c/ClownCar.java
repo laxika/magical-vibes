@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -9,6 +10,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RollDiceEffect;
 
@@ -21,6 +24,8 @@ import java.util.Set;
 public class ClownCar extends Card {
 
     public ClownCar() {
+        addActivatedAbility(new ActivatedAbility(false, null,
+                List.of(new CrewCost(2), AnimatePermanentsEffect.crew()), "Crew 2"));
         CreateTokenEffect clownRobot = new CreateTokenEffect(
                 1, "Clown Robot", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.CLOWN, CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT));

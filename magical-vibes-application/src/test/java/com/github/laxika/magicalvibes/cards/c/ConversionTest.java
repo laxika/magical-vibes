@@ -155,7 +155,8 @@ class ConversionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.UPKEEP,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertNotOnBattlefield(player1, "Conversion");
         harness.assertInGraveyard(player1, "Conversion");

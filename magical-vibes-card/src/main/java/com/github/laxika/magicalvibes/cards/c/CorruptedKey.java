@@ -17,6 +17,6 @@ public class CorruptedKey extends Card {
     public CorruptedKey() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceIsTapped(),
-                new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH), GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH), GrantScope.ALL_OWN_CREATURES)));
     }
 }

@@ -135,13 +135,14 @@ class CrushingPainTest extends BaseCardTest {
     @DisplayName("Does not deal damage when the target leaves before resolution")
     void fizzlesWhenTargetIsReturnedToHand() {
         Permanent avatar = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
-        harness.setHand(player1, List.of(new Shock(), new CrushingPain(), new Unsummon()));
+        harness.setHand(player1, List.of(new Shock(), new CrushingPain()));
+        harness.setHand(player2, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, avatar.getId());
 
         harness.castInstant(player1, 0, avatar.getId());
-        harness.castAndResolveInstant(player1, 0, avatar.getId());
+        harness.castAndResolveInstant(player2, 0, avatar.getId());
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Avatar of Might");

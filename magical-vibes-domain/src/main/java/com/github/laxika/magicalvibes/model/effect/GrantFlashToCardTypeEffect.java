@@ -12,7 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * controller — "Any player may cast creature spells … as though they had flash" (Aluren).
  */
 public record GrantFlashToCardTypeEffect(CardPredicate filter, boolean appliesToAllPlayers,
-                                         boolean alternativeCostOnly) implements CardEffect {
+                                         boolean alternativeCostOnly, boolean grantsKeyword) implements CardEffect {
+
+    public GrantFlashToCardTypeEffect(CardPredicate filter, boolean appliesToAllPlayers, boolean alternativeCostOnly) {
+        this(filter, appliesToAllPlayers, alternativeCostOnly, false);
+    }
 
     public GrantFlashToCardTypeEffect(CardPredicate filter, boolean appliesToAllPlayers) {
         this(filter, appliesToAllPlayers, false);

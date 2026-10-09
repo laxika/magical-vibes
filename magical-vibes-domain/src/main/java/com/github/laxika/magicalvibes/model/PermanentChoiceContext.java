@@ -187,7 +187,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TransformChosenPermanent() implements PermanentChoiceContext {}
 
     /** Enchantment Alteration: move the targeted Aura to another permanent of the same type. */
-    record AttachTargetAuraToAnotherPermanentOfSameType(UUID auraPermanentId) implements PermanentChoiceContext {}
+    record AttachTargetAuraToAnotherPermanentOfSameType(UUID auraPermanentId, boolean creaturesOnly)
+            implements PermanentChoiceContext {
+        public AttachTargetAuraToAnotherPermanentOfSameType(UUID auraPermanentId) {
+            this(auraPermanentId, false);
+        }
+    }
 
     /** Simic Guildmage: move the targeted Aura to another permanent controlled by its host's controller. */
     record AttachTargetAuraToAnotherPermanentWithSameController(UUID auraPermanentId)
@@ -3000,5 +3005,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Selects the next creature to connive while a multi-creature effect resolves. */
     record ConniveNextCreatureChoice() implements PermanentChoiceContext {}
+
+    /** Records a non-targeting permanent choice on the resolving stack entry. */
+    record ChosenPermanentReference() implements PermanentChoiceContext {}
 
 }

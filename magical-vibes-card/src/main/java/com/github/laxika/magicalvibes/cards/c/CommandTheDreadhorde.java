@@ -25,9 +25,9 @@ public class CommandTheDreadhorde extends Card {
                 new CardTypePredicate(CardType.PLANESWALKER)));
 
         target(new GraveyardCardPredicateTargetFilter(creatureOrPlaneswalker,
-                GraveyardSearchScope.ALL_GRAVEYARDS), 0, 99)
+                GraveyardSearchScope.ALL_GRAVEYARDS), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL,
-                        new DealDamageToPlayersEffect(new TargetCardsManaValueSum(), DamageRecipient.CONTROLLER))
+                        new DealDamageToPlayersEffect(new TargetCardsManaValueSum(true), DamageRecipient.CONTROLLER))
                 .addEffect(EffectSlot.SPELL,
                         ReturnTargetCardsFromGraveyardToBattlefieldEffect.fromAllGraveyards(creatureOrPlaneswalker));
     }

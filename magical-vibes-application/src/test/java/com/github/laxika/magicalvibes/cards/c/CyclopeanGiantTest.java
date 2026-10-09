@@ -79,11 +79,9 @@ class CyclopeanGiantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.effectiveBasicLandTypes(gd, expanse)).containsExactly(CardSubtype.SWAMP);
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
-
-        harness.tapPermanent(player2, 0);
+        harness.activateAbility(player2, 0, null, null);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(expanse);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
     }

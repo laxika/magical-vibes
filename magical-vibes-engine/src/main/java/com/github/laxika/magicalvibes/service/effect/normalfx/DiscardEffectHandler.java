@@ -39,6 +39,10 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService cardChoiceHandlerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -223,23 +227,35 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        // Chosen discards: build the APNAP-ordered chooser queue (active player first) and start
-        // the first player's discard; the remainder rides the discard choice.
-        List<UUID> choosers = new ArrayList<>();
-        if (!opponentsOnly || !activePlayerId.equals(controllerId)) {
-            choosers.add(activePlayerId);
-        }
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(activePlayerId)) {
-                continue;
+        var state = gameData.eachPlayerRummage;
+        if (!state.active) {
+            state.active = true;
+            state.deferDiscards = true;
+            if (!opponentsOnly || !activePlayerId.equals(controllerId)) state.remaining.add(activePlayerId);
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (!playerId.equals(activePlayerId) && (!opponentsOnly || !playerId.equals(controllerId))) {
+                    state.remaining.add(playerId);
+                }
             }
-            if (opponentsOnly && playerId.equals(controllerId)) {
-                continue;
-            }
-            choosers.add(playerId);
         }
-        playerInteractionSupport.startNextEachPlayerDiscard(gameData,
-                DiscardFollowUp.eachPlayer(choosers, controllerId, amount));
+        while (!state.remaining.isEmpty()) {
+            UUID playerId = state.remaining.removeFirst();
+            List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+            if (hand.isEmpty() || !playerId.equals(controllerId)
+                    && gameQueryService.isDiscardPrevented(gameData, playerId)) continue;
+            int count = Math.min(amount, hand.size());
+            if (count <= 0) continue;
+            state.currentPlayerId = playerId;
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            playerInputService.beginDiscardChoice(gameData, playerId,
+                    java.util.stream.IntStream.range(0, hand.size()).boxed().toList(),
+                    "Choose cards to discard.", count, DiscardFollowUp.NONE);
+            return;
+        }
+        var selected = List.copyOf(state.selectedDiscards);
+        state.reset();
+        cardChoiceHandlerService.discardCollectedCards(gameData, selected, controllerId);
+        gameData.rerunCurrentEffectAfterInteraction = false;
     }
 
     private void discardRandomForPlayer(GameData gameData, UUID playerId, UUID controllerId,

@@ -20,7 +20,8 @@ public class CreativeTechnique extends Card {
         addEffect(EffectSlot.SPELL, SequenceEffect.of(
                 new ShuffleLibraryEffect(false),
                 new RevealUntilCardPredicateMayCastWithoutPayingManaEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)))));
+                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                        false, null, true)));
         addEffect(EffectSlot.ON_SELF_CAST,
                 new MayEffect(new DemonstrateEffect(), "Copy Creative Technique?"));
     }

@@ -991,6 +991,15 @@ public class DamagePreventionService {
         return Math.min(damage, reduction);
     }
 
+    private int sharedCombatPreventionAmount(GameData gameData, UUID damageSourceId,
+                                              UUID preventionSourceId, UUID recipientId,
+                                              int defaultAmount, boolean combatDamage) {
+        if (!combatDamage || damageSourceId == null) return defaultAmount;
+        var sourceAllocations = gameData.combatSharedDamagePreventionAllocations.get(damageSourceId);
+        if (sourceAllocations == null || !sourceAllocations.containsKey(preventionSourceId)) return defaultAmount;
+        return sourceAllocations.get(preventionSourceId).getOrDefault(recipientId, 0);
+    }
+
     private int evaluatePerSourceControllerAndCreaturesDamagePrevention(
             GameData gameData, UUID controllerId, int damage, boolean combatDamage, Permanent damageSource,
             Permanent protectedCreature) {
@@ -1016,8 +1025,10 @@ public class DamagePreventionService {
                 } else if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
                         && (!prevention.combatOnly() || combatDamage)
                         && (!prevention.creatureSourcesOnly() || gameQueryService.isCreature(gameData, damageSource))) {
-                    reduction += amountEvaluationService.evaluate(gameData, prevention.amount(),
+                    int amount = amountEvaluationService.evaluate(gameData, prevention.amount(),
                             AmountContext.forStaticEffect(source, controllerId));
+                    reduction += sharedCombatPreventionAmount(gameData, damageSource.getId(), source.getId(),
+                            protectedCreature.getId(), amount, combatDamage);
                 }
             }
         }
@@ -2713,6 +2724,15 @@ public class DamagePreventionService {
     public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage,
                                                               boolean sourceIsCreature, boolean sourceIsArtifact,
                                                               Set<CardColor> sourceColors, boolean combatDamage) {
+        return applyControllerFixedPerSourceDamagePrevention(gameData, playerId, damage, sourceIsCreature,
+                sourceIsArtifact, sourceColors, combatDamage, null);
+    }
+
+    /** Applies per-source prevention using a player's selected division when present. */
+    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage,
+                                                              boolean sourceIsCreature, boolean sourceIsArtifact,
+                                                              Set<CardColor> sourceColors, boolean combatDamage,
+                                                              UUID damageSourceId) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
         if (damage <= 0) return 0;
 
@@ -2734,8 +2754,10 @@ public class DamagePreventionService {
                 } else if (effect instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
                         && (!prevention.combatOnly() || combatDamage)
                         && (!prevention.creatureSourcesOnly() || sourceIsCreature)) {
-                    reduction += amountEvaluationService.evaluate(gameData, prevention.amount(),
+                    int amount = amountEvaluationService.evaluate(gameData, prevention.amount(),
                             AmountContext.forStaticEffect(permanent, playerId));
+                    reduction += sharedCombatPreventionAmount(gameData, damageSourceId, permanent.getId(),
+                            playerId, amount, combatDamage);
                 }
             }
         }

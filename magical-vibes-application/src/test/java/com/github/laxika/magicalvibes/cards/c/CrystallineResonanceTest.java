@@ -120,7 +120,7 @@ class CrystallineResonanceTest extends BaseCardTest {
         cycleCard();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bears.getId());
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -131,7 +131,7 @@ class CrystallineResonanceTest extends BaseCardTest {
 
         cycleCard(player2);
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gqs.isCreature(gd, resonance)).isFalse();
         harness.assertInHand(player2, "Grizzly Bears");
     }
@@ -209,6 +209,6 @@ class CrystallineResonanceTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         Player nextPlayer = activePlayer == player1 ? player2 : player1;
-        harness.passUntil(nextPlayer, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(nextPlayer, TurnStep.UPKEEP);
     }
 }

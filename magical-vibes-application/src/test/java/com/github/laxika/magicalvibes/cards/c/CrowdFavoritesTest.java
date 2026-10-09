@@ -70,7 +70,7 @@ class CrowdFavoritesTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, crowdFavorites)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, crowdFavorites)).isEqualTo(9);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, crowdFavorites)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, crowdFavorites)).isEqualTo(4);
@@ -111,7 +111,7 @@ class CrowdFavoritesTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, crowdFavorites)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, crowdFavorites)).isEqualTo(14);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectiveToughness(gd, crowdFavorites)).isEqualTo(4);
     }

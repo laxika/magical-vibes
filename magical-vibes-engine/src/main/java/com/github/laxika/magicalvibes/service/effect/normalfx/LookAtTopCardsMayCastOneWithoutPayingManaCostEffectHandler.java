@@ -54,8 +54,8 @@ public class LookAtTopCardsMayCastOneWithoutPayingManaCostEffectHandler
         AmountContext context = AmountContext.forStackEntry(entry, source);
         int lookCount = Math.max(0, amountEvaluationService.evaluate(
                 gameData, topCardsEffect.lookCount(), context));
-        int maxManaValue = Math.max(0, amountEvaluationService.evaluate(
-                gameData, topCardsEffect.maxManaValue(), context));
+        int maxManaValue = amountEvaluationService.evaluate(
+                gameData, topCardsEffect.maxManaValue(), context);
 
         if (lookCount == 0) {
             return;

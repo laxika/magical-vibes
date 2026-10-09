@@ -731,7 +731,16 @@ public class InteractionPromptProjectionRegistry {
             PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                interaction.validCardIds().stream().map(cardId -> {
+                    ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+                    if (exiled == null) return null;
+                    boolean visible = !exiled.faceDown()
+                            || interaction.playerId().equals(gameData.exileLookPermissions.get(cardId))
+                            || gameData.additionalExileLookPermissions.getOrDefault(cardId, java.util.Set.of())
+                                    .contains(interaction.playerId());
+                    return visible ? cardViewFactory.create(exiled.card())
+                            : CardView.builder().id(cardId).name("Face-down card").build();
+                }).filter(java.util.Objects::nonNull).toList(),
                 1,
                 "Choose a card an opponent owns from exile to put into that player's graveyard as an activation cost.");
     }
@@ -1663,10 +1672,7 @@ public class InteractionPromptProjectionRegistry {
         }
         Map<UUID, Card> cardsById = interaction.allCards().stream()
                 .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
-        List<CardView> cardViews = interaction.validCardIds().stream()
-                .map(cardsById::get)
-                .map(cardViewFactory::create)
-                .toList();
+        List<CardView> cardViews = cardViews(interaction.allCards());
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
                 cardViews,

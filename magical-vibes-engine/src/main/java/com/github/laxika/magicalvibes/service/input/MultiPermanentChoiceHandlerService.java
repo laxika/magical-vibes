@@ -336,6 +336,10 @@ public class MultiPermanentChoiceHandlerService {
         if (permanentIds.size() > maxCount) {
             throw new IllegalStateException("Too many permanents selected: " + permanentIds.size() + " > " + maxCount);
         }
+        if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.ChooseFivePermanentsSearchSameNameToBattlefieldTapped
+                && permanentIds.size() != maxCount) {
+            throw new IllegalStateException("Exactly " + maxCount + " permanents must be selected");
+        }
         if (multiPermanentChoice.context() instanceof MultiPermanentChoiceContext.FadeAwayKeep keep) {
             var pool = new com.github.laxika.magicalvibes.model.ManaPool(gameData.playerManaPools.get(playerId));
             var cost = new com.github.laxika.magicalvibes.model.ManaCost(keep.manaCost());
@@ -2437,7 +2441,10 @@ public class MultiPermanentChoiceHandlerService {
                     gameData.playerIdToName.get(playerId) + " chooses no permanents."));
         } else if (librarySearchSupport.startNextSameNamePick(gameData, playerId,
                 LibrarySearchFollowUp.sameNamePicks(names, false,
-                        com.github.laxika.magicalvibes.model.LibrarySearchDestination.BATTLEFIELD_TAPPED))) {
+                        com.github.laxika.magicalvibes.model.LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                        .withRemainingSameNamePicks(new LibrarySearchFollowUp.SameNamePickQueue(names, false,
+                                com.github.laxika.magicalvibes.model.LibrarySearchDestination.BATTLEFIELD_TAPPED,
+                                null, null, false, true, List.of())))) {
             // A same-name search is now active; it resumes effect resolution on completion.
             return;
         } else if (!librarySearchSupport.isSearchPrevented(gameData, playerId)) {

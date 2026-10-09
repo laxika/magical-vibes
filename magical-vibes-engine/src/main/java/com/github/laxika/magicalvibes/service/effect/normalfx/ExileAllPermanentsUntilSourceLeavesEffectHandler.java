@@ -47,6 +47,10 @@ public class ExileAllPermanentsUntilSourceLeavesEffectHandler implements NormalE
         UUID sourcePermanentId = entry.getSourcePermanentId() != null
                 ? entry.getSourcePermanentId()
                 : findSourcePermanentId(gameData, entry);
+        if (e.requiresSourcePresent() && (sourcePermanentId == null
+                || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null)) {
+            return;
+        }
         if (sourcePermanentId == null) {
             log.info("Game {} - Source permanent for {} no longer on battlefield, exile without return tracking",
                     gameData.id, entry.getCard().getName());

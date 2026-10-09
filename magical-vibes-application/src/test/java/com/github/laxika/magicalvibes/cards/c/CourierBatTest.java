@@ -84,7 +84,7 @@ class CourierBatTest extends BaseCardTest {
     @DisplayName("Opponent's life gain does not enable the trigger")
     void opponentLifeGainDoesNotEnableTrigger() {
         harness.setGraveyard(player1, List.of(new DoomedDissenter()));
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 1));
 
         castCourierBat();
 
@@ -102,7 +102,7 @@ class CourierBatTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new CourierBat(), "{2}{B}");
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
@@ -118,7 +118,7 @@ class CourierBatTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new DoomedDissenter()));
         castCourierBat();
 
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();

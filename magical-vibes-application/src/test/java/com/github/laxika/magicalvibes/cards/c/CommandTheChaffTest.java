@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HelmOfAwakening;
 import com.github.laxika.magicalvibes.cards.s.SilvergillAdept;
+import com.github.laxika.magicalvibes.cards.s.SphereOfResistance;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CommandTheChaff.class, GrizzlyBears.class, Forest.class, SilvergillAdept.class})
+@CardUsed({CommandTheChaff.class, GrizzlyBears.class, Forest.class, SilvergillAdept.class,
+        HelmOfAwakening.class, SphereOfResistance.class})
 class CommandTheChaffTest extends BaseCardTest {
 
     @Test
@@ -131,6 +134,48 @@ class CommandTheChaffTest extends BaseCardTest {
         assertThat(gd.playerSideboards.get(player2.getId())).containsExactly(adept);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == adept);
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard() == adept);
+    }
+
+    @Test
+    void canPayMandatoryAdditionalManaCost() {
+        SilvergillAdept adept = new SilvergillAdept();
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(adept)));
+        castCommandTheChaff();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerSideboards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == adept);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void appliesCostReductionsAndTaxesToAdditionalManaCost() {
+        SilvergillAdept adept = new SilvergillAdept();
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(adept)));
+        castCommandTheChaff();
+        harness.addToBattlefield(player1, new HelmOfAwakening());
+        harness.addToBattlefield(player1, new HelmOfAwakening());
+        harness.addToBattlefield(player2, new SphereOfResistance());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerSideboards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == adept);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void canRevealMatchingHandCardForMandatoryAdditionalCost() {
+        SilvergillAdept adept = new SilvergillAdept();
+        SilvergillAdept reveal = new SilvergillAdept();
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(adept)));
+        castCommandTheChaff();
+        harness.setHand(player1, List.of(reveal));
+        harness.clearMessages();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerSideboards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == adept);
+        harness.assertInHand(player1, "Silvergill Adept");
+        assertThat(harness.getConn2().getMessagesContaining(reveal.getId().toString())).isNotEmpty();
     }
 
     private CommandTheChaff castCommandTheChaff() {

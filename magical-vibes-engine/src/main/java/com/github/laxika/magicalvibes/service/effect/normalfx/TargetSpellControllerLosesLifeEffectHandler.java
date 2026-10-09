@@ -41,6 +41,9 @@ public class TargetSpellControllerLosesLifeEffectHandler implements NormalEffect
             }
         }
         UUID targetingSpellControllerId = entry.getTriggeringPermanentControllerId();
+        if (targetingSpellControllerId == null) {
+            targetingSpellControllerId = entry.getCounteredSpellControllerId();
+        }
         if (targetingSpellControllerId != null) {
             int amount = amountEvaluationService.evaluate(
                     gameData, e.amount(), AmountContext.forStackEntry(entry, null));

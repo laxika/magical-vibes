@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class CollectiveBlessing extends Card {
 
     public CollectiveBlessing() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ALL_OWN_CREATURES));
     }
 }

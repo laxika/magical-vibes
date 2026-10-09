@@ -39,13 +39,13 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
         List<UUID> landIds = cleansing.remainingLandIds().isEmpty()
                 ? landsInApnapOrder(gameData)
                 : cleansing.remainingLandIds();
-        beginNextLand(gameData, entry.getCard(), cleansing.lifeCost(), landIds);
+        beginNextLand(gameData, entry.getCard(), cleansing.lifeCost(), landIds, cleansing.unprotectedLandIds());
     }
 
     public void continueAfterDecision(GameData gameData, DestroyLandsUnlessAnyPlayerPaysLifeEffect effect,
                                       Card sourceCard, boolean paid) {
         if (paid) {
-            beginNextLand(gameData, sourceCard, effect.lifeCost(), effect.remainingLandIds());
+            beginNextLand(gameData, sourceCard, effect.lifeCost(), effect.remainingLandIds(), effect.unprotectedLandIds());
             return;
         }
 
@@ -55,12 +55,14 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
     public boolean canPayLife(GameData gameData, UUID playerId, int lifeCost) {
         return gameData.playerIds.contains(playerId)
                 && gameQueryService.canPlayerLifeChange(gameData, playerId)
+                && gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameData.getLife(playerId) >= lifeCost;
     }
 
     private void beginNextLand(GameData gameData, Card sourceCard,
-                               int lifeCost, List<UUID> landIds) {
+                               int lifeCost, List<UUID> landIds, List<UUID> unprotectedLandIds) {
         List<UUID> remainingLandIds = new ArrayList<>(landIds);
+        List<UUID> unprotected = new ArrayList<>(unprotectedLandIds);
         while (!remainingLandIds.isEmpty()) {
             UUID landId = remainingLandIds.removeFirst();
             Permanent land = gameQueryService.findPermanentById(gameData, landId);
@@ -69,12 +71,15 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
             }
 
             var effect = new DestroyLandsUnlessAnyPlayerPaysLifeEffect(
-                    lifeCost, remainingLandIds, landId, apnapOrder(gameData));
+                    lifeCost, remainingLandIds, landId, apnapOrder(gameData), unprotected);
             if (offerNextPayer(gameData, sourceCard, effect)) {
                 return;
             }
-            destroyLand(gameData, sourceCard, landId);
+            unprotected.add(landId);
         }
+        destructionSupport.destroyBatch(gameData, unprotected.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull).toList(), sourceCard.getName(), false);
     }
 
     private void offerOrDestroyCurrentLand(GameData gameData,
@@ -84,10 +89,11 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
         if (land != null && offerNextPayer(gameData, sourceCard, effect)) {
             return;
         }
+        List<UUID> unprotected = new ArrayList<>(effect.unprotectedLandIds());
         if (land != null) {
-            destroyLand(gameData, sourceCard, effect.currentLandId());
+            unprotected.add(effect.currentLandId());
         }
-        beginNextLand(gameData, sourceCard, effect.lifeCost(), effect.remainingLandIds());
+        beginNextLand(gameData, sourceCard, effect.lifeCost(), effect.remainingLandIds(), unprotected);
     }
 
     private boolean offerNextPayer(GameData gameData,
@@ -105,7 +111,7 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
             }
             var nextEffect = new DestroyLandsUnlessAnyPlayerPaysLifeEffect(
                     effect.lifeCost(), effect.remainingLandIds(), effect.currentLandId(),
-                    payerIds.subList(i + 1, payerIds.size()));
+                    payerIds.subList(i + 1, payerIds.size()), effect.unprotectedLandIds());
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     sourceCard,
                     payerId,
@@ -116,14 +122,6 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
             return true;
         }
         return false;
-    }
-
-    private void destroyLand(GameData gameData, Card sourceCard,
-                             UUID landId) {
-        Permanent land = gameQueryService.findPermanentById(gameData, landId);
-        if (land != null) {
-            destructionSupport.tryDestroyAndLog(gameData, land, sourceCard.getName());
-        }
     }
 
     private List<UUID> landsInApnapOrder(GameData gameData) {

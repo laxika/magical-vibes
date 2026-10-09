@@ -32,8 +32,8 @@ public class CompellingDeterrence extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
         )).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandThenEffect(
-                new DiscardEffect(1, DiscardRecipient.CONTROLLER),
-                ThenEffectRecipient.TARGET_OWNER,
+                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                ThenEffectRecipient.TARGET_OWNER_AS_TARGET,
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))));
     }
 }

@@ -132,6 +132,7 @@ class CodecrackerHoundTest extends BaseCardTest {
 
     @Test
     void warpedCardCanBeCastOnALaterTurnAndStaysOnTheBattlefield() {
+        harness.setHand(player2, List.of());
         CodecrackerHound hound = new CodecrackerHound();
         harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of(hound));

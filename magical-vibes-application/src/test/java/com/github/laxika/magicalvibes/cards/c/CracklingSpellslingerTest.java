@@ -101,9 +101,10 @@ class CracklingSpellslingerTest extends BaseCardTest {
     @Test
     @DisplayName("An unused storm grant expires at the end of the turn")
     void unusedGrantExpires() {
+        harness.setHand(player2, List.of());
         castSpellslinger();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new SolRing(), "{1}");
         resolveAllTriggers();
         harness.castFromHand(player1, new ElementalEruption(), "{4}{R}{R}");

@@ -163,6 +163,11 @@ class CribSwapTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(target);
         gd.playerBattlefields.get(player1.getId()).add(target);
         gd.stolenCreatures.put(target.getId(), player2.getId());
+        gd.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
+                java.util.UUID.randomUUID(), null, null, player1.getId(),
+                new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
+                        com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                target.getId(), null, null, com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, 0));
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(creature);

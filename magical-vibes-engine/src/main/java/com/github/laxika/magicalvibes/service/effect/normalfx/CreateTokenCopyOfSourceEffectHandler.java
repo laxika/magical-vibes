@@ -108,6 +108,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         tokenCard.setColors(List.of(e.colorOverride()));
                     } else {
                         tokenCard.setColor(sourceCard.getColor());
+                        tokenCard.setColors(sourceCard.getColors());
                     }
                     tokenCard.setLoyalty(sourceCard.getLoyalty());
                     // Embalm keeps the source's P/T; Eternalize sets a fixed base P/T (e.g. a 4/4).

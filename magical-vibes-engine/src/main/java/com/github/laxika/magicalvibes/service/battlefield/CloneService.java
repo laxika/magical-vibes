@@ -681,6 +681,13 @@ public class CloneService {
             perm.tap();
         }
 
+        if (copiedCard != null && prepareCloneReplacementEffect(gameData, controllerId,
+                perm.getCard(), etbTargetId, xValue, perm.getOriginalCard(), transformed)) {
+            gameData.cloneOperation.preparedPermanent = perm;
+            gameData.cloneOperation.battlefieldEntryBatch = battlefieldEntryBatch;
+            return;
+        }
+
         if (battlefieldEntryBatch != null) {
             List<StackEntry> triggers = new ArrayList<>();
             if (exileCopiedGraveyardCard && targetCard != null) {

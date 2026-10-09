@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -51,7 +53,9 @@ class CutthroatContenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, contender)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, contender)).isEqualTo(1);
@@ -60,14 +64,16 @@ class CutthroatContenderTest extends BaseCardTest {
     @Test
     @DisplayName("The activation limit resets on a new turn")
     void activationLimitResetsOnNewTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addReadyContender(player1);
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 

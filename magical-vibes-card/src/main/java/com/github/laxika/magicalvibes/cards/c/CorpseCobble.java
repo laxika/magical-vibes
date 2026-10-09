@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +26,7 @@ public class CorpseCobble extends Card {
         addEffect(EffectSlot.SPELL, new SacrificeAnyNumberOfPermanentsCost(
                 new PermanentIsCreaturePredicate(), true));
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(
-                CardType.CREATURE, new XValue(), "Zombie", new XValue(), new XValue(), CardColor.BLUE,
+                CardType.CREATURE, new Fixed(1), "Zombie", new XValue(), new XValue(), CardColor.BLUE,
                 Set.of(CardColor.BLUE, CardColor.BLACK), List.of(CardSubtype.ZOMBIE), Set.of(Keyword.MENACE),
                 Set.of(), false, false, Map.of(), List.of(), false, false, false, 0, Set.of(), Set.of()));
         addCastingOption(new FlashbackCast("{3}{U}{B}"));

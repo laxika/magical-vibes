@@ -36,19 +36,21 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getSourcePermanentId() == null || entry.getTargetId() == null) {
-            return;
-        }
-
+        BecomeCopyOfTargetCreaturePermanentlyEffect copyEffect =
+                (BecomeCopyOfTargetCreaturePermanentlyEffect) effect;
+        List<java.util.UUID> boundTargets = entry.targetsForBoundEffectGroup(copyEffect);
+        java.util.UUID targetId = boundTargets != null
+                ? boundTargets.isEmpty() ? null : boundTargets.getFirst()
+                : entry.getTargetId() != null ? entry.getTargetId()
+                : entry.getTargetIds().isEmpty() ? null : entry.getTargetIds().getFirst();
+        if (entry.getSourcePermanentId() == null || targetId == null) return;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (source == null || target == null) {
             log.info("Game {} - Creature-copy source or target no longer on the battlefield", gameData.id);
             return;
         }
 
-        BecomeCopyOfTargetCreaturePermanentlyEffect copyEffect =
-                (BecomeCopyOfTargetCreaturePermanentlyEffect) effect;
         Card originalCard = source.getCard();
         EffectRegistration retainedRegistration = findRetainedRegistration(originalCard, copyEffect);
         var additionalRetainedRegistrations = copyEffect.additionalRetainedEffectSlots().stream()
