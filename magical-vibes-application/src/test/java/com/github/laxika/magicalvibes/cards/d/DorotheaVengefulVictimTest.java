@@ -218,7 +218,7 @@ class DorotheaVengefulVictimTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         castWithDisturb(creature);
         Permanent sorin = harness.addToBattlefieldAndReturn(player2, new SorinTheMirthless());
-        sorin.addCounters(CounterType.LOYALTY, 4);
+        sorin.setCounterCount(CounterType.LOYALTY, 4);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(player1, List.of(0));

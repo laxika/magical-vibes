@@ -2995,8 +2995,9 @@ public class CombatDamageService {
                         delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
-                        List.of(delayed.triggerEffect()));
-                trigger.setSourcePermanentId(delayed.sourcePermanentId());
+                        List.of(delayed.triggerEffect()),
+                        (UUID) null,
+                        delayed.sourcePermanentId());
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));

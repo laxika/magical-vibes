@@ -71,8 +71,8 @@ class DeathToOurEnemiesTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bear.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleColorChosen(player1, "3");
-        harness.handleColorChosen(player1, "4");
+        harness.handleListChoice(player1, "3");
+        harness.handleListChoice(player1, "4");
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);

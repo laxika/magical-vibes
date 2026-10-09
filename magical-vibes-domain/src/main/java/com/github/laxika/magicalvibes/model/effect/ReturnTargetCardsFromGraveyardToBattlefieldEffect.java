@@ -235,7 +235,9 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                                                               int sacrificeAtEndStepIfManaValueAtLeast,
                                                               boolean attachToSourceHost,
                                                               boolean underOwnersControl,
-                                                              boolean randomlyReturnTwoAndPutRestOnBottom) {
+                                                              boolean randomlyReturnTwoAndPutRestOnBottom,
+                                                              AnimatePermanentsEffect entryAnimation,
+                                                              Condition entryAnimationCondition) {
         if (maxTargets < 0) {
             throw new IllegalArgumentException("maxTargets cannot be negative");
         }
@@ -268,6 +270,8 @@ public record ReturnTargetCardsFromGraveyardToBattlefieldEffect(
         this.attachToSourceHost = attachToSourceHost;
         this.underOwnersControl = underOwnersControl;
         this.randomlyReturnTwoAndPutRestOnBottom = randomlyReturnTwoAndPutRestOnBottom;
+        this.entryAnimation = entryAnimation;
+        this.entryAnimationCondition = entryAnimationCondition;
     }
 
     public ReturnTargetCardsFromGraveyardToBattlefieldEffect(CardPredicate filter, int maxTargets,

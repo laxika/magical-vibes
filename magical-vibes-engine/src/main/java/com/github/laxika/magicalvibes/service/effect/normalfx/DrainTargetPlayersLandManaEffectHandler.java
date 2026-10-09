@@ -110,7 +110,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
                 entry, remainingLandIds);
         gameData.pendingInteractions.addLast(continuation);
         var player = new com.github.laxika.magicalvibes.model.Player(playerId,
-                gameData.playerNames.get(gameData.playerIds.indexOf(playerId)));
+                gameData.playerIdToName.get(playerId));
         if (abilityIndex == -1) abilityActivationService.tapPermanent(gameData, player, permanentIndex);
         else abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, null);
         if (!gameData.interaction.isAwaitingInput()) {
