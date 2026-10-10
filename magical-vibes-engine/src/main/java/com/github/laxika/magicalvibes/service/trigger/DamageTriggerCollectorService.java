@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardI
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -87,7 +88,6 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -110,7 +110,6 @@ public class DamageTriggerCollectorService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
     private final ConditionEvaluationService conditionEvaluationService;
 
     @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class,
@@ -500,18 +499,23 @@ public class DamageTriggerCollectorService {
         TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
         var gameData = match.gameData();
 
-        // Re-check source is still on the battlefield
         Permanent currentSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
         if (currentSource == null) return false;
 
-        // Bounce the source to its owner's hand
-        if (permanentRemovalService.removePermanentToHand(gameData, currentSource)) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
-                    " triggers — ", currentSource.getCard(), " is returned to its owner's hand."));
-            log.info("Game {} - {} triggers, bouncing {} to owner's hand",
-                    gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
-        }
+        Permanent watcher = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(ReturnToHandEffect.target())),
+                currentSource.getId(),
+                watcher.getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers, returning {} to owner's hand",
+                gameData.id, watcher.getCard().getName(), currentSource.getCard().getName());
         return true;
     }
 

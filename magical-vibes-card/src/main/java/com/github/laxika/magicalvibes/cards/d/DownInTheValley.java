@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -31,8 +32,9 @@ public class DownInTheValley extends Card {
     public DownInTheValley() {
         addEffect(EffectSlot.SAGA_CHAPTER_I,
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, GrantEffectToTargetEffect.toSourcePermanent(
-                EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, ELF_TOKEN));
+        addEffect(EffectSlot.SAGA_CHAPTER_II, new GrantEffectToTargetEffect(
+                EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, ELF_TOKEN, EffectDuration.PERMANENT, false,
+                GrantScope.SELF));
         addBuffChapter(EffectSlot.SAGA_CHAPTER_III);
         addBuffChapter(EffectSlot.SAGA_CHAPTER_IV);
     }

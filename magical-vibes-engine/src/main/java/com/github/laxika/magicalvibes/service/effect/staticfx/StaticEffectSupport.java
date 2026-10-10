@@ -170,7 +170,8 @@ public class StaticEffectSupport {
         if (scope == GrantScope.OWN_UNTAPPED_CREATURES) {
             if (!context.targetOnSameBattlefield() || context.target().isTapped()) return false;
             boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts);
+            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
+                    && matchesStaticFilter(context, context.target(), filter);
         }
         if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesUnlessControllersDrawEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTargetCreaturesUnlessControllersDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Component;
 public class ReturnTargetCreaturesUnlessControllersDrawHandler implements MayEffectHandlerBean {
 
     private final ReturnTargetCreaturesUnlessControllersDrawEffectHandler effectHandler;
-    private final PlayerInteractionSupport playerInteractionSupport;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -26,14 +24,7 @@ public class ReturnTargetCreaturesUnlessControllersDrawHandler implements MayEff
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        var effect = (ReturnTargetCreaturesUnlessControllersDrawEffect) ability.effects().getFirst();
-        if (accepted) {
-            playerInteractionSupport.applyDrawCards(gameData, effect.abilityControllerId(), 1);
-        } else {
-            effectHandler.returnTargetCreature(gameData, ability);
-        }
-
-        effectHandler.continueWithRemainingTargets(gameData, ability.sourceCard(), effect);
+        effectHandler.continueAfterChoice(gameData, ability, accepted);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

@@ -16,8 +16,10 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -66,6 +68,8 @@ public class CharacteristicState {
     private boolean protectionRemoved;
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedStaticEffects = new ArrayList<>();
+    /** Granted effects that are rules restrictions rather than abilities; they survive "loses all abilities". */
+    private final Set<CardEffect> nonAbilityEffects = Collections.newSetFromMap(new IdentityHashMap<>());
     @Setter private int basePower;
     @Setter private int baseToughness;
     /** Additive layer-7c contribution (boosts and +1/+1 / -1/-1 counters). */
@@ -192,6 +196,7 @@ public class CharacteristicState {
         this.protectionRemoved = source.protectionRemoved;
         this.grantedActivatedAbilities.addAll(source.grantedActivatedAbilities);
         this.grantedStaticEffects.addAll(source.grantedStaticEffects);
+        this.nonAbilityEffects.addAll(source.nonAbilityEffects);
         this.basePower = source.basePower;
         this.baseToughness = source.baseToughness;
         this.powerDelta = source.powerDelta;
@@ -375,6 +380,12 @@ public class CharacteristicState {
         grantedStaticEffects.add(effect);
     }
 
+    /** Adds a rules restriction that is not an ability, so a later "loses all abilities" does not remove it. */
+    public void addNonAbilityEffect(CardEffect effect) {
+        nonAbilityEffects.add(effect);
+        grantedStaticEffects.add(effect);
+    }
+
     /**
      * Applies a "loses all abilities" effect: clears every ability accumulated so far (printed
      * and granted, including protection). Grants applied afterwards (later timestamps) stick.
@@ -388,7 +399,7 @@ public class CharacteristicState {
         blockedKeywords.clear();
         protectionColors.clear();
         grantedActivatedAbilities.clear();
-        grantedStaticEffects.clear();
+        grantedStaticEffects.removeIf(effect -> !nonAbilityEffects.contains(effect));
         this.losesAllAbilities = true;
         this.losesAllAbilitiesTimestamp = timestamp;
     }
@@ -409,7 +420,7 @@ public class CharacteristicState {
         blockedKeywords.clear();
         protectionColors.clear();
         grantedActivatedAbilities.removeIf(ability -> !ability.isManaAbility());
-        grantedStaticEffects.clear();
+        grantedStaticEffects.removeIf(effect -> !nonAbilityEffects.contains(effect));
         this.losesAllNonManaAbilities = true;
         this.losesAllNonManaAbilitiesTimestamp = timestamp;
     }

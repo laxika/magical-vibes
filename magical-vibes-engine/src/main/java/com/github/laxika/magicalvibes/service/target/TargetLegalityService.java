@@ -3244,7 +3244,7 @@ public class TargetLegalityService {
             List<UUID> targetIds = entry.getDeclaredTargetIds();
             boolean anyLegalTarget = false;
             for (int i = 0; i < targetIds.size(); i++) {
-                if (gameQueryService.findPermanentById(gameData, targetIds.get(i)) != null) {
+                if (isAttackCounterMoveTargetLegal(gameData, entry, i, targetIds.get(i))) {
                     anyLegalTarget = true;
                 } else {
                     entry.markTargetIllegal(i);
@@ -3350,6 +3350,15 @@ public class TargetLegalityService {
                 if (legal) {
                     targetLegal[i] = true;
                 } else {
+                    entry.markTargetIllegal(i);
+                }
+            }
+
+            for (int i = 0; i < declaredTargetIds.size(); i++) {
+                UUID controllerAtCast = entry.getTargetControllersAtCast().get(declaredTargetIds.get(i));
+                if (targetLegal[i] && controllerAtCast != null && !controllerAtCast.equals(
+                        gameQueryService.findPermanentController(gameData, declaredTargetIds.get(i)))) {
+                    targetLegal[i] = false;
                     entry.markTargetIllegal(i);
                 }
             }
@@ -3642,6 +3651,24 @@ public class TargetLegalityService {
         return targetFizzled;
     }
 
+    /**
+     * Attack counter-move targets (Decimator Beetle): the first target must still be a creature the
+     * attacking player's trigger controller controls, the second a creature the defending player still
+     * controls (the defending player is recorded as the entry's required target controller).
+     */
+    private boolean isAttackCounterMoveTargetLegal(GameData gameData, StackEntry entry, int targetIndex,
+                                                   UUID targetId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+            return false;
+        }
+        UUID requiredControllerId = targetIndex == 0
+                ? entry.getControllerId()
+                : entry.getRequiredTargetControllerId();
+        return requiredControllerId != null
+                && requiredControllerId.equals(gameQueryService.findPermanentController(gameData, targetId));
+    }
+
     private boolean isExiledCardLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId,
                                                    List<CardEffect> exiledTargetEffects) {
         return targetValidationService.checkEffectTargets(
@@ -3715,6 +3742,9 @@ public class TargetLegalityService {
     private boolean isTargetCardLegalOnResolution(GameData gameData, StackEntry entry, UUID cardId) {
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (card != null) {
+            if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
+                return false;
+            }
             List<ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect> chosenTypeEffects =
                     entry.getEffectsToResolve().stream()
                             .filter(ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect.class::isInstance)
@@ -4203,6 +4233,17 @@ public class TargetLegalityService {
         return target.getCard().getName() + " can't be targeted by this source";
     }
 
+    /**
+     * Whether effects such as Detection Tower let {@code sourcePlayerId} target the opponent's permanent as
+     * though it didn't have hexproof. "Hexproof from [quality]" is a hexproof ability, so it is lifted too
+     * (CR 702.11d, 702.11e).
+     */
+    public boolean opponentHexproofLifted(GameData gameData, Permanent target, UUID sourcePlayerId) {
+        return gameQueryService.ignoresOpponentPermanentHexproof(gameData, sourcePlayerId)
+                || (gameQueryService.isCreature(gameData, target)
+                && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId));
+    }
+
     private boolean isHexproofFromColorBlocked(GameData gameData, Permanent targetPerm, StackEntry entry) {
         if (entry.getCard() == null) return false;
         Set<CardColor> sourceColors = effectiveSourceColors(gameData, entry);
@@ -4218,6 +4259,7 @@ public class TargetLegalityService {
         if (sourceColor == null) return false;
         if (gameQueryService.cantBeTargetedByColorSources(gameData, targetPerm, sourceColor)) return true;
         if (!gameQueryService.hasHexproofFromColor(gameData, targetPerm, sourceColor)) return false;
+        if (opponentHexproofLifted(gameData, targetPerm, entry.getControllerId())) return false;
         UUID targetController = gameQueryService.findPermanentController(gameData, targetPerm.getId());
         return targetController != null && !targetController.equals(entry.getControllerId());
     }
@@ -4241,7 +4283,8 @@ public class TargetLegalityService {
                     + " can't be the target of " + sourceColor.name().toLowerCase()
                     + " spells or abilities from " + sourceColor.name().toLowerCase() + " sources");
         }
-        if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)) {
+        if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)
+                && !opponentHexproofLifted(gameData, target, sourcePlayerId)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
             if (targetController != null && !targetController.equals(sourcePlayerId)) {
                 throw new IllegalStateException(target.getCard().getName()
@@ -4268,7 +4311,8 @@ public class TargetLegalityService {
                     + sourceColor.name().toLowerCase() + " spells or abilities from "
                     + sourceColor.name().toLowerCase() + " sources";
         }
-        if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)) {
+        if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)
+                && !opponentHexproofLifted(gameData, target, sourcePlayerId)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
             if (targetController != null && !targetController.equals(sourcePlayerId)) {
                 return target.getCard().getName() + " has hexproof from " + sourceColor.name().toLowerCase();
@@ -4576,7 +4620,8 @@ public class TargetLegalityService {
         if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, card)) {
             return target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s";
         }
-        if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)) {
+        if (gameQueryService.hasProtectionFromSourceSubtypes(target, card)
+                || gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, card)) {
             return target.getCard().getName() + " has protection from source's subtype";
         }
         if (gameQueryService.hasProtectionFromSource(gameData, target, card, sourcePlayerId)) {
@@ -5006,14 +5051,14 @@ public class TargetLegalityService {
             if (source == null) {
                 return false;
             }
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getSpellManaValue();
             return source.getChosenNumber() > 0 && manaValue == source.getChosenNumber();
         }
         if (predicate instanceof StackEntryManaValueGreaterThanControllerExperienceCountersPredicate) {
             if (controllerId == null) {
                 return false;
             }
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getSpellManaValue();
             int experienceCounters = gameData.playerExperienceCounters.getOrDefault(controllerId, 0);
             return manaValue > experienceCounters;
         }
@@ -5021,14 +5066,14 @@ public class TargetLegalityService {
             if (source == null) {
                 return false;
             }
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getSpellManaValue();
             return manaValue == gameQueryService.getEffectivePower(gameData, source);
         }
         if (predicate instanceof StackEntryManaValueAtMostSourcePowerPredicate) {
             if (source == null) {
                 return false;
             }
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getSpellManaValue();
             int sourcePower = sourcePowerAtLastKnown != null
                     ? sourcePowerAtLastKnown : gameQueryService.getEffectivePower(gameData, source);
             return manaValue <= sourcePower;
@@ -5054,7 +5099,7 @@ public class TargetLegalityService {
                 return false;
             }
             int chosenNumber = source.getChosenNumber();
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getSpellManaValue();
             Integer power = stackEntry.getCard().getPower();
             Integer toughness = stackEntry.getCard().getToughness();
             return chosenNumber > 0 && (manaValue == chosenNumber
@@ -5065,7 +5110,7 @@ public class TargetLegalityService {
             if (source == null || source.getChosenManaValueParity() == null) {
                 return false;
             }
-            int manaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int manaValue = stackEntry.getSpellManaValue();
             return source.getChosenManaValueParity().matches(manaValue);
         }
         if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
@@ -5096,7 +5141,7 @@ public class TargetLegalityService {
             }
             boolean sharesColor = imprintedCard.getColors().stream()
                     .anyMatch(stackEntry.getCard().getColors()::contains);
-            int spellManaValue = stackEntry.getCard().getManaValue() + stackEntry.getXValue();
+            int spellManaValue = stackEntry.getSpellManaValue();
             return sharesColor || spellManaValue == imprintedCard.getManaValue();
         }
         if (predicate instanceof StackEntryControlledByChosenPlayerPredicate) {

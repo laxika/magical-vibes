@@ -27,11 +27,14 @@ public class GrantColorSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantColorEffect) effect;
-        if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                || grant.scope() == GrantScope.ALL_OWN_CREATURES
-                || grant.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF
-                || grant.scope() == GrantScope.OWN_PERMANENTS)
-                && support.matchesStaticFilter(context, context.target(), grant.filter())) {
+        boolean matches = switch (grant.scope()) {
+            case ALL_OWN_CREATURES, ALL_CREATURES_INCLUDING_SELF ->
+                    support.matchesCreatureScope(context, grant.scope(), grant.filter());
+            case SELF, SELF_AND_PAIRED, OWN_PERMANENTS ->
+                    support.matchesStaticFilter(context, context.target(), grant.filter());
+            default -> false;
+        };
+        if (matches) {
             accumulator.addGrantedColor(grant.color());
             if (grant.overriding()) {
                 accumulator.setColorOverriding(true);

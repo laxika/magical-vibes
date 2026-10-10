@@ -803,7 +803,7 @@ public class PermanentChoiceTriggerHandlerService {
 
         if (validSecondTargets.isEmpty()) {
             pushAttackCounterMoveTrigger(gameData, ctx.sourceCard(), ctx.controllerId(), ctx.effects(),
-                    ctx.sourcePermanentId(), chosenId, null);
+                    ctx.sourcePermanentId(), chosenId, null, ctx.defendingPlayerId());
             continueAfterAttackCounterMove(gameData);
             return;
         }
@@ -827,13 +827,13 @@ public class PermanentChoiceTriggerHandlerService {
                                                     PermanentChoiceContext.AttackCounterMoveSecondTarget ctx) {
         UUID secondTargetId = chosenId.equals(ctx.controllerId()) ? null : chosenId;
         pushAttackCounterMoveTrigger(gameData, ctx.sourceCard(), ctx.controllerId(), ctx.effects(),
-                ctx.sourcePermanentId(), ctx.firstTargetId(), secondTargetId);
+                ctx.sourcePermanentId(), ctx.firstTargetId(), secondTargetId, ctx.defendingPlayerId());
         continueAfterAttackCounterMove(gameData);
     }
 
     private void pushAttackCounterMoveTrigger(GameData gameData, Card sourceCard, UUID controllerId,
                                               List<CardEffect> effects, UUID sourcePermanentId,
-                                              UUID firstTargetId, UUID secondTargetId) {
+                                              UUID firstTargetId, UUID secondTargetId, UUID defendingPlayerId) {
         List<UUID> targetIds = new ArrayList<>();
         targetIds.add(firstTargetId);
         if (secondTargetId != null) {
@@ -848,6 +848,7 @@ public class PermanentChoiceTriggerHandlerService {
                 new ArrayList<>(effects),
                 sourcePermanentId,
                 targetIds);
+        entry.setRequiredTargetControllerId(defendingPlayerId);
         pushTriggeredEntry(gameData, entry);
 
         String logEntry = sourceCard.getName() + "'s ability targets " + getTargetDisplayName(gameData, firstTargetId);
@@ -1391,7 +1392,7 @@ public class PermanentChoiceTriggerHandlerService {
         boolean legalForRestrictedChoice = context.requiredAttackingPlayerId() == null
                 || currentAttackTargetIds(gameData, context.requiredAttackingPlayerId()).contains(attackTargetId);
         if (permanent != null && gameQueryService.isCreature(gameData, permanent) && legalForRestrictedChoice) {
-            permanent.setAttacking(true);
+            permanent.enterAttacking(true);
             permanent.setAttackedOrBlockedSinceLastUpkeep(true);
             permanent.setAttackTarget(attackTargetId);
         }

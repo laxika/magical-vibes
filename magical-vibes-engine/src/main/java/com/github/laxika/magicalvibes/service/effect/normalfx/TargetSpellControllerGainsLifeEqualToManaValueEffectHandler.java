@@ -34,7 +34,7 @@ public class TargetSpellControllerGainsLifeEqualToManaValueEffectHandler impleme
 
         for (StackEntry se : gameData.stack) {
             if (se.getTargetableId().equals(targetCardId)) {
-                int manaValue = se.getCard().getManaValue() + se.getXValue();
+                int manaValue = se.getSpellManaValue();
                 if (manaValue > 0) {
                     lifeSupport.applyGainLife(gameData, se.getControllerId(), manaValue,
                             entry.getCard().getName());

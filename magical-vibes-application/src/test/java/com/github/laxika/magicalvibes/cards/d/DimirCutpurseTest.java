@@ -106,6 +106,8 @@ class DimirCutpurseTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LastGasp(), new GoblinSpelunkers(), new Forest()));
         harness.setLibrary(player1, List.of(new Forest()));
         Permanent cutpurse = addAttackingCutpurse(player1);
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE, TurnStep.END_OF_COMBAT));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.COMBAT_DAMAGE, TurnStep.END_OF_COMBAT));
 
         resolveCombat();
         assertThat(gd.stack).hasSize(1);

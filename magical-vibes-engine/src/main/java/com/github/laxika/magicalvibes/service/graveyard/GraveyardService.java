@@ -505,7 +505,8 @@ public class GraveyardService {
 
         // "If [this] would die, instead exile it with N egg counters" (e.g. Darigaaz Reincarnated)
         // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
-        if (sourceZone == Zone.BATTLEFIELD && hasExileWithEggCountersReplacementEffect(card)) {
+        if (sourceZone == Zone.BATTLEFIELD && hasExileWithEggCountersReplacementEffect(card)
+                && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
             ExileWithEggCountersInsteadOfDyingEffect eggEffect = getExileWithEggCountersReplacementEffect(card);
             exileService.exileCard(gameData, ownerId, card);
             gameData.exiledCardEggCounters.put(card.getId(), eggEffect.count());

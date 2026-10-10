@@ -65,7 +65,7 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
                 permanentRemovalService.removePermanentToExile(gameData, linked);
                 gameLogService.append(gameData, GameLog.text(name + " is exiled."));
             }
-            case SACRIFICE -> {
+            case SACRIFICE, SACRIFICE_PARTNER -> {
                 permanentRemovalService.sacrificePermanentToGraveyard(gameData, linked);
                 gameLogService.append(gameData, GameLog.text(name + " is sacrificed."));
             }

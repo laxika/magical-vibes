@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOwner;
@@ -24,8 +25,10 @@ public class DeceiverOfForm extends Card {
                         new MayEffect(
                                 new OtherControlledCreaturesBecomeCopiesOfTopCreatureCardUntilEndOfTurnEffect(),
                                 "Have other creatures you control become copies of that card until end of turn?")),
-                new MayEffect(
-                        new PutTopCardsOfLibraryOnBottomEffect(1),
-                        "Put that card on the bottom of your library?")));
+                ConditionalEffect.unless(
+                        new CardsInLibraryAtLeast(1),
+                        new MayEffect(
+                                new PutTopCardsOfLibraryOnBottomEffect(1),
+                                "Put that card on the bottom of your library?"))));
     }
 }

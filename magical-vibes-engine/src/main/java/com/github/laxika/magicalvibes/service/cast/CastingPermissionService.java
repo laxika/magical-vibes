@@ -3277,6 +3277,7 @@ public class CastingPermissionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         return battlefield.stream()
+                .filter(source -> !gameQueryService.hasLostAllAbilities(gameData, source))
                 .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(AllowCastFromCardsExiledWithIceCountersEffect.class::isInstance)
                         .map(AllowCastFromCardsExiledWithIceCountersEffect.class::cast)

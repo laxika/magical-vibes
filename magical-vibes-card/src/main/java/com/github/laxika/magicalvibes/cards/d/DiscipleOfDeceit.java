@@ -19,7 +19,7 @@ public class DiscipleOfDeceit extends Card {
     public DiscipleOfDeceit() {
         var nonlandCard = new CardNotPredicate(new CardTypePredicate(CardType.LAND));
         addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED,
-                new MayEffect(new DiscardCardThenEffect(
+                new MayEffect(DiscardCardThenEffect.continuing(
                         nonlandCard,
                         new SearchLibraryEffect(null, LibrarySearchDestination.HAND,
                                 new ManaValueBound(new LastDiscardedCardManaValue(), true, 0)),

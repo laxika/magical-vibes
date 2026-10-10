@@ -33,7 +33,7 @@ class DraconauticsEngineerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, otherEngineer, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, engineer, Keyword.HASTE)).isFalse();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, otherEngineer, Keyword.HASTE)).isFalse();
         assertThat(engineer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

@@ -357,6 +357,14 @@ public class MayCopyHandlerService {
         }
 
         Card copiedCard = copyEntry.getTargetingCard();
+        if (!copyEntry.isNonTargeting() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
+            // CR 115.7d: each target may be left unchanged or changed independently.
+            if (!psychicBattleSupport.beginEachTargetChoice(gameData, copyEntry, ability.controllerId(), 0)) {
+                gameLogService.append(gameData, GameLog.text("No valid targets available for the copy."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         List<UUID> validTargets = new ArrayList<>();
 
         if (EffectResolution.needsSpellTarget(copiedCard)) {
@@ -581,6 +589,15 @@ public class MayCopyHandlerService {
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines to redirect spell targets", gameData.id, player.getUsername());
 
+            // Declining to change one target leaves the rest of the targets to be offered (CR 115.7d).
+            boolean mustChangeAll = ability.effects().stream().anyMatch(effect ->
+                    effect instanceof ChooseNewTargetsForTargetSpellEffect retarget && retarget.mustChangeAllTargets());
+            if (!mustChangeAll && targetSpellEntry != null
+                    && psychicBattleSupport.queueNextChoice(gameData, ability.sourceCard(), ability.controllerId(),
+                    targetSpellEntry.getTargetableId(), 1)) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -598,7 +615,12 @@ public class MayCopyHandlerService {
             psychicBattleSupport.beginPermanentChoice(gameData, ability.sourceCard(), ability.controllerId(),
                     targetSpellEntry.getTargetableId(), 0);
             if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                if (psychicBattleSupport.queueNextChoice(gameData, ability.sourceCard(), ability.controllerId(),
+                        targetSpellEntry.getTargetableId(), 1)) {
+                    playerInputService.processNextMayAbility(gameData);
+                } else {
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                }
             }
             return;
         }

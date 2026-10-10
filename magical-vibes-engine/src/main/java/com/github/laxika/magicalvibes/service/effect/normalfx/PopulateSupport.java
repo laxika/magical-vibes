@@ -75,5 +75,18 @@ public class PopulateSupport {
             battlefieldEntryService.checkAllyTokenEntersTriggers(
                     gameData, controllerId, List.of(tokenPermanent.getId()));
         }
+
+        int additionalMutagenCount = TokenCreationReplacementSupport.additionalMutagenTokenCount(
+                gameData, controllerId, tokenMultiplier);
+        for (int mutagen = 0; mutagen < additionalMutagenCount; mutagen++) {
+            Card mutagenCard = TokenCardFactory.create(
+                    TokenCreationReplacementSupport.additionalMutagenToken(false, false), 0, 0,
+                    entry == null || entry.getCard() == null ? null : entry.getCard().getSetCode());
+            Permanent mutagenPermanent = new Permanent(mutagenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, mutagenPermanent);
+            if (entry != null) {
+                entry.getCreatedPermanentIds().add(mutagenPermanent.getId());
+            }
+        }
     }
 }

@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -116,6 +117,7 @@ public class CardChoiceHandlerService {
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final AuraAttachmentService auraAttachmentService;
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final CombatBlockService combatBlockService;
@@ -503,6 +505,16 @@ public class CardChoiceHandlerService {
         playerInputService.processNextMayAbility(gameData);
     }
 
+    private boolean hasLegalAuraHost(GameData gameData, Card aura, UUID controllerId) {
+        for (var battlefield : gameData.playerBattlefields.values()) {
+            for (var permanent : battlefield) {
+                if (auraAttachmentService.canEnchant(gameData, aura, controllerId, permanent)) return true;
+            }
+        }
+        return aura.isEnchantPlayer() && gameData.orderedPlayerIds.stream()
+                .anyMatch(playerId -> auraAttachmentService.canEnchantPlayer(gameData, aura, controllerId, playerId));
+    }
+
     public void handleHandCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction active = gameData.interaction.activeInteraction();
         UUID choicePlayerId;
@@ -635,6 +647,14 @@ public class CardChoiceHandlerService {
                     gameData, selectedCard, Zone.HAND)) {
                 gameLogService.append(gameData, GameLog.cardThen(
                         selectedCard, " can't enter the battlefield; it stays in hand."));
+                inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+                return;
+            }
+            // An Aura with no legal object to enchant stays in its current zone (CR 303.4g).
+            if (!isTargeted && selectedCard.isAura() && !selectedCard.isEnchantZone()
+                    && !hasLegalAuraHost(gameData, selectedCard, playerId)) {
+                gameLogService.append(gameData, GameLog.cardThen(
+                        selectedCard, " has nothing to enchant and stays in hand."));
                 inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
                 return;
             }
@@ -2073,7 +2093,7 @@ public class CardChoiceHandlerService {
                 && !chosenCards.isEmpty()) {
             chosenCardThenEffect = chosenCardAwareEffect.withChosenCard(chosenCards.getLast());
         }
-        if (chosenCardThenEffect != null
+        if ((chosenCardThenEffect != null || keepInHand)
                 && gameData.pendingEffectResolutionEntry != null && !chosenCards.isEmpty()) {
             gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCards.get(chosenCards.size() - 1));
         }

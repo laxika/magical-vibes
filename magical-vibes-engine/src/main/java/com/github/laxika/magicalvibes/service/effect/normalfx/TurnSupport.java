@@ -155,7 +155,6 @@ public class TurnSupport {
                     action -> gameData.currentExtraTurnSequence.equals(action.extraTurnSequence()));
         }
         gameData.currentStep = TurnStep.CLEANUP;
-        turnCleanupService.resetEndOfTurnModifiers(gameData);
         creatureControlService.reconcileControl(gameData);
         gameData.controlLossUnattachTriggers.clear();
         gameData.priorityPassedBy.clear();

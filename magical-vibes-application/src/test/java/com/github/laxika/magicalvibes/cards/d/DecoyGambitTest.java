@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NarsetParterOfVeils;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DecoyGambit.class, GrizzlyBears.class, NarsetParterOfVeils.class})
+@CardUsed({DecoyGambit.class, GrizzlyBears.class, NarsetParterOfVeils.class, ControlMagic.class})
 class DecoyGambitTest extends BaseCardTest {
 
     @Test
@@ -102,9 +104,12 @@ class DecoyGambitTest extends BaseCardTest {
     @Test
     void returnsCreatureToOwnerRatherThanController() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(target.getId(), player1.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.setHand(player2, List.of(new ControlMagic()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        gd.activePlayerId = player2.getId();
+        harness.castEnchantment(player2, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
 
         cast(target);
         harness.handleMayAbilityChosen(player2, false);
@@ -171,7 +176,6 @@ class DecoyGambitTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DecoyGambit()));
         addMana();
         harness.castInstant(player1, 0, List.of(target.getId()));
-        gd.stolenCreatures.put(target.getId(), player2.getId());
         gd.playerBattlefields.get(player2.getId()).remove(target);
         gd.playerBattlefields.get(third.getId()).add(target);
 
@@ -184,7 +188,8 @@ class DecoyGambitTest extends BaseCardTest {
 
     @Test
     void prohibitedDrawCannotBeChosenInsteadOfReturningCreature() {
-        harness.addToBattlefield(player2, new NarsetParterOfVeils());
+        harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils())
+                .setCounterCount(CounterType.LOYALTY, 5);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.setHand(player1, List.of(new DecoyGambit()));

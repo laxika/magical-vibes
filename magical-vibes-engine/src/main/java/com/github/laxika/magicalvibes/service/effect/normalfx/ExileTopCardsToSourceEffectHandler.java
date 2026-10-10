@@ -173,6 +173,11 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
             } else {
                 exileService.exileCard(gameData, playerId, card, sourcePermanentId);
             }
+            if (e.faceDown() && e.mayLookAtFaceDownCards() && sourcePermanentId == null) {
+                // A spell has no permanent whose face-down exile pile the view could reveal, so the
+                // controller's "you may look at" permission is recorded per card instead.
+                gameData.exileLookPermissions.put(card.getId(), sourceControllerId);
+            }
             if (e.markWithIntelCounters()) {
                 gameData.exiledCardsWithIntelCounters.add(card.getId());
             }

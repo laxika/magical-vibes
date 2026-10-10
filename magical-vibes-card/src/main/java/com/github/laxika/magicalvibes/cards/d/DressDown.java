@@ -13,7 +13,7 @@ public class DressDown extends Card {
 
     public DressDown() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES));
+        addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES_INCLUDING_SELF));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect());
     }
 }

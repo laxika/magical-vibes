@@ -156,6 +156,7 @@ class DominatingLicidTest extends BaseCardTest {
 
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, host));
+        harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(licid);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(licid.getOriginalCard());

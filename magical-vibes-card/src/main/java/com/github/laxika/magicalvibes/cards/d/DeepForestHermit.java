@@ -22,7 +22,7 @@ import java.util.Set;
 public class DeepForestHermit extends Card {
 
     public DeepForestHermit() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));

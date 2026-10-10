@@ -33,9 +33,7 @@ public class PerpetuallyGrantEnterAbilityToPermanentCardsInGraveyardEffectHandle
             }
             gameData.perpetualEnterEffectsByCardId.compute(card.getId(), (ignored, existing) -> {
                 List<CardEffect> updated = new ArrayList<>(existing == null ? List.of() : existing);
-                if (!updated.contains(grant.enterAbility())) {
-                    updated.add(grant.enterAbility());
-                }
+                updated.add(grant.enterAbility());
                 return List.copyOf(updated);
             });
         }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -33,10 +34,11 @@ public class DireStrainRampage extends Card {
                 "Target must be an artifact, enchantment, or land"
         )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
                 EventStat.BASIC_LAND_SEARCH_COUNT,
-                new SearchLibraryEffect(
+                new MayEffect(new SearchLibraryEffect(
                         new EventValue(),
                         CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
+                        "Search your library for basic land cards?"),
                 ThenEffectRecipient.TARGET_CONTROLLER));
         addCastingOption(new FlashbackCast("{3}{R}{G}"));
     }

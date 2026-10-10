@@ -367,6 +367,15 @@ public class EtbTriggerService {
                 return;
             }
 
+            // A modal ETB on a permanent that was not cast has no cast-time mode; its mode is chosen
+            // when the trigger is put on the stack (CR 603.3c), so it takes the trigger-time path.
+            if (!wasCastFromHand && enteringPermanent != null && !enteringPermanent.isCast()) {
+                triggeredEffects = triggeredEffects.stream()
+                        .map(e -> e instanceof ChooseOneEffect coe && coe.choicesRequired() <= 1
+                                ? new ChooseOneAtTriggerTimeEffect(coe) : e)
+                        .toList();
+            }
+
             // Extract per-mode targetFilter from ChooseOneEffect (if present)
             TargetFilter modeTargetFilter = null;
             for (CardEffect e : triggeredEffects) {
@@ -834,8 +843,7 @@ public class EtbTriggerService {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
             Map<UUID, Integer> dividedAssignments = otherEffects.stream().anyMatch(effect ->
                     effect instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
-                            && divided.etbAssignments() && (divided.targetRestriction() == null
-                            || divided.targetRestriction() instanceof com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate)
+                            && divided.etbAssignments()
                             || effect instanceof com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect prevention
                             && prevention.etbAssignments()
                             || effect instanceof com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect distribution
@@ -888,12 +896,22 @@ public class EtbTriggerService {
                     && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
-            if ((hasDynamicTargetCount && etbNeedsTarget && !hasTarget)
+            // A cast permanent whose "up to N" targets were legitimately chosen as zero at cast time
+            // (CR 601.2c) still has its ETB trigger, but with no targets it has nothing to ask for.
+            boolean castChoseZeroOptionalTargets = enteringPermanent != null && enteringPermanent.isCast()
+                    && !hasTarget && etbNeedsTarget
+                    && otherEffects.stream()
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                            || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
+                    .allMatch(e -> allowsZeroCastTimeTargets(card, e));
+
+            if ((hasDynamicTargetCount && etbNeedsTarget && !hasTarget && !castChoseZeroOptionalTargets)
                     || hasUnselectedDynamicEtbTargetGroup(card, otherEffects, targetId, targetIds)
                     || gateConditionalNeedsTarget
                     || mayPayManaNeedsTarget
                     || auraETBTargetNeedsSelection
-                    || (etbNeedsTarget && !hasTarget)) {
+                    || (etbNeedsTarget && !hasTarget && !castChoseZeroOptionalTargets)) {
                 // CR 603.3: no target was chosen at cast time — the ETB target is gated behind
                 // an intervening-if, or the permanent wasn't cast (token copy, or returned from
                 // a graveyard via undying / reanimation). The controller must choose a target
@@ -944,6 +962,23 @@ public class EtbTriggerService {
                     log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
                             gameData.id, card.getName());
                 }
+            } else if (extraTriggerCopies == 0 && dividedAssignments.isEmpty() && activeTargetIds.size() > 1
+                    && otherEffects.size() == 1
+                    && otherEffects.getFirst() instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
+                    && divided.mode() == com.github.laxika.magicalvibes.model.effect.DivisionMode.CHOSEN
+                    && divided.etbAssignments() && divided.targetRestriction() != null) {
+                // CR 601.2d / CR 603.3d: the division of damage among several chosen targets is announced
+                // as the ability is put on the stack, before anyone can respond. The multi-target trigger
+                // flow asks for each target's share and then pushes the entry carrying that division.
+                UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
+                        new ArrayList<>(activeTargetIds), card.getSpellTargets().size(), 0,
+                        List.of(activeTargetIds.size()), xValue,
+                        repeatedAdditionalCosts == null ? List.of() : List.copyOf(repeatedAdditionalCosts)));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — divide its damage."));
+                log.info("Game {} - {} ETB trigger queued for damage division", gameData.id, card.getName());
             } else if (!etbNeedsTarget || hasTarget) {
                 if (!dividedAssignments.isEmpty()) {
                     gameData.pendingETBDamageAssignments = Map.of();
@@ -1315,6 +1350,17 @@ public class EtbTriggerService {
             consumed += size;
         }
         return List.copyOf(activeTargets);
+    }
+
+    private static boolean allowsZeroCastTimeTargets(Card card, CardEffect effect) {
+        int index = card.getEffectTargetIndex(effect);
+        if (index < 0 || index >= card.getSpellTargets().size()) {
+            return false;
+        }
+        // A mandatory target group elsewhere on the card means no targets at all was not a legal
+        // cast-time choice, so the absent targets are still to be chosen when the trigger is put on the stack.
+        return card.getSpellTargets().stream()
+                .allMatch(group -> group.getMinTargets() == 0 && group.getDynamicMinTargets() == null);
     }
 
     private boolean hasUnselectedDynamicEtbTargetGroup(Card card, List<CardEffect> effects,

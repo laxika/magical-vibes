@@ -43,7 +43,6 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DrawDiscardAndConniveEffect) effect;
-        UUID controllerId = entry.getControllerId();
         List<UUID> targetIds = e.targetPermanent()
                 ? entry.targetsForEffect(effect)
                 : null;
@@ -57,6 +56,7 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
         if (e.targetPermanent() && sourcePermanentId == null) {
             return;
         }
+        UUID controllerId = connivingPlayerId(gameData, entry, sourcePermanentId);
 
         int replacementDraws = gameQueryService.countPlayerControlledStaticEffects(
                 gameData, controllerId, DrawBeforeConniveReplacementEffect.class);
@@ -81,5 +81,16 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
         if (discardAmount == 0 && source != null) {
             triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, source);
         }
+    }
+
+    /**
+     * Determines who draws and discards for a connive: the conniving permanent's controller at resolution
+     * (CR 701.50a). If that permanent is no longer on the battlefield, the ability's controller is used as
+     * the last known controller (CR 701.50b).
+     */
+    private UUID connivingPlayerId(GameData gameData, StackEntry entry, UUID sourcePermanentId) {
+        UUID currentController = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentController(gameData, sourcePermanentId);
+        return currentController != null ? currentController : entry.getControllerId();
     }
 }

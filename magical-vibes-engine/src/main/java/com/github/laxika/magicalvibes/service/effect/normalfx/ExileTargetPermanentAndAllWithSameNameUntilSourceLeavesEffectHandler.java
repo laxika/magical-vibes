@@ -48,14 +48,20 @@ public class ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffectHandle
             return;
         }
 
+        ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect sameNameEffect =
+                (ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect) effect;
+
         UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry);
         if (sourcePermanentId == null) {
+            if (!sameNameEffect.returnsOnSourceLeavesTrigger()) {
+                // CR 610.3b: the "until" event already occurred, so the object doesn't move.
+                log.info("Game {} - Source of {} already left the battlefield, nothing is exiled",
+                        gameData.id, entry.getCard().getName());
+                return;
+            }
             log.info("Game {} - Source permanent for {} no longer on battlefield, exile without return tracking",
                     gameData.id, entry.getCard().getName());
         }
-
-        ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect sameNameEffect =
-                (ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect) effect;
         String targetName = gameQueryService.getEffectiveName(gameData, target);
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         FilterContext filterContext = FilterContext.of(gameData)
@@ -89,6 +95,11 @@ public class ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffectHandle
             // Tokens cease to exist in exile — nothing to return.
             if (sourcePermanentId != null && !token) {
                 gameData.addExileReturnOnPermanentLeave(sourcePermanentId, new PendingExileReturn(card, ownerId));
+                var exiledEntry = gameData.findExiledCard(card.getId());
+                if (exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
+                    gameData.removeFromExile(card.getId());
+                    gameData.addToExile(ownerId, card, sourcePermanentId);
+                }
             }
         }
 

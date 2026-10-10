@@ -307,6 +307,8 @@ class DesolationTest extends BaseCardTest {
     @Test
     @DisplayName("Land taps from the previous turn do not require another sacrifice")
     void landTapTrackingResetsBetweenTurns() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new Desolation());
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Forest());

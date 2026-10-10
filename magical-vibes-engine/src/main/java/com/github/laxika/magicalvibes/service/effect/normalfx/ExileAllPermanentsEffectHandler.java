@@ -102,7 +102,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
         entry.setEventValue(toExile.size());
 
         if (e.returnOneAtEachUpkeep() && e.trackWithSource() && !toExile.isEmpty()) {
-            gameData.queueDelayedAction(new DimensionalBreachUpkeepReturn(entry.getCard()));
+            gameData.queueDelayedAction(new DimensionalBreachUpkeepReturn(entry.getCard(), entry.getControllerId()));
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

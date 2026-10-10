@@ -13,11 +13,12 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class DonLeoProblemSolvers extends Card {
 
     public DonLeoProblemSolvers() {
+        setAllowSharedTargets(true);
+        FlickerEffect flicker = FlickerEffect.flickerTarget();
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact you control"), 0, 1)
-                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, FlickerEffect.flickerTarget());
-        target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, FlickerEffect.flickerTarget());
+                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, flicker);
+        target(TargetFilters.creatureYouControl(), 0, 1).bindEffect(flicker);
     }
 }

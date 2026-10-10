@@ -61,7 +61,7 @@ public class DawnsireSunstarDreadnought extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"
-        ), 0, 1).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        ), 0, 1).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(10, CounterType.CHARGE),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(100, creatureOrPlaneswalker)
         ));

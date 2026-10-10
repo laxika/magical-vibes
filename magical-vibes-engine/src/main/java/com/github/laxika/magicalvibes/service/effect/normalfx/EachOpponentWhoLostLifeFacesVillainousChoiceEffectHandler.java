@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -82,11 +80,8 @@ public class EachOpponentWhoLostLifeFacesVillainousChoiceEffectHandler
             }
             state.currentPlayerId = opponentId;
 
-            if (!hasCardToDiscard(gameData, opponentId)) {
-                draw(gameData, entry);
-                return;
-            }
-
+            // A villainous choice is offered even when an option is impossible (an empty hand can
+            // still choose to discard, which does nothing).
             gameData.rerunCurrentEffectAfterInteraction = true;
             villainousChoiceSupport.beginChoice(gameData, opponentId, entry.getCard().getName(),
                     ChoiceContext.VillainousChoice.DRAW,
@@ -124,8 +119,4 @@ public class EachOpponentWhoLostLifeFacesVillainousChoiceEffectHandler
         }
     }
 
-    private boolean hasCardToDiscard(GameData gameData, UUID playerId) {
-        List<Card> hand = gameData.playerHands.get(playerId);
-        return hand != null && !hand.isEmpty();
-    }
 }

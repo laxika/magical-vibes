@@ -150,9 +150,9 @@ class DoomForetoldTest extends BaseCardTest {
         Permanent doom = harness.addToBattlefieldAndReturn(player1, new DoomForetold());
         harness.setHand(player1, List.of(new TrueLovesKiss()));
         harness.setLibrary(player1, List.of(new Forest(), new RovingKeep()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
         harness.castInstant(player1, 0, doom.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Doom Foretold");

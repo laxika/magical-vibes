@@ -114,7 +114,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
@@ -126,7 +126,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
         // "Up to X" with X=0 still searches and shuffles (Uncage the Menagerie ruling).
         if (count <= 0) {
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
@@ -188,7 +188,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                         prompt, true);
                 return;
             }
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
             if (effect.shuffleAfterSelection()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }

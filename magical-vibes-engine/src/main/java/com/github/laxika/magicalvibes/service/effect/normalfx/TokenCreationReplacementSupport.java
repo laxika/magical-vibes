@@ -208,7 +208,7 @@ public final class TokenCreationReplacementSupport {
         return CreateTokenEffect.ofArtifactToken(
                 1,
                 "Mutagen",
-                List.of(),
+                List.of(CardSubtype.MUTAGEN),
                 List.of(new ActivatedAbility(
                         true,
                         "{1}",

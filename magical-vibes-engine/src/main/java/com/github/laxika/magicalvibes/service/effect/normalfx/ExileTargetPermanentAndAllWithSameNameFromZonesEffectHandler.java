@@ -52,13 +52,13 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
             return;
         }
 
-        String name = target.getCard().getName();
+        String name = target.getOriginalCard().getName();
         ExileTargetPermanentAndAllWithSameNameFromZonesEffect exileEffect =
                 (ExileTargetPermanentAndAllWithSameNameFromZonesEffect) effect;
         CardSubtype requiredTargetSubtype = exileEffect.requiredTargetSubtype();
         boolean chooseAnyNumber = exileEffect.chooseAnyNumber();
         boolean targetHasRequiredSubtype = requiredTargetSubtype == null
-                || target.getCard().getSubtypes().contains(requiredTargetSubtype);
+                || target.getOriginalCard().getSubtypes().contains(requiredTargetSubtype);
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
 
         permanentRemovalService.removePermanentToExile(gameData, target);

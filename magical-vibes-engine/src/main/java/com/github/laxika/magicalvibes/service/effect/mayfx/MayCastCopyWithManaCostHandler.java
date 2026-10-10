@@ -34,7 +34,7 @@ public class MayCastCopyWithManaCostHandler implements MayEffectHandlerBean {
                     .map(MayCastCopyWithManaCostEffect.class::cast)
                     .findFirst()
                     .orElseThrow();
-            exileNormalCostCopySupport.offerCast(gameData, player, ability.sourceCard(), effect.manaCost());
+            exileNormalCostCopySupport.offerCast(gameData, player, ability.sourceCard(), effect.manaCost(), ability);
             return;
         }
 

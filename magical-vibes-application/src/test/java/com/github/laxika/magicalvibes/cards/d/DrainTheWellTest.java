@@ -70,9 +70,9 @@ class DrainTheWellTest extends BaseCardTest {
         harness.setLife(player1, 10);
         harness.setHand(player1, List.of(new DrainTheWell(), new Boomerang()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castSorcery(player1, 0, List.of(land));
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castAndResolveInstant(player1, 0, land);
         harness.passBothPriorities();
 

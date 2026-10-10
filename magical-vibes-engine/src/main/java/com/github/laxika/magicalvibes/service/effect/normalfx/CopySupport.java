@@ -143,6 +143,7 @@ public class CopySupport {
         copy.setSourcePlanarObject(source.getSourcePlanarObject() == null ? null : source.getSourcePlanarObject().copy());
         copy.setKicked(source.isKicked());
         copy.setAlternateCost(source.isAlternateCost());
+        copy.setCastForForetell(source.isCastForForetell());
         copy.setRepeatedAdditionalCosts(source.getRepeatedAdditionalCosts());
         copy.setRevealCardFromHandCostPaid(source.isRevealCardFromHandCostPaid());
         copy.setAdditionalEnterCounters(source.getAdditionalEnterCounters());
@@ -181,6 +182,7 @@ public class CopySupport {
         copy.setType(original.getType());
         copy.setManaCost(original.getManaCost());
         copy.setColor(original.getColor());
+        copy.setColors(original.getColors());
         copy.setAdditionalTypes(original.getAdditionalTypes());
         copy.setSupertypes(original.getSupertypes());
         copy.setSubtypes(original.getSubtypes());

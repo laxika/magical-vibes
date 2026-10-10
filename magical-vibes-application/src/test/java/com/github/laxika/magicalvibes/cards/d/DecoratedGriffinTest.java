@@ -125,7 +125,7 @@ class DecoratedGriffinTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntilWithNoAttackers(player2, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         attacker.setSummoningSick(false);

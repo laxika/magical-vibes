@@ -76,7 +76,7 @@ public class MakeChosenPermanentAttackingEffectHandler implements NormalEffectHa
         });
 
         if (validPlayerIds.size() + permanentTargetIds.size() == 1) {
-            permanent.setAttacking(true);
+            permanent.enterAttacking(true);
             permanent.setAttackedOrBlockedSinceLastUpkeep(true);
             permanent.setAttackTarget(validPlayerIds.isEmpty() ? permanentTargetIds.getFirst() : validPlayerIds.getFirst());
             return;

@@ -44,6 +44,7 @@ public class SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeE
         List<UUID> validIds = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .filter(permanent -> typedEffect.combatDamageDealerIds().contains(permanent.getId()))
+                .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
 

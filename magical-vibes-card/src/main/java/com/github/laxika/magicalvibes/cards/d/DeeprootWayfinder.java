@@ -16,7 +16,7 @@ public class DeeprootWayfinder extends Card {
 
     public DeeprootWayfinder() {
         addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
-                new SurveilThenEffect(
+                SurveilThenEffect.direct(
                         1,
                         new MayEffect(
                                 ReturnCardFromGraveyardEffect.builder()

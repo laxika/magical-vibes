@@ -38,6 +38,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithTokenAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsEnterUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesOfUnchosenParityEnterTappedEffect;
@@ -124,6 +127,8 @@ public class BattlefieldPlacementService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final EntryReplacementHandlerRegistry entryReplacementHandlerRegistry;
+    private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
+    private com.github.laxika.magicalvibes.service.aura.AuraAttachmentService auraAttachmentService;
     private AscendEffectHandler ascendEffectHandler;
     private StoriedEffectHandler storiedEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
@@ -200,6 +205,17 @@ public class BattlefieldPlacementService {
                 permanentCounterSupport, graveyardService, permanentRemovalService,
                 becomeDayAsEntersEffectHandler,
                 new EnchantedPlayerCreaturesEnterTappedEffectHandler(gameQueryService));
+    }
+
+    @Autowired
+    void setPermanentControlSupport(
+            @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport support) {
+        this.permanentControlSupport = support;
+    }
+
+    @Autowired
+    void setAuraAttachmentService(@Lazy com.github.laxika.magicalvibes.service.aura.AuraAttachmentService service) {
+        this.auraAttachmentService = service;
     }
 
     @Autowired
@@ -355,6 +371,7 @@ public class BattlefieldPlacementService {
             applySpellGrantedSubtypes(gameData, permanent);
             applySpellCastCharacteristics(gameData, permanent, request.sourceStackEntry());
             applyEntryReplacementEffects(gameData, controllerId, permanent, xValue);
+            applyEnterWithKeywords(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
             applyControlledPermanentEntryCharacteristics(gameData, controllerId, permanent);
             applyDiscardEntryCounters(gameData, controllerId, permanent, discardReplacement);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
@@ -399,6 +416,7 @@ public class BattlefieldPlacementService {
         if (creaturePositioningSupport != null) {
             creaturePositioningSupport.applyChosenPosition(gameData, controllerId, permanent);
         }
+        applyEnterWithAttachedTokens(gameData, controllerId, permanent);
         if (permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(effect -> effect instanceof ExileTopCardsToSourceEffect exile
                         && exile.toGraveyardOnControlLoss())) {
@@ -867,8 +885,8 @@ public class BattlefieldPlacementService {
     /** Don't Blink replacement effect: creatures entering from exile are shuffled into their owners' libraries instead. */
     private boolean applyShuffleCreatureEnteringFromExile(GameData gameData, UUID controllerId, Permanent permanent,
                                                            StackEntry sourceStackEntry) {
-        if (!permanent.getCard().hasType(CardType.CREATURE)
-                || gameData.playersShufflingCreaturesEnteringFromExileThisTurn.isEmpty()) {
+        if (gameData.playersShufflingCreaturesEnteringFromExileThisTurn.isEmpty()
+                || !isCreatureAsEntering(gameData, controllerId, permanent)) {
             return false;
         }
         boolean enteredFromExile = permanent.isEnteredFromExile()
@@ -1740,6 +1758,82 @@ public class BattlefieldPlacementService {
         applyGrantedBloodthirst(gameData, controllerId, permanent);
         applySpellAdditionalEnterCounters(gameData, controllerId, permanent, sourceStackEntry);
         applySpellGrantedHaste(gameData, permanent);
+    }
+
+    /**
+     * "If this creature was kicked, it enters with ... and with fear" (CR 614.1c): grants the keyword
+     * as the permanent enters, evaluating an optional {@link ConditionalEffect} gate against the cast.
+     */
+    private void applyEnterWithKeywords(GameData gameData, UUID controllerId, Permanent permanent,
+                                        int xValue, boolean kicked, List<String> repeatedAdditionalCosts) {
+        if (permanent.isFaceDown()
+                || gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)) {
+            return;
+        }
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            EnterWithKeywordEffect enterWith;
+            if (effect instanceof EnterWithKeywordEffect direct) {
+                enterWith = direct;
+            } else if (effect instanceof ConditionalEffect conditional
+                    && conditional.wrapped() instanceof EnterWithKeywordEffect wrapped) {
+                ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
+                        permanent.getCard(), kicked, false, permanent.isProwl(), permanent.isMadness(), false,
+                        false, permanent.getCastFromZone(), xValue, null, null, false,
+                        false, false, null, null, null, repeatedAdditionalCosts,
+                        permanent.isAlternateCost(), false, false, false, false, false, 0, false,
+                        false, permanent.isRevealCardFromHandCostPaid(), permanent.isControlledDragonAsCast());
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
+                    continue;
+                }
+                enterWith = wrapped;
+            } else {
+                continue;
+            }
+            permanent.getGrantedKeywords().add(enterWith.keyword());
+            permanent.getPersistentGrantedKeywords().add(enterWith.keyword());
+        }
+    }
+
+    /**
+     * "This creature enters with a token copy of [Aura] attached to it" (CR 614.1c): once the permanent is on
+     * the battlefield, creates the Aura token(s) and attaches them, before any ETB trigger is collected.
+     */
+    private void applyEnterWithAttachedTokens(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (permanent.isFaceDown() || permanentControlSupport == null || auraAttachmentService == null
+                || gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)) {
+            return;
+        }
+        for (CardEffect effect : new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))) {
+            if (!(effect instanceof EnterWithTokenAttachedEffect enterWith)) {
+                continue;
+            }
+            CreateTokenEffect blueprint = enterWith.token();
+            AmountContext context = AmountContext.forStaticEffect(permanent, controllerId);
+            int amount = amountEvaluationService.evaluate(gameData, blueprint.amount(), context);
+            if (amount <= 0 || !gameQueryService.isCreature(gameData, permanent)) {
+                continue;
+            }
+            int power = amountEvaluationService.evaluate(gameData, blueprint.power(), context);
+            int toughness = amountEvaluationService.evaluate(gameData, blueprint.toughness(), context);
+            List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, controllerId, blueprint,
+                    amount, permanent.getCard().getSetCode(), power, toughness);
+            for (UUID createdId : createdIds) {
+                Permanent aura = gameQueryService.findPermanentById(gameData, createdId);
+                if (aura == null) {
+                    continue;
+                }
+                Card withCost = aura.getCard().createRuntimeCopy();
+                withCost.setManaCost(enterWith.manaCost());
+                aura.exchangeCard(withCost);
+                if (!auraAttachmentService.canEnchant(gameData, aura.getCard(), controllerId, permanent)) {
+                    continue;
+                }
+                gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+                aura.setAttachedTo(permanent.getId());
+                aura.setTimestamp(gameData.nextTimestamp());
+                triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, permanent.getId());
+            }
+        }
     }
 
     private void applyEntryReplacementEffects(GameData gameData, UUID controllerId,

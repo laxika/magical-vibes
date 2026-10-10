@@ -34,15 +34,16 @@ public class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry);
+        doResolve(gameData, entry, (DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect) effect);
     }
 
-    private void doResolve(
-            GameData gameData, StackEntry entry) {
+    private void doResolve(GameData gameData, StackEntry entry,
+                           DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, entry.getTargetId());
 
         // Attempt to destroy the permanent
         if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
@@ -50,13 +51,21 @@ public class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandl
             log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
         }
 
-        // Build APNAP-ordered queue: active player first, then others in turn order
         List<UUID> searchers = new ArrayList<>();
-        UUID activePlayerId = gameData.activePlayerId;
-        searchers.add(activePlayerId);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(activePlayerId)) {
-                searchers.add(playerId);
+        if (effect.targetControllerThenYou()) {
+            // Sequential instructions follow the card's written order (CR 608.2c).
+            if (targetControllerId != null) {
+                searchers.add(targetControllerId);
+            }
+            if (entry.getControllerId() != null && !entry.getControllerId().equals(targetControllerId)) {
+                searchers.add(entry.getControllerId());
+            }
+        } else {
+            searchers.add(gameData.activePlayerId);
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (!playerId.equals(gameData.activePlayerId)) {
+                    searchers.add(playerId);
+                }
             }
         }
 

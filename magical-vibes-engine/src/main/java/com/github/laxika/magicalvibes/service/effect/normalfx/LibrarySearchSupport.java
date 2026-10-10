@@ -135,7 +135,7 @@ public class LibrarySearchSupport {
 
             List<Card> deck = gameData.playerDecks.get(nextPlayerId);
             if (deck == null || deck.isEmpty()) {
-                LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, nextPlayerId);
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, nextPlayerId);
                 if (deck != null) {
                     LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
                 }
@@ -150,7 +150,7 @@ public class LibrarySearchSupport {
                     opponentSearchTopCardsLimit(gameData, nextPlayerId));
 
             if (choices.isEmpty()) {
-                LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, nextPlayerId);
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, nextPlayerId);
                 LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
                 gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no creature cards. Library is shuffled."));
                 continue;
@@ -401,7 +401,7 @@ public class LibrarySearchSupport {
         int limit = Math.min(opponentSearchTopCardsLimit(gameData, playerId), deck.size());
         Set<UUID> searchableCardIds = deck.subList(0, limit).stream()
                 .map(Card::getId).collect(java.util.stream.Collectors.toSet());
-        LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
         return startNextToHandPick(gameData, playerId, followUp.withRemainingToHandPicks(
                 followUp.remainingToHandPicks().stream()
                         .map(pick -> pick.withinSingleSearch(searchableCardIds)).toList()));
@@ -621,7 +621,7 @@ public class LibrarySearchSupport {
         if (deck == null || deck.isEmpty()) {
             // Searching an empty library is still a search, so opponent-search triggers fire here too
             // (the interaction-starting path fires them in sendLibrarySearchToPlayer).
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
             String logMsg = playerName + " searches their library but it is empty."
                     + (shuffleAfterSelection ? " Library is shuffled." : "");
             gameLogService.append(gameData, GameLog.text(logMsg));
@@ -633,7 +633,7 @@ public class LibrarySearchSupport {
                 .toList();
 
         if (matchingCards.isEmpty()) {
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             }
@@ -840,7 +840,7 @@ public class LibrarySearchSupport {
                 && (params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId()))
                 && params.followUp().basicLandSearchQueue() == null
                 && params.followUp().eachPlayerToHandCount() == 0) {
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, params.playerId());
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, params.playerId());
         }
 
         // Aven Mindcensor & friends: an opponent's search is limited to the top N cards of that library.

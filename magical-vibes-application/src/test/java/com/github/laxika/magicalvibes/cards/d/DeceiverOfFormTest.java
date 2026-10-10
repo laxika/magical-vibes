@@ -211,12 +211,8 @@ class DeceiverOfFormTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
 
         advanceToCombat(player1);
-        if (gd.interaction.isAwaitingInput()) {
-            PendingInteraction.MayAbilityChoice choice = gd.interaction.activeInteraction(
-                    PendingInteraction.MayAbilityChoice.class);
-            assertThat(choice.description()).contains("bottom of your library");
-            harness.handleMayAbilityChosen(player1, true);
-        }
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        gs.declareAttackers(gd, player1, List.of());
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);

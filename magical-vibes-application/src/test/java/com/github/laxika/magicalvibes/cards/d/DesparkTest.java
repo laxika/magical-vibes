@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GodPharaohsStatue;
 import com.github.laxika.magicalvibes.cards.k.KarnTheGreatCreator;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -69,9 +71,10 @@ class DesparkTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles an opposing planeswalker with mana value exactly four")
     void exilesPlaneswalker() {
-        harness.addToBattlefield(player2, new KarnTheGreatCreator());
+        Permanent karn = harness.addToBattlefieldAndReturn(player2, new KarnTheGreatCreator());
+        karn.setCounterCount(CounterType.LOYALTY, 5);
 
-        castDespark(harness.getPermanentId(player2, "Karn, the Great Creator"));
+        castDespark(karn.getId());
 
         harness.assertNotOnBattlefield(player2, "Karn, the Great Creator");
         harness.assertNotInGraveyard(player2, "Karn, the Great Creator");

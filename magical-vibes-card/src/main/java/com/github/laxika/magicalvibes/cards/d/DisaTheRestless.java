@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class DisaTheRestless extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardIsPermanentPredicate(),
+                                new CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate(),
                                 new CardSubtypePredicate(CardSubtype.LHURGOYF))),
                         new ReturnTriggeringCardFromGraveyardToBattlefieldEffect()));
 

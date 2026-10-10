@@ -34,7 +34,8 @@ public class AssignNoCombatDamageEffectHandler implements NormalEffectHandlerBea
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID attackerId = entry.getSourcePermanentId();
+        UUID attackerId = ((AssignNoCombatDamageEffect) effect).useTargetId()
+                ? entry.getTargetId() : entry.getSourcePermanentId();
         if (attackerId == null) {
             return;
         }

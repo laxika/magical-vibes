@@ -80,7 +80,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                 .toList();
 
         if (selectedCards.isEmpty()) {
-            finishSearch(gameData, interaction);
+            finishSearch(gameData, interaction, selectedCards);
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " searches their library and graveyard but finds no "
                             + interaction.cardLabel() + "."
@@ -91,11 +91,11 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             } else {
                 putCardsIntoHand(gameData, playerId, selectedCards, interaction);
             }
-            finishSearch(gameData, interaction);
+            finishSearch(gameData, interaction, selectedCards);
         } else {
             boolean awaitingAuraChoice = completeSingleSelection(
                     gameData, playerId, selectedCards.getFirst(), interaction, toBattlefield);
-            finishSearch(gameData, interaction);
+            finishSearch(gameData, interaction, selectedCards);
             if (awaitingAuraChoice) {
                 return;
             }
@@ -250,9 +250,12 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
     }
 
     private void finishSearch(GameData gameData,
-                              PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction) {
-        if (interaction.librarySearchAllowed()) {
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(
+                              PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction,
+                              List<Card> selectedCards) {
+        boolean searchedLibrary = selectedCards.isEmpty()
+                || selectedCards.stream().anyMatch(card -> interaction.libraryCardIds().contains(card.getId()));
+        if (interaction.librarySearchAllowed() && searchedLibrary) {
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(
                     gameData, gameLogService, interaction.playerId());
             if (gameData.playerDecks.get(interaction.playerId()) != null) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());

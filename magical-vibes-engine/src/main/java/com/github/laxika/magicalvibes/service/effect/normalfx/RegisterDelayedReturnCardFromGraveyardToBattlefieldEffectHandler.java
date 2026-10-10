@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerEndStepGraveyardReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
 import org.springframework.stereotype.Component;
@@ -25,16 +25,11 @@ public class RegisterDelayedReturnCardFromGraveyardToBattlefieldEffectHandler im
             return;
         }
 
-        gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldUnderControl(
+        gameData.queueDelayedAction(new DelayedControllerEndStepGraveyardReturn(
                 cardId,
                 entry.getControllerId(),
-                entry.getSourcePermanentId(),
-                false,
-                null,
-                0,
-                null,
-                null,
-                false,
-                false));
+                gameData.graveyardEntryVersion(cardId),
+                entry.getCard(),
+                entry.getSourcePermanentId()));
     }
 }

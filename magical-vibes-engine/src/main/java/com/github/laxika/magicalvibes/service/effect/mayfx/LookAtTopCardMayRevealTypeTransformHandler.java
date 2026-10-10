@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final AnimationSupport animationSupport;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -55,15 +57,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                         Permanent self = ability.sourcePermanentId() != null
                                 ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
                         if (self != null && !self.isTransformed()) {
-                            Card backFace = self.getOriginalCard().getBackFaceCard();
-                            if (backFace != null) {
-                                String frontName = self.getCard().getName();
-                                self.setCard(backFace);
-                                self.setTransformed(true);
-                                gameLogService.append(gameData, GameLog.textCardText(frontName + " transforms into " , backFace, "."));
-                                log.info("Game {} - {} transforms into {} (revealed instant/sorcery)",
-                                        gameData.id, frontName, backFace.getName());
-                            }
+                            animationSupport.transformToBackFace(gameData, self);
                         }
                     } else {
                         log.info("Game {} - {} revealed {} but it's not a matching type, no transform",

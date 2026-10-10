@@ -122,6 +122,8 @@ class DrownInDreamsTest extends BaseCardTest {
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLUE, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, xValue + 2);
         harness.castModalSorceryWithModesForX(player1, 0, 1, 2, modes, xValue, targetIds);
-        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
     }
 }

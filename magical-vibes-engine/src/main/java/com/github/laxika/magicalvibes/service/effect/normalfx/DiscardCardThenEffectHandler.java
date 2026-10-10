@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DamagedPlayerControlsTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -85,9 +86,18 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent sourceSnapshot = currentSource == null
                 ? entry.getSourcePermanentSnapshot() : new Permanent(currentSource);
+        boolean bindsDamagedPlayer = e.thenEffect() instanceof DamagedPlayerControlsTargetEffect
+                && gameData.playerIds.contains(entry.getTargetId());
+        CardEffect boundThenEffect = bindsDamagedPlayer
+                ? ((DamagedPlayerControlsTargetEffect) e.thenEffect()).forDamagedPlayer(entry.getTargetId())
+                : e.thenEffect();
+        // The damaged player is only context for the reflexive ability; its own target (a permanent
+        // that player controls) is chosen when that ability is put on the stack, so the player id is
+        // never carried over as the pre-bound target.
+        UUID followUpTargetId = e.useEntryTarget() && !bindsDamagedPlayer ? preservedTargetId : null;
         DiscardFollowUp followUp = DiscardFollowUp.thenEffect(entry.getCard(),
-                        e.useEntryTarget() && preservedTargetId == null ? null : e.thenEffect(),
-                        e.condition(), e.useEntryTarget() ? preservedTargetId : null,
+                        e.useEntryTarget() && preservedTargetId == null ? null : boundThenEffect,
+                        e.condition(), followUpTargetId,
                         e.alternateCardType(), e.alternateThenEffect())
                 .withSourceContext(entry.getSourcePermanentId(),
                         sourceSnapshot, entry.getEventValue())

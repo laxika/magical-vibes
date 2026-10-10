@@ -60,10 +60,18 @@ public class ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler
             Card originalCard = source.getOriginalCard();
             ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect copyEffect =
                     (ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect) effect;
+            // "except it has this ability" keeps only this ability itself, wherever the permanent got it
+            // (printed, or copied from a Doppelganger), and drops abilities from earlier copies. Read
+            // from the current card before the copy replaces it.
+            Card retainedSource = source.getCard();
+            var retainedAbilities = retainedSource.getActivatedAbilities().stream()
+                    .filter(ability -> ability.getEffects().stream().anyMatch(
+                            ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect.class::isInstance))
+                    .toList();
             permanentCopierService.applyCloneCopy(source, targetCard, null, null, Set.of(),
-                    originalCard.getActivatedAbilities());
+                    retainedAbilities);
             if (copyEffect.retainedEffectSlot() != null) {
-                for (EffectRegistration registration : originalCard.getEffectRegistrations(
+                for (EffectRegistration registration : retainedSource.getEffectRegistrations(
                         copyEffect.retainedEffectSlot())) {
                     source.getCard().addEffect(copyEffect.retainedEffectSlot(),
                             registration.effect(), registration.triggerMode());

@@ -96,6 +96,8 @@ class DireFleetDaredevilTest extends BaseCardTest {
 
     @Test
     void permissionExpiresAtEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         SecretsOfTheGoldenCity spell = exileSorcery();
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));

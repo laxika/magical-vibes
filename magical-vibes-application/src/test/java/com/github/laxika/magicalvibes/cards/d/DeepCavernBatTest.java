@@ -132,8 +132,7 @@ class DeepCavernBatTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(land);
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNull();
     }
 
     @Test
@@ -146,8 +145,7 @@ class DeepCavernBatTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNull();
     }
 
     @Test

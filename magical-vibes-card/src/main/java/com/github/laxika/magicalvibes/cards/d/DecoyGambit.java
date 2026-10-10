@@ -12,6 +12,7 @@ public class DecoyGambit extends Card {
 
     public DecoyGambit() {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
+        setTargetControllersFixedAtCast(true);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
                 .addEffect(EffectSlot.SPELL, new ReturnTargetCreaturesUnlessControllersDrawEffect());
     }

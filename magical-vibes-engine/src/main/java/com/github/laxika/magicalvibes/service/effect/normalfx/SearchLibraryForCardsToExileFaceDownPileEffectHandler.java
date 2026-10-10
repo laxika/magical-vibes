@@ -57,7 +57,7 @@ public class SearchLibraryForCardsToExileFaceDownPileEffectHandler implements No
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
             gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;

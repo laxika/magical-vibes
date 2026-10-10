@@ -759,7 +759,7 @@ public class TurnCleanupService {
                         .anyMatch(RememberTargetPlayerEffect.class::isInstance);
                 boolean choosesOpponentAsEnters = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .anyMatch(com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (effect instanceof OpponentMaxHandSizeEffect handSizeEffect) {
                         UUID affectedPlayerId = null;
                         if (hasChosenPlayer) {

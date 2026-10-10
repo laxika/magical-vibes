@@ -132,8 +132,8 @@ class DowsingDaggerTest extends BaseCardTest {
             creature.setAttacking(true);
 
             resolveCombat();
+            resolveAllTriggers();
 
-            // Should be awaiting may ability choice
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         }
 
@@ -146,6 +146,7 @@ class DowsingDaggerTest extends BaseCardTest {
             creature.setAttacking(true);
 
             resolveCombat();
+            resolveAllTriggers();
 
             // Accept transform
             harness.handleMayAbilityChosen(player1, true);
@@ -166,6 +167,7 @@ class DowsingDaggerTest extends BaseCardTest {
             creature.setAttacking(true);
 
             resolveCombat();
+            resolveAllTriggers();
 
             // Decline transform
             harness.handleMayAbilityChosen(player1, false);
@@ -192,7 +194,7 @@ class DowsingDaggerTest extends BaseCardTest {
 
             // Should not be awaiting may ability — no combat damage to player
             assertThat(dagger.isTransformed()).isFalse();
-            assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(dagger.getCard().getName()).isEqualTo("Dowsing Dagger");
         }
     }
@@ -206,6 +208,7 @@ class DowsingDaggerTest extends BaseCardTest {
         creature.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         // Accept transform
         harness.handleMayAbilityChosen(player1, true);
@@ -247,7 +250,7 @@ class DowsingDaggerTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(dagger.isTransformed()).isFalse();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @ParameterizedTest
@@ -258,26 +261,31 @@ class DowsingDaggerTest extends BaseCardTest {
         dagger.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
-        resolveCombat();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        // Mana empties at the end of each step (CR 106.4), and auto-pass would otherwise end
+        // END_OF_COMBAT as soon as Alice has no castable cards, so keep her stopped there.
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            resolveCombat();
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
 
-        assertThat(dagger.isTransformed()).isTrue();
-        assertThat(dagger.isTapped()).isFalse();
-        assertThat(dagger.getAttachedTo()).isNull();
-        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
-        assertThat(countPermanents(player2, "Plant")).isZero();
+            assertThat(dagger.isTransformed()).isTrue();
+            assertThat(dagger.isTapped()).isFalse();
+            assertThat(dagger.getAttachedTo()).isNull();
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+            assertThat(countPermanents(player2, "Plant")).isZero();
 
-        harness.activateAbility(player1, 1, null, null);
-        harness.handleListChoice(player1, color.name());
+            harness.activateAbility(player1, 1, null, null);
+            harness.handleListChoice(player1, color.name());
 
-        assertThat(dagger.isTapped()).isTrue();
-        for (ManaColor manaColor : ManaColor.values()) {
-            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
-                    .isEqualTo(manaColor == color ? 3 : 0);
-        }
-        assertThat(gd.stack).isEmpty();
+            assertThat(dagger.isTapped()).isTrue();
+            for (ManaColor manaColor : ManaColor.values()) {
+                assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                        .isEqualTo(manaColor == color ? 3 : 0);
+            }
+            assertThat(gd.stack).isEmpty();
+        });
     }
 
     @Test

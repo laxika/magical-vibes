@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
+import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -24,7 +24,7 @@ import java.util.Set;
 public class DeflectingSwat extends Card {
 
     public DeflectingSwat() {
-        addCastingOption(new AlternateHandCast(List.of(), new ControllerControlsCommander(), false));
+        addCastingOption(new AlternateHandCast(List.of(), new ControlledCommanderAsCast(), false));
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(
                         StackEntryType.CREATURE_SPELL,

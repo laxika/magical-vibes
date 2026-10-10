@@ -60,7 +60,13 @@ public class ExileUntilNonlandToHandRepeatIfHighMVEffectHandler implements Norma
                     gameData.addToExile(controllerId, card);
                     gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" (land) (" + sourceName + ").").build());
                 } else {
-                    // Nonland card — put into hand
+                    // Nonland card — exiled first (exile triggers see it), then put into hand
+                    gameData.addToExile(controllerId, card);
+                    if (!gameData.removeFromExile(card.getId())) {
+                        // An exile replacement kept the card out of exile, so it is not moved to hand.
+                        foundNonland = true;
+                        break;
+                    }
                     gameData.addCardToHand(controllerId, card);
                     cardsToHand++;
                     int manaValue = card.getManaValue();

@@ -142,6 +142,7 @@ class DirgurIslandDragonTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(draw));
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castWithAlternateCost(player1, 0, dragon.getId());
         assertThat(gd.stack).hasSize(2);

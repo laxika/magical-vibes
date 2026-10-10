@@ -109,7 +109,10 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                 entry.getSourcePermanentSnapshot(),
                 entry.getControllerId(),
                 entry.getTriggeringCardId(),
-                entry.getEventValue()
+                entry.getEventValue(),
+                entry.getTriggeringPermanentId(),
+                null,
+                null
         ));
 
     }

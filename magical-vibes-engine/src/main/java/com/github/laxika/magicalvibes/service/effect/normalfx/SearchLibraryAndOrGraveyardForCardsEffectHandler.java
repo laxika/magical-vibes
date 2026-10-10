@@ -67,7 +67,7 @@ public class SearchLibraryAndOrGraveyardForCardsEffectHandler implements NormalE
         String cardLabel = CardPredicateUtils.describeFilter(search.filter());
         if (libraryMatches.isEmpty() && graveyardMatches.isEmpty()) {
             if (librarySearchAllowed) {
-                LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
                 if (deck != null) {
                     LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
                 }

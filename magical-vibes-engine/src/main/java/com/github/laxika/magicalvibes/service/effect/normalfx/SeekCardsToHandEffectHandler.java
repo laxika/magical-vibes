@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -74,6 +76,7 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (soughtCount > 0) {
+            triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId) + " seeks " + soughtCount + " card"
                             + (soughtCount == 1 ? "" : "s") + "."));

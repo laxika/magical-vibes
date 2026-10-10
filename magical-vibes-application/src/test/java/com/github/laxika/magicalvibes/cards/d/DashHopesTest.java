@@ -118,8 +118,7 @@ class DashHopesTest extends BaseCardTest {
         castTargetSpell();
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

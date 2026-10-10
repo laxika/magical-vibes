@@ -268,6 +268,7 @@ public class CombatBlockService {
             checkUnblockedExileCardTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerPowerDamageTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerGainLifeTriggers(gameData, activeId, unblockedAttackers);
+            processDelayedUnblockedAttackerCubeCounterTriggers(gameData, activeId, unblockedAttackers);
             processDelayedUnblockedAttackerUntapRemoveTriggers(gameData, unblockedAttackers);
             // CR 509.4: players still get priority during the declare blockers step even
             // when zero blocks were declared (e.g. the attacker may pump an unblocked
@@ -1239,9 +1240,6 @@ public class CombatBlockService {
         }
         for (DelayedUnblockedAttackerCubeCounter delayed
                 : gameData.getDelayedActions(DelayedUnblockedAttackerCubeCounter.class)) {
-            if (!delayed.controllerId().equals(activeId)) {
-                continue;
-            }
             for (Permanent attacker : unblockedAttackers) {
                 if (!attacker.getId().equals(delayed.watchedPermanentId())
                         || !gameQueryService.isCreature(gameData, attacker)) {
@@ -1252,10 +1250,10 @@ public class CombatBlockService {
                         delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new AssignNoCombatDamageEffect(),
+                        List.of(AssignNoCombatDamageEffect.ofTargetId(),
                                 new PutCountersOnSourceCardEffect(CounterType.CUBE)),
                         attacker.getId(),
-                        attacker.getId());
+                        delayed.sourcePermanentId());
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.cardTextCard(

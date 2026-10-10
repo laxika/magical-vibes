@@ -77,6 +77,8 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
             UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
             UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), targetControllerId);
 
+            entry.getLastKnownPermanentPowers().put(target.getId(),
+                    gameQueryService.getEffectivePower(gameData, target));
             if (!permanentRemovalService.removePermanentToExile(gameData, target)) {
                 continue;
             }

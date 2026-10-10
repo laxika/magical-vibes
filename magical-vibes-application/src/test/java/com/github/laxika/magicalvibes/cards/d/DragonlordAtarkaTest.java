@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
 import com.github.laxika.magicalvibes.cards.s.SarkhanUnbroken;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -58,7 +59,10 @@ class DragonlordAtarkaTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+        PendingInteraction.ColorChoice division = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(division).isNotNull();
+        assertThat(division.context()).isInstanceOf(ChoiceContext.CounterDistributionAssignment.class);
+        assertThat(gd.stack).isEmpty();
         assertThat(first.getMarkedDamage()).isZero();
         assertThat(second.getMarkedDamage()).isZero();
     }

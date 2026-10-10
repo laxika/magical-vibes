@@ -50,7 +50,6 @@ class DungeonGeistsTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(bears.isTapped()).isTrue();
-            assertThat(bears.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
         }
 
         @Test

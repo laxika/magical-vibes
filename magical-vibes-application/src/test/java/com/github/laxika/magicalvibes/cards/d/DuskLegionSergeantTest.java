@@ -33,7 +33,7 @@ class DuskLegionSergeantTest extends BaseCardTest {
         assertThat(vampire.hasKeyword(Keyword.PERSIST)).isTrue();
         assertThat(bear.hasKeyword(Keyword.PERSIST)).isFalse();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(vampire.hasKeyword(Keyword.PERSIST)).isFalse();

@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryForUpToTwoBasicL
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -59,6 +61,8 @@ public class SearchLibraryForUpToTwoBasicLandsThenRollD20EffectHandler
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId)
                             + " searches their library but finds no basic land cards. Library is shuffled."));
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             insertRoll(gameData, entry, followUp, List.of());
             return;
         }
@@ -78,6 +82,6 @@ public class SearchLibraryForUpToTwoBasicLandsThenRollD20EffectHandler
     private void insertRoll(GameData gameData, StackEntry entry, LibrarySearchFollowUp followUp,
                             List<Card> cards) {
         RollD20Effect roll = followUp.selectedCardFollowUp().d20BasicLandSearch().rollEffect(cards);
-        entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(roll));
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(roll));
     }
 }

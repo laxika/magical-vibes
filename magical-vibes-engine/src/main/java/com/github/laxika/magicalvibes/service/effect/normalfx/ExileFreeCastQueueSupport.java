@@ -494,7 +494,7 @@ public class ExileFreeCastQueueSupport {
         gameData.priorityPassedBy.clear();
         gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", physicalCard,
                 " without paying its mana cost."));
-        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, playerId, false);
+        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, playerId, Zone.EXILE);
         if (asCopy && spellweaverVoluteSupport.handleSuccessfulCopyCast(gameData, physicalCard.getId())) {
             return;
         }

@@ -50,7 +50,7 @@ public class DomriChaosBringer extends Card {
                 -8,
                 List.of(new CreateEmblemEffect(
                         List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.END_STEP,
+                                EmblemTriggerStep.EACH_END_STEP,
                                 List.of(new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Beast", 4, 4, CardColor.RED,
                                         Set.of(CardColor.RED, CardColor.GREEN), List.of(CardSubtype.BEAST),

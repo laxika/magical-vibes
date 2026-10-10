@@ -248,7 +248,7 @@ public class LibraryChoiceHandlerService {
             if (cardIndex == -1) {
                 shuffleAfterSelection = false;
             } else {
-                LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
             }
         }
 
@@ -272,7 +272,7 @@ public class LibraryChoiceHandlerService {
                 && followUp.basicLandSearchQueue() != null
                 && followUp.basicLandSearchQueue().optionalSearch()
                 && accumulatedCards.isEmpty()) {
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, playerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
         }
 
         gameData.interaction.clearAwaitingInput();
@@ -363,7 +363,8 @@ public class LibraryChoiceHandlerService {
 
             if (destination == LibrarySearchDestination.BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND) {
                 handleBattlefieldOneAndPutRestIntoHandChoice(
-                        gameData, player, cardIndex, searchCards, sourceCards);
+                        gameData, player, cardIndex, searchCards, sourceCards,
+                        battlefieldIfChosenTapped, shuffleAfterSelection);
                 return;
             }
 
@@ -883,6 +884,10 @@ public class LibraryChoiceHandlerService {
                         battlefieldCounter, enterWithCounters);
                 accumulatedCards.clear();
             }
+            if (!accumulatedCards.isEmpty() && toGraveyard) {
+                graveyardService.addCardsFromLibraryToGraveyard(gameData, deckOwnerId, accumulatedCards);
+                accumulatedCards.clear();
+            }
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
@@ -1247,7 +1252,12 @@ public class LibraryChoiceHandlerService {
                 finishSearchAndResume(gameData);
                 return;
             }
-            castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep);
+            // A cascade hit is still in exile when it is cast, so it is recorded as cast from exile;
+            // library searches cast from the library.
+            boolean inExile = gameData.exiledCards.stream()
+                    .anyMatch(exiled -> exiled.card().getId().equals(chosenCard.getId()));
+            castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep,
+                    inExile ? Zone.EXILE : Zone.LIBRARY);
             return;
         }
 
@@ -1595,6 +1605,13 @@ public class LibraryChoiceHandlerService {
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             finishSearchAndResume(gameData);
             return;
+        } else if (toGraveyard && (remainingCount > 1 || !accumulatedCards.isEmpty())) {
+            // Cards found by one search enter the graveyard together, so "one or more cards" triggers fire once.
+            accumulatedCards.add(chosenCard);
+            if (remainingCount <= 1) {
+                graveyardService.addCardsFromLibraryToGraveyard(gameData, deckOwnerId, accumulatedCards);
+                accumulatedCards.clear();
+            }
         } else if (toGraveyard) {
             boolean enteredGraveyard = graveyardService.addCardToGraveyard(
                     gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
@@ -1728,6 +1745,10 @@ public class LibraryChoiceHandlerService {
                     placeCardsOnBattlefieldSimultaneously(gameData, accumulatedCards, handOwnerId, toBattlefieldTapped,
                         grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
                         battlefieldCounter, enterWithCounters);
+                }
+                if (!accumulatedCards.isEmpty() && toGraveyard) {
+                    graveyardService.addCardsFromLibraryToGraveyard(gameData, deckOwnerId, accumulatedCards);
+                    accumulatedCards.clear();
                 }
                 // No more matching cards — shuffle and finish
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
@@ -2853,7 +2874,8 @@ public class LibraryChoiceHandlerService {
 
     private void handleBattlefieldOneAndPutRestIntoHandChoice(GameData gameData, Player player,
                                                                int cardIndex, List<Card> searchCards,
-                                                               List<Card> sourceCards) {
+                                                               List<Card> sourceCards,
+                                                               boolean tapped, boolean shuffleAfter) {
         if (cardIndex < 0 || cardIndex >= searchCards.size()) {
             throw new IllegalStateException("A battlefield card choice is mandatory");
         }
@@ -2863,13 +2885,16 @@ public class LibraryChoiceHandlerService {
                 .filter(card -> !card.getId().equals(chosenCard.getId()))
                 .toList();
         placeCardsOnBattlefieldSimultaneously(gameData, List.of(chosenCard), player.getId(),
-                false, false, false, false, null, null, null);
+                tapped, false, false, false, null, null, null);
         for (Card card : handCards) {
             gameData.addCardToHand(player.getId(), card);
         }
         if (!handCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " puts the other selected cards into their hand."));
+        }
+        if (shuffleAfter) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, player.getId());
         }
         performStateBasedActionsIfResolutionComplete(gameData);
         finishSearchAndResume(gameData);
@@ -4159,8 +4184,10 @@ public class LibraryChoiceHandlerService {
                 .filter(card -> gameData.findExiledCard(card.getId()) != null)
                 .map(Card::getId).collect(java.util.stream.Collectors.toSet());
 
+        boolean chosenCardCastable = cardIndex == -1 || cardIndex < -1 || cardIndex >= searchCards.size()
+                || canCastWithoutPaying(gameData, player.getId(), searchCards.get(cardIndex));
         if (!sourceCards.isEmpty() && exiledSourceIds.size() == sourceCards.size()
-                && !grantHaste && !sacrificeAtEndStep) {
+                && !grantHaste && !sacrificeAtEndStep && chosenCardCastable) {
             if (cardIndex == -1 && !canFailToFind) {
                 throw new IllegalStateException("Cannot fail to find with an unrestricted search");
             }

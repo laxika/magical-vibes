@@ -34,7 +34,15 @@ public class PsychicBattleSupport {
     public StackEntry findTargetEntry(GameData gameData, UUID cardId) {
         for (int i = gameData.stack.size() - 1; i >= 0; i--) {
             StackEntry entry = gameData.stack.get(i);
-            if (entry.getTargetableId().equals(cardId) || entry.getCard().getId().equals(cardId)) {
+            if (entry.getTargetableId().equals(cardId)) {
+                return entry;
+            }
+        }
+        // Legacy card-id reference: an ability sharing the spell's source card (a delayed copy
+        // trigger, say) must not shadow the spell itself, so match the card only as a fallback.
+        for (int i = gameData.stack.size() - 1; i >= 0; i--) {
+            StackEntry entry = gameData.stack.get(i);
+            if (entry.getCard() != null && entry.getCard().getId().equals(cardId)) {
                 return entry;
             }
         }
@@ -138,6 +146,37 @@ public class PsychicBattleSupport {
                 validTargets.stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
                 validTargets.stream().filter(gameData.playerIds::contains).toList(),
                 "Choose a new target for " + entry.getCard().getName() + ".");
+    }
+
+    /**
+     * Starts the next step of a "choose new targets" sequence (CR 115.7d) at the first target position
+     * at or after {@code fromIndex} that has a legal replacement. The chooser may keep the current target
+     * (it is offered alongside the legal replacements) or pick a replacement; the choice is then handled by
+     * the {@code SpellRetarget} context, which continues with the following target.
+     *
+     * @return whether a choice was started; false when no remaining position can be changed
+     */
+    public boolean beginEachTargetChoice(GameData gameData, StackEntry entry, UUID chooserId, int fromIndex) {
+        List<UUID> current = targetIds(entry);
+        for (int index = Math.max(0, fromIndex); index < current.size(); index++) {
+            List<UUID> alternatives = collectLegalAlternatives(gameData, entry, index);
+            if (alternatives.isEmpty()) {
+                continue;
+            }
+            List<UUID> choices = new ArrayList<>();
+            choices.add(current.get(index));
+            choices.addAll(alternatives);
+            gameData.interaction.setPermanentChoiceContext(
+                    new com.github.laxika.magicalvibes.model.PermanentChoiceContext.SpellRetarget(
+                            entry.getTargetableId(), index, null, chooserId, true));
+            playerInputService.beginAnyTargetChoice(gameData, chooserId,
+                    choices.stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
+                    choices.stream().filter(gameData.playerIds::contains).toList(),
+                    "Choose the new target for target " + (index + 1) + " of " + entry.getCard().getName()
+                            + " (choose the current target to leave it unchanged).");
+            return true;
+        }
+        return false;
     }
 
     private Set<UUID> collectCandidates(GameData gameData, StackEntry entry) {

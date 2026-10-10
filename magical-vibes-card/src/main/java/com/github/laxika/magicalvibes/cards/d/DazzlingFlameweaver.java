@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -13,6 +15,10 @@ import java.util.List;
 public class DazzlingFlameweaver extends Card {
 
     public DazzlingFlameweaver() {
+        // Ward—Pay 3 life.
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
+                new CounterUnlessPaysLifeEffect(new Fixed(3)));
+
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         new PermanentIsCreaturePredicate(),

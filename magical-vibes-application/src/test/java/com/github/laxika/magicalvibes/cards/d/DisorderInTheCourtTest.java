@@ -84,7 +84,7 @@ class DisorderInTheCourtTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Clue")).isEmpty();
 
         advanceToEndStep();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(findPermanents(player2, "Grizzly Bears")).hasSize(1).allMatch(Permanent::isTapped);
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
@@ -107,7 +107,7 @@ class DisorderInTheCourtTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Clue")).hasSize(2);
 
         advanceToEndStep();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(findPermanents(player2, "Grizzly Bears")).hasSize(1).allMatch(Permanent::isTapped);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(first.getCard());
@@ -155,7 +155,7 @@ class DisorderInTheCourtTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(creature.getCard());
         assertThat(gd.stack).hasSize(1);
 
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(findPermanents(player2, "Grizzly Bears")).hasSize(1).allMatch(Permanent::isTapped);
     }

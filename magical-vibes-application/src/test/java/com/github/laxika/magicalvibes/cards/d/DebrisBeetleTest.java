@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -155,13 +156,17 @@ class DebrisBeetleTest extends BaseCardTest {
     void crewedBeetleDealsTrampleDamage() {
         addCreatureReady(player1, new DebrisBeetle());
         addCreatureReady(player1, new DaringMechanic());
-        addCreatureReady(player2, new DaringMechanic());
+        Permanent blocker = addCreatureReady(player2, new DaringMechanic());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 3,
+                player2.getId(), 3
+        ));
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         harness.assertInGraveyard(player2, "Daring Mechanic");

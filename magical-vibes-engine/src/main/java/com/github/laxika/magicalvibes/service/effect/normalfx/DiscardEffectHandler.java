@@ -138,14 +138,17 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                 opponentCaused = !playerId.equals(entry.getControllerId());
             }
             case TARGET_PERMANENT_CONTROLLER -> {
-                // targetId is the targeted permanent; the discarder is its controller. Resolve before
-                // any accompanying destroy effect runs so the permanent is still on the battlefield.
-                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-                if (target == null) {
+                // targetId is the targeted permanent; the discarder is its controller. If an earlier
+                // destroy effect already removed it, the controller it recorded is used instead.
+                UUID targetId = entry.getTargetId();
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                playerId = target != null
+                        ? gameQueryService.findPermanentController(gameData, target.getId())
+                        : entry.getRemovedPermanentControllers().get(targetId);
+                if (playerId == null) {
                     return;
                 }
-                playerId = gameQueryService.findPermanentController(gameData, target.getId());
-                opponentCaused = true;
+                opponentCaused = !playerId.equals(entry.getControllerId());
             }
             case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> {
                 // targetId is either a player or a planeswalker; the discarder is that player or the

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInsta
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactOrCreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentEffect;
@@ -555,6 +556,26 @@ public class GameQueryService {
 
     private boolean hasCardType(Card card, CardType type) {
         return card.hasType(type);
+    }
+
+    /**
+     * Returns whether {@code card} is a creature at the moment it enters the battlefield. A non-Aura
+     * enchantment is a creature on entry while another battlefield permanent animates non-Aura
+     * enchantments (Opalescence); such an effect does not apply to its own source card.
+     */
+    private boolean wouldEnterAsCreature(GameData gameData, Card card) {
+        if (hasCardType(card, CardType.CREATURE)) {
+            return true;
+        }
+        if (!hasCardType(card, CardType.ENCHANTMENT) || card.getSubtypes().contains(CardSubtype.AURA)) {
+            return false;
+        }
+        return gameData.anyPermanentMatches(p ->
+                !p.isFaceDown()
+                        && !p.getCard().getId().equals(card.getId())
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(AnimateNonAuraEnchantmentsEffect.class::isInstance)
+                        && !hasLostPrintedAbilities(gameData, p));
     }
 
     /**
@@ -7052,6 +7073,37 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the target permanent has protection from any of the source card's
+     * subtypes. Used for sources with no battlefield permanent (a dead Zombie's death trigger, a spell
+     * on the stack). Unlike the card-only overload, this also sees subtype protection granted by
+     * another permanent's static effect (e.g. Diregraf Escort's pair grant).
+     */
+    public boolean hasProtectionFromSourceSubtypes(GameData gameData, Permanent target, Card sourceCard) {
+        if (target == null || computeStaticBonus(gameData, target).protectionRemoved()) {
+            return false;
+        }
+        Set<CardSubtype> protectedSubtypes = EnumSet.noneOf(CardSubtype.class);
+        Set<CardSubtype> creatureOnlySubtypes = EnumSet.noneOf(CardSubtype.class);
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            collectProtectedSubtypes(effect, protectedSubtypes, creatureOnlySubtypes);
+        }
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
+            collectProtectedSubtypes(effect, protectedSubtypes, creatureOnlySubtypes);
+        }
+        if (!creatureOnlySubtypes.isEmpty()
+                && (sourceCard.getType() == CardType.CREATURE
+                || sourceCard.getAdditionalTypes().contains(CardType.CREATURE))) {
+            protectedSubtypes.addAll(creatureOnlySubtypes);
+        }
+        if (protectedSubtypes.isEmpty()) return false;
+        for (CardSubtype subtype : sourceCard.getSubtypes()) {
+            if (protectedSubtypes.contains(subtype)) return true;
+        }
+        return sourceCard.hasKeyword(Keyword.CHANGELING)
+                && protectedSubtypes.stream().anyMatch(this::isCreatureSubtype);
+    }
+
+    /**
      * Splits one effect's subtype protection into the unconditional set and the
      * "â€¦creatures only" set, so a "protection from [type] creatures" grant (Riders of Gavony)
      * does not also stop a noncreature source that merely carries the type.
@@ -7328,7 +7380,7 @@ public class GameQueryService {
                 || hasProtectionFromMonocolored(gameData, target, sourceColors)
                 || hasProtectionFromColoredSpellSource(gameData, target, sourceCard)
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
-                || hasProtectionFromSourceSubtypes(target, sourceCard)
+                || hasProtectionFromSourceSubtypes(gameData, target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
                 || hasProtectionFromSourceManaValue(gameData, target, sourceCard)
                 || hasProtectionFromMatchingPermanent(gameData, target, findPermanentByCardId(gameData, sourceCard.getId()));
@@ -7359,7 +7411,7 @@ public class GameQueryService {
                 || hasProtectionFromMonocolored(gameData, target, sourceColors)
                 || hasProtectionFromColoredSpellSource(gameData, target, sourceCard)
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
-                || hasProtectionFromSourceSubtypes(target, sourceCard)
+                || hasProtectionFromSourceSubtypes(gameData, target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
                 || hasProtectionFromSourceManaValue(gameData, target, sourceCard)
                 || hasProtectionFromMatchingPermanent(gameData, target, findPermanentByCardId(gameData, sourceCard.getId()));
@@ -7750,17 +7802,22 @@ public class GameQueryService {
             return false;
         }
         boolean opponentControlled = isOpponentControlledSpell(gameData, target, spellControllerId);
+        // "Hexproof from [color]" is a hexproof ability, so an effect that lets the spell's
+        // controller target opponents' permanents as though they didn't have hexproof lifts it.
+        boolean hexproofLifted = opponentControlled
+                && (ignoresOpponentPermanentHexproof(gameData, spellControllerId)
+                || (isCreature(gameData, target) && ignoresOpponentCreatureHexproof(gameData, spellControllerId)));
         for (CardEffect effect : getActiveStaticEffects(gameData, target)) {
             if (isSpellColorRestriction(effect, spellColor, opponentControlled)
                     && (!isHexproofFromColorRestriction(effect, spellColor)
-                    || hasHexproofFromColor(gameData, target, spellColor))) {
+                    || (!hexproofLifted && hasHexproofFromColor(gameData, target, spellColor)))) {
                 return true;
             }
         }
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
             if (isSpellColorRestriction(effect, spellColor, opponentControlled)
                     && (!isHexproofFromColorRestriction(effect, spellColor)
-                    || hasHexproofFromColor(gameData, target, spellColor))) {
+                    || (!hexproofLifted && hasHexproofFromColor(gameData, target, spellColor)))) {
                 return true;
             }
         }
@@ -8554,6 +8611,8 @@ public class GameQueryService {
                         result[0] = replacement.replaceDamage(entry, result[0]);
                     }
                     if (effect instanceof ReplaceDamageAboveThresholdEffect replacement
+                            && !hasLostAllAbilities(gameData, permanent)
+                            && !permanent.isStaticEffectSuppressed(effect.getClass())
                             && result[0] >= replacement.threshold()) {
                         result[0] = replacement.replacementDamage();
                     }
@@ -8728,7 +8787,7 @@ public class GameQueryService {
             return false;
         }
         boolean creatureSpell = hasCardType(card, CardType.CREATURE);
-        int manaValue = card.getManaValue() + stackEntry.getXValue();
+        int manaValue = StackEntry.spellManaValue(card, stackEntry.getXValue());
         return battlefield.stream()
                 .filter(permanent -> !permanent.isFaceDown()
                         && !hasLostAllAbilities(gameData, permanent))
@@ -8802,7 +8861,7 @@ public class GameQueryService {
      * AND the entering card is a creature.
      */
     public boolean areCreatureETBTriggersSuppressed(GameData gameData, Card enteringCard) {
-        if (!hasCardType(enteringCard, CardType.CREATURE)) {
+        if (!wouldEnterAsCreature(gameData, enteringCard)) {
             return false;
         }
         return anyBattlefieldHasStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class)
@@ -8814,7 +8873,7 @@ public class GameQueryService {
      */
     public boolean areArtifactOrCreatureETBTriggersSuppressed(GameData gameData, Card enteringCard) {
         if (!hasCardType(enteringCard, CardType.ARTIFACT)
-                && !hasCardType(enteringCard, CardType.CREATURE)) {
+                && !wouldEnterAsCreature(gameData, enteringCard)) {
             return false;
         }
         return anyBattlefieldHasStaticEffect(gameData, ArtifactOrCreatureEnteringDontCauseTriggersEffect.class)

@@ -50,7 +50,7 @@ public class CreateTokenAndLinkToSourceEffectHandler implements NormalEffectHand
                 tokenEffects.putAll(token.tokenEffects());
             }
             tokenEffects.put(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                    new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE));
+                    new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER));
             token = token.withTokenEffects(tokenEffects);
         }
 

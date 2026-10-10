@@ -35,8 +35,8 @@ public class DefiledCryptCadaverLab extends Card {
         CreateTokenEffect horrorToken = new CreateTokenEffect(1, "Horror", 2, 2,
                 CardColor.BLACK, List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT));
         addEffect(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
-                new ConditionalEffect(new SourceRoomDoorUnlocked(0),
-                        new OncePerTurnTriggerEffect(horrorToken)));
+                new OncePerTurnTriggerEffect(
+                        new ConditionalEffect(new SourceRoomDoorUnlocked(0), horrorToken, true)));
 
         ReturnCardFromGraveyardEffect returnCreature = ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)

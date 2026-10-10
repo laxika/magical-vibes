@@ -14,7 +14,7 @@ import java.util.List;
 public class DocSamsonSuperPsychiatrist extends Card {
 
     public DocSamsonSuperPsychiatrist() {
-        addEffect(EffectSlot.STATIC, new AddOneCounterToControlledPermanentsEffect());
+        addEffect(EffectSlot.STATIC, new AddOneCounterToControlledPermanentsEffect(true));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

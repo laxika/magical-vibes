@@ -43,11 +43,6 @@ public class CreateTokenCopyOfChosenCreatureEffectHandler implements NormalEffec
             return;
         }
 
-        if (creatureIds.size() == 1) {
-            createCopies(gameData, entry, creatureIds.getFirst(), copyEffect.amount());
-            return;
-        }
-
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.EsixCreatureChoice(
                 entry.getControllerId(), entry.getCard(), entry, copyEffect.amount(),
                 copyEffect.excludedPermanentId()));

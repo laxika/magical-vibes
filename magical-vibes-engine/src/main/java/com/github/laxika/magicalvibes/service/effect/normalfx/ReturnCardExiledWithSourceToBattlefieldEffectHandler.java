@@ -57,15 +57,15 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID controllerId = entry.getControllerId();
+        ReturnCardExiledWithSourceToBattlefieldEffect returnEffect =
+                (ReturnCardExiledWithSourceToBattlefieldEffect) effect;
+        UUID controllerId = returnEffect.activePlayerReturns() ? gameData.activePlayerId : entry.getControllerId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) {
             return;
         }
         String controllerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
-        ReturnCardExiledWithSourceToBattlefieldEffect returnEffect =
-                (ReturnCardExiledWithSourceToBattlefieldEffect) effect;
 
         if (returnEffect.targeted()) {
             if (entry.getTargetZone() != Zone.EXILE

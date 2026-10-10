@@ -36,7 +36,7 @@ public class DemolitionField extends Card {
                 "{2}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect()
+                        new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect(true)
                 ),
                 "{2}, {T}, Sacrifice Demolition Field: Destroy target nonbasic land an opponent controls. That land's controller may search their library for a basic land card, put it onto the battlefield, then shuffle. You may search your library for a basic land card, put it onto the battlefield, then shuffle.",
                 new PermanentPredicateTargetFilter(

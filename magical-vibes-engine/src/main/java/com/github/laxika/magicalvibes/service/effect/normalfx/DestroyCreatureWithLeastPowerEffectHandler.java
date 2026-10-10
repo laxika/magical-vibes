@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -53,6 +54,15 @@ public class DestroyCreatureWithLeastPowerEffectHandler implements NormalEffectH
         List<Permanent> tied = creatures.stream()
                 .filter(permanent -> gameQueryService.getEffectivePower(gameData, permanent) == leastPower)
                 .toList();
+
+        // Ruling (Drop of Honey, 2021): an indestructible creature tied for least power can't be chosen
+        // while a destroyable tied creature exists; if every tied creature is indestructible, none is destroyed.
+        tied = tied.stream()
+                .filter(permanent -> !gameQueryService.hasKeyword(gameData, permanent, Keyword.INDESTRUCTIBLE))
+                .toList();
+        if (tied.isEmpty()) {
+            return;
+        }
 
         if (tied.size() == 1) {
             destructionSupport.tryDestroyAndLog(gameData, tied.getFirst(), entry.getCard().getName(),

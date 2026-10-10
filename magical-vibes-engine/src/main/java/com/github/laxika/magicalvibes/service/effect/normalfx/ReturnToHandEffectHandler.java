@@ -269,6 +269,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                 .withXValue(entry.getXValue());
 

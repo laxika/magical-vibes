@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 
 @CardRegistration(set = "ONS", collectorNumber = "138")
@@ -19,7 +20,7 @@ public class DirgeOfDread extends Card {
         addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.FEAR, GrantScope.ALL_CREATURES));
 
         addCycling("{1}{B}");
-        addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
+        target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
                 new GrantKeywordEffect(Keyword.FEAR, GrantScope.TARGET),
                 "Have target creature gain fear until end of turn?"));
     }

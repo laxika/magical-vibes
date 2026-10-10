@@ -177,7 +177,6 @@ class DrivenDespairTest extends BaseCardTest {
 
         late.setAttacking(true);
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();

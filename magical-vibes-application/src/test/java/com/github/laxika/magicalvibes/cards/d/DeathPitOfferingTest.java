@@ -123,7 +123,7 @@ class DeathPitOfferingTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Death Pit Offering");
         harness.assertOnBattlefield(player1, "Opalescence");
         assertThat(gd.stack)
-                .filteredOn(entry -> entry.getCard() instanceof Fecundity)
+                .filteredOn(entry -> entry.getCard().getName().equals("Fecundity"))
                 .hasSize(3);
     }
 

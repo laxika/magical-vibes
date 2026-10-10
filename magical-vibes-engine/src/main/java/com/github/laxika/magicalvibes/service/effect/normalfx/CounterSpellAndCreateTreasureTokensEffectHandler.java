@@ -43,7 +43,7 @@ public class CounterSpellAndCreateTreasureTokensEffectHandler implements NormalE
             return;
         }
 
-        int manaValue = targetEntry.getCard().getManaValue() + targetEntry.getXValue();
+        int manaValue = targetEntry.getSpellManaValue();
 
         boolean countered = false;
         if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {

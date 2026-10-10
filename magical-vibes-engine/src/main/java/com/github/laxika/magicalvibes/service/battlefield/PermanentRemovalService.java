@@ -2065,6 +2065,9 @@ public class PermanentRemovalService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                    continue;
+                }
                 ExileOpponentCreaturesInsteadOfDyingEffect effect = permanent.getCard()
                         .getEffects(EffectSlot.STATIC).stream()
                         .filter(ExileOpponentCreaturesInsteadOfDyingEffect.class::isInstance)
@@ -2505,9 +2508,18 @@ public class PermanentRemovalService {
                     subtypePowers.merge(subtype, dyingPowerAtDeath, Integer::sum);
                 }
                 if (!creatureDeathTriggersSuppressed) {
-                    triggerCollectionService.checkCreaturePutIntoOwnersGraveyardFromBattlefieldTriggers(
-                            gameData, target, ownerId, controllerId,
-                            dyingPowerAtDeath, dyingToughnessAtDeath);
+                    // CR 603.10a: leaves-the-battlefield triggers look back in time, so graveyard-count
+                    // conditions on granted abilities (Decaying Soil threshold) ignore the arriving cards.
+                    gameData.graveyardLookBackExcludedCardIds.add(target.getOriginalCard().getId());
+                    gameData.simultaneousDyingPermanents.values().forEach(dying ->
+                            gameData.graveyardLookBackExcludedCardIds.add(dying.getOriginalCard().getId()));
+                    try {
+                        triggerCollectionService.checkCreaturePutIntoOwnersGraveyardFromBattlefieldTriggers(
+                                gameData, target, ownerId, controllerId,
+                                dyingPowerAtDeath, dyingToughnessAtDeath);
+                    } finally {
+                        gameData.graveyardLookBackExcludedCardIds.clear();
+                    }
                     triggerCollectionService.checkAllyCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath);
                     triggerCollectionService.checkGraveyardAllyCreatureDeathTriggers(gameData, controllerId, target);
@@ -2868,7 +2880,8 @@ public class PermanentRemovalService {
             return;
         }
         boolean simultaneousReturn = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
-                .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect.class::isInstance);
+                .stream().anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect);
         if (simultaneousReturn) {
             List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> cards = new ArrayList<>();
             for (PendingExileReturn pending : pendingReturns) {

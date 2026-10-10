@@ -192,9 +192,9 @@ class DelverOfSecretsTest extends BaseCardTest {
         Card topCard = new Shock();
         harness.setLibrary(player1, List.of(topCard, new Pyroclasm()));
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.RED, 1);
         harness.ensurePriority(player2);
         harness.castAndResolveInstant(player2, 0, delver.getId());
         harness.assertInGraveyard(player1, "Delver of Secrets");

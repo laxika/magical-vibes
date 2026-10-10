@@ -41,15 +41,16 @@ class DetritivoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
-
-        assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
         var choice = (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
         assertThat(choice.validIds()).containsExactly(nonbasicLand.getId());
         harness.handlePermanentChosen(player1, nonbasicLand.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Dreadship Reef");
         harness.assertOnBattlefield(player2, "Forest");

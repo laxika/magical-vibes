@@ -48,7 +48,7 @@ public class LandPlayPermissionService {
                     if (!(effect instanceof ConditionalEffect)) continue;
                     CardEffect activeEffect = staticEffectConditionResolver.resolve(
                             gameData, permanent, controllerId, effect);
-                    if (!activeStatics.contains(activeEffect)) continue;
+                    if (activeEffect == null || !activeStatics.contains(activeEffect)) continue;
                     if (activeEffect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         conditionalExtra = Math.min(Integer.MAX_VALUE, conditionalExtra + 1);
                     } else if (activeEffect instanceof PlaysAdditionalLandEachTurnEffect additional

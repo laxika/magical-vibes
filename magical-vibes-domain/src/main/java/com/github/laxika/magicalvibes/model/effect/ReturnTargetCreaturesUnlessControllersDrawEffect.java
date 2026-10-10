@@ -9,17 +9,24 @@ import java.util.UUID;
  */
 public record ReturnTargetCreaturesUnlessControllersDrawEffect(
         List<UUID> remainingTargetIds,
-        UUID abilityControllerId
+        UUID abilityControllerId,
+        List<UUID> returnTargetIds,
+        int drawCount
 ) implements RemovalEffect {
 
     public ReturnTargetCreaturesUnlessControllersDrawEffect() {
         this(null, null);
     }
 
+    public ReturnTargetCreaturesUnlessControllersDrawEffect(List<UUID> remainingTargetIds, UUID abilityControllerId) {
+        this(remainingTargetIds, abilityControllerId, List.of(), 0);
+    }
+
     public ReturnTargetCreaturesUnlessControllersDrawEffect {
         if (remainingTargetIds != null) {
             remainingTargetIds = List.copyOf(remainingTargetIds);
         }
+        returnTargetIds = returnTargetIds == null ? List.of() : List.copyOf(returnTargetIds);
     }
 
     @Override

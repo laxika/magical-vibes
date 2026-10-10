@@ -168,6 +168,7 @@ public sealed interface PermanentPredicate permits
         PermanentManaValueAtMostOwnCountersPredicate,
         PermanentManaValueAtMostSourceCountersPredicate,
         PermanentManaValueAtMostControlledCountPredicate,
+        PermanentManaValueAtMostControlledCountersPredicate,
         PermanentManaValueAtMostControllerGraveyardCountPredicate,
         PermanentManaValueAtMostSourceControllerHandSizePredicate,
         PermanentManaValueEqualsSourceCountersPredicate,

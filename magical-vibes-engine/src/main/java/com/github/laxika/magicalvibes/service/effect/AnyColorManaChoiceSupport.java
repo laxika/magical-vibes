@@ -461,6 +461,9 @@ public final class AnyColorManaChoiceSupport {
             case LEGENDARY_SPELLS ->
                     new ChoiceContext.RestrictedManaColorChoice(playerId, amount, fromCreature,
                             effect.allowedColors(), new ManaRestriction.LegendarySpells());
+            case LEGENDARY_SPELLS_UNCOUNTERABLE ->
+                    new ChoiceContext.RestrictedManaColorChoice(playerId, amount, fromCreature,
+                            effect.allowedColors(), new ManaRestriction.LegendarySpellsUncounterable());
             case INSTANT_SORCERY_ONLY -> ChoiceContext.ManaColorChoice.instantSorceryOnly(playerId, amount);
             case INSTANT_SORCERY_OR_SUBTYPES ->
                     new ChoiceContext.RestrictedManaColorChoice(playerId, amount, fromCreature,
@@ -592,6 +595,8 @@ public final class AnyColorManaChoiceSupport {
                     COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY ->
                     "Choose a color in your commander's color identity.";
             case LEGENDARY_SPELLS -> "Choose a color of mana to add (legendary spells only).";
+            case LEGENDARY_SPELLS_UNCOUNTERABLE ->
+                    "Choose a color of mana to add (legendary spells only, and that spell can't be countered).";
             case SPELL_ONLY -> "Choose a color of mana to add (spells only).";
             case MULTICOLORED_SPELLS -> "Choose a color of mana to add (multicolored spells only).";
             case ABILITIES -> "Choose a color of mana to add (activated abilities only).";

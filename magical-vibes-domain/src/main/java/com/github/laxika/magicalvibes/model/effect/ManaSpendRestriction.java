@@ -52,6 +52,9 @@ public enum ManaSpendRestriction {
     /** Spendable only to cast spells with the legendary supertype. */
     LEGENDARY_SPELLS,
 
+    /** Spendable only to cast spells with the legendary supertype, and that spell can't be countered (Delighted Halfling). */
+    LEGENDARY_SPELLS_UNCOUNTERABLE,
+
     /**
      * Unrestricted mana that also registers the delayed trigger copying the instant or sorcery it
      * pays for (Primal Wellspring).

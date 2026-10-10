@@ -20,14 +20,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({DownwindAmbusher.class, GiantSpider.class, GrizzlyBears.class, Shock.class})
 class DownwindAmbusherTest extends BaseCardTest {
 
+    private static final String MINUS_ONE_MODE = "Target creature an opponent controls gets -1/-1 until end of turn";
+    private static final String DESTROY_MODE = "Destroy target creature an opponent controls that was dealt damage this turn";
+
     @Test
     @DisplayName("Mode 0 gives an opposing creature -1/-1 until end of turn")
     void givesOpposingCreatureMinusOneMinusOne() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        cast(0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        cast(MINUS_ONE_MODE, bears.getId());
 
         assertThat(bears.getPowerModifier()).isEqualTo(-1);
         assertThat(bears.getToughnessModifier()).isEqualTo(-1);
@@ -44,9 +45,7 @@ class DownwindAmbusherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, spider.getId());
 
-        cast(1, spider.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        cast(DESTROY_MODE, spider.getId());
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -69,6 +68,7 @@ class DownwindAmbusherTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player1, new DownwindAmbusher());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1,
                 "Target creature an opponent controls gets -1/-1 until end of turn");
         harness.passBothPriorities();
@@ -85,6 +85,7 @@ class DownwindAmbusherTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, spider.getId());
 
         harness.enterBattlefieldAndReturn(player1, new DownwindAmbusher());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1,
                 "Destroy target creature an opponent controls that was dealt damage this turn");
         harness.passBothPriorities();
@@ -98,9 +99,7 @@ class DownwindAmbusherTest extends BaseCardTest {
     @Test
     void minusOneMinusOneExpiresAtEndOfTurn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        cast(0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        cast(MINUS_ONE_MODE, bears.getId());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
@@ -114,9 +113,7 @@ class DownwindAmbusherTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        cast(0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        cast(MINUS_ONE_MODE, bears.getId());
 
         harness.assertOnBattlefield(player1, "Downwind Ambusher");
         assertThat(bears.getToughnessModifier()).isEqualTo(-1);
@@ -135,10 +132,15 @@ class DownwindAmbusherTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void cast(int mode, UUID targetId) {
+    private void cast(String mode, UUID targetId) {
         harness.setHand(player1, List.of(new DownwindAmbusher()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0, mode, targetId);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.handleListChoice(player1, mode);
+        harness.handlePermanentChosen(player1, targetId);
+        harness.passBothPriorities();
     }
 }

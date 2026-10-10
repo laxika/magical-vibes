@@ -27,7 +27,7 @@ class DragonsoulKnightTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(knight.getTransientCreatureTypeOverride()).isEqualTo(CardSubtype.DRAGON);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, knight)).containsExactly(CardSubtype.DRAGON);
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.FLYING)).isTrue();

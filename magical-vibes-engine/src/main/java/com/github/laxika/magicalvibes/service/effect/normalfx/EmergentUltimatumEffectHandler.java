@@ -41,7 +41,7 @@ public class EmergentUltimatumEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<Card> library = gameData.playerDecks.get(controllerId);
-        LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
 
         int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
         List<Card> searchableCards = library == null

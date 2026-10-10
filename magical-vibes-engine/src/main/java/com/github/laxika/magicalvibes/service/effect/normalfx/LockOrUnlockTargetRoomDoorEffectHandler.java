@@ -79,6 +79,7 @@ public class LockOrUnlockTargetRoomDoorEffectHandler implements NormalEffectHand
             room.lockRoomDoor(choice.doorIndex());
         } else {
             room.unlockRoomDoor(choice.doorIndex());
+            room.setTimestamp(gameData.nextTimestamp());
             triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
                     gameData, context.controllerId(), room, choice.doorIndex());
             if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {

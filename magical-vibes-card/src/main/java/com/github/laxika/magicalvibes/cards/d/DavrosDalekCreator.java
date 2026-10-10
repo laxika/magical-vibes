@@ -26,11 +26,14 @@ import java.util.Set;
 public class DavrosDalekCreator extends Card {
 
     public DavrosDalekCreator() {
+        // The "if" follows the effect, not the trigger condition, so it is not an intervening-if (CR 603.4):
+        // the ability always triggers and the life-loss condition is checked on resolution.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new OpponentLostLifeThisTurn(3),
                 SequenceEffect.of(
                         new CreateTokenEffect("Dalek", 3, 3, CardColor.BLACK,
                                 List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE), Set.of(CardType.ARTIFACT)),
-                        new EachOpponentWhoLostLifeFacesVillainousChoiceEffect(3))));
+                        new EachOpponentWhoLostLifeFacesVillainousChoiceEffect(3)),
+                false));
     }
 }

@@ -362,6 +362,8 @@ public class GraveyardChoiceHandlerService {
             // Owner of the graveyard the card is leaving — used to return it if a continuous effect
             // (e.g. Grafdigger's Cage) stops a creature card from entering the battlefield.
             UUID cardGraveyardOwnerId = null;
+            // A card that can't enter the battlefield (Grafdigger's Cage) never leaves the graveyard.
+            boolean blockedFromEntering = false;
             if (destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND) {
@@ -379,7 +381,10 @@ public class GraveyardChoiceHandlerService {
                 // Cross-graveyard choice: card pool contains cards from any graveyard
                 card = cardPool.get(cardIndex);
                 cardGraveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
-                if (destination == GraveyardChoiceDestination.EXILE) {
+                if (destination == GraveyardChoiceDestination.BATTLEFIELD
+                        && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+                    blockedFromEntering = true;
+                } else if (destination == GraveyardChoiceDestination.EXILE) {
                     permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
                 } else {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
@@ -388,7 +393,10 @@ public class GraveyardChoiceHandlerService {
                 // Standard choice: indices into the player's own graveyard
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
                 card = graveyard.get(cardIndex);
-                if (destination == GraveyardChoiceDestination.EXILE) {
+                if (destination == GraveyardChoiceDestination.BATTLEFIELD
+                        && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+                    blockedFromEntering = true;
+                } else if (destination == GraveyardChoiceDestination.EXILE) {
                     permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
                 } else {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
@@ -436,6 +444,12 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
                 case BATTLEFIELD -> {
+                    if (blockedFromEntering) {
+                        gameLogService.append(gameData, GameLog.cardThen(card, " can't enter the battlefield from a graveyard; it stays in the graveyard."));
+                        log.info("Game {} - {} blocked from entering the battlefield from a graveyard",
+                                gameData.id, card.getName());
+                        break;
+                    }
                     if (gameData.pendingGraveyardReturnBatch != null) {
                         gameData.pendingGraveyardReturnBatch = gameData.pendingGraveyardReturnBatch.add(
                                 card, cardGraveyardOwnerId);
@@ -1244,7 +1258,8 @@ public class GraveyardChoiceHandlerService {
             List<Card> cardsToReturn = new ArrayList<>();
             for (UUID cardId : cardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-                if (card != null) {
+                // A card Grafdigger's Cage (etc.) bars from entering stays in the graveyard it is in.
+                if (card != null && !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
                     cardsToReturn.add(card);
                 }

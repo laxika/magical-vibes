@@ -29,7 +29,7 @@ public class DoomReignsSupreme extends Card {
                                 new GainLifeEffect(1),
                                 new PutCountersOnSelfEffect(CounterType.PLAN))));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, new ConditionalEffect(
+        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(5, CounterType.PLAN),
                 SacrificeSelfThenEffect.reflexive(
                         ExileTopCardsAndMayCastSpellsEffect.targetedOpponent(5, 2))));

@@ -87,6 +87,18 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         if (amount <= 0) {
             return;
         }
+        // "Investigate N times" is N separate creation events, so a "first time you would create
+        // tokens" replacement (Esix, Mirrormind Crown, Moonlit Meditation) applies to the first
+        // investigation only; the rest resolve as their own effect afterwards.
+        if (e.investigate() && amount > 1 && e.simultaneousTokens().isEmpty()
+                && gameData.pendingTokenCreationReplacement == null
+                && entry.getResolvingEffectIndex() >= 0
+                && hasAvailableTokenCreationReplacement(gameData, controllerId)) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(e.withAmount(amount - 1)));
+            amount = 1;
+            primaryAmount = 1;
+        }
         if (e.investigate() && gameData.pendingTokenCreationReplacement == null) {
             for (int action = 0; action < amount; action++) {
                 triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
@@ -212,6 +224,12 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                     new com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect(),
                     List.of(), exiledTokenIds));
         }
+    }
+
+    private boolean hasAvailableTokenCreationReplacement(GameData gameData, UUID controllerId) {
+        return availableMirrormindCrown(gameData, controllerId) != null
+                || availableMoonlitMeditation(gameData, controllerId) != null
+                || availableEsix(gameData, controllerId) != null;
     }
 
     private Permanent availableMirrormindCrown(GameData gameData, UUID controllerId) {

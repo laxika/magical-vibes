@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -537,6 +538,12 @@ public class GameData {
      *  effect triggering Sanguine Bond) route to {@link #pendingManaAbilityTriggers} instead of the
      *  main stack. Incremented/decremented in a try/finally pair around mana-ability resolution. */
     public int manaAbilityResolutionDepth;
+    /**
+     * Set while several tokens from one effect are entering together. "One or more creatures enter"
+     * boons then wait for the whole batch instead of firing for the first token alone, so their
+     * controller can choose among every creature that entered.
+     */
+    public boolean deferCreatureEntersBoons;
     private int activeTriggeredAbilityCopies = 1;
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>() {
         @Override public List<Card> put(UUID id, List<Card> cards) {
@@ -2949,6 +2956,13 @@ public class GameData {
      * deaths (e.g. Morbid Opportunist). Cleared when the batch ends; not turn-scoped.
      */
     public final Map<UUID, Permanent> simultaneousDyingCreatures = new ConcurrentHashMap<>();
+    /**
+     * Cards that just arrived in a graveyard in the zone-change event whose leaves-the-battlefield
+     * triggers are being collected. Graveyard-count conditions (threshold) ignore them so the
+     * trigger source is evaluated as it was immediately before the event (CR 603.10a). Only
+     * populated for the duration of that collection.
+     */
+    public final Set<UUID> graveyardLookBackExcludedCardIds = ConcurrentHashMap.newKeySet();
     public final Map<UUID, UUID> simultaneousDyingControllers = new ConcurrentHashMap<>();
     public final Map<UUID, Permanent> simultaneousDyingPermanents = new ConcurrentHashMap<>();
     /** Last departure snapshots by card identity, retained for sacrifice-event collection this turn. */
@@ -3566,7 +3580,9 @@ public class GameData {
     /** Removes and returns all floating effects with end-of-turn duration (cleanup step). */
     public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffects() {
         return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_TURN
-                || fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST);
+                || (fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
+                && !(fe.effect() instanceof ReduceCastCostForNextMatchingSpellEffect reduction
+                && !reduction.expiresAtCleanup())));
     }
 
     /** Removes and returns all floating effects that expire at the beginning of the next end step. */
@@ -8416,6 +8432,7 @@ public class GameData {
         copy.playersWhoSearchedLibraryThisTurn.addAll(this.playersWhoSearchedLibraryThisTurn);
         copy.playersWhoInvestigatedThisTurn.addAll(this.playersWhoInvestigatedThisTurn);
         copy.manaAbilityResolutionDepth = this.manaAbilityResolutionDepth;
+        copy.deferCreatureEntersBoons = this.deferCreatureEntersBoons;
         copy.activeTriggeredAbilityCopies = this.activeTriggeredAbilityCopies;
         this.permanentTypesCastFromGraveyardThisTurn.forEach((k, v) ->
                 copy.permanentTypesCastFromGraveyardThisTurn.put(k, new HashSet<>(v)));

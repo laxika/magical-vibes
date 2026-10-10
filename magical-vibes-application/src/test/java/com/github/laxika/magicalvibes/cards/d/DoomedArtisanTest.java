@@ -216,6 +216,8 @@ class DoomedArtisanTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
     }
 }

@@ -16,7 +16,7 @@ import java.util.UUID;
  * and the handler reads the link off the still-present source. Either way the link is cleared, so a
  * second untap is a no-op. Used by Dance of Many for the mutual bond between the
  * enchantment and its token: when the enchantment leaves it exiles the token ({@code EXILE}); when the
- * token leaves it sacrifices the enchantment ({@code SACRIFICE}).
+ * token leaves it sacrifices the enchantment ({@code SACRIFICE_PARTNER}).
  */
 public record RemoveLinkedPermanentEffect(Mode mode, UUID linkedPermanentId, UUID linkedCardId) implements CardEffect {
 
@@ -32,7 +32,12 @@ public record RemoveLinkedPermanentEffect(Mode mode, UUID linkedPermanentId, UUI
     public enum Mode {
         /** Exile the linked permanent (enchantment leaves → exile the token). */
         EXILE,
-        /** Sacrifice the linked permanent (token leaves → sacrifice the enchantment). */
-        SACRIFICE
+        /** Sacrifice the linked permanent (Tyrannical Pitlord: the leaving creature sacrifices its chosen creature). */
+        SACRIFICE,
+        /**
+         * Sacrifice the linked permanent, where the ability belongs to the linked permanent itself (token leaves →
+         * sacrifice the enchantment). The ability is therefore controlled by the linked permanent's controller.
+         */
+        SACRIFICE_PARTNER
     }
 }

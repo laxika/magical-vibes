@@ -240,6 +240,15 @@ public class Card {
      */
     private MultiTargetConstraint multiTargetConstraint;
 
+    /**
+     * With {@link MultiTargetConstraint#AT_MOST_ONE_PER_CONTROLLER}, marks targets that are tied to a
+     * specific player ("for each opponent, choose up to one target creature that player controls", e.g.
+     * Decoy Gambit): each target's controller is recorded at cast and a target that changed controller
+     * is illegal on resolution. Leave false for "with different controllers" wording, where a control
+     * change alone doesn't break the requirement.
+     */
+    private boolean targetControllersFixedAtCast;
+
     // Target-first targeting system: each target() call adds a SpellTarget
     @Getter(AccessLevel.NONE)
     private final List<SpellTarget> spellTargets = new ArrayList<>();
@@ -421,6 +430,7 @@ public class Card {
         this.opponentChosenSpellTargetIndices = source.opponentChosenSpellTargetIndices;
         this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
         this.multiTargetConstraint = source.multiTargetConstraint;
+        this.targetControllersFixedAtCast = source.targetControllersFixedAtCast;
         this.spellTargets.addAll(source.spellTargets);
         source.effectTargetIndexMap.forEach((effect, targetIndices) ->
                 this.effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
@@ -561,6 +571,7 @@ public class Card {
         this.allowSharedTargets = face.allowSharedTargets;
         this.opponentChosenSpellTargetIndices = face.opponentChosenSpellTargetIndices;
         this.multiTargetConstraint = face.multiTargetConstraint;
+        this.targetControllersFixedAtCast = face.targetControllersFixedAtCast;
         this.spellTargets.clear();
         this.spellTargets.addAll(face.spellTargets);
         this.effectTargetIndexMap.clear();
@@ -691,6 +702,7 @@ public class Card {
         this.attackTriggerTargetChosenByDefendingPlayer = chosenByDefendingPlayer;
     }
     public void setMultiTargetConstraint(MultiTargetConstraint multiTargetConstraint) { assertMutable(); this.multiTargetConstraint = multiTargetConstraint; }
+    public void setTargetControllersFixedAtCast(boolean targetControllersFixedAtCast) { assertMutable(); this.targetControllersFixedAtCast = targetControllersFixedAtCast; }
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
     public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
     public void setCastCondition(Condition castCondition) { assertMutable(); this.castCondition = castCondition; }
@@ -734,6 +746,7 @@ public class Card {
         setOpponentChosenSpellTargetIndices(List.of());
         setAttackTriggerTargetChosenByDefendingPlayer(false);
         setMultiTargetConstraint(null);
+        setTargetControllersFixedAtCast(false);
         setCastTimeTargetFilter(null);
         setSpellCastTimingRestriction(null);
         setCastCondition(null);

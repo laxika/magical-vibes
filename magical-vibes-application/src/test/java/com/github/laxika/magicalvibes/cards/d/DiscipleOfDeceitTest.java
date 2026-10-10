@@ -99,10 +99,12 @@ class DiscipleOfDeceitTest extends BaseCardTest {
         harness.setHand(player1, List.of(discarded));
         harness.setLibrary(player1, List.of(land));
 
-        resolveUntapTrigger();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            resolveUntapTrigger();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleCardChosen(player1, 0);
+        });
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
@@ -121,13 +123,15 @@ class DiscipleOfDeceitTest extends BaseCardTest {
         harness.setHand(player1, List.of(discarded));
         harness.setLibrary(player1, List.of(matching));
 
-        resolveUntapTrigger();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            resolveUntapTrigger();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        });
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);

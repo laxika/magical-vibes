@@ -122,6 +122,8 @@ public class ManaPool {
     private int legendarySpellOnlyColorless;
     /** Per-color mana spendable only to cast legendary spells (Plaza of Heroes). */
     private final EnumMap<ManaColor, Integer> legendarySpellOnlyMana = new EnumMap<>(ManaColor.class);
+    /** Subset of {@link #legendarySpellOnlyMana} whose spell can't be countered (Delighted Halfling). */
+    private final EnumMap<ManaColor, Integer> uncounterableLegendarySpellMana = new EnumMap<>(ManaColor.class);
     private int restrictedRed;
     private int kickedOnlyGreen;
     /** Per-color mana spendable only to cast kicked spells. */
@@ -405,6 +407,7 @@ public class ManaPool {
         mergeMana(artifactAbilityOnlyMana, source.artifactAbilityOnlyMana);
         mergeMana(colorlessSubtypeSpellOrAbilityMana, source.colorlessSubtypeSpellOrAbilityMana);
         mergeMana(legendarySpellOnlyMana, source.legendarySpellOnlyMana);
+        mergeMana(uncounterableLegendarySpellMana, source.uncounterableLegendarySpellMana);
         mergeMana(kickedOnlyMana, source.kickedOnlyMana);
         mergeMana(kickedOrInstantSorceryOnlyColored, source.kickedOrInstantSorceryOnlyColored);
         mergeMana(xCostOnlyMana, source.xCostOnlyMana);
@@ -544,6 +547,7 @@ public class ManaPool {
         this.promotedColorlessSpellOnlyColorless = source.promotedColorlessSpellOnlyColorless;
         this.legendarySpellOnlyColorless = source.legendarySpellOnlyColorless;
         legendarySpellOnlyMana.putAll(source.legendarySpellOnlyMana);
+        uncounterableLegendarySpellMana.putAll(source.uncounterableLegendarySpellMana);
         this.restrictedRed = source.restrictedRed;
         this.kickedOnlyGreen = source.kickedOnlyGreen;
         kickedOnlyMana.putAll(source.kickedOnlyMana);
@@ -1131,6 +1135,7 @@ public class ManaPool {
         promotedColorlessSpellOnlyColorless = 0;
         legendarySpellOnlyColorless = 0;
         legendarySpellOnlyMana.replaceAll((color, amount) -> 0);
+        uncounterableLegendarySpellMana.replaceAll((color, amount) -> 0);
         restrictedRed = 0;
         kickedOnlyGreen = 0;
         kickedOnlyMana.clear();
@@ -2391,12 +2396,30 @@ public class ManaPool {
         }
     }
 
+    /**
+     * Adds legendary-spell-only mana. When {@code grantsUncounterable} is set, the mana is also
+     * recorded in the uncounterable subset, so spending it on a spell marks that spell uncounterable
+     * (Delighted Halfling).
+     */
+    public void addLegendarySpellOnlyMana(ManaColor color, int amount, boolean grantsUncounterable) {
+        addLegendarySpellOnlyMana(color, amount);
+        if (grantsUncounterable && color != ManaColor.COLORLESS) {
+            uncounterableLegendarySpellMana.merge(color, amount, Integer::sum);
+        }
+    }
+
     public void removeLegendarySpellOnlyMana(ManaColor color, int amount) {
         if (color == ManaColor.COLORLESS) {
             removeLegendarySpellOnlyColorless(amount);
         } else {
             int current = legendarySpellOnlyMana.getOrDefault(color, 0);
             legendarySpellOnlyMana.put(color, Math.max(0, current - amount));
+            int riderAvailable = uncounterableLegendarySpellMana.getOrDefault(color, 0);
+            int consumed = Math.min(amount, riderAvailable);
+            if (consumed > 0) {
+                uncounterableLegendarySpellMana.put(color, riderAvailable - consumed);
+                spentUncounterableGrantingMana = true;
+            }
         }
     }
 

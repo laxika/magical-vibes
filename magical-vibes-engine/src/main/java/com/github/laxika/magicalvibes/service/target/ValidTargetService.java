@@ -1597,7 +1597,8 @@ public class ValidTargetService {
             if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, perm, sourceCard)) {
                 return false;
             }
-            if (gameQueryService.hasProtectionFromSourceSubtypes(perm, sourceCard)) {
+            if (gameQueryService.hasProtectionFromSourceSubtypes(perm, sourceCard)
+                    || gameQueryService.hasProtectionFromSourceSubtypes(gameData, perm, sourceCard)) {
                 return false;
             }
         }
@@ -2274,7 +2275,8 @@ public class ValidTargetService {
         if (gameQueryService.cantBeTargetedByColorSources(gameData, perm, sourceColor)) {
             return true;
         }
-        if (gameQueryService.hasHexproofFromColor(gameData, perm, sourceColor)) {
+        if (gameQueryService.hasHexproofFromColor(gameData, perm, sourceColor)
+                && !targetLegalityService.opponentHexproofLifted(gameData, perm, controllerId)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
             if (targetController != null && !targetController.equals(controllerId)) {
                 return true;

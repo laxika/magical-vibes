@@ -43,12 +43,7 @@ public class DeposeDeploy extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Deploy — Create two 1/1 colorless Thopter artifact creature tokens with flying, then you gain 1 life for each creature you control",
                         List.of(createThopters, gainLife)
-                ).withManaCost("{2}{W}{U}"),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Fuse — Depose and then Deploy",
-                        List.of(depose, new DrawCardEffect(), createThopters, gainLife),
-                        List.of(creature)
-                ).withManaCost("{3}{W}{U}{W/U}")
+                ).withManaCost("{2}{W}{U}")
         )));
     }
 }

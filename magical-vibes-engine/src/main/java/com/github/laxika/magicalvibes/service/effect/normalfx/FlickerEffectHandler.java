@@ -472,6 +472,10 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF) {
             return List.of(entry.getSourcePermanentId());
         }
+        List<UUID> boundGroups = targetsOfEveryBoundGroup(entry, e);
+        if (boundGroups != null) {
+            return boundGroups;
+        }
         List<UUID> group = entry.targetsForEffect(e);
         if (!group.isEmpty()) {
             return group;
@@ -481,6 +485,23 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
         return e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF_OR_TARGET
                 ? List.of(entry.getSourcePermanentId()) : List.of();
+    }
+
+    /**
+     * The distinct targets of every group the effect instance is bound to, or {@code null} when it is
+     * bound to at most one group or none of those groups holds a target. One flicker bound to several groups (Don and Leo) must exile all of
+     * its targets before any of them returns, so they enter the battlefield simultaneously.
+     */
+    private List<UUID> targetsOfEveryBoundGroup(StackEntry entry, FlickerEffect e) {
+        Card targeting = entry.getTargetingCard();
+        if (targeting == null || targeting.getEffectTargetIndex(e, 1) < 0) {
+            return null;
+        }
+        Set<UUID> targets = new LinkedHashSet<>();
+        for (int occurrence = 0; targeting.getEffectTargetIndex(e, occurrence) >= 0; occurrence++) {
+            targets.addAll(entry.targetsForGroup(targeting.getEffectTargetIndex(e, occurrence)));
+        }
+        return targets.isEmpty() ? null : List.copyOf(targets);
     }
 
     /** A permanent that has already been exiled by an immediate flicker, with the state its return needs. */

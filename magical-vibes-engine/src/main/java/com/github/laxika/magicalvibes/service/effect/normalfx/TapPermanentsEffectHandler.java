@@ -215,7 +215,8 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
         int count = 0;
         for (Permanent p : battlefield) {
-            if (!predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
+            if (e.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
 
             if (tapUntapSupport.tapPermanent(gameData, p)) {
                 count++;

@@ -30,7 +30,7 @@ public class DesecrateReality extends Card {
                 new PermanentManaValueParityPredicate(ManaValueParity.EVEN),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
-        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
+        setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(new PermanentPredicateTargetFilter(
                 evenPermanentOpponentControls,
                 "Target must be an even-mana-value permanent an opponent controls"), 0, 99)

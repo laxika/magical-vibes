@@ -47,6 +47,8 @@ class DawnOfTheDeadTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         Permanent returned = findPermanent(player1, "Pardic Lancer");
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
@@ -74,6 +76,8 @@ class DawnOfTheDeadTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Pardic Lancer");
         harness.assertInGraveyard(player1, "Overmaster");
@@ -90,6 +94,8 @@ class DawnOfTheDeadTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).hasSize(1);

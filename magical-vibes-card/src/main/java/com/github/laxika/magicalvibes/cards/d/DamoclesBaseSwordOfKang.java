@@ -31,7 +31,7 @@ public class DamoclesBaseSwordOfKang extends Card {
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                TargetPlayerChoosesOneEffect.forTargetedPlayer(List.of(
+                TargetPlayerChoosesOneEffect.forTargetedPlayerVillainousChoice(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Sacrifice a nontoken creature",
                                 new SacrificePermanentsEffect(1, nontokenCreature,

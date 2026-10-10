@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "92")
 public class DesertWereWorm extends Card {
@@ -30,7 +31,8 @@ public class DesertWereWorm extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
                 new AttackingCreaturesTotalPowerAtLeast(12),
                 new OncePerTurnTriggerEffect(SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES),
+                        new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,
+                                new PermanentIsAttackingPredicate()),
                         new AdditionalCombatPhaseEffect(1)))));
     }
 }

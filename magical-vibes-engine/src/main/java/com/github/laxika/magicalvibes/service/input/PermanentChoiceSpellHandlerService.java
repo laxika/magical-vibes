@@ -125,6 +125,17 @@ public class PermanentChoiceSpellHandlerService {
         if (targetSpell == null) {
             log.info("Game {} - Target spell no longer on stack for retarget", gameData.id);
         } else {
+            if (retarget.chooseEachTarget() && retarget.targetIndex() != null) {
+                List<UUID> currentTargets = psychicBattleSupport.targetIds(targetSpell);
+                if (retarget.targetIndex() < currentTargets.size()
+                        && currentTargets.get(retarget.targetIndex()).equals(permanentId)) {
+                    if (!psychicBattleSupport.beginEachTargetChoice(
+                            gameData, targetSpell, retarget.chooserId(), retarget.targetIndex() + 1)) {
+                        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                    }
+                    return;
+                }
+            }
             if (retarget.replacementTargets() != null) {
                 List<UUID> replacements = new ArrayList<>(retarget.replacementTargets());
                 replacements.add(permanentId);
@@ -168,6 +179,11 @@ public class PermanentChoiceSpellHandlerService {
                 triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
             }
             if (gameData.interaction.isAwaitingInput()) return;
+            if (retarget.chooseEachTarget() && retarget.targetIndex() != null
+                    && psychicBattleSupport.beginEachTargetChoice(
+                    gameData, targetSpell, retarget.chooserId(), retarget.targetIndex() + 1)) {
+                return;
+            }
         }
 
         // Resume any remaining effects on the retargeting spell/ability that were paused for this

@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,11 +36,9 @@ public class DismantlingWave extends Card {
                 .addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
-        addHandActivatedAbility(new ActivatedAbility(false, "{6}{W}{W}", List.of(
-                new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsEnchantmentPredicate()))),
-                new DrawCardEffect(1)),
-                "Cycling {6}{W}{W} ({6}{W}{W}, Discard this card: Draw a card.)"));
+        addCycling("{6}{W}{W}");
+        addEffect(EffectSlot.ON_SELF_CYCLED, new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
+                new PermanentIsArtifactPredicate(),
+                new PermanentIsEnchantmentPredicate()))));
     }
 }

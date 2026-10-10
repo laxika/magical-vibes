@@ -34,6 +34,7 @@ class DireStrainRampageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Forest"));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         harness.assertInGraveyard(player2, "Forest");
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -58,6 +59,7 @@ class DireStrainRampageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Fountain of Youth"));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         harness.assertInGraveyard(player2, "Fountain of Youth");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
@@ -79,6 +81,7 @@ class DireStrainRampageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Forest"));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(countPermanents(player2, "Forest")).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
@@ -110,6 +113,7 @@ class DireStrainRampageTest extends BaseCardTest {
 
         harness.castFlashback(player1, 0, harness.getPermanentId(player2, "Fountain of Youth"));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
@@ -146,6 +150,7 @@ class DireStrainRampageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Forest"));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, -1);
 
@@ -164,6 +169,7 @@ class DireStrainRampageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Forest"));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
@@ -200,6 +206,7 @@ class DireStrainRampageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Curse of Shaken Faith"));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         harness.assertInGraveyard(player2, "Curse of Shaken Faith");
@@ -217,6 +224,7 @@ class DireStrainRampageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Bramble Armor"));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         harness.assertInGraveyard(player2, "Bramble Armor");

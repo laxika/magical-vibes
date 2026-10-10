@@ -40,6 +40,6 @@ public class RegisterDelayedUnblockedAttackerCubeCounterEffectHandler implements
         }
 
         gameData.queueDelayedAction(new DelayedUnblockedAttackerCubeCounter(
-                targetId, entry.getControllerId(), entry.getCard()));
+                targetId, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
     }
 }

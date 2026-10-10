@@ -193,10 +193,10 @@ class DiscipleOfBolasTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new DiscipleOfBolas(), new Cloudshift()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.addMana(player1, ManaColor.WHITE, 1);
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.passBothPriorities();
         var originalId = harness.getPermanentId(player1, "Disciple of Bolas");
         harness.castAndResolveInstant(player1, 0, originalId);

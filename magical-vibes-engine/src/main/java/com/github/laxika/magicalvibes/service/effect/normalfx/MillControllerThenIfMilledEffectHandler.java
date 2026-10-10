@@ -50,8 +50,8 @@ public class MillControllerThenIfMilledEffectHandler implements NormalEffectHand
         var e = (MillControllerThenIfMilledEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        // resolveMillPlayer returns only the cards that actually reached the graveyard, which is
-        // exactly what "milled this way" means — a card diverted by a replacement does not count.
+        // A milled card that a replacement effect exiled (e.g. Rest in Peace) was still milled, and
+        // an effect can refer to it in the public zone it moved to (CR 701.17c).
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
@@ -60,7 +60,7 @@ public class MillControllerThenIfMilledEffectHandler implements NormalEffectHand
         }
         int count = Math.max(0, amountEvaluationService.evaluate(gameData, e.count(),
                 AmountContext.forStackEntry(entry, source)));
-        List<Card> milled = graveyardService.resolveMillPlayer(gameData, controllerId, count);
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(gameData, controllerId, count);
         int matchCount = (int) milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(card, e.filter(), null))
                 .count();

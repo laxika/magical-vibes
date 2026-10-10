@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -62,10 +62,9 @@ public class DoesMachines extends Card {
                         new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "This Class must be level 2."));
 
-        addEffect(EffectSlot.ON_SELF_REACHES_LEVEL_TWO,
-                new ReturnUpToOneOfEachFilterFromGraveyardToHandEffect(List.of(
-                        new CardTypePredicate(CardType.ARTIFACT),
-                        new CardTypePredicate(CardType.ARTIFACT))));
+        // When this Class becomes level 2, return up to two target artifact cards from your graveyard to your hand.
+        addEffect(EffectSlot.ON_SELF_REACHES_LEVEL_TWO, ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(
+                new CardTypePredicate(CardType.ARTIFACT), 2));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),

@@ -36,7 +36,10 @@ public class PutSourceCardFromGraveyardIntoLibraryNFromTopEffectHandler implemen
 
         UUID cardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
-        if (sourceCard == null) {
+        long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
+        boolean sameIncarnation = expectedEntryVersion < 0
+                || gameData.graveyardEntryVersion(cardId) == expectedEntryVersion;
+        if (sourceCard == null || !sameIncarnation) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} tuck-on-death trigger fizzles (card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), cardId);

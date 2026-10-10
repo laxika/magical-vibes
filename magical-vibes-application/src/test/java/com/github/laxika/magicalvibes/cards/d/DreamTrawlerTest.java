@@ -131,6 +131,7 @@ class DreamTrawlerTest extends BaseCardTest {
         drawAndResolveTrigger(player1);
         assertThat(gqs.getEffectivePower(gd, trawler)).isEqualTo(basePower + 1);
 
+        harness.setHand(player1, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

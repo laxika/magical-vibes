@@ -93,6 +93,7 @@ public class MayCastHandlerService {
     private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
     private final SpellCastingService spellCastingService;
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     private final TargetLegalityService targetLegalityService;
     private final CopySupport copySupport;
     private final ValidTargetService validTargetService;
@@ -1357,6 +1358,14 @@ public class MayCastHandlerService {
         if (cardToCast.isCastOnlyFromGraveyard()) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " cannot be cast from hand."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (castingPermissionService.isSpellLimitReached(gameData, player.getId(), cardToCast)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast: the spell limit for this turn has been reached."));
+            log.info("Game {} - miracle cast of {} blocked by spell limit", gameData.id, cardToCast.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

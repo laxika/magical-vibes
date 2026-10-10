@@ -20,6 +20,7 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,6 +37,7 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
 
         int removed = 0;
         int oilRemoved = target.getCounterCount(CounterType.OIL);
+        int timeCountersBefore = target.getCounterCount(CounterType.TIME);
         for (CounterType counterType : CounterType.values()) {
             if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
                 continue;
@@ -44,6 +46,7 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
             target.setCounterCount(counterType, 0);
         }
         gameData.recordOilCounterRemoved(target, oilRemoved);
+        permanentCounterSupport.checkLastTimeCounterRemoved(gameData, target, CounterType.TIME, timeCountersBefore);
         entry.setEventValue(removed);
 
         if (removed > 0) {

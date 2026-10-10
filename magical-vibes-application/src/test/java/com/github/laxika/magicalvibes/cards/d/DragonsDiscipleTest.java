@@ -52,8 +52,7 @@ class DragonsDiscipleTest extends BaseCardTest {
 
         Permanent disciple = castDisciple(List.of(new DragonsDisciple(), new BlueDragon()));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(disciple.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
@@ -142,8 +141,7 @@ class DragonsDiscipleTest extends BaseCardTest {
 
         Permanent disciple = castDisciple(List.of(new DragonsDisciple(), new BlueDragon()));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(disciple.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
     private Permanent castDisciple(List<? extends Card> hand) {

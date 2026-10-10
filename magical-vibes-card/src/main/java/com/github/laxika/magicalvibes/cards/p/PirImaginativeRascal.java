@@ -19,6 +19,6 @@ public class PirImaginativeRascal extends Card {
                 "Have target player put Toothy into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
-        addEffect(EffectSlot.STATIC, new AddOneCounterToControlledPermanentsEffect());
+        addEffect(EffectSlot.STATIC, new AddOneCounterToControlledPermanentsEffect(false));
     }
 }

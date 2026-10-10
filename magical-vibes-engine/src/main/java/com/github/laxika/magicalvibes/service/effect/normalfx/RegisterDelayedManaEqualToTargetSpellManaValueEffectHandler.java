@@ -46,7 +46,7 @@ public class RegisterDelayedManaEqualToTargetSpellManaValueEffectHandler impleme
             return;
         }
 
-        int manaValue = targetEntry.getCard().getManaValue() + targetEntry.getXValue();
+        int manaValue = targetEntry.getSpellManaValue();
         if (manaValue <= 0) return;
 
         UUID controllerId = entry.getControllerId();

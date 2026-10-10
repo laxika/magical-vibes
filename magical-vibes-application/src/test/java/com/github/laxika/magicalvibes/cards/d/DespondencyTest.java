@@ -87,6 +87,7 @@ class DespondencyTest extends BaseCardTest {
     @DisplayName("The return ability returns only its own Despondency")
     void doesNotReturnOtherCopiesFromGraveyard() {
         Despondency otherCopy = new Despondency();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(otherCopy));
         Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new Despondency());
@@ -107,6 +108,7 @@ class DespondencyTest extends BaseCardTest {
         aura.setAttachedTo(gorilla.getId());
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, gorilla));
+        harness.runStateBasedActions();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Gorilla Warrior");

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringSpellOpponentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
@@ -34,7 +35,7 @@ public class DragonsDisciple extends Card {
 
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
-                new CounterUnlessPaysEffect(1),
+                new TriggeringSpellOpponentControllerConditionalEffect(new CounterUnlessPaysEffect(1)),
                 GrantScope.ALL_OWN_CREATURES,
                 dragon));
     }

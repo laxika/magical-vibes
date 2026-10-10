@@ -27,7 +27,7 @@ public class DestructiveRevelry extends Card {
                 )),
                 "Target must be an artifact or enchantment"
         )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
-                new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER),
-                ThenEffectRecipient.TARGET_CONTROLLER));
+                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER),
+                ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
     }
 }

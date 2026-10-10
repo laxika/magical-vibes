@@ -93,12 +93,7 @@ class DemotionTest extends BaseCardTest {
         attacker.setSummoningSick(false);
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new Demotion());
         aura.setAttachedTo(attacker.getId());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(attacker.isAttacking()).isTrue();
     }

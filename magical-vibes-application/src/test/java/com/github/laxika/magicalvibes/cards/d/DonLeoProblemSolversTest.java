@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -109,6 +113,9 @@ class DonLeoProblemSolversTest extends BaseCardTest {
         wardenCard.setOwnerId(player2.getId());
         Permanent warden = harness.addToBattlefieldAndReturn(player1, wardenCard);
         gd.stolenCreatures.put(warden.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
+                player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), warden.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 

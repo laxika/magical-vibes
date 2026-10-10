@@ -29,7 +29,7 @@ public class MayCastCopyWithNormalCostHandler implements MayEffectHandlerBean {
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted) {
-            exileNormalCostCopySupport.offerCast(gameData, player, ability.sourceCard());
+            exileNormalCostCopySupport.offerCast(gameData, player, ability.sourceCard(), null, ability);
             return;
         }
 

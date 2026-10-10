@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileNormalCostCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -37,6 +38,7 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
     private final InputCompletionService inputCompletionService;
     private final PlayerInputService playerInputService;
     private final SpellCastingService spellCastingService;
+    private final ExileNormalCostCopySupport exileNormalCostCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,8 +70,31 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
         }
         if (effect.withoutPayingManaCost()) {
             gameData.exilePlayWithoutPayingManaCost.add(copy.getId());
+        } else if (exileNormalCostCopySupport.beginXValueChoice(gameData, player, copy, null, ability)) {
+            return;
         }
 
+        castCopy(gameData, player, ability, effect, 0);
+    }
+
+    /** Resumes the copy cast once the caster has announced X for the cost being paid. */
+    public void resumeCastWithX(GameData gameData, Player player, PendingMayAbility ability, int xValue) {
+        Card copy = ability.sourceCard();
+        ExileTargetCardFromGraveyardAndMayCastCopyEffect effect = ability.effects().stream()
+                .filter(ExileTargetCardFromGraveyardAndMayCastCopyEffect.class::isInstance)
+                .map(ExileTargetCardFromGraveyardAndMayCastCopyEffect.class::cast)
+                .findFirst()
+                .orElseThrow();
+        if (gameData.findExiledCard(copy.getId()) == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        castCopy(gameData, player, ability, effect, xValue);
+    }
+
+    private void castCopy(GameData gameData, Player player, PendingMayAbility ability,
+                          ExileTargetCardFromGraveyardAndMayCastCopyEffect effect, int xValue) {
+        Card copy = ability.sourceCard();
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(copy);
         List<CardEffect> spellEffects = new ArrayList<>(copy.getEffects(EffectSlot.SPELL));
         if (EffectResolution.needsTarget(copy)) {
@@ -84,10 +109,10 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
                 return;
             }
 
-            gameData.interaction.setPermanentChoiceContext(
-                    PermanentChoiceContext.ExileCastSpellTarget.resolutionCastCopy(
-                            copy, player.getId(), spellEffects, spellType, effect.lifeLossOnCast(),
-                            effect.afterSuccessfulCastEffect(), ability.sourcePermanentId()));
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
+                    copy, player.getId(), spellEffects, spellType, true, List.of(), 0, true,
+                    effect.lifeLossOnCast(), false, false, effect.afterSuccessfulCastEffect(),
+                    ability.sourcePermanentId(), xValue));
             playerInputService.beginPermanentChoice(gameData, player.getId(), firstCandidates,
                     "Choose a target for " + copy.getName() + ".");
             return;
@@ -95,7 +120,7 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
 
         try {
             spellCastingService.playCardFromExileAsResolutionCast(
-                    gameData, player, copy.getId(), 0, (UUID) null, true);
+                    gameData, player, copy.getId(), xValue, (UUID) null, true);
             exileCastTargetSupport.queueAfterSuccessfulCast(gameData, copy, player.getId(),
                     ability.sourcePermanentId(), effect.afterSuccessfulCastEffect());
             applyLifeLoss(gameData, player, copy, effect.lifeLossOnCast());

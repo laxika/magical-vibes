@@ -52,7 +52,7 @@ public class DesertWarfare extends Card {
                         CardColor.RED,
                         Set.of(CardColor.RED, CardColor.GREEN, CardColor.WHITE),
                         List.of(CardSubtype.WARRIOR),
-                        Set.of(),
+                        Set.of(Keyword.HASTE),
                         Set.of(),
                         false,
                         false,
@@ -62,6 +62,6 @@ public class DesertWarfare extends Card {
                         false,
                         false,
                         0,
-                        Set.of(Keyword.HASTE))));
+                        Set.of())));
     }
 }

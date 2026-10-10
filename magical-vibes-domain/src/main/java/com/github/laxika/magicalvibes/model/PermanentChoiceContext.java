@@ -290,10 +290,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID targetCardId
     ) implements PermanentChoiceContext {}
 
+    /**
+     * Pending choice of a new target for a spell or ability on the stack. When {@code chooseEachTarget} is set,
+     * the choice is one step of a "choose new targets" sequence (CR 115.7d): after the target at
+     * {@code targetIndex} is settled, the chooser is offered the next target and may keep it unchanged.
+     */
     record SpellRetarget(UUID spellCardId, Integer targetIndex, List<UUID> replacementTargets,
-                        UUID chooserId) implements PermanentChoiceContext {
+                        UUID chooserId, boolean chooseEachTarget) implements PermanentChoiceContext {
+        public SpellRetarget(UUID spellCardId, Integer targetIndex, List<UUID> replacementTargets, UUID chooserId) {
+            this(spellCardId, targetIndex, replacementTargets, chooserId, false);
+        }
         public SpellRetarget(UUID spellCardId, Integer targetIndex) {
-            this(spellCardId, targetIndex, null, null);
+            this(spellCardId, targetIndex, null, null, false);
         }
         public SpellRetarget(UUID spellCardId) { this(spellCardId, null); }
     }

@@ -121,7 +121,9 @@ class DesecratedTombTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, bears.getId());
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Bat")).hasSize(1);

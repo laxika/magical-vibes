@@ -406,8 +406,8 @@ public class StackResolutionService {
         perm.setEnteredFromZone(entry.getSourceZone());
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
         // resolves into didn't enter as the result of a cast spell either.
-        perm.setCast(!entry.isCopy());
-        perm.setCastControllerId(entry.isCopy() ? null : entry.getControllerId());
+        perm.setCast(!entry.isCopy() || entry.isCastCopy());
+        perm.setCastControllerId(entry.isCopy() && !entry.isCastCopy() ? null : entry.getControllerId());
         perm.setManaSpentToCast(entry.getManaSpentToCast());
         perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
         perm.setWaterbendCostPaid(entry.isWaterbendCostPaid());
@@ -1354,11 +1354,26 @@ public class StackResolutionService {
         checkLegendRuleIfIdle(gameData, controllerId);
     }
 
+    /**
+     * A spell with several targets is only removed from the stack for having no legal targets when every
+     * target is illegal. A spell whose primary target (e.g. the spell Devious Cover-Up counters) is gone
+     * still resolves while one of its separately chosen graveyard-card targets remains in a graveyard.
+     */
+    private boolean hasLegalGraveyardCardTargetBesidesPrimary(GameData gameData, StackEntry entry) {
+        if (entry.getTargetId() == null || entry.getTargetCardIds().isEmpty()) {
+            return false;
+        }
+        return entry.getTargetCardIds().stream()
+                .filter(id -> !id.equals(entry.getTargetId()))
+                .anyMatch(id -> gameQueryService.findCardInGraveyardById(gameData, id) != null);
+    }
+
     private void resolveSpellOrAbility(GameData gameData, StackEntry entry) {
         // Check if targeted spell/ability fizzles due to illegal target
         boolean targetFizzled = entry.getEffectsToResolve().stream()
                 .noneMatch(CardEffect::resolvesWhenTargetIllegal)
-                && targetLegalityService.isTargetIllegalOnResolution(gameData, entry);
+                && targetLegalityService.isTargetIllegalOnResolution(gameData, entry)
+                && !hasLegalGraveyardCardTargetBesidesPrimary(gameData, entry);
 
         if (targetFizzled) {
             triggerCollectionService.completeDungeonRoomIfReady(gameData, entry);

@@ -104,10 +104,12 @@ class DefyGravityTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Defy Gravity");
 
         harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
         assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveFlashback(player1, 0, creature.getId());
         assertThat(creature.hasKeyword(Keyword.FLYING)).isTrue();
@@ -116,6 +118,7 @@ class DefyGravityTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Defy Gravity"));
 
         harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
         assertThat(creature.hasKeyword(Keyword.FLYING)).isFalse();
     }

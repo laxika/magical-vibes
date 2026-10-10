@@ -99,7 +99,7 @@ class DampingFieldTest extends BaseCardTest {
         Permanent untapped = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         tapped.tap();
 
-        advanceToNextTurn(player2);
+        advanceToNextTurn(player2, TurnStep.UPKEEP);
 
         assertThat(tapped.isTapped()).isFalse();
         assertThat(untapped.isTapped()).isFalse();
@@ -150,13 +150,21 @@ class DampingFieldTest extends BaseCardTest {
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
+        advanceToNextTurn(currentActivePlayer, TurnStep.UNTAP);
+    }
+
+    /**
+     * The untap step is never a priority window, so it is only observable while an untap choice is
+     * pending; scenarios without a choice must stop at the following upkeep instead.
+     */
+    private void advanceToNextTurn(Player currentActivePlayer, TurnStep stopStep) {
         harness.forceActivePlayer(currentActivePlayer);
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.withAutoStop(TurnStep.UNTAP,
-                () -> harness.passUntilWithNoAttackers(newActivePlayer, TurnStep.UNTAP));
+        harness.withAutoStop(stopStep,
+                () -> harness.passUntilWithNoAttackers(newActivePlayer, stopStep));
     }
 }

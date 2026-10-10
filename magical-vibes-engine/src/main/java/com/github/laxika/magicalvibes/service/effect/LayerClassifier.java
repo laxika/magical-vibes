@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffec
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseDevotionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofFromOwnColorsEffect;
@@ -453,6 +454,7 @@ public final class LayerClassifier {
         map.put(LosesAllNonManaAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantActivatedAbilityEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantEffectEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(GrantNonAbilityEffectEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(CantHaveOrGainKeywordEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(IncreaseDevotionEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(SuspectedEffect.class, fixed(Layer.L6_ABILITIES));

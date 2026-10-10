@@ -90,6 +90,7 @@ public class UnlockControlledRoomDoorEffectHandler implements NormalEffectHandle
 
         boolean wasFullyUnlocked = room.isRoomFullyUnlocked();
         room.unlockRoomDoor(choice.doorIndex());
+        room.setTimestamp(gameData.nextTimestamp());
         triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
                 gameData, context.controllerId(), room, choice.doorIndex());
         if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {

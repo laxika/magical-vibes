@@ -370,6 +370,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
         }
+        if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures
+                && permanentIds.size() != maxCount) {
+            throw new IllegalStateException("Must choose exactly " + maxCount + " attacking creatures to sacrifice");
+        }
         boolean mandatoryCounterChoice = context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacement own
                 && own.mandatory()
                 || context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference reference
@@ -1703,6 +1707,9 @@ public class MultiPermanentChoiceHandlerService {
                     }
                 }
                 permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
+                if (ownerId != null) {
+                    gameData.playersWhoSacrificedPermanentsThisTurn.add(ownerId);
+                }
                 String ownerName = ownerId != null ? gameData.playerIdToName.get(ownerId) : "Unknown";
                 gameLogService.append(gameData, GameLog.playerSacrifices(ownerName, creature.getCard()));
                 log.info("Game {} - {} sacrifices {}", gameData.id, ownerName, creature.getCard().getName());
@@ -3403,14 +3410,12 @@ public class MultiPermanentChoiceHandlerService {
                                                     MultiPermanentChoiceContext.SacrificeAsEntersForCounters context) {
         Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
 
-        int sacrificed = 0;
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
-                sacrificed++;
-            }
-        }
+        int sacrificed = (int) permanentIds.stream()
+                .map(permId -> gameQueryService.findPermanentById(gameData, permId))
+                .filter(java.util.Objects::nonNull)
+                .filter(perm -> !gameQueryService.cantBeSacrificed(gameData, perm))
+                .count();
+        destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (entering != null && sacrificed > 0

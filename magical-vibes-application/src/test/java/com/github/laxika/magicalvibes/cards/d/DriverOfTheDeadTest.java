@@ -47,11 +47,12 @@ class DriverOfTheDeadTest extends BaseCardTest {
     @Test
     @DisplayName("Dies: returns a chosen mana value 2 or less creature card to the battlefield")
     void diesReturnsCheapCreature() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
 
         dieInCombat();
 
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -68,19 +69,20 @@ class DriverOfTheDeadTest extends BaseCardTest {
         dieInCombat();
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Hill Giant");
     }
 
     @Test
     @DisplayName("Dies: controller picks among multiple eligible creature cards")
     void diesPicksAmongEligibleCards() {
-        harness.setGraveyard(player1, List.of(new HillGiant(), new LlanowarElves(), new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(new HillGiant(), new LlanowarElves(), bears));
 
         dieInCombat();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
-        harness.handleGraveyardCardChosen(player1, 2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -91,12 +93,13 @@ class DriverOfTheDeadTest extends BaseCardTest {
     @Test
     @DisplayName("Death trigger requires choosing a target before it can resolve")
     void choosesTargetBeforeResolution() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
 
         dieInCombat();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
         harness.passBothPriorities();
@@ -107,14 +110,15 @@ class DriverOfTheDeadTest extends BaseCardTest {
     @Test
     @DisplayName("Returning an eligible creature cannot be declined")
     void cannotDeclineReturn() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
 
         dieInCombat();
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -128,7 +132,7 @@ class DriverOfTheDeadTest extends BaseCardTest {
         dieInCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Incinerate");
         harness.assertNotOnBattlefield(player1, "Incinerate");
     }
@@ -142,7 +146,7 @@ class DriverOfTheDeadTest extends BaseCardTest {
         dieInCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }

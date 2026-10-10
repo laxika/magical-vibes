@@ -77,9 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffec
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.FirstCardCycledFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeCyclingEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.HandCardCost;
 import com.github.laxika.magicalvibes.model.effect.HandRevealCost;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
@@ -6266,24 +6264,6 @@ public class AbilityActivationService {
                 }
             }
         }
-        if (gameQueryService.isCreature(gameData, permanent)) {
-            for (StackEntry stackEntry : gameData.stack) {
-                if (stackEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
-                        || stackEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
-                    continue;
-                }
-                for (CardEffect effect : stackEntry.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof GrantActivatedAbilityEffect grant
-                            && (grant.scope() == GrantScope.ALL_CREATURES
-                            || grant.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF)
-                            && (grant.filter() == null
-                            || predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, permanent, grant.filter()))) {
-                        abilities.add(grant.ability());
-                    }
-                }
-            }
-        }
         return abilities;
     }
 
@@ -8215,11 +8195,17 @@ public class AbilityActivationService {
 
         // Compound activation condition (e.g. "Activate only if you control a Desert or there is a
         // Desert card in your graveyard"). Prefer typed helpers above when they alone express the gate.
-        if (ability.getActivationCondition() != null
-                && !conditionEvaluationService.isMet(gameData, ability.getActivationCondition(),
-                        ConditionContext.forPermanent(permanent, playerId))) {
-            String message = ability.getActivationConditionDescription();
-            throw new IllegalStateException(message != null ? message : "Activation condition not met");
+        if (ability.getActivationCondition() != null) {
+            // Command-zone activations pass a placeholder permanent for the card still in the command zone.
+            boolean fromCommandZone = gameData.playerCommandZones.getOrDefault(playerId, List.of())
+                    .contains(permanent.getCard());
+            ConditionContext conditionContext = fromCommandZone
+                    ? ConditionContext.forCard(permanent.getCard(), playerId)
+                    : ConditionContext.forPermanent(permanent, playerId);
+            if (!conditionEvaluationService.isMet(gameData, ability.getActivationCondition(), conditionContext)) {
+                String message = ability.getActivationConditionDescription();
+                throw new IllegalStateException(message != null ? message : "Activation condition not met");
+            }
         }
 
         validateHandSizeRestrictions(gameData, playerId, ability);

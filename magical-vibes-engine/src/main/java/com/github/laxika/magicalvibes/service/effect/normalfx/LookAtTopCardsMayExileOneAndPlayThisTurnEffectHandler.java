@@ -59,7 +59,10 @@ public class LookAtTopCardsMayExileOneAndPlayThisTurnEffectHandler implements No
                                 card, e.filter(), entry.getCard().getId(), gameData, controllerId))
                         .toList();
         if (eligible.isEmpty()) {
-            libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, looked);
+            // Nothing to exile, so the whole looked-at set goes to the bottom in a random order (no choice).
+            List<Card> rest = new ArrayList<>(looked);
+            java.util.Collections.shuffle(rest);
+            gameData.playerDecks.get(controllerId).addAll(rest);
             return;
         }
         String prompt = "You may exile one of these cards and play it this turn. "

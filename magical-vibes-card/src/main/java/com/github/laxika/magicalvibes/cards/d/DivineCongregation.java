@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -12,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "13")
 public class DivineCongregation extends Card {
@@ -25,5 +29,12 @@ public class DivineCongregation extends Card {
                 new Scaled(new PermanentCount(
                         new PermanentIsCreaturePredicate(), CountScope.TARGET_PLAYER), 2),
                 GainLifeRecipient.CONTROLLER, true));
+        addHandActivatedAbility(new ActivatedAbility(
+                false,
+                "{1}{W}",
+                List.of(),
+                "Suspend 5—{1}{W}",
+                ActivationTimingRestriction.SORCERY_SPEED
+        ).withSuspendsSourceFromHand(5));
     }
 }

@@ -41,12 +41,18 @@ public class SacrificeAnotherCreatureGainLifeAndDrawEqualToPowerEffectHandler im
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        // Every creature the controller controls except this one ("another creature").
+        // Every creature the controller controls except this one ("another creature") that can be sacrificed.
+        // "This one" is the source object, so a Disciple that left and returned is another creature.
+        UUID sourcePermanentId = entry.getSourcePermanentId();
         List<UUID> validIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (p.getCard() != entry.getCard() && gameQueryService.isCreature(gameData, p)) {
+                boolean isSource = sourcePermanentId != null
+                        ? p.getId().equals(sourcePermanentId)
+                        : p.getCard() == entry.getCard();
+                if (!isSource && gameQueryService.isCreature(gameData, p)
+                        && !gameQueryService.cantBeSacrificed(gameData, p)) {
                     validIds.add(p.getId());
                 }
             }

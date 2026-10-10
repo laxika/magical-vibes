@@ -304,7 +304,8 @@ public class GameService {
                     tfu.playerId().equals(player.getId());
             case PendingInteraction.MultiPermanentChoice mc ->
                     mc.playerId().equals(player.getId())
-                            && mc.context() instanceof com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.FadeAwayKeep;
+                            && (mc.context() instanceof com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.FadeAwayKeep
+                            || mc.context() instanceof com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.PayManaPerCreatureUntap);
             case null, default -> false;
         };
     }
@@ -559,6 +560,7 @@ public class GameService {
 
             boolean wasFullyUnlocked = room.isRoomFullyUnlocked();
             room.unlockRoomDoor(doorIndex);
+            room.setTimestamp(gameData.nextTimestamp());
             triggerCollectionService.checkSelfRoomDoorUnlockedTriggers(
                     gameData, player.getId(), room, doorIndex);
             if (!wasFullyUnlocked && room.isRoomFullyUnlocked()) {

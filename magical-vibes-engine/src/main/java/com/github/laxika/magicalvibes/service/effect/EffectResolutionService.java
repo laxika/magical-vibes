@@ -482,6 +482,15 @@ public class EffectResolutionService {
         if (condition instanceof NotCondition not) {
             return !isConditionMet(gameData, entry, not.inner(), context);
         }
+        // A target that an earlier step of this ability removed (e.g. exiled) is still judged by the
+        // power it had when it left the battlefield (CR 608.2h).
+        if (condition instanceof TargetPermanentMatches matches
+                && matches.filter() instanceof com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate powerAtMost
+                && context.targetId() != null
+                && gameQueryService.findPermanentById(gameData, context.targetId()) == null
+                && entry.getLastKnownPermanentPowers().containsKey(context.targetId())) {
+            return entry.getLastKnownPermanentPowers().get(context.targetId()) <= powerAtMost.maxPower();
+        }
         if (entry.isNonTargeting()
                 && condition instanceof TargetPermanentMatches matches
                 && matches.filter() instanceof PermanentControlledBySourceControllerPredicate

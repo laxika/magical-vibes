@@ -67,7 +67,7 @@ public class SearchHandAndOrLibraryForCardToBattlefieldEffectHandler implements 
         String description = CardPredicateUtils.describeFilter(search.filter());
         if (handMatches.isEmpty() && libraryMatches.isEmpty()) {
             if (librarySearchAllowed && deck != null) {
-                LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
                 LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
                 gameLogService.append(gameData, GameLog.text(playerName
                         + " searches their hand and library but finds no " + description + ". Library is shuffled."));

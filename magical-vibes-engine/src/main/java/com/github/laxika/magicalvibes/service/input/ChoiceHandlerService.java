@@ -1061,6 +1061,9 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice ctx) {
+            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
+                throw new IllegalArgumentException("Invalid card name: " + colorName);
+            }
             handleChooseNameExileTopRevealUntilNamedChoice(gameData, player, colorName, ctx);
             return;
         }

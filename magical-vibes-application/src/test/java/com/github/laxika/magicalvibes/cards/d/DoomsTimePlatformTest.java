@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -60,6 +62,7 @@ class DoomsTimePlatformTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(nonland.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -157,6 +160,8 @@ class DoomsTimePlatformTest extends BaseCardTest {
     @DisplayName("Declining suspend leaves the card exiled without another offer")
     void decliningCastLeavesCardExiled() {
         GrizzlyBears card = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         suspendFromGraveyard(card);
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -166,8 +171,7 @@ class DoomsTimePlatformTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getId)
@@ -208,11 +212,12 @@ class DoomsTimePlatformTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isTrue();
+        Permanent cast = findBattlefieldPermanent(player1, card);
+        assertThat(gqs.hasKeyword(gd, cast, Keyword.HASTE)).isTrue();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, cast, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -273,6 +278,13 @@ class DoomsTimePlatformTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.exiledCardTimeCounters).isEmpty();
+    }
+
+    private Permanent findBattlefieldPermanent(Player player, Card card) {
+        return gd.playerBattlefields.get(player.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
+                .findFirst()
+                .orElseThrow();
     }
 
     private void addAttackTriggerSourceAndAttacker() {

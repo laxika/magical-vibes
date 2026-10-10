@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToAllNonlandPermanentsEffect;
@@ -315,7 +316,8 @@ public class LayerSystemService {
                                     Set<UUID> switchedPt7d,
                                     Map<UUID, List<ModifierLine>> provenance,
                                     Map<UUID, List<GrantedEffectAttribution>> grantedEffectProvenance,
-                                    Map<UUID, Integer> devotionModifiers) {
+                                    Map<UUID, Integer> devotionModifiers,
+                                    Set<UUID> selfInflictedLoseAll) {
 
         /** Records one display-only attribution line for the given permanent — which source
          *  contributed which keyword/base-P/T/switch during this pass. Written at the layer
@@ -1070,7 +1072,7 @@ public class LayerSystemService {
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(), new HashMap<>(), new HashSet<>(), new HashMap<>(), new HashMap<>(),
-                new HashMap<>());
+                new HashMap<>(), new HashSet<>());
         // Publish the in-flight board immediately: nested queries made by handlers during the
         // layer 5/6 passes read the states as of the layers applied so far.
         pass.board = board;
@@ -1132,7 +1134,9 @@ public class LayerSystemService {
             }
             // "Target creature becomes a [creature type]" (Boldwyr Intimidator): strip all creature
             // subtypes and set the override types. Applied after lose-all so the override wins.
-            if (!permanent.getTransientCreatureTypeOverrides().isEmpty()) {
+            if (hasFloatingCreatureTypeOverride(gameData, permanent)) {
+                // Already applied at its own timestamp in layer 4 (CR 613.7).
+            } else if (!permanent.getTransientCreatureTypeOverrides().isEmpty()) {
                 setCreatureTypes(states.get(permanent.getId()), permanent.getTransientCreatureTypeOverrides());
             } else {
                 CardSubtype creatureOverride = permanent.getTransientCreatureTypeOverride();
@@ -1154,6 +1158,21 @@ public class LayerSystemService {
         // Sublayer 7d (P/T switching): each active switch is its own step on the finished
         // 7a-7c values, so only the per-permanent parity matters.
         applyLayer7d(gameData, slots, slotsById, board);
+    }
+
+    private static boolean hasFloatingCreatureTypeOverride(GameData gameData, Permanent permanent) {
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (permanent.getId().equals(floating.affectedPermanentId())
+                        && floating.duration() == EffectDuration.UNTIL_END_OF_TURN
+                        && floating.effect() instanceof GrantSubtypeEffect grant
+                        && grant.overriding()
+                        && !BASIC_LAND_SUBTYPES.contains(grant.subtype())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static LayerClassifier.LayerClassification classifyOrNull(CardEffect effect) {
@@ -1370,8 +1389,18 @@ public class LayerSystemService {
      * <p>agent-docs/STATIC_EVALUATION_MIGRATION.md stage C0 records the tradeoff this resolves.
      */
     private static boolean admitsConditionalWrapper(CardEffect effect, Layer layer) {
+        if (!(effect instanceof ConditionalEffect conditional)) {
+            return false;
+        }
+        if (layer == Layer.L7B_SET_PT) {
+            // A Room door's ability starts applying with the Room's re-stamped timestamp when the
+            // door is unlocked, so its base-P/T setter must be ordered against other setters by
+            // timestamp (CR 613.7) rather than stay legacy-additive underneath them. The door flags
+            // and the timestamp are part of the board fingerprint.
+            return conditional.condition()
+                    instanceof com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
+        }
         return layer == Layer.L4_TYPE
-                && effect instanceof ConditionalEffect conditional
                 && ConditionBoardStability.readsOnlyFingerprintedState(conditional.condition());
     }
 
@@ -1438,8 +1467,10 @@ public class LayerSystemService {
         if (state.getGrantedStaticEffects().stream().anyMatch(effect -> effect == instance.original())) {
             return false;
         }
+        boolean ownEffectRemovedItself = board.selfInflictedLoseAll().contains(instance.source().permanent().getId());
         return state.isPrintedAbilitiesRemoved() || (includeLoseAll
-                && (state.isLosesAllAbilities() || state.isLosesAllNonManaAbilities()));
+                && ((state.isLosesAllAbilities() && !ownEffectRemovedItself)
+                || state.isLosesAllNonManaAbilities()));
     }
 
     /**
@@ -1547,7 +1578,7 @@ public class LayerSystemService {
                 trialVerdicts, Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(board.l56Touched()), new HashMap<>(board.basePt7b()),
                 new HashSet<>(board.switchedPt7d()), new HashMap<>(), new HashMap<>(),
-                new HashMap<>(board.devotionModifiers()));
+                new HashMap<>(board.devotionModifiers()), new HashSet<>(board.selfInflictedLoseAll()));
         LayeredBoardState saved = pass.board;
         pass.board = trialBoard;
         try {
@@ -2835,6 +2866,14 @@ public class LayerSystemService {
                         board.recordGrantedEffect(target.permanent().getId(),
                                 provenanceSourceName(instance), grant.effect());
                     }
+                    case GrantNonAbilityEffectEffect grant -> {
+                        if (grant.scope() != GrantScope.TARGET) {
+                            continue;
+                        }
+                        state.addNonAbilityEffect(grant.effect());
+                        board.recordGrantedEffect(target.permanent().getId(),
+                                provenanceSourceName(instance), grant.effect());
+                    }
                     case GrantTriggeredAbilityEffect grant -> {
                         state.addStaticEffect(grant);
                         board.recordGrantedEffect(target.permanent().getId(),
@@ -2873,6 +2912,11 @@ public class LayerSystemService {
             if (harvested.isLosesAllAbilities()) {
                 state.loseAllAbilities(instance.timestamp());
                 board.clearGrantedEffects(target.permanent().getId());
+                if (instance.source() != null && target.permanent() == instance.source().permanent()) {
+                    // The source's own "creatures lose all abilities" (Dress Down animated by
+                    // Opalescence): its effect keeps applying to the rest of the board (CR 613.6).
+                    board.selfInflictedLoseAll().add(target.permanent().getId());
+                }
                 touched = true;
             }
             if (harvested.isLosesAllNonManaAbilities()) {

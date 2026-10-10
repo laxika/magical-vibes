@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
@@ -20,6 +21,7 @@ import java.util.List;
 public class DonnieAprilAdorkableDuo extends Card {
 
     public DonnieAprilAdorkableDuo() {
+        setMultiTargetConstraint(MultiTargetConstraint.DISTINCT_TARGETS);
         PlayerPredicateTargetFilter playerTarget = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player");
         CardAnyOfPredicate artifactInstantOrSorcery = new CardAnyOfPredicate(List.of(

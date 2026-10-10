@@ -89,6 +89,11 @@ class DeceitTest extends BaseCardTest {
 
         harness.castCreatureWithEvoke(player1, 0, player2.getId());
         harness.passBothPriorities();
+
+        var order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().stream()
+                .filter(option -> option.contains("sacrifice")).findFirst().orElseThrow());
         harness.passBothPriorities();
 
         harness.handleCardChosen(player1, 0);

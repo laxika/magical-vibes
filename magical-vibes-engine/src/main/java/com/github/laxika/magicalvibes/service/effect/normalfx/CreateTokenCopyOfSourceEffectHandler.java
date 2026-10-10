@@ -167,6 +167,10 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         tokenCard.addActivatedAbility(ability);
                     }
                     tokenCard.copyTargetingFrom(sourceCard);
+                    // Creature-token replacements (Divine Visitation) apply to the token as it is created,
+                    // before any copy-on-enter choice, so a replaced token never offers to copy anything.
+                    tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                            gameData, entry.getControllerId(), tokenCard);
 
                     // Vizier of Many Faces: the embalm token is itself a Clone. Route it through the
                     // copy-on-enter replacement so it enters as a copy of a chosen creature; the clone
@@ -181,8 +185,6 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                             return;
                     }
 
-                    tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                            gameData, entry.getControllerId(), tokenCard);
                     Permanent tokenPermanent = new Permanent(tokenCard);
 
                     if (e.initialPlusOnePlusOneCounters() > 0

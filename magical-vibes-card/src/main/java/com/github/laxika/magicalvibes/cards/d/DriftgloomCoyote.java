@@ -20,9 +20,9 @@ public class DriftgloomCoyote extends Card {
         // counter on this creature.
         target(TargetFilters.creatureAnOpponentControls()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 SequenceEffect.of(
+                        new ExileTargetPermanentUntilSourceLeavesEffect(),
                         ConditionalEffect.unless(
                                 new TargetPermanentMatches(new PermanentPowerAtMostPredicate(2)),
-                                new PutCountersOnSourceEffect(1, 1, 1)),
-                        new ExileTargetPermanentUntilSourceLeavesEffect()));
+                                new PutCountersOnSourceEffect(1, 1, 1))));
     }
 }

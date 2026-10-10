@@ -47,7 +47,7 @@ class DarksteelCitadelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DarksteelCitadel()));
 
         harness.playLand(player1, 0);
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
 
         harness.assertOnBattlefield(player1, "Darksteel Citadel");
         harness.assertNotInHand(player1, "Darksteel Citadel");

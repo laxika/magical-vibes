@@ -42,13 +42,14 @@ public class MillControllerAndMayReturnMilledPermanentToHandEffectHandler implem
                 (MillControllerAndMayReturnMilledPermanentToHandEffect) effect;
         int count = Math.max(0, amountEvaluationService.evaluate(
                 gameData, millEffect.count(), AmountContext.forStackEntry(entry, null)));
-        List<Card> milled = graveyardService.resolveMillPlayer(
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(
                 gameData, entry.getControllerId(), count);
 
         List<Card> permanentCards = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, millEffect.filter(), entry.getCard().getId(), gameData, entry.getControllerId()))
-                .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null)
+                .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null
+                        || gameData.findExiledCard(card.getId()) != null)
                 .toList();
         if (permanentCards.isEmpty()) {
             return;

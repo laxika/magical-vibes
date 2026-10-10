@@ -587,6 +587,7 @@ public class CombatDamageService {
         // marked damage + deathtouch flags on creatures, life loss on the player, loyalty on
         // planeswalkers. Nothing dies here — the state-based action check below is the single
         // place combat casualties are determined (CR 704.5f/5g/5h/5i).
+        int stackSizeBeforeDamageEvents = gameData.stack.size();
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
         List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
         gameData.combatSharedDamagePreventionAllocations.clear();
@@ -685,6 +686,7 @@ public class CombatDamageService {
         snapshotSelfDealsDamageEffects(gameData, state);
         Map<UUID, List<TriggerCollectionService.AllyDamageTriggerSnapshot>> allyDamageWatchers =
                 triggerCollectionService.snapshotAllyCreaturesDealDamageToOpponentTriggers(gameData);
+        boolean damageEventTriggersQueued = gameData.stack.size() > stackSizeBeforeDamageEvents;
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (gameData.status == com.github.laxika.magicalvibes.model.GameStatus.FINISHED) {
@@ -871,7 +873,7 @@ public class CombatDamageService {
             return CombatResult.DONE;
         }
 
-        if (gameData.stack.size() > stackSizeBeforeDamageTriggers) {
+        if (damageEventTriggersQueued || gameData.stack.size() > stackSizeBeforeDamageTriggers) {
             return CombatResult.AUTO_PASS_RESOLVE_COMBAT_TRIGGERS;
         }
 
@@ -4567,6 +4569,11 @@ public class CombatDamageService {
             }
             if (gameQueryService.isDamagePreventable(gameData, true)
                     && gameQueryService.isDamageFromChosenNamePreventedForController(gameData, pwControllerId, atk.getCard().getName())) {
+                state.combatDamageDealt.merge(atk, 0, Integer::sum);
+                return;
+            }
+            if (gameQueryService.isDamagePreventable(gameData, true)
+                    && gameData.isProtectedFromDamageUntilNextTurn(pw.getId())) {
                 state.combatDamageDealt.merge(atk, 0, Integer::sum);
                 return;
             }

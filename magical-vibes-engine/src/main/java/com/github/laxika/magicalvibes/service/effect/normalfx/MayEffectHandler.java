@@ -35,6 +35,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final DrawService drawService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private AuraAttachmentService auraAttachmentService;
@@ -122,6 +123,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         if (targetId == null && entry.isCyclingAbility()
                 && e.wrapped() instanceof CounterSpellEffect) {
             return;
+        }
+
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect hand
+                && hand.looksAtHandBeforeMayChoice() && targetId != null && gameData.playerIds.contains(targetId)
+                && e.choicePlayer() == MayChoicePlayer.CONTROLLER) {
+            cardRevealService.lookAtHand(gameData, entry.getControllerId(), targetId);
         }
 
         // CR 603.5 — "you may" choice happens at resolution time.

@@ -58,6 +58,12 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
                 return Set.copyOf(updated);
             });
         }
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(card.getId()) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            log.info("Game {} - {} graveyard return fizzles (card has entered a graveyard again)",
+                    gameData.id, card.getName());
+            return;
+        }
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         if (ownerId == null) {
             log.info("Game {} - {} graveyard return fizzles (no longer in a graveyard)", gameData.id, card.getName());

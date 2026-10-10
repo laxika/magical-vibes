@@ -40,7 +40,10 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
                     .findFirst()
                     .orElse(null);
         }
-        List<UUID> targetCardIds = entry.getTargetCardIdsForEffect(effect);
+        // CR 608.2b: card targets that can no longer be targeted (e.g. Ground Seal) are illegal and unaffected.
+        List<UUID> targetCardIds = gameQueryService.canGraveyardCardsBeTargeted(gameData)
+                ? entry.getTargetCardIdsForEffect(effect)
+                : List.of();
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         if (targetPlayerId == null || targetCardIds == null || targetCardIds.isEmpty()) {

@@ -47,7 +47,7 @@ public class TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffectHandl
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             UUID currentControllerId = permanent == null
                     ? null : gameQueryService.findPermanentController(gameData, permanentId);
-            if (permanent == null || currentControllerId == null || currentControllerId.equals(newControllerId)) {
+            if (permanent == null || currentControllerId == null) {
                 continue;
             }
 

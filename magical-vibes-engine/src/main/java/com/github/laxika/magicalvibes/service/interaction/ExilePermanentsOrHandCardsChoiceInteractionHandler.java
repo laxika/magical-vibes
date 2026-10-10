@@ -50,6 +50,9 @@ public class ExilePermanentsOrHandCardsChoiceInteractionHandler
                 throw new IllegalStateException("Invalid card ID: " + id);
             }
         }
+        if (chosen.stream().distinct().count() > interaction.count()) {
+            throw new IllegalStateException("Too many objects chosen: at most " + interaction.count());
+        }
 
         gameData.interaction.clearAwaitingInput();
         effectHandler.completeChoice(gameData, chosen, interaction);

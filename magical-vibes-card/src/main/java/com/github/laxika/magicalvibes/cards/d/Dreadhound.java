@@ -15,8 +15,10 @@ public class Dreadhound extends Card {
 
     public Dreadhound() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
+        // "Whenever a creature dies" includes this creature's own death (it looks back, CR 603.10a).
+        LoseLifeEffect loseLife = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
+        addEffect(EffectSlot.ON_DEATH, loseLife);
+        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, loseLife);
         addEffect(EffectSlot.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
     }

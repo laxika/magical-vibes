@@ -121,10 +121,10 @@ class DetentionVortexTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("can't be activated");
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("can't be activated");
         harness.assertOnBattlefield(player2, "Letter of Acceptance");
     }
 

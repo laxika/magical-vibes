@@ -2153,7 +2153,8 @@ public class DrawService {
 
         for (Permanent perm : battlefield) {
             List<CardEffect> drawEffects = perm.getCard().getEffects(slot);
-            drawEffects = drawEffects == null ? new ArrayList<>() : new ArrayList<>(drawEffects);
+            drawEffects = drawEffects == null || gameQueryService.hasLostAllAbilities(gameData, perm)
+                    ? new ArrayList<>() : new ArrayList<>(drawEffects);
             drawEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot));
             if (drawEffects.isEmpty()) continue;
 

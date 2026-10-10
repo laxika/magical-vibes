@@ -23,9 +23,12 @@ public class DreadTiller extends Card {
 
         // Whenever a creature with a -1/-1 counter on it dies, you may put a land card from your
         // hand or graveyard onto the battlefield tapped.
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        // The trigger also covers this creature's own death (it looks back, CR 603.10a).
+        TriggeringPermanentConditionalEffect landOnBattlefield = new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE),
                 new PutUpToCardsFromHandOrGraveyardOntoBattlefieldEffect(
-                        new CardTypePredicate(CardType.LAND), "land", 1)));
+                        new CardTypePredicate(CardType.LAND), "land", 1));
+        addEffect(EffectSlot.ON_DEATH, landOnBattlefield);
+        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, landOnBattlefield);
     }
 }

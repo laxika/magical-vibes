@@ -214,6 +214,15 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                 false, null, 0, false, false, false, false, false, false);
     }
 
+    /**
+     * True when this private-look exile choice, wrapped in a {@link MayEffect}, looks at the hand before
+     * the player decides whether to act ("look at target opponent's hand. You may choose a card from it")
+     * rather than only after accepting.
+     */
+    public boolean looksAtHandBeforeMayChoice() {
+        return !revealHand && destination == HandChoiceDestination.EXILE;
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());

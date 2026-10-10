@@ -1161,6 +1161,7 @@ public class DamageSupport {
                 // the loyalty branch below bypasses it, so guard it here.
                 if (gameQueryService.isDamagePreventable(gameData)
                         && (gameData.creaturesWithAllDamagePrevented.contains(targetPermanent.getId())
+                        || gameData.isProtectedFromDamageUntilNextTurn(targetPermanent.getId())
                         || gameQueryService.hasActiveStaticEffect(
                                 gameData, targetPermanent, PreventAllDamageEffect.class))) {
                     gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
@@ -2713,12 +2714,12 @@ public class DamageSupport {
 
                 if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
                     CounterType counterType = replacement.counterType();
-                    permanent.setCounterCount(counterType,
-                            permanent.getCounterCount(counterType) + damage);
+                    int placed = permanentCounterSupport.placeCounterOnPermanentForPlayer(
+                            gameData, null, permanent, counterType, damage, playerId);
                     String counterName = permanentCounterSupport.counterTypeName(counterType);
                     gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
-                            " gets " + damage + " " + counterName + " counter"
-                                    + (damage == 1 ? "" : "s") + " instead of damage."));
+                            " gets " + placed + " " + counterName + " counter"
+                                    + (placed == 1 ? "" : "s") + " instead of damage."));
                 }
                 return damage;
             }

@@ -20,7 +20,7 @@ public class Deadapult extends Card {
                 "{R}",
                 List.of(
                         new SacrificePermanentCost(
-                                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), "a Zombie"),
+                                new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), "a Zombie", false),
                         new DealDamageToAnyTargetEffect(2)),
                 "{R}, Sacrifice a Zombie: This enchantment deals 2 damage to any target."
         ));

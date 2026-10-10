@@ -151,8 +151,7 @@ class DregscapeSliverTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Universal Automaton");
         harness.assertNotInGraveyard(player1, "Universal Automaton");
-        assertThat(findPermanent(player1, "Universal Automaton").getGrantedKeywords())
-                .contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Universal Automaton"), Keyword.HASTE)).isTrue();
     }
 
     @Test

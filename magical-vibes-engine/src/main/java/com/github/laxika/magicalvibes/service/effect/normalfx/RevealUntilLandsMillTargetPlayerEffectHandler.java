@@ -107,7 +107,11 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
 
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
-            return List.of();
+            // The target may already have left the battlefield (Destroy the Evidence destroys first);
+            // its controller was captured when it left.
+            UUID removedController = entry.getTargetId() == null
+                    ? null : entry.getRemovedPermanentControllers().get(entry.getTargetId());
+            return removedController == null ? List.of() : List.of(removedController);
         }
         UUID controller = gameQueryService.findPermanentController(gameData, target.getId());
         return controller == null ? List.of() : List.of(controller);

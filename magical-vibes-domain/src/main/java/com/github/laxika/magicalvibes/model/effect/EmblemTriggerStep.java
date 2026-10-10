@@ -23,6 +23,10 @@ public enum EmblemTriggerStep {
 
     /** "At the beginning of your end step, …" */
     END_STEP,
+
+    /** "At the beginning of each end step, …" (every player's turn). */
+    EACH_END_STEP,
+
     /** At the end of the first combat phase on your turn. */
     END_OF_FIRST_COMBAT
 }

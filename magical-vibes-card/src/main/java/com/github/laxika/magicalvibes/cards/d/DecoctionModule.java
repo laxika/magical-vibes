@@ -17,7 +17,7 @@ import java.util.List;
 public class DecoctionModule extends Card {
 
     public DecoctionModule() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new EnergyCountersEffect(1));
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, new EnergyCountersEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

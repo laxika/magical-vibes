@@ -30,8 +30,15 @@ public class MillTwoThenSacrificeSelfIfMilledCardsShareAllTypesEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<Card> milled = graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), 2);
-        if (milled.size() < 2 || !cardTypes(milled.get(0)).equals(cardTypes(milled.get(1)))) {
+        List<Card> milled = graveyardService.resolveMillPlayerAndReturnAllMilledCards(
+                gameData, entry.getControllerId(), 2);
+        boolean sharedTypes = false;
+        for (int i = 0; i < milled.size() && !sharedTypes; i++) {
+            for (int j = i + 1; j < milled.size() && !sharedTypes; j++) {
+                sharedTypes = cardTypes(milled.get(i)).equals(cardTypes(milled.get(j)));
+            }
+        }
+        if (!sharedTypes) {
             return;
         }
 

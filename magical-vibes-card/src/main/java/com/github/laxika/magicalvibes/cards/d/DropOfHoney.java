@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureWithLeastPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -22,10 +22,8 @@ public class DropOfHoney extends Card {
     public DropOfHoney() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new DestroyCreatureWithLeastPowerEffect(true));
 
-        addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
-                (gameData, sourcePermanent, controllerId) -> gameData.playerBattlefields.values().stream()
-                        .flatMap(List::stream)
-                        .noneMatch(permanent -> permanent.getCard().hasType(CardType.CREATURE)),
+        addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtMost(0,
+                new PermanentIsCreaturePredicate(),
                 List.of(new SacrificeSelfEffect()),
                 "Drop of Honey's state-triggered ability"
         ));

@@ -115,7 +115,7 @@ class DreadhordeInvasionTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        declareAttackersAndPrepareBlockers(List.of(1));
+        declareAttackers(List.of(1));
         resolveAllTriggers();
         resolveCombat();
 

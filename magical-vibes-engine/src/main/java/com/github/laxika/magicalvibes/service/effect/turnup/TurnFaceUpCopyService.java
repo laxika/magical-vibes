@@ -206,7 +206,16 @@ public class TurnFaceUpCopyService {
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                 boolean targetsPermanent = effects.stream()
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-                if (targetsSpell) {
+                boolean targetsGraveyard = effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+                if (targetsGraveyard) {
+                    int minimumGraveyardTargets = effects.stream()
+                            .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                            .anyMatch(effect -> !effect.hasOptionalTarget()) ? 1 : 0;
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            source.getCard(), controllerId, effects, null, minimumGraveyardTargets, 0));
+                    triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+                } else if (targetsSpell) {
                     StackEntryPredicate spellFilter = null;
                     boolean includeAbilities = false;
                     if (source.getCard().getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {

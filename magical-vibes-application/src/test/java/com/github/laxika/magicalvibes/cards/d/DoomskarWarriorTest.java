@@ -194,6 +194,7 @@ class DoomskarWarriorTest extends BaseCardTest {
         castWarriorTargeting(bears);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());
@@ -223,6 +224,7 @@ class DoomskarWarriorTest extends BaseCardTest {
         Card fourth = new Shock();
         Card untouched = new Forest();
         harness.setLibrary(player1, List.of(first, second, third, fourth, untouched));
+        harness.setHand(player1, List.of());
         warrior.setAttacking(true);
         warrior.setAttackTarget(battle.getId());
 

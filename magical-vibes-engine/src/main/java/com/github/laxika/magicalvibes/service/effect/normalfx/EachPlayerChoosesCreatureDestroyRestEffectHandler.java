@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreatureDestroyRestEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,14 @@ public class EachPlayerChoosesCreatureDestroyRestEffectHandler implements Normal
         List<UUID> protectedIds = new ArrayList<>();
                 List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
-                for (UUID playerId : gameData.orderedPlayerIds) {
+                List<UUID> turnOrder = new ArrayList<>();
+                if (gameData.activePlayerId != null) {
+                    turnOrder.add(gameData.activePlayerId);
+                }
+                gameData.orderedPlayerIds.stream()
+                        .filter(id -> !id.equals(gameData.activePlayerId))
+                        .forEach(turnOrder::add);
+                for (UUID playerId : turnOrder) {
                     List<Permanent> creatures = new ArrayList<>();
                     List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                     if (battlefield != null) {
@@ -68,7 +76,8 @@ public class EachPlayerChoosesCreatureDestroyRestEffectHandler implements Normal
                     destructionSupport.performDestroyAllCreaturesExcept(gameData, entry.getCard().getName(), protectedIds);
                 } else {
                     destructionSupport.beginNextDestroyRestChoice(gameData, choosers, protectedIds,
-                            entry.getCard().getName());
+                            entry.getCard().getName(), new PermanentIsCreaturePredicate(),
+                            "Choose a creature to keep.", true);
                 }
     }
 }

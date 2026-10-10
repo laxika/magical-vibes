@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DecoctionModule.class, GrizzlyBears.class, Forest.class, MarchOfTheMachines.class})
+@CardUsed({DecoctionModule.class, GrizzlyBears.class, Forest.class, MarchOfTheMachines.class, ControlMagic.class})
 class DecoctionModuleTest extends BaseCardTest {
 
     @Test
@@ -139,8 +140,12 @@ class DecoctionModuleTest extends BaseCardTest {
     @Test
     void returnsBorrowedCreatureToItsOwnersHand() {
         harness.addToBattlefield(player1, new DecoctionModule());
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ControlMagic()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -160,7 +165,7 @@ class DecoctionModuleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(target);
         gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

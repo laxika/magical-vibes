@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.action.DimensionalBreachUpkeepReturn
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllMireCountersFromChosenLandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
@@ -419,7 +420,8 @@ public class StepTriggerService {
             boolean isControllerStep = gameData.activePlayerId.equals(emblem.controllerId());
             boolean opponentStep = step == EmblemTriggerStep.OPPONENT_UPKEEP
                     || step == EmblemTriggerStep.OPPONENT_DRAW_STEP;
-            if ((opponentStep && isControllerStep) || (!opponentStep && !isControllerStep)) {
+            boolean everyTurn = step == EmblemTriggerStep.EACH_END_STEP;
+            if (!everyTurn && ((opponentStep && isControllerStep) || (!opponentStep && !isControllerStep))) {
                 continue;
             }
             for (CardEffect effect : emblem.staticEffects()) {
@@ -627,9 +629,9 @@ public class StepTriggerService {
                 }
 
                 StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), gameData.activePlayerId,
+                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(ReturnCardExiledWithSourceToBattlefieldEffect.ownedByController())),
+                        new ArrayList<>(List.of(ReturnCardExiledWithSourceToBattlefieldEffect.ownedByActivePlayer())),
                         0, sourceCardId);
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
@@ -995,6 +997,8 @@ public class StepTriggerService {
                     && ce.interveningIf()
                     && !conditionEvaluationService.isMet(gameData, ce.condition(),
                             ConditionContext.forPermanent(perm, activePlayerId)));
+            upkeepEffects.removeIf(e -> e instanceof RemoveCounterAndSacrificeSelfOnLastEffect vanishing
+                    && perm.getCounterCount(vanishing.counterType()) <= 0);
             upkeepEffects.removeIf(e -> e instanceof PlayerWithMostLifeGainsControlOfSourceCreatureEffect
                     && !PlayerWithMostLifeGainsControlOfSourceCreatureEffect.hasUniqueLifeLeader(gameData));
             if (upkeepEffects.isEmpty()) continue;
@@ -4400,7 +4404,30 @@ public class StepTriggerService {
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
         }
+        // "At the beginning of your next end step" (Desert Warfare): only the scheduling player's end
+        // step fires it, and the return goes on the stack like any other triggered ability.
+        for (var delayed : gameData.drainDelayedActions(
+                com.github.laxika.magicalvibes.model.action.DelayedControllerEndStepGraveyardReturn.class,
+                pending -> pending.controllerId().equals(gameData.activePlayerId))) {
+            Card cardToReturn = gameQueryService.findCardInGraveyardById(gameData, delayed.cardId());
+            if (cardToReturn == null
+                    || gameData.graveyardEntryVersion(delayed.cardId()) != delayed.graveyardEntryVersion()) {
+                log.info("Game {} - Delayed end-step return for card {} skipped (no longer in the scheduled graveyard entry)",
+                        gameData.id, delayed.cardId());
+                continue;
+            }
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+                    delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
+                            false, true))));
+            entry.setTriggeringCardId(cardToReturn.getId());
+            entry.setTriggeringCardGraveyardEntryVersion(delayed.graveyardEntryVersion());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.cardThen(cardToReturn, "'s delayed return ability triggers."));
+        }
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
+        collectEmblemStepTriggers(gameData, EmblemTriggerStep.EACH_END_STEP);
 
         if (gameData.hasDelayedAction(ReturnExiledCardAtNextEndStepUnlessPays.class)) {
             List<ReturnExiledCardAtNextEndStepUnlessPays> pendingReturns = gameData.drainDelayedActions(
@@ -7239,7 +7266,13 @@ public class StepTriggerService {
             if (permanent == null) {
                 continue;
             }
-            UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+            // CR 603.7e: an ability that created the delayed trigger keeps controlling it (recorded as the
+            // action's player), even if the permanent has since changed controllers.
+            UUID controllerId = action.sacrificingPlayerId() != null
+                    ? action.sacrificingPlayerId()
+                    : action.controllerId() != null
+                    ? action.controllerId()
+                    : gameQueryService.findPermanentController(gameData, permanent.getId());
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     permanent.getCard(),

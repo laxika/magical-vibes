@@ -23,6 +23,6 @@ public class DraconicDebut extends Card {
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.DRAGON))),
-                new XValue()));
+                new XValue(), false, false));
     }
 }

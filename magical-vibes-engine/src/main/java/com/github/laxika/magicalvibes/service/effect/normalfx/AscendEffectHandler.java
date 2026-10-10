@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class AscendEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +41,7 @@ public class AscendEffectHandler implements NormalEffectHandlerBean {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield != null && battlefield.size() >= 10) {
                 Card ascendSource = battlefield.stream()
+                        .filter(perm -> !gameQueryService.hasLostAllAbilities(gameData, perm))
                         .map(Permanent::getCard)
                         .filter(card -> card.getEffects(EffectSlot.STATIC).stream()
                                 .anyMatch(AscendEffect.class::isInstance))

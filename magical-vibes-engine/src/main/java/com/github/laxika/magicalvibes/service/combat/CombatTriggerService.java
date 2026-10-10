@@ -240,14 +240,17 @@ public class CombatTriggerService {
                                             : gameData.playerIds.contains(attackedTargetId)
                                                     ? attackedTargetId
                                                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                                    // An attack trigger granted by an Aura is an ability of the enchanted creature,
+                                    // so its source and controller are that creature (CR 113.7, CR 113.8).
+                                    UUID grantedAttackControllerId = finalCreatureControllerId;
                                     UUID targetChooserId = slot == EffectSlot.ON_ATTACK
                                             && perm.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
-                                            ? defendingPlayerId : auraOwnerId;
+                                            ? defendingPlayerId : grantedAttackControllerId;
                                     gameData.queueInteraction(
                                             slot == EffectSlot.ON_ATTACK
                                                     ? new PermanentChoiceContext.AttackTriggerTarget(
-                                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
-                                                            targetChooserId, attackedTargetId, creature.getId())
+                                                            perm.getCard(), grantedAttackControllerId, effectsForStack,
+                                                            creature.getId(), targetChooserId, attackedTargetId, creature.getId())
                                                     : new PermanentChoiceContext.AttackTriggerTarget(
                                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
                                                             auraOwnerId, null, creature.getId()));

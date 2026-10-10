@@ -13,7 +13,7 @@ public class DesecratedEarth extends Card {
 
     public DesecratedEarth() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

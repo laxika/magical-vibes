@@ -83,6 +83,12 @@ public class StackEntry {
     @Setter private UUID opponentChosenTargetPlayerId;
     /** Controller fixed when choosing a group of targets controlled by the same player. */
     @Setter private UUID requiredTargetControllerId;
+    /**
+     * Controller of each target permanent when it was chosen, for targets worded "that player controls"
+     * ("for each opponent, choose up to one target creature that player controls"). A target whose
+     * controller differs on resolution is illegal.
+     */
+    private final Map<UUID, UUID> targetControllersAtCast = new HashMap<>();
     private boolean targetIdOverriddenForEffectResolution;
     private UUID primaryTargetBeforeEffectResolution;
     private Integer resolvingEffectTargetGroup;
@@ -141,6 +147,8 @@ public class StackEntry {
     /** Cross-target restriction declared by a multi-target activated ability. */
     @Setter private MultiTargetConstraint multiTargetConstraint;
     @Setter private boolean copy;
+    /** Whether this copy was created and then cast (CR 707.12), so it resolves as a cast spell. */
+    @Setter private boolean castCopy;
     @Setter private boolean nonTargeting;
     /** Whether an effect already placed the physical spell card in its final zone. */
     @Setter private boolean spellDispositionHandled;
@@ -821,7 +829,9 @@ public class StackEntry {
         this.targetFilter = source.targetFilter;
         this.removedPermanentControllers.putAll(source.removedPermanentControllers);
         this.requiredTargetControllerId = source.requiredTargetControllerId;
+        this.targetControllersAtCast.putAll(source.targetControllersAtCast);
         this.copy = source.copy;
+        this.castCopy = source.castCopy;
         this.nonTargeting = source.nonTargeting;
         this.spellDispositionHandled = source.spellDispositionHandled;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
@@ -1135,6 +1145,7 @@ public class StackEntry {
         this.etbMode = null;
         this.opponentChosenTargetPlayerId = null;
         this.requiredTargetControllerId = null;
+        this.targetControllersAtCast.clear();
         this.targetIdOverriddenForEffectResolution = false;
         this.resolvingEffectTargetGroup = null;
         this.sourceStackCardId = null;
@@ -1143,6 +1154,7 @@ public class StackEntry {
         this.activationUsedTreasureMana = false;
         this.manaSpentToCast = 0;
         this.copy = false;
+        this.castCopy = false;
         this.nonTargeting = false;
         this.kicked = false;
         this.giftPromised = false;
@@ -1744,5 +1756,22 @@ public class StackEntry {
 
     public boolean hasAnyTarget() {
         return targetId != null || !targetIds.isEmpty() || !targetCardIds.isEmpty();
+    }
+
+    /**
+     * This spell's mana value while it's on the stack: X counts once for each {X} in its mana cost and
+     * not at all when the cost has no {X}, e.g. an X chosen by another effect (CR 202.3e).
+     */
+    public int getSpellManaValue() {
+        return spellManaValue(card, xValue);
+    }
+
+    /** {@link #getSpellManaValue()} for a card whose stack entry is held separately. */
+    public static int spellManaValue(Card card, int xValue) {
+        if (card == null) {
+            return 0;
+        }
+        int xSymbols = card.getParsedManaCost() == null ? 0 : card.getParsedManaCost().getXSymbolCount();
+        return card.getManaValue() + xValue * xSymbols;
     }
 }

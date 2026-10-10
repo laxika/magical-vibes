@@ -1065,7 +1065,7 @@ public class PermanentCounterSupport {
     }
 
     /** Vanishing's sacrifice ability triggers whenever the last time counter is removed. */
-    private void checkLastTimeCounterRemoved(GameData gameData, Permanent permanent,
+    public void checkLastTimeCounterRemoved(GameData gameData, Permanent permanent,
                                               CounterType counterType, int previousCount) {
         if (counterType != CounterType.TIME || previousCount <= 0
                 || permanent.getCounterCount(CounterType.TIME) != 0

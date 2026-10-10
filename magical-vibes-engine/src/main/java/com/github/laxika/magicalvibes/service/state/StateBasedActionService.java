@@ -167,6 +167,7 @@ public class StateBasedActionService {
             // an unrelated sweep happened to run.
             anyPerformed |= permanentRemovalService.removeOrphanedAuras(gameData);
             anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
+            anyPerformed |= unpairNonCreatureSoulbondPairs(gameData);
             anyPerformed |= removeRedundantRoles(gameData);
 
             // Debt of Loyalty: a creature that just regenerated off its shield changes controller.
@@ -322,6 +323,38 @@ public class StateBasedActionService {
             }
             return true;
         });
+    }
+
+    /**
+     * CR 702.95e — a paired creature becomes unpaired when it or its partner stops being a creature.
+     * Pairs are cleared on both ends; a partner that already left the battlefield is handled by the
+     * leave-the-battlefield path and is simply skipped here.
+     */
+    private boolean unpairNonCreatureSoulbondPairs(GameData gameData) {
+        List<Permanent> pairedPermanents = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (permanent.getPairedWithId() != null) {
+                pairedPermanents.add(permanent);
+            }
+        });
+        boolean performed = false;
+        for (Permanent permanent : pairedPermanents) {
+            if (permanent.getPairedWithId() == null) {
+                continue;
+            }
+            Permanent partner = gameQueryService.findPermanentById(gameData, permanent.getPairedWithId());
+            boolean stillCreatures = gameQueryService.isCreature(gameData, permanent)
+                    && (partner == null || gameQueryService.isCreature(gameData, partner));
+            if (stillCreatures) {
+                continue;
+            }
+            if (partner != null && permanent.getId().equals(partner.getPairedWithId())) {
+                partner.setPairedWithId(null);
+            }
+            permanent.setPairedWithId(null);
+            performed = true;
+        }
+        return performed;
     }
 
     private boolean removeRedundantRoles(GameData gameData) {

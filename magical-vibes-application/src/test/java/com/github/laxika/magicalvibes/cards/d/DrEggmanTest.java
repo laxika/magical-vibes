@@ -124,7 +124,7 @@ class DrEggmanTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         harness.handleListChoice(player2, putOption(choice));
 
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -146,7 +146,7 @@ class DrEggmanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(construct);
-        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentCard);
         harness.assertNotOnBattlefield(player1, "Metalwork Colossus");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

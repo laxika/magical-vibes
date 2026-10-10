@@ -19,8 +19,8 @@ public class DelightedHalfling extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.LEGENDARY_SPELLS)),
-                "{T}: Add one mana of any color. Spend this mana only to cast a legendary spell."
+                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.LEGENDARY_SPELLS_UNCOUNTERABLE)),
+                "{T}: Add one mana of any color. Spend this mana only to cast a legendary spell, and that spell can't be countered."
         ));
     }
 }

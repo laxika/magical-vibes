@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,8 @@ public class DunbarrowRevivalist extends Card {
                 "an artifact, enchantment, or token"
         ));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateBoonEffect(1, new CreateTokenAttachedToTargetEffect(wickedRoleToken())));
+                new CreateBoonEffect(1, new CreateTokenAttachedToTargetEffect(
+                        wickedRoleToken(), PlayerRelation.ANY)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

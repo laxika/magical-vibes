@@ -179,8 +179,8 @@ class DreamTidesTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactly(creature.getId());
-        harness.activateAbility(player1, 2, 0, null);
-        harness.activateAbility(player1, 3, 0, null);
+        gs.activateAbility(gd, player1, 2, 0, null, null, null);
+        gs.activateAbility(gd, player1, 3, 0, null, null, null);
         harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
 
         assertThat(creature.isTapped()).isFalse();

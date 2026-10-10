@@ -432,9 +432,11 @@ public class GraveyardReturnSupport {
         if (card == null) {
             return false;
         }
-        if (effect.requiresPowerAtMostSacrificedPower()
-                && (card.getPower() == null || card.getPower() > entry.getSacrificedPower())) {
-            return false;
+        if (effect.requiresPowerAtMostSacrificedPower()) {
+            Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
+            if (power == null || power > entry.getSacrificedPower()) {
+                return false;
+            }
         }
         if (effect.requiresManaValueEqualsX()
                 && card.getManaValue() != effect.requiredManaValue(entry.getXValue())) {
@@ -1443,13 +1445,16 @@ public class GraveyardReturnSupport {
         // the greatest power. A single such card is a forced return; ties let the controller choose.
         if (effect.greatestPower()) {
             int maxPower = matchingIndices.stream()
-                    .map(i -> graveyard.get(i).getPower())
+                    .map(i -> gameQueryService.getEffectiveCardPower(gameData, graveyard.get(i)))
                     .filter(Objects::nonNull)
                     .mapToInt(Integer::intValue)
                     .max()
                     .orElse(Integer.MIN_VALUE);
             matchingIndices = matchingIndices.stream()
-                    .filter(i -> graveyard.get(i).getPower() != null && graveyard.get(i).getPower() == maxPower)
+                    .filter(i -> {
+                        Integer power = gameQueryService.getEffectiveCardPower(gameData, graveyard.get(i));
+                        return power != null && power == maxPower;
+                    })
                     .toList();
         }
 

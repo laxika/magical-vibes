@@ -148,6 +148,8 @@ class DanithaNewBenaliasLightTest extends BaseCardTest {
 
     @Test
     void permissionRefreshesOnYourNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new DanithaNewBenaliasLight());
         harness.setGraveyard(player1, List.of(new Bonesplitter(), new Bonesplitter()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

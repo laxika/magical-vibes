@@ -166,6 +166,29 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         return false;
     }
 
+    /**
+     * For counter placements that are not themselves {@code PutCounterOnTargetPermanentEffect}
+     * (e.g. "put a +1/+1 counter on this creature"): when two or more counter replacement effects
+     * apply and the order changes the result, asks the permanent's controller to order them
+     * (CR 616.1) and resumes the placement from the answer. Returns {@code true} when that choice
+     * was started (the caller must stop; the placement completes when it is answered).
+     */
+    public boolean beginReplacementOrderIfNeeded(GameData gameData, StackEntry entry, Permanent target,
+                                                 CounterType counterType, int count) {
+        if (count <= 0 || gameQueryService.cantHaveCounters(gameData, target)) {
+            return false;
+        }
+        var modifiers = gameQueryService.counterReplacementsFor(gameData, target, counterType,
+                entry.getControllerId(), false);
+        if (!orderChangesResult(gameData, counterType, count, modifiers)) {
+            return false;
+        }
+        beginReplacementChoice(gameData, new ChoiceContext.CounterReplacementOrder(
+                entry, target.getId(), count, modifiers,
+                new PutCounterOnTargetPermanentEffect(counterType, count), List.of(), count));
+        return true;
+    }
+
     private void beginReplacementChoice(GameData gameData, ChoiceContext.CounterReplacementOrder order) {
         UUID controller = gameQueryService.findPermanentController(gameData, order.targetId());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

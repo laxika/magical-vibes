@@ -271,6 +271,11 @@ public class AnimationSupport {
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
         if (effect.equals(AnimatePermanentsEffect.crew())) {
+            // The Vehicle becomes a creature at the crew ability's own timestamp (CR 613.1d, 613.7b), so
+            // an earlier type-setting effect (Swift Reconfiguration) does not strip it.
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), self.getId(), entry.getControllerId(), effect,
+                    self.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
             triggerCollectionService.checkBecomesCrewedTriggers(gameData, self, entry.getControllerId());
         }
 

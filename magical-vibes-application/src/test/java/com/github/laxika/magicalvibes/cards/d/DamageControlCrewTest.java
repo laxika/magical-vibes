@@ -80,6 +80,7 @@ class DamageControlCrewTest extends BaseCardTest {
     @DisplayName("Impound cannot target a creature")
     void impoundCannotTargetCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         enterAndChooseImpound();
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))

@@ -60,7 +60,7 @@ class DeepSeaKrakenTest extends BaseCardTest {
 
         Permanent kraken = findPermanent(player1, "Deep-Sea Kraken");
         assertThat(kraken.getCard()).isSameAs(card);
-        assertThat(kraken.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kraken, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -188,7 +188,7 @@ class DeepSeaKrakenTest extends BaseCardTest {
         harness.withAutoStop(gd.currentStep, () -> harness.passBothPriorities());
 
         Permanent kraken = findPermanent(player1, "Deep-Sea Kraken");
-        assertThat(kraken.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kraken, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
         assertThat(gd.stack).hasSize(1);
         assertThat(countPermanents(player2, "Ashcoat Bear")).isZero();

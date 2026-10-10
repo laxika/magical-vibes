@@ -116,6 +116,7 @@ class DivineCongregationTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
@@ -150,6 +151,7 @@ class DivineCongregationTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);

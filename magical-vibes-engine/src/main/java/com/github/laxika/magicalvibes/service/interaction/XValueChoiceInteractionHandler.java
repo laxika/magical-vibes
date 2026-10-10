@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.effect.mayfx.ExileTargetCardFromGraveyardAndMayCastCopyHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileNormalCostCopySupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -29,11 +32,17 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
     private final InputCompletionService inputCompletionService;
     private final AbilityActivationService abilityActivationService;
     private final ObjectProvider<MayCastHandlerService> mayCastHandlerService;
+    private final ObjectProvider<ExileTargetCardFromGraveyardAndMayCastCopyHandler> graveyardCopyHandler;
+    private final ObjectProvider<ExileNormalCostCopySupport> exileNormalCostCopySupport;
 
     @Autowired
     public XValueChoiceInteractionHandler(InputCompletionService inputCompletionService,
                                           AbilityActivationService abilityActivationService,
-                                          ObjectProvider<MayCastHandlerService> mayCastHandlerService) {
+                                          ObjectProvider<MayCastHandlerService> mayCastHandlerService,
+                                          ObjectProvider<ExileTargetCardFromGraveyardAndMayCastCopyHandler> graveyardCopyHandler,
+                                          ObjectProvider<ExileNormalCostCopySupport> exileNormalCostCopySupport) {
+        this.graveyardCopyHandler = graveyardCopyHandler;
+        this.exileNormalCostCopySupport = exileNormalCostCopySupport;
         this.inputCompletionService = inputCompletionService;
         this.abilityActivationService = abilityActivationService;
         this.mayCastHandlerService = mayCastHandlerService;
@@ -69,6 +78,16 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
         }
         if (interaction.graveyardCastAbility() != null) {
             var ability = interaction.graveyardCastAbility();
+            if (ability.effects().stream().noneMatch(CastCardFromGraveyardEffect.class::isInstance)) {
+                gameData.interaction.clearAwaitingInput();
+                if (ability.effects().stream().anyMatch(
+                        ExileTargetCardFromGraveyardAndMayCastCopyEffect.class::isInstance)) {
+                    graveyardCopyHandler.getObject().resumeCastWithX(gameData, player, ability, chosenValue);
+                } else {
+                    exileNormalCostCopySupport.getObject().resumeCastWithX(gameData, player, ability, chosenValue);
+                }
+                return;
+            }
             CastCardFromGraveyardEffect castEffect = ability.effects().stream()
                     .filter(CastCardFromGraveyardEffect.class::isInstance)
                     .map(CastCardFromGraveyardEffect.class::cast).findFirst().orElseThrow();

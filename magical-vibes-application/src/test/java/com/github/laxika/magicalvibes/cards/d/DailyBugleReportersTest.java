@@ -122,6 +122,7 @@ class DailyBugleReportersTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(eligibleCreature));
 
         harness.enterBattlefieldAndReturn(player1, new DailyBugleReporters());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1,
                 "Return target creature card with mana value 2 or less from your graveyard to your hand");
         harness.handleMultipleCardsChosen(player1, List.of(eligibleCreature.getId()));

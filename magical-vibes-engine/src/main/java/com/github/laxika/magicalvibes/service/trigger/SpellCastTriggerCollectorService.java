@@ -1834,7 +1834,7 @@ public class SpellCastTriggerCollectorService {
                 .anyMatch(TriggeringSpellManaValueEffect.class::isInstance);
         int triggeringSpellManaValue = triggeringSpell == null
                 ? sc.spellCard().getManaValue()
-                : triggeringSpell.getCard().getManaValue() + triggeringSpell.getXValue();
+                : triggeringSpell.getSpellManaValue();
         boolean selfTarget = resolved.stream().anyMatch(e -> e.targetSpec().selfTargeting());
 
         if (match.rawEffect() instanceof MayEffect may) {
@@ -3214,7 +3214,9 @@ public class SpellCastTriggerCollectorService {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             }
             if (match.permanent() != null && resolved.stream()
-                    .anyMatch(SourcePermanentSnapshotRequiredEffect.class::isInstance)) {
+                    .anyMatch(effect -> effect instanceof SourcePermanentSnapshotRequiredEffect
+                            || effect instanceof ConditionalEffect conditional
+                            && conditional.wrapped() instanceof SourcePermanentSnapshotRequiredEffect)) {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             }
             preservePlanarSource(entry, match);
@@ -3343,11 +3345,11 @@ public class SpellCastTriggerCollectorService {
         if (effect instanceof com.github.laxika.magicalvibes.model.effect.DiscoverEffect discover
                 && discover.discoverValue() instanceof com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue) {
             return new com.github.laxika.magicalvibes.model.effect.DiscoverEffect(
-                    new Fixed(spellSnapshot.getCard().getManaValue() + spellSnapshot.getXValue()));
+                    new Fixed(spellSnapshot.getSpellManaValue()));
         }
         if (effect instanceof TriggeringSpellManaValueEffect manaValueAware) {
             return manaValueAware.snapshotTriggeringSpellManaValue(
-                    spellSnapshot.getCard().getManaValue() + spellSnapshot.getXValue());
+                    spellSnapshot.getSpellManaValue());
         }
         if (effect instanceof PutCountersOnSelfEffect putCounters
                 && putCounters.amount() instanceof TriggeringSpellTargetCount targetCount) {

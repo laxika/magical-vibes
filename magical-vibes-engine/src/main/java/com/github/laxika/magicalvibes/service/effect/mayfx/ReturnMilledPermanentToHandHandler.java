@@ -59,13 +59,28 @@ public class ReturnMilledPermanentToHandHandler implements MayEffectHandlerBean 
                 }
             }
 
-            Card card = gameQueryService.findCardInGraveyardById(gameData, ability.sourceCard().getId());
-            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, ability.sourceCard().getId());
+            UUID cardId = ability.sourceCard().getId();
+            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            boolean fromExile = false;
+            if (card == null) {
+                var exiled = gameData.findExiledCard(cardId);
+                if (exiled != null) {
+                    card = exiled.card();
+                    ownerId = exiled.ownerId();
+                    fromExile = true;
+                }
+            }
             if (card != null && ownerId != null
                     && predicateEvaluationService.matchesCardPredicate(
-                    card, marker.filter(), ability.sourceCard().getId(), gameData, ownerId)) {
-                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
-                permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, card);
+                    card, marker.filter(), cardId, gameData, ownerId)) {
+                if (fromExile) {
+                    gameData.exiledCards.removeIf(exiled -> exiled.card().getId().equals(cardId));
+                    permanentRemovalService.addCardToHandFromGraveyard(gameData, null, ownerId, card);
+                } else {
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+                    permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, card);
+                }
                 if (marker.bonusFilter() != null
                         && predicateEvaluationService.matchesCardPredicate(
                         card, marker.bonusFilter(), ability.sourceCard().getId(), gameData, ownerId)) {

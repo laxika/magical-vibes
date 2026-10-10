@@ -99,6 +99,7 @@ class DarigaazShivanChampionTest extends BaseCardTest {
         Card card = conjureCard();
         gd.exiledCardEggCounters.put(card.getId(), 0);
 
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UNTAP);
         harness.passUntil(TurnStep.UPKEEP);
 

@@ -277,6 +277,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanen
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControllerGraveyardCountPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostControlledCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostOwnCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourceControllerHandSizePredicate;
@@ -2084,6 +2085,19 @@ public class PredicateEvaluationService {
                 }
                 yield sourcePermanent != null
                         && permanent.getCard().getManaValue() < sourcePermanent.getCard().getManaValue();
+            }
+            case PermanentManaValueAtMostControlledCountersPredicate ignored -> {
+                if (gameData == null || sourceControllerId == null) {
+                    yield false;
+                }
+                int controlledCounters = 0;
+                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
+                if (controllerBattlefield != null) {
+                    for (Permanent controlledPermanent : controllerBattlefield) {
+                        controlledCounters += controlledPermanent.getTotalCounterCount();
+                    }
+                }
+                yield permanent.getCard().getManaValue() <= controlledCounters;
             }
             case PermanentManaValueAtMostOwnCountersPredicate atMostOwnCounters ->
                     permanent.getCard().getManaValue()
@@ -4877,15 +4891,15 @@ public class PredicateEvaluationService {
                     entry.getCard().getParsedManaCost() != null && entry.getCard().getParsedManaCost().hasX();
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
             case StackEntryManaValuePredicate manaValue ->
-                    entry.getCard().getManaValue() + entry.getXValue()
+                    entry.getSpellManaValue()
                             * (entry.getCard().getParsedManaCost() == null ? 0
                             : entry.getCard().getParsedManaCost().getXSymbolCount()) == manaValue.manaValue();
             case StackEntryMaxManaValuePredicate maxManaValue ->
-                    (entry.isCastFaceDown() ? 0 : entry.getCard().getManaValue() + entry.getXValue()
+                    (entry.isCastFaceDown() ? 0 : entry.getSpellManaValue()
                             * (entry.getCard().getParsedManaCost() == null ? 0
                             : entry.getCard().getParsedManaCost().getXSymbolCount())) <= maxManaValue.maxManaValue();
             case StackEntryManaSpentLessThanManaValuePredicate ignored ->
-                    !entry.isCastFaceDown() && entry.getManaSpentToCast() < entry.getCard().getManaValue() + entry.getXValue()
+                    !entry.isCastFaceDown() && entry.getManaSpentToCast() < entry.getSpellManaValue()
                             * (entry.getCard().getParsedManaCost() == null ? 0
                             : entry.getCard().getParsedManaCost().getXSymbolCount());
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.

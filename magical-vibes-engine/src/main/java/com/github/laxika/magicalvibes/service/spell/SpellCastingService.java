@@ -983,14 +983,23 @@ public class SpellCastingService {
     }
 
     private static Card bestowRuntimeCopyForHandCast(List<Card> hand, int cardIndex) {
-        Card card = hand.get(cardIndex).createRuntimeCopy();
+        Card card = bestowAuraSpellCopy(hand.get(cardIndex));
+        hand.set(cardIndex, card);
+        return card;
+    }
+
+    /**
+     * Characteristics of a spell cast for its bestow cost: an Aura enchantment spell with "enchant
+     * creature" (CR 702.103a). Its mana cost, and so its mana value, is unchanged.
+     */
+    private static Card bestowAuraSpellCopy(Card source) {
+        Card card = source.createRuntimeCopy();
         card.setType(CardType.ENCHANTMENT);
         card.setAdditionalTypes(Set.of());
         card.setSubtypes(List.of(com.github.laxika.magicalvibes.model.CardSubtype.AURA));
         card.setPower(null);
         card.setToughness(null);
         card.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature());
-        hand.set(cardIndex, card);
         return card;
     }
 
@@ -2200,6 +2209,20 @@ public class SpellCastingService {
             } else {
                 targetLegalityService.validateSpellTargeting(
                         gameData, omenCard, targetId, null, playerId, true, effectiveXValue);
+            }
+        }
+        if (!declaredTargetIds.isEmpty()) {
+            if (declaredTargetIds.size() > Math.max(1, omenCard.getMaxTargets())) {
+                throw new IllegalStateException("Too many targets");
+            }
+            for (UUID declaredTargetId : declaredTargetIds) {
+                if (EffectResolution.needsSpellTarget(omenCard.getEffects(EffectSlot.SPELL))) {
+                    targetLegalityService.validateSpellTargetOnStack(
+                            gameData, declaredTargetId, omenCard.getTargetFilter(), playerId, effectiveXValue);
+                } else {
+                    targetLegalityService.validateSpellTargeting(
+                            gameData, omenCard, declaredTargetId, null, playerId, true, effectiveXValue);
+                }
             }
         }
         if (!actionAvailabilityService.isCardPlayable(
@@ -3520,8 +3543,10 @@ public class SpellCastingService {
         }
         effectiveXValue = resolveCastTimeXValue(gameData, card, playerId, effectiveXValue);
         validateXValueCap(gameData, card, playerId, effectiveXValue);
+        // A split card's chosen half decides the timing (e.g. an instant half of a sorcery // instant card).
+        Card timingCharacteristics = selectedSplitModeCharacteristics(card, effectiveXValue);
         if (!castingPermissionService.canCastWithTiming(
-                gameData, playerId, card, playerId.equals(gameData.activePlayerId),
+                gameData, playerId, timingCharacteristics, playerId.equals(gameData.activePlayerId),
                 gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                         || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,
                 gameData.stack.isEmpty(), effectiveXValue)) {
@@ -4183,6 +4208,14 @@ public class SpellCastingService {
                                         gameData, playerId, card, pool, additionalCost, castSourceZone);
                         usingBattlefieldAlternativeCost = alternativeCost != null;
                         usingWarpAlternativeCost = alternativeCost != null && alternativeCost.castsWithWarp();
+                        // CR 107.3b: a life-for-mana-value alternative cost doesn't include {X}, so X must be 0.
+                        if (alternativeCost != null
+                                && alternativeCost.nonManaCost() instanceof PayLifeEqualToSpellManaValueCost
+                                && card.getManaCost() != null
+                                && new ManaCost(card.getManaCost()).hasX()
+                                && effectiveXValue != 0) {
+                            throw new IllegalStateException("X must be 0 when paying life instead of the mana cost");
+                        }
                     }
                 }
 
@@ -6496,6 +6529,14 @@ public class SpellCastingService {
                 gameData.stack.getLast().setRequiredTargetControllerId(
                         gameQueryService.findPermanentController(gameData, targetIds.getFirst()));
             }
+            if (card.isTargetControllersFixedAtCast() && !gameData.stack.isEmpty()) {
+                for (UUID chosenTargetId : targetIds) {
+                    UUID chosenTargetController = gameQueryService.findPermanentController(gameData, chosenTargetId);
+                    if (chosenTargetController != null) {
+                        gameData.stack.getLast().getTargetControllersAtCast().put(chosenTargetId, chosenTargetController);
+                    }
+                }
+            }
             if (adventure && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setPhysicalCard(physicalSourceCard);
                 gameData.stack.getLast().setCastWithAdventure(true);
@@ -8807,7 +8848,22 @@ public class SpellCastingService {
             throw new IllegalArgumentException("Invalid graveyard card index");
         }
 
-        Card card = graveyard.get(graveyardCardIndex);
+        Card physicalGraveyardCard = graveyard.get(graveyardCardIndex);
+        // A bestow card cast from the graveyard with an Aura target is cast for its bestow cost, so it is
+        // an Aura spell as it is cast and is evaluated as one by any graveyard-cast permission.
+        BestowCast graveyardBestowCast = targetId != null && targetIds.isEmpty()
+                && physicalGraveyardCard.effectiveFlashbackCast().isEmpty()
+                && physicalGraveyardCard.getCastingOption(DisturbCast.class).isEmpty()
+                && physicalGraveyardCard.getCastingOption(GraveyardCast.class).isEmpty()
+                && physicalGraveyardCard.getCastingOption(HarmonizeCast.class).isEmpty()
+                && !gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)
+                ? physicalGraveyardCard.getCastingOption(BestowCast.class).orElse(null)
+                : null;
+        String graveyardBestowManaCost = graveyardBestowCast == null ? null
+                : graveyardBestowCast.getCost(ManaCastingCost.class)
+                .orElseThrow(() -> new IllegalStateException("Bestow cost has no mana component"))
+                .manaCost();
+        Card card = graveyardBestowCast != null ? bestowAuraSpellCopy(physicalGraveyardCard) : physicalGraveyardCard;
         if (card.effectiveFlashbackCast().isEmpty()
                 && card.getCastingOption(AdventureCast.class).isPresent()
                 && (castingPermissionService.hasGrantedGraveyardAdventureCastPermission(gameData, card, playerId)
@@ -9277,7 +9333,7 @@ public class SpellCastingService {
                 disturbOpt, graveyardCastOpt,
                 grantedFlashback, emblemFlashback, grantedGraveyardCardCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
                 isGraveyardCast, isHarmonize, isRetrace, isJumpStart, isDisturb, isGrantedCyclingGraveyardCast, isMayCastTopInstantOrSorcery,
-                withoutPayingManaCost,
+                withoutPayingManaCost, graveyardBestowManaCost,
                 effectiveXValue, additionalCost, delveReduction, convokeContributions,
                 tapPermanentIds, retraceDiscardHandCardIndex, sacrificePermanentId,
                 additionalCostSacrificePermanentIds, discardHandCardIndices);
@@ -9486,6 +9542,10 @@ public class SpellCastingService {
             }
             stackEntry.setEntersTapped(stackEntry.isEntersTapped()
                     || gameData.graveyardCardsEnterTapped.remove(card.getId()));
+            if (graveyardBestowCast != null) {
+                stackEntry.setAlternateCost(true);
+                stackEntry.setBestowOriginalCard(physicalGraveyardCard);
+            }
             preserveGraveyardOwner(stackEntry, playerId, graveyardOwnerId);
             gameData.stack.add(stackEntry);
             if (grantedGraveyardCardCast) {
@@ -10382,6 +10442,11 @@ public class SpellCastingService {
                 && !additionalSpellCostService.satisfiable(gameData, playerId, card)) {
             throw new IllegalStateException("No cards can pay the discard cost");
         }
+        boolean supportedDeclinedOptionalPutCounterCost = additionalCosts.putCounterCost() != null
+                && additionalCosts.putCounterCost().optional()
+                && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
+                .allMatch(cost -> cost instanceof PutCounterOnControlledCreatureCost put && put.optional()
+                        || cost instanceof ChooseXValueCost);
         boolean supportedOptionalTeamworkCost = additionalCosts.teamworkCost() != null
                 && card.getEffects(EffectSlot.SPELL).stream().filter(CostEffect.class::isInstance)
                 .allMatch(cost -> cost instanceof TeamworkCost || cost instanceof ChooseXValueCost);
@@ -10398,7 +10463,8 @@ public class SpellCastingService {
         }
         if ((additionalCosts.any() && additionalCosts.chooseXValueCost() == null
                 && !supportedAdditionalManaCost && !supportedAdditionalDiscardCost
-                && !supportedOptionalTeamworkCost && !supportedBeholdCost && !supportedOptionalEvidenceCost)
+                && !supportedOptionalTeamworkCost && !supportedBeholdCost && !supportedOptionalEvidenceCost
+                && !supportedDeclinedOptionalPutCounterCost)
                 || additionalCosts.delveCost() != null) {
             throw new IllegalStateException("Cannot cast " + card.getName()
                     + " from exile — paying its additional cast cost is not supported from this zone");
@@ -10772,12 +10838,12 @@ public class SpellCastingService {
             stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
         }
         stackEntry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
-        stackEntry.setAlternateCost(manaValueLifeAlternative || sourceManaValueLifeAlternative || useManaValueLifeAlternative);
         stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         stackEntry.setPutOnBottomOfOwnersLibraryInsteadOfGraveyard(
                 putOnBottomOfOwnersLibraryInsteadOfGraveyard || putOnBottomOfOwnersLibrary || flashforwardCast);
         stackEntry.setCastWithFlashforward(flashforwardCast);
         stackEntry.setCopy(copy || preparedSpellCopy);
+        stackEntry.setCastCopy(copy || preparedSpellCopy);
         stackEntry.setManaSpentToCast(gameData.getSpellCastManaSpent(card.getId()));
         boolean controlledMount = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
@@ -10826,6 +10892,8 @@ public class SpellCastingService {
                 sourceDescription));
         log.info("Game {} - {} casts {} from {}", gameData.id, player.getUsername(), card.getName(),
                 fromOutsideGame ? "outside the game" : sourceZone == Zone.BATTLEFIELD ? "the battlefield" : "exile");
+
+        queueDiscordCopyAbility(gameData, playerId, exileCardId);
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, sourceZone,
                 copy || exiledEntry == null ? null : exiledEntry.sourcePermanentId());
@@ -10963,6 +11031,34 @@ public class SpellCastingService {
         if (!copy) {
             gameData.recordCardPlayedFromExile(playerId);
         }
+    }
+
+    /**
+     * Discord, Lord of Disharmony: "If you cast a spell this way, copy this ability if Discord is on the
+     * battlefield." The copy is put onto the stack under the casting player's control as part of casting,
+     * so it depends only on Discord still being on the battlefield, not on who controls it or whether it
+     * has lost its abilities.
+     */
+    private void queueDiscordCopyAbility(GameData gameData, UUID casterId, UUID castCardId) {
+        UUID discordId = gameData.discordCopySourcePermanents.remove(castCardId);
+        if (discordId == null) {
+            return;
+        }
+        Permanent discord = gameQueryService.findPermanentById(gameData, discordId);
+        if (discord == null) {
+            return;
+        }
+        StackEntry abilityCopy = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                discord.getCard(),
+                casterId,
+                discord.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect())),
+                null,
+                discord.getId());
+        abilityCopy.setNonTargeting(true);
+        gameData.stack.add(abilityCopy);
+        gameLogService.append(gameData, GameLog.abilityTriggers(discord.getCard()));
     }
 
     /**
@@ -11422,7 +11518,7 @@ public class SpellCastingService {
             stackEntry.setOwnerIdOverride(libraryOwnerId);
         }
         stackEntry.setPhyrexianManaPaidWithLife(phyrexianManaPaidWithLife);
-        stackEntry.setAlternateCost(useManaValueLifeAlternative || castFaceDown);
+        stackEntry.setAlternateCost(castFaceDown);
         stampCastDuringMainPhase(gameData, stackEntry, playerId);
         gameData.stack.add(stackEntry);
 
@@ -14246,6 +14342,7 @@ public class SpellCastingService {
                                                 boolean isHarmonize, boolean isRetrace, boolean isJumpStart, boolean isDisturb, boolean isGrantedCyclingGraveyardCast,
                                                 boolean isMayCastTopInstantOrSorcery,
                                                 boolean withoutPayingManaCost,
+                                                String bestowManaCost,
                                                 int effectiveXValue, int additionalCost, int delveReduction,
                                                 List<ManaColor> convokeContributions,
                                                 List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
@@ -14256,7 +14353,9 @@ public class SpellCastingService {
         // GraveyardCast may override the normal mana cost with an alternate one ("by paying {W}{U}{B}{R}{G}
         // rather than paying its mana cost" — Worldheart Phoenix). When present, it is paid like a normal
         // mana cost (no flashback mana restriction).
-        String graveyardAlternateManaCost = isGraveyardCast
+        String graveyardAlternateManaCost = bestowManaCost != null
+                ? bestowManaCost
+                : isGraveyardCast
                 ? graveyardCastOpt.map(GraveyardCast::alternateManaCost).orElse(null)
                 : isGrantedCyclingGraveyardCast
                 ? castingPermissionService.findFilteredGraveyardPermission(gameData, playerId, card)

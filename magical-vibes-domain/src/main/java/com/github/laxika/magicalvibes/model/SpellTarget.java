@@ -116,6 +116,16 @@ public class SpellTarget {
     }
 
     /**
+     * Binds an effect that is already registered through another target slot to this slot as well,
+     * so one effect instance resolves against the targets of several groups at once (Don and Leo
+     * exiles its artifact and creature targets together before returning them).
+     */
+    public SpellTarget bindEffect(CardEffect effect) {
+        card.registerEffectTargetIndex(effect, this.index);
+        return this;
+    }
+
+    /**
      * Adds an effect with a specific trigger mode to this target slot.
      */
     public SpellTarget addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {

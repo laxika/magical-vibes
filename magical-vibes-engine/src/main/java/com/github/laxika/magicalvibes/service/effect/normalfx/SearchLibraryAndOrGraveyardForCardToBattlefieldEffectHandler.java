@@ -91,7 +91,7 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
         }
         if (libraryMatches.isEmpty() && graveyardMatches.isEmpty() && handMatches.isEmpty()) {
             if (librarySearchAllowed) {
-                LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
                 if (deck != null) {
                     LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
                 }

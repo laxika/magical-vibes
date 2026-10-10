@@ -43,7 +43,7 @@ public class EcologicalAppreciationEffectHandler implements NormalEffectHandlerB
 
         List<Card> pool = new ArrayList<>();
         if (!librarySearchPrevented) {
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
             gameData.playersWhoSearchedLibraryThisTurn.add(controllerId);
             addMatchingCards(pool, gameData.playerDecks.get(controllerId), maxManaValue);
         }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithTokenAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +20,7 @@ public class DomesticatedMammoth extends Card {
 
     public DomesticatedMammoth() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateTokenAttachedToSourceEffect(pacifismToken()));
+                new EnterWithTokenAttachedEffect(pacifismToken(), "{1}{W}"));
     }
 
     private static CreateTokenEffect pacifismToken() {

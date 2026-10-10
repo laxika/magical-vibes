@@ -44,7 +44,7 @@ class DevastatingOnslaughtTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(tokens.get(0).getId(), tokens.get(1).getId());
 
         harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());

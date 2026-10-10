@@ -830,6 +830,15 @@ public class DamagePreventionService {
             return 0;
         }
 
+        if (gameQueryService.isDamageFromDesertsToSelfPrevented(
+                gameData, permanent, null, damageSource, isCombatDamage)) {
+            return 0;
+        }
+        if (gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
+                gameData, permanent, null, damageSource, isCombatDamage)) {
+            return 0;
+        }
+
         if (gameQueryService.isDamageFromMatchingSourcePreventedForControlledCreature(
                 gameData, permanent, damageSource)) {
             return 0;
@@ -1086,7 +1095,7 @@ public class DamagePreventionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream()
-                .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
                         .filter(PreventCombatDamageToAttackingCreaturesYouControlEffect.class::isInstance)
                         .map(PreventCombatDamageToAttackingCreaturesYouControlEffect.class::cast)
                         .anyMatch(effect -> effect.filter() == null
@@ -2849,8 +2858,10 @@ public class DamagePreventionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(planeswalkerControllerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof PlaneswalkerDamagePreventionEffect prevention) {
+                    if (effect instanceof PlaneswalkerDamagePreventionEffect prevention
+                            && !permanent.isStaticEffectSuppressed(effect.getClass())) {
                         reduction = saturatingAdd(reduction, prevention.amount());
                     }
                 }

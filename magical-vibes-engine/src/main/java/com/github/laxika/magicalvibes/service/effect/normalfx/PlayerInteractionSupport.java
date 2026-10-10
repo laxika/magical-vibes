@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
@@ -471,10 +472,21 @@ public class PlayerInteractionSupport {
 
         int chosen = matchingIndices.get(ThreadLocalRandom.current().nextInt(matchingIndices.size()));
         Card discarded = hand.remove(chosen);
-        graveyardService.discardCard(gameData, playerId, discarded);
+        boolean entersBattlefield = gameData.discardCausedByOpponent
+                && discarded.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
+        if (entersBattlefield) {
+            battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
+                    gameData, playerId, new Permanent(discarded));
+        } else {
+            graveyardService.discardCard(gameData, playerId, discarded);
+        }
         gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+        if (entersBattlefield && discarded.hasType(CardType.CREATURE)) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, discarded, null, false);
+        }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
@@ -625,6 +637,20 @@ public class PlayerInteractionSupport {
                 discardMode, exileMode, sourcePermanentId, optional, exileAllCopiesOfChosenNames,
                 declineFallbackDiscardCount, imprintOnSource, true, false,
                 grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax);
+    }
+
+    /**
+     * True when the effect currently resolving is a {@link com.github.laxika.magicalvibes.model.effect.MayEffect}
+     * whose handler already looked at the hand before the player decided (see
+     * {@link ChooseCardsFromTargetHandEffect#looksAtHandBeforeMayChoice()}).
+     */
+    private boolean isInsideMayThatLooksAtHandFirst(StackEntry entry) {
+        int index = entry.getResolvingEffectIndex();
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        return index >= 0 && index < effects.size()
+                && effects.get(index) instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
+                && may.wrapped() instanceof ChooseCardsFromTargetHandEffect hand
+                && hand.looksAtHandBeforeMayChoice();
     }
 
     public void resolveHandRevealAndChooseWithChosenCardThen(GameData gameData, StackEntry entry,
@@ -788,11 +814,15 @@ public class PlayerInteractionSupport {
         String actionVerb = keepInHand ? "keep in hand" : exileMode ? "exile"
                 : shuffleIntoLibraryMode ? "shuffle into their library" : "discard";
 
+        boolean alreadyLookedAtHand = !revealHand && isInsideMayThatLooksAtHandFirst(entry);
+
         if (hand == null || hand.isEmpty()) {
             String logEntry = revealHand
                     ? targetName + " reveals their hand. It is empty."
                     : casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
+            if (!alreadyLookedAtHand) {
+                gameLogService.append(gameData, GameLog.text(logEntry));
+            }
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
             insertDeclineEffect(entry, currentEffect, declineEffect);
             return;
@@ -800,7 +830,7 @@ public class PlayerInteractionSupport {
 
         if (revealHand) {
             cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
-        } else {
+        } else if (!alreadyLookedAtHand) {
             cardRevealService.lookAtHand(gameData, casterId, targetPlayerId);
         }
 

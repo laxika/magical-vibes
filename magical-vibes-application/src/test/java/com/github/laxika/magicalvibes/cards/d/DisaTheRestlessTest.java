@@ -170,7 +170,7 @@ class DisaTheRestlessTest extends BaseCardTest {
     }
 
     @Test
-    void tarmogoyfTokenSurvivesRatchetBombWithZeroChargeCounters() {
+    void tarmogoyfTokenIsDestroyedByRatchetBombWithZeroChargeCounters() {
         addCreatureReady(player1, new DisaTheRestless());
         addCreatureReady(player1, new GrizzlyBears());
         declareAttackers(List.of(1));
@@ -183,6 +183,6 @@ class DisaTheRestlessTest extends BaseCardTest {
         harness.activateAbility(player1, bombIndex, 1, null, null);
         resolveAllTriggers();
 
-        assertThat(countPermanents(player1, "Tarmogoyf")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Tarmogoyf")).isZero();
     }
 }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -101,8 +102,14 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                     tokenCard.setKeywords(keywords);
 
                     // Copy effects and activated abilities (copiable characteristics per CR 707.2)
+                    // A token whose power/toughness are overridden does not copy characteristic-defining
+                    // abilities that define power/toughness (Dollhouse of Horrors ruling, 2021-11-19).
+                    boolean overridesPowerToughness = e.powerOverride() != null || e.toughnessOverride() != null;
                     for (EffectSlot slot : EffectSlot.values()) {
                         for (EffectRegistration reg : imprintedCard.getEffectRegistrations(slot)) {
+                            if (overridesPowerToughness && reg.effect() instanceof SetPowerToughnessToAmountEffect) {
+                                continue;
+                            }
                             tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
                         }
                     }

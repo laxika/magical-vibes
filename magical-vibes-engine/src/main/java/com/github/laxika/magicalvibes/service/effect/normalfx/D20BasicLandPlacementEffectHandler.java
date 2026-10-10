@@ -4,16 +4,18 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,7 +32,7 @@ public class D20BasicLandPlacementEffectHandler implements NormalEffectHandlerBe
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PlayerInputService playerInputService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -84,31 +86,17 @@ public class D20BasicLandPlacementEffectHandler implements NormalEffectHandlerBe
 
     private void putOneOntoBattlefieldAndPutRestIntoHand(GameData gameData, UUID controllerId,
                                                           List<Card> cards) {
-        for (Card card : cards) {
-            gameData.addCardToHand(controllerId, card);
-        }
-        List<Card> hand = gameData.playerHands.get(controllerId);
-        List<Integer> validIndices = cards.stream()
-                .map(card -> indexOfCard(hand, card.getId()))
-                .filter(index -> index >= 0)
-                .toList();
-        if (validIndices.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            return;
-        }
-        playerInputService.beginCardChoice(gameData, controllerId, validIndices,
-                "Choose one of those cards to put onto the battlefield tapped.",
-                true, false, false, null, false, false, null, null, false,
-                false, 0, 0, Set.of(), null, false, false,
-                new ShuffleLibraryEffect(false), null);
-    }
-
-    private int indexOfCard(List<Card> hand, UUID cardId) {
-        for (int i = 0; i < hand.size(); i++) {
-            if (hand.get(i).getId().equals(cardId)) {
-                return i;
-            }
-        }
-        return -1;
+        String prompt = "Choose one of those cards to put onto the battlefield tapped; "
+                + "the other goes into your hand.";
+        LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(cards))
+                .reveals(true)
+                .canFailToFind(false)
+                .destination(LibrarySearchDestination.BATTLEFIELD_ONE_AND_PUT_REST_INTO_HAND)
+                .sourceCards(new ArrayList<>(cards))
+                .battlefieldIfChosenTapped(true)
+                .shuffleAfterSelection(true)
+                .prompt(prompt)
+                .build();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, false));
     }
 }

@@ -1601,7 +1601,7 @@ public class ConditionEvaluationService {
                                 .findFirst().orElse(null);
                 yield targetSpell != null
                         && targetSpell.getManaSpentToCast()
-                        < targetSpell.getCard().getManaValue() + targetSpell.getXValue();
+                        < targetSpell.getSpellManaValue();
             }
             case TargetSpellManaValueAtMostGreatestControlledPermanentManaValue ignored ->
                     targetSpellManaValueAtMostGreatestControlledPermanentManaValue(gameData, ctx);
@@ -3376,7 +3376,7 @@ public class ConditionEvaluationService {
         if (graveyard == null) return 0;
         int count = 0;
         for (Card card : graveyard) {
-            if (card.isToken()) continue;
+            if (card.isToken() || gameData.graveyardLookBackExcludedCardIds.contains(card.getId())) continue;
             boolean matches = GameQueryService.isStaticEvaluationActive()
                     ? predicateEvaluationService.matchesCardPredicate(card, filter, null)
                     : filter == null || predicateEvaluationService.matchesCardPredicate(card, filter,

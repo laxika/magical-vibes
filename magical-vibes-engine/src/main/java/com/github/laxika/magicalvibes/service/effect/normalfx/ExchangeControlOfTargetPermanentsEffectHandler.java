@@ -118,7 +118,11 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
                 || (ownController.equals(exchangeControllerId) && !opponentController.equals(exchangeControllerId));
         boolean triggeringPermanentTargetLegal = !exchange.triggeringPermanentIsFirstTarget()
                 || !opponentController.equals(exchangeControllerId);
+        // CR 701.12a: an exchange either happens entirely or not at all, so a permanent that can't change
+        // control to the other player (e.g. under Guardian Beast) stops both halves.
         boolean stillLegal = controllersDiffer
+                && !gameQueryService.cantBeControlledByOtherPlayers(gameData, ownTarget)
+                && !gameQueryService.cantBeControlledByOtherPlayers(gameData, opponentTarget)
                 && ownershipSplitOk
                 && triggeringPermanentTargetLegal
                 && (exchange.sourceIsFirstTarget()

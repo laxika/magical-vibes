@@ -928,6 +928,7 @@ public class CombatAttackService {
         }
 
         // Mark creatures as attacking and tap them unless vigilance or a combat permission skips it.
+        triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             attacker.setAttacking(true);
@@ -970,6 +971,7 @@ public class CombatAttackService {
                 triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, attacker);
             }
         }
+        triggerCollectionService.endPermanentTapTriggerBatch(gameData);
 
         // Assign band membership (CR 702.22): every member of a band shares one band id, which
         // persists for the rest of combat even if banding is later removed (CR 702.22e).
@@ -1718,10 +1720,14 @@ public class CombatAttackService {
             List<CardEffect> filteredEffects = new ArrayList<>();
             Integer matchingAttackerCount = null;
             boolean oncePerTurn = false;
+            boolean oncePerTurnForPlayer = false;
             boolean markOncePerTurnOnAcceptance = false;
             boolean onceOnly = false;
             for (CardEffect effect : allyAttackEffects) {
                 CardEffect normalizedEffect = effect;
+                boolean firstQualifyingAttackOfPlayer = effect instanceof ConditionalEffect firstTimeCondition
+                        && firstTimeCondition.condition() instanceof AttackingCreaturesTotalPowerAtLeast
+                        && firstTimeCondition.wrapped() instanceof OncePerTurnTriggerEffect;
                 if (effect instanceof AttackingCreaturesAwareEffect aware) {
                     List<AttackingPermanentSnapshot> attackers = snapshotMatchingAttackerPowers(
                             gameData, battlefield, attackerIndices, perm, playerId,
@@ -1751,7 +1757,14 @@ public class CombatAttackService {
                     normalizedEffect = ce.wrapped();
                 }
                 if (normalizedEffect instanceof OncePerTurnTriggerEffect onceEffect) {
-                    if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
+                    if (firstQualifyingAttackOfPlayer) {
+                        // "For the first time each turn" counts the player's qualifying attacks, not each
+                        // source's: sources present for that attack all trigger, later arrivals never do.
+                        if (!isFirstQualifyingAttackThisTurn(gameData, playerId)) {
+                            continue;
+                        }
+                        oncePerTurnForPlayer = true;
+                    } else if (gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
                         continue;
                     }
                     oncePerTurn = true;
@@ -1948,7 +1961,9 @@ public class CombatAttackService {
                         attackTrigger.setAttackingPermanentSnapshots(attackerIndices.stream()
                                 .map(battlefield::get).map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
                         gameData.stack.add(attackTrigger);
-                        if (oncePerTurn && !markOncePerTurnOnAcceptance) {
+                        if (oncePerTurnForPlayer) {
+                            markFirstQualifyingAttackThisTurn(gameData, playerId);
+                        } else if (oncePerTurn && !markOncePerTurnOnAcceptance) {
                             gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
                         }
                         if (onceOnly) {
@@ -3990,6 +4005,25 @@ public class CombatAttackService {
      * Renders a boost the way Magic writes it — "+1/+1", "-1/-0". A zero component takes the sign of
      * the non-zero one, so a -1/-0 debuff never reads as "-1/+0".
      */
+    private static final String FIRST_QUALIFYING_ATTACK_KEY = "firstQualifyingAttackInPhase:";
+
+    /**
+     * Whether no qualifying attack by {@code playerId} was recorded earlier this turn than the current combat
+     * phase. Sources that trigger off the same attack declaration all see the same phase and so all trigger.
+     */
+    private boolean isFirstQualifyingAttackThisTurn(GameData gameData, UUID playerId) {
+        String current = FIRST_QUALIFYING_ATTACK_KEY + gameData.combatPhasesThisTurn;
+        return gameData.keyedOncePerTurnTriggersFiredThisTurn.getOrDefault(playerId, java.util.Set.of()).stream()
+                .filter(key -> key.startsWith(FIRST_QUALIFYING_ATTACK_KEY))
+                .allMatch(current::equals);
+    }
+
+    private void markFirstQualifyingAttackThisTurn(GameData gameData, UUID playerId) {
+        gameData.keyedOncePerTurnTriggersFiredThisTurn
+                .computeIfAbsent(playerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                .add(FIRST_QUALIFYING_ATTACK_KEY + gameData.combatPhasesThisTurn);
+    }
+
     private Permanent snapshotDeclaredAttacker(GameData gameData, Permanent attacker) {
         Permanent snapshot = new Permanent(attacker);
         Card card = attacker.getCard().createRuntimeCopy();

@@ -75,7 +75,9 @@ class DenOfTheBugbearTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttackedThisTurn()).isTrue();
+        assertThat(token.isAttacking()).isTrue();
+        // CR 508.4: a creature put onto the battlefield attacking is "attacking" but never "attacked"
+        assertThat(token.isAttackedThisTurn()).isFalse();
     }
 
     @Test

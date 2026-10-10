@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.LicidEndEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.ArrayList;
@@ -42,6 +43,12 @@ public class PermanentCopierService {
             return visible;
         }
         Card original = permanent.getCard();
+        if (original.getActivatedAbilities().stream().anyMatch(ability -> ability.getEffects().stream()
+                .anyMatch(LicidEndEffect.class::isInstance))) {
+            // A Licid that became an Aura: that is the effect of its ability, not a copiable value, so a
+            // copy sees the printed creature form (CR 707.2).
+            return permanent.getOriginalCard();
+        }
         if (original.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .noneMatch(ChooseIndependentModesOnEnterEffect.class::isInstance)) {
             return original;

@@ -692,7 +692,7 @@ public class MiscTriggerCollectorService {
                     match.gameData().id, cardName);
             return true;
         }
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry triggerEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 as.sacrificingPlayerId(),
@@ -700,7 +700,9 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(wrapped)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        triggerEntry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        match.gameData().enqueueTrigger(triggerEntry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on matching permanent sacrifice", match.gameData().id, cardName);
         return true;
@@ -1999,7 +2001,9 @@ public class MiscTriggerCollectorService {
         String cardName = match.permanent().getCard().getName();
         CardEffect triggerEffect = effect;
         Card triggeringCard = ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut
-                ? cardPut.card() : null;
+                ? cardPut.card()
+                : ctx instanceof TriggerContext.PermanentCardPutIntoGraveyard permanentPut
+                ? permanentPut.permanentCard() : null;
         if (ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut
                 && effect instanceof TriggeringCardsAwareEffect aware) {
             triggerEffect = aware.withTriggeringCards(cardsPut.cards());
@@ -3817,6 +3821,17 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (cards left graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = OncePerTurnTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    boolean handleOncePerTurnControllerCardsLeaveGraveyard(TriggerMatchContext match,
+            OncePerTurnTriggerEffect effect, TriggerContext ctx) {
+        CardEffect resolved = OncePerTurnTriggerSupport.unwrapIfAvailable(match.gameData(), match.permanent(), effect);
+        if (resolved == null || !handleControllerCardsLeaveGraveyard(match, resolved, ctx)) {
+            return false;
+        }
+        OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), effect);
         return true;
     }
 

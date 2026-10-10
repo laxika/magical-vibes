@@ -173,10 +173,14 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourceControllerId(controllerId);
         int count = 0;
         for (Permanent p : battlefield) {
             if (e.filter() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter())) continue;
+                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
             if (!p.isTapped()) continue;
 
             tapUntapSupport.untapPermanent(gameData, p);

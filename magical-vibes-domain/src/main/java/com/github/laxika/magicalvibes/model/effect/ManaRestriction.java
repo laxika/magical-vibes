@@ -401,6 +401,26 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /**
+     * Mana spendable only to cast legendary spells, and the spell it pays for can't be countered
+     * (Delighted Halfling).
+     */
+    record LegendarySpellsUncounterable() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            if (color == ManaColor.COLORLESS) {
+                pool.addLegendarySpellOnlyColorless(amount);
+            } else {
+                pool.addLegendarySpellOnlyMana(color, amount, true);
+            }
+        }
+
+        @Override
+        public String description() {
+            return "legendary spells only, and that spell can't be countered";
+        }
+    }
+
     /** Colorless mana spendable only to cast spells / activate abilities of Myr. */
     record SubtypeSpells(CardSubtype subtype) implements ManaRestriction {
         @Override

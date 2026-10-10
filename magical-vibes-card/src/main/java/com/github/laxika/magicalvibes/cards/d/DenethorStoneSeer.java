@@ -59,6 +59,6 @@ public class DenethorStoneSeer extends Card {
                 List.of(targetPlayer, anyTarget),
                 2,
                 2
-        ));
+        ).withAllowSharedTargets());
     }
 }

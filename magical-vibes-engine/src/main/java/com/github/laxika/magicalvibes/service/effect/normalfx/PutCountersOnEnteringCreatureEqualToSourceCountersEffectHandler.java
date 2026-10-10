@@ -33,6 +33,10 @@ public class PutCountersOnEnteringCreatureEqualToSourceCountersEffectHandler
         UUID enteringPermanentId = entry.getTriggeringPermanentId() != null
                 ? entry.getTriggeringPermanentId() : entry.getTargetId();
         Permanent enteringCreature = gameQueryService.findPermanentById(gameData, enteringPermanentId);
+        if (source == null) {
+            // Last known information: the source left the battlefield while the trigger was on the stack.
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source == null || enteringCreature == null) {
             return;
         }

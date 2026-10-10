@@ -22,12 +22,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class DinrovaHorror extends Card {
 
     public DinrovaHorror() {
-        // Any permanent is a legal target. TARGET_OWNER routes the discard to the permanent's
-        // owner, who just received the card in hand.
+        // Any permanent is a legal target. The discard is caused by this ability's controller, so the
+        // then-effect keeps that controller as the causer and makes the permanent's owner the player
+        // who discards (so an opponent-caused discard applies Loxodon Smiter's replacement).
         target(new PermanentPredicateTargetFilter(new PermanentTruePredicate(),
                 "Target must be a permanent"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnTargetPermanentToHandThenEffect(
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
-                        ThenEffectRecipient.TARGET_OWNER));
+                        new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
+                        ThenEffectRecipient.TARGET_OWNER_AS_TARGET));
     }
 }

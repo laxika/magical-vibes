@@ -21,8 +21,19 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
         boolean enterTapped, boolean enterAttacking,
         boolean returnAtRandom, boolean targeted, int additionalPlusOnePlusOneCounters,
         boolean onlyCardsOwnedByController, boolean grantHaste,
-        EnterWithCountersEffect battlefieldEntryReplacement)
+        EnterWithCountersEffect battlefieldEntryReplacement, boolean activePlayerReturns)
         implements CardEffect {
+
+    public ReturnCardExiledWithSourceToBattlefieldEffect(
+            CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
+            boolean enterTapped, boolean enterAttacking,
+            boolean returnAtRandom, boolean targeted, int additionalPlusOnePlusOneCounters,
+            boolean onlyCardsOwnedByController, boolean grantHaste,
+            EnterWithCountersEffect battlefieldEntryReplacement) {
+        this(filter, requiresManaValueEqualsX, grantedSubtype, enterTapped, enterAttacking,
+                returnAtRandom, targeted, additionalPlusOnePlusOneCounters,
+                onlyCardsOwnedByController, grantHaste, battlefieldEntryReplacement, false);
+    }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(
             CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
@@ -87,6 +98,16 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
     public static ReturnCardExiledWithSourceToBattlefieldEffect ownedByController() {
         return new ReturnCardExiledWithSourceToBattlefieldEffect(
                 null, false, null, false, false, false, false, 0, true, false, null);
+    }
+
+    /**
+     * Returns one source-tracked card owned by the active player, who chooses it and returns it, while the
+     * ability stays controlled by whoever created it (Dimensional Breach: CR 603.7d keeps the spell's
+     * controller in charge of the delayed trigger, and "that player returns" names the upkeep's player).
+     */
+    public static ReturnCardExiledWithSourceToBattlefieldEffect ownedByActivePlayer() {
+        return new ReturnCardExiledWithSourceToBattlefieldEffect(
+                null, false, null, false, false, false, false, 0, true, false, null, true);
     }
 
     @Override

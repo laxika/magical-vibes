@@ -17,8 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves Diabolic Servitude's linked-creature death trigger. It also handles the case where the
- * source has already left the battlefield and is still in its owner's graveyard.
+ * Resolves Diabolic Servitude's linked-creature death trigger. The dying creature is always exiled,
+ * but the source is returned to hand only while it is still on the battlefield: once it has left, it
+ * is a new object (CR 400.7) that "this enchantment" can no longer refer to.
  */
 @Slf4j
 @Component
@@ -57,15 +58,5 @@ public class ExileTriggeringCreatureAndReturnSourceToHandEffectHandler implement
             permanentRemovalService.removePermanentToHand(gameData, source);
             return;
         }
-
-        Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, entry.getCard().getId());
-        if (sourceCard == null) {
-            return;
-        }
-        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCard.getId());
-        permanentRemovalService.removeCardFromGraveyardById(gameData, sourceCard.getId());
-        permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, sourceCard);
-        gameLogService.append(gameData, GameLog.cardThen(sourceCard, " returns to its owner's hand."));
-        log.info("Game {} - {} returns from its graveyard to its owner's hand", gameData.id, sourceCard.getName());
     }
 }

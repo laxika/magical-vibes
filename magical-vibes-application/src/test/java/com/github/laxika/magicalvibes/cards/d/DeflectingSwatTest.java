@@ -267,12 +267,12 @@ class DeflectingSwatTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DeflectingSwat()));
         harness.addMana(player2, ManaColor.RED, 3);
         harness.castAndResolveInstant(player2, 0, seeds.getId());
-        harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(first.getId());
-        harness.handlePermanentChosen(player2, first.getId());
+        harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .doesNotContain(second.getId())
+                .contains(replacement.getId());
         harness.handlePermanentChosen(player2, replacement.getId());
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();

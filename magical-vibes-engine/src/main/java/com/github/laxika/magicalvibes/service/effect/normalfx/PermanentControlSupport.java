@@ -255,6 +255,7 @@ public class PermanentControlSupport {
                 tokenBlueprints.add(CreateTokenEffect.ofClueToken(1));
             }
         }
+        gameData.deferCreatureEntersBoons = fireTokenTriggers && !hasNativeDevour && tokenBlueprints.size() > 1;
         for (CreateTokenEffect originalTokenBlueprint : tokenBlueprints) {
             boolean originalBlueprint = originalTokenBlueprint == evaluatedToken;
             CreateTokenEffect tokenBlueprint = TokenCreationReplacementSupport.replaceTokenSubtypeIfApplicable(
@@ -352,6 +353,7 @@ public class PermanentControlSupport {
             }
         }
 
+        gameData.deferCreatureEntersBoons = false;
         if (hasNativeDevour) battlefieldEntryBatchSupport.begin(gameData, nativeEntries);
 
         if (addedClueTokens > 0 && !hasNativeDevour) {

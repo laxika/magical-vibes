@@ -80,6 +80,7 @@ class DraconicDebutTest extends BaseCardTest {
     @DisplayName("Unused Dragon reduction survives until a later turn")
     void reductionSurvivesTurnCleanup() {
         harness.setHand(player1, List.of(new DraconicDebut(), new ChardalynDragon()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castAndResolveSorcery(player1, 0, 2, player2.getId());

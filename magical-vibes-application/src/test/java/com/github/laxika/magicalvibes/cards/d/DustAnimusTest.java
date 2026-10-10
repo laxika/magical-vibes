@@ -76,7 +76,7 @@ class DustAnimusTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         declareAttackers(player1, List.of(5));
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         harness.assertLife(player1, lifeBefore + 4);
         harness.assertLife(player2, opponentLifeBefore - 4);

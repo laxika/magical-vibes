@@ -41,8 +41,10 @@ public class DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var choiceEffect = (DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffect) effect;
         UUID controllerId = entry.getControllerId();
-        UUID defendingPlayerId = defendingPlayerId(gameData,
-                entry.getAttackedTargetId() != null ? entry.getAttackedTargetId() : entry.getTargetId());
+        UUID defendingPlayerId = entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId()
+                : defendingPlayerId(gameData,
+                        entry.getAttackedTargetId() != null ? entry.getAttackedTargetId() : entry.getTargetId());
         List<Card> matchingCards = matchingCards(gameData, controllerId, choiceEffect.filter(),
                 entry.getCard().getId());
 

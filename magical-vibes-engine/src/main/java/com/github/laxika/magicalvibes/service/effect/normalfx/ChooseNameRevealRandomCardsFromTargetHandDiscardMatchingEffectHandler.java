@@ -42,7 +42,7 @@ public class ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffectHandl
         var choiceContext = new ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice(
                 entry.getControllerId(), entry.getTargetId(), entry.getCard(), count);
 
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, cardNames, "Choose a card name."));
 

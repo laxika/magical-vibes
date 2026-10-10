@@ -27,10 +27,12 @@ public class ReduceCastCostForNextMatchingSpellEffectHandler implements NormalEf
                 (ReduceCastCostForNextMatchingSpellEffect) effect;
         CardEffect floatingEffect = reduction.amount() instanceof XValue
                 ? new ReduceCastCostForNextMatchingSpellEffect(
-                        reduction.predicate(), entry.getXValue(), reduction.faceDownOnly())
+                        reduction.predicate(), new Fixed(entry.getXValue()), reduction.faceDownOnly(),
+                        reduction.expiresAtCleanup())
                 : reduction.amount() instanceof EventValue
                 ? new ReduceCastCostForNextMatchingSpellEffect(
-                        reduction.predicate(), new Fixed(entry.getEventValue()), reduction.faceDownOnly())
+                        reduction.predicate(), new Fixed(entry.getEventValue()), reduction.faceDownOnly(),
+                        reduction.expiresAtCleanup())
                 : reduction;
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(),

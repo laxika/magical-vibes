@@ -184,7 +184,8 @@ class DigsiteConservatorTest extends BaseCardTest {
     @Test
     @DisplayName("Casting the discovered card triggers Quintorius Kand")
     void discoveredSpellIsCastFromExile() {
-        harness.addToBattlefield(player1, new QuintoriusKand());
+        harness.addToBattlefieldAndReturn(player1, new QuintoriusKand())
+                .setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 4);
         Permanent conservator = harness.addToBattlefieldAndReturn(player1, new DigsiteConservator());
         DigsiteConservator discovered = new DigsiteConservator();
         harness.setLibrary(player1, List.of(discovered));

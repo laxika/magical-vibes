@@ -34,7 +34,7 @@ class DeftbladeEliteTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isTapped()).isFalse();
-        assertThat(blocker.getMustBlockIds()).containsExactly(elite.getId());
+        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(elite.getId());
 
         prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -155,7 +155,7 @@ class DeftbladeEliteTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(blocker.getMustBlockIds()).contains(elite.getId());
+        assertThat(blocker.getRequiredBlockSourceIds()).contains(elite.getId());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -167,6 +167,6 @@ class DeftbladeEliteTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Deftblade Elite");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(blocker.getMustBlockIds()).doesNotContain(elite.getId());
+        assertThat(blocker.getRequiredBlockSourceIds()).doesNotContain(elite.getId());
     }
 }

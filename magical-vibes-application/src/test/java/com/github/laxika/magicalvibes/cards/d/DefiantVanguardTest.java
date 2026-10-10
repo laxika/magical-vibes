@@ -41,6 +41,7 @@ class DefiantVanguardTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(vanguard);
 
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Chieftain en-Dal");

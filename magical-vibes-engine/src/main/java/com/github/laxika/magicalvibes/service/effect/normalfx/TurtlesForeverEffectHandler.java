@@ -55,7 +55,7 @@ public class TurtlesForeverEffectHandler implements NormalEffectHandlerBean {
         List<Card> searchableLibrary = deck == null ? List.of() : deck;
         if (librarySearchAllowed) {
             searchableLibrary = restrictToSearchableTopCards(gameData, controllerId, searchableLibrary);
-            LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
         } else {
             searchableLibrary = List.of();
         }

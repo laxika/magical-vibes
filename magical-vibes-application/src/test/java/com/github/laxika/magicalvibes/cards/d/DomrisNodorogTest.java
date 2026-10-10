@@ -33,6 +33,7 @@ class DomrisNodorogTest extends BaseCardTest {
         castNodorog();
 
         resolveSearch(true);
+        harness.handleMultipleCardsChosen(player1, List.of(domri.getId()));
 
         harness.assertInHand(player1, "Domri, City Smasher");
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(domri);

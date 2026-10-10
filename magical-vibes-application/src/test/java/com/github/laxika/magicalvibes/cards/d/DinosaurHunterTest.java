@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 @CardUsed({DinosaurHunter.class, AirElemental.class, ColossalDreadmaw.class, RabidBite.class})
 class DinosaurHunterTest extends BaseCardTest {
@@ -75,6 +76,7 @@ class DinosaurHunterTest extends BaseCardTest {
         hunter.addBlockingTarget(0);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(hunter.getId(), 2, player2.getId(), 4));
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Colossal Dreadmaw");

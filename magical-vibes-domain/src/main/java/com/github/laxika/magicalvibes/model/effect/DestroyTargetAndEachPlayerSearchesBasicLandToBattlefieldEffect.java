@@ -2,12 +2,18 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /**
  * Destroys the targeted permanent. Then each player searches their library for a basic land card,
- * puts it onto the battlefield, then shuffles. Players search in APNAP order (active player first).
- * The search is mandatory (not "may").
+ * puts it onto the battlefield, then shuffles. By default every player searches, in APNAP order (active player
+ * first), as for Field of Ruin.
  *
- * <p>Used by Field of Ruin.
+ * @param targetControllerThenYou when true, only the destroyed permanent's controller and then this ability's
+ *                                controller search, in that written order (Demolition Field)
  */
-public record DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect() implements RemovalEffect {
+public record DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect(boolean targetControllerThenYou)
+        implements RemovalEffect {
+
+    public DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect() {
+        this(false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

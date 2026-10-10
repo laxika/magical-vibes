@@ -62,9 +62,32 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             return;
         }
 
+        if (targetIds.size() > 1 && !copyEffect.chooseAttackTarget() && !copyEffect.createForTargetController()
+                && !copyEffect.tappedAndAttacking()) {
+            // One instruction ("for each of X target permanents, create X tokens"): every token enters
+            // as one event, so token replacement effects only see permanents already on the battlefield
+            // (a Doubling Season token created by this very spell doesn't double its siblings).
+            List<Card> copySources = new java.util.ArrayList<>();
+            for (UUID targetId : targetIds) {
+                Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
+                if (targetPermanent != null) {
+                    copySources.addAll(Collections.nCopies(copyCount, copySourceFor(targetPermanent)));
+                }
+            }
+            tokenCopySupport.createTokenCopies(gameData, entry, copySources, sourcePermanent,
+                    entry.getControllerId(), copyEffect, null);
+            return;
+        }
         for (UUID targetId : targetIds) {
             resolveForTarget(gameData, entry, copyEffect, targetId, copyCount);
         }
+    }
+
+    private Card copySourceFor(Permanent targetPermanent) {
+        return targetPermanent.isTransformed()
+                && targetPermanent.getOriginalCard().getBackFaceCard() != null
+                && targetPermanent.getOriginalCard().hasKeyword(com.github.laxika.magicalvibes.model.Keyword.DAYBOUND)
+                ? targetPermanent.getOriginalCard() : permanentCopierService.copiableCard(targetPermanent);
     }
 
     void resolveForTarget(GameData gameData, StackEntry entry,
@@ -100,10 +123,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 : targetPermanent.getAttackTarget()
                 : null;
         List<UUID> attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
-        Card copySource = targetPermanent.isTransformed()
-                && targetPermanent.getOriginalCard().getBackFaceCard() != null
-                && targetPermanent.getOriginalCard().hasKeyword(com.github.laxika.magicalvibes.model.Keyword.DAYBOUND)
-                ? targetPermanent.getOriginalCard() : permanentCopierService.copiableCard(targetPermanent);
+        Card copySource = copySourceFor(targetPermanent);
         tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, copySource),
                 sourcePermanent, tokenControllerId, effect, attackTargetIds);
     }

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DocOckEvilInventor.class, Millstone.class, Ornithopter.class, GrizzlyBears.class})
@@ -103,6 +105,7 @@ class DocOckEvilInventorTest extends BaseCardTest {
         advanceToCombat();
         harness.handlePermanentChosen(player1, firstArtifact.getId());
         harness.passBothPriorities();
+        declareAttackers(player1, List.of());
 
         advanceToCombat();
 

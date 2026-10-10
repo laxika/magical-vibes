@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -76,6 +77,7 @@ class DemonsDiscipleTest extends BaseCardTest {
     void choosesPlaneswalkerInsteadOfCreature() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new DemonsDisciple());
         Permanent opponentPlaneswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        opponentPlaneswalker.setCounterCount(CounterType.LOYALTY, 4);
         castDemonsDisciple();
 
         PendingInteraction.MultiPermanentChoice controllerChoice =

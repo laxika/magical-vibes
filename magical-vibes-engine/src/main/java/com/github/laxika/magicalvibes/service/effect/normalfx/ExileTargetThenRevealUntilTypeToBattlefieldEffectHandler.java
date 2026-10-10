@@ -65,6 +65,16 @@ public class ExileTargetThenRevealUntilTypeToBattlefieldEffectHandler implements
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
+        // Replacements are processed in turn order starting with the active player, regardless of the
+        // order the targets were chosen in, so the creatures enter sequentially in that order.
+        List<UUID> turnOrder = new ArrayList<>();
+        if (gameData.activePlayerId != null) {
+            turnOrder.add(gameData.activePlayerId);
+        }
+        turnOrder.addAll(gameData.orderedPlayerIds);
+        exiledTargets.sort(java.util.Comparator.comparingInt(
+                exiled -> turnOrder.indexOf(exiled.controllerId())));
+
         for (ExiledTarget exiledTarget : exiledTargets) {
             UUID targetControllerId = exiledTarget.controllerId();
             String targetControllerName = gameData.playerIdToName.get(targetControllerId);

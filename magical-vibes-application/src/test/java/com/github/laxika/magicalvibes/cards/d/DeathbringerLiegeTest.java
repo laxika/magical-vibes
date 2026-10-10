@@ -195,6 +195,9 @@ class DeathbringerLiegeTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.handlePermanentChosen(player1, target.getId());
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().getFirst());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();

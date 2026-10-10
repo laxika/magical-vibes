@@ -20,6 +20,7 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final PutCounterOnTargetPermanentEffectHandler counterOrderHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,6 +44,9 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
         int count = e.amount() != null
                 ? amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, self))
                 : e.count();
+        if (counterOrderHandler.beginReplacementOrderIfNeeded(gameData, entry, self, e.counterType(), count)) {
+            return;
+        }
         permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), count);
         if (entry.getSourcePermanentId() != null) {
             entry.setSourcePermanentSnapshot(new Permanent(self));

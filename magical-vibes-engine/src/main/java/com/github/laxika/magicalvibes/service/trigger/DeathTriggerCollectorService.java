@@ -1359,7 +1359,7 @@ public class DeathTriggerCollectorService {
                 ? new ReturnEnchantedCreatureToOwnerHandOnDeathEffect(epd.dyingCreatureCardId(),
                         effect.followUpManaCost(), effect.followUpPrompt())
                 : effect;
-        addEnchantedPermanentDeathEntry(match, effectForStack);
+        addEnchantedPermanentDeathEntry(match, effectForStack, null, null, epd.dyingCreatureCardId());
         return true;
     }
 
@@ -1620,6 +1620,15 @@ public class DeathTriggerCollectorService {
 
     private void addEnchantedPermanentDeathEntry(TriggerMatchContext match, CardEffect effect,
             Integer eventValue, UUID enchantedControllerId) {
+        addEnchantedPermanentDeathEntry(match, effect, eventValue, enchantedControllerId, null);
+    }
+
+    /**
+     * When {@code dyingCardId} is given, the entry records that card's graveyard identity so a
+     * resolution after the card has entered a graveyard again can be recognised as a new object.
+     */
+    private void addEnchantedPermanentDeathEntry(TriggerMatchContext match, CardEffect effect,
+            Integer eventValue, UUID enchantedControllerId, UUID dyingCardId) {
         if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
@@ -1636,6 +1645,9 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect))
         );
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        if (dyingCardId != null) {
+            entry.setTriggeringCardGraveyardEntryVersion(match.gameData().graveyardEntryVersion(dyingCardId));
+        }
         if (enchantedControllerId != null) {
             entry.setTargetId(enchantedControllerId);
             entry.setNonTargeting(true);
@@ -1822,6 +1834,18 @@ public class DeathTriggerCollectorService {
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
+        // A "you may" wrapping a targeted effect (Disciple of the Vault) chooses its target as the
+        // trigger goes on the stack (CR 603.3d), before the may decision is asked on resolution.
+        boolean targeted = may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || graveyardTargetingSupport.findTarget(List.of(may)) != null;
+        if (targeted) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(may)),
+                    null, new Permanent(match.permanent()), match.permanent().getCard().getTargetFilter()));
+            logArtifactGraveyard(match);
+            return true;
+        }
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
                 null, match.permanent().getId());
         logArtifactGraveyard(match);
@@ -1892,11 +1916,17 @@ public class DeathTriggerCollectorService {
         }
 
         boolean playerTargetOnly = !triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+        // "up to one target" (minimum 0): the controller may decline by choosing themselves.
+        int targetIndex = match.permanent().getCard().getEffectTargetIndex(conditional);
+        boolean optionalTarget = targetIndex >= 0
+                && targetIndex < match.permanent().getCard().getSpellTargets().size()
+                && match.permanent().getCard().getSpellTargets().get(targetIndex).getMinTargets() == 0;
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(),
                 new ArrayList<>(List.of(triggerEffect)), playerTargetOnly,
                 match.permanent().getCard().getTargetFilter(), 0, match.permanent().getId(),
-                new Permanent(match.permanent())));
+                new Permanent(match.permanent()), optionalTarget, null, null, match.controllerId(),
+                null, null));
         logArtifactGraveyard(match);
         return true;
     }
@@ -4022,13 +4052,23 @@ public class DeathTriggerCollectorService {
         }
         Permanent linked = gameQueryService.findPermanentById(match.gameData(), linkedId);
         UUID linkedCardId = linked == null ? null : linked.getCard().getId();
+        // SACRIFICE_PARTNER: the sacrifice ability belongs to the partner (e.g. "when the token leaves, sacrifice
+        // this enchantment"), so it is controlled by the partner's controller, which can differ from the leaving
+        // token's controller.
+        UUID abilityControllerId = sl.controllerId();
+        if (effect.mode() == RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER && linked != null) {
+            UUID partnerControllerId = gameQueryService.findPermanentController(match.gameData(), linkedId);
+            if (partnerControllerId != null) {
+                abilityControllerId = partnerControllerId;
+            }
+        }
         // Bake the linked id into the effect (not the stack entry's targetId, which resolution would
         // validate against the source card's spell target filter and fizzle — Dance of Many's ETB filter
         // is "nontoken creature", which the token itself fails).
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
-                sl.controllerId(),
+                abilityControllerId,
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new RemoveLinkedPermanentEffect(effect.mode(), linkedId, linkedCardId)))
         ));

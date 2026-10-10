@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
  * [{@code thenEffect}], otherwise [{@code elseEffect}]" (Liliana, Untouched by Death's +1).
  * The controller does the milling.
  *
- * <p>Only cards that actually reached the graveyard count — a replacement effect that diverts a
- * milled card elsewhere means it was not "milled this way". Wrap several follow-ups in a
+ * <p>Cards that were milled and then left in the graveyard or exile count, even if a replacement
+ * effect exiled them (CR 701.17c); a card diverted to another zone does not. Wrap several follow-ups in a
  * {@link SequenceEffect}; the steps resolve in order against the same stack entry, so they must be
  * synchronous (no player-input pauses).</p>
  *

@@ -29,9 +29,7 @@ public class CounterSpellIfManaValueEqualsXEffectHandler implements NormalEffect
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
-        int xSymbols = targetEntry.getCard().getParsedManaCost() == null ? 0
-                : targetEntry.getCard().getParsedManaCost().getXSymbolCount();
-        int targetManaValue = targetEntry.getCard().getManaValue() + targetEntry.getXValue() * xSymbols;
+        int targetManaValue = targetEntry.getSpellManaValue();
         if (targetManaValue == entry.getXValue()) {
             counterSupport.counterSpell(gameData, entry, targetEntry);
         } else {

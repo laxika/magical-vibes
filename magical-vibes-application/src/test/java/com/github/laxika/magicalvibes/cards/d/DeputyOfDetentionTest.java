@@ -170,9 +170,10 @@ class DeputyOfDetentionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Soul Warden"))
                 .hasSize(2);
-        for (int i = 0; i < 2 && !gd.stack.isEmpty(); i++) {
+        for (int i = 0; i < 5 && !gd.stack.isEmpty(); i++) {
             harness.passBothPriorities();
         }
+        assertThat(gd.stack).isEmpty();
 
         harness.assertLife(player2, lifeBeforeReturn + 2);
     }

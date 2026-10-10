@@ -150,6 +150,8 @@ class DazzlingFlameweaverTest extends BaseCardTest {
 
     @Test
     void conjuredCardPermissionExpiresAtEndOfControllersNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addAttacker(new DazzlingFlameweaver());
         harness.setLibrary(player1, List.of(new DazzlingFlameweaver(), new DazzlingFlameweaver()));
         harness.setLibrary(player2, List.of(new DazzlingFlameweaver(), new DazzlingFlameweaver()));
@@ -159,7 +161,7 @@ class DazzlingFlameweaverTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
