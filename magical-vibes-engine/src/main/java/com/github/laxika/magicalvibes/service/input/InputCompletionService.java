@@ -53,6 +53,9 @@ public class InputCompletionService {
     private DrawService drawService;
     @Autowired
     @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    @Autowired
+    @Lazy
     private com.github.laxika.magicalvibes.service.PermanentAuctionService permanentAuctionService;
 
     /**
@@ -122,6 +125,17 @@ public class InputCompletionService {
             if (gameData.interaction.isAwaitingInput()) return;
         }
         playerInputService.processNextMayAbility(gameData);
+        if (!gameData.pendingReplacementEvents.isEmpty() && gameData.pendingMayAbilities.isEmpty()
+                && !gameData.interaction.isAwaitingInput()) {
+            // Damage that waited for an earlier replacement decision is dealt before the resolving
+            // spell or ability goes on, in the order it became due.
+            damageSupport.drainPendingPlayerDamage(gameData);
+            if (gameData.status == GameStatus.FINISHED || gameData.interaction.isAwaitingInput()) return;
+            if (!gameData.pendingMayAbilities.isEmpty()) {
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+        }
         if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             StackEntry pendingAuraEntry = gameData.interaction.consumePendingAuraResolutionEntry();
             if (pendingAuraEntry != null) {

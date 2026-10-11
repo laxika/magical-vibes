@@ -70,6 +70,7 @@ public class EffectResolutionService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
     private final GameOutcomeService gameOutcomeService;
+    private final com.github.laxika.magicalvibes.service.replacement.DamageJournalService damageJournalService;
     // ObjectProvider breaks the construction-time cycle StateBasedActionService -> LegendRuleService
     // -> PlayerInputService -> (interaction handlers) -> EffectResolutionService.
     private final ObjectProvider<StateBasedActionService> stateBasedActionService;
@@ -399,7 +400,12 @@ public class EffectResolutionService {
                 entry.setResolvingEffectIndex(i);
                 EffectHandler handler = registry.getHandler(effectToResolve);
                 if (handler != null) {
-                    handler.resolve(gameData, entry, effectToResolve);
+                    damageJournalService.beginEffect(gameData, entry, i);
+                    try {
+                        handler.resolve(gameData, entry, effectToResolve);
+                    } finally {
+                        damageJournalService.endEffect(gameData);
+                    }
                 } else {
                     log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
                 }

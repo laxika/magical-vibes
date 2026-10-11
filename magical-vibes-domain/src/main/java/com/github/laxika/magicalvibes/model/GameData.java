@@ -1509,6 +1509,19 @@ public class GameData {
     public final List<DamagePreventionLifeGainShield> damagePreventionLifeGainShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending source redirect damage to deal after source-specific prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<SourceDamageRedirectShield> pendingSourceRedirectDamage = Collections.synchronizedList(new ArrayList<>());
+    /**
+     * A replacement event paused while an effect applied to it waits for a decision outside the
+     * CR 616.1 ordering prompt (a Cleric's "you may prevent"); that decision resumes it.
+     */
+    public com.github.laxika.magicalvibes.model.replacement.ReplacementEvent suspendedReplacementEvent;
+    /** The damage events of the effect being resolved, while one of them awaits its player's order. */
+    public com.github.laxika.magicalvibes.model.replacement.DamageJournal damageJournal;
+    /**
+     * Replacement events that became due while another one awaited its player's decision. They are
+     * handled in order, with the effects applicable at that time, once no decision is pending.
+     */
+    public final List<com.github.laxika.magicalvibes.model.replacement.ReplacementEvent> pendingReplacementEvents =
+            Collections.synchronizedList(new ArrayList<>());
     /** Creature-specific damage redirect shields (e.g. Oracle's Attendants): redirect all damage a chosen source would deal to a specific creature this turn onto another permanent. */
     public final List<CreatureDamageRedirectShield> creatureDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Saving Grace: redirect all damage this turn dealt to a protected player or their permanents onto a fixed creature (any source, unlimited). */
@@ -3170,6 +3183,11 @@ public class GameData {
     public CombatDamagePhase1State combatDamagePhase1State;
     /** Combat damage assignment waiting on the stack, when a static effect enables that rule. */
     public CombatDamageState pendingCombatDamageState;
+    /**
+     * The combat damage step whose damage events are being run right now; only set while they run,
+     * so it is never copied for simulation (a waiting step is in {@link #pendingCombatDamageState}).
+     */
+    public CombatDamageState combatDamageStateInProgress;
     public boolean pendingCombatDamageFirstStrikePhase;
     public boolean pendingCombatDamageFirstestStrikePhase;
     public Permanent pendingCombatDamageRedirectTarget;
@@ -6664,6 +6682,11 @@ public class GameData {
         source.pendingDralnuReplacementTargets.forEach((key, value) -> copy.pendingDralnuReplacementTargets.put(key, permanentCopy.apply(value)));
         source.pendingDralnuReplacementDamage.forEach((key, value) -> copy.pendingDralnuReplacementDamage.put(key, value));
         copy.defenderDamageAsInfect = source.defenderDamageAsInfect;
+        source.collectedPortions.forEach((key, value) -> copy.collectedPortions.put(key,
+                new ArrayList<>(value.stream().map(com.github.laxika.magicalvibes.model.replacement.DamagePortion::copyForSimulation).toList())));
+        source.pendingDamageEvents.forEach(event -> copy.pendingDamageEvents.add(event.copyForSimulation()));
+        source.permanentsToShuffleAfterDamage.forEach((key, value) ->
+                copy.permanentsToShuffleAfterDamage.put(key, permanentCopy.apply(value)));
         return copy;
     }
 
@@ -8535,6 +8558,10 @@ public class GameData {
         copy.targetSorceryDamageRedirectShields.addAll(this.targetSorceryDamageRedirectShields);
         copy.pendingRedirectDamage.addAll(this.pendingRedirectDamage);
         copy.pendingSourceRedirectDamage.addAll(this.pendingSourceRedirectDamage);
+        copy.suspendedReplacementEvent = this.suspendedReplacementEvent == null
+                ? null : this.suspendedReplacementEvent.copyForSimulation();
+        copy.damageJournal = this.damageJournal == null ? null : this.damageJournal.copyForSimulation();
+        this.pendingReplacementEvents.forEach(event -> copy.pendingReplacementEvents.add(event.copyForSimulation()));
 
         // --- Pending discard / search follow-ups (immutable, so the reference is safe to share) ---
         copy.pendingReturnToHandOnDiscardType = this.pendingReturnToHandOnDiscardType;

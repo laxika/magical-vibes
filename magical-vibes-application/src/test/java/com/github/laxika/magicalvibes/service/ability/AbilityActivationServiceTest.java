@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -115,6 +116,7 @@ class AbilityActivationServiceTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameMutationCoordinator mutationCoordinator;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @Mock private LandManaReplacementService landManaReplacementService;
 
     @InjectMocks
     private AbilityActivationService service;
@@ -160,6 +162,9 @@ class AbilityActivationServiceTest {
         gameData.activePlayerId = player1Id;
         gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
 
+        // No land-mana replacements unless a test says otherwise.
+        lenient().when(landManaReplacementService.produce(eq(gameData), any(), any(), any(), anyInt(), any()))
+                .thenReturn(new LandManaReplacementService.Resolution.Unchanged());
         // No Mana Reflection in these tests — every mana production is 1x.
         lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class), any(Permanent.class)))
                 .thenReturn(1);
@@ -293,8 +298,8 @@ class AbilityActivationServiceTest {
         }
 
         @Test
-        @DisplayName("Fixed-color land replacement preserves modeled mana quantity")
-        void fixedColorReplacementPreservesModeledManaQuantity() {
+        @DisplayName("A replaced land hands its modeled mana to the replacement service instead of adding it")
+        void replacedLandManaIsProducedByTheReplacementService() {
             Card land = new Card();
             land.setName("Modeled Mana Land");
             land.setType(CardType.LAND);
@@ -308,13 +313,15 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(
                     eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
-            when(gameQueryService.fixedLandManaColor(gameData, perm)).thenReturn(ManaColor.BLACK);
+            when(landManaReplacementService.produce(eq(gameData), eq(player1Id), eq(perm),
+                    eq(Set.of(ManaColor.RED)), eq(2), any()))
+                    .thenReturn(new LandManaReplacementService.Resolution.Prompted());
 
             service.tapPermanent(gameData, player1, 0);
 
             ManaPool pool = gameData.playerManaPools.get(player1Id);
-            assertThat(pool.get(ManaColor.BLACK)).isEqualTo(2);
             assertThat(pool.get(ManaColor.RED)).isZero();
+            assertThat(perm.isTapped()).isTrue();
         }
 
         @Test

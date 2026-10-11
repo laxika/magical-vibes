@@ -25,6 +25,9 @@ import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
+import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
+import com.github.laxika.magicalvibes.model.replacement.ReplacementEvent;
 import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -93,6 +96,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.TimeTravelService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
+import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.trigger.LandTapTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
@@ -254,6 +259,12 @@ public class ChoiceHandlerService {
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.MutationSupport mutationSupport;
 
+    @Autowired @Lazy
+    private ReplacementOrderService replacementOrderService;
+
+    @Autowired @Lazy
+    private LandManaReplacementService landManaReplacementService;
+
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
             throw new IllegalStateException("Not awaiting color choice");
@@ -354,13 +365,32 @@ public class ChoiceHandlerService {
             }
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.SpellDamageModifierOrder order) {
+        if (colorChoice.context() instanceof ChoiceContext.ReplacementEffectOrder order
+                && order.event() instanceof DamageEvent) {
             if (!colorChoice.options().contains(colorName)) {
-                throw new IllegalArgumentException("Invalid damage replacement effect");
+                throw new IllegalArgumentException("Invalid replacement effect");
             }
             gameData.interaction.clearAwaitingInput();
-            damageSupport.resolveSpellDamageModifierOrder(gameData, order, colorName);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            damageSupport.answerReplacementOrder(gameData, order, colorName);
+            if (((DamageEvent) order.event()).combat()) {
+                // The damage step deals its damage, then checks state-based actions, once every event is done.
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            } else {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ReplacementEffectOrder order) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid replacement effect");
+            }
+            gameData.interaction.clearAwaitingInput();
+            if (replacementOrderService.answer(gameData, order, colorName)
+                    instanceof ReplacementOrderService.Outcome.Completed<?> completed) {
+                finishReplacementEvent(gameData, player, completed.event());
+            } else {
+                inputCompletionService.publishStateAfterInput(gameData);
+            }
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.CounterReplacementOrder order) {
@@ -1752,6 +1782,22 @@ public class ChoiceHandlerService {
                 + (ctx.amount() == 1 ? "one" : ctx.amount()) + " "
                 + colorName.toLowerCase() + " mana (multicolored spells only)."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Lets an event whose replacement effects were ordered by its player actually happen. */
+    private void finishReplacementEvent(GameData gameData, Player player, ReplacementEvent event) {
+        switch (event) {
+            case LandManaEvent mana -> {
+                ManaColor color = landManaReplacementService.finishAfterChoice(gameData, mana);
+                if (color == null) {
+                    inputCompletionService.publishStateAfterInput(gameData);
+                    return;
+                }
+                handleManaColorChosen(gameData, player, color.name(), mana.production().withAmount(mana.amount()),
+                        List.of(color.name()));
+            }
+            case DamageEvent damage -> throw new IllegalStateException("Damage finishes in DamageSupport");
+        }
     }
 
     private void completeParkedManaActivation(GameData gameData, PendingManaActivation parkedActivation,

@@ -109,6 +109,7 @@ class EffectResolutionServiceTest {
                 registry, gameLogService, permanentRemovalService, gameQueryService, damageSupport,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.SacrificePermanentsEffectHandler.class),
                 gameOutcomeService,
+                new com.github.laxika.magicalvibes.service.replacement.DamageJournalService(),
                 stateBasedActionServiceProvider, stackResolutionServiceProvider);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

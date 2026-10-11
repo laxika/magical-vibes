@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AncientTomb;
+import com.github.laxika.magicalvibes.cards.c.Contamination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -190,5 +193,99 @@ class DeepWaterTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @CardUsed({InfernalDarkness.class})
+    @DisplayName("The replacement applied last decides the color the land produces")
+    void lastAppliedReplacementDecidesColor() {
+        activateDeepWaterWithForest();
+        harness.addToBattlefield(player2, new InfernalDarkness());
+
+        harness.tapPermanent(player1, 1);
+        chooseReplacement("Infernal Darkness");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @CardUsed({InfernalDarkness.class})
+    @DisplayName("Applying Deep Water first lets Infernal Darkness make the land produce black")
+    void applyingDeepWaterFirstProducesBlack() {
+        activateDeepWaterWithForest();
+        harness.addToBattlefield(player2, new InfernalDarkness());
+
+        harness.tapPermanent(player1, 1);
+        chooseReplacement("Your lands produce {U}");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @CardUsed({InfernalDarkness.class, Contamination.class})
+    @DisplayName("Three competing replacements ask twice and keep Contamination's amount")
+    void threeCompetingReplacementsAskTwice() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DeepWater());
+        harness.addToBattlefield(player1, new AncientTomb());
+        harness.addToBattlefield(player2, new InfernalDarkness());
+        harness.addToBattlefield(player2, new Contamination());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        assertThat(replacementChoice().options()).hasSize(3);
+        chooseReplacement("Contamination");
+        assertThat(replacementChoice().options()).hasSize(2);
+        chooseReplacement("Infernal Darkness");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @CardUsed({ManaReflection.class})
+    @DisplayName("Mana Reflection and Deep Water need no ordering because every order gives the same mana")
+    void manaReflectionWithDeepWaterNeedsNoChoice() {
+        activateDeepWaterWithForest();
+        harness.addToBattlefield(player1, new ManaReflection());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    private void activateDeepWaterWithForest() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DeepWater());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+    }
+
+    private PendingInteraction.ColorChoice replacementChoice() {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        return choice;
+    }
+
+    private void chooseReplacement(String labelPrefix) {
+        harness.handleListChoice(player1, replacementChoice().options().stream()
+                .filter(option -> option.startsWith(labelPrefix))
+                .findFirst().orElseThrow());
     }
 }

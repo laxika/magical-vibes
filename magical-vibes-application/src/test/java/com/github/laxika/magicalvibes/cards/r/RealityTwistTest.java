@@ -134,8 +134,9 @@ class RealityTwistTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLACK");
-        harness.handleListChoice(player1, "WHITE");
+        assertThat(choice.options()).containsExactlyInAnyOrder(
+                "Reality Twist: produces {W}", "Infernal Darkness: produces {B}");
+        harness.handleListChoice(player1, "Infernal Darkness: produces {B}");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();

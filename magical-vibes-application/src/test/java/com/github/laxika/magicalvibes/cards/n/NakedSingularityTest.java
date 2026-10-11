@@ -212,6 +212,13 @@ class NakedSingularityTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         PendingInteraction.ColorChoice choice = (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.options()).containsExactlyInAnyOrder("RED", "BLACK");
+        assertThat(choice.options()).containsExactlyInAnyOrder(
+                "Naked Singularity: produces {R}", "Infernal Darkness: produces {B}");
+
+        harness.handleListChoice(player1, "Infernal Darkness: produces {B}");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }

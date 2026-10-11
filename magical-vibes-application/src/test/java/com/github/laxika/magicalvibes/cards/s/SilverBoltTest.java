@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.d.DawnhartRejuvenator;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -129,5 +131,51 @@ class SilverBoltTest extends BaseCardTest {
 
     private void addMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+    }
+
+    @Test
+    @DisplayName("Damage left after the chosen shield order still destroys a Werewolf")
+    void werewolfIsDestroyedWhenDamageRemainsAfterChosenOrder() {
+        addReadyBolt();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
+        target.setDamagePreventionShield(1);
+        target.setDamageToPlusOnePlusOneCounterPreventionShield(1);
+        addMana();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertOnBattlefield(player1, "Burly Breaker");
+        chooseReplacement("Prevent the next damage to it");
+
+        harness.assertNotOnBattlefield(player1, "Burly Breaker");
+        harness.assertInGraveyard(player1, "Burly Breaker");
+    }
+
+    @Test
+    @DisplayName("Shields that prevent all of the damage in the chosen order keep a Werewolf alive")
+    void werewolfSurvivesWhenChosenShieldsPreventEverything() {
+        addReadyBolt();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BurlyBreaker());
+        target.setDamagePreventionShield(2);
+        target.setDamageToPlusOnePlusOneCounterPreventionShield(1);
+        addMana();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        chooseReplacement("Prevent damage and put +1/+1 counters on it (Temper)");
+
+        harness.assertOnBattlefield(player1, "Burly Breaker");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void chooseReplacement(String labelPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(labelPrefix))
+                .findFirst().orElseThrow());
     }
 }

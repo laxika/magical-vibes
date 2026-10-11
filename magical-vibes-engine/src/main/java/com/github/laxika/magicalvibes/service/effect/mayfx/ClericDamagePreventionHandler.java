@@ -49,8 +49,8 @@ public class ClericDamagePreventionHandler implements MayEffectHandlerBean {
         try {
             if (!damagePreventionService.queueClericPreventionChoice(gameData, entry,
                     effect.damagedPlayerId(), amount, false, effect.remainingAlchemistIds())) {
-                damageSupport.getObject().finishPlayerDamageAfterClericChoice(
-                        gameData, entry, effect.damagedPlayerId(), amount);
+                damageSupport.getObject().resumeSuspendedPlayerDamage(
+                        gameData, entry, effect.damagedPlayerId(), amount, effect.unpreventableDamage());
             }
         } finally {
             gameData.unpreventableDamageInProgress = previous;

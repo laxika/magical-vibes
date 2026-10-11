@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GiselaBladeOfGoldnight;
 import com.github.laxika.magicalvibes.cards.m.MoorlandInquisitor;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -110,6 +111,11 @@ class DivineDeflectionTest extends BaseCardTest {
         addAttacker(player2);
 
         runCombatDamage();
+        // Gisela's half prevention and the shield both apply; player1 orders them (CR 616.1).
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith("Prevent half the damage")).findFirst().orElseThrow());
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.d.DeepFreeze;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.PriestOfTitania;
@@ -214,5 +215,45 @@ class ContaminationTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Contamination");
         harness.assertOnBattlefield(player1, "Opalescence");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({ManaReflection.class})
+    @DisplayName("Applying Mana Reflection after Contamination doubles the single black mana")
+    void manaReflectionAfterContaminationDoubles() {
+        harness.addToBattlefield(player1, new Contamination());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new ManaReflection());
+
+        harness.tapPermanent(player1, 1);
+        chooseReplacement("Contamination");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @CardUsed({ManaReflection.class})
+    @DisplayName("Applying Contamination after Mana Reflection leaves one black mana")
+    void contaminationAfterManaReflectionLeavesOne() {
+        harness.addToBattlefield(player1, new Contamination());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new ManaReflection());
+
+        harness.tapPermanent(player1, 1);
+        chooseReplacement("Mana Reflection");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    private void chooseReplacement(String labelPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(labelPrefix))
+                .findFirst().orElseThrow());
     }
 }

@@ -91,7 +91,6 @@ import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorcery
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -117,6 +116,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -195,6 +195,7 @@ public class ActivatedAbilityExecutionService {
     private final ManaSourceColorSupport manaSourceColorSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameMutationCoordinator mutationCoordinator;
+    private final LandManaReplacementService landManaReplacementService;
 
     /** Puts an ability activated from a spell on the stack. */
     public void completeStackActivationAfterCosts(GameData gameData, Player player,
@@ -1167,138 +1168,24 @@ public class ActivatedAbilityExecutionService {
         // Mana-production replacement effects are applied to the tapped permanent.
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, permanent);
 
-        boolean playerControlsLand = permanent.getCard().hasType(CardType.LAND)
-                && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()));
-        ManaColor controllerLandFixedColor = playerControlsLand
-                ? gameData.landManaFixedColorThisTurn.get(playerId)
-                : null;
-        boolean chosenLandManaReplacement = playerControlsLand
-                && controllerLandFixedColor == null
-                && gameData.playersWithLandManaChoiceReplacementThisTurn.contains(playerId);
-        if (chosenLandManaReplacement) {
-            ChoiceContext.ManaColorChoice choiceContext =
-                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
+        boolean landManaReplaced = false;
+        if (gameQueryService.isLand(gameData, permanent)) {
+            LandManaReplacementService.Resolution resolution = landManaReplacementService.produce(gameData, playerId,
+                    permanent, baseManaColors(snapshotEffects),
+                    calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue),
+                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, 0)
+                            .withSnowSource(snowSource)
                             .withCaveSource(caveSource)
                             .withDesertSource(desertSource)
-                            .withArtifactSource(nonTreasureArtifactSource);
-            List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                    playerId, null, null, choiceContext, colors,
-                    "Choose a color of mana to add (Harvest Mage)."));
-        }
-
-        // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
-        boolean dampingReplacement = false;
-        if (!chosenLandManaReplacement && controllerLandFixedColor == null
-                && permanent.getCard().hasType(CardType.LAND)
-                && isDampingManaReplacementActive(gameData)) {
-            int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue);
-            if (totalMana * manaMultiplier >= 2) {
-                dampingReplacement = true;
-                gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, 1);
-                if (caveSource) {
-                    gameData.playerManaPools.get(playerId).addCaveManaTag(ManaColor.COLORLESS, 1);
-                }
-                if (desertSource) {
-                    gameData.playerManaPools.get(playerId).addDesertManaTag(ManaColor.COLORLESS, 1);
-                }
-                
-                gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " adds {C} from ").card(permanent.getCard()).text(" (Damping Sphere replaces " + totalMana + " mana).").build());
-            }
-        }
-
-        // Reality Twist / Infernal Darkness: lands produce remapped or fixed colors instead.
-        boolean twistReplacement = false;
-        ManaColor fixedLandColor = null;
-        if (!chosenLandManaReplacement && !dampingReplacement && permanent.getCard().hasType(CardType.LAND)) {
-            fixedLandColor = controllerLandFixedColor != null
-                    ? controllerLandFixedColor
-                    : gameQueryService.fixedLandManaColor(gameData, permanent);
-            if (controllerLandFixedColor == null
-                    && fixedLandColor == gameData.allLandsFixedManaColorThisTurn
-                    && producesOnlyColorlessMana(snapshotEffects)) {
-                fixedLandColor = null;
-            }
-            if (fixedLandColor != null) {
-                int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue)
-                        * manaMultiplier;
-                Integer fixedAmount = gameQueryService.fixedLandManaAmount(gameData);
-                if (totalMana > 0 && fixedAmount != null) totalMana = fixedAmount * manaMultiplier;
-                if (totalMana > 0) {
-                    twistReplacement = true;
-                    ManaPool pool = gameData.playerManaPools.get(playerId);
-                    ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId,
-                            permanent, fixedLandColor);
-                    if (snowSource) {
-                        pool.addSnowMana(effectiveColor, totalMana);
-                    } else {
-                        pool.add(effectiveColor, totalMana);
-                    }
-                    if (caveSource) {
-                        pool.addCaveManaTag(effectiveColor, totalMana);
-                    }
-                    if (desertSource) {
-                        pool.addDesertManaTag(effectiveColor, totalMana);
-                    }
-                    if (isCreatureSource) {
-                        pool.addCreatureMana(effectiveColor, totalMana);
-                    }
-                    gameLogService.append(gameData, GameLog.builder()
-                            .text(player.getUsername() + " adds " + totalMana + " " + fixedLandColor.getCode()
-                                    + " from ").card(permanent.getCard())
-                            .text(" (land mana type replaced).").build());
-                }
-            } else {
-                Set<ManaColor> twistedColors = gameQueryService.twistedLandManaColors(gameData, permanent);
-                if (!twistedColors.isEmpty()) {
-                    int totalMana = calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue)
-                            * manaMultiplier;
-                    if (totalMana > 0) {
-                        twistReplacement = true;
-                        if (twistedColors.size() == 1) {
-                            ManaColor color = ManaProductionSupport.effectiveColor(gameData, playerId,
-                                    permanent, twistedColors.iterator().next());
-                            ManaPool pool = gameData.playerManaPools.get(playerId);
-                            pool.add(color, totalMana);
-                            if (caveSource) {
-                                pool.addCaveManaTag(color, totalMana);
-                            }
-                            if (desertSource) {
-                                pool.addDesertManaTag(color, totalMana);
-                            }
-                            if (isCreatureSource) {
-                                pool.addCreatureMana(color, totalMana);
-                            }
-                            gameLogService.append(gameData, GameLog.builder()
-                                    .text(player.getUsername() + " adds " + totalMana + " " + color.getCode()
-                                            + " from ").card(permanent.getCard())
-                                    .text(" (Reality Twist).").build());
-                        } else {
-                            ChoiceContext.ManaColorChoice choiceContext =
-                                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
-                                            .withArtifactSource(nonTreasureArtifactSource);
-                            List<String> colors = twistedColors.stream().map(Enum::name).toList();
-                            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                                    playerId, null, null, choiceContext, colors,
-                                    "Choose a color of mana to add (Reality Twist)."));
-                            log.info("Game {} - Awaiting {} to choose Reality Twist mana color",
-                                    gameData.id, player.getUsername());
-                        }
-                    }
-                } else if (gameQueryService.basicLandManaProducesAnyColor(gameData, permanent)) {
-                    int totalMana = calculateTotalManaProduction(gameData, playerId, permanent,
-                            snapshotEffects, xValue) * manaMultiplier;
-                    if (totalMana > 0) {
-                        twistReplacement = true;
-                        ChoiceContext.ManaColorChoice choiceContext =
-                                new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
-                                        .withArtifactSource(nonTreasureArtifactSource);
-                        List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
-                        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                                playerId, null, null, choiceContext, colors,
-                                "Choose a color of mana to add."));
-                    }
-                }
+                            .withArtifactSource(nonTreasureArtifactSource));
+            landManaReplaced = !(resolution instanceof LandManaReplacementService.Resolution.Unchanged);
+            if (resolution instanceof LandManaReplacementService.Resolution.Produced produced
+                    && produced.event().colors().size() == 1) {
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(player.getUsername() + " adds " + produced.event().amount() + " "
+                                + produced.event().colors().iterator().next().getCode() + " from ")
+                        .card(permanent.getCard())
+                        .text(" (land mana replaced).").build());
             }
         }
 
@@ -1319,8 +1206,7 @@ public class ActivatedAbilityExecutionService {
 
         for (int effectIndex = 0; effectIndex < effectsToResolve.size(); effectIndex++) {
             CardEffect effect = effectsToResolve.get(effectIndex);
-            if ((chosenLandManaReplacement || dampingReplacement || twistReplacement)
-                    && effect instanceof ManaProducingEffect) {
+            if (landManaReplaced && effect instanceof ManaProducingEffect) {
                 continue;
             }
             ManaAbilityEffectHandler manaAbilityEffectHandler = manaAbilityEffectHandlerRegistry.getHandler(effect);
@@ -1953,23 +1839,6 @@ public class ActivatedAbilityExecutionService {
         }
     }
 
-    private boolean isDampingManaReplacementActive(GameData gameData) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf != null) {
-                for (Permanent perm : bf) {
-                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effect instanceof ReplaceLandExcessManaWithColorlessEffect) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
     /**
      * Whether a {@link LoseLifeEffect} bundled into a mana ability can be applied without the
      * stack. Only the recipients that need no chosen target qualify; a {@code TARGET_*} recipient
@@ -2077,13 +1946,18 @@ public class ActivatedAbilityExecutionService {
         return total;
     }
 
-    private boolean producesOnlyColorlessMana(List<CardEffect> effects) {
-        List<ManaProducingEffect> manaEffects = effects.stream()
-                .filter(ManaProducingEffect.class::isInstance)
-                .map(ManaProducingEffect.class::cast)
-                .toList();
-        return !manaEffects.isEmpty() && manaEffects.stream()
-                .allMatch(effect -> effect.estimatedManaColor() == ManaColor.COLORLESS);
+    /**
+     * The mana types a mana ability produces before any replacement applies; every color when the
+     * ability's type is decided as it resolves.
+     */
+    private static Set<ManaColor> baseManaColors(List<CardEffect> effects) {
+        Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
+        for (CardEffect effect : effects) {
+            if (effect instanceof ManaProducingEffect manaEffect && manaEffect.estimatedManaColor() != null) {
+                colors.add(manaEffect.estimatedManaColor());
+            }
+        }
+        return colors.isEmpty() ? Set.copyOf(ManaColor.COLORS) : colors;
     }
 
     /** The mana noted on {@code permanent} by {@code NoteManaSpentForActivationEffect}, per color. */

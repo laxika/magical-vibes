@@ -1,0 +1,141 @@
+package com.github.laxika.magicalvibes.service.effect.replacement.damage;
+
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
+import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import org.springframework.stereotype.Component;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.ToIntFunction;
+
+/**
+ * Replacement effects that change how much damage a permanent is dealt: Benevolent Unicorn's
+ * reduction, the "that much damage plus N" bonuses, Gisela's doubling for an opponent's permanent
+ * and the halving and capping replacements. They only rewrite the amount, so they are pure.
+ */
+@Component
+class PermanentDamageModifiers extends PermanentDamageCandidateSource {
+
+    private static final ReplacementOption.Kind REPLACEMENT = ReplacementOption.Kind.REPLACEMENT;
+
+    private final List<Rule<PermanentDamageContext>> rules;
+
+    PermanentDamageModifiers(GameQueryService gameQueryService, GameLogService gameLogService) {
+        super(gameQueryService, gameLogService);
+        this.rules = List.of(
+                spellDamageReductionRule(),
+                bonus("NoncreatureSourceBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getNoncreatureSourceDamageBonus(
+                        ctx.gameData(), ctx.entry(), null, ctx.target())),
+                bonus("PlayersAndBattlesBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getPlayersAndBattlesDamageBonus(
+                        ctx.gameData(), false, ctx.target())),
+                bonus("ToOpponentsBonus", ctx -> combatMultiplierApplied(ctx) ? 0
+                        : gameQueryService.getAdditionalDamageToOpponentsBonus(
+                        ctx.gameData(), ctx.sourceControllerId(), ctx.sourceCard(), ctx.damageSource(),
+                        ctx.targetControllerId())),
+                bonus("ControllerToOpponentBonus", ctx -> combatMultiplierApplied(ctx) ? 0
+                        : gameQueryService.getControllerDamageToOpponentBonus(
+                        ctx.gameData(), ctx.sourceControllerId(), ctx.targetControllerId(), ctx.combat(), true,
+                        ctx.damageSource() == null ? ctx.entry().getSourcePermanentId() : ctx.damageSource().getId())),
+                bonus("SpellToOpponentsBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
+                        ctx.gameData(), ctx.entry(), ctx.targetControllerId())),
+                bonus("ControllerNoncombatBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getControllerNoncombatDamageBonus(
+                        ctx.gameData(), ctx.sourceControllerId())),
+                bonus("PerpetualNoncombatBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getPerpetualNoncombatDamageBonus(
+                        ctx.gameData(), ctx.entry())),
+                pure("RecipientMultiplier", REPLACEMENT,
+                        ctx -> recipientMultiplier(ctx) > 1,
+                        ctx -> "Multiply damage to recipient by " + recipientMultiplier(ctx),
+                        ctx -> ctx.event().withAmount(ctx.amount() * recipientMultiplier(ctx)),
+                        PermanentDamageCandidateSource::noLog),
+                pure("DamageReplacement", REPLACEMENT,
+                        ctx -> replacedDamage(ctx) != ctx.amount(),
+                        ctx -> "Change the damage to " + replacedDamage(ctx),
+                        ctx -> ctx.event().withAmount(replacedDamage(ctx)),
+                        PermanentDamageCandidateSource::noLog));
+    }
+
+    @Override
+    protected List<Rule<PermanentDamageContext>> rules() {
+        return rules;
+    }
+
+    private Rule<PermanentDamageContext> bonus(String family, ToIntFunction<PermanentDamageContext> bonus) {
+        return pure(family, REPLACEMENT,
+                ctx -> bonus.applyAsInt(ctx) != 0,
+                ctx -> "Deal " + bonus.applyAsInt(ctx) + " more damage",
+                ctx -> ctx.event().withAmount(ctx.amount() + bonus.applyAsInt(ctx)),
+                PermanentDamageCandidateSource::noLog);
+    }
+
+    /**
+     * Combat damage assigned to a creature already carries the bonuses and multipliers for damage to
+     * an opponent's permanent (see {@code GameQueryService.applyCombatDamageMultiplier}); damage to an
+     * attacked planeswalker or battle doesn't.
+     */
+    private boolean combatMultiplierApplied(PermanentDamageContext ctx) {
+        return ctx.combat() && gameQueryService.isCreature(ctx.gameData(), ctx.target());
+    }
+
+    /** Gisela: doubling keyed on who controls the damage source, as the spell or the fighting permanent. */
+    private int recipientMultiplier(PermanentDamageContext ctx) {
+        if (combatMultiplierApplied(ctx)) {
+            return 1;
+        }
+        if (ctx.combat()) {
+            return gameQueryService.getDamageToRecipientMultiplier(ctx.gameData(), ctx.targetControllerId(),
+                    ctx.sourceControllerId(), true);
+        }
+        UUID sourceControllerId = ctx.dealtByStackEntry() ? ctx.entry().getControllerId()
+                : gameQueryService.findPermanentController(ctx.gameData(), ctx.event().explicitSource().getId());
+        if (sourceControllerId == null) {
+            sourceControllerId = ctx.entry().getControllerId();
+        }
+        return gameQueryService.getDamageToRecipientMultiplier(ctx.gameData(), ctx.targetControllerId(),
+                sourceControllerId, ctx.target().getId());
+    }
+
+    private int replacedDamage(PermanentDamageContext ctx) {
+        return gameQueryService.applyDamageReplacementEffects(ctx.gameData(), ctx.amount());
+    }
+
+    /** Benevolent Unicorn, one option each; only spells dealing damage as themselves are reduced. */
+    private Rule<PermanentDamageContext> spellDamageReductionRule() {
+        return new Rule<>("SpellDamageReduction", REPLACEMENT, true,
+                ctx -> !ctx.dealtByStackEntry()
+                        || gameQueryService.getSpellDamageReduction(ctx.gameData(), ctx.entry()) <= 0 ? List.of()
+                        : List.copyOf(spellDamageReductions(ctx.gameData()).keySet()),
+                (ctx, instance) -> spellDamageReductions(ctx.gameData()).get(instance).label(),
+                (ctx, instance) -> ctx.event().withAmount(
+                        ctx.amount() - spellDamageReductions(ctx.gameData()).get(instance).value()),
+                (ctx, instance) -> new ApplyResult.Applied<>(ctx.event().withAmount(
+                        ctx.amount() - spellDamageReductions(ctx.gameData()).get(instance).value())));
+    }
+
+    private record Reduction(String label, int value) {}
+
+    private Map<String, Reduction> spellDamageReductions(GameData gameData) {
+        Map<String, Reduction> reductions = new LinkedHashMap<>();
+        gameData.forEachPermanent((controllerId, permanent) -> collectReductions(gameData, permanent, reductions));
+        return reductions;
+    }
+
+    private void collectReductions(GameData gameData, Permanent permanent, Map<String, Reduction> reductions) {
+        if (gameQueryService.hasLostAllAbilities(gameData, permanent)) return;
+        List<CardEffect> statics = permanent.getCard().getEffects(EffectSlot.STATIC);
+        for (int i = 0; i < statics.size(); i++) {
+            if (statics.get(i) instanceof ReduceSpellDamageEffect reduce && reduce.amount() > 0) {
+                reductions.put(permanent.getId() + "#" + i, new Reduction(
+                        permanent.getCard().getName() + ": subtract " + reduce.amount() + " from the damage",
+                        reduce.amount()));
+            }
+        }
+    }
+}

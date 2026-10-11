@@ -972,7 +972,8 @@ public class GameSimulator {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("LAND"));
                 } else if (ccCtx.context() instanceof ChoiceContext.TeferisRealmTypeChoice) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("CREATURE"));
-                } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice) {
+                } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice
+                        || ccCtx.context() instanceof ChoiceContext.ReplacementEffectOrder) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(ccCtx.options().getFirst()));
                 } else {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("RED"));

@@ -150,4 +150,45 @@ class PhytohydraTest extends BaseCardTest {
         assertThat(blocker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(blocker.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Applying a Temper shield first leaves the rest of the damage to become counters")
+    void temperShieldFirstThenPhytohydra() {
+        Permanent phytohydra = harness.addToBattlefieldAndReturn(player2, new Phytohydra());
+        phytohydra.setDamageToPlusOnePlusOneCounterPreventionShield(1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, phytohydra.getId());
+        chooseReplacement("Prevent damage and put +1/+1 counters on it (Temper)");
+
+        assertThat(phytohydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(phytohydra.getDamageToPlusOnePlusOneCounterPreventionShield()).isZero();
+        assertThat(phytohydra.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Applying Phytohydra first replaces all the damage and leaves the Temper shield unused")
+    void phytohydraFirstLeavesTemperShield() {
+        Permanent phytohydra = harness.addToBattlefieldAndReturn(player2, new Phytohydra());
+        phytohydra.setDamageToPlusOnePlusOneCounterPreventionShield(1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, phytohydra.getId());
+        chooseReplacement("Put +1/+1 counters on it instead");
+
+        assertThat(phytohydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(phytohydra.getDamageToPlusOnePlusOneCounterPreventionShield()).isEqualTo(1);
+        assertThat(phytohydra.getMarkedDamage()).isZero();
+    }
+
+    private void chooseReplacement(String labelPrefix) {
+        var choice = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, choice.options().stream()
+                .filter(option -> option.startsWith(labelPrefix))
+                .findFirst().orElseThrow());
+    }
 }

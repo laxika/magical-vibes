@@ -31,19 +31,26 @@ public class DamagePreventionReplacementSupport {
                                                              boolean combatDamage) {
         if (damage <= 0 || !gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return 0;
+        List<Permanent> sources = damageToControllerCounterOnSelfSources(gameData, playerId);
+        return sources.isEmpty() ? 0 : preventDamageToControllerAndPutCounterOnSelf(gameData, sources.getFirst(), damage);
+    }
 
-        for (Permanent permanent : battlefield) {
-            PreventDamageToControllerAndPutCounterOnSelfEffect effect = findDamagePreventionEffect(gameData, permanent);
-            if (effect == null) continue;
+    /** The permanents {@code playerId} controls that prevent damage to them and take counters for it. */
+    public List<Permanent> damageToControllerCounterOnSelfSources(GameData gameData, UUID playerId) {
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> findDamagePreventionEffect(gameData, permanent) != null)
+                .toList();
+    }
 
-            int counterCount = effect.putThatManyCounters() ? damage : 1;
-            permanentCounterSupport.placeCounterOnPermanent(
-                    gameData, null, permanent, effect.counterType(), counterCount);
-            return damage;
-        }
-        return 0;
+    /** Prevents {@code damage} to {@code source}'s controller and puts its counters on it. */
+    public int preventDamageToControllerAndPutCounterOnSelf(GameData gameData, Permanent source, int damage) {
+        PreventDamageToControllerAndPutCounterOnSelfEffect effect = findDamagePreventionEffect(gameData, source);
+        if (damage <= 0 || effect == null) return 0;
+
+        int counterCount = effect.putThatManyCounters() ? damage : 1;
+        permanentCounterSupport.placeCounterOnPermanent(
+                gameData, null, source, effect.counterType(), counterCount);
+        return damage;
     }
 
     private PreventDamageToControllerAndPutCounterOnSelfEffect findDamagePreventionEffect(
@@ -63,6 +70,27 @@ public class DamagePreventionReplacementSupport {
                 .map(PreventDamageToControllerAndPutCounterOnSelfEffect.class::cast)
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * Whether {@link #applyDamageToPermanentByRemovingCountersOrSacrificing} would replace
+     * {@code damage} to {@code permanent}.
+     */
+    public boolean removesCountersOrSacrificesForDamage(GameData gameData, Permanent permanent, int damage) {
+        if (damage <= 0 || permanent == null
+                || !gameQueryService.hasActiveStaticEffect(
+                gameData, permanent, PreventDamageByRemovingCountersOrSacrificeEffect.class)) {
+            return false;
+        }
+        PreventDamageByRemovingCountersOrSacrificeEffect effect = permanent.getCard()
+                .getEffects(EffectSlot.STATIC).stream()
+                .filter(PreventDamageByRemovingCountersOrSacrificeEffect.class::isInstance)
+                .map(PreventDamageByRemovingCountersOrSacrificeEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        return effect != null && (permanent.getCounterCount(effect.counterType()) >= damage
+                || !gameQueryService.cantBeSacrificed(gameData, permanent)
+                && gameQueryService.findPermanentController(gameData, permanent.getId()) != null);
     }
 
     /** Applies a permanent's damage replacement that consumes counters or sacrifices it. */

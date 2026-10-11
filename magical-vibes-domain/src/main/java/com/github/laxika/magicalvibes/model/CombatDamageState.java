@@ -80,6 +80,18 @@ public class CombatDamageState {
     public final Map<UUID, Integer> pendingDralnuReplacementDamage = new LinkedHashMap<>();
     public boolean defenderDamageAsInfect;
 
+    /**
+     * The combat damage assigned in this step, collected per recipient before replacement and
+     * prevention effects apply: each recipient's portions become one damage event (CR 510.2).
+     */
+    public final Map<UUID, List<com.github.laxika.magicalvibes.model.replacement.DamagePortion>> collectedPortions =
+            new LinkedHashMap<>();
+    /** Damage events of this step still to be run through their recipients' replacement effects. */
+    public final List<com.github.laxika.magicalvibes.model.replacement.DamageEvent> pendingDamageEvents =
+            new ArrayList<>();
+    /** Creatures a prevention effect shuffles into their owners' libraries once the step's damage is dealt. */
+    public final Map<UUID, Permanent> permanentsToShuffleAfterDamage = new LinkedHashMap<>();
+
     public record DelayedCombatDamageDrawQualification(DelayedCombatDamageDraw delayedAction,
                                                        Set<UUID> sourceIds) {
     }

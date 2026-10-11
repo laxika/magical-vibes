@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.k.KamahlPitFighter;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DelayingShield.class, KamahlPitFighter.class, DuskImp.class, DoublingSeason.class})
+@CardUsed({DelayingShield.class, KamahlPitFighter.class, DuskImp.class, DoublingSeason.class, WhiteKnight.class})
 class DelayingShieldTest extends BaseCardTest {
 
     private Permanent shield() {
@@ -173,6 +174,105 @@ class DelayingShieldTest extends BaseCardTest {
         assertThat(first.getCounterCount(CounterType.DELAY)).isZero();
         assertThat(second.getCounterCount(CounterType.DELAY)).isZero();
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void chosenShieldTakesAllTheCounters() {
+        Permanent first = shield();
+        Permanent second = shield();
+
+        dealThreeDamageTo(player1);
+        chooseReplacement("Delaying Shield: put counters on it instead (2)");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(first.getCounterCount(CounterType.DELAY)).isZero();
+        assertThat(second.getCounterCount(CounterType.DELAY)).isEqualTo(3);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void preventionShieldAppliedFirstLeavesTheRestForTheChosenShield() {
+        Permanent first = shield();
+        Permanent second = shield();
+        gd.playerDamagePreventionShields.put(player1.getId(), 2);
+
+        dealThreeDamageTo(player1);
+        assertThat(replacementChoice().options()).hasSize(3);
+        chooseReplacement("Prevent the next 2 damage to you");
+        assertThat(replacementChoice().options()).hasSize(2);
+        chooseReplacement("Delaying Shield: put counters on it instead (1)");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(first.getCounterCount(CounterType.DELAY)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.DELAY)).isZero();
+        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player1.getId());
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void shieldAppliedFirstLeavesThePreventionShieldUnused() {
+        Permanent first = shield();
+        gd.playerDamagePreventionShields.put(player1.getId(), 2);
+
+        dealThreeDamageTo(player1);
+        chooseReplacement("Delaying Shield");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(first.getCounterCount(CounterType.DELAY)).isEqualTo(3);
+        assertThat(gd.playerDamagePreventionShields.get(player1.getId())).isEqualTo(2);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Combat damage from several attackers is one event whose counters all go on the chosen shield")
+    void combatDamageFromSeveralAttackersGoesOnTheChosenShield() {
+        Permanent first = shield();
+        Permanent second = shield();
+        addCreatureReady(player2, new DuskImp()).setAttacking(true);
+        addCreatureReady(player2, new DuskImp()).setAttacking(true);
+
+        resolveCombat(player2);
+        assertThat(replacementChoice().options()).hasSize(2);
+        chooseReplacement("Delaying Shield: put counters on it instead (1)");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(first.getCounterCount(CounterType.DELAY)).isEqualTo(4);
+        assertThat(second.getCounterCount(CounterType.DELAY)).isZero();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("First-strike and regular combat damage are separate events, each with its own choice")
+    void eachCombatDamageStepAsksAgain() {
+        Permanent first = shield();
+        Permanent second = shield();
+        addCreatureReady(player2, new WhiteKnight()).setAttacking(true);
+        addCreatureReady(player2, new DuskImp()).setAttacking(true);
+
+        resolveCombat(player2);
+        chooseReplacement("Delaying Shield: put counters on it instead (1)");
+        assertThat(first.getCounterCount(CounterType.DELAY)).isEqualTo(2);
+        if (!gd.interaction.isAwaitingInput()) {
+            harness.passBothPriorities();
+        }
+        chooseReplacement("Delaying Shield: put counters on it instead (2)");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(first.getCounterCount(CounterType.DELAY)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.DELAY)).isEqualTo(2);
+        harness.assertLife(player1, 20);
+    }
+
+    private PendingInteraction.ColorChoice replacementChoice() {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        return choice;
+    }
+
+    private void chooseReplacement(String labelPrefix) {
+        harness.handleListChoice(player1, replacementChoice().options().stream()
+                .filter(option -> option.startsWith(labelPrefix))
+                .findFirst().orElseThrow());
     }
 
     @Test

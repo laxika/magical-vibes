@@ -166,6 +166,9 @@ class SoulEchoTest extends BaseCardTest {
 
         harness.setLife(player1, 20);
         incinerateController();
+        var choice = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().getFirst());
 
         harness.assertLife(player1, 20);
         assertThat(firstEcho.getCounterCount(CounterType.ECHO)

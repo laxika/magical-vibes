@@ -95,18 +95,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** One independently applicable change to an impending spell-damage event. */
-    record SpellDamageModifier(String label, int amount, boolean multiply, boolean replacesWithExile,
-                               boolean playerPreventionShield) {
-        public SpellDamageModifier(String label, int amount, boolean multiply, boolean replacesWithExile) {
-            this(label, amount, multiply, replacesWithExile, false);
-        }
-
-        public SpellDamageModifier(String label, int amount, boolean multiply) {
-            this(label, amount, multiply, false, false);
-        }
-    }
-
     /** A separately applicable counter replacement, identified by its source. */
     record CounterReplacement(String label, CardEffect effect) {}
 
@@ -121,12 +109,15 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** The affected player orders global multiplication and spell-damage reduction. */
-    record SpellDamageModifierOrder(StackEntry entry, UUID recipientId, int damage,
-                                   List<SpellDamageModifier> remaining, boolean unpreventable)
+    /**
+     * CR 616.1: the event's chooser picks which of {@code options} — the replacement and/or
+     * prevention effects that currently apply to {@code event} — to apply next.
+     */
+    record ReplacementEffectOrder(com.github.laxika.magicalvibes.model.replacement.ReplacementEvent event,
+                                  List<com.github.laxika.magicalvibes.model.replacement.ReplacementOption> options)
             implements ChoiceContext {
-        public SpellDamageModifierOrder {
-            remaining = List.copyOf(remaining);
+        public ReplacementEffectOrder {
+            options = List.copyOf(options);
         }
     }
 
@@ -593,6 +584,19 @@ public sealed interface ChoiceContext {
                     sourcePermanentId, restrictedToSpellOrAbilitySubtypes, abilityOnly,
                     recipientPlayerId, grantsAdditionalPlusOneCounter, false,
                     false, false, null, false, false);
+        }
+
+        public ManaColorChoice withAmount(int amount) {
+            return new ManaColorChoice(playerId, fromCreature, amount, restrictedToCreatureSubtype,
+                    flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype,
+                    creatureSourceSpellOrAbility, fixedColorOptions, creatureSpellOnly,
+                    artifactSpellOrAbilityOnly, grantsUncounterable, manaValueAtLeastFour,
+                    creatureSpellOrAbilityOnly, sourcePermanentId, restrictedToSpellOrAbilitySubtypes,
+                    abilityOnly, recipientPlayerId, grantsAdditionalPlusOneCounter, fromSnowSource,
+                    fromCaveSource, grantsRiot, restrictedToSubtypeSpell,
+                    differentColors, planeswalkerSpellOnly, fromBasicLandSource,
+                    creatureSpellManaValueAtLeastFourOrXOnly, fromTreasureSource, fromArtifactSource,
+                    tracksSourceForSpellCastTriggers, fromDesertSource);
         }
 
         public ManaColorChoice withSnowSource(boolean fromSnowSource) {

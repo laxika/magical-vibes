@@ -2899,10 +2899,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         new ChoiceContext.TappedEntryStateChoice(tapped.request().deepCopy()),
                         options, prompt, disabledOptions);
             }
-            if (context instanceof ChoiceContext.SpellDamageModifierOrder order) {
+            if (context instanceof ChoiceContext.ReplacementEffectOrder order) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,
-                        new ChoiceContext.SpellDamageModifierOrder(new StackEntry(order.entry()),
-                                order.recipientId(), order.damage(), order.remaining(), order.unpreventable()),
+                        new ChoiceContext.ReplacementEffectOrder(order.event().copyForSimulation(), order.options()),
                         options, prompt, disabledOptions);
             }
             if (context instanceof ChoiceContext.CounterReplacementOrder order) {

@@ -10159,7 +10159,7 @@ public class GameQueryService {
      * multiplies by its factor, and multiple instances stack multiplicatively (e.g. two Furnaces =
      * 4x damage).
      */
-    private int getDamageMultiplier(GameData gameData) {
+    public int getDamageMultiplier(GameData gameData) {
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, p) -> {
             if (p.isFaceDown() || hasLostPrintedAbilities(gameData, p)) {

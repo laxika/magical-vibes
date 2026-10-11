@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.f.FlameBurst;
+import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
 import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NefariousLich.class, DuskImp.class, FlameBurst.class, WurmcoilEngine.class})
+@CardUsed({NefariousLich.class, DuskImp.class, FlameBurst.class, WurmcoilEngine.class, GlacialChasm.class})
 class NefariousLichTest extends BaseCardTest {
 
     @Test
@@ -80,6 +82,52 @@ class NefariousLichTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("With Glacial Chasm, the controller choosing Chasm first prevents the combat damage, so nothing is exiled")
+    void glacialChasmChosenFirstPreventsCombatDamage() {
+        attackWithDuskImpPastGlacialChasm();
+
+        chooseReplacement("Prevent all damage dealt to you");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With Glacial Chasm, the controller choosing the Lich first exiles cards for the combat damage")
+    void lichChosenFirstReplacesCombatDamage() {
+        attackWithDuskImpPastGlacialChasm();
+
+        chooseReplacement("Nefarious Lich");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+    }
+
+    private void attackWithDuskImpPastGlacialChasm() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new NefariousLich());
+        harness.addToBattlefield(player1, new GlacialChasm());
+        harness.setGraveyard(player1, List.of(new DuskImp(), new DuskImp(), new DuskImp()));
+        Permanent attacker = addCreatureReady(player2, new DuskImp());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+    }
+
+    private void chooseReplacement(String labelPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).hasSize(2);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(labelPrefix))
+                .findFirst().orElseThrow());
     }
 
     @Test

@@ -121,6 +121,9 @@ class RockHydraTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, hydra.getId());
+        var choice = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().getFirst());
 
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(hydra.getMarkedDamage()).isZero();

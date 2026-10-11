@@ -11,38 +11,40 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 1. Choosing the order of competing replacement effects
 
-**Status:** open · **Found:** 2026-10-10, while fixing D-card tests
+**Status:** in progress (phases A–D landed) · **Found:** 2026-10-10, while fixing D-card tests
 
-**Failing tests:**
-- `DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage()`
-- `DeepWaterTest` — "The mana recipient chooses the order of competing mana replacements"
+**Done.** CR 616.1 ordering runs through `ReplacementOrderService` for land mana (every land-type
+replacement on both tap paths, plus Mana Reflection-style multipliers) and for damage to a player or a
+permanent (every redirect, multiplier, bonus, prevention and final-stage replacement in one pool; a
+prompt in the middle of an effect resolves the effect again through `DamageJournal`). Combat damage is
+one event per recipient per damage step, with a portion per source. The
+original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage`,
+`DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
-**What the rules require.** CR 616.1: when two or more replacement and/or prevention effects try to
-modify the same event, the affected object's controller (or the affected player) chooses which one
-to apply first, then the remaining ones are re-checked. The engine instead applies a fixed
-precedence: for damage it takes the first applicable shield (Delaying Shield vs. another Delaying
-Shield / prevention shield); for land mana `GameQueryService` silently orders Deep Water against
-other mana replacements such as Infernal Darkness.
-
-**Why it's large.** It needs a new player interaction that can pause inside the damage and mana
-replacement pipelines and resume after the choice, and every replacement-effect path has to route
-through it. High regression risk across damage, prevention and mana tests.
+**Still open.**
+- Phase E: damage multipliers and "+N" bonuses that dealing effects apply before `DamageSupport`
+  (`GameQueryService.applyDamageMultiplier`); until then they only compete when the global multiplier
+  divides the damage evenly, and Sulfuric Vapors-style spell bonuses never do.
+- Damage redirected to a player through `processSourceRedirectDamage` / `processPendingRedirectDamage`
+  starts a fresh fixed chain instead of continuing the same event (CR 614.5).
+- Combat: global combat multipliers and the bonuses/multipliers for damage to an opponent's creature
+  are still applied while assigning (`GameQueryService.applyCombatDamageMultiplier`), so they never
+  compete; "prevent all combat damage" (Fog) and the guard/"dealt to this creature instead" routing
+  apply before the pool. The all-creature-damage redirect ("have N damage dealt to you instead")
+  attributes a multi-source event to its first source.
+- Taps through Piracy keep the old land-mana precedence; mana previews and the AI's
+  `wouldTapForManaOpenChoice` do not yet treat a contested land as opening a choice; the
+  "colored mana becomes white" replacement is applied after the others instead of being ordered.
+- The AI answers a replacement-order prompt with the first option instead of the least harmful one.
 
 **Prompt to start it:**
 
 ```
-Implement CR 616.1 replacement-effect ordering (see missing-features-to-do.md, entry 1).
-Failing tests: DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage and DeepWaterTest
-"The mana recipient chooses the order of competing mana replacements".
-1. Verify CR 616.1 and its subrules with the rules MCP get_rule tool before citing them.
-2. Inventory how damage replacement/prevention and land-mana replacement are applied today
-   (DamageSupport, prevention shields, GameQueryService mana replacement) and where a fixed
-   precedence is used. Read agent-docs/ARCHITECTURE.md first.
-3. Design one interaction that asks the affected player/controller to pick the next applicable
-   replacement when more than one applies, resumes the event, and re-checks the rest. Skip the
-   prompt when only one applies.
-4. Make the two failing tests pass, add tests for the single-effect and three-effect cases, and
-   list every shared engine file changed so I can run a broad test pass.
+Continue CR 616.1 replacement-effect ordering (see missing-features-to-do.md, entry 1, "Still open").
+Read the "Replacement ordering (CR 616.1)" bullet in agent-docs/ARCHITECTURE.md first.
+1. Phase E: stop pre-multiplying damage in the normalfx handlers (and in
+   GameQueryService.applyCombatDamageMultiplier for combat); add a ratchet test.
+Verify every CR number with the rules MCP. List shared engine files changed after each phase.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

@@ -111,7 +111,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromCo
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromPermanentOrSuspendedCardCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandCost;
@@ -143,12 +142,14 @@ import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.ability.cost.AllMatchingPermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.BlightXCostHandler;
@@ -197,6 +198,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -256,6 +258,7 @@ public class AbilityActivationService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final EquipSupport equipSupport;
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
+    private final LandManaReplacementService landManaReplacementService;
 
     /**
      * Taps a permanent for its mana ability (ON_TAP effects), adding the produced mana to the player's pool.
@@ -274,6 +277,39 @@ public class AbilityActivationService {
      */
     private static int onTapManaAmount(ManaProducingEffect effect) {
         return effect.estimatedManaAmount() instanceof Fixed fixed ? fixed.value() : 0;
+    }
+
+    /** The mana types a land's printed tap ability produces before any replacement applies. */
+    private static Set<ManaColor> baseLandManaColors(Permanent permanent, List<ManaColor> overriddenManaColors,
+                                                     Set<ManaColor> intrinsicBasicLandManaColors) {
+        if (!overriddenManaColors.isEmpty()) {
+            return Set.copyOf(overriddenManaColors);
+        }
+        if (!intrinsicBasicLandManaColors.isEmpty()) {
+            return intrinsicBasicLandManaColors;
+        }
+        Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+            if (effect instanceof ManaProducingEffect manaEffect && manaEffect.estimatedManaColor() != null) {
+                colors.add(manaEffect.estimatedManaColor());
+            }
+        }
+        return colors;
+    }
+
+    /** The amount of mana a land's printed tap ability produces before any replacement applies. */
+    private static int baseLandManaAmount(Permanent permanent, List<ManaColor> overriddenManaColors,
+                                          Set<ManaColor> intrinsicBasicLandManaColors) {
+        if (!overriddenManaColors.isEmpty() || !intrinsicBasicLandManaColors.isEmpty()) {
+            return 1;
+        }
+        int amount = 0;
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+            if (effect instanceof ManaProducingEffect manaEffect && manaEffect.estimatedManaColor() != null) {
+                amount += onTapManaAmount(manaEffect);
+            }
+        }
+        return amount;
     }
 
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
@@ -341,145 +377,19 @@ public class AbilityActivationService {
                 && gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         // Mana-production replacement effects are applied to the tapped permanent.
         int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, permanent);
-        boolean playerControlsLand = isLandSource
-                && playerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId()));
-        ManaColor controllerLandFixedColor = playerControlsLand
-                ? gameData.landManaFixedColorThisTurn.get(playerId)
-                : null;
-        boolean chosenLandManaReplacement = playerControlsLand
-                && controllerLandFixedColor == null
-                && gameData.playersWithLandManaChoiceReplacementThisTurn.contains(playerId);
-        ManaColor fixedLandColor = controllerLandFixedColor != null
-                ? controllerLandFixedColor
-                : isLandSource
-                ? gameQueryService.fixedLandManaColor(gameData, permanent)
-                : null;
-        boolean anyColorReplacement = isLandSource
-                && fixedLandColor == null
-                && gameQueryService.basicLandManaProducesAnyColor(gameData, permanent);
-        Set<ManaColor> twistedColors = isLandSource
-                && fixedLandColor == null && !anyColorReplacement
-                ? gameQueryService.twistedLandManaColors(gameData, permanent)
-                : Set.of();
-        if (chosenLandManaReplacement) {
-            ChoiceContext.ManaColorChoice choiceContext =
-                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
-                            .withCaveSource(caveSource)
-                            .withDesertSource(desertSource)
-                            .withBasicLandSource(basicLandSource)
-                            .withArtifactSource(nonTreasureArtifactSource);
-            List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                    playerId, null, null, choiceContext, colors,
-                    "Choose a color of mana to add (Harvest Mage)."));
-        } else if (fixedLandColor != null) {
-            int totalMana = 0;
-            if (!overriddenManaColors.isEmpty()) {
-                totalMana = manaMultiplier;
-            } else if (!intrinsicBasicLandManaColors.isEmpty()) {
-                totalMana = manaMultiplier;
-            } else {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof ManaProducingEffect manaEffect
-                            && manaEffect.estimatedManaColor() != null) {
-                        totalMana += onTapManaAmount(manaEffect) * manaMultiplier;
-                    }
-                }
-            }
-            Integer fixedAmount = gameQueryService.fixedLandManaAmount(gameData);
-            if (totalMana > 0 && fixedAmount != null) totalMana = fixedAmount * manaMultiplier;
-            if (totalMana > 0) {
-                if (snowSource) {
-                    manaPool.addSnowMana(fixedLandColor, totalMana);
-                } else {
-                    manaPool.add(fixedLandColor, totalMana);
-                }
-                if (caveSource) {
-                    manaPool.addCaveManaTag(fixedLandColor, totalMana);
-                }
-                if (desertSource) {
-                    manaPool.addDesertManaTag(fixedLandColor, totalMana);
-                }
-                if (basicLandSource) {
-                    manaPool.addBasicLandManaTag(fixedLandColor, totalMana);
-                }
-                if (isCreatureSource) {
-                    manaPool.addCreatureMana(fixedLandColor, totalMana);
-                }
-            }
-        } else if (anyColorReplacement) {
-            int totalMana = 0;
-            if (!overriddenManaColors.isEmpty()) {
-                totalMana = manaMultiplier;
-            } else if (!intrinsicBasicLandManaColors.isEmpty()) {
-                totalMana = manaMultiplier;
-            } else {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof ManaProducingEffect manaEffect
-                            && manaEffect.estimatedManaColor() != null) {
-                        totalMana += onTapManaAmount(manaEffect) * manaMultiplier;
-                    }
-                }
-            }
-            if (totalMana > 0) {
-                ChoiceContext.ManaColorChoice choiceContext =
-                        new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
+        LandManaReplacementService.Resolution landManaReplacement = isLandSource
+                ? landManaReplacementService.produce(gameData, playerId, permanent,
+                        baseLandManaColors(permanent, overriddenManaColors, intrinsicBasicLandManaColors),
+                        baseLandManaAmount(permanent, overriddenManaColors, intrinsicBasicLandManaColors),
+                        new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, 0)
+                                .withSnowSource(snowSource)
                                 .withCaveSource(caveSource)
                                 .withDesertSource(desertSource)
                                 .withBasicLandSource(basicLandSource)
-                                .withArtifactSource(nonTreasureArtifactSource);
-                List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                        playerId, null, null, choiceContext, colors,
-                        "Choose a color of mana to add."));
-            }
-        } else if (!twistedColors.isEmpty()) {
-            int totalMana = 0;
-            if (!overriddenManaColors.isEmpty()) {
-                totalMana = manaMultiplier;
-            } else if (!intrinsicBasicLandManaColors.isEmpty()) {
-                totalMana = manaMultiplier;
-            } else {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof ManaProducingEffect manaEffect
-                            && manaEffect.estimatedManaColor() != null) {
-                        totalMana += onTapManaAmount(manaEffect) * manaMultiplier;
-                    }
-                }
-            }
-            if (totalMana > 0) {
-                if (twistedColors.size() == 1) {
-                    ManaColor color = twistedColors.iterator().next();
-                    if (snowSource) {
-                        manaPool.addSnowMana(color, totalMana);
-                    } else {
-                        manaPool.add(color, totalMana);
-                    }
-                    if (caveSource) {
-                        manaPool.addCaveManaTag(color, totalMana);
-                    }
-                    if (desertSource) {
-                        manaPool.addDesertManaTag(color, totalMana);
-                    }
-                    if (basicLandSource) {
-                        manaPool.addBasicLandManaTag(color, totalMana);
-                    }
-                    if (isCreatureSource) {
-                        manaPool.addCreatureMana(color, totalMana);
-                    }
-                } else {
-                    ChoiceContext.ManaColorChoice choiceContext =
-                            new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, totalMana)
-                                    .withCaveSource(caveSource)
-                                    .withDesertSource(desertSource)
-                                    .withBasicLandSource(basicLandSource)
-                                    .withArtifactSource(nonTreasureArtifactSource);
-                    List<String> colors = twistedColors.stream().map(Enum::name).toList();
-                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                            playerId, null, null, choiceContext, colors,
-                            "Choose a color of mana to add (Reality Twist)."));
-                }
-            }
+                                .withArtifactSource(nonTreasureArtifactSource))
+                : new LandManaReplacementService.Resolution.Unchanged();
+        if (!(landManaReplacement instanceof LandManaReplacementService.Resolution.Unchanged)) {
+            // The replacement service already added the replaced mana or asked for its color.
         } else if (!overriddenManaColors.isEmpty()) {
             // Land type is overridden — produce a new basic land type's mana instead of original
             if (overriddenManaColors.size() == 1) {
@@ -513,82 +423,51 @@ public class AbilityActivationService {
                         "Choose a color of mana to add."));
             }
         } else {
-            // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
-            boolean dampingReplacement = false;
-            if (isLandSource && isDampingManaReplacementActiveOnTap(gameData)) {
-                int totalMana = 0;
-                if (!intrinsicBasicLandManaColors.isEmpty()) {
-                    totalMana = 1;
-                } else {
-                    for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                        if (effect instanceof ManaProducingEffect manaEffect
-                                && manaEffect.estimatedManaColor() != null) {
-                            totalMana += onTapManaAmount(manaEffect);
-                        }
-                    }
-                }
-                if (totalMana * manaMultiplier >= 2) {
-                    dampingReplacement = true;
-                    int replacedAmount = totalMana >= 2 ? manaMultiplier : 1;
-                    manaPool.add(ManaColor.COLORLESS, replacedAmount);
-                    if (caveSource) {
-                        manaPool.addCaveManaTag(ManaColor.COLORLESS, replacedAmount);
-                    }
-                    if (desertSource) {
-                        manaPool.addDesertManaTag(ManaColor.COLORLESS, replacedAmount);
-                    }
+            if (intrinsicBasicLandManaColors.size() > 1) {
+                ChoiceContext.ManaColorChoice choiceContext =
+                        new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
+                                .withCaveSource(caveSource).withDesertSource(desertSource)
+                                .withBasicLandSource(basicLandSource).withArtifactSource(nonTreasureArtifactSource);
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext,
+                        intrinsicBasicLandManaColors.stream().map(Enum::name).toList(),
+                        "Choose a color of mana from a basic land type."));
+            } else if (!intrinsicBasicLandManaColors.isEmpty()) {
+                for (ManaColor color : intrinsicBasicLandManaColors) {
+                    manaPool.add(color, manaMultiplier);
                     if (basicLandSource) {
-                        manaPool.addBasicLandManaTag(ManaColor.COLORLESS, replacedAmount);
+                        manaPool.addBasicLandManaTag(color, manaMultiplier);
+                    }
+                    if (isCreatureSource) {
+                        manaPool.addCreatureMana(color, manaMultiplier);
                     }
                 }
             }
-            if (!dampingReplacement) {
-                if (intrinsicBasicLandManaColors.size() > 1) {
-                    ChoiceContext.ManaColorChoice choiceContext =
-                            new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, manaMultiplier)
-                                    .withCaveSource(caveSource).withDesertSource(desertSource)
-                                    .withBasicLandSource(basicLandSource).withArtifactSource(nonTreasureArtifactSource);
-                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                            playerId, null, null, choiceContext,
-                            intrinsicBasicLandManaColors.stream().map(Enum::name).toList(),
-                            "Choose a color of mana from a basic land type."));
-                } else if (!intrinsicBasicLandManaColors.isEmpty()) {
-                    for (ManaColor color : intrinsicBasicLandManaColors) {
-                        manaPool.add(color, manaMultiplier);
-                        if (basicLandSource) {
-                            manaPool.addBasicLandManaTag(color, manaMultiplier);
-                        }
-                        if (isCreatureSource) {
-                            manaPool.addCreatureMana(color, manaMultiplier);
-                        }
+            for (CardEffect effect : intrinsicBasicLandManaColors.size() > 1 ? List.<CardEffect>of()
+                    : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                if (effect instanceof AwardManaEffect awardMana) {
+                    int amount = onTapManaAmount(awardMana) * manaMultiplier;
+                    ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId,
+                            permanent, awardMana.color());
+                    if (snowSource) {
+                        manaPool.addSnowMana(effectiveColor, amount);
+                    } else {
+                        manaPool.add(effectiveColor, amount);
                     }
-                }
-                for (CardEffect effect : intrinsicBasicLandManaColors.size() > 1 ? List.<CardEffect>of()
-                        : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof AwardManaEffect awardMana) {
-                        int amount = onTapManaAmount(awardMana) * manaMultiplier;
-                        ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId,
-                                permanent, awardMana.color());
-                        if (snowSource) {
-                            manaPool.addSnowMana(effectiveColor, amount);
-                        } else {
-                            manaPool.add(effectiveColor, amount);
-                        }
-                        if (caveSource) {
-                            manaPool.addCaveManaTag(effectiveColor, amount);
-                        }
-                        if (desertSource) {
-                            manaPool.addDesertManaTag(effectiveColor, amount);
-                        }
-                        if (basicLandSource) {
-                            manaPool.addBasicLandManaTag(effectiveColor, amount);
-                        }
-                        if (isCreatureSource) {
-                            manaPool.addCreatureMana(effectiveColor, amount);
-                        }
-                        if (gameQueryService.isArtifact(gameData, permanent)) {
-                            manaPool.addSpellCastTriggerMana(permanent.getId(), effectiveColor, amount);
-                        }
+                    if (caveSource) {
+                        manaPool.addCaveManaTag(effectiveColor, amount);
+                    }
+                    if (desertSource) {
+                        manaPool.addDesertManaTag(effectiveColor, amount);
+                    }
+                    if (basicLandSource) {
+                        manaPool.addBasicLandManaTag(effectiveColor, amount);
+                    }
+                    if (isCreatureSource) {
+                        manaPool.addCreatureMana(effectiveColor, amount);
+                    }
+                    if (gameQueryService.isArtifact(gameData, permanent)) {
+                        manaPool.addSpellCastTriggerMana(permanent.getId(), effectiveColor, amount);
                     }
                 }
             }
@@ -745,6 +624,10 @@ public class AbilityActivationService {
             return true;
         }
         if (choice.context() instanceof ChoiceContext.CommanderManaColorChoice) {
+            return true;
+        }
+        if (choice.context() instanceof ChoiceContext.ReplacementEffectOrder order
+                && order.event() instanceof LandManaEvent) {
             return true;
         }
         if (!(choice.context() instanceof ChoiceContext.ManaColorChoice manaChoice)) {
@@ -10065,23 +9948,6 @@ public class AbilityActivationService {
      * Returns the mana color that a land should produce if its type has been overridden
      * by an aura (e.g. Evil Presence making it a Swamp), or {@code null} if no override applies.
      */
-    private boolean isDampingManaReplacementActiveOnTap(GameData gameData) {
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf != null) {
-                for (Permanent perm : bf) {
-                    if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effect instanceof ReplaceLandExcessManaWithColorlessEffect) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
     private ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
         return gameQueryService.getOverriddenLandManaColor(gameData, permanent);
     }

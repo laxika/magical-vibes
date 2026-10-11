@@ -61,8 +61,9 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         if (context instanceof ChoiceContext.ChooseModeChoice
-                || context instanceof ChoiceContext.LibraryCastModeChoice) {
-            // Modal abilities and free-cast modal spells take the first offered mode.
+                || context instanceof ChoiceContext.LibraryCastModeChoice
+                || context instanceof ChoiceContext.ReplacementEffectOrder) {
+            // Modal abilities, free-cast modal spells and replacement-effect orders take the first option.
             String chosenMode = interaction.options().getFirst();
             log.info("AI: Choosing modal option \"{}\" in game {}", chosenMode, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenMode));

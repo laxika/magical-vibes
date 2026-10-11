@@ -54,6 +54,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,6 +79,8 @@ import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
+// Prevention stubs guard paths the combat damage events now take through the replacement pool.
+@MockitoSettings(strictness = Strictness.LENIENT)
 class CombatDamageServiceTest {
 
     private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
@@ -129,6 +133,8 @@ class CombatDamageServiceTest {
                         triggerCollectionService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.LegendRuleService.class),
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
+        com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport =
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class);
         combatDamageService = new CombatDamageService(gameQueryService,
                 predicateEvaluationService,
                 conditionEvaluationService,
@@ -139,10 +145,15 @@ class CombatDamageServiceTest {
                 lifeSupport,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService.class),
                 combatAttackService, combatTriggerService,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),
+                damageSupport,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport.class),
                 stateBasedActionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class));
+        // No replacement or prevention effects apply: each combat damage event is dealt as collected.
+        org.mockito.Mockito.lenient().doAnswer(inv -> {
+            combatDamageService.recordCombatDamageEvent(inv.getArgument(0), inv.getArgument(1));
+            return null;
+        }).when(damageSupport).runCombatDamageEvent(any(), any());
 
         UUID gameId = UUID.randomUUID();
         player1Id = UUID.randomUUID();
@@ -293,7 +304,7 @@ class CombatDamageServiceTest {
                     }
                     return null;
                 });
-        when(damagePreventionService.applySourceRedirectShields(
+        lenient().when(damagePreventionService.applySourceRedirectShields(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         lenient().when(damagePreventionService.applyPlayerSourceNextDamageRedirectShield(
@@ -367,10 +378,10 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
-        when(damagePreventionService.applyCombatPlayerPreventionShield(
+        lenient().when(damagePreventionService.applyCombatPlayerPreventionShield(
                 eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
-        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
+        lenient().when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
                 eq(gameData), any(UUID.class), anyInt(), anyString(), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
         when(gameOutcomeService.checkWinCondition(gameData)).thenReturn(false);

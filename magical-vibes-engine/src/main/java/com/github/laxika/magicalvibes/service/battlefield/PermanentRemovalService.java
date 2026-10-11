@@ -1536,6 +1536,22 @@ public class PermanentRemovalService {
                 sourcePermanentId, sourceCard, sourceRestrictedRedirect);
     }
 
+    /** Whether {@link #redirectPlayerDamageToEnchantedCreature} would redirect this damage to {@code playerId}. */
+    public boolean hasPlayerDamageRedirectToPermanent(GameData gameData, UUID playerId,
+                                                      UUID sourcePermanentId, Card sourceCard) {
+        return gameQueryService.findEnchantedCreatureByAuraEffect(
+                gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class) != null
+                || findControlledPermanentWithDamageRedirect(
+                gameData, playerId, sourcePermanentId, null, sourceCard, false) != null;
+    }
+
+    /** Whether {@link #redirectPlayerDamageFromMatchingSourceToSelf} would redirect damage from this source. */
+    public boolean hasPlayerDamageRedirectFromMatchingSource(GameData gameData, UUID playerId,
+                                                             UUID sourcePermanentId, Card sourceCard) {
+        return findControlledPermanentWithDamageRedirect(
+                gameData, playerId, sourcePermanentId, null, sourceCard, true) != null;
+    }
+
     public int redirectPlayerDamageFromMatchingSourceToSelf(GameData gameData, UUID playerId, int damage,
                                                              String sourceName, boolean isCombatDamage,
                                                              UUID sourcePermanentId, Card sourceCard) {
