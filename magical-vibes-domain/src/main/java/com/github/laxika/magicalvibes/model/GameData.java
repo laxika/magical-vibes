@@ -1300,6 +1300,9 @@ public class GameData {
      *  global "whenever a [color] source deals damage" watcher (Justice) reflects the summed total
      *  once per source (CR ruling). Combat damage batches separately via {@code combatDamageDealt}. */
     public final Map<UUID, PendingSourceDamage> pendingSourceDamageForReflection = new LinkedHashMap<>();
+    /** Lifelink gains summed per source and player while a spell or ability resolves; applied as one
+     *  life-gain event each when the outermost resolution ends. */
+    public final List<PendingLifelinkGain> pendingLifelinkGains = new ArrayList<>();
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Creatures protected from damage caused by spells or abilities targeting them this turn. */
     public final Set<UUID> creaturesProtectedFromTargetingDamage = ConcurrentHashMap.newKeySet();
@@ -7256,6 +7259,7 @@ public class GameData {
         copy.pendingEyeForAnEyeReflections.addAll(this.pendingEyeForAnEyeReflections);
         this.pendingSourceDamageForReflection.forEach((sourceId, pending) ->
                 copy.pendingSourceDamageForReflection.put(sourceId, pending.copy()));
+        copy.pendingLifelinkGains.addAll(this.pendingLifelinkGains);
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
         copy.exiledCardsWithIceCounters.addAll(this.exiledCardsWithIceCounters);

@@ -338,7 +338,7 @@ public class LifeSupport {
         return false;
     }
 
-    private UUID resolveSpellOrAbilityControllerId(GameData gameData) {
+    UUID resolveSpellOrAbilityControllerId(GameData gameData) {
         if (gameData.currentlyResolvingControllerId != null) {
             return gameData.currentlyResolvingControllerId;
         }

@@ -118,6 +118,9 @@ public class EffectResolutionService {
             // player input (pendingEffectResolutionEntry set). On a pause the flag stays set so the
             // suppression survives until the resumed resolution drains and completes here.
             if (gameData.effectResolutionDepth == 0 && gameData.pendingEffectResolutionEntry == null) {
+                // One life-gain event per lifelink source for the whole resolution's damage, gained
+                // before the loss check below so it counts toward the controller's life total.
+                damageSupport.flushLifelinkGains(gameData);
                 gameData.deferPlayerLossCheck = false;
                 if (gameData.currentlyResolvingControllerId == null) {
                     stackResolutionService.getObject().completeDeferredSpellResolution(gameData, entry);

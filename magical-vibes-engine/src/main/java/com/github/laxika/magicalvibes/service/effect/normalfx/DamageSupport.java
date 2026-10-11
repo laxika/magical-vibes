@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingLifelinkGain;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -473,7 +474,10 @@ public class DamageSupport {
 
     /**
      * Applies lifelink for the spell or permanent that dealt the damage, using the permanent's
-     * current controller when it is still on the battlefield.
+     * current controller when it is still on the battlefield. While a spell or ability resolves,
+     * the gain is added to that source's pending gain instead, so the damage one source deals to
+     * several recipients is a single life-gain event; {@link #flushLifelinkGains} applies it when
+     * the resolution ends.
      */
     public void checkSpellLifelink(GameData gameData, StackEntry entry, int effectiveDamage) {
         if (effectiveDamage <= 0) return;
@@ -481,8 +485,36 @@ public class DamageSupport {
         UUID controllerId = entry.getSourcePermanentId() == null ? null
                 : gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
         if (controllerId == null) controllerId = entry.getDamageSourceControllerId();
-        lifeSupport.applyGainLife(gameData, controllerId != null ? controllerId : entry.getControllerId(), effectiveDamage,
-                "lifelink", entry.getEffectiveDamageSourceCard(), entry.getEntryType());
+        UUID gainingPlayerId = controllerId != null ? controllerId : entry.getControllerId();
+        Card sourceCard = entry.getEffectiveDamageSourceCard();
+        UUID sourceControllerId = lifeSupport.resolveSpellOrAbilityControllerId(gameData);
+        UUID sourceId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId()
+                : sourceCard != null ? sourceCard.getId() : null;
+        if (gameData.effectResolutionDepth == 0 || sourceId == null) {
+            lifeSupport.applyGainLife(gameData, gainingPlayerId, effectiveDamage, "lifelink",
+                    sourceCard, entry.getEntryType(), sourceControllerId);
+            return;
+        }
+        List<PendingLifelinkGain> pending = gameData.pendingLifelinkGains;
+        for (int i = 0; i < pending.size(); i++) {
+            if (pending.get(i).isSameEvent(sourceId, gainingPlayerId)) {
+                pending.set(i, pending.get(i).plus(effectiveDamage));
+                return;
+            }
+        }
+        pending.add(new PendingLifelinkGain(sourceId, gainingPlayerId, effectiveDamage, sourceCard,
+                entry.getEntryType(), sourceControllerId));
+    }
+
+    /** Applies each lifelink gain summed during the resolution that just ended as one life-gain event. */
+    public void flushLifelinkGains(GameData gameData) {
+        if (gameData.pendingLifelinkGains.isEmpty()) return;
+        List<PendingLifelinkGain> gains = new ArrayList<>(gameData.pendingLifelinkGains);
+        gameData.pendingLifelinkGains.clear();
+        for (PendingLifelinkGain gain : gains) {
+            lifeSupport.applyGainLife(gameData, gain.playerId(), gain.amount(), "lifelink",
+                    gain.sourceCard(), gain.sourceEntryType(), gain.sourceControllerId());
+        }
     }
 
     public boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
