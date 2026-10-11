@@ -55,7 +55,7 @@ public class EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffectHan
             if (controllerId == null) return;
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue(), entry);
+        int rawDamage = entry.getXValue();
         if (rawDamage <= 0) return;
 
         String sourceName = sourceCard.getName();

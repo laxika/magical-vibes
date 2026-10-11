@@ -2702,8 +2702,8 @@ class GameQueryServiceTest {
                             new DoubleSelfCombatDamageToPlayersEffect()));
             Permanent creatureTarget = addPermanent(player2Id, createCreature("Creature", 5, 5, CardColor.GREEN));
 
-            assertThat(gqs.applyCombatDamageMultiplier(gd, 4, source, null)).isEqualTo(8);
-            assertThat(gqs.applyCombatDamageMultiplier(gd, 4, source, creatureTarget)).isEqualTo(4);
+            assertThat(gqs.getCombatSourceDamageMultiplier(gd, source, null, player2Id)).isEqualTo(2);
+            assertThat(gqs.getCombatSourceDamageMultiplier(gd, source, creatureTarget, null)).isEqualTo(1);
             assertThat(gqs.getSourceDamageMultiplier(gd, player1Id, source)).isEqualTo(1);
         }
     }
@@ -2967,29 +2967,15 @@ class GameQueryServiceTest {
         }
 
         @Test
-        @DisplayName("applyCombatDamageMultiplier includes color bonus for matching creature")
-        void applyCombatDamageMultiplierIncludesBonus() {
+        @DisplayName("Combat damage from a matching creature gets the color bonus")
+        void combatSourceDamageBonusIncludesColorBonus() {
             setBonus(player1Id, CardColor.RED, 2);
 
             Card redCreature = createCreature("Red Goblin", 2, 1, CardColor.RED);
             redCreature.setColors(List.of(CardColor.RED));
             Permanent perm = addPermanent(player1Id, redCreature);
 
-            // 2 base + 2 bonus = 4
-            assertThat(gqs.applyCombatDamageMultiplier(gd, 2, perm, null)).isEqualTo(4);
-        }
-
-        @Test
-        @DisplayName("applyCombatDamageMultiplier does not add bonus for zero damage")
-        void applyCombatDamageMultiplierNoBonusForZeroDamage() {
-            setBonus(player1Id, CardColor.RED, 2);
-
-            Card redCreature = createCreature("Red Goblin", 2, 1, CardColor.RED);
-            redCreature.setColors(List.of(CardColor.RED));
-            Permanent perm = addPermanent(player1Id, redCreature);
-
-            // 0 damage -> no bonus applied
-            assertThat(gqs.applyCombatDamageMultiplier(gd, 0, perm, null)).isZero();
+            assertThat(gqs.getCombatSourceDamageBonus(gd, perm)).isEqualTo(2);
         }
     }
 

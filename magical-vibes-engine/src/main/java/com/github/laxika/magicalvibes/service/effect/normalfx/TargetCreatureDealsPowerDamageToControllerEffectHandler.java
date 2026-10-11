@@ -61,7 +61,7 @@ public class TargetCreatureDealsPowerDamageToControllerEffectHandler implements 
                 null,
                 target.getId());
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+        int rawDamage = power;
         damageSupport.dealDamageToPlayer(gameData, damageEntry, controllerId, rawDamage);
     }
 }

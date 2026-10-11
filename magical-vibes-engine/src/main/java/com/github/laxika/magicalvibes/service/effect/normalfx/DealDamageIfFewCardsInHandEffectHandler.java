@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
 public class DealDamageIfFewCardsInHandEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
@@ -47,7 +45,7 @@ public class DealDamageIfFewCardsInHandEffectHandler implements NormalEffectHand
         }
 
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+            int rawDamage = e.damage();
             damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 

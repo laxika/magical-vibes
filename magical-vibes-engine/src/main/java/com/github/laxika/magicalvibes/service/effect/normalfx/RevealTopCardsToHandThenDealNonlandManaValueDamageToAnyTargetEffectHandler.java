@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsToHandThenDealNonlandManaValueDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,6 @@ public class RevealTopCardsToHandThenDealNonlandManaValueDamageToAnyTargetEffect
     private final DamageSupport damageSupport;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
-    private final GameQueryService gameQueryService;
     private final LibraryRevealSupport libraryRevealSupport;
 
     @Override
@@ -66,7 +64,7 @@ public class RevealTopCardsToHandThenDealNonlandManaValueDamageToAnyTargetEffect
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, totalManaValue, entry);
+        int damage = totalManaValue;
         damageSupport.resolveAnyTargetDamage(gameData, entry, entry.getTargetId(), damage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }

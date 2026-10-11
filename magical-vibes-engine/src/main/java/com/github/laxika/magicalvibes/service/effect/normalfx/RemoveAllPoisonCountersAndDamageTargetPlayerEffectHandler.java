@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllPoisonCountersAndDamageTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,6 @@ public class RemoveAllPoisonCountersAndDamageTargetPlayerEffectHandler implement
 
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
-    private final GameQueryService gameQueryService;
     private final DamageSupport damageSupport;
 
     @Override
@@ -47,7 +45,7 @@ public class RemoveAllPoisonCountersAndDamageTargetPlayerEffectHandler implement
         }
 
         if (poison > 0 && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, poison, entry);
+            int rawDamage = poison;
             damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             gameOutcomeService.checkWinCondition(gameData);
         }

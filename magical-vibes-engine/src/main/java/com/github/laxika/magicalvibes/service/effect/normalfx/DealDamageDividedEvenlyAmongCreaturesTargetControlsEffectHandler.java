@@ -56,7 +56,7 @@ public class DealDamageDividedEvenlyAmongCreaturesTargetControlsEffectHandler im
         int perCreature = total / creatures.size();
         if (perCreature <= 0) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, perCreature, entry);
+        int rawDamage = perCreature;
         String cardName = entry.getCard().getName();
 
         for (Permanent creature : creatures) {

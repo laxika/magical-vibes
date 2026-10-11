@@ -187,7 +187,7 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
             UUID targetId = assignment.getKey();
             if (!entry.isAssignmentTargetLegal(targetId)) continue;
 
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue(), entry);
+            int rawDamage = assignment.getValue();
 
             boolean targetIsPlayer = gameData.playerIds.contains(targetId);
             Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);

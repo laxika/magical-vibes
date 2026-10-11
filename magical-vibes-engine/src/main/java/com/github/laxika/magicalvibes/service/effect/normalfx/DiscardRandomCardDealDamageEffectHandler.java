@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardDealDamageEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +16,6 @@ public class DiscardRandomCardDealDamageEffectHandler implements NormalEffectHan
 
     private final DamageSupport damageSupport;
     private final GameOutcomeService gameOutcomeService;
-    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +33,7 @@ public class DiscardRandomCardDealDamageEffectHandler implements NormalEffectHan
         int damage = entry.getDiscardedCardSnapshot().getColors().size() >= 2
                 ? damageEffect.multicoloredDamage()
                 : damageEffect.damage();
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        int rawDamage = damage;
         damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }

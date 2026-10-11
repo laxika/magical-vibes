@@ -43,7 +43,7 @@ public class DealDamageToEachPlayerAndTheirCreaturesEqualToControlledCreatureCou
                 continue;
             }
 
-            int damage = gameQueryService.applyDamageMultiplier(gameData, creatureCount, entry);
+            int damage = creatureCount;
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
             damageSupport.damageFilteredCreatures(gameData, entry, damage, battlefield,
                     permanent -> gameQueryService.isCreature(gameData, permanent));

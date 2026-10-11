@@ -123,7 +123,7 @@ public class TargetPermanentControllerMaySacrificeOrDamageEffectHandler
         }
         int damage = amountEvaluationService.evaluate(gameData, effect.damage(),
                 AmountContext.forStackEntry(damageEntry, source));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
+        int rawDamage = damage;
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
             damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId, rawDamage);
         }

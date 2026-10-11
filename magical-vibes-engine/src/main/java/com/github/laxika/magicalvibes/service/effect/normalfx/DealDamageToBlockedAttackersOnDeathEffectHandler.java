@@ -26,7 +26,7 @@ public class DealDamageToBlockedAttackersOnDeathEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToBlockedAttackersOnDeathEffect) effect;
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int damage = e.damage();
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
         for (UUID targetId : entry.getTargetIds()) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);

@@ -40,7 +40,7 @@ public class TargetLandDealsDamageToTriggeringCreatureEffectHandler implements N
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, damageEffect.damage(), entry);
+        int damage = damageEffect.damage();
         damageSupport.dealCreatureDamage(gameData, entry, creature, damage, land);
     }
 }

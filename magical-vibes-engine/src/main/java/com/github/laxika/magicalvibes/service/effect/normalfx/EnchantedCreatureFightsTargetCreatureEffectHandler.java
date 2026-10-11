@@ -56,7 +56,7 @@ public class EnchantedCreatureFightsTargetCreatureEffectHandler implements Norma
         } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, enchanted)) {
             gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " has protection — damage from ", enchanted.getCard(), " prevented."));
         } else {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, enchantedPower, entry);
+            int damage = enchantedPower;
             damageSupport.dealCreatureDamage(gameData, entry, target, damage, enchanted);
         }
 
@@ -67,7 +67,7 @@ public class EnchantedCreatureFightsTargetCreatureEffectHandler implements Norma
         } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, enchanted, target)) {
             gameLogService.append(gameData, GameLog.cardTextCard(enchanted.getCard(), " has protection — damage from ", target.getCard(), " prevented."));
         } else {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
+            int damage = targetPower;
             damageSupport.dealCreatureDamage(gameData, entry, enchanted, damage, target);
         }
     }

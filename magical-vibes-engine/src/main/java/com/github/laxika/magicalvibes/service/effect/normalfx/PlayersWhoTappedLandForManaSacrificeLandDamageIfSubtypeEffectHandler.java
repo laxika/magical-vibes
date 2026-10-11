@@ -148,7 +148,7 @@ public class PlayersWhoTappedLandForManaSacrificeLandDamageIfSubtypeEffectHandle
                 if (!playersToDamage.contains(playerId)) {
                     continue;
                 }
-                int raw = gameQueryService.applyDamageMultiplier(gameData, damageAmount, damageEntry);
+                int raw = damageAmount;
                 damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId, raw);
             }
             gameOutcomeService.checkWinCondition(gameData);

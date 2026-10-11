@@ -44,7 +44,7 @@ public class EnchantedCreatureDealsDamageToItsOwnerEffectHandler implements Norm
         String creatureName = creature.getCard().getName();
         
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int rawDamage = e.damage();
 
         // Create a temporary stack entry with the creature as source for correct damage attribution
         StackEntry creatureEntry = new StackEntry(

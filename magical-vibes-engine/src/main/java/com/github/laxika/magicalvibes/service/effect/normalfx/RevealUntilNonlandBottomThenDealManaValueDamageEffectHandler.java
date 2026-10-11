@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandBottomThenDealManaValueDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -25,7 +24,6 @@ import org.springframework.stereotype.Component;
 public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final LibraryRevealSupport libraryRevealSupport;
@@ -113,7 +111,7 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
                     .text("'s mana value (" + manaValue + ").")
                     .build());
             if (manaValue > 0 && targetId != null) {
-                int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
+                int damage = manaValue;
                 damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, damage, false);
                 gameOutcomeService.checkWinCondition(gameData);
             }

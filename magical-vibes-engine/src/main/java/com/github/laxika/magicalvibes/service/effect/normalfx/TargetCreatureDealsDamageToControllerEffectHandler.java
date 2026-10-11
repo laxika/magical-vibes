@@ -73,7 +73,7 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
                 target.getId());
 
         damageEntry.setSourcePermanentSnapshot(new Permanent(target));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
+        int rawDamage = damage;
         UUID recipientId = targetEffect.recipient() == DamageRecipient.CONTROLLER
                 ? entry.getControllerId() : controllerId;
         damageSupport.dealDamageToPlayer(gameData, damageEntry, recipientId, rawDamage);

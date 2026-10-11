@@ -83,7 +83,7 @@ public class EachCreatureDealsPowerDamageToItselfEffectHandler implements Normal
                     null,
                     liveCreature.getId());
             int power = gameQueryService.getPowerBasedDamage(gameData, liveCreature);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            int rawDamage = power;
             damageSupport.dealCreatureDamage(gameData, damageEntry, liveCreature, rawDamage, liveCreature);
         }
 

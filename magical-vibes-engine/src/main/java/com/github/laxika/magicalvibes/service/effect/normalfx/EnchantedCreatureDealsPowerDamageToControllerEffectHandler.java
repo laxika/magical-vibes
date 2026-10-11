@@ -55,7 +55,7 @@ public class EnchantedCreatureDealsPowerDamageToControllerEffectHandler implemen
                 creature.getId());
         damageEntry.setSourcePermanentSnapshot(creature);
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+        int rawDamage = power;
         damageSupport.dealDamageToPlayer(gameData, damageEntry, recipientId, rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
     }

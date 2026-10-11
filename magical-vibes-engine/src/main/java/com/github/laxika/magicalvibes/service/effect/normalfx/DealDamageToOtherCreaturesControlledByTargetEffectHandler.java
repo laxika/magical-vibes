@@ -40,7 +40,7 @@ public class DealDamageToOtherCreaturesControlledByTargetEffectHandler implement
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int damage = e.damage();
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetControllerId);
         if (battlefield != null) {
             for (Permanent creature : new ArrayList<>(battlefield)) {

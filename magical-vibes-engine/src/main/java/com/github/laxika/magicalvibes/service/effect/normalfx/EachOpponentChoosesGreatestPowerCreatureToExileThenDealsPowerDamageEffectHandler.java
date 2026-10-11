@@ -125,7 +125,7 @@ public class EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamage
             if (power <= 0) {
                 continue;
             }
-            int damage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
+            int damage = power;
             damageSupport.dealDamageToPlayer(gameData, entry, opponentId, damage);
         }
         gameOutcomeService.checkWinCondition(gameData);

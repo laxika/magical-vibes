@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerMayPayToPreventDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,6 @@ import java.util.UUID;
 public class EnchantedControllerMayPayToPreventDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -115,7 +113,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
     private void dealRemainingDamage(GameData gameData, StackEntry entry, UUID playerId, int remaining) {
         if (remaining <= 0) return;
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, remaining, entry);
+        int rawDamage = remaining;
         damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);
     }
 }

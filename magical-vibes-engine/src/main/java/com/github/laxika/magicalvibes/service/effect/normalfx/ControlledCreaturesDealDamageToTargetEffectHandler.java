@@ -57,7 +57,7 @@ public class ControlledCreaturesDealDamageToTargetEffectHandler implements Norma
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int rawDamage = evaluatedDamage;
 
         FilterContext context = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         List<Permanent> matchingCreatures = new ArrayList<>();

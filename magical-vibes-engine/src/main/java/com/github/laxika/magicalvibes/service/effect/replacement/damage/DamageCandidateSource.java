@@ -1,16 +1,24 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -52,6 +60,8 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
         default boolean combat() {
             return event().combat();
         }
+
+        GameData gameData();
     }
 
     /** Whether a rule is about each source's damage or about all the damage the recipient is dealt. */
@@ -116,6 +126,51 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
                 (ctx, instance) -> label.apply(ctx),
                 (ctx, instance) -> ctx.event(),
                 (ctx, instance) -> new ApplyResult.Applied<>(apply.apply(ctx)));
+    }
+
+    /** One effect instance: its option label and the number it multiplies or subtracts by. */
+    protected record NumericInstance(String label, int value) {}
+
+    /**
+     * Furnace of Rath-style multipliers ({@link GlobalDamageMultiplyingEffect}), one option per
+     * effect instance, for any damage whoever deals it.
+     */
+    protected static <C extends DamageContext> Rule<C> globalMultiplierRule(GameQueryService gameQueryService) {
+        return new Rule<C>("GlobalDamageMultiplier", ReplacementOption.Kind.REPLACEMENT, true,
+                ctx -> List.copyOf(globalMultipliers(ctx.gameData(), gameQueryService).keySet()),
+                (ctx, instance) -> globalMultipliers(ctx.gameData(), gameQueryService).get(instance).label(),
+                (ctx, instance) -> ctx.event().withAmount(
+                        ctx.amount() * globalMultipliers(ctx.gameData(), gameQueryService).get(instance).value()),
+                (ctx, instance) -> new ApplyResult.Applied<>(ctx.event().withAmount(
+                        ctx.amount() * globalMultipliers(ctx.gameData(), gameQueryService).get(instance).value())));
+    }
+
+    private static Map<String, NumericInstance> globalMultipliers(GameData gameData, GameQueryService gameQueryService) {
+        Map<String, NumericInstance> multipliers = new LinkedHashMap<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) return;
+            collectGlobalMultipliers(gameData, permanent.getId().toString(), permanent.getCard(), multipliers);
+        });
+        if (gameData.planechase != null) {
+            for (var plane : gameData.planechase.faceUp) {
+                collectGlobalMultipliers(gameData, plane.getCard().getId().toString(), plane.getCard(), multipliers);
+            }
+        }
+        return multipliers;
+    }
+
+    private static void collectGlobalMultipliers(GameData gameData, String sourceKey, Card card,
+                                                 Map<String, NumericInstance> multipliers) {
+        List<CardEffect> statics = card.getEffects(EffectSlot.STATIC);
+        for (int i = 0; i < statics.size(); i++) {
+            if (statics.get(i) instanceof GlobalDamageMultiplyingEffect global) {
+                int factor = MaroGoneNutsSupport.apply(gameData, global, global.damageMultiplierFactor());
+                if (factor > 1) {
+                    multipliers.put(sourceKey + "#" + i,
+                            new NumericInstance(card.getName() + ": multiply damage by " + factor, factor));
+                }
+            }
+        }
     }
 
     protected static DamageEvent prevented(DamageContext ctx) {
@@ -281,7 +336,7 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
         entry.setSourcePermanentSnapshot(portion.sourceSnapshot());
         return new DamageEvent(entry, event.recipientPlayerId(), event.recipientPermanentId(),
                 event.toPermanent() ? source : null, amount, unpreventable || event.unpreventable(),
-                event.cantBeRedirected(), false, event.journalSlot(), event.appliedKeys(), true, List.of());
+                event.cantBeRedirected(), event.journalSlot(), event.appliedKeys(), true, List.of());
     }
 
     private static String sourceName(DamageEvent view) {

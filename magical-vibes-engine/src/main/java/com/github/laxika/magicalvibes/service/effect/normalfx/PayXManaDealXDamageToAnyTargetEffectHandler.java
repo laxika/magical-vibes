@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDealXDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,6 @@ import java.util.UUID;
 public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -82,7 +80,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
             gameLogService.append(gameData, GameLog.text(playerName + " pays " + e.manaCost().replace("{X}", "{" + chosenValue + "}") + " for " + cardName + "."));
             log.info("Game {} - {} pays X={} for {}", gameData.id, playerName, chosenValue, cardName);
 
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, chosenValue, entry);
+            int rawDamage = chosenValue;
             damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
             gameOutcomeService.checkWinCondition(gameData);
             return;

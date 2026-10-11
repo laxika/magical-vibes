@@ -63,7 +63,7 @@ public class DealDamageToDefendingPlayerCreaturesEffectHandler implements Normal
         }
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int rawDamage = evaluatedDamage;
         String cardName = entry.getCard().getName();
         FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         List<Permanent> battlefield = gameData.playerBattlefields.get(defendingPlayerId);

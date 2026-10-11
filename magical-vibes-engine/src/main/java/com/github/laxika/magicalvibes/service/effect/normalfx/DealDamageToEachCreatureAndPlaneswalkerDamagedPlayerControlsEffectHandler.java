@@ -40,7 +40,7 @@ public class DealDamageToEachCreatureAndPlaneswalkerDamagedPlayerControlsEffectH
             return;
         }
 
-        int adjustedDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        int adjustedDamage = damage;
         List<Permanent> battlefield = gameData.playerBattlefields.get(damagedPlayerId);
         if (battlefield != null) {
             for (Permanent permanent : new ArrayList<>(battlefield)) {

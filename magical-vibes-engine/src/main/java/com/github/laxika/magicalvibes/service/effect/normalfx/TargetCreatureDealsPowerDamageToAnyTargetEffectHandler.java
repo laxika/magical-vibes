@@ -78,7 +78,7 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
                     null,
                     biter.getId());
 
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            int rawDamage = power;
             boolean trampleSource = e.excessDamageToControllerIfSourceHasTrample()
                     && victim != null
                     && gameQueryService.isCreature(gameData, victim)

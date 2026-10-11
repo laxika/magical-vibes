@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEndStepPlayerIfLifeAtMostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 public class DealDamageToEndStepPlayerIfLifeAtMostEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
@@ -42,7 +40,7 @@ public class DealDamageToEndStepPlayerIfLifeAtMostEffectHandler implements Norma
         }
 
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+            int rawDamage = e.damage();
             damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 

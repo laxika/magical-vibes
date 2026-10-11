@@ -85,7 +85,7 @@ public class AddCounterToEnchantedCreatureThenDestroyAtThresholdEffectHandler im
                 null,
                 creature.getId());
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+        int rawDamage = power;
         damageSupport.dealDamageToPlayer(gameData, damageEntry, controllerId, rawDamage);
     }
 }

@@ -73,7 +73,7 @@ public class DealDamageToRandomOpponentOrTheirPlaneswalkerEffectHandler implemen
         if (source == null) source = entry.getSourcePermanentSnapshot();
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        int rawDamage = damage;
         damageSupport.resolveAnyTargetDamage(gameData, entry, chosenOpponent, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }

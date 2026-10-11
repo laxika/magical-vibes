@@ -41,7 +41,7 @@ public class DealDamageToDamageSourceControllerEffectHandler implements NormalEf
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, damageEffect.amount(), entry);
+        int damage = damageEffect.amount();
         damageSupport.dealDamageToPlayer(gameData, entry, controllerId, damage);
         gameOutcomeService.checkWinCondition(gameData);
     }

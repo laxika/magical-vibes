@@ -8,11 +8,15 @@ import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
+import com.github.laxika.magicalvibes.cards.t.TorbranThaneOfRedFell;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -27,7 +31,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FurnaceOfRath.class, BenalishKnight.class, Blaze.class, CircleOfFlame.class, FlamewaveInvoker.class, GrizzlyBears.class, JaceBeleren.class, MinimusContainment.class, SamiteHealer.class, SerraAngel.class, SkyhunterSkirmisher.class})
+@CardUsed({FurnaceOfRath.class, BenalishKnight.class, Blaze.class, CircleOfFlame.class, FlamewaveInvoker.class, GrizzlyBears.class, JaceBeleren.class, MinimusContainment.class, SamiteHealer.class, SerraAngel.class, Shock.class, SkyhunterSkirmisher.class, TorbranThaneOfRedFell.class})
 class FurnaceOfRathTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -475,5 +479,110 @@ class FurnaceOfRathTest extends BaseCardTest {
         // Prevention first yields 2 damage; doubling first yields 3. The player must choose.
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Furnace of Rath and a \"plus 2\" bonus apply in the order the damaged player chooses")
+    void damagedPlayerOrdersDoublingAndBonus() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.addToBattlefield(player1, new TorbranThaneOfRedFell());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        chooseReplacement(player2, "Furnace of Rath");
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void bonusBeforeDoublingDoublesTheBonusToo() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.addToBattlefield(player1, new TorbranThaneOfRedFell());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        chooseReplacement(player2, "Deal 2 more damage");
+
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("A creature's controller can prevent before Furnace of Rath doubles the damage")
+    void creatureControllerOrdersDoublingAndPrevention() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        addCreatureReady(player2, new SamiteHealer());
+        harness.activateAbility(player2, 1, null, angel.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, 2, angel.getId());
+        harness.passBothPriorities();
+        chooseReplacementNotStartingWith(player2, "Furnace of Rath");
+
+        assertThat(angel.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void doublingBeforePreventionLeavesMoreDamageOnTheCreature() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        addCreatureReady(player2, new SamiteHealer());
+        harness.activateAbility(player2, 1, null, angel.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, 2, angel.getId());
+        harness.passBothPriorities();
+        chooseReplacement(player2, "Furnace of Rath");
+
+        assertThat(angel.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The defending player orders Furnace of Rath against a prevention shield in combat")
+    void defendingPlayerOrdersCombatDoublingAndPrevention() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        gd.playerDamagePreventionShields.put(player2.getId(), 1);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+
+        resolveCombat(player1);
+        chooseReplacement(player2, "Prevent the next 1 damage");
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void combatDoublingBeforePreventionDealsMore() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        gd.playerDamagePreventionShields.put(player2.getId(), 1);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+
+        resolveCombat(player1);
+        chooseReplacement(player2, "Furnace of Rath");
+
+        harness.assertLife(player2, 17);
+    }
+
+    private void chooseReplacement(Player chooser, String labelPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(chooser.getId());
+        harness.handleListChoice(chooser, choice.options().stream()
+                .filter(option -> option.startsWith(labelPrefix))
+                .findFirst().orElseThrow());
+    }
+
+    private void chooseReplacementNotStartingWith(Player chooser, String labelPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(chooser.getId());
+        harness.handleListChoice(chooser, choice.options().stream()
+                .filter(option -> !option.startsWith(labelPrefix))
+                .findFirst().orElseThrow());
     }
 }

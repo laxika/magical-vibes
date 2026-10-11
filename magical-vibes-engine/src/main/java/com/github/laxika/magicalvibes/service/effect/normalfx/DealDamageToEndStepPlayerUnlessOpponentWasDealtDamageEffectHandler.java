@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEndStepPlayerUnlessOpponentWasDealtDamageEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,7 +15,6 @@ public class DealDamageToEndStepPlayerUnlessOpponentWasDealtDamageEffectHandler
         implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -36,7 +34,7 @@ public class DealDamageToEndStepPlayerUnlessOpponentWasDealtDamageEffectHandler
                 .filter(playerId -> !playerId.equals(endStepPlayerId))
                 .anyMatch(playerId -> gameData.damageDealtToPlayersThisTurn.getOrDefault(playerId, 0) > 0);
         if (!opponentWasDealtDamage && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+            int damage = e.damage();
             damageSupport.dealDamageToPlayer(gameData, entry, endStepPlayerId, damage);
         }
 

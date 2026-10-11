@@ -42,7 +42,7 @@ public class DealDamageToPermanentsTargetControlsEffectHandler implements Normal
             if (targetPlayerId == null) return;
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int rawDamage = e.damage();
         String cardName = entry.getCard().getName();
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;

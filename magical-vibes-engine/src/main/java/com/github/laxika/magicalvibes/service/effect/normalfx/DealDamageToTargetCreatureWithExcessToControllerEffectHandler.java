@@ -40,7 +40,7 @@ public class DealDamageToTargetCreatureWithExcessToControllerEffectHandler
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, gameQueryService.findPermanentById(
                         gameData, entry.getSourcePermanentId())));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int damage = evaluatedDamage;
         int markedDamageBefore = target.getMarkedDamage();
         int excessDamage = damageSupport.computeExcessDamageToCreature(
                 gameData, target, damage, markedDamageBefore, false);

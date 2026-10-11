@@ -92,7 +92,7 @@ public class ExileUntilNonlandToHandRepeatIfHighMVEffectHandler implements Norma
             if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
                 gameLogService.append(gameData, GameLog.text(sourceName + "'s damage to " + playerName + " is prevented."));
             } else {
-                int rawDamage = gameQueryService.applyDamageMultiplier(gameData, totalDamage, entry);
+                int rawDamage = totalDamage;
                 damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
                 gameLogService.append(gameData, GameLog.text(sourceName + " deals " + rawDamage + " damage to " + playerName
                                 + " (" + cardsToHand + " card" + (cardsToHand > 1 ? "s" : "") + " put into hand)."));

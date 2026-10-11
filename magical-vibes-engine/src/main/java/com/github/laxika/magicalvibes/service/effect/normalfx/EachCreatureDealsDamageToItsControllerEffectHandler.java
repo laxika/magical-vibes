@@ -80,7 +80,7 @@ public class EachCreatureDealsDamageToItsControllerEffectHandler implements Norm
                     null,
                     creature.getId());
 
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), damageEntry);
+            int rawDamage = e.damage();
             damageSupport.dealDamageToPlayer(gameData, damageEntry, controllerId, rawDamage);
         }
 

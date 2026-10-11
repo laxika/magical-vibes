@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
  * carrying the effect itself ("another"). Two copies do boost each other.
  *
  * <p>Multiple instances stack additively. Only applies when the source would deal at least 1
- * damage. Queried by {@code GameQueryService.getColorSourcePermanentDamageBonus} from both
- * {@code applyDamageMultiplier(GameData, int, StackEntry)} and
- * {@code applyCombatDamageMultiplier}.
+ * damage. Queried by {@code GameQueryService.getColorSourcePermanentDamageBonus} for the damage
+ * pool's source-bonus option, which the damaged player or permanent controller orders against the
+ * other replacement effects.
  *
  * <p>Example: Embermaw Hellion — {@code new AdditionalColorSourceDamageEffect(1, CardColor.RED)}.
  */

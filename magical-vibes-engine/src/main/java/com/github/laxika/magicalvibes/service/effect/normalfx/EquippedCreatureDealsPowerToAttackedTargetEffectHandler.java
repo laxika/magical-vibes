@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -64,11 +63,10 @@ public class EquippedCreatureDealsPowerToAttackedTargetEffectHandler implements 
                 equippedCreature.getId());
 
         int power = gameQueryService.getPowerBasedDamage(gameData, equippedCreature);
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
 
         if (gameData.playerIds.contains(targetId)) {
             if (!damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
-                damageSupport.dealDamageToPlayer(gameData, damageEntry, targetId, rawDamage);
+                damageSupport.dealDamageToPlayer(gameData, damageEntry, targetId, power);
             }
             gameOutcomeService.checkWinCondition(gameData);
             return;
@@ -85,9 +83,7 @@ public class EquippedCreatureDealsPowerToAttackedTargetEffectHandler implements 
             return;
         }
 
-        int newLoyalty = Math.max(0, target.getCounterCount(CounterType.LOYALTY) - rawDamage);
-        target.setCounterCount(CounterType.LOYALTY, newLoyalty);
-        gameLogService.append(gameData, GameLog.builder().card(source).text(" deals " + rawDamage + " damage to ").card(target.getCard()).text(".").build());
+        damageSupport.dealCreatureDamage(gameData, damageEntry, target, power);
         gameOutcomeService.checkWinCondition(gameData);
     }
 }

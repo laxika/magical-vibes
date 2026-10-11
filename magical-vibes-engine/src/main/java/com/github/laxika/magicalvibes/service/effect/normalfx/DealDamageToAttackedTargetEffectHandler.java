@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -49,10 +48,9 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
         }
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, sourcePermanent));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
         if (gameData.playerIds.contains(targetId)) {
             if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-                damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
+                damageSupport.dealDamageToPlayer(gameData, entry, targetId, damage);
             }
             gameOutcomeService.checkWinCondition(gameData);
             return;
@@ -68,9 +66,7 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
             return;
         }
 
-        int newLoyalty = Math.max(0, target.getCounterCount(CounterType.LOYALTY) - rawDamage);
-        target.setCounterCount(CounterType.LOYALTY, newLoyalty);
-        gameLogService.append(gameData, GameLog.builder().card(source).text(" deals " + rawDamage + " damage to ").card(target.getCard()).text(".").build());
+        damageSupport.dealCreatureDamage(gameData, entry, target, damage);
         gameOutcomeService.checkWinCondition(gameData);
     
     }

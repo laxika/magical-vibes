@@ -44,7 +44,7 @@ public class DealDamageToEndStepPlayerEffectHandler implements NormalEffectHandl
             }
             int amount = amountEvaluationService.evaluate(
                     gameData, e.amount(), AmountContext.forStackEntry(entry, source));
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+            int rawDamage = amount;
             damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 

@@ -58,7 +58,7 @@ public class TargetCreatureDealsDamageToSelfEffectHandler implements NormalEffec
                 target.getId(), target.getId());
         damageEntry.setNonTargeting(true);
         damageEntry.setSourcePermanentSnapshot(new Permanent(target));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
+        int rawDamage = damage;
         damageSupport.dealCreatureDamage(gameData, damageEntry, target, rawDamage, target);
     }
 }

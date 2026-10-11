@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.WheelOfMisfortuneEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,6 @@ public class WheelOfMisfortuneEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
     private final DiscardHandEffectHandler discardHandEffectHandler;
     private final DrawService drawService;
@@ -96,7 +94,7 @@ public class WheelOfMisfortuneEffectHandler implements NormalEffectHandlerBean {
         if (highest > 0 && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             for (UUID playerId : state.order) {
                 if (state.chosenNumbers.get(playerId) == highest) {
-                    int damage = gameQueryService.applyDamageMultiplier(gameData, highest, entry);
+                    int damage = highest;
                     damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
                 }
             }

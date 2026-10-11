@@ -48,7 +48,7 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
         }
         int baseDamage = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage, entry);
+        int damage = baseDamage;
 
         // Prefer the permanent's original (front-face) card id so PermanentIsSourceCardPredicate
         // correctly excludes the source on transform DFCs (back-face stack entry ≠ original id).
@@ -75,9 +75,7 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
                 // The amount describes the creature being damaged, so it is evaluated per creature with
                 // that creature standing in as the amount's source permanent (Baki's Curse).
                 damageSupport.damageAllCreaturesOnBattlefield(gameData, entry,
-                        p -> gameQueryService.applyDamageMultiplier(gameData,
-                                amountEvaluationService.evaluate(gameData, e.amount(),
-                                        AmountContext.forStackEntry(entry, p)), entry),
+                        p -> amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, p)),
                         creatureFilter, e.exileInsteadOfDie(), e.cantRegenerate(), e.tapDamagedCreatures());
                 return;
             }

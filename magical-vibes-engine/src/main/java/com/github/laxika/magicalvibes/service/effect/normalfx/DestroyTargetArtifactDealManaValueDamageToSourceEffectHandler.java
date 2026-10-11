@@ -42,7 +42,7 @@ public class DestroyTargetArtifactDealManaValueDamageToSourceEffectHandler imple
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
         if (source != null && manaValue > 0) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
+            int damage = manaValue;
             damageSupport.dealCreatureDamage(gameData, entry, source, damage, artifact);
         }
 

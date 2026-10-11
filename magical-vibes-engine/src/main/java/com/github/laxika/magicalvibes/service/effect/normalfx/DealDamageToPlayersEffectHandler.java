@@ -102,7 +102,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             int amount = evaluateAmount(gameData, entry, effect, enchantedPlayer);
             damageSupport.resolveAnyTargetDamage(gameData, entry, recipient,
-                    gameQueryService.applyDamageMultiplier(gameData, amount, entry), false);
+                    amount, false);
         }
     }
 
@@ -113,7 +113,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
 
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             int amount = evaluateAmount(gameData, entry, e, targetId);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+            int rawDamage = amount;
             damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
     }
@@ -135,7 +135,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                 && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             int amount = evaluateAmount(gameData, entry, effect, controllerId);
             damageSupport.dealDamageToPlayer(gameData, entry, controllerId,
-                    gameQueryService.applyDamageMultiplier(gameData, amount, entry));
+                    amount);
         }
     }
 
@@ -145,7 +145,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s damage to controller is prevented."));
         } else {
             int amount = evaluateAmount(gameData, entry, e, entry.getControllerId());
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+            int rawDamage = amount;
             damageSupport.dealDamageToPlayer(gameData, entry, entry.getControllerId(), rawDamage);
         }
     }
@@ -164,7 +164,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         }
 
         int amount = evaluateAmount(gameData, entry, e, defendingPlayerId);
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+        int rawDamage = amount;
         damageSupport.dealDamageToPlayer(gameData, entry, defendingPlayerId, rawDamage);
     }
 
@@ -178,7 +178,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             int evaluated = opponentsOnly
                     ? evaluateAmount(gameData, entry, e, controllerId)
                     : evaluateAmount(gameData, entry, e, playerId);
-            int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+            int damage = evaluated;
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
         }
     }
@@ -191,7 +191,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         for (UUID playerId : e.selectedPlayerIds()) {
             if (!gameData.playerIds.contains(playerId) || playerId.equals(controllerId)) continue;
             int amount = evaluateAmount(gameData, entry, e, controllerId);
-            int damage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+            int damage = amount;
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
         }
     }
@@ -204,7 +204,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         int evaluated = evaluateAmount(gameData, entry, e, controllerId);
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId) || playerId.equals(excludedPlayerId)) continue;
-            int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+            int damage = evaluated;
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
         }
     }
@@ -223,7 +223,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
         } else {
             int amount = evaluateAmount(gameData, entry, e, controllerId);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+            int rawDamage = amount;
             damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
         }
     }
@@ -246,7 +246,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             int amount = evaluateAmount(gameData, entry, e, victimId);
             if (amount <= 0) return;
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+            int rawDamage = amount;
             damageSupport.dealDamageToPlayer(gameData, entry, victimId, rawDamage);
         }
     }

@@ -43,7 +43,7 @@ public class EnchantedCreatureDealsDamageToTargetCreatureEffectHandler implement
 
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, enchantedCreature));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        int rawDamage = damage;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
         if (gameQueryService.isDamagePreventable(gameData)

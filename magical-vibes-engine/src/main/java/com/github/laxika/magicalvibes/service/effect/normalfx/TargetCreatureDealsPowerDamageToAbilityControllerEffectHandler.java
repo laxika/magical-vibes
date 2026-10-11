@@ -57,7 +57,7 @@ public class TargetCreatureDealsPowerDamageToAbilityControllerEffectHandler impl
                 null,
                 target.getId());
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+        int rawDamage = power;
         damageSupport.dealDamageToPlayer(gameData, damageEntry, abilityControllerId, rawDamage);
     }
 }

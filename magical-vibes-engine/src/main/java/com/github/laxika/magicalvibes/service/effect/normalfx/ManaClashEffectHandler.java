@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaClashEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Component;
 public class ManaClashEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final CoinFlipService coinFlipService;
@@ -73,7 +71,7 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void dealOneDamage(GameData gameData, StackEntry entry, UUID playerId) {
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, 1, entry);
+        int rawDamage = 1;
         damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);
     }
 }

@@ -50,7 +50,7 @@ public class ChosenPermanentDealsPowerDamageToEachMatchingCreatureEffectHandler
         }
 
         int power = gameQueryService.getPowerBasedDamage(gameData, source);
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
+        int rawDamage = power;
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(source.getCard().getId())
                 .withSourceControllerId(gameQueryService.findPermanentController(gameData, source.getId()));

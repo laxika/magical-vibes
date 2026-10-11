@@ -50,7 +50,7 @@ public class DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffectHandler impl
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + playerName + " is prevented."));
             } else {
-                int rawDamage = gameQueryService.applyDamageMultiplier(gameData, cardsDrawn, entry);
+                int rawDamage = cardsDrawn;
                 damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);
             }
         }

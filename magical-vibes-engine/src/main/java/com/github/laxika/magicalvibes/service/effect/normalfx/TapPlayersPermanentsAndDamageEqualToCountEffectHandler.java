@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamage
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Component;
 public class TapPlayersPermanentsAndDamageEqualToCountEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -69,7 +67,7 @@ public class TapPlayersPermanentsAndDamageEqualToCountEffectHandler implements N
         log.info("Game {} - {} taps {} permanent(s) of the end-step player", gameData.id, entry.getCard().getName(), tapped);
 
         if (tapped > 0 && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, tapped, entry);
+            int damage = tapped;
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
         }
 

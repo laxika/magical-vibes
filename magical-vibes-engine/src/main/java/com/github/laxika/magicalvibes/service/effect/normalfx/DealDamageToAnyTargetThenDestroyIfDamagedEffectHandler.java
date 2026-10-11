@@ -50,7 +50,7 @@ public class DealDamageToAnyTargetThenDestroyIfDamagedEffectHandler implements N
         }
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, damageEffect.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int damage = evaluatedDamage;
         int actualDamage = damageSupport.resolveAnyTargetDamage(
                 gameData, entry, entry.getTargetId(), damage, false);
 

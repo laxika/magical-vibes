@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerWithoutMaxSpeedEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +19,6 @@ public class DealDamageToEachPlayerWithoutMaxSpeedEffectHandler implements Norma
     private static final int MAX_SPEED = 4;
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -36,7 +34,7 @@ public class DealDamageToEachPlayerWithoutMaxSpeedEffectHandler implements Norma
                 if (gameData.playerSpeeds.getOrDefault(playerId, 0) >= MAX_SPEED) {
                     continue;
                 }
-                int damage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+                int damage = e.damage();
                 damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
             }
         }

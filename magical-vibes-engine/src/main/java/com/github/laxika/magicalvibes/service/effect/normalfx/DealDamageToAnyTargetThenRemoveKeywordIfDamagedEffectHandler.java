@@ -49,7 +49,7 @@ public class DealDamageToAnyTargetThenRemoveKeywordIfDamagedEffectHandler
         }
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, damageEffect.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int damage = evaluatedDamage;
 
         if (target != null && gameQueryService.isCreature(gameData, target)) {
             boolean damagePrevented = damageSupport.isDamageSourcePreventedWithLog(gameData, entry)

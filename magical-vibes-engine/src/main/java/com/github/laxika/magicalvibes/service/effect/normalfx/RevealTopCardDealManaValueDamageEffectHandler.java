@@ -52,7 +52,7 @@ public class RevealTopCardDealManaValueDamageEffectHandler implements NormalEffe
         gameLogService.append(gameData, GameLog.builder().text(targetPlayerName + " reveals ").card(topCard).text(" (mana value " + manaValue + ") from the top of their library.").build());
 
         if (manaValue > 0 && !gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
+            int damage = manaValue;
 
             if (e.damageTargetPlayer()) {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetPlayerId, damage);

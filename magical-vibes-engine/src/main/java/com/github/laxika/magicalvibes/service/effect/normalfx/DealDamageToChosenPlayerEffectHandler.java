@@ -71,7 +71,7 @@ public class DealDamageToChosenPlayerEffectHandler implements NormalEffectHandle
         damageEntry.setDamageSourceCard(damageSourceCard);
         int amount = amountEvaluationService.evaluate(gameData, chosenPlayerEffect.damage(),
                 AmountContext.forStackEntry(entry, dealer));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, damageEntry);
+        int rawDamage = amount;
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
             damageSupport.dealDamageToPlayer(gameData, damageEntry, chosenPlayerId, rawDamage);
         }

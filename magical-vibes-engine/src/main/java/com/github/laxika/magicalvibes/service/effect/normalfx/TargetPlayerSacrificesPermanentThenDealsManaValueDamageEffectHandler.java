@@ -81,7 +81,7 @@ public class TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandle
         destructionSupport.sacrificeAndLog(gameData, permanent, sacrificingPlayerId);
 
         if (manaValue > 0) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
+            int damage = manaValue;
             damageSupport.dealDamageToPlayer(gameData, entry, sacrificingPlayerId, damage);
         }
         gameOutcomeService.checkWinCondition(gameData);

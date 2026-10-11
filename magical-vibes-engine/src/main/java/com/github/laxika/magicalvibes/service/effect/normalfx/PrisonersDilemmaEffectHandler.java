@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PrisonersDilemmaEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,7 +26,6 @@ public class PrisonersDilemmaEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;
 
@@ -93,7 +91,7 @@ public class PrisonersDilemmaEffectHandler implements NormalEffectHandlerBean {
                     int damage = allSilence ? 4 : allSnitch ? 8 : 12;
                     damageSupport.dealDamageToPlayer(
                             gameData, entry, choice.getKey(),
-                            gameQueryService.applyDamageMultiplier(gameData, damage, entry));
+                            damage);
                 }
             }
         }

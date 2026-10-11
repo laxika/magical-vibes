@@ -49,7 +49,7 @@ public class DealDamageToEachOpponentEqualToControlledPermanentCountEffectHandle
                 continue;
             }
 
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, matchingPermanentCount, entry);
+            int rawDamage = matchingPermanentCount;
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);
         }
 

@@ -453,59 +453,9 @@ public class DestructionSupport {
         return true;
     }
 
-    public void dealNoncombatDamageToPlayer(GameData gameData, UUID playerId, int baseDamage,
-                                              String cardName, Card sourceCard) {
-        int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);
-
-        if (gameQueryService.isDamagePreventable(gameData)
-                && (gameQueryService.isDamageFromCardSourcePrevented(gameData, sourceCard)
-                    || damagePreventionService.applyColorDamagePreventionForPlayer(
-                            gameData, playerId, sourceCard.getColor()))) {
-            gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
-            return;
-        }
-
-        int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
-        effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                gameData, playerId, effectiveDamage, cardName, false, null, sourceCard);
-        effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                gameData, playerId, effectiveDamage);
-
-        if (effectiveDamage > 0) {
-            gameData.recordDamageToPlayer(playerId, effectiveDamage,
-                    sourceCard.hasType(CardType.ARTIFACT) ? effectiveDamage : 0);
-        }
-
-        if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
-            if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
-                int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
-                if (poisonAmount > 0) {
-                    int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-                    gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
-                    String playerName = gameData.playerIdToName.get(playerId);
-                    gameLogService.append(gameData, GameLog.text(playerName + " gets " + poisonAmount + " poison counters from " + cardName + "."));
-                }
-            }
-            lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName,
-                    gameData.currentlyResolvingControllerId);
-            return;
-        }
-
-        if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
-            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + "'s life total can't change."));
-            return;
-        }
-
-        int lifeLoss = effectiveDamage
-                * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
-        gameData.playerLifeTotals.put(playerId,
-                gameQueryService.lifeAfterDamage(gameData, playerId, lifeLoss));
-
-        if (effectiveDamage > 0) {
-            String playerName = gameData.playerIdToName.get(playerId);
-            gameLogService.append(gameData, GameLog.text(cardName + " deals " + effectiveDamage + " damage to " + playerName + "."));
-            log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, effectiveDamage, playerName);
-        }
+    /** Deals {@code damage} from {@code entry}'s source to a player through the damage pipeline. */
+    public void dealNoncombatDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int damage) {
+        damageSupportProvider.getObject().dealDamageToPlayer(gameData, entry, playerId, damage);
     }
 
     public List<UUID> collectCreatureIds(GameData gameData, UUID playerId, Predicate<Permanent> additionalFilter) {
@@ -783,8 +733,7 @@ public class DestructionSupport {
             } else if (elseEffect instanceof DealDamageToPlayersEffect damage
                     && damage.recipient() == DamageRecipient.CONTROLLER
                     && damage.amount() instanceof Fixed fixed) {
-                dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), fixed.value(),
-                        entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
+                dealNoncombatDamageToPlayer(gameData, entry, entry.getControllerId(), fixed.value());
                 gameOutcomeService.checkWinCondition(gameData);
             } else if (elseEffect instanceof DealDamageToPlayersEffect damage
                     && damage.recipient() == DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER
@@ -792,8 +741,7 @@ public class DestructionSupport {
                 // Mind Whip: damage the enchanted permanent's controller (baked as targetId).
                 UUID victim = entry.getTargetId();
                 if (victim != null) {
-                    dealNoncombatDamageToPlayer(gameData, victim, fixed.value(),
-                            entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
+                    dealNoncombatDamageToPlayer(gameData, entry, victim, fixed.value());
                     gameOutcomeService.checkWinCondition(gameData);
                 }
             } else if (elseEffect instanceof SacrificeSelfEffect) {

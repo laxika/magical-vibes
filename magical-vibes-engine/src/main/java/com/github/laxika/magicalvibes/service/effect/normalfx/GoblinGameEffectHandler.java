@@ -122,7 +122,7 @@ public class GoblinGameEffectHandler implements NormalEffectHandlerBean {
             }
         } else if (effect.discardNonLowestAndDrawSeven()) {
             if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-                int damage = gameQueryService.applyDamageMultiplier(gameData, winningNumber, entry);
+                int damage = winningNumber;
                 for (UUID playerId : winningPlayers) {
                     damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
                 }

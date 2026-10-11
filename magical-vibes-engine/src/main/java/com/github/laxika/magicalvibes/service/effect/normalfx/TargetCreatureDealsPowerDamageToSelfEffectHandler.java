@@ -52,8 +52,7 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
                 gameQueryService.findPermanentController(gameData, target.getId()),
                 target.getCard().getName(), List.of(), target.getId(), List.of());
         damageEntry.setSourcePermanentSnapshot(target);
-        int rawDamage = gameQueryService.applyDamageMultiplier(
-                gameData, Math.multiplyExact(power, selfDamageEffect.powerMultiplier()), damageEntry);
+        int rawDamage = Math.multiplyExact(power, selfDamageEffect.powerMultiplier());
         damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, target);
     }
 }

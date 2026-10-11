@@ -61,7 +61,7 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        int rawDamage = damage;
         String cardName = entry.getCard().getName();
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;

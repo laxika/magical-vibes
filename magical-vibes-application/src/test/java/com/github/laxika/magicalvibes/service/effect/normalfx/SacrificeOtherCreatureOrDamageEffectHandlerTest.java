@@ -30,6 +30,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.test.util.ReflectionTestUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +43,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,6 +61,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
     @Mock private LifeSupport lifeSupport;
     @Mock private TriggerCollectionService triggerCollectionService;
     @InjectMocks private DestructionSupport destructionSupport;
+    private DamageSupport damageSupport;
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -81,6 +85,11 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
                 .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
                         - (int) invocation.getArgument(2));
         lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
+        damageSupport = mock(DamageSupport.class);
+        @SuppressWarnings("unchecked")
+        ObjectProvider<DamageSupport> damageSupportProvider = mock(ObjectProvider.class);
+        lenient().when(damageSupportProvider.getObject()).thenReturn(damageSupport);
+        ReflectionTestUtils.setField(destructionSupport, "damageSupportProvider", damageSupportProvider);
         sacrificeOtherOrDamageHandler = new SacrificeOtherCreatureOrDamageEffectHandler(
                 destructionSupport, gameOutcomeService, gameQueryService, playerInputService);
 
@@ -160,17 +169,10 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
 
                 // Lord is a creature but is the source, so no "other" creatures
                 when(gameQueryService.isCreature(gd, lord)).thenReturn(true);
-                when(gameQueryService.applyDamageMultiplier(gd, 7)).thenReturn(7);
-                when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
-                when(gameQueryService.isDamageFromCardSourcePrevented(gd, lordCard)).thenReturn(false);
-                when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
-                when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
-                when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"), eq(false), isNull(), any(Card.class))).thenReturn(7);
-                when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(true);
 
                 sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.getLife(player1Id)).isEqualTo(13);
+                verify(damageSupport).dealDamageToPlayer(gd, entry, player1Id, 7);
                 verify(gameOutcomeService).checkWinCondition(gd);
             }
 
@@ -218,28 +220,5 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
 
                 assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
                 verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), anyString());
-            }
-
-            @Test
-            @DisplayName("Damage is logged when no creatures to sacrifice")
-            void damageIsLogged() {
-                Card lordCard = createCreatureCard("Lord of the Pit");
-                Permanent lord = addPermanent(player1Id, lordCard);
-
-                StackEntry entry = triggeredAbilityEntry(lordCard, player1Id, null, lord.getId());
-                SacrificeOtherCreatureOrDamageEffect effect = new SacrificeOtherCreatureOrDamageEffect(7);
-
-                when(gameQueryService.isCreature(gd, lord)).thenReturn(true);
-                when(gameQueryService.applyDamageMultiplier(gd, 7)).thenReturn(7);
-                when(gameQueryService.isDamagePreventable(gd)).thenReturn(true);
-                when(gameQueryService.isDamageFromCardSourcePrevented(gd, lordCard)).thenReturn(false);
-                when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player1Id), any())).thenReturn(false);
-                when(damagePreventionService.applyPlayerPreventionShield(gd, player1Id, 7)).thenReturn(7);
-                when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"), eq(false), isNull(), any(Card.class))).thenReturn(7);
-                when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(true);
-
-                sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
-
-                verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Lord of the Pit deals 7 damage to Player1.")));
             }
 }

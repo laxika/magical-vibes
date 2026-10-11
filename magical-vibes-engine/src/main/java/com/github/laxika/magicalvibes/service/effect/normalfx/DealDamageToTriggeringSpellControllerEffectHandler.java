@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringSpellControllerEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 public class DealDamageToTriggeringSpellControllerEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -46,7 +44,7 @@ public class DealDamageToTriggeringSpellControllerEffectHandler implements Norma
 
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)
                 && damageEffect.amount() > 0) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, damageEffect.amount(), entry);
+            int damage = damageEffect.amount();
             damageSupport.dealDamageToPlayer(gameData, entry, triggeringControllerId, damage);
         }
         gameOutcomeService.checkWinCondition(gameData);

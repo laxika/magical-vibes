@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachDestroyedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Component;
 public class DealDamageToEachDestroyedPermanentControllerEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -41,7 +39,7 @@ public class DealDamageToEachDestroyedPermanentControllerEffectHandler implement
                 continue;
             }
             damageSupport.dealDamageToPlayer(gameData, entry, playerId,
-                    gameQueryService.applyDamageMultiplier(gameData, count, entry));
+                    count);
         }
 
         gameOutcomeService.checkWinCondition(gameData);

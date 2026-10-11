@@ -10247,9 +10247,13 @@ public class GameQueryService {
                 gameData, recipientPlayerId, sourceControllerId, null, combatDamage);
     }
 
-    private int getDamageToRecipientMultiplier(GameData gameData, UUID recipientPlayerId,
-                                               UUID sourceControllerId, UUID recipientPermanentId,
-                                               boolean combatDamage) {
+    /**
+     * Returns the damage multiplier for a player or permanent recipient, with both the recipient
+     * permanent and the damage kind known.
+     */
+    public int getDamageToRecipientMultiplier(GameData gameData, UUID recipientPlayerId,
+                                              UUID sourceControllerId, UUID recipientPermanentId,
+                                              boolean combatDamage) {
         if (recipientPlayerId == null) return 1;
 
         int[] multiplier = {1};
@@ -10719,38 +10723,63 @@ public class GameQueryService {
     }
 
     /**
-     * Applies the global damage multiplier and per-controller damage multipliers
-     * (e.g. {@link DoubleControllerDamageEffect}) to the given damage amount.
+     * The damage {@code entry} would deal after every multiplier and "+N" bonus for its source,
+     * applied in a fixed order: bonuses first, then multipliers. Damage dealt to a player or a
+     * permanent gets these as replacement effects its recipient orders (CR 616.1), so this is
+     * only a prediction, for the AI and for effects that read an amount without dealing it.
      *
      * @param entry the stack entry representing the damage source; used to check controller
      *              and to evaluate stack-entry predicates on controller damage effects
-     * @return the damage after applying all multipliers
      */
     public int applyDamageMultiplier(GameData gameData, int damage, StackEntry entry) {
+        int bonus = damage > 0 && entry != null ? getDealingSourceDamageBonus(gameData, entry) : 0;
+        return (damage + bonus) * getDamageMultiplier(gameData) * getDealingSourceDamageMultiplier(gameData, entry);
+    }
+
+    /** The source permanent of {@code entry} on the battlefield, or its last known information. */
+    private Permanent dealingSourcePermanent(GameData gameData, StackEntry entry) {
         Permanent source = entry != null && entry.getSourcePermanentId() != null
                 ? findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
         if (source == null && entry != null) {
             source = entry.getSourcePermanentSnapshot();
         }
+        return source;
+    }
+
+    private UUID dealingSourceController(GameData gameData, StackEntry entry, Permanent source) {
         UUID controllerId = entry != null ? entry.getControllerId() : null;
         if (source != null) {
             UUID sourceControllerId = findPermanentController(gameData, source.getId());
             if (sourceControllerId != null) controllerId = sourceControllerId;
         }
-        int bonus = 0;
-        if (damage > 0 && entry != null) {
-            bonus = getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
-                    + getColorSourcePermanentDamageBonus(gameData, entry.getControllerId(),
-                            entry.getEffectiveDamageSourceCard().getColors(), entry.getSourcePermanentId())
-                    + getSubtypeSourceDamageBonus(gameData, controllerId,
-                            entry.getEffectiveDamageSourceCard(), source)
-                    + getControllerDamageBonusThisTurn(gameData, controllerId)
-                    + getControllerDamageBonus(gameData, entry)
-                    + getSpellDamageBonus(gameData, entry);
-        }
-        return (damage + bonus) * getDamageMultiplier(gameData)
-                * getControllerDamageMultiplier(gameData, controllerId, entry, false, source)
+        return controllerId;
+    }
+
+    /**
+     * The "deals that much damage plus N" bonuses for noncombat damage {@code entry} deals, whoever
+     * is dealt it: color and subtype source bonuses, the controller's bonuses and spell bonuses.
+     */
+    public int getDealingSourceDamageBonus(GameData gameData, StackEntry entry) {
+        Permanent source = dealingSourcePermanent(gameData, entry);
+        UUID controllerId = dealingSourceController(gameData, entry, source);
+        return getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
+                + getColorSourcePermanentDamageBonus(gameData, entry.getControllerId(),
+                        entry.getEffectiveDamageSourceCard().getColors(), entry.getSourcePermanentId())
+                + getSubtypeSourceDamageBonus(gameData, controllerId, entry.getEffectiveDamageSourceCard(), source)
+                + getControllerDamageBonusThisTurn(gameData, controllerId)
+                + getControllerDamageBonus(gameData, entry)
+                + getSpellDamageBonus(gameData, entry);
+    }
+
+    /**
+     * The multipliers for noncombat damage {@code entry} deals, apart from the global ones
+     * ({@link #getDamageMultiplier}): the controller's and the source's doublings.
+     */
+    public int getDealingSourceDamageMultiplier(GameData gameData, StackEntry entry) {
+        Permanent source = dealingSourcePermanent(gameData, entry);
+        UUID controllerId = dealingSourceController(gameData, entry, source);
+        return getControllerDamageMultiplier(gameData, controllerId, entry, false, source)
                 * getPermanentDamageMultiplier(gameData, entry != null ? entry.getSourcePermanentId() : null);
     }
 
@@ -11058,65 +11087,45 @@ public class GameQueryService {
         return multiplier[0];
     }
 
-    /**
-     * Applies the global damage multiplier and creature-specific combat damage multipliers
-     * to the given combat damage amount. The source multiplier doubles damage dealt by the
-     * source creature, and the target multiplier doubles damage received by the target creature.
-     *
-     * @param source the creature dealing combat damage
-     * @param target the creature receiving combat damage, or {@code null} if damage is to a player
-     * @return the damage after applying all multipliers
-     */
-    public int applyCombatDamageMultiplier(GameData gameData, int damage, Permanent source, Permanent target) {
-        return applyCombatDamageMultiplier(gameData, damage, source, target, null);
+    /** The "deals that much damage plus N" bonuses for combat damage {@code source} deals, whoever is dealt it. */
+    public int getCombatSourceDamageBonus(GameData gameData, Permanent source) {
+        UUID controllerId = findPermanentController(gameData, source.getId());
+        if (controllerId == null) {
+            return 0;
+        }
+        return getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors())
+                + getColorSourcePermanentDamageBonus(gameData, controllerId, source.getCard().getColors(),
+                        source.getId())
+                + getSubtypeSourceDamageBonus(gameData, controllerId, source.getCard(), source)
+                + getControllerDamageBonusThisTurn(gameData, controllerId);
     }
 
-    /** Applies combat multipliers when the damage is assigned to a player. */
-    public int applyCombatDamageMultiplier(GameData gameData, int damage, Permanent source,
-                                           Permanent target, UUID recipientPlayerId) {
-        int bonus = 0;
+    /**
+     * The multipliers for combat damage {@code source} deals to {@code recipientPermanent}, or to the
+     * player {@code recipientPlayerId}, apart from the global ones and the recipient's own: the
+     * controller's, the source's and its Equipment's doublings.
+     */
+    public int getCombatSourceDamageMultiplier(GameData gameData, Permanent source, Permanent recipientPermanent,
+                                               UUID recipientPlayerId) {
         UUID controllerId = findPermanentController(gameData, source.getId());
-        if (damage > 0) {
-            if (controllerId != null) {
-                bonus = getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors())
-                        + getColorSourcePermanentDamageBonus(gameData, controllerId,
-                                source.getCard().getColors(), source.getId())
-                        + getSubtypeSourceDamageBonus(gameData, controllerId, source.getCard(), source);
-                bonus += getControllerDamageBonusThisTurn(gameData, controllerId);
-                if (target != null) {
-                    UUID targetControllerId = findPermanentController(gameData, target.getId());
-                    bonus += getAdditionalDamageToOpponentsBonus(
-                            gameData, controllerId, source.getCard(), source, targetControllerId);
-                }
-            }
+        return getControllerDamageMultiplier(gameData, controllerId, null, true)
+                * getSourceDamageMultiplier(gameData, controllerId, source, true, recipientPermanent,
+                        recipientPlayerId)
+                * getDelayedSourceDamageMultiplier(gameData, source, recipientPlayerId)
+                * getPermanentDamageMultiplier(gameData, source.getId())
+                * getEquippedCreatureCombatDamageMultiplier(gameData, source);
+    }
+
+    /**
+     * The multipliers for combat damage dealt to the creature {@code target} itself: its
+     * Equipment's doublings and "combat damage dealt to creatures is doubled this turn".
+     */
+    public int getCombatDamageToCreatureMultiplier(GameData gameData, Permanent target) {
+        int multiplier = getEquippedCreatureCombatDamageMultiplier(gameData, target);
+        for (int i = 0; i < gameData.combatDamageToCreaturesDoublingsThisTurn; i++) {
+            multiplier *= 2;
         }
-        if (target != null) {
-            bonus += getControllerDamageToOpponentBonus(gameData, controllerId,
-                    findPermanentController(gameData, target.getId()), true, true, source.getId());
-        }
-        int result = (damage + bonus) * getDamageMultiplier(gameData);
-        result *= getControllerDamageMultiplier(gameData, controllerId, null, true);
-        Permanent attackTarget = target;
-        if (attackTarget == null && recipientPlayerId == null && source.getAttackTarget() != null
-                && !gameData.playerIds.contains(source.getAttackTarget())) {
-            attackTarget = findPermanentById(gameData, source.getAttackTarget());
-        }
-        result *= getSourceDamageMultiplier(
-                gameData, controllerId, source, true, attackTarget, recipientPlayerId);
-        result *= getDelayedSourceDamageMultiplier(gameData, source, recipientPlayerId);
-        result *= getPermanentDamageMultiplier(gameData, source.getId());
-        result *= getEquippedCreatureCombatDamageMultiplier(gameData, source);
-        if (target != null) {
-            result *= getEquippedCreatureCombatDamageMultiplier(gameData, target);
-            // Gisela, Blade of Goldnight: double the damage dealt to a permanent an opponent controls.
-            result *= getDamageToRecipientMultiplier(
-                    gameData, findPermanentController(gameData, target.getId()), controllerId,
-                    target.getId(), true);
-            for (int i = 0; i < gameData.combatDamageToCreaturesDoublingsThisTurn; i++) {
-                result *= 2;
-            }
-        }
-        return result;
+        return multiplier;
     }
 
     private int getDelayedSourceDamageMultiplier(GameData gameData, Permanent source,

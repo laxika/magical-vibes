@@ -48,7 +48,7 @@ public class DealDamageToAnyTargetThenCantBlockIfCreatureDamagedEffectHandler im
         }
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, damageEffect.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int damage = evaluatedDamage;
 
         damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, damage, false);
 

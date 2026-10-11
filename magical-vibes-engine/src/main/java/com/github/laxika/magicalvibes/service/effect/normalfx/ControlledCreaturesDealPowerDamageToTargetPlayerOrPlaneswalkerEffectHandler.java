@@ -86,7 +86,7 @@ public class ControlledCreaturesDealPowerDamageToTargetPlayerOrPlaneswalkerEffec
                     null,
                     source.getId());
             int power = gameQueryService.getPowerBasedDamage(gameData, source);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            int rawDamage = power;
             if (targetPermanent != null) {
                 damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, false);
             } else {

@@ -42,7 +42,7 @@ public class DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffectHandler i
         UUID firstTargetId = targets.getFirst();
         UUID affectedPlayerId = resolveAffectedPlayer(gameData, entry, e, firstTargetId);
         if (!sourceDamagePrevented && affectedPlayerId != null && entry.isTargetLegal(0)) {
-            int playerDamage = gameQueryService.applyDamageMultiplier(gameData, e.playerDamage(), entry);
+            int playerDamage = e.playerDamage();
             damageSupport.resolveAnyTargetDamage(gameData, entry, firstTargetId, playerDamage, false);
         }
 
@@ -54,7 +54,7 @@ public class DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffectHandler i
                 continue;
             }
             if (!sourceDamagePrevented && !damageSupport.isDamagePreventedForCreature(gameData, entry, creature)) {
-                int creatureDamage = gameQueryService.applyDamageMultiplier(gameData, e.creatureDamage(), entry);
+                int creatureDamage = e.creatureDamage();
                 damageSupport.dealCreatureDamage(gameData, entry, creature, creatureDamage);
             }
             // The can't-block rider is a separate part of the effect, so it applies even when the

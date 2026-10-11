@@ -43,7 +43,7 @@ public class DealDamageToEnchantedCreatureEffectHandler implements NormalEffectH
 
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, aura));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+        int rawDamage = amount;
         damageSupport.dealCreatureDamage(gameData, entry, enchantedCreature, rawDamage, aura);
     }
 }

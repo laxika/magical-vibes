@@ -62,7 +62,7 @@ public class EquippedCreatureDealsDamageToDefendingPlayerEffectHandler implement
         damageEntry.setDamageSourceCard(damageSourceCard);
         int amount = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(damageEntry, creature));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, damageEntry);
+        int rawDamage = amount;
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, damageEntry)) {
             damageSupport.dealDamageToPlayer(gameData, damageEntry, defendingPlayerId, rawDamage);
         }

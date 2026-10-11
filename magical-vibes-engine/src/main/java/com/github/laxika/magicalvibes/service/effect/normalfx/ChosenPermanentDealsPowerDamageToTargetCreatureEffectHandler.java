@@ -69,7 +69,7 @@ public class ChosenPermanentDealsPowerDamageToTargetCreatureEffectHandler implem
         }
 
         int power = gameQueryService.getPowerBasedDamage(gameData, source);
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
+        int rawDamage = power;
         damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, source);
     }
 }

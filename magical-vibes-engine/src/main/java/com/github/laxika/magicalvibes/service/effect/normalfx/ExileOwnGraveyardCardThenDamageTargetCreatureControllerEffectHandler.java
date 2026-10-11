@@ -67,7 +67,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
             if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
                 gameLogService.append(gameData, GameLog.text(sourceName + "'s damage to " + gameData.playerIdToName.get(targetControllerId) + " is prevented."));
             } else {
-                int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+                int rawDamage = e.damage();
                 damageSupport.dealDamageToPlayer(gameData, entry, targetControllerId, rawDamage);
             }
             gameOutcomeService.checkWinCondition(gameData);

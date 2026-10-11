@@ -63,7 +63,7 @@ public class DealDamageToTargetAndSharingCreaturesEffectHandler implements Norma
         }
         int evaluated = amountEvaluationService.evaluate(gameData, damageEffect.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+        int damage = evaluated;
         Set<CardColor> targetColors = gameQueryService.getEffectiveColors(gameData, target);
 
         List<Permanent> affectedCreatures = new ArrayList<>();

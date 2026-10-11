@@ -137,7 +137,7 @@ public class EachPlayerMayDiscardUpToThenTakeDamageEffectHandler implements Norm
 
     private void dealDamage(GameData gameData, StackEntry entry, UUID playerId, int amount) {
         if (amount <= 0) return;
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+        int rawDamage = amount;
         damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
     }

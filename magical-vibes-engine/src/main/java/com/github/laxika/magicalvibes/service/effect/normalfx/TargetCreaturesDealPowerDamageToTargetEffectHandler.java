@@ -64,7 +64,7 @@ public class TargetCreaturesDealPowerDamageToTargetEffectHandler implements Norm
                     source.getCard(), gameQueryService.findPermanentController(gameData, sourceId),
                     entry.getDescription(), List.of(), victim.getId(), sourceId);
             damageEntry.setSourcePermanentSnapshot(new Permanent(source));
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            int rawDamage = power;
             damageSupport.dealCreatureDamage(gameData, damageEntry, victim, rawDamage, source);
         }
     }

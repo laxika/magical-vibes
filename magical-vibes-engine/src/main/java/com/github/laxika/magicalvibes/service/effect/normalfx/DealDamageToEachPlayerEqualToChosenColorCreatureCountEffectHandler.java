@@ -51,7 +51,7 @@ public class DealDamageToEachPlayerEqualToChosenColorCreatureCountEffectHandler
             if (count == 0) {
                 continue;
             }
-            int damage = gameQueryService.applyDamageMultiplier(gameData, count, entry);
+            int damage = count;
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
         }
 

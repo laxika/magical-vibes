@@ -46,7 +46,7 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
         }
         int evaluated = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+        int damage = evaluated;
 
         boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
         Permanent singleTarget = gameQueryService.findPermanentById(gameData, entry.getTargetId());

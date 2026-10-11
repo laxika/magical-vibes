@@ -50,7 +50,7 @@ public class EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatu
                 continue;
             }
             StackEntry damageEntry = sourceEntry(enchantment, controllerId);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), damageEntry);
+            int rawDamage = e.damage();
             damageSupport.dealDamageToPlayer(gameData, damageEntry, controllerId, rawDamage);
         }
 
@@ -73,7 +73,7 @@ public class EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatu
                 continue;
             }
             StackEntry damageEntry = sourceEntry(aura, controllerId);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), damageEntry);
+            int rawDamage = e.damage();
             damageSupport.dealCreatureDamage(gameData, damageEntry, enchanted, rawDamage, aura);
         }
 

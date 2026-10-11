@@ -38,7 +38,7 @@ public class DealDamageToEachOpponentEqualToCardsInHandEffectHandler implements 
                 continue;
             }
 
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, handSize, entry);
+            int rawDamage = handSize;
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);
         }
 

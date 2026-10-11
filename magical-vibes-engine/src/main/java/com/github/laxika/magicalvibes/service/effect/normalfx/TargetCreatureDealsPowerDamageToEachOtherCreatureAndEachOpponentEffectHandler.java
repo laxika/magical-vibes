@@ -65,7 +65,7 @@ public class TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEff
                 null,
                 source.getId());
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+        int rawDamage = power;
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);

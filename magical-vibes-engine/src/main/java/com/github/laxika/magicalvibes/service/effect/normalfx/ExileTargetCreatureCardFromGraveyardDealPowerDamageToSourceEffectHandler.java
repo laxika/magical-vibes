@@ -70,7 +70,7 @@ public class ExileTargetCreatureCardFromGraveyardDealPowerDamageToSourceEffectHa
                 List.of(),
                 null,
                 List.of());
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+        int rawDamage = power;
         damageSupport.dealCreatureDamage(gameData, damageEntry, recipient, rawDamage);
     }
 }

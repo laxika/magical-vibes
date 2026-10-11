@@ -36,7 +36,7 @@ public class DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffectHandle
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int rawDamage = e.damage();
         String cardName = entry.getCard().getName();
         UUID controllerId = entry.getControllerId();
 

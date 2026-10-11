@@ -60,7 +60,7 @@ public class EnchantedCreatureDealsDamageToEachOpponentEffectHandler implements 
                     List.of(),
                     playerId,
                     sourcePermanentId);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
+            int rawDamage = damage;
             damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId, rawDamage);
         }
         gameOutcomeService.checkWinCondition(gameData);

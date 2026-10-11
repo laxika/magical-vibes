@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  * source.
  *
  * <p>Multiple instances stack additively. Only applies when the source would deal at least 1 damage.
- * Queried by {@code GameQueryService.getControllerDamageBonus} from
- * {@code applyDamageMultiplier(GameData, int, StackEntry)}.
+ * Queried by {@code GameQueryService.getControllerDamageBonus} for the damage pool's source-bonus
+ * option.
  *
  * <p>Example: Pyromancer's Gauntlet —
  * {@code new AdditionalControllerDamageEffect(2, redInstantOrSorceryOrRedPlaneswalkerFilter)}.

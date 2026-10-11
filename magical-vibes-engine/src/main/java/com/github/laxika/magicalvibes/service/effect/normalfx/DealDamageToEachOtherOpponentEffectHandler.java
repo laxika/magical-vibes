@@ -53,7 +53,7 @@ public class DealDamageToEachOtherOpponentEffectHandler implements NormalEffectH
             if (opponentId.equals(controllerId) || opponentId.equals(damagedOpponentId)) {
                 continue;
             }
-            int damage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+            int damage = amount;
             damageSupport.dealDamageToPlayer(gameData, entry, opponentId, damage);
         }
         gameOutcomeService.checkWinCondition(gameData);

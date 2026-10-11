@@ -65,7 +65,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
 
         // Source deals damage equal to its power to target
         if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard(), entry.getControllerId()))) {
-            int sourceDamage = gameQueryService.applyDamageMultiplier(gameData, sourcePower, entry);
+            int sourceDamage = sourcePower;
             damageSupport.dealCreatureDamage(gameData, entry, target, sourceDamage);
             gameLogService.append(gameData, GameLog.textCardText(cardName + " deals " + sourceDamage + " damage to ", target.getCard(), "."));
         } else {
@@ -80,7 +80,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
         if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, source, target.getCard(),
                 gameQueryService.findPermanentController(gameData, target.getId())))) {
-            int targetDamage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
+            int targetDamage = targetPower;
             damageSupport.dealCreatureDamage(gameData, entry, source, targetDamage, target);
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetDamage + " damage to " + cardName + ".").build());
         } else {

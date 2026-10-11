@@ -50,7 +50,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         int evaluated = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+        int damage = evaluated;
 
         // Multi-target: deal damage to each valid creature target (e.g. Dual Shot targeting two creatures,
         // Fire Shrine Keeper targeting up to two creatures via activated ability).
@@ -94,8 +94,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
                 target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             }
             if (target == null) return;
-            damageSupport.dealCreatureDamageUnpreventable(gameData, entry, target, damage);
-            damageDealt = damage;
+            damageDealt = damageSupport.dealCreatureDamageUnpreventable(gameData, entry, target, damage);
         } else {
             damageDealt = damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
         }

@@ -60,7 +60,7 @@ public class DealDamageToCombatOpponentControllerEffectHandler implements Normal
                 source = entry.getSourcePermanentSnapshot();
             }
             int amount = amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, source));
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
+            int rawDamage = amount;
             damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
         }
 

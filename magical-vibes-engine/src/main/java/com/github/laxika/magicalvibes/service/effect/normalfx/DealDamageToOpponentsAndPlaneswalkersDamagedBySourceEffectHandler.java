@@ -33,7 +33,7 @@ public class DealDamageToOpponentsAndPlaneswalkersDamagedBySourceEffectHandler i
         if (sourceId == null) return;
 
         Set<UUID> recipients = gameData.damageRecipientsBySource.getOrDefault(sourceId, Set.of());
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int rawDamage = e.damage();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(entry.getControllerId()) && recipients.contains(playerId)) {

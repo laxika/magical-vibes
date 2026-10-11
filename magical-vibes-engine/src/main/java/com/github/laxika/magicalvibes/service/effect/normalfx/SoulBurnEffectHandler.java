@@ -68,7 +68,7 @@ public class SoulBurnEffectHandler implements NormalEffectHandlerBean {
             damageBefore = targetPermanent.getMarkedDamage();
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, x, entry);
+        int rawDamage = x;
         int resolvedDamage = damageSupport.resolveAnyTargetDamage(
                 gameData, entry, targetId, rawDamage, false);
 

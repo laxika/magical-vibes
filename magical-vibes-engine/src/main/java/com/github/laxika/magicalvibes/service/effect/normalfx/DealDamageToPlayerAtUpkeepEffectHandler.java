@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayerAtUpkeepEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Component;
 public class DealDamageToPlayerAtUpkeepEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -30,7 +28,7 @@ public class DealDamageToPlayerAtUpkeepEffectHandler implements NormalEffectHand
         }
 
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, 1, entry);
+            int damage = 1;
             damageSupport.dealDamageToPlayer(gameData, entry, damageEffect.playerId(), damage);
         }
         gameOutcomeService.checkWinCondition(gameData);

@@ -43,7 +43,7 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
         String cardName = entry.getCard().getName();
 
         // Step 1: Planeswalker deals fixed damage to target creature
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int rawDamage = e.damage();
         if (rawDamage > 0) {
             if (!(gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard(), entry.getControllerId()))) {

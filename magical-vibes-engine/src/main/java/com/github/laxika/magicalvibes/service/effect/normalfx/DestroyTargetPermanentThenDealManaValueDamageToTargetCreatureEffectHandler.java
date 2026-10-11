@@ -51,7 +51,7 @@ public class DestroyTargetPermanentThenDealManaValueDamageToTargetCreatureEffect
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
+        int damage = manaValue;
         if (!damageSupport.isDamagePreventedForCreature(gameData, entry, damageTarget)) {
             damageSupport.dealCreatureDamage(gameData, entry, damageTarget, damage);
         }

@@ -54,7 +54,7 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
         if (source == null && damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
         int evaluated = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+        int rawDamage = evaluated;
         String cardName = source == null ? entry.getCard().getName() : source.getCard().getName();
 
         List<Permanent> candidates = new ArrayList<>();

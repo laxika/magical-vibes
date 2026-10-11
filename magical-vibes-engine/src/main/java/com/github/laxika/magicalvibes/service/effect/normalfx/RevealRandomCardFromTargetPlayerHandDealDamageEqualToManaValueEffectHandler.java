@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -31,7 +30,6 @@ public class RevealRandomCardFromTargetPlayerHandDealDamageEqualToManaValueEffec
     private final CardRevealService cardRevealService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
-    private final GameQueryService gameQueryService;
     private final DamageSupport damageSupport;
 
     @Override
@@ -67,7 +65,7 @@ public class RevealRandomCardFromTargetPlayerHandDealDamageEqualToManaValueEffec
                 gameData.id, sourceName, targetName, revealed.getName(), manaValue);
         if (manaValue <= 0) return;
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
+        int damage = manaValue;
         damageSupport.dealDamageToPlayer(gameData, entry, targetPlayerId, damage);
         gameOutcomeService.checkWinCondition(gameData);
     }

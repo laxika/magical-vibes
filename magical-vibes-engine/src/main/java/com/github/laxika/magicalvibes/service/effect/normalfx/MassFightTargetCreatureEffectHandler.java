@@ -64,7 +64,7 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
                     continue;
                 }
                 StackEntry damageEntry = creatureDamageEntry(gameData, target, entry);
-                int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, damageEntry);
+                int damage = targetPower;
                 damageSupport.dealCreatureDamage(gameData, damageEntry, other, damage, target);
             }
         }
@@ -84,7 +84,7 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
                 continue;
             }
             StackEntry damageEntry = creatureDamageEntry(gameData, other, entry);
-            int damage = gameQueryService.applyDamageMultiplier(gameData, otherPower, damageEntry);
+            int damage = otherPower;
             damageSupport.dealCreatureDamage(gameData, damageEntry, target, damage, other);
         }
 

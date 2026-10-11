@@ -59,7 +59,7 @@ public class DealDamageToRandomAnyTargetEffectHandler implements NormalEffectHan
         }
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        int rawDamage = damage;
 
         UUID chosen = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
         damageSupport.resolveAnyTargetDamage(gameData, entry, chosen, rawDamage, false);

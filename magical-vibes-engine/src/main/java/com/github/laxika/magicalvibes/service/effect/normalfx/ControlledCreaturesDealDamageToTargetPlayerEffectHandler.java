@@ -51,7 +51,7 @@ public class ControlledCreaturesDealDamageToTargetPlayerEffectHandler implements
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, typed.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int rawDamage = evaluatedDamage;
         FilterContext context = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         List<Permanent> sources = new ArrayList<>();
         for (Permanent permanent : battlefield) {

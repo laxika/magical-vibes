@@ -80,7 +80,7 @@ public class CommanderCreaturesDealPowerDamageToPreventedCreatureEffectHandler
                     null,
                     commander.getId());
             int power = gameQueryService.getPowerBasedDamage(gameData, commander);
-            int damage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            int damage = power;
             damageSupport.dealCreatureDamage(gameData, damageEntry, target, damage, commander);
         }
 

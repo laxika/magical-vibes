@@ -56,9 +56,9 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
         dealDamageToAnyTargetHandler.resolve(gd, entry,
                 DealDamageToAnyTargetEffect.fromEnteringPermanent(new com.github.laxika.magicalvibes.model.amount.Fixed(0)));
 
-        verify(gameQueryService).applyDamageMultiplier(eq(gd), eq(0), argThat(damageEntry ->
+        verify(damagePreventionService).applyNextInstantOrSorceryDamageRedirectShield(eq(gd), argThat(damageEntry ->
                 damageEntry.getControllerId().equals(player2Id)
-                        && damageEntry.getEffectiveDamageSourceCard() == creature.getCard()));
+                        && damageEntry.getEffectiveDamageSourceCard() == creature.getCard()), eq(player1Id), eq(0));
         assertThat(entry.getControllerId()).isEqualTo(player1Id);
     }
 
@@ -155,7 +155,6 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
-                verify(gameQueryService, never()).applyDamageMultiplier(any(), anyInt(), any());
                 verifyNoInteractions(triggerCollectionService);
             }
 

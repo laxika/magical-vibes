@@ -43,7 +43,7 @@ public class DestroyTargetEquipmentAndDamageAttachedCreatureEffectHandler
         if (destroyed && attachedCreature != null
                 && !damageSupport.isDamagePreventedForCreature(gameData, entry, attachedCreature)) {
             damageSupport.dealCreatureDamage(gameData, entry, attachedCreature,
-                    gameQueryService.applyDamageMultiplier(gameData, 2, entry));
+                    2);
         }
     }
 }

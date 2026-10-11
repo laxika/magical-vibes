@@ -64,7 +64,7 @@ public class DestroySourceThenDealDamageToControllerEffectHandler implements Nor
             return;
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
+        int rawDamage = damage;
         damageSupport.dealDamageToPlayer(gameData, damageEntry, entry.getControllerId(), rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
     }

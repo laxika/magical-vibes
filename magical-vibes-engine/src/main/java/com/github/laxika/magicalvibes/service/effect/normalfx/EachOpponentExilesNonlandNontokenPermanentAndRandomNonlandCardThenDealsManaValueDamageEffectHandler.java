@@ -114,7 +114,7 @@ public class EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenD
         }
 
         if (totalManaValue > 0) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, totalManaValue, entry);
+            int damage = totalManaValue;
             damageSupport.dealDamageToPlayer(gameData, entry, opponentId, damage);
         }
         beginNextOpponent(gameData, entry, remainingOpponentIds, permanentFilter);

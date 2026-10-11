@@ -39,7 +39,7 @@ public class DealDamageToTargetCreatureThenGainLifeEffectHandler implements Norm
         }
         int evaluated = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+        int damage = evaluated;
         int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, target, damage);
 
         if (damageDealt > 0) {

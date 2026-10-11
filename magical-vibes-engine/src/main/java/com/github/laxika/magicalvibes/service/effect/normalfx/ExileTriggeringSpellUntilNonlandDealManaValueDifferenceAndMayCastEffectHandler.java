@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellUntilNonl
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +27,6 @@ public class ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEf
 
     private final ExileService exileService;
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
@@ -83,7 +81,7 @@ public class ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEf
         int spellManaValue = entry.getEventValue();
         int damageAmount = Math.abs(spellManaValue - hit.getManaValue());
         if (damageAmount > 0 && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
-            int damage = gameQueryService.applyDamageMultiplier(gameData, damageAmount, entry);
+            int damage = damageAmount;
             for (UUID playerId : gameData.orderedPlayerIds) {
                 if (!playerId.equals(entry.getControllerId())) {
                     damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);

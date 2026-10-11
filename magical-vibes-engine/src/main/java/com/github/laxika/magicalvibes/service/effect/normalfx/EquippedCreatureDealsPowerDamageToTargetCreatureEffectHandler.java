@@ -67,7 +67,7 @@ public class EquippedCreatureDealsPowerDamageToTargetCreatureEffectHandler imple
                 List.of(),
                 target.getId(),
                 creature.getId());
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+        int rawDamage = power;
         damageSupport.dealCreatureDamage(gameData, damageEntry, target, rawDamage, creature);
     }
 }

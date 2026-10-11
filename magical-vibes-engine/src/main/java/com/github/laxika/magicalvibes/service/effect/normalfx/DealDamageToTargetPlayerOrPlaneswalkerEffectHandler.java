@@ -45,7 +45,7 @@ public class DealDamageToTargetPlayerOrPlaneswalkerEffectHandler implements Norm
         int damage = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        int rawDamage = damage;
         // "The damage can't be prevented" is scoped to this one damage event, so the flag is raised
         // only around the resolution itself and always dropped again.
         boolean previous = gameData.unpreventableDamageInProgress;

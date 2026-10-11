@@ -54,7 +54,7 @@ public class ReturnedPermanentDealsPowerDamageToEachOtherCreatureEffectHandler
         }
 
         int power = gameQueryService.getPowerBasedDamage(gameData, source);
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
+        int rawDamage = power;
         List<Permanent> targets = new ArrayList<>();
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             if (battlefield == null) {

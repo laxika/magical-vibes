@@ -1573,7 +1573,7 @@ public class MultiPermanentChoiceHandlerService {
                     : gameQueryService.findPermanentById(gameData, damageEntry.getSourcePermanentId());
             int damageAmount = amountEvaluationService.evaluate(gameData, context.damage(),
                     AmountContext.forStackEntry(damageEntry, source));
-            int damage = gameQueryService.applyDamageMultiplier(gameData, damageAmount, damageEntry);
+            int damage = damageAmount;
             if (!damageSupport.isDamagePreventedForCreature(gameData, damageEntry, target)) {
                 damageSupport.dealCreatureDamage(gameData, damageEntry, target, damage);
             }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardDealManaValueDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardDealManaValueDamageToAnyTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
 
@@ -50,7 +48,7 @@ public class RevealTopCardDealManaValueDamageToAnyTargetEffectHandler implements
 
         if (manaValue <= 0 || entry.getTargetId() == null) return;
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
+        int damage = manaValue;
         damageSupport.resolveAnyTargetDamage(gameData, entry, entry.getTargetId(), damage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }

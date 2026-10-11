@@ -37,7 +37,7 @@ public class DealDamageToDamageSourceCreatureOrSpellControllerEffectHandler
             Permanent sourceCreature = gameQueryService.findPermanentById(gameData, sourceCreatureId);
             if (sourceCreature == null || !gameQueryService.isCreature(gameData, sourceCreature)) return;
 
-            int damage = gameQueryService.applyDamageMultiplier(gameData, damageEffect.amount(), entry);
+            int damage = damageEffect.amount();
             damageSupport.dealCreatureDamage(gameData, entry, sourceCreature, damage);
             gameOutcomeService.checkWinCondition(gameData);
             return;
@@ -49,7 +49,7 @@ public class DealDamageToDamageSourceCreatureOrSpellControllerEffectHandler
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, damageEffect.amount(), entry);
+        int damage = damageEffect.amount();
         damageSupport.dealDamageToPlayer(gameData, entry, spellControllerId, damage);
         gameOutcomeService.checkWinCondition(gameData);
     }

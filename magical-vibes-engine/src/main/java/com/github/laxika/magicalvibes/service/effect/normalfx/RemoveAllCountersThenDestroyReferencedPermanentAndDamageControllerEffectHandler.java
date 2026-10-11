@@ -80,7 +80,7 @@ public class RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerE
                 List.of(),
                 null,
                 damageSourceId);
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), damageEntry);
+        int rawDamage = e.damage();
         damageSupport.dealDamageToPlayer(gameData, damageEntry, controllerId, rawDamage);
     }
 

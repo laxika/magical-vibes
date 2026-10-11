@@ -64,7 +64,7 @@ public class TargetCreatureDealsPowerDamageToEachTargetEffectHandler implements 
                 List.of(),
                 null,
                 source.getId());
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+        int rawDamage = power;
 
         for (UUID targetId : targetIds) {
             damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, false);

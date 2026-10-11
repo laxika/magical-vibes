@@ -1610,7 +1610,7 @@ public class ActivatedAbilityExecutionService {
                         permanent.getCard(), playerId, permanent.getCard().getName() + "'s ability", List.of(dmg),
                         playerId, permanent.getId());
                 damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId,
-                        gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry));
+                        damage);
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.EACH_OPPONENT) {
                 // Reflexive "When you do" rider on a mana ability, e.g. Rubble Rouser:
                 // "Add {R}. When you do, this creature deals 1 damage to each opponent."

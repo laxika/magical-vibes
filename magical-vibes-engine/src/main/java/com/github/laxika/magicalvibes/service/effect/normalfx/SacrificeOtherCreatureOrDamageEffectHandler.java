@@ -109,8 +109,7 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
 
     private void dealDamage(GameData gameData, StackEntry entry, DynamicAmount amount, UUID playerId) {
         if (amount instanceof Fixed fixed) {
-            destructionSupport.dealNoncombatDamageToPlayer(gameData, playerId, fixed.value(),
-                    entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
+            destructionSupport.dealNoncombatDamageToPlayer(gameData, entry, playerId, fixed.value());
             return;
         }
         if (damageSupport == null) {
@@ -122,7 +121,7 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
         }
         AmountContext context = AmountContext.forStackEntry(entry, source);
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, amount, context);
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int rawDamage = evaluatedDamage;
         damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);
     }
 }

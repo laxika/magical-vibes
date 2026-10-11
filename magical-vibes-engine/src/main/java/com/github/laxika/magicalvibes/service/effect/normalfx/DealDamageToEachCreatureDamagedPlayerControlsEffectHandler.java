@@ -40,7 +40,7 @@ public class DealDamageToEachCreatureDamagedPlayerControlsEffectHandler implemen
         int damage = e.fixedDamage() != null ? e.fixedDamage() : damageDealt;
         if (damage <= 0) return;
 
-        damage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        damage = damage;
         String cardName = entry.getCard().getName();
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;

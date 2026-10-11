@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
@@ -37,7 +36,6 @@ public class DealDamageEqualToChosenTypeCountEffectHandler implements NormalEffe
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -73,7 +71,7 @@ public class DealDamageEqualToChosenTypeCountEffectHandler implements NormalEffe
             }
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, count, entry);
+        int rawDamage = count;
 
         if (TargetPredicates.creature().equals(e.declaredTarget())) {
             damageSupport.resolveCreatureTargetDamage(gameData, entry, rawDamage);

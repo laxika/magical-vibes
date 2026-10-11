@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerControllingMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
 public class DealDamageToEachPlayerControllingMatchingPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameOutcomeService gameOutcomeService;
 
@@ -34,7 +32,7 @@ public class DealDamageToEachPlayerControllingMatchingPermanentEffectHandler imp
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int rawDamage = e.damage();
         FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
 
         for (UUID playerId : gameData.orderedPlayerIds) {

@@ -110,7 +110,7 @@ public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, 2, entry);
+        int damage = 2;
         damageSupport.dealDamageToPlayer(gameData, entry, playerId, damage);
 
         List<Permanent> battlefield = new ArrayList<>(gameData.playerBattlefields.getOrDefault(playerId, List.of()));

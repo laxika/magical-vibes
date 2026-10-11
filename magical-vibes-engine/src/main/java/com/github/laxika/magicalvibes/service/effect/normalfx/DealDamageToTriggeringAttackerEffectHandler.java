@@ -51,7 +51,7 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
         }
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int damage = evaluatedDamage;
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + damage + " damage to ").card(attacker.getCard()).text(".").build());
         damageSupport.dealCreatureDamage(gameData, entry, attacker, damage);
     }

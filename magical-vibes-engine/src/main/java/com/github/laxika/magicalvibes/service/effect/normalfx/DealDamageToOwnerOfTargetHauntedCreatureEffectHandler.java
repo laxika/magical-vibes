@@ -53,7 +53,7 @@ public class DealDamageToOwnerOfTargetHauntedCreatureEffectHandler implements No
         int amount = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
         damageSupport.dealDamageToPlayer(gameData, entry, ownerId,
-                gameQueryService.applyDamageMultiplier(gameData, amount, entry));
+                amount);
         gameOutcomeService.checkWinCondition(gameData);
     }
 

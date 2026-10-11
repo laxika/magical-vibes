@@ -96,7 +96,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             }
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
+        int rawDamage = damage;
 
         boolean tracksExcess = entry.getEffectsToResolve().stream().anyMatch(this::referencesExcessDamage);
         Permanent excessTarget = null;

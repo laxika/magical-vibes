@@ -88,7 +88,7 @@ public class FightSupport {
                 recipient.getId(), source.getId());
         damageEntry.setNonTargeting(true);
         damageEntry.setSourcePermanentSnapshot(new Permanent(source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage, damageEntry);
+        int damage = baseDamage;
         int markedDamageBefore = recipient.getMarkedDamage();
         int damageDealt = damageSupport.dealCreatureDamage(gameData, damageEntry, recipient, damage, source);
         UUID recipientControllerId = gameQueryService.findPermanentController(gameData, recipient.getId());

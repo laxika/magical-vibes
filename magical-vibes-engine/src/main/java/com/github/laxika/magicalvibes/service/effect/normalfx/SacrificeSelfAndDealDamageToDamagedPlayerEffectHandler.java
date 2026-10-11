@@ -55,7 +55,7 @@ public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements N
         if (!gameData.playerIds.contains(defenderId)) {
             return;
         }
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+        int rawDamage = e.damage();
         damageSupport.dealDamageToPlayer(gameData, entry, defenderId, rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
     

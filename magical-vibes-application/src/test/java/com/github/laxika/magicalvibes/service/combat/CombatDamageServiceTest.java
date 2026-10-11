@@ -237,13 +237,6 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applySourceNextCombatDamageToControllerShield(
                 eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
-        lenient().when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(),
-                any(), any()))
-                .thenAnswer(inv -> (int) inv.getArgument(1));
-        lenient().when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(),
-                any(Permanent.class), org.mockito.ArgumentMatchers.nullable(Permanent.class),
-                org.mockito.ArgumentMatchers.nullable(UUID.class)))
-                .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.applyDamageReplacementEffects(eq(gameData), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gameData), any(UUID.class)))

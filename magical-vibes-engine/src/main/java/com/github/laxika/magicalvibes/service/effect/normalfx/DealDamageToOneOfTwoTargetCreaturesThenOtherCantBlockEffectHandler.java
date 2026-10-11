@@ -52,7 +52,7 @@ public class DealDamageToOneOfTwoTargetCreaturesThenOtherCantBlockEffectHandler
         }
         int evaluated = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int damage = gameQueryService.applyDamageMultiplier(gameData, evaluated, entry);
+        int damage = evaluated;
         UUID choosingPlayerId = gameQueryService.findPermanentController(gameData, legal.getFirst());
 
         if (legal.size() == 1) {

@@ -58,7 +58,7 @@ public class TargetCreatureDealsPowerDamageToTargetCreatureThenApplyPerpetualPow
                         && !(gameQueryService.isDamagePreventable(gameData)
                         && gameQueryService.hasProtectionFromSource(gameData, victim, source))) {
                     int power = gameQueryService.getPowerBasedDamage(gameData, source);
-                    int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
+                    int rawDamage = power;
                     int damageDealt = damageSupport.dealCreatureDamage(
                             gameData, entry, victim, rawDamage, source);
                     excessDamage = damageSupport.computeExcessDamageToCreature(

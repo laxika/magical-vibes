@@ -51,7 +51,7 @@ public class DealDamageToEachOpponentFromTriggeringSpellEffectHandler implements
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, amount, damageEntry);
+        int damage = amount;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(damageEntry.getControllerId())) {
                 damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId, damage);

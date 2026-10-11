@@ -49,7 +49,7 @@ public class DealDamageToEachOpponentEqualToLandDifferenceEffectHandler implemen
                 continue;
             }
 
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+            int rawDamage = damage;
             damageSupport.dealDamageToPlayer(gameData, entry, playerId, rawDamage);
         }
 

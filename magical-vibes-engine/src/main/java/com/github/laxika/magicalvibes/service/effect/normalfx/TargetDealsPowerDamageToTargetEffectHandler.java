@@ -66,8 +66,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
                 biter.getCard(), sourceController, biter.getCard().getName(), List.of(), null, biter.getId());
         damageEntry.setSourcePermanentSnapshot(new Permanent(biter));
         int power = gameQueryService.getPowerBasedDamage(gameData, biter);
-        int rawDamage = gameQueryService.applyDamageMultiplier(
-                gameData, Math.multiplyExact(power, e.powerMultiplier()), damageEntry);
+        int rawDamage = Math.multiplyExact(power, e.powerMultiplier());
         int markedDamageBefore = e.recordExcessDamage() ? target.getMarkedDamage() : 0;
         boolean deathtouch = e.recordExcessDamage()
                 && gameQueryService.sourceHasKeyword(gameData, entry, biter, Keyword.DEATHTOUCH);

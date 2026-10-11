@@ -44,7 +44,7 @@ public class DealDamageToTargetControllerIfTargetHasKeywordEffectHandler impleme
         if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
             gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
         } else {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
+            int rawDamage = e.damage();
             damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
         }
 

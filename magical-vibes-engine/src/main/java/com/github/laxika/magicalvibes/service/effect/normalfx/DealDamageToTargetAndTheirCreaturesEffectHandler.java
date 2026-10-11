@@ -41,7 +41,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
 
         int damage = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, null));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
+        int rawDamage = damage;
         String cardName = entry.getCard().getName();
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;

@@ -66,7 +66,7 @@ public class EnchantedCreatureDealsPowerDamageToAnyTargetEffectHandler implement
                 List.of(),
                 targetId,
                 creature.getId());
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, damageEntry);
+        int rawDamage = damage;
         damageSupport.resolveAnyTargetDamage(gameData, damageEntry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
     }

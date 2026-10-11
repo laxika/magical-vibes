@@ -203,7 +203,6 @@ abstract class AbstractDamageHandlerTest {
     }
 
     protected void stubNoDamageMultiplier() {
-        when(gameQueryService.applyDamageMultiplier(eq(gd), anyInt(), any(StackEntry.class))).thenAnswer(inv -> inv.getArgument(1));
         lenient().when(gameQueryService.getDamageToRecipientMultiplier(
                 eq(gd), any(UUID.class), nullable(UUID.class), any(UUID.class))).thenReturn(1);
     }

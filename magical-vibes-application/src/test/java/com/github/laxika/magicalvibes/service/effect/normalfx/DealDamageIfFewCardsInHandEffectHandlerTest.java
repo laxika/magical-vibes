@@ -17,7 +17,7 @@ class DealDamageIfFewCardsInHandEffectHandlerTest extends AbstractDamageHandlerT
 
     @Override
     protected void setUpHandler() {
-        dealDamageIfFewCardsInHandHandler = new DealDamageIfFewCardsInHandEffectHandler(damageSupport, gameQueryService, gameLogService, gameOutcomeService);
+        dealDamageIfFewCardsInHandHandler = new DealDamageIfFewCardsInHandEffectHandler(damageSupport, gameLogService, gameOutcomeService);
     }
 
     @Test

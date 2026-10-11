@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
@@ -30,14 +31,17 @@ import java.util.function.ToIntFunction;
 class PlayerDamageModifiers extends PlayerDamageCandidateSource {
 
     private static final ReplacementOption.Kind REPLACEMENT = ReplacementOption.Kind.REPLACEMENT;
-    private static final String GLOBAL_MULTIPLIER = "GlobalDamageMultiplier";
 
     private final List<Rule<PlayerDamageContext>> rules;
 
     PlayerDamageModifiers(GameQueryService gameQueryService, GameLogService gameLogService) {
         super(gameQueryService, gameLogService);
         List<Rule<PlayerDamageContext>> all = new ArrayList<>();
-        all.add(globalMultiplierRule());
+        all.add(globalMultiplierRule(gameQueryService));
+        all.add(multiplier("SourceMultiplier", "damage from the source", this::sourceMultiplier));
+        all.add(bonus("SourceBonus", ctx -> ctx.combat()
+                ? gameQueryService.getCombatSourceDamageBonus(ctx.gameData(), combatSource(ctx))
+                : gameQueryService.getDealingSourceDamageBonus(ctx.gameData(), ctx.entry())));
         all.add(multiplier("EnchantedPlayerMultiplier", "damage to enchanted player",
                 ctx -> gameQueryService.getEnchantedPlayerDamageMultiplier(ctx.gameData(), ctx.playerId())).whole());
         all.add(multiplier("RecipientMultiplier", "damage to recipient",
@@ -80,6 +84,19 @@ class PlayerDamageModifiers extends PlayerDamageCandidateSource {
     @Override
     protected List<Rule<PlayerDamageContext>> rules() {
         return rules;
+    }
+
+    /** The controller's and the source's doublings of the damage. */
+    private int sourceMultiplier(PlayerDamageContext ctx) {
+        return ctx.combat()
+                ? gameQueryService.getCombatSourceDamageMultiplier(ctx.gameData(), combatSource(ctx), null,
+                        ctx.playerId())
+                : gameQueryService.getDealingSourceDamageMultiplier(ctx.gameData(), ctx.entry());
+    }
+
+    /** The creature dealing combat damage, as it last existed on the battlefield. */
+    private static Permanent combatSource(PlayerDamageContext ctx) {
+        return ctx.sourcePermanent() != null ? ctx.sourcePermanent() : ctx.entry().getSourcePermanentSnapshot();
     }
 
     private Rule<PlayerDamageContext> multiplier(String family, String description, ToIntFunction<PlayerDamageContext> factor) {
@@ -140,52 +157,5 @@ class PlayerDamageModifiers extends PlayerDamageCandidateSource {
     private int ojerDamage(PlayerDamageContext ctx) {
         return ctx.combat() ? ctx.amount() : gameQueryService.applyOjerAxonilDamageReplacement(ctx.gameData(),
                 ctx.amount(), ctx.damageSourceColors(), ctx.sourceControllerId(), ctx.playerId());
-    }
-
-    /**
-     * Furnace of Rath-style multipliers, one option each. The effect dealing the damage already
-     * multiplied it, so these only compete when that multiplication was taken back out of the
-     * event ({@link DamageEvent#globalMultiplierPending()}).
-     */
-    private Rule<PlayerDamageContext> globalMultiplierRule() {
-        return new Rule<PlayerDamageContext>(GLOBAL_MULTIPLIER, REPLACEMENT, true,
-                ctx -> ctx.event().globalMultiplierPending()
-                        ? List.copyOf(globalMultipliers(ctx.gameData()).keySet()) : List.of(),
-                (ctx, instance) -> globalMultipliers(ctx.gameData()).get(instance).label(),
-                (ctx, instance) -> ctx.event().withAmount(
-                        ctx.amount() * globalMultipliers(ctx.gameData()).get(instance).value()),
-                (ctx, instance) -> new ApplyResult.Applied<>(ctx.event().withAmount(
-                        ctx.amount() * globalMultipliers(ctx.gameData()).get(instance).value())));
-    }
-
-    /** One effect instance: its option label and the number it multiplies or subtracts by. */
-    private record NumericInstance(String label, int value) {}
-
-    private Map<String, NumericInstance> globalMultipliers(GameData gameData) {
-        Map<String, NumericInstance> multipliers = new LinkedHashMap<>();
-        gameData.forEachPermanent((controllerId, permanent) -> {
-            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) return;
-            collectGlobalMultipliers(gameData, permanent.getId().toString(), permanent.getCard(), multipliers);
-        });
-        if (gameData.planechase != null) {
-            for (var plane : gameData.planechase.faceUp) {
-                collectGlobalMultipliers(gameData, plane.getCard().getId().toString(), plane.getCard(), multipliers);
-            }
-        }
-        return multipliers;
-    }
-
-    private static void collectGlobalMultipliers(GameData gameData, String sourceKey, Card card,
-                                                 Map<String, NumericInstance> multipliers) {
-        List<CardEffect> statics = card.getEffects(EffectSlot.STATIC);
-        for (int i = 0; i < statics.size(); i++) {
-            if (statics.get(i) instanceof GlobalDamageMultiplyingEffect global) {
-                int factor = MaroGoneNutsSupport.apply(gameData, global, global.damageMultiplierFactor());
-                if (factor > 1) {
-                    multipliers.put(sourceKey + "#" + i,
-                            new NumericInstance(card.getName() + ": multiply damage by " + factor, factor));
-                }
-            }
-        }
     }
 }

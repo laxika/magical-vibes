@@ -11,26 +11,29 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 1. Choosing the order of competing replacement effects
 
-**Status:** in progress (phases A–D landed) · **Found:** 2026-10-10, while fixing D-card tests
+**Status:** in progress (phases A–E landed) · **Found:** 2026-10-10, while fixing D-card tests
 
 **Done.** CR 616.1 ordering runs through `ReplacementOrderService` for land mana (every land-type
 replacement on both tap paths, plus Mana Reflection-style multipliers) and for damage to a player or a
 permanent (every redirect, multiplier, bonus, prevention and final-stage replacement in one pool; a
 prompt in the middle of an effect resolves the effect again through `DamageJournal`). Combat damage is
-one event per recipient per damage step, with a portion per source. The
+one event per recipient per damage step, with a portion per source. Damage multipliers and "+N"
+bonuses are pool options for noncombat and combat damage (dealing effects and combat assignment pass the
+unmodified amount; `DamageMultiplierRatchetTest` keeps it that way). The
 original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage`,
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
 **Still open.**
-- Phase E: damage multipliers and "+N" bonuses that dealing effects apply before `DamageSupport`
-  (`GameQueryService.applyDamageMultiplier`); until then they only compete when the global multiplier
-  divides the damage evenly, and Sulfuric Vapors-style spell bonuses never do.
+- The "+N" bonus families are one option per family (the sum of every instance), so a multiplier
+  can't be applied between two bonuses of the same family; global multipliers are one option each.
+- Damage paths that never reach `DamageSupport` keep their own fixed chain: mana-ability riders
+  (`ActivatedAbilityExecutionService.dealManaAbilityRiderDamageToPlayer`), discard triggers
+  (`DiscardTriggerCollectorService`) and the "tap X permanents, deal X damage to the defending player" path in
+  `MultiPermanentChoiceHandlerService`.
 - Damage redirected to a player through `processSourceRedirectDamage` / `processPendingRedirectDamage`
   starts a fresh fixed chain instead of continuing the same event (CR 614.5).
-- Combat: global combat multipliers and the bonuses/multipliers for damage to an opponent's creature
-  are still applied while assigning (`GameQueryService.applyCombatDamageMultiplier`), so they never
-  compete; "prevent all combat damage" (Fog) and the guard/"dealt to this creature instead" routing
-  apply before the pool. The all-creature-damage redirect ("have N damage dealt to you instead")
+- Combat: "prevent all combat damage" (Fog) and the guard/"dealt to this creature instead" routing
+  apply before the pool (the rerouted damage then goes through the new recipient's pool). The all-creature-damage redirect ("have N damage dealt to you instead")
   attributes a multi-source event to its first source.
 - Taps through Piracy keep the old land-mana precedence; mana previews and the AI's
   `wouldTapForManaOpenChoice` do not yet treat a contested land as opening a choice; the
@@ -42,8 +45,7 @@ original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplaces
 ```
 Continue CR 616.1 replacement-effect ordering (see missing-features-to-do.md, entry 1, "Still open").
 Read the "Replacement ordering (CR 616.1)" bullet in agent-docs/ARCHITECTURE.md first.
-1. Phase E: stop pre-multiplying damage in the normalfx handlers (and in
-   GameQueryService.applyCombatDamageMultiplier for combat); add a ratchet test.
+1. Pick the next open item, e.g. route the remaining fixed-chain damage paths through DamageSupport.
 Verify every CR number with the rules MCP. List shared engine files changed after each phase.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```

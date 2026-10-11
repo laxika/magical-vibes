@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerEqualToFractionOfLifeRoundedDownEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Component;
 public class DealDamageToEachPlayerEqualToFractionOfLifeRoundedDownEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -43,7 +41,7 @@ public class DealDamageToEachPlayerEqualToFractionOfLifeRoundedDownEffectHandler
         for (UUID playerId : gameData.orderedPlayerIds) {
             int amount = gameData.getLife(playerId) / e.divisor();
             if (amount > 0) {
-                damageByPlayer.put(playerId, gameQueryService.applyDamageMultiplier(gameData, amount, entry));
+                damageByPlayer.put(playerId, amount);
             }
         }
         damageByPlayer.forEach((playerId, damage) ->

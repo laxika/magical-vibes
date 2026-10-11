@@ -46,7 +46,7 @@ public class DestroyTargetWallDealManaValueDamageToControllerEffectHandler imple
             if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
                 gameLogService.append(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
             } else {
-                int rawDamage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
+                int rawDamage = manaValue;
                 damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
             }
         }

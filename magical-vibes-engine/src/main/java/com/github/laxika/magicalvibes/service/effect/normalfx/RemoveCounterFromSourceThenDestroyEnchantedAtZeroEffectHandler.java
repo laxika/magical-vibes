@@ -62,7 +62,7 @@ public class RemoveCounterFromSourceThenDestroyEnchantedAtZeroEffectHandler impl
         UUID controllerId = gameQueryService.findPermanentController(gameData, enchanted.getId());
         destructionSupport.tryDestroyAndLog(gameData, enchanted, entry.getCard().getName());
         if (controllerId != null) {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damageToController(), entry);
+            int rawDamage = e.damageToController();
             damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);
         }
     }

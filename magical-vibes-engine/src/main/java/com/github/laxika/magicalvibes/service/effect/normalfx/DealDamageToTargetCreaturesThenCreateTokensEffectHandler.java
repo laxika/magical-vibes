@@ -48,7 +48,7 @@ public class DealDamageToTargetCreaturesThenCreateTokensEffectHandler implements
         }
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, evaluatedDamage, entry);
+        int rawDamage = evaluatedDamage;
 
         int damagedCreatureCount = 0;
         for (UUID targetId : targetIds) {

@@ -82,7 +82,7 @@ public class ControlledCreaturesDealPowerDamageToTargetEffectHandler implements 
                     gameQueryService.findPermanentController(gameData, hunter.getId()),
                     entry.getDescription(), List.of(), target.getId(), hunter.getId());
             damageEntry.setSourcePermanentSnapshot(new Permanent(hunter));
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            int rawDamage = power;
             damageSupport.dealCreatureDamage(gameData, damageEntry, target, rawDamage, hunter);
         }
 

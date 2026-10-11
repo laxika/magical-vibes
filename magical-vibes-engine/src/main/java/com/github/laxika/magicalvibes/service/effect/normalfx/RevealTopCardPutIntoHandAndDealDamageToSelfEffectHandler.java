@@ -56,7 +56,7 @@ public class RevealTopCardPutIntoHandAndDealDamageToSelfEffectHandler implements
             return;
         }
 
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
+        int rawDamage = manaValue;
         damageSupport.dealCreatureDamage(gameData, entry, source, rawDamage, source);
     }
 }

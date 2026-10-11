@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEqualToChosenCardTypeCardsInHandEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +22,6 @@ public class DealDamageToTargetPlayerEqualToChosenCardTypeCardsInHandEffectHandl
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -64,7 +62,7 @@ public class DealDamageToTargetPlayerEqualToChosenCardTypeCardsInHandEffectHandl
         }
 
         int rawDamage = Math.multiplyExact(matchingCards, e.damagePerCard());
-        int damage = gameQueryService.applyDamageMultiplier(gameData, rawDamage, entry);
+        int damage = rawDamage;
         damageSupport.dealDamageToPlayer(gameData, entry, targetPlayerId, damage);
         gameOutcomeService.checkWinCondition(gameData);
     }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndDealDamageByHighestManaValueEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.UUID;
 import java.util.ArrayList;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Component;
 public class MillControllerAndDealDamageByHighestManaValueEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final GraveyardService graveyardService;
@@ -68,7 +66,7 @@ public class MillControllerAndDealDamageByHighestManaValueEffectHandler implemen
             return;
         }
 
-        int damage = gameQueryService.applyDamageMultiplier(gameData, highestManaValue, entry);
+        int damage = highestManaValue;
         damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, damage, false);
         gameOutcomeService.checkWinCondition(gameData);
     
