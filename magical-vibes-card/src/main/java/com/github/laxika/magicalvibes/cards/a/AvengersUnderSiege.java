@@ -31,8 +31,8 @@ public class AvengersUnderSiege extends Card {
         var nonVillainCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.VILLAIN))));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new MassDamageEffect(2, false, false, nonVillainCreature));
-        addEffect(EffectSlot.SAGA_CHAPTER_II,
+        addSimultaneousEffects(EffectSlot.SAGA_CHAPTER_II,
+                new MassDamageEffect(2, false, false, nonVillainCreature),
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III,

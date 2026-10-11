@@ -1300,9 +1300,11 @@ public class GameData {
      *  global "whenever a [color] source deals damage" watcher (Justice) reflects the summed total
      *  once per source (CR ruling). Combat damage batches separately via {@code combatDamageDealt}. */
     public final Map<UUID, PendingSourceDamage> pendingSourceDamageForReflection = new LinkedHashMap<>();
-    /** Lifelink gains summed per source and player while a spell or ability resolves; applied as one
-     *  life-gain event each when the outermost resolution ends. */
+    /** Lifelink gains summed per source and player during the open damage event of a resolution;
+     *  applied as one life-gain event each when that damage event ends. */
     public final List<PendingLifelinkGain> pendingLifelinkGains = new ArrayList<>();
+    /** The damage event the resolving spell or ability is in, or null outside a resolution. */
+    public ResolutionDamageEvent openDamageEvent;
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Creatures protected from damage caused by spells or abilities targeting them this turn. */
     public final Set<UUID> creaturesProtectedFromTargetingDamage = ConcurrentHashMap.newKeySet();
@@ -1519,6 +1521,16 @@ public class GameData {
     public com.github.laxika.magicalvibes.model.replacement.ReplacementEvent suspendedReplacementEvent;
     /** The damage events of the effect being resolved, while one of them awaits its player's order. */
     public com.github.laxika.magicalvibes.model.replacement.DamageJournal damageJournal;
+    /**
+     * Damage the steps of a simultaneous damage event started, held until the event ends and then
+     * dealt combined per recipient and source.
+     */
+    public final List<com.github.laxika.magicalvibes.model.replacement.PendingSimultaneousDamage>
+            pendingSimultaneousDamage = new ArrayList<>();
+    /** The simultaneous damage event whose step is being dispatched, or null when none is. */
+    public ResolutionDamageEvent collectingDamageEvent;
+    /** The effect index of the step {@link #collectingDamageEvent} is dispatching. */
+    public int collectingDamageStep;
     /**
      * Replacement events that became due while another one awaited its player's decision. They are
      * handled in order, with the effects applicable at that time, once no decision is pending.
@@ -7259,6 +7271,7 @@ public class GameData {
         this.pendingSourceDamageForReflection.forEach((sourceId, pending) ->
                 copy.pendingSourceDamageForReflection.put(sourceId, pending.copy()));
         copy.pendingLifelinkGains.addAll(this.pendingLifelinkGains);
+        copy.openDamageEvent = this.openDamageEvent;
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
         copy.exiledCardsWithIceCounters.addAll(this.exiledCardsWithIceCounters);
@@ -8564,6 +8577,10 @@ public class GameData {
         copy.suspendedReplacementEvent = this.suspendedReplacementEvent == null
                 ? null : this.suspendedReplacementEvent.copyForSimulation();
         copy.damageJournal = this.damageJournal == null ? null : this.damageJournal.copyForSimulation();
+        this.pendingSimultaneousDamage.forEach(pending ->
+                copy.pendingSimultaneousDamage.add(pending.copyForSimulation()));
+        copy.collectingDamageEvent = this.collectingDamageEvent;
+        copy.collectingDamageStep = this.collectingDamageStep;
         this.pendingReplacementEvents.forEach(event -> copy.pendingReplacementEvents.add(event.copyForSimulation()));
 
         // --- Pending discard / search follow-ups (immutable, so the reference is safe to share) ---

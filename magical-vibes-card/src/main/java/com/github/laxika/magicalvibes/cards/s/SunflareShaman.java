@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -23,10 +24,10 @@ public class SunflareShaman extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{R}",
-                List.of(
+                List.of(SequenceEffect.simultaneous(
                         new DealDamageToAnyTargetEffect(elementalsInGraveyard),
                         new DealDamageToSourceEffect(elementalsInGraveyard)
-                ),
+                )),
                 "{1}{R}, {T}: Sunflare Shaman deals X damage to any target and X damage to itself, "
                         + "where X is the number of Elemental cards in your graveyard."
         ));

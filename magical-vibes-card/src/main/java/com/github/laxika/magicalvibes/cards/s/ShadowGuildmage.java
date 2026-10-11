@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -22,10 +23,10 @@ public class ShadowGuildmage extends Card {
                 TargetFilters.creatureYouControl()));
 
         addActivatedAbility(new ActivatedAbility(true, "{R}",
-                List.of(
+                List.of(SequenceEffect.simultaneous(
                         new DealDamageToAnyTargetEffect(1),
                         new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)
-                ),
+                )),
                 "{R}, {T}: Shadow Guildmage deals 1 damage to any target and 1 damage to you."));
     }
 }

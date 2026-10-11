@@ -25,8 +25,9 @@ public class NeonatesRush extends Card {
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
         // Neonate's Rush deals 1 damage to target creature and 1 damage to its controller. Draw a card.
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToTargetCreatureEffect(1),
+                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
         addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
     }
 }

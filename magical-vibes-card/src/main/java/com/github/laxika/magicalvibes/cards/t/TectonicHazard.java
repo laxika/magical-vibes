@@ -13,8 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class TectonicHazard extends Card {
 
     public TectonicHazard() {
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(1, false, false,
-                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new MassDamageEffect(1, false, false,
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }
 }

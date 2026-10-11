@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 public class UnleashShell extends Card {
 
     public UnleashShell() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureOrPlaneswalkerEffect(5));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToTargetCreatureOrPlaneswalkerEffect(5),
+                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

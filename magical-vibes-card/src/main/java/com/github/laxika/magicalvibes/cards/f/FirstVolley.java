@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 public class FirstVolley extends Card {
 
     public FirstVolley() {
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToTargetCreatureEffect(1),
+                new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

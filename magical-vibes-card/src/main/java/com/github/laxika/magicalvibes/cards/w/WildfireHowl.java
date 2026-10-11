@@ -26,10 +26,11 @@ public class WildfireHowl extends Card {
         addEffect(EffectSlot.STATIC, new GiftEffect(0));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
+        ConditionalEffect giftTargetDamage = new ConditionalEffect(new GiftPromised(),
+                new DealDamageToAnyTargetEffect(1));
         targetWhenGiftPromised(anyTarget(), 0, 1, 1)
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new GiftPromised(),
-                        new DealDamageToAnyTargetEffect(1)));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(2));
+                .bindEffect(giftTargetDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, giftTargetDamage, new MassDamageEffect(2));
     }
 
     private static AnyTargetPredicateTargetFilter anyTarget() {

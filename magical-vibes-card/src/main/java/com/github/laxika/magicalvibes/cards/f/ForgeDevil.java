@@ -15,9 +15,12 @@ public class ForgeDevil extends Card {
 
     public ForgeDevil() {
         // When this creature enters, it deals 1 damage to target creature...
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(1));
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(1);
+        target(TargetFilters.creature()).bindEffect(creatureDamage);
 
         // ...and 1 damage to you.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+        addSimultaneousEffects(EffectSlot.ON_ENTER_BATTLEFIELD,
+                creatureDamage,
+                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
     }
 }

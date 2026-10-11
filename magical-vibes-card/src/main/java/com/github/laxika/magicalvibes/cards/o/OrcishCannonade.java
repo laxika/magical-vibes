@@ -14,8 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class OrcishCannonade extends Card {
 
     public OrcishCannonade() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToAnyTargetEffect(2),
+                new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER));
         addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
     }
 }

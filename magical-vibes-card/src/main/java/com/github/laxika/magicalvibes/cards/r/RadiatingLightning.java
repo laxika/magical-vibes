@@ -12,7 +12,8 @@ public class RadiatingLightning extends Card {
 
     public RadiatingLightning() {
         // Radiating Lightning deals 3 damage to target player and 1 damage to each creature that player controls.
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new DealDamageToPermanentsTargetControlsEffect(1));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER),
+                new DealDamageToPermanentsTargetControlsEffect(1));
     }
 }

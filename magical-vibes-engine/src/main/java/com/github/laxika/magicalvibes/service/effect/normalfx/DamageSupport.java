@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingLifelinkGain;
+import com.github.laxika.magicalvibes.model.ResolutionDamageEvent;
+import com.github.laxika.magicalvibes.model.replacement.PendingSimultaneousDamage;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -475,9 +477,9 @@ public class DamageSupport {
     /**
      * Applies lifelink for the spell or permanent that dealt the damage, using the permanent's
      * current controller when it is still on the battlefield. While a spell or ability resolves,
-     * the gain is added to that source's pending gain instead, so the damage one source deals to
-     * several recipients is a single life-gain event; {@link #flushLifelinkGains} applies it when
-     * the resolution ends.
+     * the gain is added to that source's pending gain instead, so the damage one source deals in one
+     * damage event is a single life-gain event; {@link #beginDamageEvent} and
+     * {@link #endDamageEvent} apply it when that event ends.
      */
     public void checkSpellLifelink(GameData gameData, StackEntry entry, int effectiveDamage) {
         if (effectiveDamage <= 0) return;
@@ -506,8 +508,103 @@ public class DamageSupport {
                 entry.getEntryType(), sourceControllerId));
     }
 
-    /** Applies each lifelink gain summed during the resolution that just ended as one life-gain event. */
-    public void flushLifelinkGains(GameData gameData) {
+    /**
+     * Opens the damage event of the effect at {@code index} of {@code entry}, which is about to
+     * resolve. When that is a new event, the open one ends first ({@link #endOpenDamageEvent}).
+     * Returns {@code false} when ending it raised a prompt; the resolution then waits and comes
+     * back to this effect.
+     */
+    public boolean beginDamageEvent(GameData gameData, StackEntry entry, int index) {
+        ResolutionDamageEvent event = new ResolutionDamageEvent(entry.getTargetableId(), entry.damageEventAt(index));
+        if (event.equals(gameData.openDamageEvent)) return true;
+        if (!endOpenDamageEvent(gameData)) return false;
+        gameData.openDamageEvent = event;
+        return true;
+    }
+
+    /**
+     * Ends the open damage event: deals the damage its simultaneous steps held, combined per
+     * recipient and source, then gains its lifelink. Returns {@code false} while a prompt the
+     * combined damage raised waits for its player.
+     */
+    public boolean endOpenDamageEvent(GameData gameData) {
+        if (!dealSimultaneousDamage(gameData)) return false;
+        flushLifelinkGains(gameData);
+        return true;
+    }
+
+    /** Ends the last damage event when the outermost resolution finishes, gaining its lifelink. */
+    public void endDamageEvent(GameData gameData) {
+        flushLifelinkGains(gameData);
+        gameData.openDamageEvent = null;
+    }
+
+    /**
+     * Deals the damage the open event's steps held. Damage one source would deal one recipient is
+     * one event, so a replacement or prevention effect applies to the total once. A prompt is
+     * answered like one an effect raises: this runs again and replays what was already dealt.
+     */
+    private boolean dealSimultaneousDamage(GameData gameData) {
+        ResolutionDamageEvent open = gameData.openDamageEvent;
+        if (open == null) return true;
+        List<PendingSimultaneousDamage> held = gameData.pendingSimultaneousDamage.stream()
+                .filter(pending -> pending.event().equals(open))
+                .toList();
+        if (held.isEmpty()) return true;
+        damageJournalService.beginSimultaneousDamage(gameData, open);
+        try {
+            for (PendingSimultaneousDamage combined : combineSimultaneousDamage(held)) {
+                StackEntry entry = combined.damage().entry();
+                boolean previousExiles = entry.isExilesCreaturesDamaged();
+                entry.setExilesCreaturesDamaged(combined.exilesDamagedCreatures());
+                try {
+                    processDamageEvent(gameData, combined.damage());
+                } finally {
+                    entry.setExilesCreaturesDamaged(previousExiles);
+                }
+            }
+        } finally {
+            damageJournalService.endEffect(gameData);
+        }
+        if (gameData.damageJournal != null) return false;
+        gameData.pendingSimultaneousDamage.removeAll(held);
+        return true;
+    }
+
+    private List<PendingSimultaneousDamage> combineSimultaneousDamage(List<PendingSimultaneousDamage> held) {
+        List<PendingSimultaneousDamage> combined = new ArrayList<>();
+        for (PendingSimultaneousDamage pending : held) {
+            int match = -1;
+            for (int i = 0; i < combined.size() && match < 0; i++) {
+                if (combined.get(i).exilesDamagedCreatures() == pending.exilesDamagedCreatures()
+                        && isSameRecipientAndSource(combined.get(i).damage(), pending.damage())) {
+                    match = i;
+                }
+            }
+            if (match < 0) {
+                combined.add(pending);
+            } else {
+                PendingSimultaneousDamage first = combined.get(match);
+                combined.set(match, new PendingSimultaneousDamage(first.event(), first.stepIndex(),
+                        first.damage().withAmount(first.damage().amount() + pending.damage().amount()),
+                        first.exilesDamagedCreatures()));
+            }
+        }
+        return combined;
+    }
+
+    private boolean isSameRecipientAndSource(DamageEvent first, DamageEvent second) {
+        UUID firstSource = first.explicitSource() == null ? null : first.explicitSource().getId();
+        UUID secondSource = second.explicitSource() == null ? null : second.explicitSource().getId();
+        return first.entry() == second.entry()
+                && Objects.equals(firstSource, secondSource)
+                && Objects.equals(first.recipientPermanentId(), second.recipientPermanentId())
+                && (first.toPermanent() || first.recipientPlayerId().equals(second.recipientPlayerId()))
+                && first.unpreventable() == second.unpreventable()
+                && first.cantBeRedirected() == second.cantBeRedirected();
+    }
+
+    private void flushLifelinkGains(GameData gameData) {
         if (gameData.pendingLifelinkGains.isEmpty()) return;
         List<PendingLifelinkGain> gains = new ArrayList<>(gameData.pendingLifelinkGains);
         gameData.pendingLifelinkGains.clear();
@@ -904,6 +1001,13 @@ public class DamageSupport {
      * replacement decision is outstanding waits in {@code GameData.pendingReplacementEvents}.
      */
     private int processDamageEvent(GameData gameData, DamageEvent event) {
+        if (gameData.collectingDamageEvent != null && damageJournalService.isEffectDamage(gameData)) {
+            // A step of a simultaneous damage event: held until the event ends (dealSimultaneousDamage).
+            gameData.pendingSimultaneousDamage.add(new PendingSimultaneousDamage(
+                    gameData.collectingDamageEvent, gameData.collectingDamageStep, event,
+                    event.entry().isExilesCreaturesDamaged()));
+            return event.toPermanent() ? event.amount() : 0;
+        }
         return switch (damageJournalService.next(gameData)) {
             case DamageJournalService.Step.Replay replay -> replay.dealt();
             case DamageJournalService.Step.Hold hold -> 0;
@@ -1457,7 +1561,7 @@ public class DamageSupport {
                 || sourceEntry.getEntryType() == StackEntryType.SORCERY_SPELL);
         UUID damageEventKey = spellDamage
                 ? UUID.nameUUIDFromBytes((sourceEntry.getTargetableId() + ":" + sourceCard.getId()
-                        + ":" + sourceEntry.getResolvingEffectIndex()).getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                        + ":" + sourceEntry.getResolvingDamageEvent()).getBytes(java.nio.charset.StandardCharsets.UTF_8))
                 : sourceCard.getId();
         PendingSourceDamage batch = gameData.pendingSourceDamageForReflection.get(damageEventKey);
         if (batch == null) {

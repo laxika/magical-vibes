@@ -30,7 +30,8 @@ public class EndTheFestivities extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
 
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(1, false, false, true, opponentCreatureOrPlaneswalker));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new MassDamageEffect(1, false, false, true, opponentCreatureOrPlaneswalker));
     }
 }

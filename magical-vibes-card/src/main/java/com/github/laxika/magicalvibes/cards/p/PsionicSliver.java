@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class PsionicSliver extends Card {
         ActivatedAbility psionicAbility = new ActivatedAbility(
                 true,
                 null,
-                List.of(new DealDamageToAnyTargetEffect(2), new DealDamageToSourceEffect(3)),
+                List.of(SequenceEffect.simultaneous(new DealDamageToAnyTargetEffect(2), new DealDamageToSourceEffect(3))),
                 "{T}: This creature deals 2 damage to any target and 3 damage to itself."
         );
         PermanentHasSubtypePredicate sliver = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);

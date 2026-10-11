@@ -3372,10 +3372,9 @@ public class SpellCastTriggerCollectorService {
                     Set.copyOf(spellSnapshot.getCard().getColors()));
         }
         if (effect instanceof SequenceEffect sequence) {
-            return new SequenceEffect(sequence.steps().stream()
+            return sequence.withSteps(sequence.steps().stream()
                     .map(step -> snapshotTriggeringSpell(step, spellSnapshot, castingPlayerId,
-                            gameData, sourceControllerId)).toList(),
-                    sequence.controllerDrawCount(), sequence.onlyIfSacrificed(), sequence.optionalTarget());
+                            gameData, sourceControllerId)).toList());
         }
         if (effect instanceof ConditionalEffect conditional) {
             return new ConditionalEffect(conditional.condition(),

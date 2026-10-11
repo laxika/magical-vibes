@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.replacement;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ResolutionDamageEvent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.DamageJournal;
@@ -14,6 +15,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class DamageJournalService {
+
+    /** Journal index base for combined simultaneous damage, clear of every effect index. */
+    private static final int SIMULTANEOUS_DAMAGE_JOURNAL = -1_000_000;
 
     /** How a damage event the resolving effect starts should proceed. */
     public sealed interface Step {
@@ -45,6 +49,20 @@ public class DamageJournalService {
     }
 
     /**
+     * Opens a pass over the combined damage of simultaneous damage event {@code event}, dealt once the event's steps have resolved. A prompt it raises is answered like
+     * one an effect raises: the pass runs again and replays what was already dealt.
+     */
+    public void beginSimultaneousDamage(GameData gameData, ResolutionDamageEvent event) {
+        int index = SIMULTANEOUS_DAMAGE_JOURNAL - event.event();
+        DamageJournal journal = gameData.damageJournal;
+        if (journal == null || !journal.isFor(event.stackObjectId(), index)) {
+            journal = new DamageJournal(event.stackObjectId(), index);
+            gameData.damageJournal = journal;
+        }
+        journal.beginPass();
+    }
+
+    /**
      * Closes the pass. While an event of the effect is still to be dealt, the effect is resolved
      * again once its player has answered; otherwise the journal is done.
      */
@@ -63,6 +81,12 @@ public class DamageJournalService {
             gameData.rerunCurrentEffectAfterInteraction = false;
         }
         gameData.damageJournal = null;
+    }
+
+    /** Whether damage starting now is the resolving effect's own rather than damage other damage caused. */
+    public boolean isEffectDamage(GameData gameData) {
+        DamageJournal journal = gameData.damageJournal;
+        return journal != null && journal.isActive() && !journal.isProcessingDamage();
     }
 
     /** How the next damage event should proceed; nested damage is never journaled. */

@@ -11,6 +11,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DaggerCasterTest extends BaseCardTest {
 
     @Test
+    void enterTriggerIsOneAbilityDamagingOpponentsAndTheirCreaturesTogether() {
+        harness.addToBattlefield(player2, new TinStreetDodger());
+
+        castDaggerCaster();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertNotOnBattlefield(player2, "Tin Street Dodger");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void entersAndDealsDamageToEachOpponent() {
         harness.setLife(player2, 20);
 

@@ -36,18 +36,21 @@ public class SeismicWave extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
         );
-        target(anyTarget).addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
-
-        target(new PlayerPredicateTargetFilter(
-                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                "Target must be an opponent"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToEachMatchingPermanentEffect(
+        DealDamageToAnyTargetEffect targetDamage = new DealDamageToAnyTargetEffect(2);
+        DealDamageToEachMatchingPermanentEffect creatureDamage = new DealDamageToEachMatchingPermanentEffect(
                 1,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate())
                 )),
                 EachPermanentScope.TARGET_PLAYER
-        ));
+        );
+        target(anyTarget).bindEffect(targetDamage);
+
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"
+        )).bindEffect(creatureDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, targetDamage, creatureDamage);
     }
 }

@@ -72,6 +72,11 @@ public class StackEntry {
     private List<CardEffect> bombardmentOriginalEffectsToResolve;
     /** Index of the effect currently being dispatched by EffectResolutionService. */
     @Setter private int resolvingEffectIndex = -1;
+    /** Spliced steps of a simultaneous {@code SequenceEffect}, each mapped to its sequence's group. */
+    @Getter(AccessLevel.NONE)
+    private final Map<CardEffect, Integer> simultaneousStepGroups = new IdentityHashMap<>();
+    @Getter(AccessLevel.NONE)
+    private int nextSimultaneousGroup;
     @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
@@ -798,6 +803,8 @@ public class StackEntry {
         this.bombardmentOriginalEffectsToResolve = source.bombardmentOriginalEffectsToResolve == null
                 ? null : new ArrayList<>(source.bombardmentOriginalEffectsToResolve);
         this.resolvingEffectIndex = source.resolvingEffectIndex;
+        this.simultaneousStepGroups.putAll(source.simultaneousStepGroups);
+        this.nextSimultaneousGroup = source.nextSimultaneousGroup;
         this.xValue = source.xValue;
         this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
@@ -1087,7 +1094,59 @@ public class StackEntry {
         effectsToResolve = updated;
     }
 
+    /**
+     * Splices a SequenceEffect's steps after the effect at {@code index}, like
+     * {@link #insertEffectsToResolve}. The steps of a simultaneous sequence become one damage event,
+     * and so do the steps of any sequence spliced from inside one.
+     */
+    public void spliceSequenceSteps(int index, List<CardEffect> steps, boolean simultaneous) {
+        Integer group = simultaneousStepGroups.get(effectsToResolve.get(index));
+        if (group == null && simultaneous) {
+            group = nextSimultaneousGroup++;
+        }
+        if (group != null) {
+            for (CardEffect step : steps) {
+                simultaneousStepGroups.put(step, group);
+            }
+        }
+        insertEffectsToResolve(index + 1, steps);
+    }
+
+    /** The damage event of the effect being dispatched; see {@link #damageEventAt}. */
+    public int getResolvingDamageEvent() {
+        return damageEventAt(resolvingEffectIndex);
+    }
+
+    /**
+     * Identifies the damage event of the effect at {@code index}: the steps of one simultaneous
+     * sequence share an event, an effect the card adds simultaneously shares the event of the effect
+     * before it ({@link Card#addSimultaneousEffects}), and every other effect is an event of its own.
+     */
+    public int damageEventAt(int index) {
+        if (index < 0 || index >= effectsToResolve.size()) {
+            return index;
+        }
+        Integer group = simultaneousStepGroups.get(effectsToResolve.get(index));
+        if (group != null) {
+            return -2 - group;
+        }
+        while (index > 0 && card != null && card.isSimultaneousWithPrevious(effectsToResolve.get(index))) {
+            index--;
+        }
+        return index;
+    }
+
+    /** Whether the effect at {@code index} shares its damage event with another effect. */
+    public boolean isInSimultaneousDamageEvent(int index) {
+        int event = damageEventAt(index);
+        return event != index || damageEventAt(index + 1) == event;
+    }
+
     public void replaceEffectToResolve(int index, CardEffect effect) {
+        Integer group = simultaneousStepGroups.get(effectsToResolve.get(index));
+        if (group != null) {
+            simultaneousStepGroups.put(effect, group);
+        }
         List<CardEffect> updated = new ArrayList<>(effectsToResolve);
         updated.set(index, effect);
         effectsToResolve = updated;

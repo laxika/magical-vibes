@@ -240,8 +240,7 @@ public class EtbEffectResolver {
         if (effect instanceof SequenceEffect sequence) {
             var steps = sequence.steps().stream().map(child -> snapshotManaPairs(ctx, child)).toList();
             return steps.equals(sequence.steps()) ? effect
-                    : new SequenceEffect(steps, sequence.controllerDrawCount(),
-                    sequence.onlyIfSacrificed(), sequence.optionalTarget());
+                    : sequence.withSteps(steps);
         }
         if (effect instanceof ConditionalEffect conditional) {
             CardEffect wrapped = snapshotManaPairs(ctx, conditional.wrapped());

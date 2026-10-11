@@ -25,7 +25,9 @@ import java.util.UUID;
  * several steps must stay a single atomic triggered ability on one trigger slot (trigger collectors push one
  * stack entry per slot effect, so a multi-step bundle on a trigger slot must be one effect). For a plain spell
  * or ability effect list, prefer flat {@code addEffect(...)} calls (the Act of Treason / Drain Life pattern) —
- * do NOT wrap them in a sequence.</p>
+ * do NOT wrap them in a sequence. Every separate effect is its own damage event, so flat slot effects that deal
+ * damage at the same time ("… and 2 damage to you") are added with {@code Card.addSimultaneousEffects}; inside a
+ * wrapper or an activated ability's effect list, use {@link #simultaneous} instead.</p>
  *
  * <p><b>Two dispatch paths.</b> Most wrappers ({@code MayEffect}, {@code ConditionalEffect}, trigger slots)
  * route their child back through {@code EffectResolutionService}'s loop, so the splice above applies and steps
@@ -46,7 +48,7 @@ import java.util.UUID;
  * "that player".</p>
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed,
-                             boolean optionalTarget)
+                             boolean optionalTarget, boolean simultaneous)
         implements CombatDamageTriggerContextEffect, CombatDamageDealerAwareEffect,
         EndStepPlayerTargetedEffect, DyingCreatureCardAwareEffect, DyingCreatureCountersAwareEffect,
         DyingCreaturePermanentAwareEffect, CombatOpponentReferencingEffect, DamageSourceControllerAwareEffect {
@@ -61,6 +63,11 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
 
     public SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed) {
         this(steps, controllerDrawCount, onlyIfSacrificed, false);
+    }
+
+    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean onlyIfSacrificed,
+                          boolean optionalTarget) {
+        this(steps, controllerDrawCount, onlyIfSacrificed, optionalTarget, false);
     }
 
     public SequenceEffect {
@@ -87,6 +94,22 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     /** Creates a sequence that triggers only when its source permanent was sacrificed. */
     public static SequenceEffect sacrificeOnly(CardEffect... steps) {
         return new SequenceEffect(List.of(steps), 0, true);
+    }
+
+    /**
+     * Creates a sequence whose steps happen at the same time ("deals 4 damage to any target and 2
+     * damage to you"). The steps still resolve one after another, but the damage they deal is one
+     * damage event: a lifelink source gains life once for all of it, and a "whenever this deals
+     * damage" watcher sees one total. Steps of a plain sequence, like separate effects, are separate
+     * events ("… Then …", or a second sentence).
+     */
+    public static SequenceEffect simultaneous(CardEffect... steps) {
+        return new SequenceEffect(List.of(steps), 0, false, false, true);
+    }
+
+    /** Returns this sequence with its steps replaced, keeping every other setting. */
+    public SequenceEffect withSteps(List<CardEffect> newSteps) {
+        return new SequenceEffect(newSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget, simultaneous);
     }
 
     /** Creates a sequence whose single declared target may be omitted. */
@@ -118,8 +141,7 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
                 .map(step -> step instanceof DyingCreatureCardAwareEffect aware
                         ? aware.boundToDyingCard(dyingCardId) : step)
                   .toList();
-        return boundSteps.equals(steps) ? this
-                : new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+        return boundSteps.equals(steps) ? this : withSteps(boundSteps);
     }
 
     @Override
@@ -131,8 +153,7 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
                 .map(step -> step instanceof DyingCreaturePermanentAwareEffect aware
                         ? aware.boundToDyingCreature(dyingCreature) : step)
                   .toList();
-        return boundSteps.equals(steps) ? this
-                : new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+        return boundSteps.equals(steps) ? this : withSteps(boundSteps);
     }
 
     @Override
@@ -144,17 +165,16 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
                 .map(step -> step instanceof DyingCreatureCountersAwareEffect aware
                         ? aware.boundToDyingCreatureCounters(counters) : step)
                   .toList();
-        return boundSteps.equals(steps) ? this
-                : new SequenceEffect(boundSteps, controllerDrawCount, onlyIfSacrificed, optionalTarget);
+        return boundSteps.equals(steps) ? this : withSteps(boundSteps);
     }
 
     @Override
     public CardEffect bindDamageSourceController(UUID controllerId, int damageDealt) {
-        return new SequenceEffect(steps.stream()
+        return withSteps(steps.stream()
                 .map(step -> step instanceof DamageSourceControllerAwareEffect aware
                         ? aware.bindDamageSourceController(controllerId, damageDealt)
                         : step)
-                 .toList(), controllerDrawCount, onlyIfSacrificed, optionalTarget);
+                 .toList());
     }
 
     @Override
@@ -222,10 +242,10 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
 
     @Override
     public CardEffect withCombatDamageDealerIds(List<UUID> dealerIds) {
-        return new SequenceEffect(steps.stream()
+        return withSteps(steps.stream()
                 .map(step -> step instanceof CombatDamageDealerAwareEffect aware
                         ? aware.withCombatDamageDealerIds(dealerIds)
                         : step)
-                .toList(), controllerDrawCount, onlyIfSacrificed, optionalTarget);
+                .toList());
     }
 }

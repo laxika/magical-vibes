@@ -17,8 +17,8 @@ public class JudgmentBolt extends Card {
     public JudgmentBolt() {
         PermanentCount equipmentCount = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER);
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5));
-        addEffect(EffectSlot.SPELL,
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToTargetCreatureEffect(5),
                 new DealDamageToPlayersEffect(equipmentCount, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

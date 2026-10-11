@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -31,10 +32,11 @@ public class DragonsparkReactor extends Card {
                 "{4}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE),
-                                false, false, 0),
-                        new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE),
-                                false, false, 1)
+                        SequenceEffect.simultaneous(
+                                new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE),
+                                        false, false, 0),
+                                new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE),
+                                        false, false, 1))
                 ),
                 "{4}, Sacrifice this artifact: It deals damage equal to the number of charge counters on it "
                         + "to target player and that much damage to up to one target creature.",

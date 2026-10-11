@@ -19,15 +19,16 @@ public class Firespout extends Card {
 
     public Firespout() {
         // 3 damage to each creature without flying if {R} was spent to cast this spell.
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new ColorSpentToCast(ManaColor.RED),
-                new MassDamageEffect(new Fixed(3), false, false,
-                        new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))));
 
         // 3 damage to each creature with flying if {G} was spent to cast this spell.
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new ColorSpentToCast(ManaColor.GREEN),
-                new MassDamageEffect(new Fixed(3), false, false,
-                        new PermanentHasKeywordPredicate(Keyword.FLYING))));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new ConditionalEffect(
+                        new ColorSpentToCast(ManaColor.RED),
+                        new MassDamageEffect(new Fixed(3), false, false,
+                                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))),
+                new ConditionalEffect(
+                        new ColorSpentToCast(ManaColor.GREEN),
+                        new MassDamageEffect(new Fixed(3), false, false,
+                                new PermanentHasKeywordPredicate(Keyword.FLYING))));
     }
 }

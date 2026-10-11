@@ -14,9 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 public class HailStorm extends Card {
 
     public HailStorm() {
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(2, false, false, new PermanentIsAttackingPredicate()));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(
-                1, false, false, new PermanentControlledBySourceControllerPredicate()));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new MassDamageEffect(2, false, false, new PermanentIsAttackingPredicate()),
+                new MassDamageEffect(
+                        1, false, false, new PermanentControlledBySourceControllerPredicate()),
+                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
     }
 }

@@ -14,17 +14,20 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class DireStrainAnarchist extends Card {
 
     public DireStrainAnarchist() {
-        target(TargetFilters.creature(), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK, new DealDamageToTargetCreatureEffect(2));
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(2);
+        DealDamageToTargetPlayerOrPlaneswalkerEffect playerDamage =
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
+        DealDamageToTargetPlayerOrPlaneswalkerEffect planeswalkerDamage =
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
+        target(TargetFilters.creature(), 0, 1).bindEffect(creatureDamage);
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        ), 0, 1).addEffect(EffectSlot.ON_ATTACK,
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2));
+        ), 0, 1).bindEffect(playerDamage);
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 "Target must be a planeswalker"
-        ), 0, 1).addEffect(EffectSlot.ON_ATTACK,
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2));
+        ), 0, 1).bindEffect(planeswalkerDamage);
+        addSimultaneousEffects(EffectSlot.ON_ATTACK, creatureDamage, playerDamage, planeswalkerDamage);
     }
 }

@@ -23,9 +23,10 @@ public class ImpendingFlux extends Card {
     public ImpendingFlux() {
         var damage = new Sum(new Fixed(1),
                 new SpellsCastFromOutsideHandThisTurn(CountScope.CONTROLLER));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(damage, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(damage, false, false,
-                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToPlayersEffect(damage, DamageRecipient.EACH_OPPONENT),
+                new MassDamageEffect(damage, false, false,
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addCastingOption(new ForetellCast("{1}{R}{R}"));
     }
 }

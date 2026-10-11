@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class DaredevilsBillyClub extends Card {
 
     public DaredevilsBillyClub() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addSimultaneousEffects(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new DealDamageToAnyTargetEffect(2),
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));

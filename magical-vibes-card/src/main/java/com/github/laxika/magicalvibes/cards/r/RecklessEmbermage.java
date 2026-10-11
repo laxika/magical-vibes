@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
 
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "MIR", collectorNumber = "189")
@@ -18,10 +19,10 @@ public class RecklessEmbermage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",
-                List.of(
+                List.of(SequenceEffect.simultaneous(
                         new DealDamageToAnyTargetEffect(1),
                         new DealDamageToSourceEffect(1)
-                ),
+                )),
                 "{1}{R}: Reckless Embermage deals 1 damage to any target and 1 damage to itself."
         ));
     }

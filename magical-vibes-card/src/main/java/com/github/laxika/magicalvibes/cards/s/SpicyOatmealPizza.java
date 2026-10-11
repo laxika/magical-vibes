@@ -16,8 +16,8 @@ import java.util.List;
 public class SpicyOatmealPizza extends Card {
 
     public SpicyOatmealPizza() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(4));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        addSimultaneousEffects(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new DealDamageToAnyTargetEffect(4),
                 new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(

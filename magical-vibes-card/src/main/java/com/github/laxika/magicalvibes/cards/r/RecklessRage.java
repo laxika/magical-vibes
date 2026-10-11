@@ -10,12 +10,13 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RecklessRage extends Card {
 
     public RecklessRage() {
-        // Reckless Rage deals 4 damage to target creature you don't control.
-        target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
+        // Reckless Rage deals 4 damage to target creature you don't control...
+        DealDamageToTargetCreatureEffect opposingDamage = new DealDamageToTargetCreatureEffect(4);
+        target(TargetFilters.creatureAnOpponentControls()).bindEffect(opposingDamage);
 
-        // Reckless Rage deals 2 damage to target creature you control.
-        target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(2));
+        // ...and 2 damage to target creature you control.
+        DealDamageToTargetCreatureEffect ownDamage = new DealDamageToTargetCreatureEffect(2);
+        target(TargetFilters.creatureYouControl()).bindEffect(ownDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, opposingDamage, ownDamage);
     }
 }

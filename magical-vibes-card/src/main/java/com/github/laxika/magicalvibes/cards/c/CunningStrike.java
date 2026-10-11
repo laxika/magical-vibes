@@ -18,13 +18,16 @@ public class CunningStrike extends Card {
     public CunningStrike() {
         setAllowSharedTargets(true);
 
-        target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(2));
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(2);
+        DealDamageToTargetPlayerOrPlaneswalkerEffect playerDamage =
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
+        target(TargetFilters.creature()).bindEffect(creatureDamage);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetPlayerOrPlaneswalkerEffect(2));
+        )).bindEffect(playerDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, creatureDamage, playerDamage);
         addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
     }
 }

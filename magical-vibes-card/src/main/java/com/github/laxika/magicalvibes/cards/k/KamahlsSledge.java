@@ -14,10 +14,13 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class KamahlsSledge extends Card {
 
     public KamahlsSledge() {
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(4);
+        ConditionalEffect thresholdControllerDamage = new ConditionalEffect(
+                new GraveyardCardThreshold(7, null),
+                new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                        new GraveyardCardThreshold(7, null),
-                        new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PERMANENT_CONTROLLER)));
+                .bindEffect(creatureDamage)
+                .bindEffect(thresholdControllerDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, creatureDamage, thresholdControllerDamage);
     }
 }

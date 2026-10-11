@@ -63,15 +63,27 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 **Done.** While a spell or ability resolves, `DamageSupport.checkSpellLifelink` adds each lifelink
 gain to `GameData.pendingLifelinkGains`, keyed by source and gaining player. `EffectResolutionService`
-applies each one as a single life-gain event when the outermost resolution ends, before the loss check.
+applies each one as a single life-gain event when its damage event ends, before the loss check.
 Damage outside a resolution still gains life immediately. Combat already summed damage per creature.
 The original failing test
 (`DelayedBlastFireballTest.lifelinkDamageToPlayerAndCreatureCausesOnlyOneLifeGainTrigger`) passes;
 `LifelinkMechanicTest` covers multi-target spells and combat.
 
-**Known limitation.** The resolution is the batching unit, so damage from one source in genuinely
-sequential steps of a single resolution ("…, then …") is also one gain. Cards write simultaneous
-damage as separate steps too (Delayed Blast Fireball), so the engine can't tell the two apart.
+**Simultaneity grouping.** Each effect a resolution dispatches is now its own damage event, and its
+lifelink is gained before the next effect resolves. Effects that deal damage at the same time are
+grouped explicitly: `Card.addSimultaneousEffects` for slot effects (including multi-target spells and
+triggers), `SequenceEffect.simultaneous` inside wrappers and ability effect lists. About 60 cards with
+"… and … damage" across separate effects were regrouped; sequential damage ("Then …", a second
+sentence) stays separate events (`LifelinkMechanicTest.sequentialStepsGainLifeSeparately`).
+Only a handler that deals sequential damage *inside one effect* still forms one event.
+
+**Combined damage.** The steps of a grouped event hold their damage and deal it, when the event
+ends, combined per recipient and source — so a prevention, a "minus 1"/"plus 2" replacement or a
+"dealt damage" trigger applies once, and no step's amount sees another step's damage. A
+replacement-order prompt for the combined damage parks the resolution and replays through a
+`DamageJournal` pass (`SimultaneousDamageMechanicTest`). This fixed the Kaervek's Hex, Tropical
+Storm, Fire and Brimstone, Seismic Wave, Hail Storm, Wildfire Howl, Form of the Dinosaur and
+Self-Destruct (infect) tests.
 
 ---
 

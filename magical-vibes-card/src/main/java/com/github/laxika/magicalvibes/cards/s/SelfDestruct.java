@@ -20,8 +20,11 @@ import java.util.List;
 public class SelfDestruct extends Card {
 
     public SelfDestruct() {
-        target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.SPELL, new TargetCreatureDealsPowerDamageToSelfEffect());
+        TargetCreatureDealsPowerDamageToSelfEffect selfDamage =
+                new TargetCreatureDealsPowerDamageToSelfEffect();
+        TargetCreatureDealsPowerDamageToAnyTargetEffect targetDamage =
+                new TargetCreatureDealsPowerDamageToAnyTargetEffect();
+        target(TargetFilters.creatureYouControl()).bindEffect(selfDamage);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -30,6 +33,7 @@ public class SelfDestruct extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Second target must be any other target"
-        )).addEffect(EffectSlot.SPELL, new TargetCreatureDealsPowerDamageToAnyTargetEffect());
+        )).bindEffect(targetDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, selfDamage, targetDamage);
     }
 }

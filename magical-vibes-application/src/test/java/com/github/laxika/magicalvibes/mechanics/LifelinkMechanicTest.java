@@ -2,9 +2,14 @@ package com.github.laxika.magicalvibes.mechanics;
 
 import com.github.laxika.magicalvibes.cards.a.AjanisPridemate;
 import com.github.laxika.magicalvibes.cards.a.ArcTrail;
+import com.github.laxika.magicalvibes.cards.c.Char;
+import com.github.laxika.magicalvibes.cards.c.CunningStrike;
 import com.github.laxika.magicalvibes.cards.e.Earthquake;
+import com.github.laxika.magicalvibes.cards.f.Fireslinger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.Lifelink;
+import com.github.laxika.magicalvibes.cards.s.SarkhansRage;
 import com.github.laxika.magicalvibes.cards.s.SoulfireGrandMaster;
 import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -24,9 +29,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Damage one lifelink source deals to several recipients at once is a single life-gain event, so a
- * "whenever you gain life" ability triggers once for it; separate lifelink sources gain life separately.
+ * "whenever you gain life" ability triggers once for it; separate lifelink sources, and damage one
+ * source deals in sequential steps, gain life separately.
  */
-@CardUsed({AjanisPridemate.class, ArcTrail.class, Earthquake.class, GrizzlyBears.class, HillGiant.class,
+@CardUsed({AjanisPridemate.class, ArcTrail.class, Char.class, CunningStrike.class, Earthquake.class,
+        Fireslinger.class, GrizzlyBears.class, HillGiant.class, Lifelink.class, SarkhansRage.class,
         SoulfireGrandMaster.class, VampireNighthawk.class})
 class LifelinkMechanicTest extends BaseCardTest {
 
@@ -66,6 +73,85 @@ class LifelinkMechanicTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A lifelink spell dealing damage to a target and to you at the same time gains life once")
+    void simultaneousStepsGainLifeOnce() {
+        harness.addToBattlefield(player1, new SoulfireGrandMaster());
+        Permanent pridemate = harness.addToBattlefieldAndReturn(player1, new AjanisPridemate());
+        harness.setHand(player1, List.of(new Char()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        // 4 damage to the opponent and 2 to you: 20 - 2 + 6.
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A lifelink spell damaging two separate targets at the same time gains life once")
+    void simultaneousStepsWithSeparateTargetsGainLifeOnce() {
+        harness.addToBattlefield(player1, new SoulfireGrandMaster());
+        Permanent pridemate = harness.addToBattlefieldAndReturn(player1, new AjanisPridemate());
+        UUID giantId = harness.addToBattlefieldAndReturn(player2, new HillGiant()).getId();
+        harness.setHand(player1, List.of(new CunningStrike()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, List.of(giantId, player2.getId()));
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A lifelink creature's ability dealing damage to a target and to you at the same time gains life once")
+    void simultaneousAbilityStepsGainLifeOnce() {
+        Permanent fireslinger = harness.addToBattlefieldAndReturn(player1, new Fireslinger());
+        fireslinger.setSummoningSick(false);
+        Permanent pridemate = harness.addToBattlefieldAndReturn(player1, new AjanisPridemate());
+        harness.addToBattlefieldAndReturn(player1, new Lifelink()).setAttachedTo(fireslinger.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        // 1 damage to the opponent and 1 to you: 20 - 1 + 2.
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A lifelink spell dealing damage in two sentences gains life twice")
+    void sequentialStepsGainLifeSeparately() {
+        harness.addToBattlefield(player1, new SoulfireGrandMaster());
+        Permanent pridemate = harness.addToBattlefieldAndReturn(player1, new AjanisPridemate());
+        harness.setHand(player1, List.of(new SarkhansRage()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        // 5 damage to the opponent, then 2 to you: 20 + 5 - 2 + 2.
+        harness.assertLife(player1, 25);
+        harness.assertLife(player2, 15);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
     }
 

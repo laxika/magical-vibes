@@ -17,12 +17,15 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class HungryFlames extends Card {
 
     public HungryFlames() {
-        target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(3));
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(3);
+        DealDamageToTargetPlayerOrPlaneswalkerEffect playerDamage =
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
+        target(TargetFilters.creature()).bindEffect(creatureDamage);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker."
-        )).addEffect(EffectSlot.SPELL, new DealDamageToTargetPlayerOrPlaneswalkerEffect(2));
+        )).bindEffect(playerDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, creatureDamage, playerDamage);
     }
 }

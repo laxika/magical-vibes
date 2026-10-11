@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 public class Famine extends Card {
 
     public Famine() {
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(3));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new MassDamageEffect(3),
+                new DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER));
     }
 }

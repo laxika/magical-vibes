@@ -26,8 +26,12 @@ public class TheFallOfKroog extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET);
 
         landTarget.addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
-        opponentTarget.addEffect(EffectSlot.SPELL,
-                new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
-        opponentTarget.addEffect(EffectSlot.SPELL, new DealDamageToPermanentsTargetControlsEffect(1));
+        DealDamageToPlayersEffect opponentDamage =
+                new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER);
+        DealDamageToPermanentsTargetControlsEffect creatureDamage =
+                new DealDamageToPermanentsTargetControlsEffect(1);
+        opponentTarget.bindEffect(opponentDamage);
+        opponentTarget.bindEffect(creatureDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, opponentDamage, creatureDamage);
     }
 }

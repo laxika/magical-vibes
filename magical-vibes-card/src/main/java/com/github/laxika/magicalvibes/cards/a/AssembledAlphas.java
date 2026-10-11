@@ -13,11 +13,12 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 public class AssembledAlphas extends Card {
 
     public AssembledAlphas() {
-        addEffect(EffectSlot.ON_BLOCK, new DealDamageToCombatOpponentControllerEffect(new Fixed(3)));
-        addEffect(EffectSlot.ON_BLOCK, new DealDamageToTargetCreatureEffect(3));
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED,
-                new DealDamageToCombatOpponentControllerEffect(new Fixed(3)), TriggerMode.PER_BLOCKER);
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED,
-                new DealDamageToTargetCreatureEffect(3), TriggerMode.PER_BLOCKER);
+        addSimultaneousEffects(EffectSlot.ON_BLOCK,
+                new DealDamageToCombatOpponentControllerEffect(new Fixed(3)),
+                new DealDamageToTargetCreatureEffect(3));
+
+        addSimultaneousEffects(EffectSlot.ON_BECOMES_BLOCKED, TriggerMode.PER_BLOCKER,
+                new DealDamageToCombatOpponentControllerEffect(new Fixed(3)),
+                new DealDamageToTargetCreatureEffect(3));
     }
 }

@@ -1415,6 +1415,43 @@ public class Card {
         effectCache.remove(slot);
     }
 
+    /**
+     * Adds effects that happen at the same time ("deals 4 damage to any target and 2 damage to
+     * you"), so the damage they deal is one damage event: a lifelink source gains life once for all
+     * of it. Every separate effect is otherwise its own event. Effects bound to different target
+     * groups are attached with {@code SpellTarget.bindEffect} first and added here. Steps inside a
+     * wrapper effect or an activated ability's effect list go in a
+     * {@code SequenceEffect.simultaneous} instead.
+     */
+    public void addSimultaneousEffects(EffectSlot slot, CardEffect... effects) {
+        addSimultaneousEffects(slot, TriggerMode.NORMAL, effects);
+    }
+
+    public void addSimultaneousEffects(EffectSlot slot, TriggerMode triggerMode, CardEffect... effects) {
+        assertMutable();
+        if (effects.length < 2) {
+            throw new IllegalArgumentException("Simultaneous effects need at least two effects, got " + effects.length);
+        }
+        List<EffectRegistration> regs = effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>());
+        for (int i = 0; i < effects.length; i++) {
+            validateEffectSlotType(slot, effects[i]);
+            regs.add(new EffectRegistration(effects[i], triggerMode, i > 0));
+        }
+        effectCache.remove(slot);
+    }
+
+    /** Whether {@code effect} is registered as happening at the same time as the effect before it. */
+    public boolean isSimultaneousWithPrevious(CardEffect effect) {
+        for (List<EffectRegistration> regs : effectRegistrations.values()) {
+            for (EffectRegistration reg : regs) {
+                if (reg.effect() == effect) {
+                    return reg.simultaneousWithPrevious();
+                }
+            }
+        }
+        return false;
+    }
+
     private void validateEffectSlotType(EffectSlot slot, CardEffect effect) {
         if (slot == EffectSlot.STATE_TRIGGERED && !(effect instanceof StateTriggerEffect)) {
             throw new IllegalArgumentException(

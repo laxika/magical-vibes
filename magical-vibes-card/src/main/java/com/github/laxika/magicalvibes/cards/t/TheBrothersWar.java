@@ -45,10 +45,13 @@ public class TheBrothersWar extends Card {
                 "Target must be a creature, planeswalker, battle, or player.");
         var artifactCount = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        target(anyTarget).addEffect(EffectSlot.SAGA_CHAPTER_III,
-                new DealDamageToAnyTargetEffect(artifactCount, false, false, 1, null));
-        target(anyTarget).addEffect(EffectSlot.SAGA_CHAPTER_III,
-                new DealDamageToAnyTargetEffect(artifactCount, false, false, 2, null));
+        DealDamageToAnyTargetEffect firstDamage =
+                new DealDamageToAnyTargetEffect(artifactCount, false, false, 1, null);
+        DealDamageToAnyTargetEffect secondDamage =
+                new DealDamageToAnyTargetEffect(artifactCount, false, false, 2, null);
+        target(anyTarget).bindEffect(firstDamage);
+        target(anyTarget).bindEffect(secondDamage);
+        addSimultaneousEffects(EffectSlot.SAGA_CHAPTER_III, firstDamage, secondDamage);
         setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_III, List.of(
                 new SagaChapterTargetGroup(anyTarget, 1, 1),
                 new SagaChapterTargetGroup(anyTarget, 1, 1)));

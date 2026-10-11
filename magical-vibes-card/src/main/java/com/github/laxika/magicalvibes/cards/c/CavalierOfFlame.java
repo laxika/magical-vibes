@@ -43,7 +43,7 @@ public class CavalierOfFlame extends Card {
 
         CardsInGraveyard landsInGraveyard = new CardsInGraveyard(
                 new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
-        addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
+        addEffect(EffectSlot.ON_DEATH, SequenceEffect.simultaneous(
                 new DealDamageToPlayersEffect(landsInGraveyard, DamageRecipient.EACH_OPPONENT),
                 new MassDamageEffect(landsInGraveyard, false, true,
                         new PermanentAllOfPredicate(List.of(

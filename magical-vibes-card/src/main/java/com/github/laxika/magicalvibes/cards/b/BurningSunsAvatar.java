@@ -18,13 +18,17 @@ public class BurningSunsAvatar extends Card {
         setAllowSharedTargets(true);
 
         // Deals 3 damage to target opponent or planeswalker
+        DealDamageToTargetPlayerOrPlaneswalkerEffect opponentDamage =
+                new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT);
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent or planeswalker"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetPlayerOrPlaneswalkerEffect(3, PlayerRelation.OPPONENT));
+        )).bindEffect(opponentDamage);
 
         // Deals 3 damage to up to one target creature
-        target(TargetFilters.creature(), 0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(3));
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(3);
+        target(TargetFilters.creature(), 0, 1).bindEffect(creatureDamage);
+        addSimultaneousEffects(EffectSlot.ON_ENTER_BATTLEFIELD, opponentDamage, creatureDamage);
     }
 }

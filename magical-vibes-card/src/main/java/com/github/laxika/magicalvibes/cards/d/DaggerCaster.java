@@ -18,13 +18,13 @@ import java.util.List;
 public class DaggerCaster extends Card {
 
     public DaggerCaster() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToEachMatchingPermanentEffect(
-                1,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
-                EachPermanentScope.ALL_PLAYERS));
+        addSimultaneousEffects(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToEachMatchingPermanentEffect(
+                        1,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
+                        EachPermanentScope.ALL_PLAYERS));
     }
 }

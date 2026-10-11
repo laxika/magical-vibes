@@ -16,14 +16,16 @@ import java.util.List;
 public class TrickShot extends Card {
 
     public TrickShot() {
-        target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(6));
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(6);
+        DealDamageToTargetCreatureEffect tokenDamage = new DealDamageToTargetCreatureEffect(2);
+        target(TargetFilters.creature()).bindEffect(creatureDamage);
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTokenPredicate()
                 )),
                 "Target must be a creature token"
-        ), 0, 1).addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(2));
+        ), 0, 1).bindEffect(tokenDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, creatureDamage, tokenDamage);
     }
 }

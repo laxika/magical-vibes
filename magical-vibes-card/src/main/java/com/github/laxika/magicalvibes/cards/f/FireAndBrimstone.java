@@ -12,10 +12,14 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 public class FireAndBrimstone extends Card {
 
     public FireAndBrimstone() {
+        DealDamageToPlayersEffect targetDamage =
+                new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER);
         target(new PlayerPredicateTargetFilter(
                 new PlayerAttackedThisTurnPredicate(),
                 "Target must be a player who attacked this turn"
-        )).addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(4, DamageRecipient.CONTROLLER));
+        )).bindEffect(targetDamage);
+        addSimultaneousEffects(EffectSlot.SPELL,
+                targetDamage,
+                new DealDamageToPlayersEffect(4, DamageRecipient.CONTROLLER));
     }
 }

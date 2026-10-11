@@ -16,7 +16,8 @@ import java.util.Set;
 public class TropicalStorm extends Card {
 
     public TropicalStorm() {
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(0, true, false, new PermanentHasKeywordPredicate(Keyword.FLYING)));
-        addEffect(EffectSlot.SPELL, new MassDamageEffect(new Fixed(1), false, false, new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new MassDamageEffect(0, true, false, new PermanentHasKeywordPredicate(Keyword.FLYING)),
+                new MassDamageEffect(new Fixed(1), false, false, new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
     }
 }

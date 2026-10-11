@@ -68,7 +68,8 @@ public class PermanentCopierService {
                         copy.setToughness(set.toughness());
                         continue;
                     }
-                    selectedEffects.add(new EffectRegistration(conditional.wrapped(), registration.triggerMode()));
+                    selectedEffects.add(new EffectRegistration(conditional.wrapped(), registration.triggerMode(),
+                            registration.simultaneousWithPrevious()));
                 }
             }
             registrations.addAll(0, selectedEffects);

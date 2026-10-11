@@ -14,8 +14,8 @@ public class SynchronizedSpellcraft extends Card {
 
     public SynchronizedSpellcraft() {
         target(TargetFilters.creature());
-        addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
-        addEffect(EffectSlot.SPELL,
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToTargetCreatureEffect(4),
                 new DealDamageToPlayersEffect(new PartySize(), DamageRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

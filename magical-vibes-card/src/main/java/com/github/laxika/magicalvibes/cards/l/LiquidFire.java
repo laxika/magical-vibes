@@ -19,11 +19,14 @@ public class LiquidFire extends Card {
 
     public LiquidFire() {
         addEffect(EffectSlot.SPELL, new ChooseXValueCost(0, 5));
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(new XValue());
+        DealDamageToPlayersEffect controllerDamage = new DealDamageToPlayersEffect(
+                new Sum(new Fixed(5), new Scaled(new XValue(), -1)),
+                DamageRecipient.TARGET_PERMANENT_CONTROLLER);
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature."))
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()))
-                .addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
-                        new Sum(new Fixed(5), new Scaled(new XValue(), -1)),
-                        DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+                .bindEffect(creatureDamage)
+                .bindEffect(controllerDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, creatureDamage, controllerDamage);
     }
 }

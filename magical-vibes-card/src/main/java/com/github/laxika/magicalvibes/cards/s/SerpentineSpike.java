@@ -11,14 +11,12 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SerpentineSpike extends Card {
 
     public SerpentineSpike() {
-        target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new DealDamageToAnyTargetEffect(new Fixed(2), false, true));
-        target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new DealDamageToAnyTargetEffect(new Fixed(3), false, true));
-        target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL,
-                        new DealDamageToAnyTargetEffect(new Fixed(4), false, true));
+        DealDamageToAnyTargetEffect firstDamage = new DealDamageToAnyTargetEffect(new Fixed(2), false, true);
+        DealDamageToAnyTargetEffect secondDamage = new DealDamageToAnyTargetEffect(new Fixed(3), false, true);
+        DealDamageToAnyTargetEffect thirdDamage = new DealDamageToAnyTargetEffect(new Fixed(4), false, true);
+        target(TargetFilters.creature()).bindEffect(firstDamage);
+        target(TargetFilters.creature()).bindEffect(secondDamage);
+        target(TargetFilters.creature()).bindEffect(thirdDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, firstDamage, secondDamage, thirdDamage);
     }
 }

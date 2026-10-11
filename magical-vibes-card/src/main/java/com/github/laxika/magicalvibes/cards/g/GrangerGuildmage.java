@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,10 +19,10 @@ public class GrangerGuildmage extends Card {
 
     public GrangerGuildmage() {
         addActivatedAbility(new ActivatedAbility(true, "{R}",
-                List.of(
+                List.of(SequenceEffect.simultaneous(
                         new DealDamageToAnyTargetEffect(1),
                         new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)
-                ),
+                )),
                 "{R}, {T}: Granger Guildmage deals 1 damage to any target and 1 damage to you."));
 
         addActivatedAbility(new ActivatedAbility(true, "{W}",

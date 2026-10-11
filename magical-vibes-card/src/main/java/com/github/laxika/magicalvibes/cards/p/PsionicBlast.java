@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 public class PsionicBlast extends Card {
 
     public PsionicBlast() {
-        addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(4));
-        addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
+        addSimultaneousEffects(EffectSlot.SPELL,
+                new DealDamageToAnyTargetEffect(4),
+                new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
     }
 }

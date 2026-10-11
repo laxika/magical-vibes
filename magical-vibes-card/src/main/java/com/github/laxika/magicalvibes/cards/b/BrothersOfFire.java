@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -20,7 +21,7 @@ public class BrothersOfFire extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}{R}",
-                List.of(new DealDamageToAnyTargetEffect(1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
+                List.of(SequenceEffect.simultaneous(new DealDamageToAnyTargetEffect(1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))),
                 "{1}{R}{R}: This creature deals 1 damage to any target and 1 damage to you."
         ));
     }

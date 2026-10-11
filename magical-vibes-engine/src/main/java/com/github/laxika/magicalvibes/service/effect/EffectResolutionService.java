@@ -118,9 +118,9 @@ public class EffectResolutionService {
             // player input (pendingEffectResolutionEntry set). On a pause the flag stays set so the
             // suppression survives until the resumed resolution drains and completes here.
             if (gameData.effectResolutionDepth == 0 && gameData.pendingEffectResolutionEntry == null) {
-                // One life-gain event per lifelink source for the whole resolution's damage, gained
-                // before the loss check below so it counts toward the controller's life total.
-                damageSupport.flushLifelinkGains(gameData);
+                // The last damage event's lifelink, gained before the loss check below so it counts
+                // toward the controller's life total.
+                damageSupport.endDamageEvent(gameData);
                 gameData.deferPlayerLossCheck = false;
                 if (gameData.currentlyResolvingControllerId == null) {
                     stackResolutionService.getObject().completeDeferredSpellResolution(gameData, entry);
@@ -143,6 +143,12 @@ public class EffectResolutionService {
     private void resolveEffectsLoop(GameData gameData, StackEntry entry, int startIndex) {
         List<CardEffect> effects = entry.getEffectsToResolve();
         for (int i = startIndex; i < effects.size(); i++) {
+            // A new damage event ends the open one first; held simultaneous damage that prompts its
+            // player brings the resolution back to this effect once answered.
+            if (!damageSupport.beginDamageEvent(gameData, entry, i)) {
+                parkResolution(gameData, entry, i);
+                return;
+            }
             CardEffect effect = effects.get(i);
             CardEffect effectToResolve = effect;
             int effectOccurrence = 0;
@@ -363,7 +369,7 @@ public class EffectResolutionService {
             // Sequence expansion: splice the steps into this entry's effect list so they resolve
             // in order through this same loop (pause/resume and nested wrappers work unchanged).
             if (effectToResolve instanceof SequenceEffect sequence) {
-                entry.insertEffectsToResolve(i + 1, sequence.steps());
+                entry.spliceSequenceSteps(i, sequence.steps(), sequence.simultaneous());
                 effects = entry.getEffectsToResolve();
                 continue;
             }
@@ -392,7 +398,7 @@ public class EffectResolutionService {
                 if (may.elseEffect() == null) {
                     skipEffect = true;
                 } else if (may.elseEffect() instanceof SequenceEffect sequence) {
-                    entry.insertEffectsToResolve(i + 1, sequence.steps());
+                    entry.spliceSequenceSteps(i, sequence.steps(), sequence.simultaneous());
                     skipEffect = true;
                 } else {
                     effectToResolve = may.elseEffect();
@@ -403,11 +409,13 @@ public class EffectResolutionService {
                 entry.setResolvingEffectIndex(i);
                 EffectHandler handler = registry.getHandler(effectToResolve);
                 if (handler != null) {
+                    beginCollectingSimultaneousDamage(gameData, entry, i);
                     damageJournalService.beginEffect(gameData, entry, i);
                     try {
                         handler.resolve(gameData, entry, effectToResolve);
                     } finally {
                         damageJournalService.endEffect(gameData);
+                        gameData.collectingDamageEvent = null;
                     }
                 } else {
                     log.warn("No handler for effect: {}", effectToResolve.getClass().getSimpleName());
@@ -439,6 +447,10 @@ public class EffectResolutionService {
                 return;
             }
         }
+        if (!damageSupport.endOpenDamageEvent(gameData)) {
+            parkResolution(gameData, entry, effects.size());
+            return;
+        }
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
         entry.setResolvingEffectIndex(-1);
@@ -465,6 +477,25 @@ public class EffectResolutionService {
         // Now that the whole resolution's damage is dealt, queue any "whenever a [color] source deals
         // damage" reflections (Justice) once per source with the summed total (CR ruling).
         damageSupport.flushSourceDamageReflections(gameData);
+    }
+
+    private void parkResolution(GameData gameData, StackEntry entry, int resumeIndex) {
+        gameData.pendingEffectResolutionEntry = entry;
+        gameData.pendingEffectResolutionIndex = resumeIndex;
+    }
+
+    /**
+     * A step of a simultaneous damage event holds the damage it starts until the event ends, so it
+     * is dealt combined with the other steps' damage. A step resolved again replaces what it held.
+     */
+    private void beginCollectingSimultaneousDamage(GameData gameData, StackEntry entry, int index) {
+        if (!entry.isInSimultaneousDamageEvent(index)) {
+            return;
+        }
+        gameData.pendingSimultaneousDamage.removeIf(pending ->
+                pending.event().equals(gameData.openDamageEvent) && pending.stepIndex() == index);
+        gameData.collectingDamageEvent = gameData.openDamageEvent;
+        gameData.collectingDamageStep = index;
     }
 
     private boolean shouldSkipAcceptedOncePerTurnMay(GameData gameData, StackEntry entry, MayEffect may) {

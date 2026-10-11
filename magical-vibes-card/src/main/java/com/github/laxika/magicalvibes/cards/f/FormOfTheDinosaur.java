@@ -16,7 +16,7 @@ public class FormOfTheDinosaur extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SetLifeTotalEffect(15));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+                .addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.simultaneous(
                         new DealDamageToTargetCreatureEffect(15),
                         new TargetCreatureDealsPowerDamageToAbilityControllerEffect()));
     }

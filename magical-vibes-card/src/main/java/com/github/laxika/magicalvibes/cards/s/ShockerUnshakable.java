@@ -21,9 +21,10 @@ public class ShockerUnshakable extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new DealDamageToTargetCreatureEffect(2));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(2);
+        target(TargetFilters.creature()).bindEffect(creatureDamage);
+        addSimultaneousEffects(EffectSlot.ON_ENTER_BATTLEFIELD,
+                creatureDamage,
                 new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

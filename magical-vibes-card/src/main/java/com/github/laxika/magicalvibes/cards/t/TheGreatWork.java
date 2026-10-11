@@ -24,10 +24,14 @@ public class TheGreatWork extends Card {
         var opponent = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent");
+        DealDamageToPlayersEffect opponentDamage =
+                new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER);
+        DealDamageToPermanentsTargetControlsEffect creatureDamage =
+                new DealDamageToPermanentsTargetControlsEffect(3);
         target(opponent)
-                .addEffect(EffectSlot.SAGA_CHAPTER_I,
-                        new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER))
-                .addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToPermanentsTargetControlsEffect(3));
+                .bindEffect(opponentDamage)
+                .bindEffect(creatureDamage);
+        addSimultaneousEffects(EffectSlot.SAGA_CHAPTER_I, opponentDamage, creatureDamage);
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, CreateTokenEffect.ofTreasureToken(3));
 

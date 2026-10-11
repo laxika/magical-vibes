@@ -16,10 +16,13 @@ public class BurnTheAccursed extends Card {
     public BurnTheAccursed() {
         // Burn the Accursed deals 5 damage to target creature and 2 damage to that creature's
         // controller. If that creature would die this turn, exile it instead.
+        DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(5);
+        DealDamageToPlayersEffect controllerDamage =
+                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER);
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new MarkTargetCreatureExileInsteadOfDieThisTurnEffect())
-                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(5))
-                .addEffect(EffectSlot.SPELL,
-                        new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER));
+                .bindEffect(creatureDamage)
+                .bindEffect(controllerDamage);
+        addSimultaneousEffects(EffectSlot.SPELL, creatureDamage, controllerDamage);
     }
 }

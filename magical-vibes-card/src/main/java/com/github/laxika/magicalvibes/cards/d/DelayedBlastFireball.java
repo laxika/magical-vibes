@@ -25,7 +25,7 @@ public class DelayedBlastFireball extends Card {
     }
 
     private static SequenceEffect damage(int amount) {
-        return SequenceEffect.of(
+        return SequenceEffect.simultaneous(
                 new DealDamageToPlayersEffect(amount, DamageRecipient.EACH_OPPONENT),
                 new DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect(amount, false)
         );

@@ -3487,7 +3487,7 @@ public class CombatAttackService {
         if (resolvedSteps.size() == sequence.steps().size()) {
             return effect;
         }
-        return new SequenceEffect(resolvedSteps, sequence.controllerDrawCount(), sequence.onlyIfSacrificed());
+        return sequence.withSteps(resolvedSteps);
     }
 
     private boolean isAttackedTargetOpponentCondition(Condition condition) {
