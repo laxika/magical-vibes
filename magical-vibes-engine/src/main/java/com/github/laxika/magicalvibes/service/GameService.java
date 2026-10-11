@@ -2163,16 +2163,29 @@ public class GameService {
             }
             abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
-            if (normalPriorityActivation && manaActivation && !gameData.interaction.isAwaitingInput()
-                    && gameData.revertableManaActivations.isEmpty()
-                    && gameData.pendingRevertableManaActivation == null
-                    && !gameData.pendingManaAbilityTriggers.isEmpty()) {
-                stateBasedActionService.performStateBasedActions(gameData);
-                gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
-                gameData.pendingManaAbilityTriggers.clear();
-                gameData.priorityPassedBy.clear();
+            if (normalPriorityActivation && manaActivation) {
+                flushManaAbilityTriggersAfterActivation(gameData);
             }
         }
+    }
+
+    /**
+     * Puts the triggers deferred by a completed mana-ability activation on the stack: the player
+     * receives priority after activating an ability (CR 117.3c), which is when triggered abilities
+     * are put on the stack (CR 603.3). Waits while a prompt is open or while earlier mana
+     * activations can still be undone by the cancel-casting UI.
+     */
+    private void flushManaAbilityTriggersAfterActivation(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput()
+                || !gameData.revertableManaActivations.isEmpty()
+                || gameData.pendingRevertableManaActivation != null
+                || gameData.pendingManaAbilityTriggers.isEmpty()) {
+            return;
+        }
+        stateBasedActionService.performStateBasedActions(gameData);
+        gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+        gameData.pendingManaAbilityTriggers.clear();
+        gameData.priorityPassedBy.clear();
     }
 
     public void activateCommandZoneAbility(GameData gameData, Player player, UUID cardId, Integer abilityIndex) {
@@ -2368,9 +2381,14 @@ public class GameService {
         if (delegated) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            int deferredManaTriggersBefore = gameData.pendingManaAbilityTriggers.size();
             if (!interactionHandlerRegistry.dispatchAnswer(gameData, player, answer)) {
                 throw new IllegalStateException(
                         "Not awaiting " + answer.getClass().getSimpleName() + " input");
+            }
+            // A cost choice (sacrifice, graveyard exile, ...) can complete a mana ability.
+            if (gameData.pendingManaAbilityTriggers.size() > deferredManaTriggersBefore) {
+                flushManaAbilityTriggersAfterActivation(gameData);
             }
         }
     }

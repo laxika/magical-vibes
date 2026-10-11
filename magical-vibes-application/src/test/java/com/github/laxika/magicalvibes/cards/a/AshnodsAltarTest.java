@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AshnodsAltar.class, GrizzlyBears.class})
+@CardUsed({AshnodsAltar.class, GrizzlyBears.class, AnodetLurker.class})
 class AshnodsAltarTest extends BaseCardTest {
 
     @Test
@@ -34,6 +35,27 @@ class AshnodsAltarTest extends BaseCardTest {
                 .filteredOn(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .hasSize(1);
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A death trigger from the chosen sacrifice goes on the stack once the activation completes")
+    void deathTriggerFromChosenSacrificeGoesOnStackAfterActivation() {
+        harness.addToBattlefield(player1, new AshnodsAltar());
+        Permanent lurker = harness.addToBattlefieldAndReturn(player1, new AnodetLurker());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, lurker.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getCard().getName()).isEqualTo("Anodet Lurker");
+        });
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
     }
 
     @Test

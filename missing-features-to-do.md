@@ -23,16 +23,14 @@ unmodified amount; `DamageMultiplierRatchetTest` keeps it that way). The last fi
 are gone: Megrim's discard damage and Rubble Rouser's "when you do" mana-ability rider are now triggered
 abilities on the stack (CR 603.12, 605.5a), and Myr Battlesphere's attack damage goes through
 `DamageSupport` to the player or planeswalker it's attacking. Discard-triggered life loss (Liliana's
-Caress, Fell Specter, Raider's Wake, Midnight Oil) uses the stack too (CR 603.3). The
+Caress, Fell Specter, Raider's Wake, Midnight Oil) uses the stack too (CR 603.3), and triggers from a
+mana ability completed by a cost choice reach the stack when it completes (CR 117.3c). The
 original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage`,
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
 **Still open.**
 - The "+N" bonus families are one option per family (the sum of every instance), so a multiplier
   can't be applied between two bonuses of the same family; global multipliers are one option each.
-- A mana-ability trigger deferred while the activation waits on a cost choice (Rubble Rouser's
-  graveyard exile) reaches the stack only on the next priority pass, not when the activation completes
-  (`RubbleRouserTest.manaAbilityAddsRedAndDamagesOpponents` expects it at once).
 - Damage redirected to a player through `processSourceRedirectDamage` / `processPendingRedirectDamage`
   starts a fresh fixed chain instead of continuing the same event (CR 614.5).
 - Combat: "prevent all combat damage" (Fog) and the guard/"dealt to this creature instead" routing
