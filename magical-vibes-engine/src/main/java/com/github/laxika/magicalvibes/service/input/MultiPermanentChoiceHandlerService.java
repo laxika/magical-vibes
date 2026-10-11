@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadChosenCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -33,7 +32,6 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -164,7 +162,6 @@ public class MultiPermanentChoiceHandlerService {
             .DestroyUpToOneAttachedPermanentEffectHandler destroyUpToOneAttachedPermanentHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PutMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler putMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler;
     private final LifeSupport lifeSupport;
-    private final DamagePreventionService damagePreventionService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport tapUntapSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.QueueReflexiveAbilityEffectHandler
@@ -2949,90 +2946,24 @@ public class MultiPermanentChoiceHandlerService {
 
             // Boost source permanent +X/+0 (only if still on battlefield)
             Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-            Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : null;
-            String sourceName;
             if (sourcePermanent != null) {
                 sourcePermanent.setPowerModifier(sourcePermanent.getPowerModifier() + count);
-                sourceName = sourcePermanent.getCard().getName();
                 gameLogService.append(gameData,
-                        GameLog.cardThen(sourceCard, " gets +" + count + "/+0 until end of turn."));
-                log.info("Game {} - {} gets +{}/+0", gameData.id, sourceName, count);
+                        GameLog.cardThen(sourcePermanent.getCard(), " gets +" + count + "/+0 until end of turn."));
+                log.info("Game {} - {} gets +{}/+0", gameData.id, sourcePermanent.getCard().getName(), count);
             } else {
-                sourceName = "Myr Battlesphere";
                 log.info("Game {} - Source permanent no longer on battlefield, skipping boost", gameData.id);
             }
 
-            // Deal X damage to the defending player (happens even if source left battlefield per ruling)
-            UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, playerId);
-            String defenderName = gameData.playerIdToName.get(defendingPlayerId);
-
-            // Check source damage prevention
-            Set<UUID> preventedSources = gameData.playerSourceDamagePreventionIds.get(defendingPlayerId);
-            boolean sourcePrevented = preventedSources != null && preventedSources.contains(sourcePermanentId);
-
-            if (sourcePrevented) {
-                gameLogService.append(gameData, appendCardOrText(GameLog.builder(), sourceCard, sourceName)
-                        .text("'s damage to " + defenderName + " is prevented.").build());
-            } else {
-                // Apply damage multiplier (GlobalDamageMultiplyingEffect)
-                int damage = count;
-                damage += gameQueryService.getAdditionalDamageToOpponentsBonus(
-                        gameData, playerId, sourceCard, sourcePermanent, defendingPlayerId);
-                final int[] multiplier = {1};
-                gameData.forEachPermanent((pid, p) -> {
-                    for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (e instanceof GlobalDamageMultiplyingEffect multiplyingEffect) {
-                            multiplier[0] *= multiplyingEffect.damageMultiplierFactor();
-                        }
-                    }
-                });
-                damage *= multiplier[0];
-
-                // Apply global prevention shield
-                if (gameData.globalDamagePreventionShield > 0 && damage > 0) {
-                    int prevented = Math.min(gameData.globalDamagePreventionShield, damage);
-                    gameData.globalDamagePreventionShield -= prevented;
-                    damage -= prevented;
-                }
-
-                damage = damagePreventionService.applyDamagePreventionLifeGainShield(
-                        gameData, defendingPlayerId, damage);
-
-                // Apply player prevention shield
-                int shield = gameData.playerDamagePreventionShields.getOrDefault(defendingPlayerId, 0);
-                if (shield > 0 && damage > 0) {
-                    int prevented = Math.min(shield, damage);
-                    gameData.playerDamagePreventionShields.put(defendingPlayerId, shield - prevented);
-                    damage -= prevented;
-                }
-
-                if (damage > 0) {
-                    boolean hasInfect = sourcePermanent != null
-                            && gameQueryService.hasKeyword(gameData, sourcePermanent, Keyword.INFECT);
-                    boolean treatAsInfect = hasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, defendingPlayerId);
-                    if (treatAsInfect) {
-                        lifeSupport.applyPoisonCounters(gameData, defendingPlayerId, damage,
-                                sourceName, playerId);
-                    } else if (!gameQueryService.canPlayerLoseLife(gameData, defendingPlayerId)) {
-                        gameLogService.append(gameData, GameLog.text(defenderName + "'s life total can't change."));
-                    } else {
-                        int lifeLoss = damage
-                                * gameQueryService.opponentLifeLossMultiplier(gameData, defendingPlayerId);
-                        int currentLife = gameData.getLife(defendingPlayerId);
-                        gameData.playerLifeTotals.put(defendingPlayerId, currentLife - lifeLoss);
-                        gameLogService.append(gameData, appendCardOrText(GameLog.builder(), sourceCard, sourceName)
-                                .text(" deals " + damage + " damage to " + defenderName + ".").build());
-                    }
-                    gameData.recordDamageToPlayer(defendingPlayerId, damage,
-                            gameQueryService.isArtifact(gameData, sourcePermanent) ? damage : 0);
-                    gameData.recordDamageDealtBySourceToPlayer(sourcePermanentId, defendingPlayerId, damage);
-                    triggerCollectionService.checkOpponentDealtDamageTriggers(
-                            gameData, defendingPlayerId, sourcePermanentId, damage);
-                    if (sourcePermanent != null) {
-                        triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
-                                gameData, sourcePermanent, playerId, defendingPlayerId, damage);
-                    }
-                }
+            // The damage is dealt even if the source left the battlefield (ruling), to the player or
+            // planeswalker it is attacking; it is an ordinary damage event (CR 616.1).
+            StackEntry damageEntry = context.damageEntry();
+            UUID attackedId = damageEntry.getAttackedTargetId();
+            Permanent attackedPermanent = attackedId == null || gameData.playerIds.contains(attackedId) ? null
+                    : gameQueryService.findPermanentById(gameData, attackedId);
+            if (attackedId != null && (gameData.playerIds.contains(attackedId)
+                    || attackedPermanent != null && gameQueryService.isPlaneswalker(gameData, attackedPermanent))) {
+                damageSupport.resolveAnyTargetDamage(gameData, damageEntry, attackedId, count, false);
             }
         }
 

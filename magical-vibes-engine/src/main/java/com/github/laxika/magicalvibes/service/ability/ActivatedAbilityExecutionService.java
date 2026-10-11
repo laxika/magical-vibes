@@ -112,7 +112,6 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -175,7 +174,6 @@ public class ActivatedAbilityExecutionService {
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
 
-    private final DamagePreventionService damagePreventionService;
     private final DrawService drawService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
@@ -1612,16 +1610,12 @@ public class ActivatedAbilityExecutionService {
                 damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId,
                         damage);
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.EACH_OPPONENT) {
-                // Reflexive "When you do" rider on a mana ability, e.g. Rubble Rouser:
-                // "Add {R}. When you do, this creature deals 1 damage to each opponent."
-                int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
-                        new AmountContext(playerId, permanent, null, 0, 0));
-                for (UUID opponentId : gameData.orderedPlayerIds) {
-                    if (opponentId.equals(playerId)) continue;
-                    int opponentDamage = damage + gameQueryService.getControllerDamageToOpponentBonus(
-                            gameData, playerId, opponentId, false, permanent.getId());
-                    dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, opponentDamage);
-                }
+                // Reflexive "When you do" rider on a mana ability, e.g. Rubble Rouser: "Add {R}. When
+                // you do, this creature deals 1 damage to each opponent." A reflexive trigger that
+                // can't add mana is not a mana ability, so it waits for the stack (CR 603.12, 605.5a).
+                gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        permanent.getCard(), playerId, permanent.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(dmg)), null, permanent.getId()));
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
                 // "Draw a card at the beginning of the next turn's upkeep." rider on a mana ability (Barbed Sextant).
                 gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard(),
@@ -1751,92 +1745,6 @@ public class ActivatedAbilityExecutionService {
             totals.put(color, manaPool.get(color));
         }
         return totals;
-    }
-
-    /**
-     * Deals a mana-ability rider's damage to a single player, applying the same prevention/infect/
-     * redirect handling used by the {@link DealDamageToPlayersEffect} CONTROLLER rider. Used by
-     * {@link DealDamageToPlayersEffect} EACH_OPPONENT riders (e.g. Rubble Rouser).
-     */
-    private void dealManaAbilityRiderDamageToPlayer(GameData gameData, Permanent permanent, UUID playerId, int damage) {
-        String cardName = permanent.getCard().getName();
-        String playerName = gameData.playerIdToName.get(playerId);
-        damage = gameQueryService.applyOjerAxonilDamageReplacement(
-                gameData, damage,
-                gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, permanent)),
-                gameQueryService.findPermanentController(gameData, permanent.getId()), playerId);
-        if (gameQueryService.isDamagePreventable(gameData)) {
-            CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
-            boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
-                    gameData, playerId, permanent.getId());
-            if (sourceDamagePrevented && !gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)) {
-                damagePreventionService.applySourceDamagePreventionForPlayer(
-                        gameData, playerId, permanent.getId(), damage,
-                        gameQueryService.getEffectiveColors(gameData, permanent));
-            }
-            if (gameQueryService.isDamageFromPermanentSourcePrevented(gameData, permanent)
-                    || sourceDamagePrevented
-                    || gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(gameData, playerId, permanent)
-                    || gameData.isPreventedFromDealingDamage(permanent.getId())
-                    || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
-                damage = 0;
-            } else {
-                // One-shot Circle-of-Protection shields may prevent only part of the damage
-                damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, permanent.getId(), damage);
-            }
-        }
-        if (damage > 0) {
-            damage = damagePreventionService.applyChannelHarmPrevention(gameData, playerId, playerId, damage);
-        }
-        if (damage > 0) {
-            int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
-            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                    gameData, playerId, effectiveDamage, cardName, false, permanent.getId());
-            effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                    gameData, playerId, effectiveDamage);
-            if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
-                if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
-                    int poisonAmount = gameQueryService.replacePoisonCounters(gameData, playerId, effectiveDamage);
-                    if (poisonAmount > 0) {
-                        int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
-                        gameData.playerPoisonCounters.put(playerId, currentPoison + poisonAmount);
-                        gameLogService.append(gameData, GameLog.text(playerName + " gets " + poisonAmount + " poison counters from " + cardName + "."));
-                    }
-                }
-                lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage, cardName, playerId);
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
-                gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
-            } else {
-                int lifeLoss = effectiveDamage
-                        * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
-                gameData.playerLifeTotals.put(playerId,
-                        gameQueryService.lifeAfterDamage(gameData, playerId, lifeLoss));
-                if (effectiveDamage > 0) {
-                    gameLogService.append(gameData, GameLog.text(playerName + " takes " + effectiveDamage + " damage from " + cardName + "."));
-                    log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);
-                }
-            }
-            if (effectiveDamage > 0) {
-                gameData.recordRedSourceNoncombatDamage(
-                        gameQueryService.findPermanentController(gameData, permanent.getId()),
-                        gameQueryService.getDamageSourceColors(gameData, gameQueryService.getEffectiveColors(gameData, permanent)),
-                        effectiveDamage);
-                gameData.recordDamageToPlayer(playerId, effectiveDamage,
-                        gameQueryService.isArtifact(gameData, permanent) ? effectiveDamage : 0);
-                gameData.recordDamageSourceControlledBy(permanent.getId(), playerId);
-                gameData.recordDamageDealtBySourceToPlayer(
-                        permanent.getId(), playerId, effectiveDamage);
-                gameData.recordNoncombatDamageSourceToPlayer(permanent.getId(), playerId);
-                gameData.recordPermanentDamageSourceNameToPlayer(permanent.getCard().getName(), playerId);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(
-                        gameData, playerId, permanent.getId(), effectiveDamage);
-                triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
-                        gameData, permanent, playerId, playerId, effectiveDamage);
-                if (gameQueryService.isCreature(gameData, permanent)) {
-                    gameData.recordCreatureDamageSourceToPlayer(permanent.getId(), playerId);
-                }
-            }
-        }
     }
 
     /**

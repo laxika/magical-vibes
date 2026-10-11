@@ -11,7 +11,7 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 1. Choosing the order of competing replacement effects
 
-**Status:** in progress (phases A–E landed) · **Found:** 2026-10-10, while fixing D-card tests
+**Status:** in progress (phases A–F landed) · **Found:** 2026-10-10, while fixing D-card tests
 
 **Done.** CR 616.1 ordering runs through `ReplacementOrderService` for land mana (every land-type
 replacement on both tap paths, plus Mana Reflection-style multipliers) and for damage to a player or a
@@ -19,17 +19,21 @@ permanent (every redirect, multiplier, bonus, prevention and final-stage replace
 prompt in the middle of an effect resolves the effect again through `DamageJournal`). Combat damage is
 one event per recipient per damage step, with a portion per source. Damage multipliers and "+N"
 bonuses are pool options for noncombat and combat damage (dealing effects and combat assignment pass the
-unmodified amount; `DamageMultiplierRatchetTest` keeps it that way). The
+unmodified amount; `DamageMultiplierRatchetTest` keeps it that way). The last fixed-chain damage paths
+are gone: Megrim's discard damage and Rubble Rouser's "when you do" mana-ability rider are now triggered
+abilities on the stack (CR 603.12, 605.5a), and Myr Battlesphere's attack damage goes through
+`DamageSupport` to the player or planeswalker it's attacking. The
 original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage`,
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
 **Still open.**
 - The "+N" bonus families are one option per family (the sum of every instance), so a multiplier
   can't be applied between two bonuses of the same family; global multipliers are one option each.
-- Damage paths that never reach `DamageSupport` keep their own fixed chain: mana-ability riders
-  (`ActivatedAbilityExecutionService.dealManaAbilityRiderDamageToPlayer`), discard triggers
-  (`DiscardTriggerCollectorService`) and the "tap X permanents, deal X damage to the defending player" path in
-  `MultiPermanentChoiceHandlerService`.
+- A mana-ability trigger deferred while the activation waits on a cost choice (Rubble Rouser's
+  graveyard exile) reaches the stack only on the next priority pass, not when the activation completes
+  (`RubbleRouserTest.manaAbilityAddsRedAndDamagesOpponents` expects it at once).
+- Discard-triggered life loss (`DiscardTriggerCollectorService.handleLifeLossOnDiscard`, Liliana's
+  Caress) still resolves inline instead of using the stack (CR 603.3).
 - Damage redirected to a player through `processSourceRedirectDamage` / `processPendingRedirectDamage`
   starts a fresh fixed chain instead of continuing the same event (CR 614.5).
 - Combat: "prevent all combat damage" (Fog) and the guard/"dealt to this creature instead" routing

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RubbleRouser.class, Forest.class})
+@CardUsed({RubbleRouser.class, Forest.class, FurnaceOfRath.class})
 class RubbleRouserTest extends BaseCardTest {
 
     @Test
@@ -109,5 +110,20 @@ class RubbleRouserTest extends BaseCardTest {
         assertThat(gd.exiledCards).anyMatch(e -> e.card() == gyCard);
         // Source tapped
         assertThat(rouser.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mana ability: the reflexive damage is an ordinary damage event that Furnace of Rath doubles")
+    void reflexiveDamageIsModifiedByDamageReplacements() {
+        addCreatureReady(player1, new RubbleRouser());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setGraveyard(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
     }
 }

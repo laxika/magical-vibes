@@ -63,7 +63,7 @@ public class TapSubtypeBoostSelfAndDamageDefenderEffectHandler implements Normal
         }
 
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, eligibleIds.size(),
-                new MultiPermanentChoiceContext.TapSubtypeBoost(sourcePermanentId),
+                new MultiPermanentChoiceContext.TapSubtypeBoost(sourcePermanentId, entry),
                 "You may tap any number of untapped " + e.subtype().getDisplayName() + " you control.");
     }
 }

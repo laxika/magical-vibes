@@ -1807,7 +1807,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   pipelines where supported.
 - `GlobalDamageMultiplyingEffect` — static permanent that scales ALL damage in the game regardless of
   source/target/controller; `damageMultiplierFactor()` (2 for a doubler, stacks multiplicatively). Read
-  by `GameQueryService.getDamageMultiplier` and the Myr Battlesphere damage path. Impl `DoubleDamageEffect`
+  by `GameQueryService.getDamageMultiplier` and the damage pool's `GlobalDamageMultiplier` options. Impl `DoubleDamageEffect`
   (Furnace of Rath). NOT for the selective doublers (`DoubleControllerDamageEffect`,
   `DoubleDamageToEnchantedPlayerEffect`, `DoubleDamageToControllerAndSelfEffect`,
   `DoubleEquippedCreatureCombatDamageEffect`) — each selects a

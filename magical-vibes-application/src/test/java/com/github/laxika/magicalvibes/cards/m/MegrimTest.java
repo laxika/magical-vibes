@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.Distress;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HypnoticSpecter;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Megrim.class, Distress.class, GrizzlyBears.class, HypnoticSpecter.class, Sift.class,
+@CardUsed({Megrim.class, Distress.class, FurnaceOfRath.class, GrizzlyBears.class, HypnoticSpecter.class, Sift.class,
         MindRot.class, Swamp.class})
 class MegrimTest extends BaseCardTest {
 
@@ -62,6 +63,7 @@ class MegrimTest extends BaseCardTest {
 
         // Player1 chooses card from player2's revealed hand
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         // Megrim trigger should have resolved, dealing 2 damage to player2
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -92,6 +94,7 @@ class MegrimTest extends BaseCardTest {
 
         // Player2 chooses a card to discard
         harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
 
         // Megrim trigger should have resolved, dealing 2 damage to player2
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -134,6 +137,7 @@ class MegrimTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         // Only 1 card discarded, so only 2 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -153,6 +157,7 @@ class MegrimTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -175,6 +180,7 @@ class MegrimTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         // Both Megrims trigger, dealing 2 + 2 = 4 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -237,8 +243,10 @@ class MegrimTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
-        assertThat(gameLogContains("triggers — deals 2 damage")).isTrue();
+        assertThat(gameLogContains("Megrim's ability triggers.")).isTrue();
+        assertThat(gameLogContains("takes 2 damage from Megrim.")).isTrue();
     }
 
     // ===== Opponent controls Megrim — their discard does not trigger it =====
@@ -258,6 +266,7 @@ class MegrimTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0); // Resolve Sift — draws 3, prompts for discard
 
         harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
 
         // Player2's Megrim triggers on player1's discard, dealing 2 damage to player1
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -309,5 +318,21 @@ class MegrimTest extends BaseCardTest {
             harness.assertLife(player2, 16);
         });
     }
-}
 
+    @Test
+    @DisplayName("Megrim's damage is an ordinary damage event that Furnace of Rath doubles")
+    void damageIsModifiedByDamageReplacements() {
+        harness.addToBattlefield(player1, new Megrim());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Distress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+    }
+}

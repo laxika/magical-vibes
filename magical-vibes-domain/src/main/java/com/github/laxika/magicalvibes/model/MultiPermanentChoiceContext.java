@@ -800,8 +800,12 @@ public sealed interface MultiPermanentChoiceContext {
     record Proliferate(int remainingCount) implements MultiPermanentChoiceContext {
     }
 
-    /** Tap the chosen subtype permanents to boost [source] and damage the defender (Myr Battlesphere). */
-    record TapSubtypeBoost(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+    /**
+     * Tap the chosen subtype permanents to boost [source] and damage the player or planeswalker it
+     * is attacking (Myr Battlesphere). {@code damageEntry} is the resolving attack trigger: the
+     * damage source and the attacked player or planeswalker.
+     */
+    record TapSubtypeBoost(UUID sourcePermanentId, StackEntry damageEntry) implements MultiPermanentChoiceContext {
     }
 
     /** Tap the chosen permanents to boost the source by the number tapped (Siege Striker). */

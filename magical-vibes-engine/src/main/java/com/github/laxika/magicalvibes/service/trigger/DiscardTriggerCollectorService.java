@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -21,7 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -53,13 +51,10 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -75,10 +70,6 @@ public class DiscardTriggerCollectorService {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final DamagePreventionService damagePreventionService;
-    private final PermanentRemovalService permanentRemovalService;
-    private final TriggerCollectionService triggerCollectionService;
-    private final LifeSupport lifeSupport;
     private final ConditionEvaluationService conditionEvaluationService;
 
     @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
@@ -279,75 +270,13 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToDiscardingPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
-    private boolean handleDamageOnDiscard(TriggerMatchContext match,
-            DealDamageToDiscardingPlayerEffect trigger, TriggerContext ctx) {
-        TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
-        Card sourceCard = match.permanent().getCard();
-        String cardName = sourceCard.getName();
-        int damage = trigger.damage();
-        var gameData = match.gameData();
-        var discardingPlayerId = dc.discardingPlayerId();
-        damage += gameQueryService.getControllerDamageToOpponentBonus(
-                gameData, match.controllerId(), discardingPlayerId, false,
-                match.permanent().getId());
-
-        gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                " triggers — deals " + damage + " damage to " + gameData.playerIdToName.get(discardingPlayerId) + "."));
-        log.info("Game {} - {} triggers on discard, dealing {} damage to {}",
-                gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
-
-        CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, match.permanent());
-        boolean sourceDamagePrevented = damagePreventionService.isSourceDamagePreventedForPlayer(
-                gameData, discardingPlayerId, match.permanent().getId());
-        if (sourceDamagePrevented && !gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())) {
-            damagePreventionService.applySourceDamagePreventionForPlayer(
-                    gameData, discardingPlayerId, match.permanent().getId(), damage,
-                    gameQueryService.getEffectiveColors(gameData, match.permanent()));
-        }
-        if (!gameQueryService.isDamageFromPermanentSourcePrevented(gameData, match.permanent())
-                && !sourceDamagePrevented
-                && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(
-                gameData, discardingPlayerId, match.permanent())
-                && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
-                && !damagePreventionService.isColorDamagePreventedForTarget(
-                        gameData, discardingPlayerId,
-                        gameQueryService.getEffectiveColors(gameData, match.permanent()))
-                && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
-            damage = damagePreventionService.applyChannelHarmPrevention(
-                    gameData, discardingPlayerId,
-                    gameQueryService.findPermanentController(gameData, match.permanent().getId()), damage);
-            if (damage <= 0) return true;
-            int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
-            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                    gameData, discardingPlayerId, effectiveDamage, cardName, false,
-                    match.permanent().getId(), sourceCard);
-            effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                    gameData, discardingPlayerId, effectiveDamage);
-            if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {
-                lifeSupport.applyPoisonCounters(gameData, discardingPlayerId, effectiveDamage,
-                        cardName, match.controllerId());
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, discardingPlayerId)) {
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
-            } else {
-                int lifeLoss = effectiveDamage
-                        * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
-                gameData.playerLifeTotals.put(discardingPlayerId,
-                        gameQueryService.lifeAfterDamage(gameData, discardingPlayerId, lifeLoss));
-            }
-            if (effectiveDamage > 0) {
-                gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage,
-                        gameQueryService.isArtifact(gameData, match.permanent()) ? effectiveDamage : 0);
-                gameData.recordDamageDealtBySourceToPlayer(
-                        match.permanent().getId(), discardingPlayerId, effectiveDamage);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(
-                        gameData, discardingPlayerId, match.permanent().getId(), effectiveDamage);
-                triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(
-                        gameData, match.permanent(), match.controllerId(), discardingPlayerId, effectiveDamage);
-            }
-        }
-
-        return true;
+    /** "Whenever an opponent discards a card, this enchantment deals 2 damage to that player." (Megrim) */
+    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
+    private boolean handleDamageToDiscardingPlayer(TriggerMatchContext match,
+            DealDamageToPlayersEffect trigger, TriggerContext ctx) {
+        if (trigger.recipient() != DamageRecipient.TRIGGERING_PLAYER) return false;
+        return enqueueDiscardTrigger(match, trigger, "damage to the discarding player",
+                ((TriggerContext.Discard) ctx).discardingPlayerId());
     }
 
     @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)

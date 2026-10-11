@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.k.KothOfTheHammer;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.t.TrueConviction;
@@ -24,7 +25,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MyrBattlesphere.class, KothOfTheHammer.class, Shatter.class, TrueConviction.class})
+@CardUsed({MyrBattlesphere.class, FurnaceOfRath.class, KothOfTheHammer.class, Shatter.class, TrueConviction.class})
 class MyrBattlesphereTest extends BaseCardTest {
 
     @Test
@@ -341,6 +342,33 @@ class MyrBattlesphereTest extends BaseCardTest {
         assertThat(battlesphere.getPowerModifier()).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
+
+    @Test
+    @DisplayName("The damaged player orders a prevention shield and a damage multiplier on the attack ability damage")
+    void damagedPlayerOrdersReplacementsOnAttackAbilityDamage() {
+        setupBattlefieldWithMyr(3);
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        gd.playerDamagePreventionShields.put(player2.getId(), 3);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.handleMultiplePermanentsChosen(player1, getMyrTokenIds(3));
+
+            PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(choice.playerId()).isEqualTo(player2.getId());
+            harness.assertLife(player2, 20);
+            harness.handleListChoice(player2, choice.options().stream()
+                    .filter(option -> option.startsWith("Furnace of Rath")).findFirst().orElseThrow());
+        });
+
+        // Doubled to 6 first, then the shield prevents 3 of it.
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
+
     /**
      * Sets up a battlefield with a non-summoning-sick Myr Battlesphere at index 0
      * and the specified number of untapped Myr tokens.

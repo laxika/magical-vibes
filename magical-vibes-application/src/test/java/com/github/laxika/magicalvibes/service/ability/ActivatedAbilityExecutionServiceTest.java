@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -114,7 +113,8 @@ class ActivatedAbilityExecutionServiceTest {
         org.mockito.Mockito.verifyNoInteractions(triggerCollectionService);
     }
 
-    @Mock private DamagePreventionService damagePreventionService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    @Mock private com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService landManaReplacementService;
     @Mock private DrawService drawService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private TriggerCollectionService triggerCollectionService;
@@ -199,16 +199,8 @@ class ActivatedAbilityExecutionServiceTest {
         // No Mana Reflection in these tests — every mana production is 1x.
         lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class), any(Permanent.class)))
                 .thenReturn(1);
-        lenient().when(gameQueryService.lifeAfterDamage(eq(gameData), any(UUID.class), anyInt()))
-                .thenAnswer(invocation -> gameData.getLife(invocation.getArgument(1))
-                        - (int) invocation.getArgument(2));
-        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gameData), any(UUID.class))).thenReturn(1);
-        lenient().when(gameQueryService.applyOjerAxonilDamageReplacement(
-                        eq(gameData), anyInt(), any(), any(), any()))
-                .thenAnswer(invocation -> invocation.getArgument(1));
-        lenient().when(damagePreventionService.applyChannelHarmPrevention(
-                        eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
-                .thenAnswer(invocation -> invocation.getArgument(3));
+        // DamageSupport is a lazy field-injected collaborator, which @InjectMocks skips.
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "damageSupport", damageSupport);
     }
 
     // =========================================================================
@@ -228,13 +220,12 @@ class ActivatedAbilityExecutionServiceTest {
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
 
             stubIsCreature(perm, false);
-            stubDamagePathForNormalDamage(perm, 1);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             ManaPool pool = gameData.playerManaPools.get(player1Id);
             assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
-            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(19);
+            verifyPainDamageDealtToController(perm, 1);
             assertThat(gameData.stack).isEmpty();
             verify(stateBasedActionService).performStateBasedActions(gameData);
             verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
@@ -294,6 +285,30 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
+        @DisplayName("Each-opponent \"when you do\" rider waits as a reflexive trigger instead of dealing damage")
+        void eachOpponentRiderQueuesReflexiveTrigger() {
+            Card card = createCard("Test Rider Creature", CardType.CREATURE);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            DealDamageToPlayersEffect rider = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.RED, 1), rider);
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}: Add {R}. When you do, this creature deals 1 damage to each opponent.");
+            stubIsCreature(perm, true);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.RED)).isEqualTo(1);
+            assertThat(gameData.stack).isEmpty();
+            assertThat(gameData.pendingManaAbilityTriggers).singleElement().satisfies(trigger -> {
+                assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+                assertThat(trigger.getControllerId()).isEqualTo(player1Id);
+                assertThat(trigger.getSourcePermanentId()).isEqualTo(perm.getId());
+                assertThat(trigger.getEffectsToResolve()).containsExactly(rider);
+            });
+            verify(damageSupport, never()).dealDamageToPlayer(any(), any(), any(), anyInt());
+        }
+
+        @Test
         @DisplayName("Pain land: blue ability adds blue mana and deals damage without stack")
         void painLandBlueAbility() {
             Card card = createCard("Test Pain Land", CardType.LAND);
@@ -302,13 +317,12 @@ class ActivatedAbilityExecutionServiceTest {
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {U}. Deals 1 damage.");
 
             stubIsCreature(perm, false);
-            stubDamagePathForNormalDamage(perm, 1);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             ManaPool pool = gameData.playerManaPools.get(player1Id);
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(1);
-            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(19);
+            verifyPainDamageDealtToController(perm, 1);
             assertThat(gameData.stack).isEmpty();
         }
 
@@ -1410,7 +1424,6 @@ class ActivatedAbilityExecutionServiceTest {
             gameData.priorityPassedBy.add(player2Id);
 
             stubIsCreature(perm, false);
-            stubDamagePathForNormalDamage(perm, 1);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
@@ -1459,137 +1472,6 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.priorityPassedBy).isEmpty();
-        }
-    }
-
-    // =========================================================================
-    // Pain land damage prevention interaction
-    // =========================================================================
-
-    @Nested
-    @DisplayName("pain land — damage prevention")
-    class PainLandDamagePrevention {
-
-        @Test
-        @DisplayName("Pain land damage is prevented when source damage prevention is active")
-        void painLandDamagePreventedBySourcePrevention() {
-            Card card = createCard("Test Pain Land", CardType.LAND);
-            Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
-            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
-
-            stubIsCreature(perm, false);
-            when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-            when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
-            // Source-specific prevention is active for this permanent
-            when(damagePreventionService.isSourceDamagePreventedForPlayer(gameData, player1Id, perm.getId()))
-                    .thenReturn(true);
-
-            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
-
-            // Mana should be added
-            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.WHITE)).isEqualTo(1);
-            // Damage should be prevented — applyPlayerPreventionShield should NOT be called
-            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(20);
-            verify(damagePreventionService, never()).applyPlayerPreventionShield(any(), any(), any(int.class));
-        }
-
-        @Test
-        @DisplayName("Pain land damage is reduced by player damage prevention shield")
-        void painLandDamageReducedByShield() {
-            Card card = createCard("Test Pain Land", CardType.LAND);
-            Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
-            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
-
-            stubIsCreature(perm, false);
-            when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-            when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
-            when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player1Id), eq(perm.getId())))
-                    .thenReturn(false);
-            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
-                    .thenReturn(false);
-            when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), 1))
-                    .thenReturn(1);
-            // Shield absorbs all 1 damage
-            when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(0);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                    eq(gameData), eq(player1Id), eq(0), anyString(), anyBoolean(), eq(perm.getId())))
-                    .thenReturn(0);
-
-            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
-
-            // Mana should be added
-            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.WHITE)).isEqualTo(1);
-            // 1 damage fully absorbed by shield
-            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(20);
-            verify(damagePreventionService).applyPlayerPreventionShield(gameData, player1Id, 1);
-        }
-
-        @Test
-        @DisplayName("Pain land damage partially prevented by next-source shield deals only the remainder")
-        void painLandDamagePartiallyPreventedByNextSourceShield() {
-            Card card = createCard("Test Pain Land", CardType.LAND);
-            Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
-            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 2 damage.");
-
-            stubIsCreature(perm, false);
-            when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-            when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
-            when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player1Id), eq(perm.getId())))
-                    .thenReturn(false);
-            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
-                    .thenReturn(false);
-            // Shield absorbs 1 of the 2 damage
-            when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), 2))
-                    .thenReturn(1);
-            when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                    eq(gameData), eq(player1Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
-                    .thenReturn(1);
-            when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
-            when(gameQueryService.canPlayerLoseLife(gameData, player1Id)).thenReturn(true);
-
-            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
-
-            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.WHITE)).isEqualTo(1);
-            // Only the unprevented remainder (1 of 2) is dealt
-            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(19);
-            verify(damagePreventionService).applyPlayerPreventionShield(gameData, player1Id, 1);
-        }
-
-        @Test
-        @DisplayName("Each-opponent rider damage partially prevented by next-source shield deals only the remainder")
-        void riderDamagePartiallyPreventedByNextSourceShield() {
-            Card card = createCard("Test Rider Creature", CardType.CREATURE);
-            Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.RED, 1), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {R}. When you do, deals 2 damage to each opponent.");
-
-            stubIsCreature(perm, true);
-            when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-            when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
-            when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player2Id), eq(perm.getId())))
-                    .thenReturn(false);
-            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player2Id), any()))
-                    .thenReturn(false);
-            // Opponent's shield absorbs 1 of the 2 damage
-            when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player2Id, perm.getId(), 2))
-                    .thenReturn(1);
-            when(damagePreventionService.applyPlayerPreventionShield(gameData, player2Id, 1)).thenReturn(1);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                    eq(gameData), eq(player2Id), eq(1), anyString(), anyBoolean(), eq(perm.getId())))
-                    .thenReturn(1);
-            when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player2Id)).thenReturn(false);
-            when(gameQueryService.canPlayerLoseLife(gameData, player2Id)).thenReturn(true);
-
-            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
-
-            // Only the unprevented remainder (1 of 2) hits the opponent; the controller is untouched
-            assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(19);
-            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(20);
-            verify(damagePreventionService).applyPlayerPreventionShield(gameData, player2Id, 1);
         }
     }
 
@@ -1776,20 +1658,9 @@ class ActivatedAbilityExecutionServiceTest {
         when(gameQueryService.isCreature(gameData, perm)).thenReturn(value);
     }
 
-    private void stubDamagePathForNormalDamage(Permanent perm, int damage) {
-        when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
-        when(gameQueryService.isDamageFromPermanentSourcePrevented(gameData, perm)).thenReturn(false);
-        when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player1Id), eq(perm.getId())))
-                .thenReturn(false);
-        when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
-                .thenReturn(false);
-        when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), damage))
-                .thenReturn(damage);
-        when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, damage)).thenReturn(damage);
-        when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                eq(gameData), eq(player1Id), eq(damage), anyString(), anyBoolean(), eq(perm.getId())))
-                .thenReturn(damage);
-        when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
-        when(gameQueryService.canPlayerLoseLife(gameData, player1Id)).thenReturn(true);
+    /** The pain is an ordinary damage event: the unmodified amount goes to DamageSupport. */
+    private void verifyPainDamageDealtToController(Permanent perm, int damage) {
+        verify(damageSupport).dealDamageToPlayer(eq(gameData), argThat(entry ->
+                perm.getId().equals(entry.getSourcePermanentId())), eq(player1Id), eq(damage));
     }
 }

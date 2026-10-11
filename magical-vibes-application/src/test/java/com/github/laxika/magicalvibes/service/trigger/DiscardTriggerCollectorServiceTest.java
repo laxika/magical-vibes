@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CyclingTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
@@ -55,13 +54,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -93,18 +89,6 @@ class DiscardTriggerCollectorServiceTest {
     private GameQueryService gameQueryService;
 
     @Mock
-    private DamagePreventionService damagePreventionService;
-
-    @Mock
-    private PermanentRemovalService permanentRemovalService;
-
-    @Mock
-    private TriggerCollectionService triggerCollectionService;
-
-    @Mock
-    private LifeSupport lifeSupport;
-
-    @Mock
     private ConditionEvaluationService conditionEvaluationService;
 
     @InjectMocks
@@ -124,9 +108,6 @@ class DiscardTriggerCollectorServiceTest {
                 .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
                         - (int) invocation.getArgument(2));
         lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
-        lenient().when(damagePreventionService.applyChannelHarmPrevention(
-                        eq(gd), any(UUID.class), org.mockito.ArgumentMatchers.nullable(UUID.class), anyInt()))
-                .thenAnswer(invocation -> invocation.getArgument(3));
 
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
@@ -314,102 +295,16 @@ class DiscardTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_OPPONENT_DISCARDS — DealDamageToDiscardingPlayerEffect =====
-
     @Nested
-    @DisplayName("ON_OPPONENT_DISCARDS — DealDamageToDiscardingPlayerEffect")
+    @DisplayName("ON_OPPONENT_DISCARDS — DealDamageToPlayersEffect")
     class DiscardDamage {
 
         @Test
-        @DisplayName("deals damage to the discarding player and returns true")
-        void dealsDamageToDiscardingPlayer() {
+        @DisplayName("queues a non-targeting damage trigger aimed at the discarding player")
+        void queuesDamageTriggerForDiscardingPlayer() {
             Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
+            var effect = new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER);
             var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
-                    .thenReturn(2);
-            when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(megrim, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 2);
-            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
-        }
-
-        @Test
-        @DisplayName("does not deal damage when source damage is prevented globally")
-        void noDamageWhenSourcePrevented() {
-            Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.isDamageFromPermanentSourcePrevented(gd, megrim)).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(megrim, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-        }
-
-        @Test
-        @DisplayName("does not deal damage when source damage is prevented for player")
-        void noDamageWhenSourcePreventedForPlayer() {
-            Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(damagePreventionService.isSourceDamagePreventedForPlayer(gd, player2Id, megrim.getId()))
-                    .thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(megrim, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-        }
-
-        @Test
-        @DisplayName("does not deal damage when color damage prevention applies")
-        void noDamageWhenColorPreventionApplies() {
-            Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gd), eq(player2Id), any()))
-                    .thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(megrim, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-        }
-
-        @Test
-        @DisplayName("does not deal damage when permanent is prevented from dealing damage")
-        void noDamageWhenPermanentPrevented() {
-            Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            gd.permanentsPreventedFromDealingDamage.add(megrim.getId());
             int lifeBefore = gd.getLife(player2Id);
 
             boolean result = registry.dispatch(
@@ -418,108 +313,29 @@ class DiscardTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(megrim.getId());
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         }
 
         @Test
-        @DisplayName("tracks player as dealt damage this turn")
-        void tracksPlayerDealtDamageThisTurn() {
-            Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
+        @DisplayName("ignores damage effects aimed at other recipients")
+        void ignoresOtherRecipients() {
+            Permanent permanent = createPermanent("Megrim");
+            var effect = new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT);
             var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
 
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
-                    .thenReturn(2);
-
-            registry.dispatch(
-                    match(megrim, player1Id, effect),
+            boolean result = registry.dispatch(
+                    match(permanent, player1Id, effect),
                     EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
 
-            assertThat(gd.playersDealtDamageThisTurn).contains(player2Id);
-        }
-
-        @Test
-        @DisplayName("gives poison counters when damage should be dealt as infect")
-        void givesPoisonCountersWithInfect() {
-            Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
-                    .thenReturn(2);
-            when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
-
-            registry.dispatch(
-                    match(megrim, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            verify(lifeSupport).applyPoisonCounters(gd, player2Id, 2, "Megrim", player1Id);
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-        }
-
-        @Test
-        @DisplayName("does not give poison counters when player can't get them")
-        void noPoisonWhenPlayerCantGetThem() {
-            Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
-                    .thenReturn(2);
-            when(gameQueryService.shouldDamageBeDealtAsInfect(gd, player2Id)).thenReturn(true);
-            // canPlayerGetPoisonCounters defaults to false
-
-            registry.dispatch(
-                    match(megrim, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(gd.playerPoisonCounters).doesNotContainKey(player2Id);
-        }
-
-        @Test
-        @DisplayName("does not track damage when prevention shield reduces damage to zero")
-        void noDamageTrackingWhenShieldReducesToZero() {
-            Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(0);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(0), any(), eq(false), any(UUID.class), any(Card.class)))
-                    .thenReturn(0);
-
-            registry.dispatch(
-                    match(megrim, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
-            assertThat(gd.playersDealtDamageThisTurn).doesNotContain(player2Id);
-        }
-
-        @Test
-        @DisplayName("does not change life when player life can't change")
-        void noLifeChangeWhenPrevented() {
-            Permanent megrim = createPermanent("Megrim");
-            var effect = new DealDamageToDiscardingPlayerEffect(2);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(player2Id), eq(2))).thenReturn(2);
-            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player2Id), eq(2), any(), eq(false), any(UUID.class), any(Card.class)))
-                    .thenReturn(2);
-            // canPlayerLoseLife defaults to false — life can't change
-
-            registry.dispatch(
-                    match(megrim, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
 
