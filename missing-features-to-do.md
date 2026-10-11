@@ -22,7 +22,8 @@ bonuses are pool options for noncombat and combat damage (dealing effects and co
 unmodified amount; `DamageMultiplierRatchetTest` keeps it that way). The last fixed-chain damage paths
 are gone: Megrim's discard damage and Rubble Rouser's "when you do" mana-ability rider are now triggered
 abilities on the stack (CR 603.12, 605.5a), and Myr Battlesphere's attack damage goes through
-`DamageSupport` to the player or planeswalker it's attacking. The
+`DamageSupport` to the player or planeswalker it's attacking. Discard-triggered life loss (Liliana's
+Caress, Fell Specter, Raider's Wake, Midnight Oil) uses the stack too (CR 603.3). The
 original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage`,
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
@@ -32,8 +33,6 @@ original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplaces
 - A mana-ability trigger deferred while the activation waits on a cost choice (Rubble Rouser's
   graveyard exile) reaches the stack only on the next priority pass, not when the activation completes
   (`RubbleRouserTest.manaAbilityAddsRedAndDamagesOpponents` expects it at once).
-- Discard-triggered life loss (`DiscardTriggerCollectorService.handleLifeLossOnDiscard`, Liliana's
-  Caress) still resolves inline instead of using the stack (CR 603.3).
 - Damage redirected to a player through `processSourceRedirectDamage` / `processPendingRedirectDamage`
   starts a fresh fixed chain instead of continuing the same event (CR 614.5).
 - Combat: "prevent all combat damage" (Fog) and the guard/"dealt to this creature instead" routing

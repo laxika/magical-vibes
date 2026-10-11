@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -73,9 +72,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -84,9 +81,6 @@ class DiscardTriggerCollectorServiceTest {
 
     @Mock
     private GameLogService gameLogService;
-
-    @Mock
-    private GameQueryService gameQueryService;
 
     @Mock
     private ConditionEvaluationService conditionEvaluationService;
@@ -104,10 +98,6 @@ class DiscardTriggerCollectorServiceTest {
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
-        lenient().when(gameQueryService.lifeAfterDamage(eq(gd), any(UUID.class), anyInt()))
-                .thenAnswer(invocation -> gd.getLife(invocation.getArgument(1))
-                        - (int) invocation.getArgument(2));
-        lenient().when(gameQueryService.opponentLifeLossMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
 
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
@@ -339,62 +329,17 @@ class DiscardTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_OPPONENT_DISCARDS — LoseLifeEffect =====
-
     @Nested
-    @DisplayName("ON_OPPONENT_DISCARDS — LoseLifeEffect")
+    @DisplayName("ON_OPPONENT_DISCARDS / ON_CONTROLLER_DISCARDS — LoseLifeEffect")
     class DiscardLifeLoss {
 
         @Test
-        @DisplayName("causes the discarding player to lose life and returns true")
-        void causesLifeLossOnDiscard() {
+        @DisplayName("queues a non-targeting life-loss trigger aimed at the discarding player")
+        void queuesLifeLossTriggerForDiscardingPlayer() {
             Permanent enchantment = createPermanent("Liliana's Caress");
-            var effect = new LoseLifeEffect(2);
+            var effect = new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER);
             var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
             int lifeBefore = gd.getLife(player2Id);
-
-            when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(enchantment, player1Id, effect),
-                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 2);
-            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
-        }
-
-        @Test
-        @DisplayName("causes the controller to lose life on their own discard")
-        void causesControllerLifeLossOnDiscard() {
-            Permanent enchantment = createPermanent("Midnight Oil");
-            var effect = new LoseLifeEffect(1);
-            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
-
-            int lifeBefore = gd.getLife(player1Id);
-
-            when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(true);
-
-            boolean result = registry.dispatch(
-                    match(enchantment, player1Id, effect),
-                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.getLife(player1Id)).isEqualTo(lifeBefore - 1);
-            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
-        }
-
-        @Test
-        @DisplayName("does not change life when player life can't change")
-        void noLifeLossWhenPrevented() {
-            Permanent enchantment = createPermanent("Liliana's Caress");
-            var effect = new LoseLifeEffect(2);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            int lifeBefore = gd.getLife(player2Id);
-
-            // canPlayerLoseLife defaults to false — life can't change
 
             boolean result = registry.dispatch(
                     match(enchantment, player1Id, effect),
@@ -402,6 +347,50 @@ class DiscardTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(enchantment.getId());
+                assertThat(entry.getTargetId()).isEqualTo(player2Id);
+                assertThat(entry.isNonTargeting()).isTrue();
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            });
+        }
+
+        @Test
+        @DisplayName("queues the controller's own life-loss trigger on their discard")
+        void queuesControllerLifeLossTrigger() {
+            Permanent enchantment = createPermanent("Midnight Oil");
+            var effect = new LoseLifeEffect(1);
+            var ctx = new TriggerContext.Discard(player1Id, createCard("Grizzly Bears"));
+            int lifeBefore = gd.getLife(player1Id);
+
+            boolean result = registry.dispatch(
+                    match(enchantment, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.getLife(player1Id)).isEqualTo(lifeBefore);
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+                assertThat(entry.getTargetId()).isNull();
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            });
+        }
+
+        @Test
+        @DisplayName("ignores life-loss effects aimed at other recipients")
+        void ignoresOtherRecipients() {
+            Permanent enchantment = createPermanent("Liliana's Caress");
+            var effect = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
+
+            boolean result = registry.dispatch(
+                    match(enchantment, player1Id, effect),
+                    EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.stack).isEmpty();
         }
     }
 

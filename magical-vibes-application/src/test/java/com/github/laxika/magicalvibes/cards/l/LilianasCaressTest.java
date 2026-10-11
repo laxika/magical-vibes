@@ -202,8 +202,9 @@ class LilianasCaressTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         resolveAllTriggers();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Liliana's Caress") && log.contains("triggers") && log.contains("loses") && log.contains("life"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("Liliana's Caress's ability triggers."))
+                .anyMatch(log -> log.contains("loses 2 life (Liliana's Caress)."));
     }
 
     @Test

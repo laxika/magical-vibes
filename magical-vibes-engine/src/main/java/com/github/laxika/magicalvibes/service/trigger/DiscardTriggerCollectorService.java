@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -52,7 +51,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +67,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 public class DiscardTriggerCollectorService {
 
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
     private final ConditionEvaluationService conditionEvaluationService;
 
     @CollectsTrigger(value = ConditionalEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
@@ -919,33 +916,20 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
+    /**
+     * "Whenever an opponent discards a card, that player loses 2 life." (Liliana's Caress) and
+     * "Whenever you discard a card, you lose 1 life." (Midnight Oil): the life loss is a triggered
+     * ability that uses the stack (CR 603.3), bound to the discarding player when it names "that player".
+     */
     @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_OPPONENT_DISCARDS)
     @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
     private boolean handleLifeLossOnDiscard(TriggerMatchContext match,
             LoseLifeEffect trigger, TriggerContext ctx) {
-        TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
-        Card sourceCard = match.permanent().getCard();
-        String cardName = sourceCard.getName();
-        // Discard-triggered life loss carries a literal amount ("that player loses N life" or
-        // "you lose N life").
-        int amount = trigger.amount() instanceof Fixed fixed ? fixed.value() : 0;
-        var gameData = match.gameData();
-        var discardingPlayerId = dc.discardingPlayerId();
-
-        gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                " triggers — " + gameData.playerIdToName.get(discardingPlayerId) + " loses " + amount + " life."));
-        log.info("Game {} - {} triggers on discard, {} loses {} life",
-                gameData.id, cardName, gameData.playerIdToName.get(discardingPlayerId), amount);
-
-        if (!gameQueryService.canPlayerLoseLife(gameData, discardingPlayerId)) {
-            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
-        } else {
-            int lifeLoss = amount
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, discardingPlayerId);
-            int currentLife = gameData.getLife(discardingPlayerId);
-            gameData.playerLifeTotals.put(discardingPlayerId, currentLife - lifeLoss);
-        }
-
-        return true;
+        return switch (trigger.recipient()) {
+            case TRIGGERING_PLAYER -> enqueueDiscardTrigger(match, trigger, "life loss for the discarding player",
+                    ((TriggerContext.Discard) ctx).discardingPlayerId());
+            case CONTROLLER -> enqueueDiscardTrigger(match, trigger, "controller loses life");
+            default -> false;
+        };
     }
 }
