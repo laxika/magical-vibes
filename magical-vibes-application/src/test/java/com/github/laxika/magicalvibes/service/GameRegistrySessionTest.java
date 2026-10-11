@@ -88,10 +88,10 @@ class GameRegistrySessionTest {
         root.pendingCombatDamageState = new CombatDamageState();
         root.pendingCombatDamageState.combatDamageAmountsToCreatures.put(permanent,
                 new java.util.HashMap<>(java.util.Map.of(permanent.getId(), 2)));
-        root.pendingCombatDamageRedirectTarget = permanent;
         GameData copy = root.simulationCopy();
         Permanent copiedPermanent = copy.playerBattlefields.get(player).getFirst();
-        assertThat(copy.pendingCombatDamageRedirectTarget).isSameAs(copiedPermanent).isNotSameAs(permanent);
+        assertThat(copy.pendingCombatDamageState.combatDamageAmountsToCreatures).containsOnlyKeys(copiedPermanent);
+        assertThat(copiedPermanent).isNotSameAs(permanent);
         copy.pendingCombatDamageState.combatDamageAmountsToCreatures.get(copiedPermanent).clear();
         assertThat(root.pendingCombatDamageState.combatDamageAmountsToCreatures.get(permanent)).hasSize(1);
     }

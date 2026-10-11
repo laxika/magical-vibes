@@ -80,9 +80,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PerDamageSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
@@ -200,9 +197,6 @@ public class CombatDamageService {
             return CombatResult.DONE;
         }
 
-        // Check for combat damage redirect (e.g. Kjeldoran Royal Guard or Weathered Bodyguards).
-        Permanent redirectTarget = findCombatDamageRedirectTarget(gameData, defenderId);
-
         List<Integer> attackingIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
 
         Map<Integer, List<Integer>> blockerMap = buildBlockerMap(atkBf, defBf, attackingIndices);
@@ -254,15 +248,15 @@ public class CombatDamageService {
             }
             if (prepareSharedCombatPrevention(gameData, atkBf, defBf)) return CombatResult.DONE;
             resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf, activeId, defenderId,
-                    redirectTarget, DamagePhase.FIRSTEST_STRIKE);
-            if (parkOptionalDamageChoices(gameData, state, DamagePhase.FIRSTEST_STRIKE, redirectTarget)) {
+                    DamagePhase.FIRSTEST_STRIKE);
+            if (parkOptionalDamageChoices(gameData, state, DamagePhase.FIRSTEST_STRIKE)) {
                 return CombatResult.DONE;
             }
             if (shouldPutCombatDamageOnStack(gameData)) {
-                return putCombatDamageOnStack(gameData, state, DamagePhase.FIRSTEST_STRIKE, redirectTarget);
+                return putCombatDamageOnStack(gameData, state, DamagePhase.FIRSTEST_STRIKE);
             }
             CombatResult result = finishCombatDamageStep(gameData, state, atkBf, defBf,
-                    activeId, defenderId, redirectTarget);
+                    activeId, defenderId);
             gameData.combatDamageFirstestStrikeAssignmentPhase = false;
             gameData.combatDamagePlayerAssignments.clear();
             gameData.combatDamageBlockerAssignments.clear();
@@ -288,15 +282,15 @@ public class CombatDamageService {
             }
             if (prepareSharedCombatPrevention(gameData, atkBf, defBf)) return CombatResult.DONE;
             resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf, activeId, defenderId,
-                    redirectTarget, DamagePhase.FIRST_STRIKE);
-            if (parkOptionalDamageChoices(gameData, state, DamagePhase.FIRST_STRIKE, redirectTarget)) {
+                    DamagePhase.FIRST_STRIKE);
+            if (parkOptionalDamageChoices(gameData, state, DamagePhase.FIRST_STRIKE)) {
                 return CombatResult.DONE;
             }
             if (shouldPutCombatDamageOnStack(gameData)) {
-                return putCombatDamageOnStack(gameData, state, DamagePhase.FIRST_STRIKE, redirectTarget);
+                return putCombatDamageOnStack(gameData, state, DamagePhase.FIRST_STRIKE);
             }
             CombatResult result = finishCombatDamageStep(gameData, state, atkBf, defBf,
-                    activeId, defenderId, redirectTarget);
+                    activeId, defenderId);
             gameData.combatDamageFirstStrikeAssignmentPhase = false;
             gameData.combatDamagePlayerAssignments.clear();
             gameData.combatDamageBlockerAssignments.clear();
@@ -317,18 +311,18 @@ public class CombatDamageService {
 
         if (prepareSharedCombatPrevention(gameData, atkBf, defBf)) return CombatResult.DONE;
         resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf, activeId, defenderId,
-                redirectTarget, DamagePhase.REGULAR);
+                DamagePhase.REGULAR);
 
-        if (parkOptionalDamageChoices(gameData, state, DamagePhase.REGULAR, redirectTarget)) {
+        if (parkOptionalDamageChoices(gameData, state, DamagePhase.REGULAR)) {
             return CombatResult.DONE;
         }
         if (shouldPutCombatDamageOnStack(gameData)) {
-            return putCombatDamageOnStack(gameData, state, DamagePhase.REGULAR, redirectTarget);
+            return putCombatDamageOnStack(gameData, state, DamagePhase.REGULAR);
         }
 
         gameData.combatDamageFirstestStrikeStepComplete = false;
         gameData.combatDamageFirstStrikeStepComplete = false;
-        return finishCombatDamageStep(gameData, state, atkBf, defBf, activeId, defenderId, redirectTarget);
+        return finishCombatDamageStep(gameData, state, atkBf, defBf, activeId, defenderId);
     }
 
     private boolean prepareSharedCombatPrevention(GameData gameData, List<Permanent> attackers,
@@ -435,13 +429,12 @@ public class CombatDamageService {
     }
 
     private boolean parkOptionalDamageChoices(GameData gameData, CombatDamageState state,
-                                                DamagePhase phase, Permanent redirectTarget) {
+                                                DamagePhase phase) {
         if (state.pendingOptionalDamageChoices == 0) return false;
         state.awaitingOptionalDamageChoices = true;
         gameData.pendingCombatDamageState = state;
         gameData.pendingCombatDamageFirstestStrikePhase = phase == DamagePhase.FIRSTEST_STRIKE;
         gameData.pendingCombatDamageFirstStrikePhase = phase == DamagePhase.FIRST_STRIKE;
-        gameData.pendingCombatDamageRedirectTarget = redirectTarget;
         playerInputService.processNextMayAbility(gameData);
         return true;
     }
@@ -452,12 +445,10 @@ public class CombatDamageService {
     }
 
     private CombatResult putCombatDamageOnStack(GameData gameData, CombatDamageState state,
-                                                 DamagePhase phase,
-                                                 Permanent redirectTarget) {
+                                                 DamagePhase phase) {
         gameData.pendingCombatDamageState = state;
         gameData.pendingCombatDamageFirstestStrikePhase = phase == DamagePhase.FIRSTEST_STRIKE;
         gameData.pendingCombatDamageFirstStrikePhase = phase == DamagePhase.FIRST_STRIKE;
-        gameData.pendingCombatDamageRedirectTarget = redirectTarget;
 
         Card sourceCard = null;
         UUID sourcePermanentId = null;
@@ -504,17 +495,15 @@ public class CombatDamageService {
                 : gameData.pendingCombatDamageFirstStrikePhase
                 ? DamagePhase.FIRST_STRIKE
                 : DamagePhase.REGULAR;
-        Permanent redirectTarget = gameData.pendingCombatDamageRedirectTarget;
         gameData.pendingCombatDamageState = null;
         gameData.pendingCombatDamageFirstestStrikePhase = false;
         gameData.pendingCombatDamageFirstStrikePhase = false;
-        gameData.pendingCombatDamageRedirectTarget = null;
 
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
         List<Permanent> atkBf = gameData.playerBattlefields.getOrDefault(activeId, List.of());
         List<Permanent> defBf = gameData.playerBattlefields.getOrDefault(defenderId, List.of());
-        CombatResult result = finishCombatDamageStep(gameData, state, atkBf, defBf, activeId, defenderId, redirectTarget);
+        CombatResult result = finishCombatDamageStep(gameData, state, atkBf, defBf, activeId, defenderId);
 
         if (phase == DamagePhase.FIRSTEST_STRIKE) {
             gameData.combatDamageFirstestStrikeAssignmentPhase = false;
@@ -538,8 +527,7 @@ public class CombatDamageService {
 
     private CombatResult finishCombatDamageStep(GameData gameData, CombatDamageState state,
                                                  List<Permanent> atkBf, List<Permanent> defBf,
-                                                 UUID activeId, UUID defenderId,
-                                                 Permanent redirectTarget) {
+                                                 UUID activeId, UUID defenderId) {
         // CR 510.1 — Snapshot Phyrexian Unlife infect conversion before lifelink changes life totals.
         // All combat damage is simultaneous, so the infect check must use pre-damage life.
         state.defenderDamageAsInfect = gameQueryService.shouldDamageBeDealtAsInfect(gameData, defenderId);
@@ -1282,7 +1270,7 @@ public class CombatDamageService {
                                      Map<Integer, List<Integer>> blockerMap,
                                      List<Permanent> atkBf, List<Permanent> defBf,
                                      UUID activeId, UUID defenderId,
-                                     Permanent redirectTarget, DamagePhase phase) {
+                                     DamagePhase phase) {
         state.sharedRedirectShields = List.copyOf(gameData.sourcePermanentAndControllerNextDamageRedirectShields);
         state.sourceDamageShields = List.copyOf(gameData.sourceNextDamageToAnyTargetShields);
         captureCombatDamageBaselines(gameData, state, atkBf, defBf);
@@ -1322,14 +1310,12 @@ public class CombatDamageService {
             Map<UUID, Integer> playerAssignment = gameData.combatDamagePlayerAssignments.get(atkIdx);
 
             boolean assignAsUnblocked = assignsCombatDamageAsThoughUnblocked(gameData, atk);
-            Permanent unblockedDamageRedirectTarget = blkIndices.isEmpty()
-                    && !atk.isBlockedWithoutBlockers() ? redirectTarget : null;
 
             if (playerAssignment != null) {
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()) {
                     if (phase != DamagePhase.FIRSTEST_STRIKE) {
                         applyPlayerAssignedDamage(gameData, state, atk, atkStats, defBf,
-                                playerAssignment, activeId, defenderId, unblockedDamageRedirectTarget,
+                                playerAssignment, activeId, defenderId,
                                 damagePreventableFrom(gameData, snap.damagePreventable(), atk),
                                 assignsCombatDamageAmongDefendingPlayerAndCreatures(gameData, atk),
                                 blkIndices.isEmpty() && !atk.isBlockedWithoutBlockers());
@@ -1343,7 +1329,7 @@ public class CombatDamageService {
                         && (!atk.isBlockedWithoutBlockers() || atkStats.trample() || assignAsUnblocked)) {
                     int power = atkStats.combatDamage();
                     accumulatePlayerDamage(gameData, atk, atkStats, power, defenderId,
-                            unblockedDamageRedirectTarget, state, !atk.isBlockedWithoutBlockers());
+                            state, !atk.isBlockedWithoutBlockers());
                 }
             } else {
                 if (atkParticipates && !atkStats.preventedFromDealingCombatDamage()) {
@@ -1411,14 +1397,14 @@ public class CombatDamageService {
                 int playerDamage = assignments.getOrDefault(activeId, 0);
                 if (playerDamage > 0 && phase != DamagePhase.FIRSTEST_STRIKE
                         && !isCombatDamagePreventedByGlobalEffect(gameData, blocker, null)) {
-                    accumulatePlayerDamageToPlayer(gameData, blocker, stats, playerDamage, activeId, null, state, false);
+                    accumulatePlayerDamageToPlayer(gameData, blocker, stats, playerDamage, activeId, state, false);
                 }
                 continue;
             }
             int playerDamage = assignments.getOrDefault(defenderId, 0);
             if (playerDamage > 0 && phase != DamagePhase.FIRSTEST_STRIKE
                     && !isCombatDamagePreventedByGlobalEffect(gameData, blocker, null)) {
-                accumulatePlayerDamageToPlayer(gameData, blocker, stats, playerDamage, defenderId, null, state, false);
+                accumulatePlayerDamageToPlayer(gameData, blocker, stats, playerDamage, defenderId, state, false);
             }
             for (int targetIndex = 0; targetIndex < defBf.size(); targetIndex++) {
                 Permanent target = defBf.get(targetIndex);
@@ -1458,29 +1444,6 @@ public class CombatDamageService {
                 gameData.sourceNextDamageToAnyTargetShields.addFirst(shield);
             }
         }
-    }
-
-    private Permanent findCombatDamageRedirectTarget(GameData gameData, UUID defenderId) {
-        if (gameData.combatDamageRedirectTarget != null) {
-            Permanent activatedTarget = gameQueryService.findPermanentById(
-                    gameData, gameData.combatDamageRedirectTarget);
-            if (activatedTarget != null && defenderId.equals(gameData.combatDamageRedirectPlayer)) {
-                return activatedTarget;
-            }
-        }
-
-        List<Permanent> defendingBattlefield = gameData.playerBattlefields.get(defenderId);
-        if (defendingBattlefield == null) return null;
-        for (Permanent permanent : defendingBattlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            boolean redirectsUnblockedCombatDamage = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
-                    .anyMatch(effect -> effect instanceof RedirectUnblockedCombatDamageToSelfEffect
-                            && !permanent.isTapped()
-                            || effect instanceof RedirectPlayerDamageToSelfEffect redirect
-                            && (!redirect.onlyFromUnblockedCreatures() || !permanent.isTapped()));
-            if (redirectsUnblockedCombatDamage) return permanent;
-        }
-        return null;
     }
 
     /**
@@ -1605,7 +1568,7 @@ public class CombatDamageService {
         }
         if (remaining > 0 && atkStats.trample() && phase != DamagePhase.FIRSTEST_STRIKE) {
             int doubledRemaining = remaining;
-            accumulatePlayerDamage(gameData, atk, atkStats, doubledRemaining, defenderId, null, state, false);
+            accumulatePlayerDamage(gameData, atk, atkStats, doubledRemaining, defenderId, state, false);
         }
     }
 
@@ -1614,7 +1577,7 @@ public class CombatDamageService {
                                             List<Permanent> defBf,
                                             Map<UUID, Integer> playerAssignment,
                                             UUID activeId, UUID defenderId,
-                                            Permanent redirectTarget, boolean damagePreventable,
+                                            boolean damagePreventable,
                                             boolean assignsAmongDefendingPlayerAndCreatures,
                                             boolean sourceUnblocked) {
         UUID overflowTargetId = atk.getAttackTarget() != null ? atk.getAttackTarget() : defenderId;
@@ -1629,10 +1592,10 @@ public class CombatDamageService {
                 int actualDmg = dmg;
                 if (assignedToDefendingPlayer) {
                     accumulatePlayerDamageToPlayer(gameData, atk, atkStats, actualDmg, defenderId,
-                            redirectTarget, state, sourceUnblocked);
+                            state, sourceUnblocked);
                 } else {
                     accumulatePlayerDamage(gameData, atk, atkStats, actualDmg, defenderId,
-                            redirectTarget, state, sourceUnblocked);
+                            state, sourceUnblocked);
                 }
             } else {
                 // Damage assigned to a defending creature. For a blocked attacker this is one of
@@ -4347,36 +4310,36 @@ public class CombatDamageService {
     }
 
     private void accumulatePlayerDamage(GameData gameData, Permanent atk, CombatantStats atkStats,
-                                         int damage, UUID defenderId, Permanent redirectTarget,
+                                         int damage, UUID defenderId,
                                          CombatDamageState state, boolean sourceUnblocked) {
         UUID attackTargetId = atk.getAttackTarget();
         Permanent attackTarget = attackTargetId != null && !gameData.playerIds.contains(attackTargetId)
                 ? gameQueryService.findPermanentById(gameData, attackTargetId)
-                : redirectTarget;
+                : null;
         if (isCombatDamagePreventedByGlobalEffect(gameData, atk, attackTarget)) {
             state.combatDamageDealt.merge(atk, 0, Integer::sum);
             return;
         }
         withSourceUnpreventableDamage(gameData, atk, () -> accumulatePlayerDamageInternal(
-                gameData, atk, atkStats, damage, defenderId, redirectTarget, state, null, sourceUnblocked));
+                gameData, atk, atkStats, damage, defenderId, state, null, sourceUnblocked));
     }
 
     private void accumulatePlayerDamageToPlayer(GameData gameData, Permanent atk, CombatantStats atkStats,
-                                                int damage, UUID playerId, Permanent redirectTarget,
+                                                int damage, UUID playerId,
                                                 CombatDamageState state, boolean sourceUnblocked) {
         withSourceUnpreventableDamage(gameData, atk, () -> accumulatePlayerDamageInternal(
-                gameData, atk, atkStats, damage, playerId, redirectTarget, state, playerId, sourceUnblocked));
+                gameData, atk, atkStats, damage, playerId, state, playerId, sourceUnblocked));
     }
 
     private void accumulatePlayerDamageInternal(GameData gameData, Permanent atk, CombatantStats atkStats,
-                                                 int damage, UUID defenderId, Permanent redirectTarget,
+                                                 int damage, UUID defenderId,
                                                  CombatDamageState state, UUID forcedPlayerTarget,
                                                  boolean sourceUnblocked) {
         UUID playerTarget = forcedPlayerTarget != null ? forcedPlayerTarget : atk.getAttackTarget();
         if (playerTarget != null && gameData.playerIds.contains(playerTarget)
                 && !playerTarget.equals(defenderId)) {
             accumulatePlayerDamageInternal(gameData, atk, atkStats, damage, playerTarget,
-                    redirectTarget, state, playerTarget, sourceUnblocked);
+                    state, playerTarget, sourceUnblocked);
             return;
         }
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
@@ -4394,62 +4357,7 @@ public class CombatDamageService {
             return;
         }
 
-        if (redirectTarget != null) {
-            applyCombatCreatureDamage(gameData, state, atk, atkStats, redirectTarget, damage);
-            return;
-        }
-        if (damage > 0 && redirectCombatDamageFromPlayerToCreature(gameData, state, atk, atkStats, defenderId,
-                sourceControllerId, damage)) {
-            return;
-        }
         collectCombatDamage(gameData, state, atk, atkStats, defenderId, null, damage, sourceUnblocked);
-    }
-
-    /**
-     * Kjeldoran Royal Guard-style effects that make a creature the recipient of combat damage that
-     * would be dealt to a player. Returns whether the damage went to such a creature.
-     */
-    private boolean redirectCombatDamageFromPlayerToCreature(GameData gameData, CombatDamageState state,
-                                                             Permanent atk, CombatantStats atkStats,
-                                                             UUID defenderId, UUID sourceControllerId,
-                                                             int damage) {
-        UUID combatRedirectTargetId = damagePreventionService.findCombatDamageRedirectTarget(gameData, defenderId);
-        Permanent combatRedirectTarget = combatRedirectTargetId == null
-                ? null : gameQueryService.findPermanentById(gameData, combatRedirectTargetId);
-        List<Permanent> attackingBattlefield = gameData.playerBattlefields.get(gameData.activePlayerId);
-        int combatRedirectTargetIdx = attackingBattlefield == null || combatRedirectTarget == null
-                ? -1 : attackingBattlefield.indexOf(combatRedirectTarget);
-        if (combatRedirectTargetIdx >= 0) {
-            if (gameQueryService.isDamagePreventable(gameData, true)
-                    && gameQueryService.hasProtectionFromDamageSource(gameData, combatRedirectTarget, atk)) {
-                return true;
-            }
-            applyCombatCreatureDamage(gameData, state, atk, atkStats, combatRedirectTarget, damage);
-            return true;
-        }
-        UUID sourceCombatRedirectTargetId = damagePreventionService.findCombatDamageRedirectTargetFromSource(
-                gameData, defenderId, atk.getId());
-        Permanent sourceCombatRedirectTarget = sourceCombatRedirectTargetId == null
-                ? null : gameQueryService.findPermanentById(gameData, sourceCombatRedirectTargetId);
-        if (sourceCombatRedirectTarget == null) {
-            sourceCombatRedirectTarget = gameQueryService.findEnchantedCreatureByAuraEffect(
-                    gameData, defenderId,
-                    RedirectPlayerDamageToEnchantedCreatureEffect.class);
-        }
-        if (sourceCombatRedirectTarget == null) return false;
-        List<Permanent> defendingBattlefield = gameData.playerBattlefields.get(defenderId);
-        boolean targetIsAttacker = attackingBattlefield != null
-                && attackingBattlefield.contains(sourceCombatRedirectTarget);
-        List<Permanent> redirectBattlefield = targetIsAttacker ? attackingBattlefield : defendingBattlefield;
-        int redirectTargetIdx = redirectBattlefield == null
-                ? -1 : redirectBattlefield.indexOf(sourceCombatRedirectTarget);
-        if (redirectTargetIdx < 0) return false;
-        if (gameQueryService.isDamagePreventable(gameData, true)
-                && gameQueryService.hasProtectionFromDamageSource(gameData, sourceCombatRedirectTarget, atk)) {
-            return true;
-        }
-        applyCombatCreatureDamage(gameData, state, atk, atkStats, sourceCombatRedirectTarget, damage);
-        return true;
     }
 
     /** Continues the combat damage event a Cleric's "you may prevent" paused. */

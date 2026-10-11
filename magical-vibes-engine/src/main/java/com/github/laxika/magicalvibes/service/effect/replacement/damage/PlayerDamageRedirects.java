@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -128,23 +129,32 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                             damageSupport.getObject().processPendingRedirectDamage(ctx.gameData());
                             return ctx.event().withAmount(remaining);
                         }).whole(),
-                effect("RedirectFromMatchingSourceToPermanent", REDIRECT,
-                        ctx -> ctx.combat() && ctx.sourcePermanent() != null
-                                && gameQueryService.isArtifact(ctx.gameData(), ctx.sourcePermanent())
-                                && permanentRemovalService.hasPlayerDamageRedirectFromMatchingSource(ctx.gameData(),
-                                ctx.playerId(), ctx.damageSourceId(), ctx.source()),
-                        ctx -> "Redirect the artifact's damage to a permanent you control",
-                        ctx -> ctx.event().withAmount(permanentRemovalService.redirectPlayerDamageFromMatchingSourceToSelf(
-                                ctx.gameData(), ctx.playerId(), ctx.amount(), ctx.source().getName(), true,
-                                ctx.damageSourceId(), ctx.source()))),
-                effect("RedirectToControlledPermanent", REDIRECT,
-                        ctx -> permanentRemovalService.hasPlayerDamageRedirectToPermanent(
-                                ctx.gameData(), ctx.playerId(), ctx.entry().getSourcePermanentId(), ctx.source()),
-                        ctx -> "Redirect the damage to a permanent you control",
-                        ctx -> ctx.event().withAmount(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                                ctx.gameData(), ctx.playerId(), ctx.amount(),
-                                ctx.combat() ? "combat" : ctx.source().getName(), ctx.combat(),
-                                ctx.entry().getSourcePermanentId(), ctx.source()))));
+                new Rule<PlayerDamageContext>("PlayerDamageAbsorber", REDIRECT, false,
+                        ctx -> absorbers(ctx).stream().map(permanent -> permanent.getId().toString()).toList(),
+                        (ctx, instance) -> absorberName(ctx, instance) + ": deal the damage to it instead",
+                        (ctx, instance) -> ctx.event(),
+                        (ctx, instance) -> {
+                            Permanent absorber = absorbers(ctx).stream()
+                                    .filter(permanent -> permanent.getId().toString().equals(instance))
+                                    .findFirst().orElse(null);
+                            if (absorber == null) {
+                                return new ApplyResult.Applied<>(ctx.event());
+                            }
+                            return new ApplyResult.Applied<>(redirected(ctx,
+                                    prevention.applyStaticPermanentDamageRedirectToSelf(
+                                            ctx.gameData(), ctx.playerId(), ctx.amount(), absorber)));
+                        }));
+    }
+
+    /** The permanents that would be dealt this damage instead of the player (Palisade Giant, Royal Guard). */
+    private List<Permanent> absorbers(PlayerDamageContext ctx) {
+        return prevention.playerDamageAbsorbers(ctx.gameData(), ctx.playerId(), ctx.entry(), ctx.source(),
+                ctx.entry().getSourcePermanentId(), ctx.combat());
+    }
+
+    private String absorberName(PlayerDamageContext ctx, String instance) {
+        Permanent absorber = gameQueryService.findPermanentById(ctx.gameData(), UUID.fromString(instance));
+        return absorber == null ? "A permanent" : absorber.getCard().getName();
     }
 
     @Override

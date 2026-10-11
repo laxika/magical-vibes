@@ -374,9 +374,6 @@ class CombatDamageServiceTest {
         lenient().when(damagePreventionService.applyCombatPlayerPreventionShield(
                 eq(gameData), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
-        lenient().when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
-                eq(gameData), any(UUID.class), anyInt(), anyString(), anyBoolean()))
-                .thenAnswer(inv -> (int) inv.getArgument(2));
         when(gameOutcomeService.checkWinCondition(gameData)).thenReturn(false);
     }
 

@@ -27,7 +27,9 @@ Caress, Fell Specter, Raider's Wake, Midnight Oil) uses the stack too (CR 603.3)
 mana ability completed by a cost choice reach the stack when it completes (CR 117.3c). Damage a
 redirect shield takes over (Harm's Way) is the same damage continuing through the new recipient's
 pool (combat damage as an event of the same damage step), with source-side effects that already applied still spent (CR 614.5); a redirect whose destination
-has left or is no longer a battle, creature or planeswalker does nothing (CR 614.9). The
+has left or is no longer a battle, creature or planeswalker does nothing (CR 614.9). Guards and
+"dealt to this creature instead" absorbers (Kjeldoran Royal Guard, Palisade Giant, Pariah) are one
+redirect option per absorber instead of routing combat damage before the pool. The
 original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage`,
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
@@ -35,9 +37,9 @@ original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplaces
 - The turn-scoped "+N" bonuses (this turn's color and controller bonuses, perpetual spell bonuses)
   are stored as running totals, so each is one option; permanent and floating bonuses are one option
   per effect.
-- Combat: "prevent all combat damage" (Fog) and the guard/"dealt to this creature instead" routing
-  apply before the pool (the rerouted damage then goes through the new recipient's pool). The all-creature-damage redirect ("have N damage dealt to you instead")
-  attributes a multi-source event to its first source.
+- Combat: "prevent all combat damage" (Fog) skips the damage step before the pool, so the affected
+  player can't apply another replacement first (Undead Alchemist's mill). The all-creature-damage
+  redirect ("have N damage dealt to you instead") attributes a multi-source event to its first source.
 - Taps through Piracy keep the old land-mana precedence; mana previews and the AI's
   `wouldTapForManaOpenChoice` do not yet treat a contested land as opening a choice; the
   "colored mana becomes white" replacement is applied after the others instead of being ordered.

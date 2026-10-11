@@ -3193,7 +3193,6 @@ public class GameData {
     public CombatDamageState combatDamageStateInProgress;
     public boolean pendingCombatDamageFirstStrikePhase;
     public boolean pendingCombatDamageFirstestStrikePhase;
-    public Permanent pendingCombatDamageRedirectTarget;
 
     // CR 704.5b — track players who attempted to draw from an empty library
     public final Set<UUID> playersAttemptedDrawFromEmptyLibrary = ConcurrentHashMap.newKeySet();
@@ -8633,7 +8632,6 @@ public class GameData {
         java.util.function.Function<Permanent, Permanent> copyCombatPermanent = permanent ->
                 permanent == null ? null : copiedCombatPermanents.computeIfAbsent(
                         permanent.getId(), ignored -> new Permanent(permanent));
-        copy.pendingCombatDamageRedirectTarget = copyCombatPermanent.apply(this.pendingCombatDamageRedirectTarget);
         copy.pendingCombatDamageState = copyCombatDamageState(this.pendingCombatDamageState, copyCombatPermanent);
         return copy;
     }
