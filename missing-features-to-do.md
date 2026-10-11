@@ -26,7 +26,8 @@ abilities on the stack (CR 603.12, 605.5a), and Myr Battlesphere's attack damage
 Caress, Fell Specter, Raider's Wake, Midnight Oil) uses the stack too (CR 603.3), and triggers from a
 mana ability completed by a cost choice reach the stack when it completes (CR 117.3c). Noncombat damage
 a redirect shield takes over (Harm's Way) is the same damage continuing through the new recipient's
-pool, with source-side effects that already applied still spent (CR 614.5). The
+pool, with source-side effects that already applied still spent (CR 614.5); a redirect whose destination
+has left or is no longer a battle, creature or planeswalker does nothing (CR 614.9). The
 original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage`,
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
@@ -36,8 +37,6 @@ original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplaces
 - Combat damage redirected by a source shield (`CombatDamageService.processSourceRedirectDamage`)
   still walks a fixed chain instead of continuing the same event (CR 614.5); noncombat redirects
   already run through the new recipient's pool.
-- A redirect whose destination is gone (CR 614.9: the effect does nothing) consumes the shield and
-  drops the damage instead of leaving it with the original recipient.
 - Combat: "prevent all combat damage" (Fog) and the guard/"dealt to this creature instead" routing
   apply before the pool (the rerouted damage then goes through the new recipient's pool). The all-creature-damage redirect ("have N damage dealt to you instead")
   attributes a multi-source event to its first source.

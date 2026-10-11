@@ -2042,7 +2042,8 @@ public class DamagePreventionService {
 
         while (it.hasNext() && remaining > 0) {
             SourceDamageRedirectShield shield = it.next();
-            if (!shield.protectedPlayerId().equals(protectedPlayerId) || !shield.damageSourceId().equals(sourcePermanentId))
+            if (!shield.protectedPlayerId().equals(protectedPlayerId) || !shield.damageSourceId().equals(sourcePermanentId)
+                    || !isRedirectDestination(gameData, shield.redirectTargetId()))
                 continue;
 
             int prevented = Math.min(shield.remainingAmount(), remaining);
@@ -2105,6 +2106,7 @@ public class DamagePreventionService {
                 it.remove();
                 continue;
             }
+            if (!isRedirectDestination(gameData, shield.redirectTargetId())) continue;
             if (shield.isUnlimited() && !gameData.playerIds.contains(shield.redirectTargetId())
                     && !gameQueryService.isCreature(gameData,
                     gameQueryService.findPermanentById(gameData, shield.redirectTargetId()))) {
@@ -2156,7 +2158,8 @@ public class DamagePreventionService {
                 gameData.sourcePermanentAndControllerNextDamageRedirectShields.iterator();
         while (it.hasNext()) {
             SourcePermanentAndControllerNextDamageRedirectShield shield = it.next();
-            if (!protectedPermanentId.equals(shield.protectedPermanentId())) continue;
+            if (!protectedPermanentId.equals(shield.protectedPermanentId())
+                    || !isRedirectDestination(gameData, shield.redirectTargetId())) continue;
             it.remove();
             gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
                     protectedPermanentId, sourcePermanentId, damage, shield.redirectTargetId()));
@@ -2179,7 +2182,8 @@ public class DamagePreventionService {
                 gameData.sourcePermanentAndControllerNextDamageRedirectShields.iterator();
         while (it.hasNext()) {
             SourcePermanentAndControllerNextDamageRedirectShield shield = it.next();
-            if (!protectedPlayerId.equals(shield.protectedPlayerId())) continue;
+            if (!protectedPlayerId.equals(shield.protectedPlayerId())
+                    || !isRedirectDestination(gameData, shield.redirectTargetId())) continue;
             it.remove();
             gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
                     protectedPlayerId, sourcePermanentId, damage, shield.redirectTargetId()));
@@ -2331,8 +2335,7 @@ public class DamagePreventionService {
             PlayerNextDamageRedirectShield shield = it.next();
             if (!shield.protectedPlayerId().equals(protectedPlayerId)) continue;
             UUID destinationId = shield.redirectTargetPermanentId();
-            if (!gameData.playerIds.contains(destinationId)
-                    && gameQueryService.findPermanentById(gameData, destinationId) == null) continue;
+            if (!isRedirectDestination(gameData, destinationId)) continue;
 
             int redirected = Math.min(shield.remainingAmount(), remaining);
             remaining -= redirected;
@@ -3233,7 +3236,8 @@ public class DamagePreventionService {
     public boolean hasSourceRedirectShield(GameData gameData, UUID protectedPlayerId, UUID sourcePermanentId) {
         return sourcePermanentId != null && gameData.sourceDamageRedirectShields.stream()
                 .anyMatch(shield -> shield.protectedPlayerId().equals(protectedPlayerId)
-                        && shield.damageSourceId().equals(sourcePermanentId));
+                        && shield.damageSourceId().equals(sourcePermanentId)
+                        && isRedirectDestination(gameData, shield.redirectTargetId()));
     }
 
     /** Whether General's Regalia redirects the next damage from {@code sourcePermanentId} to this player. */
@@ -3284,15 +3288,15 @@ public class DamagePreventionService {
     public boolean hasSourcePermanentAndControllerNextDamageRedirectToPlayer(GameData gameData,
                                                                              UUID protectedPlayerId) {
         return protectedPlayerId != null && gameData.sourcePermanentAndControllerNextDamageRedirectShields.stream()
-                .anyMatch(shield -> protectedPlayerId.equals(shield.protectedPlayerId()));
+                .anyMatch(shield -> protectedPlayerId.equals(shield.protectedPlayerId())
+                        && isRedirectDestination(gameData, shield.redirectTargetId()));
     }
 
     /** Whether Martyrdom-style shields redirect the next damage to this player. */
     public boolean hasPlayerNextDamageRedirectShield(GameData gameData, UUID protectedPlayerId) {
         return protectedPlayerId != null && gameData.playerNextDamageRedirectShields.stream()
                 .anyMatch(shield -> shield.protectedPlayerId().equals(protectedPlayerId)
-                        && (gameData.playerIds.contains(shield.redirectTargetPermanentId())
-                        || gameQueryService.findPermanentById(gameData, shield.redirectTargetPermanentId()) != null));
+                        && isRedirectDestination(gameData, shield.redirectTargetPermanentId()));
     }
 
     /** Whether Aegis of Honor-style shields send this instant or sorcery damage back to its caster. */
@@ -3309,6 +3313,20 @@ public class DamagePreventionService {
         return gameData.playerBattlefields.getOrDefault(recipientId, List.of()).stream()
                 .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(PreventHalfDamageToControllerAndTheirPermanentsEffect.class::isInstance));
+    }
+
+    /**
+     * Whether damage can still be redirected to {@code destinationId}: a player in the game, or a
+     * permanent on the battlefield that is still a battle, creature or planeswalker. Otherwise the
+     * redirection effect does nothing (CR 614.9) and the damage stays with its original recipient.
+     */
+    public boolean isRedirectDestination(GameData gameData, UUID destinationId) {
+        if (destinationId == null) return false;
+        if (gameData.playerIds.contains(destinationId)) return true;
+        Permanent permanent = gameQueryService.findPermanentById(gameData, destinationId);
+        return permanent != null && (gameQueryService.isCreature(gameData, permanent)
+                || gameQueryService.isPlaneswalker(gameData, permanent)
+                || permanent.getCard().hasType(CardType.BATTLE));
     }
 
     private boolean isCreatureOnBattlefield(GameData gameData, UUID permanentId) {
@@ -3380,7 +3398,8 @@ public class DamagePreventionService {
     /** Whether Glarecaster's shared shield redirects the next damage dealt to {@code permanentId}. */
     public boolean hasSourcePermanentAndControllerNextDamageRedirectToPermanent(GameData gameData, UUID permanentId) {
         return permanentId != null && gameData.sourcePermanentAndControllerNextDamageRedirectShields.stream()
-                .anyMatch(shield -> permanentId.equals(shield.protectedPermanentId()));
+                .anyMatch(shield -> permanentId.equals(shield.protectedPermanentId())
+                        && isRedirectDestination(gameData, shield.redirectTargetId()));
     }
 
     /** Whether Oracle's Attendants-style shields redirect damage from {@code sourceId} to {@code permanentId}. */
@@ -3390,10 +3409,10 @@ public class DamagePreventionService {
                 .anyMatch(shield -> shield.protectedPermanentId().equals(permanentId)
                         && (!shield.combatOnly() || combatDamage)
                         && (shield.damageSourceId() == null || shield.damageSourceId().equals(sourceId))
+                        && isRedirectDestination(gameData, shield.redirectTargetId())
                         && (gameData.playerIds.contains(shield.redirectTargetId())
                         ? true
-                        : gameQueryService.findPermanentById(gameData, shield.redirectTargetId()) != null
-                        && (!shield.isUnlimited() || gameQueryService.isCreature(gameData,
+                        : (!shield.isUnlimited() || gameQueryService.isCreature(gameData,
                         gameQueryService.findPermanentById(gameData, shield.redirectTargetId())))));
     }
 
