@@ -336,7 +336,8 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
         entry.setSourcePermanentSnapshot(portion.sourceSnapshot());
         return new DamageEvent(entry, event.recipientPlayerId(), event.recipientPermanentId(),
                 event.toPermanent() ? source : null, amount, unpreventable || event.unpreventable(),
-                event.cantBeRedirected(), event.journalSlot(), event.appliedKeys(), true, List.of());
+                event.cantBeRedirected(), event.journalSlot(), event.appliedKeys(), true, List.of(),
+                event.redirected());
     }
 
     private static String sourceName(DamageEvent view) {

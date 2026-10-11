@@ -188,16 +188,6 @@ public class DamagePreventionService {
         return true;
     }
 
-    public int applyDamageToControllerAndPutCounterOnSelf(GameData gameData, UUID playerId, int damage) {
-        return applyDamageToControllerAndPutCounterOnSelf(gameData, playerId, damage, false);
-    }
-
-    public int applyDamageToControllerAndPutCounterOnSelf(GameData gameData, UUID playerId, int damage,
-                                                           boolean combatDamage) {
-        return damagePreventionReplacementSupport.preventDamageToControllerAndPutCounterOnSelf(
-                gameData, playerId, damage, combatDamage);
-    }
-
     /**
      * Swans of Bryn Argoll: "If a source would deal damage to this creature, prevent that damage.
      * The source's controller draws cards equal to the damage prevented this way." Returns {@code true}

@@ -33,11 +33,13 @@ import java.util.function.Predicate;
  *                                event fills, or -1
  * @param combat                  the event is combat damage
  * @param portions                the per-source parts of combat damage; empty otherwise
+ * @param redirected              combat damage a redirection effect sent here from another
+ *                                recipient (CR 614.9); still combat damage of the same step
  */
 public record DamageEvent(StackEntry entry, UUID recipientPlayerId, UUID recipientPermanentId,
                           Permanent explicitSource, int amount, boolean unpreventable, boolean cantBeRedirected,
                           int journalSlot, Set<String> appliedKeys,
-                          boolean combat, List<DamagePortion> portions)
+                          boolean combat, List<DamagePortion> portions, boolean redirected)
         implements ReplacementEvent {
 
     public DamageEvent {
@@ -51,7 +53,7 @@ public record DamageEvent(StackEntry entry, UUID recipientPlayerId, UUID recipie
     /** Damage to a player. */
     public static DamageEvent toPlayer(StackEntry entry, UUID playerId, int amount, boolean unpreventable) {
         return new DamageEvent(entry, playerId, null, null, amount, unpreventable, false,
-                -1, Set.of(), false, List.of());
+                -1, Set.of(), false, List.of(), false);
     }
 
     /** Damage to a permanent controlled by {@code controllerId}. */
@@ -59,14 +61,14 @@ public record DamageEvent(StackEntry entry, UUID recipientPlayerId, UUID recipie
                                           Permanent explicitSource, int amount, boolean unpreventable,
                                           boolean cantBeRedirected) {
         return new DamageEvent(entry, controllerId, permanentId, explicitSource, amount, unpreventable,
-                cantBeRedirected, -1, Set.of(), false, List.of());
+                cantBeRedirected, -1, Set.of(), false, List.of(), false);
     }
 
     /** The combat damage one recipient is dealt in a damage step. */
     public static DamageEvent combat(StackEntry entry, UUID chooserId, UUID recipientPermanentId,
                                      boolean unpreventable, boolean cantBeRedirected, List<DamagePortion> portions) {
         return new DamageEvent(entry, chooserId, recipientPermanentId, null, 0, unpreventable, cantBeRedirected,
-                -1, Set.of(), true, portions);
+                -1, Set.of(), true, portions, false);
     }
 
     public boolean toPermanent() {
@@ -142,12 +144,21 @@ public record DamageEvent(StackEntry entry, UUID recipientPlayerId, UUID recipie
             }
         }
         return new DamageEvent(entry, controllerId, permanentId, explicitSource, Math.max(0, redirectedAmount),
-                unpreventable, cantBeRedirected, -1, keys, false, List.of());
+                unpreventable, cantBeRedirected, -1, keys, false, List.of(), false);
+    }
+
+    /**
+     * This combat damage as damage a redirection effect sent to its recipient from another one
+     * (CR 614.9), with the effects {@code spentKeys} names already applied to it (CR 614.5).
+     */
+    public DamageEvent asRedirectedCombat(Set<String> spentKeys) {
+        return new DamageEvent(entry, recipientPlayerId, recipientPermanentId, explicitSource, amount, unpreventable,
+                cantBeRedirected, journalSlot, spentKeys, combat, portions, true);
     }
 
     public DamageEvent withJournalSlot(int slot) {
         return new DamageEvent(entry, recipientPlayerId, recipientPermanentId, explicitSource, amount, unpreventable,
-                cantBeRedirected, slot, appliedKeys, combat, portions);
+                cantBeRedirected, slot, appliedKeys, combat, portions, redirected);
     }
 
     @Override
@@ -167,13 +178,13 @@ public record DamageEvent(StackEntry entry, UUID recipientPlayerId, UUID recipie
         return new DamageEvent(new StackEntry(entry), recipientPlayerId, recipientPermanentId,
                 explicitSource == null ? null : new Permanent(explicitSource), amount, unpreventable,
                 cantBeRedirected, journalSlot, appliedKeys, combat,
-                portions.stream().map(DamagePortion::copyForSimulation).toList());
+                portions.stream().map(DamagePortion::copyForSimulation).toList(), redirected);
     }
 
     private DamageEvent with(int newAmount, List<DamagePortion> newPortions, UUID playerId, UUID permanentId,
                              Set<String> keys) {
         return new DamageEvent(entry, playerId, permanentId, explicitSource, newAmount, unpreventable,
-                cantBeRedirected, journalSlot, keys, combat, newPortions);
+                cantBeRedirected, journalSlot, keys, combat, newPortions, redirected);
     }
 
     /**

@@ -189,7 +189,8 @@ public class ReplacementOrderService {
     private <E extends ReplacementEvent> ReplacementCandidateSource.ApplyResult<E> applyCandidate(
             GameData gameData, E event, Candidate<E> candidate) {
         String key = candidate.option().key();
-        return switch (candidate.source().apply(gameData, event, candidate.option())) {
+        // The effect is spent from the moment it applies (CR 614.5), so damage it redirects carries it.
+        return switch (candidate.source().apply(gameData, (E) event.withApplied(key), candidate.option())) {
             case ReplacementCandidateSource.ApplyResult.Applied<E> applied ->
                     new ReplacementCandidateSource.ApplyResult.Applied<>((E) applied.event().withApplied(key));
             case ReplacementCandidateSource.ApplyResult.Suspended<E> suspended ->

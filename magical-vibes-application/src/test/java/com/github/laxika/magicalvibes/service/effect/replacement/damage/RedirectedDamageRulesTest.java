@@ -17,6 +17,14 @@ class RedirectedDamageRulesTest {
     }
 
     @Test
+    @DisplayName("A redirect of the source's own damage stays spent for the damage it redirected")
+    void sourceSideRedirectsStaySpent() {
+        assertThat(RedirectedDamageRules.staysSpent("SourceNextCombatDamageToController@a1b2")).isTrue();
+        assertThat(RedirectedDamageRules.staysSpent("SourceNextRedirectToPermanent")).isTrue();
+        assertThat(RedirectedDamageRules.staysSpent("SourceNextCombatDamageToOpponentRedirect")).isTrue();
+    }
+
+    @Test
     @DisplayName("The original recipient's effects don't stay spent for the new recipient")
     void recipientSideEffectsDoNotStaySpent() {
         assertThat(RedirectedDamageRules.staysSpent("RecipientMultiplier")).isFalse();

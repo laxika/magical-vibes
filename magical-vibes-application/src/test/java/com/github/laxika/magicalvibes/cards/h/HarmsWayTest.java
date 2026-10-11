@@ -300,6 +300,47 @@ class HarmsWayTest extends BaseCardTest {
         harness.assertLife(player1, 20);
     }
 
+    @Test
+    @DisplayName("Redirected combat damage meets the new recipient's damage replacements")
+    void redirectedCombatDamageIsModifiedForTheNewRecipient() {
+        attackIntoHarmsWayWithFurnace();
+
+        chooseReplacement(player1, "Redirect damage from Runeclaw Bear");
+
+        // Both of the Bear's damage is redirected first, then Furnace of Rath doubles it for player2.
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Combat damage already doubled before it is redirected isn't doubled again")
+    void combatDamageDoubledBeforeRedirectIsNotDoubledAgain() {
+        attackIntoHarmsWayWithFurnace();
+
+        chooseReplacement(player1, "Furnace of Rath");
+
+        // Doubled to 4 first, then 2 of it is redirected; Furnace of Rath is spent (CR 614.5).
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 18);
+    }
+
+    private void attackIntoHarmsWayWithFurnace() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent bear = addCreatureReady(player2, new RuneclawBear());
+        harness.setHand(player1, List.of(new HarmsWay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, bear.getId());
+
+        harness.forceActivePlayer(player2);
+        bear.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+    }
+
     private void pingRedirectedByHarmsWayWithFurnace() {
         harness.addToBattlefield(player1, new FurnaceOfRath());
         harness.setLife(player1, 20);

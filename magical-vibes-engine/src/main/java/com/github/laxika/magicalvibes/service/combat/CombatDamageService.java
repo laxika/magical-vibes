@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreat
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
+import com.github.laxika.magicalvibes.service.effect.replacement.damage.RedirectedDamageRules;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -4141,141 +4142,199 @@ public class CombatDamageService {
     }
 
     /**
-     * Processes pending source-specific redirect damage entries (e.g. Harm's Way).
-     * The prevented damage is dealt to the redirect target, which can be a player or permanent.
+     * Queues the damage redirect effects just took over from combat damage (Harm's Way, Saving Grace,
+     * the creatures and Auras that absorb damage): the redirected part is still combat damage of
+     * this step (CR 510.2), dealt to its new recipient instead (CR 614.9), so it becomes an event of
+     * its own that the new recipient's replacement and prevention effects modify (CR 616.1). Effects
+     * that already modified {@code origin} don't apply to it again (CR 614.5).
      */
-    private void processSourceRedirectDamage(GameData gameData, CombatDamageState state) {
+    private void queueRedirectedCombatDamage(GameData gameData, CombatDamageState state, DamageEvent origin) {
         if (gameData.pendingSourceRedirectDamage.isEmpty()) return;
 
         List<SourceDamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingSourceRedirectDamage);
         gameData.pendingSourceRedirectDamage.clear();
 
         for (SourceDamageRedirectShield redirect : toProcess) {
-            UUID targetId = redirect.redirectTargetId();
-            int damage = redirect.remainingAmount();
-            boolean targetIsPlayer = gameData.playerIds.contains(targetId);
+            DamageEvent redirected = redirectedCombatEvent(gameData, origin, redirect);
+            if (redirected != null) {
+                state.pendingDamageEvents.add(redirected);
+            }
+        }
+    }
 
-            if (targetIsPlayer) {
-                String targetName = gameData.playerIdToName.get(targetId);
-                gameLogService.append(gameData, GameLog.text(damage + " damage is redirected to " + targetName + "."));
+    private DamageEvent redirectedCombatEvent(GameData gameData, DamageEvent origin,
+                                              SourceDamageRedirectShield redirect) {
+        UUID targetId = redirect.redirectTargetId();
+        int damage = redirect.remainingAmount();
+        if (damage <= 0) return null;
+        boolean toPlayer = gameData.playerIds.contains(targetId);
+        Permanent target = toPlayer ? null : findOnBattlefield(gameData, targetId);
+        if (!toPlayer && target == null) return null;
 
-                Permanent damageSource = gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
-                UUID sourceControllerId = redirect.damageSourceId() == null
-                        ? null
-                        : gameQueryService.findPermanentController(gameData, redirect.damageSourceId());
-                int channelHarmAdjusted = damagePreventionService.applyChannelHarmPrevention(
-                        gameData, targetId, sourceControllerId, damage);
-                int redirectEffective = damagePreventionService.applyCombatPlayerPreventionShield(
-                        gameData, targetId, channelHarmAdjusted, damageSource);
-                processPendingRedirectDamage(gameData);
-                redirectEffective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                        gameData, targetId, redirectEffective, true);
-
-                if (redirectEffective > 0) {
-                    if (damageSource != null && gameQueryService.hasKeyword(gameData, damageSource, Keyword.INFECT)) {
-                        lifeSupport.applyPoisonCounters(gameData, targetId, redirectEffective,
-                                damageSource.getCard().getName(), sourceControllerId);
-                    } else if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
-                        int lifeLoss = redirectEffective
-                                * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
-                        gameData.playerLifeTotals.put(targetId,
-                                gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
-                    }
-                    gameData.recordCombatDamageToPlayer(targetId, redirectEffective);
-                    if (damageSource != null) state.combatDamageDealt.merge(damageSource, redirectEffective, Integer::sum);
-                    if (damageSource != null) state.redirectedCombatDamageSourcesToPlayers
-                            .computeIfAbsent(targetId, ignored -> new LinkedHashSet<>()).add(damageSource);
-                    Permanent sourcePermanent = redirect.damageSourceId() == null
-                            ? null
-                            : gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
-                    boolean artifactSource = sourcePermanent != null
-                            && gameQueryService.isArtifact(gameData, sourcePermanent);
-                    gameData.recordDamageToPlayer(targetId, redirectEffective,
-                            artifactSource ? redirectEffective : 0);
-                    gameData.recordDamageDealtBySourceToPlayer(
-                            redirect.damageSourceId(), targetId, redirectEffective);
-                    gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetId);
-                    if (damageSource != null) {
-                        gameData.recordCombatDamageByCreatureNameToPlayer(
-                                damageSource.getCard().getName(), targetId);
-                    }
-                    triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
-                            gameData, targetId, redirectEffective);
-                    triggerCollectionService.checkOpponentDealtDamageTriggers(
-                            gameData, targetId, redirect.damageSourceId(), redirectEffective);
+        List<DamagePortion> portions = new ArrayList<>();
+        if (redirect.damageSourceId() == null && origin != null && origin.hasPortions()) {
+            // A redirect of the whole event (Palisade Giant) takes every source's part of it.
+            for (DamagePortion portion : origin.withAmount(damage).portions()) {
+                if (portion.amount() > 0) {
+                    portions.add(redirectedPortion(gameData, portion.sourceId(), portion,
+                            portion.sourceSnapshot(), portion.amount(), target));
                 }
+            }
+        } else {
+            // A per-source rule sees one source's part of the event, as damage from that source alone.
+            UUID sourceId = redirect.damageSourceId() != null ? redirect.damageSourceId()
+                    : origin == null ? null : origin.entry().getSourcePermanentId();
+            if (sourceId == null) return null;
+            DamagePortion originPortion = origin == null ? null : origin.portions().stream()
+                    .filter(portion -> portion.sourceId().equals(sourceId))
+                    .findFirst().orElse(null);
+            Permanent originSnapshot = originPortion != null ? originPortion.sourceSnapshot()
+                    : origin != null && sourceId.equals(origin.entry().getSourcePermanentId())
+                    ? origin.entry().getSourcePermanentSnapshot() : null;
+            portions.add(redirectedPortion(gameData, sourceId, originPortion, originSnapshot, damage, target));
+        }
+        portions.removeIf(Objects::isNull);
+        if (portions.isEmpty()) return null;
+
+        gameLogService.append(gameData, toPlayer
+                ? GameLog.text(damage + " damage is redirected to " + gameData.playerIdToName.get(targetId) + ".")
+                : GameLog.textCardText(damage + " damage is redirected to ", target.getCard(), "."));
+        DamageEvent event = combatDamageEvent(gameData, targetId, portions);
+        if (event == null) return null;
+        Set<String> spentKeys = new HashSet<>();
+        if (origin != null) {
+            origin.appliedKeys().stream().filter(RedirectedDamageRules::staysSpent).forEach(spentKeys::add);
+        }
+        return event.asRedirectedCombat(spentKeys);
+    }
+
+    /**
+     * {@code amount} of {@code sourceId}'s combat damage as dealt to its new recipient: whether it is
+     * dealt as counters or poison depends on that recipient, the rest on the source.
+     */
+    private DamagePortion redirectedPortion(GameData gameData, UUID sourceId, DamagePortion originPortion,
+                                            Permanent originSnapshot, int amount, Permanent target) {
+        Permanent live = gameQueryService.findPermanentById(gameData, sourceId);
+        Permanent snapshot = originSnapshot != null ? originSnapshot : live != null ? new Permanent(live) : null;
+        if (snapshot == null) return null;
+        Permanent source = live != null ? live : snapshot;
+        boolean counterDamage = target == null ? gameQueryService.hasKeyword(gameData, source, Keyword.INFECT)
+                : gameQueryService.dealsCounterDamageToCreatures(gameData, source);
+        boolean deathtouch = originPortion != null ? originPortion.deathtouch()
+                : gameQueryService.hasKeyword(gameData, source, Keyword.DEATHTOUCH);
+        boolean unpreventable = gameQueryService.damageCantBePreventedFromSource(gameData, source, true)
+                || target != null && target.isDamageCantBePreventedOrRedirectedThisTurn();
+        return new DamagePortion(sourceId, snapshot, amount, counterDamage, deathtouch,
+                originPortion != null && originPortion.unblocked(), unpreventable);
+    }
+
+    /**
+     * Deals redirected combat damage once its new recipient's effects are applied: life loss or
+     * poison for a player, loyalty, defense, counters or marked damage for a permanent, and the
+     * records and triggers of that damage.
+     */
+    private void dealRedirectedCombatDamage(GameData gameData, CombatDamageState state, DamageEvent event) {
+        for (DamagePortion portion : event.portions()) {
+            if (portion.amount() <= 0) continue;
+            UUID sourceId = portion.sourceId();
+            Permanent damageSource = gameQueryService.findPermanentById(gameData, sourceId);
+            UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourceId);
+            if (!event.toPermanent()) {
+                dealRedirectedCombatDamageToPlayer(gameData, state, event.recipientPlayerId(), portion,
+                        damageSource, sourceControllerId);
             } else {
-                Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-                if (targetPerm == null) continue;
-
-                gameLogService.append(gameData, GameLog.textCardText(damage + " damage is redirected to ", targetPerm.getCard(), "."));
-
-                Permanent damageSource = gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
-                UUID sourceControllerId = redirect.damageSourceId() == null
-                        ? null
-                        : gameQueryService.findPermanentController(gameData, redirect.damageSourceId());
-                int channelHarmAdjusted = damagePreventionService.applyChannelHarmPreventionToPermanent(
-                        gameData, targetPerm, sourceControllerId, damage);
-                int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(
-                        gameData, targetPerm, channelHarmAdjusted, true, damageSource);
-                if (effectiveDamage > 0) {
-                    damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
-                    boolean toughnessAsLoyalty = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, targetPerm);
-                    if (toughnessAsLoyalty) {
-                        targetPerm.setToughnessAsLoyalty(
-                                gameQueryService.getToughnessAsLoyalty(targetPerm) - effectiveDamage);
-                    } else if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
-                        int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
-                                gameData, targetPerm, effectiveDamage);
-                        targetPerm.setCounterCount(CounterType.LOYALTY,
-                                targetPerm.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
-                    }
-                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
-                        targetPerm.setCounterCount(CounterType.DEFENSE,
-                                targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
-                    }
-                    boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
-                    boolean infect = isCreature && damageSource != null
-                            && gameQueryService.dealsCounterDamageToCreatures(gameData, damageSource);
-                    if (infect && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, targetPerm)) {
-                        int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, targetPerm, effectiveDamage);
-                        targetPerm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
-                                targetPerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-                    }
-                    if (!infect && ((isCreature && !toughnessAsLoyalty)
-                            || (!toughnessAsLoyalty && !targetPerm.getCard().hasType(CardType.PLANESWALKER)
-                            && !targetPerm.getCard().hasType(CardType.BATTLE)))) {
-                        targetPerm.addMarkedDamage(redirect.damageSourceId(), effectiveDamage);
-                    }
-                    if (damageSource != null) {
-                        state.combatDamageDealt.merge(damageSource, effectiveDamage, Integer::sum);
-                        if (isCreature) {
-                            recordCombatDamageToCreature(gameData, state, damageSource, sourceControllerId,
-                                    targetPerm, effectiveDamage);
-                            if (gameQueryService.hasKeyword(gameData, damageSource, Keyword.DEATHTOUCH)) {
-                                targetPerm.setDamagedByDeathtouch(true);
-                            }
-                        }
-                    }
-                    gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage,
-                            redirect.damageSourceId(), damageSource == null ? null
-                                    : gameQueryService.getEffectiveName(gameData, damageSource),
+                Permanent targetPerm = gameQueryService.findPermanentById(gameData, event.recipientPermanentId());
+                if (targetPerm != null) {
+                    dealRedirectedCombatDamageToPermanent(gameData, state, targetPerm, portion, damageSource,
                             sourceControllerId);
-                    if (isCreature && redirect.damageSourceId() != null) {
-                        gameData.recordDamageDealtToCreatureBySource(
-                                redirect.damageSourceId(), targetPerm.getId());
-                    }
-                    triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
-                            gameData, targetPerm, effectiveDamage);
-                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
-                        battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
-                    }
-                    recordQualifyingCombatDamageBySourceId(gameData, redirect.damageSourceId(), targetPerm);
-                    gameData.recordDamageRecipientBySource(redirect.damageSourceId(), targetPerm.getId());
-                    gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
                 }
             }
         }
+    }
+
+    private void dealRedirectedCombatDamageToPlayer(GameData gameData, CombatDamageState state, UUID targetId,
+                                                    DamagePortion portion, Permanent damageSource,
+                                                    UUID sourceControllerId) {
+        int damage = portion.amount();
+        UUID sourceId = portion.sourceId();
+        if (portion.counterDamage()) {
+            lifeSupport.applyPoisonCounters(gameData, targetId, damage,
+                    portion.sourceSnapshot().getCard().getName(), sourceControllerId);
+        } else if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
+            int lifeLoss = damage * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
+            gameData.playerLifeTotals.put(targetId, gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
+        }
+        gameData.recordCombatDamageToPlayer(targetId, damage);
+        if (damageSource != null) {
+            state.combatDamageDealt.merge(damageSource, damage, Integer::sum);
+            state.redirectedCombatDamageSourcesToPlayers
+                    .computeIfAbsent(targetId, ignored -> new LinkedHashSet<>()).add(damageSource);
+        }
+        boolean artifactSource = damageSource != null && gameQueryService.isArtifact(gameData, damageSource);
+        gameData.recordDamageToPlayer(targetId, damage, artifactSource ? damage : 0);
+        gameData.recordDamageDealtBySourceToPlayer(sourceId, targetId, damage);
+        gameData.recordDamageRecipientBySource(sourceId, targetId);
+        if (damageSource != null) {
+            gameData.recordCombatDamageByCreatureNameToPlayer(damageSource.getCard().getName(), targetId);
+        }
+        triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(gameData, targetId, damage);
+        triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, sourceId, damage);
+    }
+
+    private void dealRedirectedCombatDamageToPermanent(GameData gameData, CombatDamageState state,
+                                                       Permanent targetPerm, DamagePortion portion,
+                                                       Permanent damageSource, UUID sourceControllerId) {
+        int effectiveDamage = portion.amount();
+        UUID sourceId = portion.sourceId();
+        damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
+        boolean toughnessAsLoyalty = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, targetPerm);
+        if (toughnessAsLoyalty) {
+            targetPerm.setToughnessAsLoyalty(gameQueryService.getToughnessAsLoyalty(targetPerm) - effectiveDamage);
+        } else if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
+            int loyaltyCounterRemoval = gameQueryService.applyPlaneswalkerLoyaltyDamageReplacement(
+                    gameData, targetPerm, effectiveDamage);
+            targetPerm.setCounterCount(CounterType.LOYALTY,
+                    targetPerm.getCounterCount(CounterType.LOYALTY) - loyaltyCounterRemoval);
+        }
+        if (targetPerm.getCard().hasType(CardType.BATTLE)) {
+            targetPerm.setCounterCount(CounterType.DEFENSE,
+                    targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
+        }
+        boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
+        boolean infect = isCreature && portion.counterDamage();
+        if (infect && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, targetPerm)) {
+            int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, targetPerm, effectiveDamage);
+            targetPerm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
+                    targetPerm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+        }
+        if (!infect && ((isCreature && !toughnessAsLoyalty)
+                || (!toughnessAsLoyalty && !targetPerm.getCard().hasType(CardType.PLANESWALKER)
+                && !targetPerm.getCard().hasType(CardType.BATTLE)))) {
+            targetPerm.addMarkedDamage(sourceId, effectiveDamage);
+        }
+        if (damageSource != null) {
+            state.combatDamageDealt.merge(damageSource, effectiveDamage, Integer::sum);
+            if (isCreature) {
+                recordCombatDamageToCreature(gameData, state, damageSource, sourceControllerId,
+                        targetPerm, effectiveDamage);
+            }
+        }
+        if (isCreature && portion.deathtouch()) {
+            targetPerm.setDamagedByDeathtouch(true);
+        }
+        gameData.recordDamageToPermanent(targetPerm.getId(), effectiveDamage, sourceId,
+                damageSource == null ? null : gameQueryService.getEffectiveName(gameData, damageSource),
+                sourceControllerId);
+        if (isCreature) {
+            gameData.recordDamageDealtToCreatureBySource(sourceId, targetPerm.getId());
+        }
+        triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, targetPerm, effectiveDamage);
+        if (targetPerm.getCard().hasType(CardType.BATTLE)) {
+            battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
+        }
+        recordQualifyingCombatDamageBySourceId(gameData, sourceId, targetPerm);
+        gameData.recordDamageRecipientBySource(sourceId, targetPerm.getId());
+        gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
     }
 
     /**
@@ -4517,7 +4576,7 @@ public class CombatDamageService {
             if (source != null) {
                 gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
                         ability.controllerId(), source.getId(), ability.eventValue(), ability.controllerId()));
-                processSourceRedirectDamage(gameData, state);
+                queueRedirectedCombatDamage(gameData, state, null);
             }
         } else {
             damageSupport.resumeSuspendedCombatDamage(gameData, null, -1);
@@ -4647,14 +4706,17 @@ public class CombatDamageService {
                 ? gameData.combatDamageStateInProgress : gameData.pendingCombatDamageState;
     }
 
-    /** Deals the damage redirect effects just took over from combat damage, with combat's bookkeeping. */
-    public void processCombatRedirects(GameData gameData) {
+    /**
+     * Deals the damage redirect effects just took over from {@code origin}'s combat damage: queued
+     * as events of the step in progress, or, without one, as damage of its own.
+     */
+    public void processCombatRedirects(GameData gameData, DamageEvent origin) {
         CombatDamageState state = activeCombatDamageState(gameData);
         if (state == null) {
             damageSupport.processSourceRedirectDamage(gameData);
             return;
         }
-        processSourceRedirectDamage(gameData, state);
+        queueRedirectedCombatDamage(gameData, state, origin);
     }
 
     /** Dralnu's sacrifices for combat damage happen once the step's damage is dealt. */
@@ -4704,6 +4766,10 @@ public class CombatDamageService {
     public void recordCombatDamageEvent(GameData gameData, DamageEvent event) {
         CombatDamageState state = activeCombatDamageState(gameData);
         if (state == null) return;
+        if (event.redirected()) {
+            dealRedirectedCombatDamage(gameData, state, event);
+            return;
+        }
         if (!event.toPermanent()) {
             recordCombatEventToPlayer(gameData, state, event);
             return;

@@ -1288,7 +1288,7 @@ public class DamageSupport {
      */
     public void processRedirects(GameData gameData, DamageEvent event) {
         if (event.combat()) {
-            combatDamageService.getObject().processCombatRedirects(gameData);
+            combatDamageService.getObject().processCombatRedirects(gameData, event);
         } else {
             dealRedirectedDamage(gameData, event);
         }
