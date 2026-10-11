@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.cards.s.StampedingRhino;
 import com.github.laxika.magicalvibes.cards.c.CanyonMinotaur;
 import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
 import com.github.laxika.magicalvibes.cards.d.DeadlyRecluse;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HarmsWay.class, RuneclawBear.class, StampedingRhino.class, CanyonMinotaur.class,
         ChildOfNight.class, DeadlyRecluse.class, LightningBolt.class, ProdigalPyromancer.class,
-        LeylineOfPunishment.class})
+        LeylineOfPunishment.class, FurnaceOfRath.class})
 class HarmsWayTest extends BaseCardTest {
 
     @Test
@@ -272,6 +274,51 @@ class HarmsWayTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Redirected damage meets the new recipient's damage replacements")
+    void redirectedDamageIsModifiedForTheNewRecipient() {
+        pingRedirectedByHarmsWayWithFurnace();
+
+        chooseReplacement(player1, "Redirect damage from Prodigal Pyromancer");
+
+        // The 1 damage is redirected first, then Furnace of Rath doubles it for player2.
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Damage already doubled before it is redirected isn't doubled again")
+    void damageDoubledBeforeRedirectIsNotDoubledAgain() {
+        pingRedirectedByHarmsWayWithFurnace();
+
+        chooseReplacement(player1, "Furnace of Rath");
+
+        // Doubled to 2 first, then redirected; Furnace of Rath is spent (CR 614.5).
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    private void pingRedirectedByHarmsWayWithFurnace() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.setHand(player1, List.of(new HarmsWay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, pyromancer.getId());
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(Player chooser, String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(chooser.getId());
+        harness.handleListChoice(chooser, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     @Test

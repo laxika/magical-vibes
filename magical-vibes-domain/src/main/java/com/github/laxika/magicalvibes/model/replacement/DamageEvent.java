@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * Damage about to be dealt while replacement and prevention effects modify it (CR 120.4b). The
@@ -121,6 +122,27 @@ public record DamageEvent(StackEntry entry, UUID recipientPlayerId, UUID recipie
     /** The same damage dealt to another player instead (CR 614.9). */
     public DamageEvent withRecipient(UUID newRecipientPlayerId) {
         return with(amount, portions, newRecipientPlayerId, null, appliedKeys);
+    }
+
+    /**
+     * {@code redirectedAmount} of this noncombat damage dealt to another player or permanent instead
+     * (CR 614.9), as an event of its own for the new recipient's effects. It keeps the source and
+     * whether the damage can be prevented or redirected; an effect that already applied stays spent
+     * (CR 614.5) when {@code stillSpent} accepts its key.
+     *
+     * @param controllerId the new recipient player, or the new recipient permanent's controller
+     * @param permanentId  the new recipient permanent, or {@code null} for a player
+     */
+    public DamageEvent redirectedTo(UUID controllerId, UUID permanentId, int redirectedAmount,
+                                    Predicate<String> stillSpent) {
+        Set<String> keys = new HashSet<>();
+        for (String key : appliedKeys) {
+            if (stillSpent.test(key)) {
+                keys.add(key);
+            }
+        }
+        return new DamageEvent(entry, controllerId, permanentId, explicitSource, Math.max(0, redirectedAmount),
+                unpreventable, cantBeRedirected, -1, keys, false, List.of());
     }
 
     public DamageEvent withJournalSlot(int slot) {

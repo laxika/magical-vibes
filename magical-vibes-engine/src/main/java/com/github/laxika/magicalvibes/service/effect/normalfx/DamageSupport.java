@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.service.replacement.DamageJournalService;
+import com.github.laxika.magicalvibes.service.effect.replacement.damage.RedirectedDamageRules;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -1242,11 +1243,11 @@ public class DamageSupport {
     }
 
     /**
-     * Processes pending source-specific redirect damage entries (e.g. Harm's Way).
-     * The prevented damage is dealt to the redirect target, which can be a player or permanent.
+     * Processes pending source-specific redirect damage entries (e.g. Harm's Way) that no damage
+     * event carries: the redirected damage is dealt by its source as damage of its own.
      */
     public void processSourceRedirectDamage(GameData gameData) {
-        processSourceRedirectDamage(gameData, null);
+        dealRedirectedDamage(gameData, null);
     }
 
     /**
@@ -1257,120 +1258,65 @@ public class DamageSupport {
         if (event.combat()) {
             combatDamageService.getObject().processCombatRedirects(gameData);
         } else {
-            processSourceRedirectDamage(gameData, event.entry());
+            dealRedirectedDamage(gameData, event);
         }
     }
 
-    public void processSourceRedirectDamage(GameData gameData, StackEntry entry) {
-        if (gameData.pendingSourceRedirectDamage.isEmpty()) return;
-
-        List<SourceDamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingSourceRedirectDamage);
-        gameData.pendingSourceRedirectDamage.clear();
-
-        for (SourceDamageRedirectShield redirect : toProcess) {
-            UUID sourceId = redirect.damageSourceId() != null ? redirect.damageSourceId()
-                    : entry == null ? null : damageSourceKey(entry, null);
-            UUID targetId = redirect.redirectTargetId();
-            int damage = redirect.remainingAmount();
-            boolean targetIsPlayer = gameData.playerIds.contains(targetId);
-
-            if (targetIsPlayer) {
-                String targetName = gameData.playerIdToName.get(targetId);
-                gameLogService.append(gameData, GameLog.text(damage + " damage is redirected to " + targetName + "."));
-
-                int redirectEffective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, damage);
-                processPendingRedirectDamage(gameData);
-                redirectEffective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                        gameData, targetId, redirectEffective);
-
-                if (redirectEffective > 0) {
-                    if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
-                        int lifeLoss = redirectEffective
-                                * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
-                        gameData.playerLifeTotals.put(targetId,
-                                gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
-                    }
-                    Permanent sourcePermanent = sourceId == null
-                            ? null
-                            : gameQueryService.findPermanentById(gameData, sourceId);
-                    boolean artifactSource = sourcePermanent != null
-                            && gameQueryService.isArtifact(gameData, sourcePermanent);
-                    gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
-                    if (entry != null) {
-                        entry.recordPlayerDealtDamage(targetId);
-                    }
-                    gameData.recordDamageDealtBySourceToPlayer(
-                            sourceId, targetId, redirectEffective);
-                    gameData.recordDamageDealtBySource(sourceId, redirectEffective);
-                    gameData.recordDamageRecipientBySource(sourceId, targetId);
-                    triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
-                            gameData, targetId, redirectEffective);
-                    triggerCollectionService.checkOpponentDealtDamageTriggers(
-                            gameData, targetId, sourceId, redirectEffective);
-                }
-            } else {
-                Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-                if (targetPerm == null) continue;
-
-                gameLogService.append(gameData, GameLog.textCardText(
-                        damage + " damage is redirected to ", targetPerm.getCard(), "."));
-
-                // The redirected damage can itself be redirected by the new recipient's own shield
-                // (a second Carom); that chained part is dealt when the queue is processed again.
-                damage = damagePreventionService.applyCreatureRedirectShields(gameData, targetPerm.getId(), sourceId, damage);
-                if (damage <= 0) continue;
-
-                int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
-                if (effectiveDamage > 0) {
-                    if (entry != null && entry.isExilesCreaturesDamaged()
-                            && gameQueryService.isCreature(gameData, targetPerm)) {
-                        targetPerm.setExileInsteadOfDieThisTurn(true);
-                    }
-                    gameData.recordDamageDealtBySource(sourceId, effectiveDamage);
-                    damagePreventionService.applyDamageHealingReplacement(gameData, targetPerm, effectiveDamage);
-                    // A planeswalker destination loses that much loyalty (CR 120.3c) and a battle
-                    // destination that many defense counters (CR 120.3h); a permanent that is also
-                    // a creature additionally gets marked damage (CR 120.3e).
-                    if (gameQueryService.isToughnessAsLoyaltyPermanent(gameData, targetPerm)) {
-                        targetPerm.setToughnessAsLoyalty(
-                                gameQueryService.getToughnessAsLoyalty(targetPerm) - effectiveDamage);
-                    } else if (targetPerm.getCard().hasType(CardType.PLANESWALKER)) {
-                        targetPerm.setCounterCount(CounterType.LOYALTY,
-                                targetPerm.getCounterCount(CounterType.LOYALTY) - effectiveDamage);
-                    }
-                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
-                        targetPerm.setCounterCount(CounterType.DEFENSE,
-                                targetPerm.getCounterCount(CounterType.DEFENSE) - effectiveDamage);
-                    }
-                    triggerCollectionService.checkAnyPermanentDealtDamageTriggers(
-                            gameData, targetPerm, effectiveDamage);
-                    if (targetPerm.getCard().hasType(CardType.BATTLE)) {
-                        battleDefeatSupport.checkAfterDefenseRemoved(gameData, targetPerm);
-                    }
-                    gameData.recordDamageRecipientBySource(sourceId, targetPerm.getId());
-                    boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
-                    boolean toughnessAsLoyalty = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, targetPerm);
-                    if ((isCreature && !toughnessAsLoyalty)
-                            || (!toughnessAsLoyalty && !targetPerm.getCard().hasType(CardType.PLANESWALKER)
-                            && !targetPerm.getCard().hasType(CardType.BATTLE))) {
-                        // Record only — the state-based action check (CR 704.5g) performs any
-                        // destruction once the current damage event finishes.
-                        targetPerm.addMarkedDamage(sourceId, effectiveDamage);
-                        gameData.recordNoncombatDamageToPermanent(targetPerm.getId(), effectiveDamage);
-                        Permanent damageSource = sourceId == null ? null
-                                : gameQueryService.findPermanentById(gameData, sourceId);
-                        gameData.recordDamageToPermanentFromSource(targetPerm.getId(), effectiveDamage,
-                                sourceId, damageSource == null ? null
-                                        : gameQueryService.getEffectiveName(gameData, damageSource),
-                                damageSource == null ? null
-                                        : gameQueryService.findPermanentController(gameData, damageSource.getId()));
-                    }
+    /**
+     * Deals the damage waiting in {@code pendingSourceRedirectDamage} to its new recipients. The
+     * redirected damage is the same damage modified (CR 614.9), so it goes through the new
+     * recipient's replacement and prevention effects, ordered by that player (CR 616.1), while the
+     * effects that already modified {@code origin} don't apply again (CR 614.5). Without an
+     * {@code origin}, the damage is dealt by the redirect's chosen source.
+     */
+    private void dealRedirectedDamage(GameData gameData, DamageEvent origin) {
+        while (!gameData.pendingSourceRedirectDamage.isEmpty()) {
+            List<SourceDamageRedirectShield> toProcess = new ArrayList<>(gameData.pendingSourceRedirectDamage);
+            gameData.pendingSourceRedirectDamage.clear();
+            for (SourceDamageRedirectShield redirect : toProcess) {
+                DamageEvent redirected = redirectedEvent(gameData, origin, redirect);
+                if (redirected == null || redirected.amount() <= 0) continue;
+                if (isReplacementDecisionOutstanding(gameData)) {
+                    gameData.pendingReplacementEvents.add(redirected);
+                } else {
+                    continueDamage(gameData, redirected, false, current -> replacementOrderService.run(gameData, current));
                 }
             }
         }
-        processSourceRedirectDamage(gameData, entry);
     }
 
+    private DamageEvent redirectedEvent(GameData gameData, DamageEvent origin, SourceDamageRedirectShield redirect) {
+        UUID targetId = redirect.redirectTargetId();
+        int damage = redirect.remainingAmount();
+        UUID controllerId;
+        UUID permanentId;
+        if (gameData.playerIds.contains(targetId)) {
+            controllerId = targetId;
+            permanentId = null;
+            gameLogService.append(gameData, GameLog.text(
+                    damage + " damage is redirected to " + gameData.playerIdToName.get(targetId) + "."));
+        } else {
+            Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
+            if (targetPerm == null) return null;
+            controllerId = gameQueryService.findPermanentController(gameData, targetId);
+            permanentId = targetId;
+            gameLogService.append(gameData, GameLog.textCardText(
+                    damage + " damage is redirected to ", targetPerm.getCard(), "."));
+        }
+        if (origin != null) {
+            return origin.redirectedTo(controllerId, permanentId, damage, RedirectedDamageRules::staysSpent);
+        }
+        Permanent source = redirect.damageSourceId() == null ? null
+                : gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
+        if (source == null) return null;
+        StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(),
+                gameQueryService.findPermanentController(gameData, source.getId()), source.getCard().getName(),
+                List.of(), targetId, source.getId());
+        boolean unpreventable = gameData.damageCantBePreventedThisTurn || gameData.unpreventableDamageInProgress;
+        return permanentId == null
+                ? DamageEvent.toPlayer(entry, targetId, damage, unpreventable)
+                : DamageEvent.toPermanent(entry, controllerId, permanentId, source, damage, unpreventable, false);
+    }
 
     /**
      * Deals divided damage to any number of targets (creatures and/or players) according
