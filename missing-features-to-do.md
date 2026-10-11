@@ -59,38 +59,19 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ## 2. Lifelink for simultaneous damage as a single life-gain event
 
-**Status:** open · **Found:** 2026-10-10, while fixing D-card tests
+**Status:** done (2026-10-11, `4a109bc2cb`) · **Found:** 2026-10-10, while fixing D-card tests
 
-**Failing tests:**
-- `DelayedBlastFireballTest.lifelinkDamageToPlayerAndCreatureCausesOnlyOneLifeGainTrigger()`
+**Done.** While a spell or ability resolves, `DamageSupport.checkSpellLifelink` adds each lifelink
+gain to `GameData.pendingLifelinkGains`, keyed by source and gaining player. `EffectResolutionService`
+applies each one as a single life-gain event when the outermost resolution ends, before the loss check.
+Damage outside a resolution still gains life immediately. Combat already summed damage per creature.
+The original failing test
+(`DelayedBlastFireballTest.lifelinkDamageToPlayerAndCreatureCausesOnlyOneLifeGainTrigger`) passes;
+`LifelinkMechanicTest` covers multi-target spells and combat.
 
-**What the rules require.** CR 120.3f: damage dealt by a source with lifelink causes its
-controller to gain that much life. CR 119.9: "whenever you gain life" means "whenever a source causes
-you to gain life", so one source's simultaneous damage to several objects/players is a single
-life-gain event and triggers once (CR 702.15e: only *multiple* lifelink sources cause separate
-events). The
-engine applies lifelink per damage call, so a spell that damages a player and a creature at once
-produces two life-gain events.
-
-**Why it's large.** It needs simultaneous damage from one source to be batched into a single event
-across every damage path (spells, abilities, combat), and life-gain triggers to fire per batch.
-Touches damage handling engine-wide; lifelink and life-gain trigger tests everywhere may change.
-
-**Prompt to start it:**
-
-```
-Implement batched lifelink for simultaneous damage (see missing-features-to-do.md, entry 2).
-Failing test: DelayedBlastFireballTest.lifelinkDamageToPlayerAndCreatureCausesOnlyOneLifeGainTrigger.
-1. Re-verify CR 120.3f, 119.9 and 702.15e with the rules MCP get_rule tool before citing them.
-2. Inventory every place lifelink life gain is applied (DamageSupport, combat damage, damage
-   effect handlers) and how "whenever you gain life" triggers are collected. Combat damage may
-   already batch; reuse that if so. Read agent-docs/ARCHITECTURE.md first.
-3. Make one source's simultaneous damage produce one life-gain event (one trigger), keeping
-   separate sources separate.
-4. Make the failing test pass, add tests for multi-target damage spells and combat, and list every
-   shared engine file changed so I can run a broad test pass.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
+**Known limitation.** The resolution is the batching unit, so damage from one source in genuinely
+sequential steps of a single resolution ("…, then …") is also one gain. Cards write simultaneous
+damage as separate steps too (Delayed Blast Fireball), so the engine can't tell the two apart.
 
 ---
 
