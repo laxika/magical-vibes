@@ -37,21 +37,22 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
                         ctx -> "Multiply damage from the source by " + sourceMultiplier(ctx),
                         ctx -> ctx.event().withAmount(ctx.amount() * sourceMultiplier(ctx)),
                         PermanentDamageCandidateSource::noLog),
-                bonus("SourceBonus", ctx -> ctx.combat()
-                        ? gameQueryService.getCombatSourceDamageBonus(ctx.gameData(), ctx.damageSource())
-                        : gameQueryService.getDealingSourceDamageBonus(ctx.gameData(), ctx.entry())),
+                bonusRule("SourceBonus", ctx -> ctx.combat()
+                        ? gameQueryService.getCombatSourceDamageBonuses(ctx.gameData(), ctx.damageSource())
+                        : gameQueryService.getDealingSourceDamageBonuses(ctx.gameData(), ctx.entry())),
                 spellDamageReductionRule(),
-                bonus("NoncreatureSourceBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getNoncreatureSourceDamageBonus(
-                        ctx.gameData(), ctx.entry(), null, ctx.target())),
-                bonus("PlayersAndBattlesBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getPlayersAndBattlesDamageBonus(
-                        ctx.gameData(), false, ctx.target())),
-                bonus("ToOpponentsBonus", ctx -> gameQueryService.getAdditionalDamageToOpponentsBonus(
+                bonusRule("NoncreatureSourceBonus", ctx -> ctx.combat() ? List.of()
+                        : gameQueryService.getNoncreatureSourceDamageBonuses(ctx.gameData(), ctx.entry(), null, ctx.target())),
+                bonusRule("PlayersAndBattlesBonus", ctx -> ctx.combat() ? List.of()
+                        : gameQueryService.getPlayersAndBattlesDamageBonuses(ctx.gameData(), false, ctx.target())),
+                bonusRule("ToOpponentsBonus", ctx -> gameQueryService.getAdditionalDamageToOpponentsBonuses(
                         ctx.gameData(), ctx.sourceControllerId(), ctx.sourceCard(), ctx.damageSource(),
                         ctx.targetControllerId())),
-                bonus("ControllerToOpponentBonus", ctx -> gameQueryService.getControllerDamageToOpponentBonus(
+                bonusRule("ControllerToOpponentBonus", ctx -> gameQueryService.getControllerDamageToOpponentBonuses(
                         ctx.gameData(), ctx.sourceControllerId(), ctx.targetControllerId(), ctx.combat(), true,
                         ctx.damageSource() == null ? ctx.entry().getSourcePermanentId() : ctx.damageSource().getId())),
-                bonus("SpellToOpponentsBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getAdditionalSpellDamageToOpponentsBonus(
+                bonusRule("SpellToOpponentsBonus", ctx -> ctx.combat() ? List.of()
+                        : gameQueryService.getAdditionalSpellDamageToOpponentsBonuses(
                         ctx.gameData(), ctx.entry(), ctx.targetControllerId())),
                 bonus("ControllerNoncombatBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getControllerNoncombatDamageBonus(
                         ctx.gameData(), ctx.sourceControllerId())),

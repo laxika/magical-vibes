@@ -32,8 +32,9 @@ original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplaces
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
 **Still open.**
-- The "+N" bonus families are one option per family (the sum of every instance), so a multiplier
-  can't be applied between two bonuses of the same family; global multipliers are one option each.
+- The turn-scoped "+N" bonuses (this turn's color and controller bonuses, perpetual spell bonuses)
+  are stored as running totals, so each is one option; permanent and floating bonuses are one option
+  per effect.
 - Combat: "prevent all combat damage" (Fog) and the guard/"dealt to this creature instead" routing
   apply before the pool (the rerouted damage then goes through the new recipient's pool). The all-creature-damage redirect ("have N damage dealt to you instead")
   attributes a multi-source event to its first source.

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -247,5 +248,33 @@ class EmbermawHellionTest extends BaseCardTest {
         // The two legal orders deal 5 or 6 damage; the recipient must choose first.
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Two Hellions are separate replacements, so Furnace of Rath can double between them")
+    void furnaceCanDoubleBetweenTwoHellionBonuses() {
+        harness.addToBattlefield(player1, new EmbermawHellion());
+        harness.addToBattlefield(player1, new EmbermawHellion());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        chooseReplacement("Deal 1 more damage (Embermaw Hellion)");
+        chooseReplacement("Furnace of Rath");
+
+        // (2 + 1) * 2 + 1 = 7: one Hellion, then Furnace of Rath, then the other Hellion.
+        harness.assertLife(player2, 13);
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 }

@@ -10313,9 +10313,17 @@ public class GameQueryService {
     public int getAdditionalDamageToOpponentsBonus(GameData gameData, UUID sourceControllerId,
                                                    Card sourceCard, Permanent sourcePermanent,
                                                    UUID recipientPlayerId) {
+        return totalBonus(getAdditionalDamageToOpponentsBonuses(
+                gameData, sourceControllerId, sourceCard, sourcePermanent, recipientPlayerId));
+    }
+
+    /** {@link #getAdditionalDamageToOpponentsBonus}, one entry per effect. */
+    public List<DamageBonus> getAdditionalDamageToOpponentsBonuses(GameData gameData, UUID sourceControllerId,
+                                                                   Card sourceCard, Permanent sourcePermanent,
+                                                                   UUID recipientPlayerId) {
         if (sourceControllerId == null || recipientPlayerId == null
                 || sourceControllerId.equals(recipientPlayerId)) {
-            return 0;
+            return List.of();
         }
 
         Set<CardColor> sourceColors;
@@ -10327,20 +10335,20 @@ public class GameQueryService {
             sourceColors = getDamageSourceColors(gameData, getEffectiveCardColors(gameData, sourceCard));
             artifactSource = sourceCard.hasType(CardType.ARTIFACT);
         } else {
-            return 0;
+            return List.of();
         }
         Set<CardColor> effectiveSourceColors = sourceColors;
-        int[] bonus = {0};
+        List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!sourceControllerId.equals(controllerId)) return;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof SourceOpponentDamageBonusEffect additional
                         && additional.appliesTo(effectiveSourceColors, artifactSource)) {
-                    bonus[0] += additional.amount();
+                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), additional.amount()));
                 }
-            }
+            });
         });
-        return bonus[0];
+        return bonuses;
     }
 
     /**
@@ -10376,21 +10384,33 @@ public class GameQueryService {
     public int getControllerDamageToOpponentBonus(GameData gameData, UUID sourceControllerId,
                                                    UUID recipientPlayerId, boolean combatDamage,
                                                    boolean opponentPermanent, UUID damageSourcePermanentId) {
+        return totalBonus(getControllerDamageToOpponentBonuses(gameData, sourceControllerId, recipientPlayerId,
+                combatDamage, opponentPermanent, damageSourcePermanentId));
+    }
+
+    /** {@link #getControllerDamageToOpponentBonus}, one entry per effect. */
+    public List<DamageBonus> getControllerDamageToOpponentBonuses(GameData gameData, UUID sourceControllerId,
+                                                                  UUID recipientPlayerId, boolean combatDamage,
+                                                                  boolean opponentPermanent,
+                                                                  UUID damageSourcePermanentId) {
         if (sourceControllerId == null || recipientPlayerId == null
                 || sourceControllerId.equals(recipientPlayerId)) {
-            return 0;
+            return List.of();
         }
 
-        int[] bonus = {0};
+        List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!sourceControllerId.equals(controllerId)) return;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                bonus[0] += getControllerDamageToOpponentBonus(
+            forEachStaticEffect(permanent, (effect, instance) -> {
+                int amount = getControllerDamageToOpponentBonus(
                         gameData, effect, permanent, controllerId, combatDamage,
                         opponentPermanent, damageSourcePermanentId);
-            }
+                if (amount != 0) {
+                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), amount));
+                }
+            });
         });
-        return bonus[0];
+        return bonuses;
     }
 
     /**
@@ -10399,20 +10419,26 @@ public class GameQueryService {
      */
     public int getAdditionalSpellDamageToOpponentsBonus(GameData gameData, StackEntry entry,
                                                         UUID recipientControllerId) {
+        return totalBonus(getAdditionalSpellDamageToOpponentsBonuses(gameData, entry, recipientControllerId));
+    }
+
+    /** {@link #getAdditionalSpellDamageToOpponentsBonus}, one entry per effect. */
+    public List<DamageBonus> getAdditionalSpellDamageToOpponentsBonuses(GameData gameData, StackEntry entry,
+                                                                        UUID recipientControllerId) {
         if (entry == null || recipientControllerId == null || !isSpellStackEntry(entry.getEntryType())) {
-            return 0;
+            return List.of();
         }
 
-        int[] bonus = {0};
+        List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (recipientControllerId.equals(controllerId)) return;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof OpponentDamageBonusEffect damageBonus) {
-                    bonus[0] += damageBonus.amount();
+                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), damageBonus.amount()));
                 }
-            }
+            });
         });
-        return bonus[0];
+        return bonuses;
     }
 
     private int getControllerDamageToOpponentBonus(GameData gameData, CardEffect effect,
@@ -10447,18 +10473,21 @@ public class GameQueryService {
      * colours have already been resolved through {@link #getDamageSourceColor} (Ghostly Flame).
      */
     public int getDamageToPlayerColorSourceBonus(GameData gameData, Set<CardColor> sourceColors) {
-        if (sourceColors == null || sourceColors.isEmpty()) return 0;
+        return totalBonus(getDamageToPlayerColorSourceBonuses(gameData, sourceColors));
+    }
 
-        int[] bonus = {0};
-        gameData.forEachPermanent((controllerId, p) -> {
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AdditionalDamageToPlayersFromColorSourcesEffect e
-                        && !Collections.disjoint(e.colors(), sourceColors)) {
-                    bonus[0] += e.amount();
-                }
+    /** {@link #getDamageToPlayerColorSourceBonus}, one entry per effect. */
+    public List<DamageBonus> getDamageToPlayerColorSourceBonuses(GameData gameData, Set<CardColor> sourceColors) {
+        if (sourceColors == null || sourceColors.isEmpty()) return List.of();
+
+        List<DamageBonus> bonuses = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, p) -> forEachStaticEffect(p, (effect, instance) -> {
+            if (effect instanceof AdditionalDamageToPlayersFromColorSourcesEffect e
+                    && !Collections.disjoint(e.colors(), sourceColors)) {
+                bonuses.add(new DamageBonus(instance, p.getCard().getName(), e.amount()));
             }
-        });
-        return bonus[0];
+        }));
+        return bonuses;
     }
 
     /**
@@ -10761,15 +10790,26 @@ public class GameQueryService {
      * is dealt it: color and subtype source bonuses, the controller's bonuses and spell bonuses.
      */
     public int getDealingSourceDamageBonus(GameData gameData, StackEntry entry) {
+        return totalBonus(getDealingSourceDamageBonuses(gameData, entry));
+    }
+
+    /**
+     * {@link #getDealingSourceDamageBonus}, one entry per effect; this turn's color and controller
+     * bonuses are kept as one total each.
+     */
+    public List<DamageBonus> getDealingSourceDamageBonuses(GameData gameData, StackEntry entry) {
         Permanent source = dealingSourcePermanent(gameData, entry);
         UUID controllerId = dealingSourceController(gameData, entry, source);
-        return getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors())
-                + getColorSourcePermanentDamageBonus(gameData, entry.getControllerId(),
-                        entry.getEffectiveDamageSourceCard().getColors(), entry.getSourcePermanentId())
-                + getSubtypeSourceDamageBonus(gameData, controllerId, entry.getEffectiveDamageSourceCard(), source)
-                + getControllerDamageBonusThisTurn(gameData, controllerId)
-                + getControllerDamageBonus(gameData, entry)
-                + getSpellDamageBonus(gameData, entry);
+        List<DamageBonus> bonuses = new ArrayList<>();
+        addTurnBonus(bonuses, "color-this-turn",
+                getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors()));
+        bonuses.addAll(getColorSourcePermanentDamageBonuses(gameData, entry.getControllerId(),
+                entry.getEffectiveDamageSourceCard().getColors(), entry.getSourcePermanentId()));
+        bonuses.addAll(getSubtypeSourceDamageBonuses(gameData, controllerId, entry.getEffectiveDamageSourceCard(), source));
+        addTurnBonus(bonuses, "controller-this-turn", getControllerDamageBonusThisTurn(gameData, controllerId));
+        bonuses.addAll(getControllerDamageBonuses(gameData, entry));
+        bonuses.addAll(getSpellDamageBonuses(gameData, entry));
+        return bonuses;
     }
 
     /**
@@ -10789,8 +10829,12 @@ public class GameQueryService {
      * the spell's controller or the effect's controller.
      */
     int getSpellDamageBonus(GameData gameData, StackEntry entry) {
+        return totalBonus(getSpellDamageBonuses(gameData, entry));
+    }
+
+    private List<DamageBonus> getSpellDamageBonuses(GameData gameData, StackEntry entry) {
         if (entry == null || entry.getCard() == null || !isSpellEntry(entry.getEntryType())) {
-            return 0;
+            return List.of();
         }
 
         Set<CardColor> spellColors = EnumSet.noneOf(CardColor.class);
@@ -10799,19 +10843,17 @@ public class GameQueryService {
             spellColors.add(entry.getCard().getColor());
         }
         if (spellColors.isEmpty()) {
-            return 0;
+            return List.of();
         }
 
-        int[] bonus = {0};
-        gameData.forEachPermanent((playerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof SpellDamageBonusEffect spellDamageBonus
-                        && spellDamageBonus.colors().stream().anyMatch(spellColors::contains)) {
-                    bonus[0] += spellDamageBonus.amount();
-                }
+        List<DamageBonus> bonuses = new ArrayList<>();
+        gameData.forEachPermanent((playerId, permanent) -> forEachStaticEffect(permanent, (effect, instance) -> {
+            if (effect instanceof SpellDamageBonusEffect spellDamageBonus
+                    && spellDamageBonus.colors().stream().anyMatch(spellColors::contains)) {
+                bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), spellDamageBonus.amount()));
             }
-        });
-        return bonus[0];
+        }));
+        return bonuses;
     }
 
     private static boolean isSpellEntry(StackEntryType entryType) {
@@ -10829,33 +10871,39 @@ public class GameQueryService {
      * the entry is null or no matching effect applies.
      */
     int getControllerDamageBonus(GameData gameData, StackEntry entry) {
-        if (entry == null) return 0;
-        UUID controllerId = entry.getControllerId();
-        if (controllerId == null) return 0;
+        return totalBonus(getControllerDamageBonuses(gameData, entry));
+    }
 
-        int[] bonus = {0};
+    private List<DamageBonus> getControllerDamageBonuses(GameData gameData, StackEntry entry) {
+        if (entry == null) return List.of();
+        UUID controllerId = entry.getControllerId();
+        if (controllerId == null) return List.of();
+
+        List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AdditionalControllerDamageEffect acde) {
-                    if (acde.anotherSourceOnly()
-                            && p.getId().equals(entry.getSourcePermanentId())) {
-                        continue;
-                    }
-                    if (acde.stackFilter() == null
-                            || predicateEvaluationService.matchesStackEntryPredicate(entry, acde.stackFilter(), null)) {
-                        bonus[0] += acde.amount();
-                    }
+            forEachStaticEffect(p, (effect, instance) -> {
+                if (effect instanceof AdditionalControllerDamageEffect acde
+                        && !(acde.anotherSourceOnly() && p.getId().equals(entry.getSourcePermanentId()))
+                        && (acde.stackFilter() == null
+                        || predicateEvaluationService.matchesStackEntryPredicate(entry, acde.stackFilter(), null))) {
+                    bonuses.add(new DamageBonus(instance, p.getCard().getName(), acde.amount()));
                 }
-            }
+            });
         });
-        return bonus[0];
+        return bonuses;
     }
 
     public int getNoncreatureSourceDamageBonus(GameData gameData, StackEntry entry,
                                                 UUID recipientPlayerId, Permanent recipientPermanent) {
+        return totalBonus(getNoncreatureSourceDamageBonuses(gameData, entry, recipientPlayerId, recipientPermanent));
+    }
+
+    /** {@link #getNoncreatureSourceDamageBonus}, one entry per effect. */
+    public List<DamageBonus> getNoncreatureSourceDamageBonuses(GameData gameData, StackEntry entry,
+                                                               UUID recipientPlayerId, Permanent recipientPermanent) {
         if (entry == null || entry.getControllerId() == null) {
-            return 0;
+            return List.of();
         }
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : findPermanentById(gameData, entry.getSourcePermanentId());
@@ -10864,42 +10912,47 @@ public class GameQueryService {
                 : entry.getEffectiveDamageSourceCard() != null
                 && entry.getEffectiveDamageSourceCard().hasType(CardType.CREATURE);
         if (creatureSource) {
-            return 0;
+            return List.of();
         }
         boolean eligibleRecipient = recipientPermanent != null
                 ? isCreature(gameData, recipientPermanent) || isBattle(gameData, recipientPermanent)
                 : recipientPlayerId != null && !entry.getControllerId().equals(recipientPlayerId);
         if (!eligibleRecipient) {
-            return 0;
+            return List.of();
         }
 
-        int[] bonus = {0};
+        List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!controllerId.equals(entry.getControllerId())) {
                 return;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof NoncreatureSourceDamageBonusEffect damageBonus) {
-                    bonus[0] += damageBonus.amount();
+                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), damageBonus.amount()));
                 }
-            }
+            });
         });
-        return bonus[0];
+        return bonuses;
     }
 
     public int getPlayersAndBattlesDamageBonus(GameData gameData, boolean playerRecipient,
                                                 Permanent recipientPermanent) {
+        return totalBonus(getPlayersAndBattlesDamageBonuses(gameData, playerRecipient, recipientPermanent));
+    }
+
+    /** {@link #getPlayersAndBattlesDamageBonus}, one entry per floating effect. */
+    public List<DamageBonus> getPlayersAndBattlesDamageBonuses(GameData gameData, boolean playerRecipient,
+                                                               Permanent recipientPermanent) {
         if (!playerRecipient
                 && (recipientPermanent == null || !isBattle(gameData, recipientPermanent))) {
-            return 0;
+            return List.of();
         }
         synchronized (gameData.floatingEffects) {
             return gameData.floatingEffects.stream()
-                    .map(FloatingContinuousEffect::effect)
-                    .filter(DamageToPlayersAndBattlesBonusEffect.class::isInstance)
-                    .map(DamageToPlayersAndBattlesBonusEffect.class::cast)
-                    .mapToInt(DamageToPlayersAndBattlesBonusEffect::amount)
-                    .sum();
+                    .filter(floating -> floating.effect() instanceof DamageToPlayersAndBattlesBonusEffect)
+                    .map(floating -> new DamageBonus(String.valueOf(floating.id()), floating.sourceCardName(),
+                            ((DamageToPlayersAndBattlesBonusEffect) floating.effect()).amount()))
+                    .toList();
         }
     }
 
@@ -11089,15 +11142,26 @@ public class GameQueryService {
 
     /** The "deals that much damage plus N" bonuses for combat damage {@code source} deals, whoever is dealt it. */
     public int getCombatSourceDamageBonus(GameData gameData, Permanent source) {
+        return totalBonus(getCombatSourceDamageBonuses(gameData, source));
+    }
+
+    /**
+     * {@link #getCombatSourceDamageBonus}, one entry per effect; this turn's color and controller
+     * bonuses are kept as one total each.
+     */
+    public List<DamageBonus> getCombatSourceDamageBonuses(GameData gameData, Permanent source) {
         UUID controllerId = findPermanentController(gameData, source.getId());
         if (controllerId == null) {
-            return 0;
+            return List.of();
         }
-        return getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors())
-                + getColorSourcePermanentDamageBonus(gameData, controllerId, source.getCard().getColors(),
-                        source.getId())
-                + getSubtypeSourceDamageBonus(gameData, controllerId, source.getCard(), source)
-                + getControllerDamageBonusThisTurn(gameData, controllerId);
+        List<DamageBonus> bonuses = new ArrayList<>();
+        addTurnBonus(bonuses, "color-this-turn",
+                getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors()));
+        bonuses.addAll(getColorSourcePermanentDamageBonuses(gameData, controllerId, source.getCard().getColors(),
+                source.getId()));
+        bonuses.addAll(getSubtypeSourceDamageBonuses(gameData, controllerId, source.getCard(), source));
+        addTurnBonus(bonuses, "controller-this-turn", getControllerDamageBonusThisTurn(gameData, controllerId));
+        return bonuses;
     }
 
     /**
@@ -11144,26 +11208,26 @@ public class GameQueryService {
         return multiplier;
     }
 
-    private int getSubtypeSourceDamageBonus(GameData gameData, UUID controllerId,
-                                             Card sourceCard, Permanent source) {
+    private List<DamageBonus> getSubtypeSourceDamageBonuses(GameData gameData, UUID controllerId,
+                                                            Card sourceCard, Permanent source) {
         if (controllerId == null || sourceCard == null) {
-            return 0;
+            return List.of();
         }
-        int[] bonus = {0};
+        List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
             if (!playerId.equals(controllerId)) {
                 return;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof SubtypeSourceDamageBonusEffect subtypeBonus
                         && subtypeBonus.subtypes().stream().anyMatch(subtype -> source != null
                                 ? hasEffectiveSubtype(gameData, source, subtype)
                                 : sourceCard.getSubtypes().contains(subtype))) {
-                    bonus[0] += subtypeBonus.amount();
+                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), subtypeBonus.amount()));
                 }
-            }
+            });
         });
-        return bonus[0];
+        return bonuses;
     }
 
     /**
@@ -11220,21 +11284,53 @@ public class GameQueryService {
      */
     int getColorSourcePermanentDamageBonus(GameData gameData, UUID controllerId,
                                            List<CardColor> sourceColors, UUID sourcePermanentId) {
+        return totalBonus(getColorSourcePermanentDamageBonuses(gameData, controllerId, sourceColors, sourcePermanentId));
+    }
+
+    private List<DamageBonus> getColorSourcePermanentDamageBonuses(GameData gameData, UUID controllerId,
+                                                                   List<CardColor> sourceColors,
+                                                                   UUID sourcePermanentId) {
         if (controllerId == null || sourceColors == null || sourceColors.isEmpty()) {
-            return 0;
+            return List.of();
         }
-        int[] bonus = {0};
+        List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
             if (p.getId().equals(sourcePermanentId)) return;
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+            forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof AdditionalColorSourceDamageEffect acsde
                         && sourceColors.contains(acsde.color())) {
-                    bonus[0] += acsde.amount();
+                    bonuses.add(new DamageBonus(instance, p.getCard().getName(), acsde.amount()));
                 }
-            }
+            });
         });
-        return bonus[0];
+        return bonuses;
+    }
+
+    /**
+     * One "deals that much damage plus N" effect: {@code instance} identifies the effect (a static
+     * ability of a permanent, a floating effect, or this turn's total of a turn-scoped bonus),
+     * {@code sourceName} names where it comes from and {@code amount} is N.
+     */
+    public record DamageBonus(String instance, String sourceName, int amount) {}
+
+    private static int totalBonus(List<DamageBonus> bonuses) {
+        return bonuses.stream().mapToInt(DamageBonus::amount).sum();
+    }
+
+    private static void addTurnBonus(List<DamageBonus> bonuses, String instance, int amount) {
+        if (amount != 0) {
+            bonuses.add(new DamageBonus(instance, "this turn's effects", amount));
+        }
+    }
+
+    /** Visits each static effect of {@code permanent} with an instance key unique to that effect. */
+    private static void forEachStaticEffect(Permanent permanent,
+                                            java.util.function.BiConsumer<CardEffect, String> visitor) {
+        List<CardEffect> statics = permanent.getCard().getEffects(EffectSlot.STATIC);
+        for (int i = 0; i < statics.size(); i++) {
+            visitor.accept(statics.get(i), permanent.getId() + "/" + i);
+        }
     }
 
     /**

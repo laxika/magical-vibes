@@ -128,6 +128,29 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
                 (ctx, instance) -> new ApplyResult.Applied<>(apply.apply(ctx)));
     }
 
+    /**
+     * A family of "deals that much damage plus N" effects with one option per effect instance, so
+     * the affected player can apply a multiplier between two of them (CR 616.1).
+     */
+    protected static <C extends DamageContext> Rule<C> bonusRule(
+            String family, Function<C, List<GameQueryService.DamageBonus>> bonuses) {
+        return new Rule<C>(family, ReplacementOption.Kind.REPLACEMENT, true,
+                ctx -> bonuses.apply(ctx).stream().map(GameQueryService.DamageBonus::instance).toList(),
+                (ctx, instance) -> {
+                    GameQueryService.DamageBonus bonus = bonus(bonuses.apply(ctx), instance);
+                    return "Deal " + bonus.amount() + " more damage"
+                            + (bonus.sourceName() == null ? "" : " (" + bonus.sourceName() + ")");
+                },
+                (ctx, instance) -> ctx.event().withAmount(ctx.amount() + bonus(bonuses.apply(ctx), instance).amount()),
+                (ctx, instance) -> new ApplyResult.Applied<>(
+                        ctx.event().withAmount(ctx.amount() + bonus(bonuses.apply(ctx), instance).amount())));
+    }
+
+    private static GameQueryService.DamageBonus bonus(List<GameQueryService.DamageBonus> bonuses, String instance) {
+        return bonuses.stream().filter(bonus -> bonus.instance().equals(instance)).findFirst()
+                .orElse(new GameQueryService.DamageBonus(instance, null, 0));
+    }
+
     /** One effect instance: its option label and the number it multiplies or subtracts by. */
     protected record NumericInstance(String label, int value) {}
 

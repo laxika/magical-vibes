@@ -122,6 +122,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -2473,6 +2474,22 @@ class GameQueryServiceTest {
 
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(3);
             assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player1Id)).isZero();
+        }
+
+        @Test
+        @DisplayName("lists each bonus effect separately, adding up to the total")
+        void listsEachBonusEffectSeparately() {
+            Permanent first = addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Far Fortune", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
+            Permanent second = addPermanent(player1Id, createEnchantmentWithStaticEffect(
+                    "Far Fortune", new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
+
+            assertThat(gqs.getControllerDamageToOpponentBonuses(gd, player1Id, player2Id, false, false, null))
+                    .extracting(GameQueryService.DamageBonus::instance, GameQueryService.DamageBonus::amount)
+                    .containsExactlyInAnyOrder(
+                            tuple(first.getId() + "/0", 1),
+                            tuple(second.getId() + "/0", 1));
+            assertThat(gqs.getControllerDamageToOpponentBonus(gd, player1Id, player2Id)).isEqualTo(2);
         }
     }
 
