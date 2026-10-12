@@ -34,8 +34,8 @@ original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplaces
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
 **Still open.**
-- Taps through Piracy keep the old land-mana precedence; mana previews and the AI's
-  `wouldTapForManaOpenChoice` do not yet treat a contested land as opening a choice; the
+- `LandManaDrainSupport` (mana drained from lands) and `LandManaTypeSupport` (the mana a land
+  could produce) still read the fixed-precedence `GameQueryService` land-mana queries; the
   "colored mana becomes white" replacement is applied after the others instead of being ordered.
 - The AI answers a replacement-order prompt with the first option instead of the least harmful one.
 

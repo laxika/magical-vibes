@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
@@ -40,6 +41,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +67,11 @@ public class PotentialManaService {
     @Autowired
     @Lazy
     private AmountEvaluationService amountEvaluationService;
+
+    /** Previews land mana through the replacement pool; absent in unit tests that build this service by hand. */
+    @Autowired(required = false)
+    @Lazy
+    private LandManaReplacementService landManaReplacementService;
 
     /**
      * The pool {@link #canTapForManaNow} measures affordability against. Shared and never mutated:
@@ -155,36 +162,9 @@ public class PotentialManaService {
                 // Check for land type overrides (e.g. Evil Presence / Lush Growth)
                 List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, perm);
                 ManaColor overriddenColor = overriddenColors.size() == 1 ? overriddenColors.getFirst() : null;
-                ManaColor fixedLandColor = gameQueryService.isLand(gameData, perm)
-                        ? gameQueryService.fixedLandManaColor(gameData, perm)
-                        : null;
-                boolean anyColorReplacement = gameQueryService.isLand(gameData, perm)
-                        && fixedLandColor == null
-                        && gameQueryService.basicLandManaProducesAnyColor(gameData, perm);
-                Set<ManaColor> twisted = fixedLandColor == null && !anyColorReplacement
-                        ? gameQueryService.twistedLandManaColors(gameData, perm)
-                        : Set.of();
-                if (fixedLandColor != null) {
-                    ManaColor amountKey = overriddenColor != null ? overriddenColor
-                            : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
-                    int amount = estimateLandManaAmount(perm, gameData, amountKey);
-                    if (amount > 0) {
-                        addManaToVirtualPool(virtual, gameData, perm, fixedLandColor, amount);
-                        if (isCreature) {
-                            virtual.addCreatureMana(fixedLandColor, amount);
-                        }
-                    }
-                } else if (anyColorReplacement) {
-                    ManaColor amountKey = overriddenColor != null ? overriddenColor
-                            : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
-                    int amount = estimateLandManaAmount(perm, gameData, amountKey);
-                    if (amount > 0) {
-                        addAnyColorManaToVirtualPool(virtual, amount, isCreature,
-                                isBasicLandSource(gameData, perm));
-                    }
-                } else if (!twisted.isEmpty()) {
-                    addTwistedManaToVirtualPool(virtual, twisted, 1, isCreature,
-                            isBasicLandSource(gameData, perm));
+                LandManaReplacementService.Preview landPreview = landManaPreview(gameData, playerId, perm);
+                if (landPreview != null) {
+                    addLandPreviewToVirtualPool(virtual, gameData, perm, landPreview, isCreature);
                 } else if (overriddenColors.size() > 1) {
                     addTwistedManaToVirtualPool(virtual, new LinkedHashSet<>(overriddenColors), 1, isCreature,
                             isBasicLandSource(gameData, perm));
@@ -254,33 +234,9 @@ public class PotentialManaService {
                 }
                 List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, perm);
                 ManaColor overriddenColor = overriddenColors.size() == 1 ? overriddenColors.getFirst() : null;
-                ManaColor fixedLandColor = gameQueryService.isLand(gameData, perm)
-                        ? gameQueryService.fixedLandManaColor(gameData, perm)
-                        : null;
-                boolean anyColorReplacement = gameQueryService.isLand(gameData, perm)
-                        && fixedLandColor == null
-                        && gameQueryService.basicLandManaProducesAnyColor(gameData, perm);
-                Set<ManaColor> twisted = fixedLandColor == null && !anyColorReplacement
-                        ? gameQueryService.twistedLandManaColors(gameData, perm)
-                        : Set.of();
-                if (fixedLandColor != null) {
-                    ManaColor amountKey = overriddenColor != null ? overriddenColor
-                            : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
-                    int amount = estimateLandManaAmount(perm, gameData, amountKey);
-                    if (amount > 0) {
-                        addManaToVirtualPool(virtual, gameData, perm, fixedLandColor, amount);
-                    }
-                } else if (anyColorReplacement) {
-                    ManaColor amountKey = overriddenColor != null ? overriddenColor
-                            : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
-                    int amount = estimateLandManaAmount(perm, gameData, amountKey);
-                    if (amount > 0) {
-                        addAnyColorManaToVirtualPool(virtual, amount, false,
-                                isBasicLandSource(gameData, perm));
-                    }
-                } else if (!twisted.isEmpty()) {
-                    addTwistedManaToVirtualPool(virtual, twisted, 1, false,
-                            isBasicLandSource(gameData, perm));
+                LandManaReplacementService.Preview landPreview = landManaPreview(gameData, playerId, perm);
+                if (landPreview != null) {
+                    addLandPreviewToVirtualPool(virtual, gameData, perm, landPreview, isCreature);
                 } else if (overriddenColors.size() > 1) {
                     addTwistedManaToVirtualPool(virtual, new LinkedHashSet<>(overriddenColors), 1, false,
                             isBasicLandSource(gameData, perm));
@@ -318,19 +274,17 @@ public class PotentialManaService {
         }
 
         List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
-        ManaColor fixedLandColor = permanent.getCard().hasType(CardType.LAND)
-                ? gameQueryService.fixedLandManaColor(gameData, permanent)
-                : null;
-        if (fixedLandColor == null && permanent.getCard().hasType(CardType.LAND)) {
-            if (gameQueryService.basicLandManaProducesAnyColor(gameData, permanent)) {
-                return true;
+        if (permanent.getCard().hasType(CardType.LAND)) {
+            LandManaReplacementService.Preview landPreview = landManaPreview(gameData,
+                    gameQueryService.findPermanentController(gameData, permanent.getId()), permanent);
+            if (landPreview != null) {
+                return landPreview.opensChoice();
             }
-            Set<ManaColor> twisted = gameQueryService.twistedLandManaColors(gameData, permanent);
-            if (twisted.size() > 1 || (twisted.isEmpty() && overriddenColors.size() > 1)) {
+            if (overriddenColors.size() > 1) {
                 return true;
             }
         }
-        if (fixedLandColor != null || overriddenColors.size() == 1) {
+        if (overriddenColors.size() == 1) {
             return false;
         }
 
@@ -340,6 +294,86 @@ public class PotentialManaService {
                     .anyMatch(PotentialManaService::manaEffectOpensChoice);
         }
         return wouldManaAbilityTriggerChoice(activatedAbilitiesFor(gameData, permanent, card));
+    }
+
+    /**
+     * The mana tapping {@code land} would produce for {@code playerId} once the land-mana
+     * replacements are applied in any order the player may choose (CR 616.1), or {@code null} when
+     * no replacement changes its type, so the land's own mana abilities describe it.
+     */
+    public LandManaReplacementService.Preview landManaPreview(GameData gameData, UUID playerId, Permanent land) {
+        List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, land);
+        if (landManaReplacementService == null || playerId == null) {
+            return land.getCard().hasType(CardType.LAND)
+                    ? fixedOrderLandManaPreview(gameData, land, overriddenColors) : null;
+        }
+        if (!gameQueryService.isLand(gameData, land)) {
+            return null;
+        }
+        Set<ManaColor> baseColors = EnumSet.noneOf(ManaColor.class);
+        if (!overriddenColors.isEmpty()) {
+            baseColors.addAll(overriddenColors);
+        } else {
+            baseColors.addAll(gameQueryService.intrinsicBasicLandManaColors(gameData, land));
+            addProducedColors(land.getCard().getEffects(EffectSlot.ON_TAP), baseColors);
+            for (ActivatedAbility ability : land.getCard().getActivatedAbilities()) {
+                if (isFreeTapManaAbility(ability)) {
+                    addProducedColors(ability.getEffects(), baseColors);
+                }
+            }
+        }
+        int amount = estimateLandManaAmount(land, gameData, overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
+        if (baseColors.isEmpty() || amount <= 0) {
+            return null;
+        }
+        return landManaReplacementService.preview(gameData, playerId, land, baseColors, amount);
+    }
+
+    /**
+     * The fixed-precedence approximation of {@link #landManaPreview} for a service built without
+     * the replacement pool (hand-built unit tests): a fixed type, then "a color of your choice",
+     * then a basic land type remapping.
+     */
+    private LandManaReplacementService.Preview fixedOrderLandManaPreview(GameData gameData, Permanent land,
+                                                                         List<ManaColor> overriddenColors) {
+        int amount = estimateLandManaAmount(land, gameData, overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
+        ManaColor fixedColor = gameQueryService.fixedLandManaColor(gameData, land);
+        if (fixedColor != null) {
+            return amount > 0 ? new LandManaReplacementService.Preview(Set.of(fixedColor), amount, false) : null;
+        }
+        if (gameQueryService.basicLandManaProducesAnyColor(gameData, land)) {
+            return amount > 0 ? new LandManaReplacementService.Preview(Set.copyOf(ManaColor.COLORS), amount, true) : null;
+        }
+        Set<ManaColor> twisted = gameQueryService.twistedLandManaColors(gameData, land);
+        return twisted.isEmpty() ? null : new LandManaReplacementService.Preview(twisted, 1, twisted.size() > 1);
+    }
+
+    private static void addProducedColors(List<CardEffect> effects, Set<ManaColor> colors) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof AwardManaEffect award) {
+                colors.add(award.color());
+            } else if (effect instanceof AwardAnyColorManaEffect) {
+                colors.addAll(ManaColor.COLORS);
+            } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
+                colors.addAll(ofColors.colors());
+            }
+        }
+    }
+
+    private void addLandPreviewToVirtualPool(ManaPool virtual, GameData gameData, Permanent land,
+                                             LandManaReplacementService.Preview preview, boolean isCreature) {
+        Set<ManaColor> colors = preview.colors();
+        if (colors.size() == 1) {
+            ManaColor color = colors.iterator().next();
+            addManaToVirtualPool(virtual, gameData, land, color, preview.amount());
+            if (isCreature) {
+                virtual.addCreatureMana(color, preview.amount());
+            }
+        } else if (colors.containsAll(ManaColor.COLORS)) {
+            addAnyColorManaToVirtualPool(virtual, preview.amount(), isCreature, isBasicLandSource(gameData, land));
+        } else {
+            addTwistedManaToVirtualPool(virtual, colors, preview.amount(), isCreature, isBasicLandSource(gameData, land));
+        }
     }
 
     private static boolean hasAttachedManaChoiceTrigger(GameData gameData, Permanent manaSource) {
@@ -401,34 +435,9 @@ public class PotentialManaService {
                 }
                 List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, perm);
                 ManaColor overriddenColor = overriddenColors.size() == 1 ? overriddenColors.getFirst() : null;
-                ManaColor fixedLandColor = gameQueryService.isLand(gameData, perm)
-                        ? gameQueryService.fixedLandManaColor(gameData, perm)
-                        : null;
-                boolean anyColorReplacement = gameQueryService.isLand(gameData, perm)
-                        && fixedLandColor == null
-                        && gameQueryService.basicLandManaProducesAnyColor(gameData, perm);
-                Set<ManaColor> twisted = fixedLandColor == null && !anyColorReplacement
-                        ? gameQueryService.twistedLandManaColors(gameData, perm)
-                        : Set.of();
-                if (fixedLandColor != null) {
-                    ManaColor amountKey = overriddenColor != null ? overriddenColor
-                            : (overriddenColors.isEmpty() ? null : overriddenColors.getFirst());
-                    int amount = estimateLandManaAmount(perm, gameData, amountKey);
-                    if (amount > 0) {
-                        addManaToVirtualPool(virtual, gameData, perm, fixedLandColor, amount);
-                        if (isCreature) {
-                            virtual.addCreatureMana(fixedLandColor, amount);
-                        }
-                    }
-                } else if (anyColorReplacement) {
-                    // This replacement opens the same color-choice interaction as an any-color
-                    // mana ability, so it is excluded from the safe pool.
-                } else if (!twisted.isEmpty()) {
-                    // Multi-color Reality Twist prompts; treat like a choice source in the safe pool.
-                    if (twisted.size() == 1) {
-                        addTwistedManaToVirtualPool(virtual, twisted, 1, isCreature,
-                                isBasicLandSource(gameData, perm));
-                    }
+                LandManaReplacementService.Preview landPreview = landManaPreview(gameData, playerId, perm);
+                if (landPreview != null) {
+                    addLandPreviewToVirtualPool(virtual, gameData, perm, landPreview, isCreature);
                 } else if (overriddenColor != null) {
                     addManaToVirtualPool(virtual, gameData, perm, overriddenColor, 1);
                     if (isCreature) {

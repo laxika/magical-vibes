@@ -6,7 +6,11 @@ import com.github.laxika.magicalvibes.cards.c.CudgelTroll;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
+import com.github.laxika.magicalvibes.cards.r.RealityTwist;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +24,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Piracy.class, AncientTomb.class, CityOfBrass.class, CudgelTroll.class, DryadArbor.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Piracy.class, AncientTomb.class, CityOfBrass.class, CudgelTroll.class, DryadArbor.class, Forest.class, GrizzlyBears.class,
+        InfernalDarkness.class, ManaReflection.class, RealityTwist.class, Plains.class})
 class PiracyTest extends BaseCardTest {
 
     private void castPiracy() {
@@ -48,6 +53,46 @@ class PiracyTest extends BaseCardTest {
         assertThat(forest.isTapped()).isTrue();
         assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(pool.getSpellOnlyMana(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Land-mana replacements apply to a land tapped through Piracy, and its mana stays spell-only")
+    void landManaReplacementsApplyToForeignLand() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addToBattlefield(player2, new InfernalDarkness());
+        harness.addToBattlefield(player1, new ManaReflection());
+        castPiracy();
+
+        harness.tapForeignLandForMana(player1, forest.getId());
+
+        // Infernal Darkness makes it {B}; Mana Reflection doubles the mana its controller taps for.
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(pool.getSpellOnlyMana(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(pool.get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("The player tapping through Piracy orders competing land-mana replacements")
+    void tappingPlayerOrdersForeignLandReplacements() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.addToBattlefield(player2, new InfernalDarkness());
+        harness.addToBattlefield(player2, new RealityTwist());
+        castPiracy();
+
+        harness.tapForeignLandForMana(player1, plains.getId());
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith("Infernal Darkness")).findFirst().orElseThrow());
+
+        // Infernal Darkness first, then Reality Twist turns the Plains' mana into {R}.
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
+        assertThat(pool.getSpellOnlyMana(ManaColor.RED)).isEqualTo(1);
+        assertThat(pool.get(ManaColor.BLACK)).isZero();
     }
 
     @Test

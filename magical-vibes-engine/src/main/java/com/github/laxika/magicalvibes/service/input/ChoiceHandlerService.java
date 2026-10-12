@@ -1793,8 +1793,14 @@ public class ChoiceHandlerService {
                     inputCompletionService.publishStateAfterInput(gameData);
                     return;
                 }
-                handleManaColorChosen(gameData, player, color.name(), mana.production().withAmount(mana.amount()),
-                        List.of(color.name()));
+                if (mana.spellOnly()) {
+                    handleSpellOnlyManaColorChosen(gameData, player, color.name(),
+                            new ChoiceContext.SpellOnlyManaColorChoice(mana.playerId(),
+                                    mana.production().fromCreature(), mana.amount(), false));
+                } else {
+                    handleManaColorChosen(gameData, player, color.name(),
+                            mana.production().withAmount(mana.amount()), List.of(color.name()));
+                }
             }
             case DamageEvent damage -> throw new IllegalStateException("Damage finishes in DamageSupport");
         }

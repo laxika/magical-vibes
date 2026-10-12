@@ -16,9 +16,10 @@ import java.util.UUID;
  * @param permanentId the tapped land
  * @param production  the plain mana-color choice describing the source's tags; its amount and
  *                    color options are ignored until the event is finished
+ * @param spellOnly   whether the mana can be spent only to cast spells (a land tapped through Piracy)
  */
 public record LandManaEvent(UUID playerId, UUID permanentId, Set<ManaColor> colors, int amount,
-                            ChoiceContext.ManaColorChoice production, Set<String> appliedKeys)
+                            ChoiceContext.ManaColorChoice production, Set<String> appliedKeys, boolean spellOnly)
         implements ReplacementEvent {
 
     public LandManaEvent {
@@ -32,22 +33,22 @@ public record LandManaEvent(UUID playerId, UUID permanentId, Set<ManaColor> colo
     }
 
     public LandManaEvent withColors(Set<ManaColor> newColors) {
-        return new LandManaEvent(playerId, permanentId, newColors, amount, production, appliedKeys);
+        return new LandManaEvent(playerId, permanentId, newColors, amount, production, appliedKeys, spellOnly);
     }
 
     public LandManaEvent withAmount(int newAmount) {
-        return new LandManaEvent(playerId, permanentId, colors, newAmount, production, appliedKeys);
+        return new LandManaEvent(playerId, permanentId, colors, newAmount, production, appliedKeys, spellOnly);
     }
 
     @Override
     public LandManaEvent withApplied(String key) {
         Set<String> keys = new HashSet<>(appliedKeys);
         keys.add(key);
-        return new LandManaEvent(playerId, permanentId, colors, amount, production, keys);
+        return new LandManaEvent(playerId, permanentId, colors, amount, production, keys, spellOnly);
     }
 
     @Override
     public LandManaEvent withoutAppliedKeys() {
-        return new LandManaEvent(playerId, permanentId, colors, amount, production, Set.of());
+        return new LandManaEvent(playerId, permanentId, colors, amount, production, Set.of(), spellOnly);
     }
 }

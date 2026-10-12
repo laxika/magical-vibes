@@ -835,143 +835,38 @@ public class AbilityActivationService {
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         EnumMap<ManaColor, Integer> manaTypesBefore = manaPool.getAllManaTotals();
+        boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = isCaveSource(gameData, permanent);
         boolean desertSource = isDesertSource(gameData, permanent);
         boolean basicLandSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
-        ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, permanent);
-        boolean anyColorReplacement = fixedLandColor == null
-                && gameQueryService.basicLandManaProducesAnyColor(gameData, permanent);
-        Set<ManaColor> twistedColors = fixedLandColor == null && !anyColorReplacement
-                ? gameQueryService.twistedLandManaColors(gameData, permanent)
-                : Set.of();
-        if (fixedLandColor != null) {
-            int totalMana = 0;
-            if (!overriddenManaColors.isEmpty()) {
-                totalMana = 1;
-            } else {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof ManaProducingEffect manaEffect
-                            && manaEffect.estimatedManaColor() != null) {
-                        totalMana += onTapManaAmount(manaEffect);
-                    }
-                }
-            }
-            if (totalMana > 0) {
-                manaPool.add(fixedLandColor, totalMana);
-                manaPool.addSpellOnlyMana(fixedLandColor, totalMana);
-                if (basicLandSource) {
-                    manaPool.addBasicLandManaTag(fixedLandColor, totalMana);
-                }
-                if (caveSource) {
-                    manaPool.addCaveManaTag(fixedLandColor, totalMana);
-                }
-                if (desertSource) {
-                    manaPool.addDesertManaTag(fixedLandColor, totalMana);
-                }
-            }
-        } else if (anyColorReplacement) {
-            int totalMana = 0;
-            if (!overriddenManaColors.isEmpty()) {
-                totalMana = 1;
-            } else {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (effect instanceof ManaProducingEffect manaEffect
-                            && manaEffect.estimatedManaColor() != null) {
-                        totalMana += onTapManaAmount(manaEffect);
-                    }
-                }
-            }
-            if (totalMana > 0) {
-                ChoiceContext.ManaColorChoice choiceContext =
-                        new ChoiceContext.ManaColorChoice(playerId, false, totalMana)
-                                .withCaveSource(caveSource)
-                                .withDesertSource(desertSource)
-                                .withBasicLandSource(basicLandSource);
-                List<String> colors = ManaColor.COLORS.stream().map(Enum::name).toList();
+        LandManaReplacementService.Resolution landManaReplacement = landManaReplacementService.produce(gameData,
+                playerId, permanent,
+                baseLandManaColors(permanent, overriddenManaColors, Set.of()),
+                baseLandManaAmount(permanent, overriddenManaColors, Set.of()),
+                new ChoiceContext.ManaColorChoice(playerId, false, 0)
+                        .withSnowSource(snowSource)
+                        .withCaveSource(caveSource)
+                        .withDesertSource(desertSource)
+                        .withBasicLandSource(basicLandSource),
+                true);
+        if (landManaReplacement instanceof LandManaReplacementService.Resolution.Unchanged) {
+            int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, permanent);
+            if (overriddenManaColors.size() > 1) {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                        playerId, null, null, choiceContext, colors,
-                        "Choose a color of mana to add."));
-            }
-        } else if (!twistedColors.isEmpty()) {
-            int totalMana = 0;
-            if (!overriddenManaColors.isEmpty()) {
-                totalMana = 1;
+                        playerId, null, null,
+                        new ChoiceContext.SpellOnlyManaColorChoice(playerId, false, manaMultiplier, false),
+                        overriddenManaColors.stream().map(Enum::name).toList(),
+                        "Choose a color of mana to add (spells only)."));
+            } else if (overriddenManaColor != null) {
+                addForeignLandMana(manaPool, ManaProductionSupport.effectiveColor(gameData, playerId,
+                                permanent, overriddenManaColor), manaMultiplier,
+                        snowSource, basicLandSource, caveSource, desertSource);
             } else {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect awardMana) {
-                        totalMana += onTapManaAmount(awardMana);
-                    }
-                }
-            }
-            if (totalMana > 0) {
-                if (twistedColors.size() == 1) {
-                    ManaColor color = twistedColors.iterator().next();
-                    manaPool.add(color, totalMana);
-                    manaPool.addSpellOnlyMana(color, totalMana);
-                    if (basicLandSource) {
-                        manaPool.addBasicLandManaTag(color, totalMana);
-                    }
-                    if (caveSource) {
-                        manaPool.addCaveManaTag(color, totalMana);
-                    }
-                    if (desertSource) {
-                        manaPool.addDesertManaTag(color, totalMana);
-                    }
-                } else {
-                    // Piracy + multi-type under Reality Twist: pick one color for all mana.
-                    ChoiceContext.ManaColorChoice choiceContext =
-                            new ChoiceContext.ManaColorChoice(playerId, false, totalMana)
-                                    .withCaveSource(caveSource)
-                                    .withDesertSource(desertSource)
-                                    .withBasicLandSource(basicLandSource);
-                    List<String> colors = twistedColors.stream().map(Enum::name).toList();
-                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                            playerId, null, null, choiceContext, colors,
-                            "Choose a color of mana to add (Reality Twist)."));
-                }
-            }
-        } else if (!overriddenManaColors.isEmpty()) {
-            if (overriddenManaColors.size() == 1) {
-                ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId,
-                        permanent, overriddenManaColor);
-                manaPool.add(effectiveColor, 1);
-                manaPool.addSpellOnlyMana(effectiveColor, 1);
-                if (basicLandSource) {
-                    manaPool.addBasicLandManaTag(effectiveColor, 1);
-                }
-                if (caveSource) {
-                    manaPool.addCaveManaTag(effectiveColor, 1);
-                }
-                if (desertSource) {
-                    manaPool.addDesertManaTag(effectiveColor, 1);
-                }
-            } else {
-                ChoiceContext.ManaColorChoice choiceContext =
-                        new ChoiceContext.ManaColorChoice(playerId, false, 1)
-                                .withCaveSource(caveSource)
-                                .withDesertSource(desertSource)
-                                .withBasicLandSource(basicLandSource);
-                List<String> colors = overriddenManaColors.stream().map(Enum::name).toList();
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                        playerId, null, null, choiceContext, colors,
-                        "Choose a color of mana to add."));
-            }
-        } else {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (effect instanceof AwardManaEffect awardMana) {
-                    int amount = onTapManaAmount(awardMana);
-                    ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId,
-                            permanent, awardMana.color());
-                    manaPool.add(effectiveColor, amount);
-                    manaPool.addSpellOnlyMana(effectiveColor, amount);
-                    if (basicLandSource) {
-                        manaPool.addBasicLandManaTag(effectiveColor, amount);
-                    }
-                    if (caveSource) {
-                        manaPool.addCaveManaTag(effectiveColor, amount);
-                    }
-                    if (desertSource) {
-                        manaPool.addDesertManaTag(effectiveColor, amount);
+                        addForeignLandMana(manaPool, ManaProductionSupport.effectiveColor(gameData, playerId,
+                                        permanent, awardMana.color()), onTapManaAmount(awardMana) * manaMultiplier,
+                                snowSource, basicLandSource, caveSource, desertSource);
                     }
                 }
             }
@@ -992,6 +887,29 @@ public class AbilityActivationService {
         }
 
         mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    /** Adds mana from a land tapped through Piracy, which can be spent only to cast spells. */
+    private static void addForeignLandMana(ManaPool manaPool, ManaColor color, int amount, boolean snowSource,
+                                           boolean basicLandSource, boolean caveSource, boolean desertSource) {
+        if (amount <= 0) {
+            return;
+        }
+        if (snowSource) {
+            manaPool.addSnowMana(color, amount);
+        } else {
+            manaPool.add(color, amount);
+        }
+        manaPool.addSpellOnlyMana(color, amount);
+        if (basicLandSource) {
+            manaPool.addBasicLandManaTag(color, amount);
+        }
+        if (caveSource) {
+            manaPool.addCaveManaTag(color, amount);
+        }
+        if (desertSource) {
+            manaPool.addDesertManaTag(color, amount);
+        }
     }
 
     /**

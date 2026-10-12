@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderServic
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -67,10 +67,20 @@ public class LandManaReplacementService {
      */
     public Resolution produce(GameData gameData, UUID playerId, Permanent land, Set<ManaColor> baseColors,
                               int baseAmount, ChoiceContext.ManaColorChoice production) {
+        return produce(gameData, playerId, land, baseColors, baseAmount, production, false);
+    }
+
+    /**
+     * {@link #produce(GameData, UUID, Permanent, Set, int, ChoiceContext.ManaColorChoice)}; with
+     * {@code spellOnly} the mana can be spent only to cast spells (a land tapped through Piracy).
+     */
+    public Resolution produce(GameData gameData, UUID playerId, Permanent land, Set<ManaColor> baseColors,
+                              int baseAmount, ChoiceContext.ManaColorChoice production, boolean spellOnly) {
         if (baseAmount <= 0) {
             return new Resolution.Unchanged();
         }
-        LandManaEvent event = new LandManaEvent(playerId, land.getId(), baseColors, baseAmount, production, Set.of());
+        LandManaEvent event = new LandManaEvent(playerId, land.getId(), baseColors, baseAmount, production, Set.of(),
+                spellOnly);
         return switch (replacementOrderService.run(gameData, event)) {
             case ReplacementOrderService.Outcome.Prompted<LandManaEvent> ignored -> new Resolution.Prompted();
             case ReplacementOrderService.Outcome.Suspended<LandManaEvent> ignored ->
@@ -87,24 +97,37 @@ public class LandManaReplacementService {
     }
 
     /**
-     * Every color and the largest amount {@code land} could produce for {@code playerId} under the
-     * active replacements, or {@code null} when no replacement changes its type. For previews.
+     * What tapping {@code land} for {@code baseAmount} mana of {@code baseColors} could produce for
+     * {@code playerId} under the active replacements, computed without changing the game.
+     *
+     * @param colors      every type the mana could end up as, over every order the player may choose
+     * @param amount      the largest amount any order produces
+     * @param opensChoice whether the tap would stop for a decision: the order of the replacements
+     *                    or the color of the mana
      */
-    public LandManaEvent possibleProduction(GameData gameData, UUID playerId, Permanent land,
-                                            Set<ManaColor> baseColors, int baseAmount) {
+    public record Preview(Set<ManaColor> colors, int amount, boolean opensChoice) {}
+
+    /**
+     * The {@link Preview} of {@code land}'s mana, or {@code null} when no replacement changes its
+     * type, so the land's own mana abilities describe it. For previews and AI planning.
+     */
+    public Preview preview(GameData gameData, UUID playerId, Permanent land, Set<ManaColor> baseColors,
+                           int baseAmount) {
         LandManaEvent event = new LandManaEvent(playerId, land.getId(), baseColors, Math.max(1, baseAmount),
-                new ChoiceContext.ManaColorChoice(playerId, false, 0), Set.of());
+                new ChoiceContext.ManaColorChoice(playerId, false, 0), Set.of(), false);
         Set<LandManaEvent> outcomes = replacementOrderService.possibleOutcomes(gameData, event);
-        if (outcomes.size() == 1 && outcomes.iterator().next().equals(event.withoutAppliedKeys())) {
-            return null;
-        }
-        Set<ManaColor> colors = new HashSet<>();
+        Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
         int amount = 0;
+        boolean severalColors = false;
         for (LandManaEvent outcome : outcomes) {
             colors.addAll(outcome.colors());
             amount = Math.max(amount, outcome.amount());
+            severalColors |= outcome.colors().size() > 1;
         }
-        return event.withColors(colors).withAmount(amount);
+        if (colors.equals(Set.copyOf(baseColors))) {
+            return null;
+        }
+        return new Preview(colors, amount, outcomes.size() > 1 || severalColors);
     }
 
     /**
@@ -147,12 +170,19 @@ public class LandManaReplacementService {
         if (production.fromCreature()) {
             pool.addCreatureMana(color, amount);
         }
+        if (event.spellOnly()) {
+            pool.addSpellOnlyMana(color, amount);
+        }
     }
 
     private void askForColor(GameData gameData, LandManaEvent event) {
         List<String> colors = event.colors().stream().sorted().map(Enum::name).toList();
+        ChoiceContext context = event.spellOnly()
+                ? new ChoiceContext.SpellOnlyManaColorChoice(event.playerId(), event.production().fromCreature(),
+                        event.amount(), false)
+                : event.production().withAmount(event.amount());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                event.playerId(), null, null, event.production().withAmount(event.amount()), colors,
-                "Choose a color of mana to add."));
+                event.playerId(), null, null, context, colors,
+                event.spellOnly() ? "Choose a color of mana to add (spells only)." : "Choose a color of mana to add."));
     }
 }

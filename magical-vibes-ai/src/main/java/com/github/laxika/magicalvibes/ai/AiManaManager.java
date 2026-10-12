@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -857,10 +858,10 @@ public class AiManaManager {
 
     /**
      * Colors a land actually produces after type-changing effects and mana-type replacements:
-     * Infernal Darkness / Ritual of Subdual's fixed color, Reality Twist / Naked Singularity's
-     * per-basic-type remapping (several colors when several such effects are active — the
-     * controller then chooses), or the intrinsic mana ability of a temporarily assigned basic land
-     * type. Empty when the printed colors still apply.
+     * every type the land-mana replacements (Infernal Darkness, Naked Singularity, Pulse of
+     * Llanowar, …) can make it produce in an order its controller may choose
+     * ({@link PotentialManaService#landManaPreview}), or the intrinsic mana ability of a
+     * temporarily assigned basic land type. Empty when the printed colors still apply.
      *
      * <p>Mirrors {@code ActivatedAbilityExecutionService} and {@code AbilityActivationService}: a
      * planner that reads only the printed mana effects would tap a Swamp expecting {B} under Naked
@@ -870,16 +871,10 @@ public class AiManaManager {
         if (!permanent.getCard().hasType(CardType.LAND)) {
             return Set.of();
         }
-        ManaColor fixedColor = gameQueryService.fixedLandManaColor(gameData, permanent);
-        if (fixedColor != null) {
-            return Set.of(fixedColor);
-        }
-        if (gameQueryService.basicLandManaProducesAnyColor(gameData, permanent)) {
-            return new LinkedHashSet<>(ManaColor.COLORS);
-        }
-        Set<ManaColor> twistedColors = gameQueryService.twistedLandManaColors(gameData, permanent);
-        if (!twistedColors.isEmpty()) {
-            return twistedColors;
+        LandManaReplacementService.Preview preview = potentialManaService.landManaPreview(gameData,
+                gameQueryService.findPermanentController(gameData, permanent.getId()), permanent);
+        if (preview != null) {
+            return new LinkedHashSet<>(preview.colors());
         }
         List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, permanent);
         return overriddenColors.isEmpty() ? Set.of() : new LinkedHashSet<>(overriddenColors);
