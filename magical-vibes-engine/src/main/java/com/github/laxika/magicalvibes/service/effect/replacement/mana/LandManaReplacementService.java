@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
-import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import org.springframework.context.annotation.Lazy;
@@ -20,8 +19,9 @@ import java.util.UUID;
 
 /**
  * Runs a land's mana through every applicable land-mana replacement (Deep Water, Infernal
- * Darkness, Pale Moon, Pulse of Llanowar, Damping Sphere, Mana Reflection, …) in the order its
- * player chooses (CR 616.1). Each "produces X instead of any other type" effect still applies after
+ * Darkness, Pale Moon, Pulse of Llanowar, Damping Sphere, Mana Reflection, False Dawn, …) in the
+ * order its player chooses (CR 616.1). The result is final: a color chosen afterwards is added
+ * as is, without applying "colored mana becomes white" again. Each "produces X instead of any other type" effect still applies after
  * another, so the last one applied decides the type, while amount changes compose in the order
  * applied.
  *
@@ -149,8 +149,7 @@ public class LandManaReplacementService {
             return;
         }
         ChoiceContext.ManaColorChoice production = event.production();
-        ManaColor color = ManaProductionSupport.effectiveColor(gameData, event.playerId(),
-                event.colors().iterator().next());
+        ManaColor color = event.colors().iterator().next();
         int amount = event.amount();
         ManaPool pool = gameData.playerManaPools.get(event.playerId());
         if (production.fromSnowSource()) {
@@ -179,8 +178,8 @@ public class LandManaReplacementService {
         List<String> colors = event.colors().stream().sorted().map(Enum::name).toList();
         ChoiceContext context = event.spellOnly()
                 ? new ChoiceContext.SpellOnlyManaColorChoice(event.playerId(), event.production().fromCreature(),
-                        event.amount(), false)
-                : event.production().withAmount(event.amount());
+                        event.amount(), false).withReplacementsApplied()
+                : event.production().withAmount(event.amount()).withReplacementsApplied();
         PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
                 event.playerId(), null, null, context, colors,
                 event.spellOnly() ? "Choose a color of mana to add (spells only)." : "Choose a color of mana to add.");

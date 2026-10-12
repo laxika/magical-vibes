@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.cards.b.BirgiGodOfStorytelling;
 import com.github.laxika.magicalvibes.cards.d.DegaDisciple;
 import com.github.laxika.magicalvibes.cards.g.GoblinLegionnaire;
 import com.github.laxika.magicalvibes.cards.h.HarnfelHornOfBounty;
+import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
 import com.github.laxika.magicalvibes.cards.j.Jilt;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.ReflectingPool;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FalseDawn.class, BattlefieldForge.class, DegaDisciple.class, Jilt.class,
         GoblinLegionnaire.class, BirgiGodOfStorytelling.class, HarnfelHornOfBounty.class,
-        Mountain.class, ReflectingPool.class})
+        Mountain.class, ReflectingPool.class, InfernalDarkness.class, Forest.class})
 class FalseDawnTest extends BaseCardTest {
 
     @Test
@@ -48,6 +50,38 @@ class FalseDawnTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Dega Disciple");
         harness.assertInHand(player2, "Dega Disciple");
+    }
+
+    @Test
+    @DisplayName("The player orders False Dawn with another land-mana replacement; the last one decides the type")
+    void ordersWithOtherLandManaReplacements() {
+        assertThat(tapForestUnderFalseDawnAndInfernalDarkness("Your colored mana becomes"))
+                .isEqualTo(ManaColor.BLACK);
+    }
+
+    @Test
+    @DisplayName("Applying Infernal Darkness first leaves False Dawn to make the mana white")
+    void infernalDarknessFirstThenFalseDawn() {
+        assertThat(tapForestUnderFalseDawnAndInfernalDarkness("Infernal Darkness"))
+                .isEqualTo(ManaColor.WHITE);
+    }
+
+    private ManaColor tapForestUnderFalseDawnAndInfernalDarkness(String firstOption) {
+        harness.addToBattlefield(player1, new InfernalDarkness());
+        harness.setHand(player1, List.of(new FalseDawn()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).size() - 1);
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(firstOption)).findFirst().orElseThrow());
+        var pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.getTotalAllMana()).isEqualTo(1);
+        return ManaColor.COLORS.stream().filter(color -> pool.get(color) == 1).findFirst().orElseThrow();
     }
 
     @Test

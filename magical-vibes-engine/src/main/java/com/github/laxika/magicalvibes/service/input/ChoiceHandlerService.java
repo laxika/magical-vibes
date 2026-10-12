@@ -1676,8 +1676,8 @@ public class ChoiceHandlerService {
 
     private void handleSpellOnlyManaColorChosen(GameData gameData, Player player, String colorName,
                                                  ChoiceContext.SpellOnlyManaColorChoice ctx) {
-        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(),
-                ManaColor.valueOf(colorName));
+        ManaColor manaColor = ctx.replacementsApplied() ? ManaColor.valueOf(colorName)
+                : ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), ManaColor.valueOf(colorName));
         gameData.interaction.clearAwaitingInput();
 
         UUID manaRecipientId = ctx.recipientPlayerId() != null ? ctx.recipientPlayerId() : ctx.playerId();
@@ -1796,10 +1796,11 @@ public class ChoiceHandlerService {
                 if (mana.spellOnly()) {
                     handleSpellOnlyManaColorChosen(gameData, player, color.name(),
                             new ChoiceContext.SpellOnlyManaColorChoice(mana.playerId(),
-                                    mana.production().fromCreature(), mana.amount(), false));
+                                    mana.production().fromCreature(), mana.amount(), false).withReplacementsApplied());
                 } else {
                     handleManaColorChosen(gameData, player, color.name(),
-                            mana.production().withAmount(mana.amount()), List.of(color.name()));
+                            mana.production().withAmount(mana.amount()).withReplacementsApplied(),
+                            List.of(color.name()));
                 }
             }
             case DamageEvent damage -> throw new IllegalStateException("Damage finishes in DamageSupport");
@@ -1847,7 +1848,8 @@ public class ChoiceHandlerService {
         if (ctx.fixedColorOptions() != null && !ctx.fixedColorOptions().contains(chosenColor)) {
             throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
         }
-        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosenColor);
+        ManaColor manaColor = ctx.replacementsApplied()
+                ? chosenColor : ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosenColor);
 
         if (ctx.differentColors() && !ctx.fixedColorOptions().contains(manaColor)) {
             throw new IllegalArgumentException("The chosen mana color must differ from previous choices");
