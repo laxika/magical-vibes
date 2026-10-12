@@ -8144,7 +8144,8 @@ public class GameData {
         // --- Deques ---
         this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
                 pending instanceof PendingInteraction.LandManaDrainContinuation drain
-                        ? new PendingInteraction.LandManaDrainContinuation(drain.entry(), drain.remainingLandIds())
+                        ? new PendingInteraction.LandManaDrainContinuation(drain.entry(), drain.remainingLandIds(),
+                                drain.delayedColorless())
                         : pending instanceof PendingInteraction.ColorChoice choice
                         ? choice.copyCardTypeOnEnterPermanent()
                         : pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger

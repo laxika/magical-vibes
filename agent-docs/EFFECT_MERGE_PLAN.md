@@ -317,8 +317,7 @@ the enchanted-land-tap trigger.
   `restriction == NONE`: the undo snapshot only covers the ordinary pool and creature mana, so a
   restricted-bucket activation must not be parked as revertable.
 - The virtual-pool contributions in `PotentialManaService` (`buildVirtualManaPool` /
-  `buildLandOnlyVirtualManaPool`) also require `restriction == NONE`, and `LandManaDrainSupport`
-  skips restricted producers rather than laundering them into plain colorless.
+  `buildLandOnlyVirtualManaPool`) also require `restriction == NONE`.
 - `hasOnTapManaEffects` now matches every restriction. Inert today — no card carries a restricted
   any-colour producer in `EffectSlot.ON_TAP`; all eleven are activated abilities.
 

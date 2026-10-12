@@ -2897,7 +2897,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             if (context instanceof ChoiceContext.LandManaDrainAbilityChoice drain) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,
                         new ChoiceContext.LandManaDrainAbilityChoice(drain.entry(), drain.landId(),
-                                drain.abilityIndices(), drain.remainingLandIds()), options, prompt, disabledOptions);
+                                drain.abilityIndices(), drain.remainingLandIds(), drain.delayedColorless()),
+                        options, prompt, disabledOptions);
             }
             if (context instanceof ChoiceContext.TappedEntryStateChoice tapped) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,
@@ -6419,8 +6420,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             return new InteractionOptions.MultiCardPick(validIds, 1, 1);
         }
     }
-    /** Resumes a land drain after the current mana ability's choices finish. */
-    record LandManaDrainContinuation(StackEntry entry, java.util.List<UUID> remainingLandIds)
+    /**
+     * Resumes a land drain after the current mana ability's choices finish; see
+     * {@link ChoiceContext.LandManaDrainAbilityChoice} for {@code delayedColorless}.
+     */
+    record LandManaDrainContinuation(StackEntry entry, java.util.List<UUID> remainingLandIds,
+                                     boolean delayedColorless)
             implements PendingInteraction {
         public LandManaDrainContinuation {
             entry = new StackEntry(entry);

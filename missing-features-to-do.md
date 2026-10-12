@@ -34,9 +34,6 @@ original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplaces
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
 **Still open.**
-- Pygmy Hippo empties the defending player's pool right after their lands are tapped, so mana
-  that waits on a queued choice (an any-color land, or a land whose replacements need ordering)
-  is added after the drain.
 - The AI answers a replacement-order prompt with the first option instead of the least harmful one.
 
 **Prompt to start it:**

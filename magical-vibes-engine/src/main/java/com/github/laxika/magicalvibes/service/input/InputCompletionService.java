@@ -106,7 +106,8 @@ public class InputCompletionService {
         }
         var pendingDrain = gameData.pollPendingInteraction(PendingInteraction.LandManaDrainContinuation.class);
         if (pendingDrain != null) {
-            landManaDrainHandler.continueDrain(gameData, pendingDrain.entry(), pendingDrain.remainingLandIds());
+            landManaDrainHandler.continueDrain(gameData, pendingDrain.entry(), pendingDrain.remainingLandIds(),
+                    pendingDrain.delayedColorless());
             if (gameData.interaction.isAwaitingInput()) return;
         }
         if (gameData.pendingInteractions.stream().anyMatch(pending ->

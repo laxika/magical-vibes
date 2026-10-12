@@ -277,7 +277,7 @@ public class ChoiceHandlerService {
             if (optionIndex < 0) throw new IllegalArgumentException("Invalid mana ability");
             gameData.interaction.clearAwaitingInput();
             landManaDrainHandler.activateLandAbility(gameData, choice.entry(), choice.landId(),
-                    choice.abilityIndices().get(optionIndex), choice.remainingLandIds());
+                    choice.abilityIndices().get(optionIndex), choice.remainingLandIds(), choice.delayedColorless());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

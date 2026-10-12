@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.Karoo;
 import com.github.laxika.magicalvibes.cards.m.ManaReflection;
+import com.github.laxika.magicalvibes.cards.r.RealityTwist;
 import com.github.laxika.magicalvibes.cards.u.UndiscoveredParadise;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @CardUsed({PygmyHippo.class, Forest.class, Island.class, GrizzlyBears.class,
-        Karoo.class, UndiscoveredParadise.class, InfernalDarkness.class, ManaReflection.class})
+        Karoo.class, UndiscoveredParadise.class, InfernalDarkness.class, ManaReflection.class,
+        RealityTwist.class, Plains.class})
 class PygmyHippoTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -78,6 +80,28 @@ class PygmyHippoTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         harness.passBothPriorities();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Mana that waits for the defending player to order its replacements is still drained")
+    void manaWaitingOnReplacementOrderIsDrained() {
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new InfernalDarkness());
+        harness.addToBattlefield(player2, new RealityTwist());
+        Permanent attacker = addAttacker();
+        attackUnblocked(attacker);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        assertThat(order.playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, order.options().getFirst());
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
     @Test
