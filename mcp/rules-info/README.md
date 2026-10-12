@@ -16,7 +16,7 @@ Rules that do exist nearby: 120.1, 120.1a
 
 ## Requirements
 
-- Node.js 20 or newer. There are no npm dependencies and no install step.
+- Node.js 20 or newer on `PATH` (the same command works on Windows, macOS and Linux). There are no npm dependencies and no install step.
 - Network access to `https://magic.wizards.com` and `https://media.wizards.com` when the cache is
   missing or older than seven days.
 
@@ -24,8 +24,8 @@ Rules that do exist nearby: 120.1, 120.1a
 
 From the repository root:
 
-```powershell
-./mcp/rules-info/start.ps1
+```sh
+node mcp/rules-info/server.mjs
 ```
 
 The process speaks newline-delimited MCP JSON-RPC over stdin/stdout. Project configuration is
@@ -47,16 +47,16 @@ both are part of the official rule.
 
 ## Command-line mode
 
-```powershell
+```sh
 # Verify one or more rule numbers
-./mcp/rules-info/start.ps1 get-rule 120.1a 702.11b
+node mcp/rules-info/server.mjs get-rule 120.1a 702.11b
 
 # Find the rule number for a phrase
-./mcp/rules-info/start.ps1 search "state-based actions are checked"
+node mcp/rules-info/server.mjs search "state-based actions are checked"
 
 # Show the cached release, or force a re-download
-./mcp/rules-info/start.ps1 status
-./mcp/rules-info/start.ps1 refresh
+node mcp/rules-info/server.mjs status
+node mcp/rules-info/server.mjs refresh
 ```
 
 ## Cache
@@ -78,14 +78,7 @@ directory without overwriting an existing entry. Restart running MCP clients aft
 
 ## Tests
 
-```powershell
-& 'C:\Program Files\nodejs\node.exe' --test --test-isolation=none `
-  mcp/rules-info/test/rules-cache.test.mjs mcp/rules-info/test/server.test.mjs
-```
-
-If `node` is on `PATH`, this is equivalent:
-
-```powershell
+```sh
 cd mcp/rules-info
 npm test
 ```

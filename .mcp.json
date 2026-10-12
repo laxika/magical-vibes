@@ -1,24 +1,12 @@
 {
   "mcpServers": {
     "scryfall": {
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "mcp/card-info/start.ps1"
-      ]
+      "command": "node",
+      "args": ["mcp/card-info/server.mjs"]
     },
     "rules": {
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "mcp/rules-info/start.ps1"
-      ]
+      "command": "node",
+      "args": ["mcp/rules-info/server.mjs"]
     }
   }
 }

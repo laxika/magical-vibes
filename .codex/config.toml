@@ -17,27 +17,15 @@ extra_writable_paths = [
 ]
 
 [mcp_servers.scryfall]
-command = "powershell.exe"
-args = [
-    "-NoProfile",
-    "-ExecutionPolicy",
-    "Bypass",
-    "-File",
-    "mcp/card-info/start.ps1"
-]
+command = "node"
+args = ["mcp/card-info/server.mjs"]
 cwd = "."
 startup_timeout_sec = 10
 tool_timeout_sec = 60
 
 [mcp_servers.rules]
-command = "powershell.exe"
-args = [
-    "-NoProfile",
-    "-ExecutionPolicy",
-    "Bypass",
-    "-File",
-    "mcp/rules-info/start.ps1"
-]
+command = "node"
+args = ["mcp/rules-info/server.mjs"]
 cwd = "."
 startup_timeout_sec = 10
 tool_timeout_sec = 60

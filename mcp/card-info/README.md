@@ -14,7 +14,7 @@ implementation.
 
 ## Requirements
 
-- Node.js 20 or newer. There are no npm dependencies and no install step.
+- Node.js 20 or newer on `PATH` (the same command works on Windows, macOS and Linux). There are no npm dependencies and no install step.
 - Network access to `https://api.scryfall.com` when a set cache is missing, or
   `https://mtgjson.com/api/v5/<SET>.json` for the fallback.
 
@@ -22,8 +22,8 @@ implementation.
 
 From the repository root:
 
-```powershell
-./mcp/card-info/start.ps1
+```sh
+node mcp/card-info/server.mjs
 ```
 
 The process speaks newline-delimited MCP JSON-RPC over stdin/stdout. Project configuration is
@@ -37,17 +37,17 @@ The server exposes one read-only tool:
 
 ## Command-line mode
 
-The same implementation is used by the repository's PowerShell card helpers:
+The same implementation is used by the repository's PowerShell card helpers in `scripts/`, which call it through `mcp/card-info/start.ps1` (a Windows wrapper that also finds Node in the standard install locations):
 
-```powershell
+```sh
 # Return one compact card; downloads the whole set on a cache miss
-./mcp/card-info/start.ps1 get-card DKA 76
+node mcp/card-info/server.mjs get-card DKA 76
 
 # Download/read a whole set and print a short cache summary
-./mcp/card-info/start.ps1 cache-set DKA
+node mcp/card-info/server.mjs cache-set DKA
 
 # Print the complete compact cached set (used by export-set-metadata.ps1)
-./mcp/card-info/start.ps1 get-set DKA
+node mcp/card-info/server.mjs get-set DKA
 ```
 
 ## Cache
@@ -90,15 +90,7 @@ the new implementation. Codex's tool timeout is 60 seconds to allow both provide
 
 ## Tests
 
-```powershell
-& 'C:\Program Files\nodejs\node.exe' --test --test-isolation=none `
-  mcp/card-info/test/card-cache.test.mjs mcp/card-info/test/server.test.mjs `
-  mcp/card-info/test/fallback.test.mjs mcp/card-info/test/shared-cache.test.mjs
-```
-
-If `node` is on `PATH`, this is equivalent:
-
-```powershell
+```sh
 cd mcp/card-info
 npm test
 ```
