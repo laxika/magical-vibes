@@ -50,7 +50,9 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
         }
 
         Collections.shuffle(spellbook);
-        List<Card> offeredCards = new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
+        List<Card> offeredCards = draft.conjure()
+                ? spellbook
+                : new ArrayList<>(spellbook.subList(0, Math.min(3, spellbook.size())));
         UUID draftPlayerId = draft.recipient() == DraftCardRecipient.TARGET_PLAYER
                 ? entry.getTargetId() : entry.getControllerId();
 
@@ -59,12 +61,16 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
             return;
         }
 
+        offeredCards.forEach(card -> card.setOwnerId(draftPlayerId));
+
         gameLogService.append(gameData, GameLog.text(
-                gameData.playerIdToName.get(entry.getControllerId()) + " drafts a card from "
+                gameData.playerIdToName.get(entry.getControllerId())
+                        + (draft.conjure() ? " conjures" : " drafts") + " a card from "
                         + entry.getCard().getName() + "'s spellbook."));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SpellbookDraftChoice(
                 draftPlayerId, offeredCards, entry.getCard().getName(), draft.revealChosenCard(),
-                draft.exileChosenCard(), draft.putChosenCardOntoBattlefield(), draft.chosenCardEffects()));
+                draft.exileChosenCard(), draft.putChosenCardOntoBattlefield(), draft.chosenCardEffects(),
+                draft.conjure()));
     }
 
     private void beginSelectionWithFollowUp(GameData gameData, DraftCardFromSpellbookEffect draft,

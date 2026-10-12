@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.d.DefiantStrike;
 import com.github.laxika.magicalvibes.cards.e.Embercleave;
 import com.github.laxika.magicalvibes.cards.f.FeatherOfFlight;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.m.MabelsMettle;
 import com.github.laxika.magicalvibes.cards.m.MightOfTheMeek;
 import com.github.laxika.magicalvibes.cards.m.MomentOfHeroism;
@@ -31,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({RecruitInstructor.class, AngelfireIgnition.class, BargeIn.class, BecomeBrutes.class,
         BoonOfSafety.class, CheekyHouseMouse.class, CrumbAndGetIt.class, DefiantStrike.class,
         Embercleave.class, FeatherOfFlight.class, MabelsMettle.class, MightOfTheMeek.class,
-        MomentOfHeroism.class, UnleashFury.class, WarSqueak.class, GiantGrowth.class})
+        MomentOfHeroism.class, UnleashFury.class, WarSqueak.class, GiantGrowth.class, ThayanEvokers.class})
 class RecruitInstructorTest extends BaseCardTest {
 
     @Test
@@ -119,5 +120,23 @@ class RecruitInstructorTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId()).get(1).getAttachedTo())
                 .isEqualTo(instructor.getId());
+    }
+
+    @Test
+    void draftingIntoHandDoesNotTriggerConjureAbilities() {
+        Permanent instructor = addCreatureReady(player1, new RecruitInstructor());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(instructor)));
+        resolveAllTriggers();
+        PendingInteraction.SpellbookCardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.validCardIds().getFirst()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .contains(choice.cards().getFirst().getName());
+        assertThat(evokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.b.Brainstorm;
 import com.github.laxika.magicalvibes.cards.c.Consider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.o.ObsessiveSearch;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.p.Peek;
@@ -41,8 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         PieceItTogether.class,
         ThoughtScour.class,
         SerumVisions.class,
-        Quicken.class
-})
+        Quicken.class, ThayanEvokers.class})
 class TomeOfGadwickTest extends BaseCardTest {
 
     @Test
@@ -169,5 +169,20 @@ class TomeOfGadwickTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    void conjuringASpellbookCardTriggersConjureAbilities() {
+        harness.setHand(player1, List.of());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent tome = harness.addToBattlefieldAndReturn(player1, new TomeOfGadwick());
+        tome.setAttachedTo(creature.getId());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

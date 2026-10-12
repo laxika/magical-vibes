@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.p.PurgingStormbrood;
 import com.github.laxika.magicalvibes.cards.r.RunescaleStormbrood;
 import com.github.laxika.magicalvibes.cards.t.TwinmawStormbrood;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -22,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({DragonweaveTapestry.class, PurgingStormbrood.class,
         TwinmawStormbrood.class, RunescaleStormbrood.class,
         DisruptiveStormbrood.class, WhirlwingStormbrood.class,
-        GrizzlyBears.class, DirgurIslandDragon.class})
+        GrizzlyBears.class, DirgurIslandDragon.class, ThayanEvokers.class})
 class DragonweaveTapestryTest extends BaseCardTest {
 
     @Test
@@ -107,5 +109,19 @@ class DragonweaveTapestryTest extends BaseCardTest {
         card.setToughness(2);
         card.setSubtypes(List.of(CardSubtype.DRAGON));
         return card;
+    }
+
+    @Test
+    void conjuringTheSpellbookIntoTheLibraryTriggersConjureAbilitiesOnce() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DragonweaveTapestry()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(11);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

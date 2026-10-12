@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.FirstLittlePig;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.l.LendAHam;
 import com.github.laxika.magicalvibes.cards.s.SecondLittlePig;
 import com.github.laxika.magicalvibes.cards.t.ThirdLittlePig;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PorcinePortent.class, LendAHam.class, FirstLittlePig.class, SecondLittlePig.class,
-        ThirdLittlePig.class, GrizzlyBears.class, Forest.class})
+        ThirdLittlePig.class, GrizzlyBears.class, Forest.class, ThayanEvokers.class})
 class PorcinePortentTest extends BaseCardTest {
 
     @Test
@@ -209,5 +210,19 @@ class PorcinePortentTest extends BaseCardTest {
     private void addAdventureMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    @Test
+    void conjuringAPigTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.castFromHand(player1, new PorcinePortent(), "{3}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

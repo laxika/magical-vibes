@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.Disentomb;
 import com.github.laxika.magicalvibes.cards.f.FumingEffigy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GarruksUprising;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.p.PillardropWarden;
 import com.github.laxika.magicalvibes.cards.s.SpiritMascot;
 import com.github.laxika.magicalvibes.cards.s.StoneDocent;
@@ -37,8 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         StoneriseSpirit.class,
         SummonedDromedary.class,
         Disentomb.class,
-        GrizzlyBears.class
-})
+        GrizzlyBears.class, ThayanEvokers.class})
 class BloodAgeMusterTest extends BaseCardTest {
 
     @Test
@@ -191,5 +191,21 @@ class BloodAgeMusterTest extends BaseCardTest {
 
     private Permanent addMuster() {
         return harness.addToBattlefieldAndReturn(player1, new BloodAgeMuster());
+    }
+
+    @Test
+    void conjuringOntoTheBattlefieldTriggersConjureAbilities() {
+        addMuster();
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.setHand(player1, List.of(new Disentomb()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

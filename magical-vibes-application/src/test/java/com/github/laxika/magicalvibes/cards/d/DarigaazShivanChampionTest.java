@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +13,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DarigaazShivanChampion.class})
+@CardUsed({DarigaazShivanChampion.class, ThayanEvokers.class})
 class DarigaazShivanChampionTest extends BaseCardTest {
 
     private static final Set<String> SPELLBOOK = Set.of(
@@ -134,5 +136,19 @@ class DarigaazShivanChampionTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.passUntil(TurnStep.UPKEEP);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Conjuring into exile at end step triggers conjure abilities")
+    void conjuringTriggersConjureAbilities() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new DarigaazShivanChampion());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

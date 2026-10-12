@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,7 @@ public class ConjureRandomCardFromSpellbookToBattlefieldEffectHandler
     private final CardCatalog cardCatalog;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +58,7 @@ public class ConjureRandomCardFromSpellbookToBattlefieldEffectHandler
 
         Permanent permanent = new Permanent(conjuredCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
         if (gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
                 .anyMatch(candidate -> candidate.getId().equals(permanent.getId()))) {
             entry.getCreatedPermanentIds().add(permanent.getId());

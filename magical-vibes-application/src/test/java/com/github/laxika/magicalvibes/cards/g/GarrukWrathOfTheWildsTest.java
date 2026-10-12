@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.s.SarkhanTheMasterless;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GarrukWrathOfTheWilds.class, GrizzlyBears.class})
+@CardUsed({GarrukWrathOfTheWilds.class, GrizzlyBears.class, ThayanEvokers.class})
 class GarrukWrathOfTheWildsTest extends BaseCardTest {
 
     @Test
@@ -192,5 +193,22 @@ class GarrukWrathOfTheWildsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, garruk)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, sarkhan, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, garruk, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void draftingOntoTheBattlefieldDoesNotTriggerConjureAbilities() {
+        addReadyGarruk(2);
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
+                permanent -> permanent.getCard().getId().equals(choice.cards().getFirst().getId()));
+        assertThat(evokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

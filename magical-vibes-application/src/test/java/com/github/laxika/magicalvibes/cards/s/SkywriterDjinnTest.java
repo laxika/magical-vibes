@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.t.TolarianTerror;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +21,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SkywriterDjinn.class, Plains.class, Island.class, Forest.class, Swamp.class,
-        Mountain.class, TolarianTerror.class})
+        Mountain.class, TolarianTerror.class, ThayanEvokers.class})
 class SkywriterDjinnTest extends BaseCardTest {
 
     private static final Set<String> SPELLBOOK = Set.of(
@@ -167,5 +169,22 @@ class SkywriterDjinnTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Tolarian Terror");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(conjured);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each repetition of the conjure process triggers conjure abilities")
+    void eachRepetitionTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new SkywriterDjinn()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(3);
     }
 }

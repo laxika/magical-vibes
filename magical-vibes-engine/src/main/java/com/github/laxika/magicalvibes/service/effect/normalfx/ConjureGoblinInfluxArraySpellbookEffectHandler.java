@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureGoblinInfluxArraySpellbookEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -45,6 +46,7 @@ public class ConjureGoblinInfluxArraySpellbookEffectHandler implements NormalEff
             "Beetleback Chief", "Goblin Instigator", "Legion Warboss");
 
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,6 +64,7 @@ public class ConjureGoblinInfluxArraySpellbookEffectHandler implements NormalEff
         hand.add(createSpellbookCard(cardName, entry.getControllerId()));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a random card from its spellbook into their hand."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
     }
 
     private Card createSpellbookCard(String name, UUID ownerId) {

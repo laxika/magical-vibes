@@ -18,6 +18,6 @@ public class FollowTheTracks extends Card {
             "Gate to Manorborn");
 
     public FollowTheTracks() {
-        addEffect(EffectSlot.SPELL, new DraftCardFromSpellbookEffect(SPELLBOOK, false, true));
+        addEffect(EffectSlot.SPELL, DraftCardFromSpellbookEffect.conjureToBattlefield(SPELLBOOK));
     }
 }

@@ -751,27 +751,32 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** The controller chooses one of the three cards offered from a spellbook. */
+    /**
+     * The controller chooses one of the cards offered from a spellbook. {@code conjure} marks the
+     * chosen card as conjured rather than drafted, so "whenever you conjure" abilities trigger.
+     */
     record SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards,
                                 String sourceCardName, boolean revealChosenCard,
                                 boolean exileChosenCard,
                                 boolean putChosenCardOntoBattlefield,
-                                java.util.List<CardEffect> chosenCardEffects) implements PendingInteraction {
+                                java.util.List<CardEffect> chosenCardEffects,
+                                boolean conjure) implements PendingInteraction {
 
         public SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards, String sourceCardName) {
-            this(playerId, cards, sourceCardName, false, false, false, java.util.List.of());
+            this(playerId, cards, sourceCardName, false, false, false, java.util.List.of(), false);
         }
 
         public SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards,
                                     String sourceCardName, boolean revealChosenCard) {
-            this(playerId, cards, sourceCardName, revealChosenCard, false, false, java.util.List.of());
+            this(playerId, cards, sourceCardName, revealChosenCard, false, false, java.util.List.of(),
+                    false);
         }
 
         public SpellbookDraftChoice(UUID playerId, java.util.List<Card> cards,
                                     String sourceCardName, boolean revealChosenCard,
                                     boolean exileChosenCard) {
             this(playerId, cards, sourceCardName, revealChosenCard, exileChosenCard, false,
-                    java.util.List.of());
+                    java.util.List.of(), false);
         }
 
         public SpellbookDraftChoice {
@@ -5581,26 +5586,33 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Chooses exactly one card from the cards currently offered by a spellbook. */
+    /**
+     * Chooses cards from the cards currently offered by a spellbook. {@code conjure} marks the chosen
+     * cards as conjured rather than drafted, so "whenever you conjure" abilities trigger.
+     */
     record SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
                                DraftFromSpellbookEffect.DraftMode draftMode,
-                               int minCount, int maxCount, CardEffect chosenCardThenEffect)
+                               int minCount, int maxCount, CardEffect chosenCardThenEffect,
+                               boolean conjure)
             implements PendingInteraction {
 
         public SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt) {
             this(playerId, cards, prompt, DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND,
-                    1, 1, null);
+                    1, 1, null, false);
         }
 
         public SpellbookCardChoice(UUID playerId, java.util.List<Card> cards, String prompt,
                                    DraftFromSpellbookEffect.DraftMode draftMode) {
-            this(playerId, cards, prompt, draftMode, 1, 1, null);
+            this(playerId, cards, prompt, draftMode, 1, 1, null, false);
         }
 
         public SpellbookCardChoice {
             cards = java.util.List.copyOf(cards);
             if (minCount < 1 || maxCount < minCount || maxCount > cards.size()) {
                 throw new IllegalArgumentException("Invalid spellbook choice bounds");
+            }
+            if (conjure && draftMode != DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND) {
+                throw new IllegalArgumentException("Only cards put into hand unchanged can be conjured");
             }
         }
 

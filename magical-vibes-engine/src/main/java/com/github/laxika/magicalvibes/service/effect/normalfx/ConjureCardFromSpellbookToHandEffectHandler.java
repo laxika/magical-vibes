@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardFromSpellbookToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -49,6 +50,7 @@ public class ConjureCardFromSpellbookToHandEffectHandler implements NormalEffect
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SpellbookCardChoice(
                 entry.getControllerId(), spellbookCards,
-                "Choose a card from Charged Conjuration's spellbook."));
+                "Choose a card from Charged Conjuration's spellbook.",
+                DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND, 1, 1, null, true));
     }
 }

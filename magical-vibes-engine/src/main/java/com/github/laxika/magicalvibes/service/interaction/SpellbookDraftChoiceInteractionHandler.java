@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,7 @@ public class SpellbookDraftChoiceInteractionHandler
     private final CardRevealService cardRevealService;
     private final ExileService exileService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<PendingInteraction.SpellbookDraftChoice> handledType() {
@@ -90,8 +92,12 @@ public class SpellbookDraftChoiceInteractionHandler
         String destination = interaction.putChosenCardOntoBattlefield()
                 ? " onto the battlefield" : interaction.exileChosenCard() ? " into exile" : "";
         gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(interaction.playerId()) + " drafts ", chosen,
+                gameData.playerIdToName.get(interaction.playerId())
+                        + (interaction.conjure() ? " conjures " : " drafts "), chosen,
                 " from " + interaction.sourceCardName() + "'s spellbook" + destination + "."));
+        if (interaction.conjure()) {
+            triggerCollectionService.checkConjureTriggers(gameData, interaction.playerId(), 1);
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 }

@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -79,11 +80,14 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
 
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public ConjureSkywriterDjinnSpellbookEffectHandler(AmountEvaluationService amountEvaluationService,
-                                                        GameLogService gameLogService) {
+                                                        GameLogService gameLogService,
+                                                        TriggerCollectionService triggerCollectionService) {
         this.amountEvaluationService = amountEvaluationService;
         this.gameLogService = gameLogService;
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override
@@ -102,6 +106,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         hand.add(createSpellbookCard(cardName, entry.getControllerId()));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a random card from its spellbook into their hand."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
 
         int domain = amountEvaluationService.evaluate(gameData,
                 new BasicLandTypesAmongControlledLands(), AmountContext.forStackEntry(entry, null));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.g.GateOfTheBlackDragon;
 import com.github.laxika.magicalvibes.cards.g.GateToManorborn;
 import com.github.laxika.magicalvibes.cards.g.GateToSeatower;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.g.GateToTheCitadel;
 import com.github.laxika.magicalvibes.cards.g.GateToTumbledown;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FollowTheTracks.class, GateOfTheBlackDragon.class, GateToManorborn.class,
-        GateToSeatower.class, GateToTheCitadel.class, GateToTumbledown.class})
+        GateToSeatower.class, GateToTheCitadel.class, GateToTumbledown.class, ThayanEvokers.class})
 class FollowTheTracksTest extends BaseCardTest {
 
     @Test
@@ -75,5 +77,18 @@ class FollowTheTracksTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, chosen.getName());
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void conjuringAGateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.castFromHand(player1, new FollowTheTracks(), "{2}{G}");
+        harness.passBothPriorities();
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

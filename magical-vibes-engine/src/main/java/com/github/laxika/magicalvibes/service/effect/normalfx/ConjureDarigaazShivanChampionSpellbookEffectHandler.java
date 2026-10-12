@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDarigaazShivanChampionSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,6 +47,7 @@ public class ConjureDarigaazShivanChampionSpellbookEffectHandler implements Norm
             "Red Dragon");
 
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,6 +64,7 @@ public class ConjureDarigaazShivanChampionSpellbookEffectHandler implements Norm
         gameData.exiledCardEggCounters.put(card.getId(), 3);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a random card from its spellbook into exile face down with three egg counters."));
+        triggerCollectionService.checkConjureTriggers(gameData, ownerId, 1);
     }
 
     private Card createSpellbookCard(String name, UUID ownerId) {

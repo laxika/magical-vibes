@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,7 @@ public class SpellbookCardChoiceInteractionHandler
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<PendingInteraction.SpellbookCardChoice> handledType() {
@@ -72,9 +74,14 @@ public class SpellbookCardChoiceInteractionHandler
                 gameData.addCardToHand(player.getId(), selected);
             }
             gameData.interaction.clearAwaitingInput();
-            gameLogService.append(gameData, GameLog.text(player.getUsername() + " conjures "
+            gameLogService.append(gameData, GameLog.text(player.getUsername()
+                    + (interaction.conjure() ? " conjures " : " drafts ")
                     + String.join(", ", selectedCards.stream().map(Card::getName).toList())
                     + " into their hand."));
+            if (interaction.conjure()) {
+                triggerCollectionService.checkConjureTriggers(
+                        gameData, player.getId(), selectedCards.size());
+            }
             if (interaction.chosenCardThenEffect() != null) {
                 List<Card> hand = gameData.playerHands.get(player.getId());
                 List<Integer> validIndices = IntStream.range(0, hand.size())

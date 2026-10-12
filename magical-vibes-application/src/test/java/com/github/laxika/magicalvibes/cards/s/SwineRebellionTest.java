@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.f.FirstLittlePig;
 import com.github.laxika.magicalvibes.cards.t.ThirdLittlePig;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwineRebellion.class, FirstLittlePig.class, SecondLittlePig.class, ThirdLittlePig.class})
+@CardUsed({SwineRebellion.class, FirstLittlePig.class, SecondLittlePig.class, ThirdLittlePig.class, ThayanEvokers.class})
 class SwineRebellionTest extends BaseCardTest {
 
     @Test
@@ -124,5 +126,22 @@ class SwineRebellionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castAndResolveSorcery(player1, 0, 0);
+    }
+
+    @Test
+    void conjuringTwoCardsIntoHandTriggersConjureAbilitiesOnce() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        castSwineRebellion();
+
+        PendingInteraction.SpellbookCardChoice spellbookChoice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+        harness.handleMultipleCardsChosen(player1, spellbookChoice.cards().subList(0, 2).stream()
+                .map(Card::getId).toList());
+        PendingInteraction.RevealedHandChoice battlefieldChoice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        harness.handleCardChosen(player1, battlefieldChoice.validIndices().getFirst());
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

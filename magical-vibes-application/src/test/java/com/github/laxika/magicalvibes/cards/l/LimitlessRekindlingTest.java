@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.a.AquaticSubtlety;
 import com.github.laxika.magicalvibes.cards.c.CraterousStomp;
 import com.github.laxika.magicalvibes.cards.c.CircadianStruggle;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.r.RiteOfFlame;
 import com.github.laxika.magicalvibes.cards.y.ThoughtweftsCall;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LimitlessRekindling.class, AquaticSubtlety.class, CraterousStomp.class,
-        CircadianStruggle.class, ElvishElegy.class, RiteOfFlame.class, ThoughtweftsCall.class})
+        CircadianStruggle.class, ElvishElegy.class, RiteOfFlame.class, ThoughtweftsCall.class, ThayanEvokers.class})
 class LimitlessRekindlingTest extends BaseCardTest {
 
     @Test
@@ -60,5 +62,19 @@ class LimitlessRekindlingTest extends BaseCardTest {
             assertThat(gd.exilePlayWithoutPayingManaCost).contains(exiled.getId());
             assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());
         }
+    }
+
+    @Test
+    void conjuringIntoExileTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, java.util.List.of(new LimitlessRekindling()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

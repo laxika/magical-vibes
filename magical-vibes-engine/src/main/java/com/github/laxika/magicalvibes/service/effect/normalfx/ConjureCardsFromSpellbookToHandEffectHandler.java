@@ -52,6 +52,6 @@ public class ConjureCardsFromSpellbookToHandEffectHandler implements NormalEffec
                 entry.getControllerId(), spellbookCards,
                 "Choose " + conjure.count() + " cards from the spellbook.",
                 DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND,
-                conjure.count(), conjure.count(), conjure.chosenCardThenEffect()));
+                conjure.count(), conjure.count(), conjure.chosenCardThenEffect(), true));
     }
 }

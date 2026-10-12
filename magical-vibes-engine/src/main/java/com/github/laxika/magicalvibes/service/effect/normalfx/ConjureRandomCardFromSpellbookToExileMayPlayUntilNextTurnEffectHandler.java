@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +27,7 @@ public class ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffectHand
     private final ExileService exileService;
     private final ExileSupport exileSupport;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,5 +56,6 @@ public class ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffectHand
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a " + conjuredCard.getName()
                         + " card into exile (may play until end of next turn)."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
     }
 }

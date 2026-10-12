@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffec
     private final CardCatalog cardCatalog;
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,6 +58,7 @@ public class ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffec
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a " + conjuredCard.getName()
                         + " card into exile (may cast without paying its mana cost until end of turn)."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
     }
 
     private Card createCardIfImplemented(

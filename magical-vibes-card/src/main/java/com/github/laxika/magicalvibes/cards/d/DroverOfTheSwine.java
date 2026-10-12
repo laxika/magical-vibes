@@ -38,7 +38,7 @@ public class DroverOfTheSwine extends Card {
                 new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Conjure a card of your choice from the Three Pigs spellbook onto the battlefield",
-                                DraftCardFromSpellbookEffect.toBattlefield(SPELLBOOK, null)),
+                                DraftCardFromSpellbookEffect.conjureToBattlefield(SPELLBOOK)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Return up to three target Boar creature cards with different names from your graveyard to the battlefield",
                                 List.of(new ReturnTargetCardsFromGraveyardToBattlefieldEffect(

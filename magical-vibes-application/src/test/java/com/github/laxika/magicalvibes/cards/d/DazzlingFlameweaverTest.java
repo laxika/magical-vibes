@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BladeJuggler;
 import com.github.laxika.magicalvibes.cards.b.BodyCount;
 import com.github.laxika.magicalvibes.cards.c.CinderconeSmite;
 import com.github.laxika.magicalvibes.cards.h.Hackrobat;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.l.LightUpTheStage;
 import com.github.laxika.magicalvibes.cards.r.RafterDemon;
 import com.github.laxika.magicalvibes.cards.r.RixMaadiReveler;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({DazzlingFlameweaver.class, GrizzlyBears.class, BladeJuggler.class, BodyCount.class,
         DeadRevels.class, DrillBit.class, Hackrobat.class, LightUpTheStage.class,
         RafterDemon.class, RixMaadiReveler.class, SkewerTheCritics.class, SpawnOfMayhem.class,
-        SpikewheelAcrobat.class, CinderconeSmite.class})
+        SpikewheelAcrobat.class, CinderconeSmite.class, ThayanEvokers.class})
 class DazzlingFlameweaverTest extends BaseCardTest {
 
     @Test
@@ -217,5 +218,18 @@ class DazzlingFlameweaverTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void conjuringIntoExileTriggersConjureAbilities() {
+        harness.addToBattlefield(player1, new DazzlingFlameweaver());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        addAttacker(new GrizzlyBears());
+
+        runCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.ColossalPlow;
 import com.github.laxika.magicalvibes.cards.f.FiftyFeetOfRope;
 import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeatherArmor;
@@ -35,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         FiftyFeetOfRope.class, FurnaceOfRath.class, Gingerbrute.class, GrizzlyBears.class,
         JaceBeleren.class, LeatherArmor.class, MagistratesScepter.class, Millstone.class, OrazcaRelic.class,
         PyreOfHeroes.class, RaidersKarve.class, RelicAmulet.class, ReplicatingRing.class,
-        SpikedPitTrap.class, TreasureChest.class, WeaponRack.class, Whirlermaker.class})
+        SpikedPitTrap.class, TreasureChest.class, WeaponRack.class, Whirlermaker.class, ThayanEvokers.class})
 class BrazenBoardingTest extends BaseCardTest {
 
     @Test
@@ -146,5 +147,17 @@ class BrazenBoardingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    @Test
+    void conjuringTheMatchingCardTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castBrazenBoarding(target);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }
