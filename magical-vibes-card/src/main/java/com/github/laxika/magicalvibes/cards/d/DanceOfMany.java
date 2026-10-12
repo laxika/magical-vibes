@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyAndLinkToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,11 +32,11 @@ public class DanceOfMany extends Card {
                 "Target must be a nontoken creature"
         ))
                 // "When this enchantment enters, create a token that's a copy of target nontoken creature."
-                // The token and this enchantment become linked (see the leaves-battlefield triggers below).
+                // Every token created this way becomes linked to this enchantment (see the leaves-battlefield
+                // triggers below); with a token doubler, "the token" refers to all of them.
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenCopyAndLinkToSourceEffect())
                 // "When this enchantment leaves the battlefield, exile the token."
-                .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                        new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE))
+                .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ExileTokensCreatedWithSourceEffect())
                 // "At the beginning of your upkeep, sacrifice this enchantment unless you pay {U}{U}."
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new ForcedCostOrElseEffect(

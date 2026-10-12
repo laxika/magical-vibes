@@ -218,6 +218,23 @@ class DanceOfManyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Without a doubler, the token leaving sacrifices Dance and nothing else is exiled")
+    void undoubledTokenLeavingSacrificesDanceOnly() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castDanceCopying(harness.getPermanentId(player2, "Grizzly Bears"));
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, tokenCopy(player1)));
+        harness.clearPriorityPassed();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Dance of Many");
+        assertThat(findPermanent(player2, "Grizzly Bears")).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Leaving exiles every token created by a doubled copy ability")
     void leavingExilesAllDoubledTokens() {
         harness.addToBattlefield(player1, new DoublingSeason());

@@ -17,9 +17,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Resolves Dance of Many's enter-the-battlefield ability: create a token copy of the target nontoken
- * creature and forge the mutual leaves-the-battlefield bond between the enchantment and the token.
+ * creature and forge the mutual leaves-the-battlefield bond between the enchantment and every token
+ * created (recorded in {@code GameData.sourceCreatedTokens} for the enchantment's
+ * {@link com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect} trigger).
  */
 @Slf4j
 @Component
@@ -62,12 +66,15 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, entry.getControllerId(), tokenPermanent);
 
-        // Forge the bond: each permanent remembers the other so their leaves-battlefield triggers can
-        // find their partner.
-        if (sourceEnchantment != null) {
-            sourceEnchantment.setChosenPermanentId(tokenPermanent.getId());
-            tokenPermanent.setChosenPermanentId(sourceEnchantment.getId());
-        }
+            // Forge the bond for every token the ability creates (a token doubler makes several): the
+            // source tracks them all for its exile trigger, and each token remembers the source for its
+            // sacrifice trigger.
+            if (sourceEnchantment != null) {
+                gameData.sourceCreatedTokens
+                        .computeIfAbsent(sourceEnchantment.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                        .add(tokenPermanent.getId());
+                tokenPermanent.setChosenPermanentId(sourceEnchantment.getId());
+            }
 
             gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
             log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id, sourceCard.getName());
