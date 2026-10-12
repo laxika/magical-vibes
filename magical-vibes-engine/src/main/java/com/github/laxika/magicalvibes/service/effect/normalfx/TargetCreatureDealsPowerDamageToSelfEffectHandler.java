@@ -48,11 +48,12 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
         }
 
         int power = gameQueryService.getPowerBasedDamage(gameData, target);
+        // The creature is the damage source, so its lifelink, infect and damage triggers apply.
         StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, target.getCard(),
                 gameQueryService.findPermanentController(gameData, target.getId()),
-                target.getCard().getName(), List.of(), target.getId(), List.of());
+                target.getCard().getName() + "'s ability", List.of(), null, target.getId());
         damageEntry.setSourcePermanentSnapshot(target);
         int rawDamage = Math.multiplyExact(power, selfDamageEffect.powerMultiplier());
-        damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, target);
+        damageSupport.dealCreatureDamage(gameData, damageEntry, target, rawDamage, target);
     }
 }

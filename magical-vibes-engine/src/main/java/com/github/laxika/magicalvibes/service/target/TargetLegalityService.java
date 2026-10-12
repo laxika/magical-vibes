@@ -1862,25 +1862,32 @@ public class TargetLegalityService {
         return validTargets;
     }
 
-    /** Returns the opponents who control a legal permanent for one marked spell target group. */
+    /**
+     * Returns the opponents who may choose the target for one marked spell target group. The chosen
+     * opponent picks from every battlefield, so any opponent qualifies while the group has a legal
+     * permanent anywhere.
+     */
     public List<UUID> computeValidOpponentChosenTargetGroupPlayers(GameData gameData, Card card,
                                                                     UUID controllerId, int groupIndex,
                                                                     int xValue, boolean kicked) {
         if (gameQueryService.isPeaceTalksActive(gameData)) {
             return List.of();
         }
-        List<UUID> validPlayers = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!controllerId.equals(playerId)
-                    && !computeValidOpponentChosenTargetGroupPermanents(
-                    gameData, card, controllerId, playerId, groupIndex, xValue, kicked).isEmpty()) {
-                validPlayers.add(playerId);
-            }
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !controllerId.equals(playerId))
+                .toList();
+        if (opponentIds.isEmpty() || computeValidOpponentChosenTargetGroupPermanents(
+                gameData, card, controllerId, opponentIds.getFirst(), groupIndex, xValue, kicked).isEmpty()) {
+            return List.of();
         }
-        return validPlayers;
+        return opponentIds;
     }
 
-    /** Returns the legal permanents controlled by an opponent for one marked spell target group. */
+    /**
+     * Returns the permanents the chosen opponent may target for one marked spell target group. The
+     * opponent chooses from every battlefield, its own and other players' alike; the group's filter
+     * decides which of them are legal.
+     */
     public List<UUID> computeValidOpponentChosenTargetGroupPermanents(GameData gameData, Card card,
                                                                         UUID controllerId,
                                                                         UUID chosenOpponentId, int groupIndex,
@@ -1891,13 +1898,15 @@ public class TargetLegalityService {
             return List.of();
         }
         List<UUID> validTargets = new ArrayList<>();
-        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(chosenOpponentId, List.of())) {
-            try {
-                validateSpellTargetGroup(gameData, card, groupIndex, List.of(permanent.getId()),
-                        controllerId, xValue, kicked);
-                validTargets.add(permanent.getId());
-            } catch (IllegalArgumentException | IllegalStateException ignored) {
-                // The permanent simply does not satisfy this target group's filter.
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                try {
+                    validateSpellTargetGroup(gameData, card, groupIndex, List.of(permanent.getId()),
+                            controllerId, xValue, kicked);
+                    validTargets.add(permanent.getId());
+                } catch (IllegalArgumentException | IllegalStateException ignored) {
+                    // The permanent simply does not satisfy this target group's filter.
+                }
             }
         }
         return validTargets;
