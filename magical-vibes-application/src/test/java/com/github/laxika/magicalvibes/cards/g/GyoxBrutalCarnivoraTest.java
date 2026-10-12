@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GyoxBrutalCarnivora.class, GrizzlyBears.class, Shock.class, Island.class})
+@CardUsed({GyoxBrutalCarnivora.class, GrizzlyBears.class, Shock.class, Island.class, ThayanEvokers.class})
 class GyoxBrutalCarnivoraTest extends BaseCardTest {
 
     @Test
@@ -226,5 +227,25 @@ class GyoxBrutalCarnivoraTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(duplicate);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Conjuring the duplicates triggers conjure abilities once")
+    void conjuringDuplicatesTriggersConjureAbilitiesOnce() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new GyoxBrutalCarnivora());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent dying = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        dying.setCounterCount(CounterType.OIL, 2);
+        harness.setLibrary(player1, List.of(new Island()));
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, dying.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

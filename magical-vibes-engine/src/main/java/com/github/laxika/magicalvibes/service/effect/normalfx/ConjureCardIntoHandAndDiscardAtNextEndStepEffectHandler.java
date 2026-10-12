@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoHandAndDiscardAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ public class ConjureCardIntoHandAndDiscardAtNextEndStepEffectHandler implements 
 
     private final CardCatalog cardCatalog;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +41,7 @@ public class ConjureCardIntoHandAndDiscardAtNextEndStepEffectHandler implements 
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(entry.getControllerId()) + " conjures ", conjured,
                 " into their hand."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
 
         Card sourceCard = entry.getCard().createRuntimeCopy();
         sourceCard.clearRuntimeSpellTargets();

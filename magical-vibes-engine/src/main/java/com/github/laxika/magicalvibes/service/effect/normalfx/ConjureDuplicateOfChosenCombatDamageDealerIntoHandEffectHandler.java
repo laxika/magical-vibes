@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfChosenComba
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +27,7 @@ public class ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -82,5 +84,6 @@ public class ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler
         gameData.addCardToHand(controllerId, duplicate);
         gameLogService.append(gameData, GameLog.textCardText(
                 "A duplicate of ", duplicate, " is conjured into your hand."));
+        triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);
     }
 }

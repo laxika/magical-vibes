@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SmogSmasher.class, GrizzlyBears.class})
+@CardUsed({SmogSmasher.class, GrizzlyBears.class, ThayanEvokers.class})
 class SmogSmasherTest extends BaseCardTest {
 
     @Test
@@ -124,5 +125,19 @@ class SmogSmasherTest extends BaseCardTest {
 
         assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);
         assertThat(findPermanents(player1, "Smog Smasher")).containsExactly(source);
+    }
+
+    @Test
+    void conjuringTheDuplicateIntoExileTriggersConjureAbilities() {
+        addCreatureReady(player1, new SmogSmasher());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        bears.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

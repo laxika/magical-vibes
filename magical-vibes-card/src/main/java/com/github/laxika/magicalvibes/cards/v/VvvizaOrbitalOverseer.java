@@ -41,12 +41,12 @@ public class VvvizaOrbitalOverseer extends Card {
             )), false, false, false, 0, Set.of());
 
     public VvvizaOrbitalOverseer() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DraftFromSpellbookEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DraftFromSpellbookEffect.conjureOntoBattlefield(List.of(
                 AdagiaWindsweptBastion::new,
                 EvendoWakingHaven::new,
                 KavaronMemorialWorld::new,
                 SusurSecundiVoidAltar::new,
-                UthrosTitanicGodcore::new), 5));
+                UthrosTitanicGodcore::new)));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, LANDER);
     }
 }

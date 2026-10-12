@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShellfishScholar.class, BogRats.class, GrizzlyBears.class, ThinkTwice.class, Conspiracy.class})
+@CardUsed({ShellfishScholar.class, BogRats.class, GrizzlyBears.class, ThinkTwice.class, Conspiracy.class, ThayanEvokers.class})
 @DisplayName("Shellfish Scholar")
 class ShellfishScholarTest extends BaseCardTest {
 
@@ -163,5 +166,17 @@ class ShellfishScholarTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void conjuringThinkTwiceTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.enterBattlefieldAndReturn(player1, new ShellfishScholar());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Think Twice");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

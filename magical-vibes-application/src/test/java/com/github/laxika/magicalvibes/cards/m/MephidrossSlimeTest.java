@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MephidrossSlime.class})
+@CardUsed({MephidrossSlime.class, ThayanEvokers.class})
 class MephidrossSlimeTest extends BaseCardTest {
 
     @Test
@@ -113,5 +114,21 @@ class MephidrossSlimeTest extends BaseCardTest {
                 .containsEntry(duplicate.getId(), new CardPowerToughnessModifier(3, 3));
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Conjuring the copy into the graveyard triggers conjure abilities")
+    void conjuringTheCopyTriggersConjureAbilities() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent slime = harness.addToBattlefieldAndReturn(player1, new MephidrossSlime());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setLibrary(player1, List.of());
+
+        slime.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

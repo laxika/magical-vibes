@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class ConjureCardIntoTargetPlayerHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,5 +43,6 @@ public class ConjureCardIntoTargetPlayerHandEffectHandler implements NormalEffec
         gameData.addCardToHand(targetPlayerId, conjured);
         gameLogService.append(gameData, GameLog.textCardText(
                 "A card named ", conjured, " is conjured into their hand."));
+        triggerCollectionService.checkConjureTriggers(gameData, targetPlayerId, 1);
     }
 }

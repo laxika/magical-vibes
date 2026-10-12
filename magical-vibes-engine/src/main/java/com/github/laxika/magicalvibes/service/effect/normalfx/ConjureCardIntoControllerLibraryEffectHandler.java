@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoControllerLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class ConjureCardIntoControllerLibraryEffectHandler implements NormalEffe
 
     private final CardCatalog cardCatalog;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +55,7 @@ public class ConjureCardIntoControllerLibraryEffectHandler implements NormalEffe
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures a " + conjuredCard.getName() + " card into the top fifteen cards of their library."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
     }
 
     private void shuffleTopCards(java.util.List<Card> library, int depth) {

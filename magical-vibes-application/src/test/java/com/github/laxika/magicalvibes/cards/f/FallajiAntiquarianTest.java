@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FallajiAntiquarian.class, GrizzlyBears.class, Plains.class, SolRing.class})
+@CardUsed({FallajiAntiquarian.class, GrizzlyBears.class, Plains.class, SolRing.class, ThayanEvokers.class})
 class FallajiAntiquarianTest extends BaseCardTest {
 
     @Test
@@ -72,5 +73,19 @@ class FallajiAntiquarianTest extends BaseCardTest {
 
     private int graveyardIndex(Card card) {
         return gd.playerGraveyards.get(player1.getId()).indexOf(card);
+    }
+
+    @Test
+    void conjuringTheDuplicateIntoTheGraveyardTriggersConjureAbilities() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.enterBattlefieldAndReturn(player1, new FallajiAntiquarian());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        findDuplicate("Grizzly Bears", target.getOriginalCard().getId());
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

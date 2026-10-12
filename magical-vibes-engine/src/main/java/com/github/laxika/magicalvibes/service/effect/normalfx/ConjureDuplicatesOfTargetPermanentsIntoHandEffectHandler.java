@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutChosenCardFromHandOntoBatt
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,7 @@ public class ConjureDuplicatesOfTargetPermanentsIntoHandEffectHandler implements
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +55,7 @@ public class ConjureDuplicatesOfTargetPermanentsIntoHandEffectHandler implements
                     + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
         }
 
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), conjuredCards.size());
         if (entry.getXValue() < 5 || conjuredCards.isEmpty()) {
             return;
         }

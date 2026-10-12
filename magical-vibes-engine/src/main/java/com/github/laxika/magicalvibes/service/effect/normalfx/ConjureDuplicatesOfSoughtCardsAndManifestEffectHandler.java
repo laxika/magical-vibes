@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicatesOfSoughtCardsAndManifestEffect;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class ConjureDuplicatesOfSoughtCardsAndManifestEffectHandler implements NormalEffectHandlerBean {
 
     private final ManifestService manifestService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +41,7 @@ public class ConjureDuplicatesOfSoughtCardsAndManifestEffectHandler implements N
         duplicates.forEach(card -> gameData.addCardToHand(controllerId, card));
         Set<UUID> duplicateIds = duplicates.stream().map(Card::getId).collect(Collectors.toSet());
         gameData.playerHands.get(controllerId).removeIf(card -> duplicateIds.contains(card.getId()));
+        triggerCollectionService.checkConjureTriggers(gameData, controllerId, duplicates.size());
         manifestService.manifestCards(gameData, controllerId, entry.getCard(), duplicates);
     }
 }

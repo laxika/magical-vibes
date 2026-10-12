@@ -5611,8 +5611,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             if (minCount < 1 || maxCount < minCount || maxCount > cards.size()) {
                 throw new IllegalArgumentException("Invalid spellbook choice bounds");
             }
-            if (conjure && draftMode != DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND) {
-                throw new IllegalArgumentException("Only cards put into hand unchanged can be conjured");
+            if (conjure && draftMode == DraftFromSpellbookEffect.DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT) {
+                throw new IllegalArgumentException("Conjured spellbook cards are not changed perpetually");
             }
         }
 

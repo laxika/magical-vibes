@@ -75,44 +75,6 @@ me. Don't commit until I say so.
 
 ---
 
-## 6. Conjure triggers for non-spellbook conjure effects
-
-**Status:** open · **Found:** 2026-10-12, while adding spellbook conjure triggers
-
-**Failing tests:**
-- None yet. Add a Thayan Evokers (`ON_CONTROLLER_CONJURES`) test per handler family as it is fixed.
-
-**What's missing.** "Whenever you conjure one or more cards" abilities (Thayan Evokers, Crescendo
-Conductor) only trigger from `ConjureCardToHandEffectHandler`, `ConjureCardToBattlefieldEffectHandler`
-and the spellbook conjure handlers. About 60 other conjure handlers in `service/effect/normalfx`
-never call `TriggerCollectionService.checkConjureTriggers`: duplicates (`ConjureDuplicateOf*`,
-`ConjureDuplicatesOf*`, `Choose*AndConjureDuplicate*`, `*ThenConjureDuplicate*`), named and random
-cards (`ConjureCardNamed*`, `ConjureCardInto*`, `ConjureCardOnto*`, `ConjureCardTo{Graveyard,
-OpponentBattlefield}`, `ConjureCards{ToBattlefield,IntoTopOfLibraries,AttachedToOpposingCreatures}`,
-`ConjureRandomCreature*`, `ConjureRandomCardFromTargetPlayerLibrary`, `ConjurePowerNineIntoLibrary`),
-and combined effects (`EachOpponentSacrifices…ConjuresDuplicates`, `EachPlayerDiscardsHand…Conjures…`,
-`ExileAnotherCreatureAndConjureRandomCreature`, `PayXManaConjure…AndCloak`,
-`SeekLibraryAndConjureDuplicatesInGraveyard`, `ReturnCardAndConjureOpponentGraveyardDuplicate`,
-`TargetPlayerSacrifices…ThenConjuresDuplicate`). The rule is one trigger check per conjure event,
-whatever the destination, passing the number of cards conjured in that event.
-
-**Why it's large.** Many handlers, and the conjuring player isn't always the effect's controller:
-"each opponent conjures", "target player conjures" and "conjure into target player's hand" need the
-right player passed to `checkConjureTriggers`. Effects that conjure for several players need one
-check per player. Look up the official ruling for any wording where it's unclear who conjures.
-
-**Prompt to start it:**
-
-```
-Implement conjure triggers for the non-spellbook conjure effects (missing-features-to-do.md,
-entry 6). Every conjure handler must call TriggerCollectionService.checkConjureTriggers once per
-conjure event for the player who conjures, with the number of cards conjured. Check each card's
-oracle text for who conjures. Add Thayan Evokers trigger tests per handler family. Don't run the
-full suite; ask me. Don't commit until I say so.
-```
-
----
-
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringS
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ public class ConjureDuplicateOfTriggeringSpellIntoHandEffectHandler implements N
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,5 +52,6 @@ public class ConjureDuplicateOfTriggeringSpellIntoHandEffectHandler implements N
 
         gameLogService.append(gameData, GameLog.textCardText(
                 "A duplicate of ", duplicate, " is conjured into your hand."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
     }
 }

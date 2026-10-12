@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CloneCrafter.class, Forest.class, GrizzlyBears.class, Unsummon.class})
+@CardUsed({CloneCrafter.class, Forest.class, GrizzlyBears.class, Unsummon.class, ThayanEvokers.class})
 class CloneCrafterTest extends BaseCardTest {
 
     @Test
@@ -103,5 +105,21 @@ class CloneCrafterTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCreature);
+    }
+
+    @Test
+    void conjuringTheRandomCreatureTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setLibrary(player2, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new CloneCrafter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

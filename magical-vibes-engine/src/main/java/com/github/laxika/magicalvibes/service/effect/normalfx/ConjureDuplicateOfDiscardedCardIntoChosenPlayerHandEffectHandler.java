@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfDiscardedCa
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler
     private final PlayerInputService playerInputService;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,5 +79,6 @@ public class ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler
         gameData.addCardToHand(recipientId, copy);
         gameLogService.append(gameData, GameLog.cardThen(copy, " is conjured into "
                 + gameData.playerIdToName.get(recipientId) + "'s hand."));
+        triggerCollectionService.checkConjureTriggers(gameData, recipientId, 1);
     }
 }

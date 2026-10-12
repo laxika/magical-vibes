@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ public class ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffectHan
         implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,6 +42,7 @@ public class ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffectHan
         Permanent permanent = new Permanent(card);
         battlefieldEntryService.putPermanentOntoBattlefield(
                 gameData, controllerId, permanent, conjure.enterTappedTypes());
+        triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);
         if (card.hasType(CardType.LAND)) {
             battlefieldEntryService.processLandETBEffects(gameData, controllerId, card);
         } else {

@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AceFlockbringer.class, AirElemental.class, GrizzlyBears.class, Counterspell.class})
+@CardUsed({AceFlockbringer.class, AirElemental.class, GrizzlyBears.class, Counterspell.class, ThayanEvokers.class})
 class AceFlockbringerTest extends BaseCardTest {
 
     @Test
@@ -153,5 +155,19 @@ class AceFlockbringerTest extends BaseCardTest {
             assertThat(card.getName()).isEqualTo("Grizzly Bears");
             assertThat(card.hasKeyword(Keyword.FLYING)).isTrue();
         });
+    }
+
+    @Test
+    void conjuringTheFlyingDuplicateTriggersConjureAbilities() {
+        addCreatureReady(player1, new AceFlockbringer());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        castGrizzlyBears();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

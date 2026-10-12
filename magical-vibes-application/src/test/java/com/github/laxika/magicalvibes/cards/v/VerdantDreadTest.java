@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VerdantDread.class, Forest.class, GrizzlyBears.class})
+@CardUsed({VerdantDread.class, Forest.class, GrizzlyBears.class, ThayanEvokers.class})
 class VerdantDreadTest extends BaseCardTest {
 
     @Test
@@ -227,5 +228,22 @@ class VerdantDreadTest extends BaseCardTest {
                 .containsExactly(untouchedFirst, untouchedSecond);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(Permanent::isManifested).hasSize(3);
+    }
+
+    @Test
+    void conjuringOntoTheBattlefieldTriggersConjureAbilities() {
+        harness.addToBattlefieldAndReturn(player1, new VerdantDread());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof VerdantDread)
+                .hasSize(2);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

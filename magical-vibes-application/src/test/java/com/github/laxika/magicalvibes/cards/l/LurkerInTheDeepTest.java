@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LurkerInTheDeep.class, Island.class, GrizzlyBears.class, SeekNewKnowledge.class})
+@CardUsed({LurkerInTheDeep.class, Island.class, GrizzlyBears.class, SeekNewKnowledge.class, ThayanEvokers.class})
 class LurkerInTheDeepTest extends BaseCardTest {
 
     @Test
@@ -199,5 +200,20 @@ class LurkerInTheDeepTest extends BaseCardTest {
 
         assertThat(lurker.getCounterCount(CounterType.TIME)).isEqualTo(3);
         assertThat(gqs.isCreature(gd, lurker)).isTrue();
+    }
+
+    @Test
+    void conjuringTheSoughtDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setLibrary(player1, List.of(new Island(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LurkerInTheDeep()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(Permanent::isManifested);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

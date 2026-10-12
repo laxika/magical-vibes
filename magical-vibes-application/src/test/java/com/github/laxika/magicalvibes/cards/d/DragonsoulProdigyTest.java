@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DragonsoulProdigy.class, DirgurIslandDragon.class})
+@CardUsed({DragonsoulProdigy.class, DirgurIslandDragon.class, ThayanEvokers.class})
 class DragonsoulProdigyTest extends BaseCardTest {
 
     @Test
@@ -69,5 +70,22 @@ class DragonsoulProdigyTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         resolveStack();
+    }
+
+    @Test
+    void conjuringTheOmenDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new DragonsoulProdigy(), new DirgurIslandDragon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castWithAlternateCost(player1, 0, List.of());
+        resolveStack();
+
+        assertThat(findPermanent(player1, "Dirgur Island Dragon")).isNotNull();
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

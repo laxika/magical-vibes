@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +39,7 @@ public class ExileAnotherCreatureAndConjureRandomCreatureEffectHandler
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -98,6 +100,7 @@ public class ExileAnotherCreatureAndConjureRandomCreatureEffectHandler
         Card conjuredCard = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).createCard();
         Permanent conjuredPermanent = new Permanent(conjuredCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, conjuredPermanent);
+        triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);
         if (gameQueryService.findPermanentById(gameData, conjuredPermanent.getId()) == null) {
             return;
         }

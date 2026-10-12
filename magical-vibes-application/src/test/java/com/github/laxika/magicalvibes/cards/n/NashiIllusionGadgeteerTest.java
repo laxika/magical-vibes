@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NashiIllusionGadgeteer.class, GrizzlyBears.class, Forest.class})
+@CardUsed({NashiIllusionGadgeteer.class, GrizzlyBears.class, Forest.class, ThayanEvokers.class})
 class NashiIllusionGadgeteerTest extends BaseCardTest {
 
     @Test
@@ -62,5 +64,17 @@ class NashiIllusionGadgeteerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest()));
+
+        castNashi();
+        harness.handleGraveyardCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

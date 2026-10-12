@@ -19,7 +19,7 @@ import java.util.Set;
 public class SaintElenda extends Card {
 
     public SaintElenda() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DraftFromSpellbookEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DraftFromSpellbookEffect.conjureIntoHand(
                 List.of(
                         new DraftFromSpellbookEffect.SpellbookCard("M21", "17"),
                         new DraftFromSpellbookEffect.SpellbookCard("DOM", "22"),

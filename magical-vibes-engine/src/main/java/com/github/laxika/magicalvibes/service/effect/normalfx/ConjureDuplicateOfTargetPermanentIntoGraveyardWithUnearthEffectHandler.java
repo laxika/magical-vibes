@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetPerma
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,7 @@ public class ConjureDuplicateOfTargetPermanentIntoGraveyardWithUnearthEffectHand
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,7 +58,10 @@ public class ConjureDuplicateOfTargetPermanentIntoGraveyardWithUnearthEffectHand
         Card duplicate = target.getCard().createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
         duplicate.freeze();
-        if (!graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), duplicate)) {
+        boolean addedToGraveyard = graveyardService.addCardToGraveyard(
+                gameData, entry.getControllerId(), duplicate);
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        if (!addedToGraveyard) {
             return;
         }
 

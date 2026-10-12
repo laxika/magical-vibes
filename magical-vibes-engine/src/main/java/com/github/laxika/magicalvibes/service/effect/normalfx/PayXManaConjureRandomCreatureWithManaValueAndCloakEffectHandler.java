@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -45,6 +46,7 @@ public class PayXManaConjureRandomCreatureWithManaValueAndCloakEffectHandler
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final Map<Integer, List<CardPrinting>> candidatesByManaValue = new ConcurrentHashMap<>();
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -115,6 +117,7 @@ public class PayXManaConjureRandomCreatureWithManaValueAndCloakEffectHandler
 
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(entry.getControllerId()) + " conjures and cloaks a creature."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
     }
 
     private void beginXPrompt(GameData gameData, UUID controllerId, String cardName) {

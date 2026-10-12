@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHa
 
     private final DiscardHandEffectHandler discardHandEffectHandler;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,6 +65,7 @@ public class EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHa
                 gameLogService.append(gameData, GameLog.cardThen(duplicate, " is conjured into "
                         + gameData.playerIdToName.get(playerId) + "'s hand."));
             }
+            triggerCollectionService.checkConjureTriggers(gameData, playerId, conjure.count());
         }
     }
 }

@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JuggernautPeddler.class, Juggernaut.class, Forest.class, GrizzlyBears.class})
+@CardUsed({JuggernautPeddler.class, Juggernaut.class, Forest.class, GrizzlyBears.class, ThayanEvokers.class})
 class JuggernautPeddlerTest extends BaseCardTest {
 
     @Test
@@ -133,5 +135,27 @@ class JuggernautPeddlerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The target player conjures Juggernaut, so only their conjure abilities trigger")
+    void targetPlayersConjureAbilitiesTrigger() {
+        Permanent ownEvokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent targetEvokers = harness.addToBattlefieldAndReturn(player2, new ThayanEvokers());
+        harness.setHand(player1, List.of(new JuggernautPeddler()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Juggernaut");
+        assertThat(targetEvokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(ownEvokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

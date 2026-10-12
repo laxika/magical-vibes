@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GorgingVulture;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.l.LilianasElite;
 import com.github.laxika.magicalvibes.cards.l.LockedInTheCemetery;
 import com.github.laxika.magicalvibes.cards.n.NagaOracle;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.cards.w.Wonder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -37,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         DurableCoilbug.class, FearOfDeath.class, GorgingVulture.class, LilianasElite.class,
         LockedInTheCemetery.class, NagaOracle.class, NecroticWound.class, ObsessiveStitcher.class,
         ReassemblingSkeleton.class, StrategicPlanning.class, UnmarkedGrave.class, Wonder.class,
-        Divination.class, Forest.class, GrizzlyBears.class, HillGiant.class, Shock.class, Spellbook.class})
+        Divination.class, Forest.class, GrizzlyBears.class, HillGiant.class, Shock.class, Spellbook.class, ThayanEvokers.class})
 class BindToSecrecyTest extends BaseCardTest {
 
     private static final List<String> SPELLBOOK = List.of(
@@ -137,5 +139,24 @@ class BindToSecrecyTest extends BaseCardTest {
         Card drafted = choice.cards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
         assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new BindToSecrecy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 1, new int[]{1}, opponentCard.getId(),
+                List.of());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears") && card.isTokenCard());
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

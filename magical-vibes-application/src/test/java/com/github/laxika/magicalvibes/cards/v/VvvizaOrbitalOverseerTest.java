@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.e.EvendoWakingHaven;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.cards.k.KavaronMemorialWorld;
 import com.github.laxika.magicalvibes.cards.s.SusurSecundiVoidAltar;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VvvizaOrbitalOverseer.class, GrizzlyBears.class, Clone.class, Forest.class, SoulWarden.class,
         AdagiaWindsweptBastion.class, EvendoWakingHaven.class, KavaronMemorialWorld.class,
-        SusurSecundiVoidAltar.class, UthrosTitanicGodcore.class})
+        SusurSecundiVoidAltar.class, UthrosTitanicGodcore.class, ThayanEvokers.class})
 class VvvizaOrbitalOverseerTest extends BaseCardTest {
 
     @Test
@@ -167,5 +168,17 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         resolveAllTriggers();
         return findPermanent(player1, "Lander");
+    }
+
+    @Test
+    void conjuringAPlanetTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.enterBattlefieldAndReturn(player1, new VvvizaOrbitalOverseer());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Adagia, Windswept Bastion");
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Adagia, Windswept Bastion")).isNotNull();
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

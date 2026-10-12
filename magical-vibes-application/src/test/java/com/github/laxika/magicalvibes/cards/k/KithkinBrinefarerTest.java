@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.BondBeetle;
 import com.github.laxika.magicalvibes.cards.h.HardenedBonds;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.t.TopsoilTurner;
 import com.github.laxika.magicalvibes.cards.y.ThoughtweftsCall;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KithkinBrinefarer.class, ThoughtweftsCall.class, TopsoilTurner.class, HardenedBonds.class, BondBeetle.class})
+@CardUsed({KithkinBrinefarer.class, ThoughtweftsCall.class, TopsoilTurner.class, HardenedBonds.class, BondBeetle.class, ThayanEvokers.class})
 class KithkinBrinefarerTest extends BaseCardTest {
 
     @Test
@@ -152,4 +154,21 @@ class KithkinBrinefarerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        harness.addToBattlefield(player1, new KithkinBrinefarer());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setLibrary(player1, List.of(new KithkinBrinefarer()));
+        harness.setHand(player1, List.of(new ThoughtweftsCall()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Kithkin Brinefarer"))
+                .hasSize(2);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
 }

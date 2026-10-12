@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureCardOntoTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class ConjureDuplicateOfTargetCreatureCardOntoTopOfLibraryEffectHandler
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,6 +70,7 @@ public class ConjureDuplicateOfTargetCreatureCardOntoTopOfLibraryEffectHandler
                     return Set.copyOf(merged);
                 });
         library.addFirst(duplicate);
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
         gameLogService.append(gameData, GameLog.textCardText(
                 "A duplicate of ", targetCard, " is conjured onto the top of your library."));
     }

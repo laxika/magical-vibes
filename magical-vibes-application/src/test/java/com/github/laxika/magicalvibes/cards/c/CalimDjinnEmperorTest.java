@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CalimDjinnEmperor.class, GrizzlyBears.class})
+@CardUsed({CalimDjinnEmperor.class, GrizzlyBears.class, ThayanEvokers.class})
 class CalimDjinnEmperorTest extends BaseCardTest {
 
     @Test
@@ -147,5 +148,28 @@ class CalimDjinnEmperorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(conjured);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+    }
+
+    @Test
+    @DisplayName("Conjuring Calim into the library triggers conjure abilities")
+    void conjuringCalimTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CalimDjinnEmperor()));
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .contains("Calim, Djinn Emperor");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

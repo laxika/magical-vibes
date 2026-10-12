@@ -45,11 +45,11 @@ public class ConjureRandomCreatureOfEachManaValueToBattlefieldEffectHandler
             return;
         }
 
-        List<CardEffect> conjures = new ArrayList<>();
+        List<String> names = new ArrayList<>();
         for (int manaValue = 1; manaValue <= maxManaValue; manaValue++) {
-            findRandomCreatureName(manaValue).ifPresent(name ->
-                    conjures.add(new ConjureCardToBattlefieldEffect(name)));
+            findRandomCreatureName(manaValue).ifPresent(names::add);
         }
+        List<CardEffect> conjures = ConjureCardToBattlefieldEffect.asOneEvent(names);
 
         int index = entry.getEffectsToResolve().indexOf(effect);
         if (index < 0) {

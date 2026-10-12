@@ -45,7 +45,8 @@ public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandle
 
         Permanent permanent = new Permanent(conjuredCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
-        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
+        triggerCollectionService.checkConjureTriggers(
+                gameData, entry.getControllerId(), conjure.conjureEventCardCount());
 
         if (gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of()).stream()
                 .anyMatch(candidate -> candidate.getId().equals(permanent.getId()))) {

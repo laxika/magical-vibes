@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ViconiaNightsingersDisciple.class, Forest.class, Plains.class, GrizzlyBears.class,
-        Island.class, Mountain.class, SteadfastPaladin.class, Swamp.class, YouComeToARiver.class})
+        Island.class, Mountain.class, SteadfastPaladin.class, Swamp.class, YouComeToARiver.class, ThayanEvokers.class})
 class ViconiaNightsingersDiscipleTest extends BaseCardTest {
 
     @Test
@@ -262,5 +263,28 @@ class ViconiaNightsingersDiscipleTest extends BaseCardTest {
         harness.activateAbility(player1, 0, abilityIndex, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
+    }
+
+    @Test
+    void greenSpecializationDuplicateTriggersConjureAbilities() {
+        harness.addToBattlefield(player1, new ViconiaNightsingersDisciple());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 5, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .contains("Grizzly Bears");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

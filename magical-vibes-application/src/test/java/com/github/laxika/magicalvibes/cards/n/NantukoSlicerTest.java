@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NantukoSlicer.class, GrizzlyBears.class, Shock.class})
+@CardUsed({NantukoSlicer.class, GrizzlyBears.class, Shock.class, ThayanEvokers.class})
 class NantukoSlicerTest extends BaseCardTest {
 
     @Test
@@ -190,5 +192,28 @@ class NantukoSlicerTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.nontokenCreatureDeathCountThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    void kickedDuplicateConjureTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Shock ownCard = new Shock();
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new NantukoSlicer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .contains("Grizzly Bears");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

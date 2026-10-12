@@ -6,15 +6,19 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ConjureCardInGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
+    private final TriggerCollectionService triggerCollectionService;
 
-    public ConjureCardInGraveyardEffectHandler(GraveyardService graveyardService) {
+    public ConjureCardInGraveyardEffectHandler(GraveyardService graveyardService,
+                                               TriggerCollectionService triggerCollectionService) {
         this.graveyardService = graveyardService;
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override
@@ -29,5 +33,6 @@ public class ConjureCardInGraveyardEffectHandler implements NormalEffectHandlerB
         card.setOwnerId(entry.getControllerId());
         card.freeze();
         graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), card);
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
     }
 }

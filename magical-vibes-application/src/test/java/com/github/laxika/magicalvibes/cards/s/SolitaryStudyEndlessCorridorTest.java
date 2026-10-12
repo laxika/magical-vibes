@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SolitaryStudyEndlessCorridor.class, GrizzlyBears.class})
+@CardUsed({SolitaryStudyEndlessCorridor.class, GrizzlyBears.class, ThayanEvokers.class})
 class SolitaryStudyEndlessCorridorTest extends BaseCardTest {
 
     @Test
@@ -126,5 +127,22 @@ class SolitaryStudyEndlessCorridorTest extends BaseCardTest {
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.ROOM))
                 .findFirst().orElseThrow();
+    }
+
+    @Test
+    void endlessCorridorDuplicateTriggersConjureAbilities() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent room = castRoom(0);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(SolitaryStudyEndlessCorridor.class::isInstance);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrototypeX8.class, GrizzlyBears.class, Unsummon.class})
+@CardUsed({PrototypeX8.class, GrizzlyBears.class, Unsummon.class, ThayanEvokers.class})
 class PrototypeX8Test extends BaseCardTest {
 
     @Test
@@ -167,5 +168,24 @@ class PrototypeX8Test extends BaseCardTest {
                     assertThat(duplicate.getCard().hasType(CardType.ARTIFACT)).isTrue();
                     assertThat(duplicate.getCard().getSubtypes()).contains(CardSubtype.ROBOT);
                 });
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new PrototypeX8(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Grizzly Bears"));
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

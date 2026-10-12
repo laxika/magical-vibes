@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FuturistSpellthief.class, Shock.class, GrizzlyBears.class})
+@CardUsed({FuturistSpellthief.class, Shock.class, GrizzlyBears.class, ThayanEvokers.class})
 class FuturistSpellthiefTest extends BaseCardTest {
 
     @Test
@@ -169,5 +171,18 @@ class FuturistSpellthiefTest extends BaseCardTest {
             }
         }
         throw new AssertionError("Conjured duplicate not found in hand");
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Shock shock = new Shock();
+        castSpellthiefTargeting(shock);
+        harness.handlePermanentChosen(player1, shock.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(Card::isTokenCard);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

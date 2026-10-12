@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.r.RhysticStudy;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArchivalWhorl.class, RhysticStudy.class, GrizzlyBears.class})
+@CardUsed({ArchivalWhorl.class, RhysticStudy.class, GrizzlyBears.class, ThayanEvokers.class})
 class ArchivalWhorlTest extends BaseCardTest {
 
     @Test
@@ -103,5 +105,21 @@ class ArchivalWhorlTest extends BaseCardTest {
         }
         harness.setLibrary(player1, library);
         harness.setLibrary(player2, opponentLibrary);
+    }
+
+    @Test
+    @DisplayName("The gift recipient conjures Rhystic Study, so only their conjure abilities trigger")
+    void giftRecipientConjuresRhysticStudy() {
+        harness.setHand(player1, List.of(new ArchivalWhorl()));
+        setLibraries(20);
+        Permanent ownEvokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent opponentEvokers = harness.addToBattlefieldAndReturn(player2, new ThayanEvokers());
+
+        cast(true);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Rhystic Study")).isEqualTo(1);
+        assertThat(opponentEvokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(ownEvokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

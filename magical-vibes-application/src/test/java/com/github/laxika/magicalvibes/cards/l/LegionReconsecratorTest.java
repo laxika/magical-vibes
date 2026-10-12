@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.m.Mortivore;
 import com.github.laxika.magicalvibes.cards.n.NorwoodRanger;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LegionReconsecrator.class, GrizzlyBears.class, SavannahLions.class, WrathOfGod.class,
-        Mortivore.class, NorwoodRanger.class})
+        Mortivore.class, NorwoodRanger.class, ThayanEvokers.class})
 class LegionReconsecratorTest extends BaseCardTest {
 
     @Test
@@ -192,5 +193,21 @@ class LegionReconsecratorTest extends BaseCardTest {
     private void addReadyLegion() {
         Permanent legion = harness.addToBattlefieldAndReturn(player1, new LegionReconsecrator());
         legion.setSummoningSick(false);
+    }
+
+    @Test
+    void conjuringTheSkeletonDuplicateTriggersConjureAbilities() {
+        addReadyLegion();
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

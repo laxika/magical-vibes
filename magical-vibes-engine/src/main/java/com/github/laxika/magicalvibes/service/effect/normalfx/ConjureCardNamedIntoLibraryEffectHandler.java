@@ -60,6 +60,7 @@ public class ConjureCardNamedIntoLibraryEffectHandler implements NormalEffectHan
         }
 
         triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, controllerId, conjuredCount);
+        triggerCollectionService.checkConjureTriggers(gameData, controllerId, conjuredCount);
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures " + conjuredCount + " card" + (conjuredCount == 1 ? "" : "s")

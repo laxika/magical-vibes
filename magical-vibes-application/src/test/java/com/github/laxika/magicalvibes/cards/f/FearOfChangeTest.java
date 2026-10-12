@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FearOfChange.class, GrizzlyBears.class})
+@CardUsed({FearOfChange.class, GrizzlyBears.class, ThayanEvokers.class})
 class FearOfChangeTest extends BaseCardTest {
 
     @Test
@@ -124,4 +125,17 @@ class FearOfChangeTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("Conjuring the random creature triggers conjure abilities")
+    void conjuringTheCreatureTriggersConjureAbilities() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent evokers = addCreatureReady(player1, new ThayanEvokers());
+
+        castFearOfChange();
+        harness.handlePermanentChosen(player1, bear.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
 }

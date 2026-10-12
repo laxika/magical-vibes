@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpellchainScatter.class, Shock.class, LavaAxe.class, SliverConstruct.class})
+@CardUsed({SpellchainScatter.class, Shock.class, LavaAxe.class, SliverConstruct.class, ThayanEvokers.class})
 class SpellchainScatterTest extends BaseCardTest {
 
     @Test
@@ -194,5 +196,20 @@ class SpellchainScatterTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new SpellchainScatter(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Shock") && card.isTokenCard());
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

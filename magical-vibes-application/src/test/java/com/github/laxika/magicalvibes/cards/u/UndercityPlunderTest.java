@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UndercityPlunder.class, Forest.class})
+@CardUsed({UndercityPlunder.class, Forest.class, ThayanEvokers.class})
 class UndercityPlunderTest extends BaseCardTest {
 
     @Test
@@ -144,5 +146,22 @@ class UndercityPlunderTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class))
                 .isNotNull();
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersOnlyTheCastersConjureAbilities() {
+        Permanent ownEvokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent opponentsEvokers = harness.addToBattlefieldAndReturn(player2, new ThayanEvokers());
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new Forest())));
+        cast();
+
+        harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(ownEvokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(opponentsEvokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

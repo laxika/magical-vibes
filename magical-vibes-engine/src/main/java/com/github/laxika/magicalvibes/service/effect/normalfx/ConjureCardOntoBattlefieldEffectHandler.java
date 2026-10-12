@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class ConjureCardOntoBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,6 +39,9 @@ public class ConjureCardOntoBattlefieldEffectHandler implements NormalEffectHand
         } else {
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, entry.getControllerId(), card, null, false);
+        }
+        if (conjure.conjure()) {
+            triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
         }
     }
 }

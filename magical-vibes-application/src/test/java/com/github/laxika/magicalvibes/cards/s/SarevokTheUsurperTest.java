@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SarevokTheUsurper.class, Forest.class, GrizzlyBears.class, Swamp.class,
-        Plains.class, Island.class, Mountain.class, ShockingGrasp.class, CounselOfTheSoratami.class})
+        Plains.class, Island.class, Mountain.class, ShockingGrasp.class, CounselOfTheSoratami.class, ThayanEvokers.class})
 class SarevokTheUsurperTest extends BaseCardTest {
 
     @Test
@@ -244,5 +245,23 @@ class SarevokTheUsurperTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+    }
+
+    @Test
+    void conjuringTwoDuplicatesIntoTheGraveyardTriggersConjureAbilitiesOnce() {
+        harness.addToBattlefield(player1, new SarevokTheUsurper());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new Swamp()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Grizzly Bears"))
+                .hasSize(3);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCardReturnedFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ public class ConjureDuplicateOfCardReturnedFromGraveyardToHandEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,5 +38,6 @@ public class ConjureDuplicateOfCardReturnedFromGraveyardToHandEffectHandler
         gameData.addCardToHand(entry.getControllerId(), copy);
         gameLogService.append(gameData, GameLog.cardThen(copy, " is conjured into "
                 + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VonaDeIedoTheAntifex.class, Forest.class, GrizzlyBears.class})
+@CardUsed({VonaDeIedoTheAntifex.class, Forest.class, GrizzlyBears.class, ThayanEvokers.class})
 class VonaDeIedoTheAntifexTest extends BaseCardTest {
 
     @Test
@@ -71,5 +72,38 @@ class VonaDeIedoTheAntifexTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    @Test
+    void discardingToConjureTheDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, new ArrayList<>(List.of(new VonaDeIedoTheAntifex(), new Forest())));
+        addMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    void decliningTheDiscardDoesNotTriggerConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, new ArrayList<>(List.of(new VonaDeIedoTheAntifex(), new Forest())));
+        addMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

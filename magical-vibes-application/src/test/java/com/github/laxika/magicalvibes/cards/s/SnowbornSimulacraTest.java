@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SnowbornSimulacra.class, GrizzlyBears.class, PropheticPrism.class})
+@CardUsed({SnowbornSimulacra.class, GrizzlyBears.class, PropheticPrism.class, ThayanEvokers.class})
 class SnowbornSimulacraTest extends BaseCardTest {
 
     @Test
@@ -230,5 +231,21 @@ class SnowbornSimulacraTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().getId().equals(chosenId))
                 .singleElement()
                 .satisfies(permanent -> assertThat(permanent.getEnteredFromZone()).isEqualTo(Zone.HAND));
+    }
+
+    @Test
+    void conjuringSeveralDuplicatesTriggersConjureAbilitiesOnce() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new SnowbornSimulacra()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 2, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

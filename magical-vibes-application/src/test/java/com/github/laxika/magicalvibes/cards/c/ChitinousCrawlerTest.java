@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +19,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChitinousCrawler.class, GrizzlyBears.class, Plains.class})
+@CardUsed({ChitinousCrawler.class, GrizzlyBears.class, Plains.class, ThayanEvokers.class})
 class ChitinousCrawlerTest extends BaseCardTest {
 
     @Test
@@ -169,5 +171,20 @@ class ChitinousCrawlerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addToBattlefield(player1, new ChitinousCrawler());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

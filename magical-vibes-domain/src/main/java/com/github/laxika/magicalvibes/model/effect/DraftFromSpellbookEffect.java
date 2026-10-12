@@ -7,12 +7,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-/** Offers a random subset of a digital spellbook and lets a player draft one card. */
+/**
+ * Offers a random subset of a digital spellbook and lets a player draft one card.
+ *
+ * <p>With {@code conjure} set ("conjure a card of your choice from … spellbook") the chosen card counts
+ * as conjured, so "whenever you conjure" abilities trigger; see {@link #conjureIntoHand} and
+ * {@link #conjureOntoBattlefield}. Card factories put the chosen card onto the battlefield.
+ */
 public record DraftFromSpellbookEffect(
         List<SpellbookCard> spellbook,
         List<Supplier<? extends Card>> cardFactories,
         int offeredCardCount,
-        DraftMode mode) implements CardEffect {
+        DraftMode mode,
+        boolean conjure) implements CardEffect {
 
     public enum DraftMode {
         PERPETUALLY_BECOMES_ENCHANTMENT,
@@ -35,15 +42,30 @@ public record DraftFromSpellbookEffect(
     }
 
     public DraftFromSpellbookEffect(List<SpellbookCard> spellbook, DraftMode mode) {
-        this(spellbook, List.of(), Math.min(3, spellbook.size()), mode);
+        this(spellbook, List.of(), Math.min(3, spellbook.size()), mode, false);
     }
 
     public DraftFromSpellbookEffect(List<Supplier<? extends Card>> cardFactories, int offeredCardCount) {
-        this(List.of(), cardFactories, offeredCardCount, DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT);
+        this(List.of(), cardFactories, offeredCardCount, DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT, false);
     }
 
     public DraftFromSpellbookEffect(List<Supplier<? extends Card>> cardFactories) {
         this(cardFactories, 3);
+    }
+
+    /** "Conjure a card of your choice from … spellbook onto the battlefield." */
+    public static DraftFromSpellbookEffect conjureOntoBattlefield(
+            List<Supplier<? extends Card>> cardFactories) {
+        return new DraftFromSpellbookEffect(List.of(), cardFactories, cardFactories.size(),
+                DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT, true);
+    }
+
+    /** "Conjure a card of your choice from … spellbook into your hand", handled by {@code mode}. */
+    public static DraftFromSpellbookEffect conjureIntoHand(List<SpellbookCard> spellbook, DraftMode mode) {
+        if (mode == DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT) {
+            throw new IllegalArgumentException("Conjured spellbook cards are not changed perpetually");
+        }
+        return new DraftFromSpellbookEffect(spellbook, List.of(), spellbook.size(), mode, true);
     }
 
     @Override

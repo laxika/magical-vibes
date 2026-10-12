@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CantorOfTheRefrain;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SongOfPointPrime.class, CantorOfTheRefrain.class})
+@CardUsed({SongOfPointPrime.class, CantorOfTheRefrain.class, ThayanEvokers.class})
 class SongOfPointPrimeTest extends BaseCardTest {
 
     @Test
@@ -89,5 +90,16 @@ class SongOfPointPrimeTest extends BaseCardTest {
     private void castSong() {
         harness.castFromHand(player1, new SongOfPointPrime(), "{1}{B}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    void conjuringCantorIntoTheGraveyardTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.addToBattlefieldAndReturn(player2, new CantorOfTheRefrain());
+        castSong();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Cantor of the Refrain");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

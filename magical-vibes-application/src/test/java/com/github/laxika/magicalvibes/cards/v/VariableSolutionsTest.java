@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VariableSolutions.class, Forest.class, MindStone.class})
+@CardUsed({VariableSolutions.class, Forest.class, MindStone.class, ThayanEvokers.class})
 class VariableSolutionsTest extends BaseCardTest {
 
     @Test
@@ -168,5 +169,15 @@ class VariableSolutionsTest extends BaseCardTest {
     private void cast(int xValue) {
         harness.addMana(player1, ManaColor.GREEN, xValue + 1);
         harness.castAndResolveSorcery(player1, 0, xValue);
+    }
+
+    @Test
+    void xThreeConjureTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new VariableSolutions()));
+        cast(3);
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isGreaterThanOrEqualTo(1);
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetualAnyManaTypeToCastSel
 import com.github.laxika.magicalvibes.model.effect.ReturnCardAndConjureOpponentGraveyardDuplicateEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class ReturnCardAndConjureOpponentGraveyardDuplicateEffectHandler
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,6 +57,7 @@ public class ReturnCardAndConjureOpponentGraveyardDuplicateEffectHandler
                 " returns ", " from graveyard to hand.");
 
         int duplicateOffset = firstGroupSize;
+        int conjuredCount = 0;
         for (UUID cardId : targetCardIds.subList(duplicateOffset, duplicateOffset + secondGroupSize)) {
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
             Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
@@ -69,8 +72,10 @@ public class ReturnCardAndConjureOpponentGraveyardDuplicateEffectHandler
             duplicate.addEffect(EffectSlot.STATIC, new PerpetualAnyManaTypeToCastSelfEffect());
             duplicate.freeze();
             gameData.addCardToHand(controllerId, duplicate);
+            conjuredCount++;
             gameLogService.append(gameData, GameLog.textCardText(
                     "A duplicate of ", duplicate, " is conjured into your hand."));
         }
+        triggerCollectionService.checkConjureTriggers(gameData, controllerId, conjuredCount);
     }
 }

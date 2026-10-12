@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetSpellIntoHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ public class ConjureDuplicateOfTargetSpellIntoHandEffectHandler implements Norma
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,6 +43,7 @@ public class ConjureDuplicateOfTargetSpellIntoHandEffectHandler implements Norma
         duplicate.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());
         gameData.addCardToHand(entry.getControllerId(), duplicate);
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
         gameLogService.append(gameData, GameLog.textCardText(
                 "A duplicate of ", duplicate, " is conjured into your hand."));
     }

@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Desert;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.i.IrrigatedFarmland;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SandcloudHarbinger.class, SunscorchedDesert.class, Desert.class, GrizzlyBears.class, IrrigatedFarmland.class})
+@CardUsed({SandcloudHarbinger.class, SunscorchedDesert.class, Desert.class, GrizzlyBears.class, IrrigatedFarmland.class, ThayanEvokers.class})
 @DisplayName("Sandcloud Harbinger")
 class SandcloudHarbingerTest extends BaseCardTest {
 
@@ -143,5 +145,20 @@ class SandcloudHarbingerTest extends BaseCardTest {
             cards.add(new GrizzlyBears());
         }
         return cards;
+    }
+
+    @Test
+    @DisplayName("Only the controller conjures the Deserts, so only their conjure abilities trigger")
+    void conjuringDesertsTriggersOnlyTheControllersConjureAbilities() {
+        harness.setLibrary(player1, cards(10));
+        harness.setLibrary(player2, cards(10));
+        Permanent ownEvokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent opponentEvokers = harness.addToBattlefieldAndReturn(player2, new ThayanEvokers());
+
+        harness.enterBattlefieldAndReturn(player1, new SandcloudHarbinger());
+        resolveAllTriggers();
+
+        assertThat(ownEvokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(opponentEvokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

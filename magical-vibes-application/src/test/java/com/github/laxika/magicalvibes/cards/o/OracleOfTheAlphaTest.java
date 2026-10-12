@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.d.Deglamer;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OracleOfTheAlpha.class, Deglamer.class})
+@CardUsed({OracleOfTheAlpha.class, Deglamer.class, ThayanEvokers.class})
 class OracleOfTheAlphaTest extends BaseCardTest {
 
     @Test
@@ -134,5 +136,20 @@ class OracleOfTheAlphaTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Mox Sapphire");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(9).contains(mox);
+    }
+
+    @Test
+    @DisplayName("Conjuring the Power Nine triggers conjure abilities once")
+    void conjuringPowerNineTriggersConjureAbilitiesOnce() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new OracleOfTheAlpha()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(9);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

@@ -125,8 +125,12 @@ public class SpellbookCardChoiceInteractionHandler
                     List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
                     "Cast " + drafted.getName() + " without paying its mana cost?"));
             gameLogService.append(gameData, GameLog.textCardText(
-                    gameData.playerIdToName.get(player.getId()) + " drafts ", drafted,
+                    gameData.playerIdToName.get(player.getId())
+                            + (interaction.conjure() ? " conjures " : " drafts "), drafted,
                     " from a spellbook into their hand."));
+            if (interaction.conjure()) {
+                triggerCollectionService.checkConjureTriggers(gameData, player.getId(), 1);
+            }
         } else {
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(player.getId()) + " drafts ", drafted,

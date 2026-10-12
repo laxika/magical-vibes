@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.t.TheloniteHermit;
 import com.github.laxika.magicalvibes.cards.s.Sprout;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GraveChoice.class, GrizzlyBears.class, HillGiant.class, Unsummon.class,
-        TheloniteHermit.class, Sprout.class})
+        TheloniteHermit.class, Sprout.class, ThayanEvokers.class})
 class GraveChoiceTest extends BaseCardTest {
 
     @Test
@@ -159,5 +160,27 @@ class GraveChoiceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player2, 0);
         return gd.playerBattlefields.get(player2.getId()).getFirst();
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castGraveChoice();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    void largeSacrificedCreatureConjuresNothingAndTriggersNoConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.addToBattlefield(player2, new HillGiant());
+        castGraveChoice();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(evokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

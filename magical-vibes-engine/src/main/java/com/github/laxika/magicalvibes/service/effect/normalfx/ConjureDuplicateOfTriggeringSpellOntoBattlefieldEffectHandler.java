@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLib
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,7 @@ public class ConjureDuplicateOfTriggeringSpellOntoBattlefieldEffectHandler
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,6 +54,7 @@ public class ConjureDuplicateOfTriggeringSpellOntoBattlefieldEffectHandler
 
         Permanent permanent = new Permanent(duplicate);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
         if (gameQueryService.findPermanentById(gameData, permanent.getId()) == null) return;
 
         entry.getCreatedPermanentIds().add(permanent.getId());

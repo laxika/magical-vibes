@@ -47,7 +47,8 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
                         Card preview = factory.get();
                         return new ChooseOneEffect.ChooseOneOption(
                                 preview.getName(),
-                                new ConjureCardOntoBattlefieldEffect(factory, Set.of(CardType.LAND)));
+                                new ConjureCardOntoBattlefieldEffect(factory, Set.of(CardType.LAND),
+                                        draft.conjure()));
                     })
                     .toList();
             playerInputService.beginChooseModeChoice(
@@ -72,7 +73,7 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
                 entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId(),
                 offeredCards,
                 "Choose a card from " + entry.getCard().getName() + "'s spellbook.",
-                draft.mode()));
+                draft.mode(), 1, 1, null, draft.conjure()));
     }
 
     private Card createCardIfImplemented(DraftFromSpellbookEffect.SpellbookCard reference) {

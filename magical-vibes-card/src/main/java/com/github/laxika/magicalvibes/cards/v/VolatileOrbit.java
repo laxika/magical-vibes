@@ -37,12 +37,12 @@ public class VolatileOrbit extends Card {
                 "{1}{R}{G}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new DraftFromSpellbookEffect(List.of(
+                        DraftFromSpellbookEffect.conjureOntoBattlefield(List.of(
                                 chargedPlanet(AdagiaWindsweptBastion::new),
                                 chargedPlanet(EvendoWakingHaven::new),
                                 chargedPlanet(KavaronMemorialWorld::new),
                                 chargedPlanet(SusurSecundiVoidAltar::new),
-                                chargedPlanet(UthrosTitanicGodcore::new)), 5)),
+                                chargedPlanet(UthrosTitanicGodcore::new)))),
                 "{1}{R}{G}, Sacrifice this enchantment: Conjure a card of your choice from the Planets Spellbook onto the battlefield tapped with eight charge counters on it. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

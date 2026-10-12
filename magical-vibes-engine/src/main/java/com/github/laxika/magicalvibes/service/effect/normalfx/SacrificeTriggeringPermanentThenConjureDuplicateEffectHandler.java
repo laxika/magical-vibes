@@ -70,6 +70,7 @@ public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler imple
         entry.getCreatedPermanentIds().add(duplicate.getId());
         gameLogService.append(gameData, GameLog.textCardText(
                 "A duplicate of ", duplicateCard, " is conjured onto the battlefield."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
 
         if (duplicateCard.hasType(CardType.LAND)) {
             battlefieldEntryService.processLandETBEffects(gameData, entry.getControllerId(), duplicateCard);

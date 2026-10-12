@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.CacheGrab;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.r.Regrowth;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VeteranGhoulcaller.class, Regrowth.class, GrizzlyBears.class, CacheGrab.class})
+@CardUsed({VeteranGhoulcaller.class, Regrowth.class, GrizzlyBears.class, CacheGrab.class, ThayanEvokers.class})
 class VeteranGhoulcallerTest extends BaseCardTest {
 
     @Test
@@ -104,5 +106,20 @@ class VeteranGhoulcallerTest extends BaseCardTest {
                 .allMatch(card -> card.getName().equals("Veteran Ghoulcaller"));
         assertThat(gd.playerHands.get(player1.getId()).stream().map(Card::getId))
                 .doesNotHaveDuplicates();
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        harness.addToBattlefield(player1, new VeteranGhoulcaller());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Card returned = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returned));
+        harness.setHand(player1, List.of(new Regrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, returned.getId());
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

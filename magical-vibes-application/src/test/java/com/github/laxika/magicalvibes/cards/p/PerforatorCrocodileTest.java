@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.s.StabWound;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PerforatorCrocodile.class, HillGiant.class, StabWound.class})
+@CardUsed({PerforatorCrocodile.class, HillGiant.class, StabWound.class, ThayanEvokers.class})
 class PerforatorCrocodileTest extends BaseCardTest {
 
     @Test
@@ -51,5 +52,23 @@ class PerforatorCrocodileTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Perforator Crocodile");
         harness.assertInHand(player1, "Hill Giant");
+    }
+
+    @Test
+    void conjuringAStabWoundForEachOpposingCreatureTriggersConjureAbilitiesOnce() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        harness.setHand(player1, List.of(new PerforatorCrocodile()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Stab Wound"))
+                .hasSize(2);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

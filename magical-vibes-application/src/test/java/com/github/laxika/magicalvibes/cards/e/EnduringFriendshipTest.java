@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.o.OneWithTheStars;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EnduringFriendship.class, GrizzlyBears.class, Divination.class,
-        Forest.class, DoomBlade.class, Disenchant.class, OneWithTheStars.class})
+        Forest.class, DoomBlade.class, Disenchant.class, OneWithTheStars.class, ThayanEvokers.class})
 class EnduringFriendshipTest extends BaseCardTest {
 
     @Test
@@ -149,5 +150,19 @@ class EnduringFriendshipTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Enduring Friendship");
         harness.assertNotOnBattlefield(player1, "Enduring Friendship");
+    }
+
+    @Test
+    @DisplayName("Double team's conjured copy triggers conjure abilities")
+    void doubleTeamConjureTriggersConjureAbilities() {
+        addCreatureReady(player1, new EnduringFriendship());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Enduring Friendship"));
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GutmornPactboundServant.class, GrizzlyBears.class, Forest.class, Distress.class})
+@CardUsed({GutmornPactboundServant.class, GrizzlyBears.class, Forest.class, Distress.class, ThayanEvokers.class})
 class GutmornPactboundServantTest extends BaseCardTest {
 
     @Test
@@ -119,5 +121,25 @@ class GutmornPactboundServantTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
         harness.assertInHand(player2, "Forest");
+    }
+
+    @Test
+    void theChosenPlayerConjuresTheDuplicateSoOnlyTheirConjureAbilitiesTrigger() {
+        Permanent ownEvokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent opponentEvokers = harness.addToBattlefieldAndReturn(player2, new ThayanEvokers());
+        harness.setHand(player1, List.of(new GutmornPactboundServant(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(opponentEvokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(ownEvokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

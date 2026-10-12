@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /** Resolves a dynamic number of named battlefield conjures. */
@@ -34,10 +34,8 @@ public class ConjureCardsToBattlefieldEffectHandler implements NormalEffectHandl
             return;
         }
 
-        List<CardEffect> conjures = new ArrayList<>(count);
-        for (int i = 0; i < count; i++) {
-            conjures.add(new ConjureCardToBattlefieldEffect(conjure.cardName()));
-        }
+        List<CardEffect> conjures = ConjureCardToBattlefieldEffect.asOneEvent(
+                Collections.nCopies(count, conjure.cardName()));
 
         int index = entry.getEffectsToResolve().indexOf(effect);
         if (index < 0) {

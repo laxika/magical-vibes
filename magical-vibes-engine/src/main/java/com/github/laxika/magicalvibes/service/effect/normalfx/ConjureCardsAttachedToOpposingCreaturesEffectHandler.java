@@ -35,10 +35,11 @@ public class ConjureCardsAttachedToOpposingCreaturesEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ConjureCardsAttachedToOpposingCreaturesEffect conjure =
                 (ConjureCardsAttachedToOpposingCreaturesEffect) effect;
-        for (Permanent creature : opposingCreatures(gameData, entry.getControllerId())) {
+        List<Permanent> creatures = opposingCreatures(gameData, entry.getControllerId());
+        for (Permanent creature : creatures) {
             int createdBefore = entry.getCreatedPermanentIds().size();
             conjureCardToBattlefieldEffectHandler.resolve(
-                    gameData, entry, new ConjureCardToBattlefieldEffect(conjure.cardName()));
+                    gameData, entry, ConjureCardToBattlefieldEffect.partOfEvent(conjure.cardName(), 0));
             if (entry.getCreatedPermanentIds().size() == createdBefore) {
                 continue;
             }
@@ -54,6 +55,7 @@ public class ConjureCardsAttachedToOpposingCreaturesEffectHandler implements Nor
             aura.setTimestamp(gameData.nextTimestamp());
             triggerCollectionService.checkAuraAttachedTriggers(gameData, aura, creature.getId());
         }
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), creatures.size());
     }
 
     private List<Permanent> opposingCreatures(GameData gameData, UUID controllerId) {

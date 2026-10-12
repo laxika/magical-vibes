@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,7 @@ public class EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandl
     private final PlayerInputService playerInputService;
     private final GraveyardService graveyardService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -108,6 +110,7 @@ public class EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandl
                     gameData.playerIdToName.get(controllerId) + " conjures ", duplicate,
                     " into their graveyard."));
         }
+        triggerCollectionService.checkConjureTriggers(gameData, controllerId, duplicates.size());
     }
 
     private List<UUID> eligibleCreatureIds(GameData gameData, UUID playerId) {

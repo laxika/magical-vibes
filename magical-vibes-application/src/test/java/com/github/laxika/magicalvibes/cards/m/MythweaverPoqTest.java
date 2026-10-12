@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.e.EvolvingWilds;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SplendidReclamation;
 import com.github.laxika.magicalvibes.cards.t.TheGitrogMonster;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MythweaverPoq.class, Forest.class, Plains.class, TheGitrogMonster.class, EvolvingWilds.class, SplendidReclamation.class})
+@CardUsed({MythweaverPoq.class, Forest.class, Plains.class, TheGitrogMonster.class, EvolvingWilds.class, SplendidReclamation.class, ThayanEvokers.class})
 class MythweaverPoqTest extends BaseCardTest {
 
     @Test
@@ -158,5 +159,18 @@ class MythweaverPoqTest extends BaseCardTest {
 
         assertThat(gqs.getEffectiveCardPower(gd, poq)).isEqualTo(2);
         assertThat(gqs.getEffectiveCardToughness(gd, poq)).isEqualTo(2);
+    }
+
+    @Test
+    void conjuringTheLandDuplicateTriggersConjureAbilities() {
+        addCreatureReady(player1, new MythweaverPoq());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new Plains()));
+
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Plains")).hasSize(2);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

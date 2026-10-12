@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReplicatingTerror.class, GrizzlyBears.class})
+@CardUsed({ReplicatingTerror.class, GrizzlyBears.class, ThayanEvokers.class})
 @DisplayName("Replicating Terror")
 class ReplicatingTerrorTest extends BaseCardTest {
 
@@ -120,5 +121,17 @@ class ReplicatingTerrorTest extends BaseCardTest {
     private void castReplicatingTerror() {
         harness.castFromHand(player1, new ReplicatingTerror(), "{1}{B}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Conjuring the duplicate triggers conjure abilities")
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        castReplicatingTerror();
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

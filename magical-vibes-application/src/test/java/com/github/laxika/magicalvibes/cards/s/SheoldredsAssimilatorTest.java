@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SheoldredsAssimilator.class, GrizzlyBears.class})
+@CardUsed({SheoldredsAssimilator.class, GrizzlyBears.class, ThayanEvokers.class})
 class SheoldredsAssimilatorTest extends BaseCardTest {
 
     @Test
@@ -183,5 +184,22 @@ class SheoldredsAssimilatorTest extends BaseCardTest {
                 .filter(candidate -> candidate.getCard().getId().equals(duplicate.getId()))
                 .findFirst().orElseThrow();
         assertThat(gqs.isToken(gd, permanent)).isFalse();
+    }
+
+    @Test
+    void conjuringTheDuplicateIntoTheLibraryTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Card graveyardCard = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.castFromHand(player1, new SheoldredsAssimilator(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

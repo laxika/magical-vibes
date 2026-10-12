@@ -65,6 +65,7 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
         duplicate.freeze();
         boolean duplicateEnteredGraveyard = graveyardService.addCardToGraveyard(
                 gameData, controllerId, duplicate);
+        triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);
 
         rememberDouble(gameData, dyingCard);
         rememberDouble(gameData, duplicate);

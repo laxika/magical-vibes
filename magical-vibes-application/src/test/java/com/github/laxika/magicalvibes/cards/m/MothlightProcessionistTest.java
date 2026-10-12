@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DazzlingTheaterPropRoom;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MothlightProcessionist.class, DazzlingTheaterPropRoom.class})
+@CardUsed({MothlightProcessionist.class, DazzlingTheaterPropRoom.class, ThayanEvokers.class})
 class MothlightProcessionistTest extends BaseCardTest {
 
     @Test
@@ -156,5 +157,21 @@ class MothlightProcessionistTest extends BaseCardTest {
         card.setType(type);
         card.setManaCost("{1}");
         return card;
+    }
+
+    @Test
+    void conjuringIntoHandTriggersConjureAbilities() {
+        harness.addToBattlefieldAndReturn(player1, new MothlightProcessionist());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(testEnchantment()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .contains("Mothlight Processionist");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.a.AdagiaWindsweptBastion;
 import com.github.laxika.magicalvibes.cards.e.EvendoWakingHaven;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.k.KavaronMemorialWorld;
 import com.github.laxika.magicalvibes.cards.s.SusurSecundiVoidAltar;
 import com.github.laxika.magicalvibes.cards.u.UthrosTitanicGodcore;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BroodAstronomer.class, Forest.class, AdagiaWindsweptBastion.class,
         EvendoWakingHaven.class, KavaronMemorialWorld.class, SusurSecundiVoidAltar.class,
-        UthrosTitanicGodcore.class})
+        UthrosTitanicGodcore.class, ThayanEvokers.class})
 class BroodAstronomerTest extends BaseCardTest {
 
     @Test
@@ -150,5 +151,26 @@ class BroodAstronomerTest extends BaseCardTest {
         harness.handleListChoice(player1, ManaColor.RED.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Drafting a Planet onto the battlefield does not trigger conjure abilities")
+    void draftingAPlanetDoesNotTriggerConjureAbilities() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.castFromHand(player1, new BroodAstronomer(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, forest.getId());
+        ChoiceContext.ChooseModeChoice context = (ChoiceContext.ChooseModeChoice)
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
+        String chosenName = context.effect().options().getFirst().label();
+
+        harness.handleListChoice(player1, chosenName);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, chosenName)).isNotNull();
+        assertThat(evokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

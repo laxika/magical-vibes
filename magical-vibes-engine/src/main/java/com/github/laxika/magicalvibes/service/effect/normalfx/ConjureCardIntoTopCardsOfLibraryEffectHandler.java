@@ -5,13 +5,18 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoTopCardsOfLibraryEffect;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
+@RequiredArgsConstructor
 public class ConjureCardIntoTopCardsOfLibraryEffectHandler implements NormalEffectHandlerBean {
+
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,5 +43,6 @@ public class ConjureCardIntoTopCardsOfLibraryEffectHandler implements NormalEffe
         int insertionSlots = Math.min(conjure.count(), library.size() + 1);
         int insertionIndex = ThreadLocalRandom.current().nextInt(insertionSlots);
         library.add(insertionIndex, card);
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
     }
 }

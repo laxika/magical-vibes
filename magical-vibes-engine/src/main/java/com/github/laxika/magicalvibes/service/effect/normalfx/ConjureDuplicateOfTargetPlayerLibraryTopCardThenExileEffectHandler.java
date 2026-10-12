@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetPlayerLibraryTopCardThenExileEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class ConjureDuplicateOfTargetPlayerLibraryTopCardThenExileEffectHandler
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,6 +52,7 @@ public class ConjureDuplicateOfTargetPlayerLibraryTopCardThenExileEffectHandler
         gameData.addCardToHand(entry.getControllerId(), duplicate);
         gameLogService.append(gameData, GameLog.cardThen(duplicate, " is conjured into "
                 + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
 
         library.removeFirst();
         exileService.exileCardFaceDown(gameData, targetPlayerId, topCard, null, targetPlayerId);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DogWalker;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RoaleskPrimeSpecimen.class, DogWalker.class})
+@CardUsed({RoaleskPrimeSpecimen.class, DogWalker.class, ThayanEvokers.class})
 class RoaleskPrimeSpecimenTest extends BaseCardTest {
 
     @Test
@@ -64,5 +65,21 @@ class RoaleskPrimeSpecimenTest extends BaseCardTest {
                 .filter(Permanent::isFaceDown)
                 .findFirst()
                 .orElseThrow();
+    }
+
+    @Test
+    void conjuringTheCloakedCreatureTriggersConjureAbilities() {
+        harness.addToBattlefield(player1, new RoaleskPrimeSpecimen());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent dogWalker = castFaceDownDogWalker();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(dogWalker));
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(Permanent::isCloaked);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

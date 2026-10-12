@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.FieldOfRuin;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ThendarTheOverminer.class, Wastes.class, FieldOfRuin.class, Mountain.class,
-        StoneRain.class, GrizzlyBears.class, ImprisonedInTheMoon.class})
+        StoneRain.class, GrizzlyBears.class, ImprisonedInTheMoon.class, ThayanEvokers.class})
 class ThendarTheOverminerTest extends BaseCardTest {
 
     @Test
@@ -171,5 +172,23 @@ class ThendarTheOverminerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(findPermanent(player2, "Wastes").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The nonbasic land's controller conjures the Wastes, so only their conjure abilities trigger")
+    void landControllersConjureAbilitiesTrigger() {
+        harness.addToBattlefield(player1, new ThendarTheOverminer());
+        Permanent ownEvokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent landControllerEvokers = harness.addToBattlefieldAndReturn(player2, new ThayanEvokers());
+        UUID fieldOfRuinId = harness.addToBattlefieldAndReturn(player2, new FieldOfRuin()).getId();
+
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveSorcery(player1, 0, fieldOfRuinId);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Wastes")).isNotNull();
+        assertThat(landControllerEvokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(ownEvokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

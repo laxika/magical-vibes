@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SinisterReflections.class, GrizzlyBears.class})
+@CardUsed({SinisterReflections.class, GrizzlyBears.class, ThayanEvokers.class})
 class SinisterReflectionsTest extends BaseCardTest {
 
     @Test
@@ -132,5 +133,21 @@ class SinisterReflectionsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
                 List.of(first.getId(), second.getId(), third.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void conjuringTwoDuplicatesTriggersConjureAbilitiesOnce() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new SinisterReflections()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

@@ -7,10 +7,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/** Conjures a fresh card onto the battlefield under the ability's controller. */
+/**
+ * Puts a fresh card onto the battlefield under the ability's controller. {@code conjure} is false
+ * when the card was drafted from a spellbook rather than conjured, so "whenever you conjure"
+ * abilities don't trigger.
+ */
 public record ConjureCardOntoBattlefieldEffect(
         Supplier<? extends Card> cardFactory,
-        Set<CardType> enterTappedTypes
+        Set<CardType> enterTappedTypes,
+        boolean conjure
 ) implements CardEffect {
 
     public ConjureCardOntoBattlefieldEffect {

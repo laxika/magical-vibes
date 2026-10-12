@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +38,7 @@ public class ConjureRandomCreatureWithManaValueEffectHandler implements NormalEf
     private final GameQueryService gameQueryService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
     private final Map<Integer, List<CardPrinting>> candidatesByManaValue = new ConcurrentHashMap<>();
 
     @Override
@@ -72,6 +74,7 @@ public class ConjureRandomCreatureWithManaValueEffectHandler implements NormalEf
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), 1);
         battlefieldEntryService.handleCreatureEnteredBattlefield(
                 gameData, entry.getControllerId(), card, null, false);
         entry.getCreatedPermanentIds().add(permanent.getId());

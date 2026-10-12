@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EmporiumThopterist.class, Ornithopter.class, GrizzlyBears.class})
+@CardUsed({EmporiumThopterist.class, Ornithopter.class, GrizzlyBears.class, ThayanEvokers.class})
 class EmporiumThopteristTest extends BaseCardTest {
 
     @Test
@@ -46,5 +47,16 @@ class EmporiumThopteristTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(card -> card.getName().equals("Ornithopter"))
                 .isEmpty();
+    }
+
+    @Test
+    void conjuringAnOrnithopterTriggersConjureAbilities() {
+        harness.addToBattlefield(player1, new EmporiumThopterist());
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.s.SiegeRhino;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -10,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CallTheCrash.class, SiegeRhino.class})
+@CardUsed({CallTheCrash.class, SiegeRhino.class, ThayanEvokers.class})
 class CallTheCrashTest extends BaseCardTest {
 
     @Test
@@ -52,5 +54,18 @@ class CallTheCrashTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+    }
+
+    @Test
+    void conjuringTwoRhinosTriggersConjureAbilitiesOnce() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new CallTheCrash()));
+        addManaForSpell();
+
+        harness.castSorcery(player1, 0, List.of());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Siege Rhino")).hasSize(2);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

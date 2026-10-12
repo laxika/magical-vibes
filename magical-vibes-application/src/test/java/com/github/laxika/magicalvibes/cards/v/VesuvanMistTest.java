@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VesuvanMist.class, Island.class, LlanowarElves.class})
+@CardUsed({VesuvanMist.class, Island.class, LlanowarElves.class, ThayanEvokers.class})
 class VesuvanMistTest extends BaseCardTest {
 
     @Test
@@ -138,5 +139,36 @@ class VesuvanMistTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a nontoken, nonland permanent");
+    }
+
+    @Test
+    void kickedConjureTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new VesuvanMist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castKickedInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Llanowar Elves");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    void unkickedBounceDoesNotTriggerConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new VesuvanMist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Llanowar Elves");
+        assertThat(evokers.getPlusOnePlusOneCounters()).isZero();
     }
 }

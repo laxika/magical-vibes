@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SemblanceScanner.class, GrizzlyBears.class})
+@CardUsed({SemblanceScanner.class, GrizzlyBears.class, ThayanEvokers.class})
 class SemblanceScannerTest extends BaseCardTest {
 
     @Test
@@ -172,5 +173,19 @@ class SemblanceScannerTest extends BaseCardTest {
 
     private Permanent addReadyScanner() {
         return addCreatureReady(player1, new SemblanceScanner());
+    }
+
+    @Test
+    void conjuringTheDuplicateTriggersConjureAbilities() {
+        harness.setHand(player1, List.of());
+        Permanent scanner = addReadyScanner();
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(scanner)));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

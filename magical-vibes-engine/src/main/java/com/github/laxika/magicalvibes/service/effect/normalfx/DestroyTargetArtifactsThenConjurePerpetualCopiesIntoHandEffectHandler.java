@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetArtifactsThenCon
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +32,7 @@ public class DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandl
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,6 +56,7 @@ public class DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandl
 
         List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
                 gameData, targets, entry.getCard().getName(), false);
+        int conjuredCount = 0;
         for (Permanent destroyedPermanent : destroyed) {
             if (destroyedPermanent.getCard().isToken()) {
                 continue;
@@ -67,7 +70,9 @@ public class DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandl
             gameData.addCardToHand(entry.getControllerId(), copy);
             gameLogService.append(gameData, GameLog.cardThen(copy, " is conjured into "
                     + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
+            conjuredCount++;
         }
+        triggerCollectionService.checkConjureTriggers(gameData, entry.getControllerId(), conjuredCount);
     }
 
     private void addPerpetualEndStepSacrifice(GameData gameData, UUID cardId) {
