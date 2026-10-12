@@ -103,7 +103,7 @@ class EternalTaskmasterTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        // Unused mana empties from the pool when the step ends (CR 500.4), so no mana is left over.
+        // Unused mana empties from the pool when the step ends (CR 500.5), so no mana is left over.
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
@@ -125,7 +125,7 @@ class EternalTaskmasterTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(creature.getId()));
-        // Unused mana empties from the pool when the step ends (CR 500.4), so no mana is left over.
+        // Unused mana empties from the pool when the step ends (CR 500.5), so no mana is left over.
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
