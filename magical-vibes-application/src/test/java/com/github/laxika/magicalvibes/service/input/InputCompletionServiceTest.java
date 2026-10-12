@@ -71,6 +71,36 @@ class InputCompletionServiceTest {
     }
 
     @Test
+    void answeredNestedPromptReturnsToItsOuterPromptWithoutResumingAnything() {
+        InteractionHandlerRegistry registry = new InteractionHandlerRegistry(() -> coordinator);
+        ReflectionTestUtils.setField(service, "interactionHandlerRegistry", registry);
+        var outer = new PendingInteraction.ColorChoice(playerId, null, null,
+                com.github.laxika.magicalvibes.model.ChoiceContext.ManaColorChoice.fixedColorCombination(
+                        playerId, false, 1, List.of(com.github.laxika.magicalvibes.model.ManaColor.BLUE)),
+                List.of("BLUE"), "Outer prompt");
+        gameData.interaction.beginInteraction(outer);
+        UUID outerDecision = gameData.interaction.activeDecisionId();
+        gameData.interaction.openNestedPromptWindow();
+        gameData.interaction.beginInteraction(new PendingInteraction.ColorChoice(playerId, null, null,
+                com.github.laxika.magicalvibes.model.ChoiceContext.ManaColorChoice.fixedColorCombination(
+                        playerId, false, 1, List.of(com.github.laxika.magicalvibes.model.ManaColor.RED)),
+                List.of("RED"), "Nested prompt"));
+        gameData.interaction.closeNestedPromptWindow();
+        gameData.interaction.clearAwaitingInput();
+        parkResolution();
+
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+
+        assertThat(gameData.interaction.activeInteraction()).isSameAs(outer);
+        assertThat(gameData.interaction.activeDecisionId()).isEqualTo(outerDecision);
+        assertThat(gameData.interaction.hasSuspendedInteraction()).isFalse();
+        assertThat(gameData.pendingEffectResolutionEntry).isNotNull();
+        assertThat(lastKinds()).containsExactly(GameEventKind.DECISION_REQUESTED, GameEventKind.STATE_INVALIDATED);
+        verifyNoInteractions(playerInputService, turnProgressionService, effectResolutionService,
+                stateBasedActionService);
+    }
+
+    @Test
     void pendingRegenerationChoiceIsServicedBeforePriorityResumes() {
         var choice = new PendingInteraction.ColorChoice(playerId, UUID.randomUUID(), null,
                 new com.github.laxika.magicalvibes.model.ChoiceContext.RegenerationShieldChoice(

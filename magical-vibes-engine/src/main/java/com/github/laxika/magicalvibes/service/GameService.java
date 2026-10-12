@@ -2010,12 +2010,19 @@ public class GameService {
                 () -> tapPermanent(gameData, actionPlayer, permanentIndex, paymentIntent))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (!isCombatCostManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player)) {
+            boolean manaPayment = isCombatCostManaPayment(gameData, player) || isMayCostManaPayment(gameData, player);
+            if (!manaPayment) {
                 requirePriority(gameData, player);
             }
             requireWordOfCommandLandManaSource(gameData, player, permanentIndex);
             requireCanActivateAbilities(gameData, player);
-            abilityActivationService.tapPermanent(gameData, player, permanentIndex);
+            Player tappingPlayer = player;
+            Runnable activation = () -> abilityActivationService.tapPermanent(gameData, tappingPlayer, permanentIndex);
+            if (manaPayment) {
+                activateDuringManaPayment(gameData, activation);
+            } else {
+                activation.run();
+            }
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
         }
     }
@@ -2161,11 +2168,33 @@ public class GameService {
             } else {
                 requirePriority(gameData, player);
             }
-            abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
+            Player activatingPlayer = player;
+            Runnable activation = () -> abilityActivationService.activateAbility(gameData, activatingPlayer,
+                    permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
+            if (normalPriorityActivation) {
+                activation.run();
+            } else {
+                activateDuringManaPayment(gameData, activation);
+            }
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
             if (normalPriorityActivation && manaActivation) {
                 flushManaAbilityTriggersAfterActivation(gameData);
             }
+        }
+    }
+
+    /**
+     * Runs a mana-ability activation made while another prompt asks this player for mana
+     * (CR 605.3a). The payment prompt stays active while the activation is checked, so timing
+     * restrictions still see it; a prompt the ability opens for its own choices (the colour of
+     * "any color" mana) is answered first, and the payment prompt then returns.
+     */
+    private void activateDuringManaPayment(GameData gameData, Runnable activation) {
+        gameData.interaction.openNestedPromptWindow();
+        try {
+            activation.run();
+        } finally {
+            gameData.interaction.closeNestedPromptWindow();
         }
     }
 
@@ -2385,6 +2414,11 @@ public class GameService {
             if (!interactionHandlerRegistry.dispatchAnswer(gameData, player, answer)) {
                 throw new IllegalStateException(
                         "Not awaiting " + answer.getClass().getSimpleName() + " input");
+            }
+            // A nested prompt's handler normally returns to its outer prompt through the
+            // input-completion epilogue; one that ends without it must not strand the outer one.
+            if (gameData.status != GameStatus.FINISHED && !gameData.interaction.isAwaitingInput()) {
+                interactionHandlerRegistry.resumeSuspended(gameData);
             }
             // A cost choice (sacrifice, graveyard exile, ...) can complete a mana ability.
             if (gameData.pendingManaAbilityTriggers.size() > deferredManaTriggersBefore) {

@@ -84,6 +84,7 @@ public class InputCompletionService {
         if (gameData.waitingForSubgame) return;
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
+        if (resumeSuspendedInteraction(gameData)) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         var queuedMergedOrder = gameData.pendingInteractions.stream()
                 .filter(pending -> pending instanceof PendingInteraction.LibraryReorder order
@@ -193,6 +194,20 @@ public class InputCompletionService {
         }
     }
 
+    /**
+     * Returns to the interaction a just-answered nested prompt was opened under (a mana ability
+     * activated while paying a cost, CR 605.3a). Nothing else continues: the game is still in the
+     * middle of that outer decision, so no state-based actions, queued work or auto-pass run.
+     */
+    private boolean resumeSuspendedInteraction(GameData gameData) {
+        if (!gameData.interaction.hasSuspendedInteraction() || gameData.status == GameStatus.FINISHED
+                || gameData.interaction.isAwaitingInput() || !interactionHandlerRegistry.resumeSuspended(gameData)) {
+            return false;
+        }
+        publishStateAfterInput(gameData);
+        return true;
+    }
+
     /** Resumes Word of Command after the selected card's action and any resulting spell resolve. */
     private boolean resumeWordOfCommandIfReady(GameData gameData) {
         StackEntry pendingEntry = gameData.wordOfCommandPendingResolutionEntry;
@@ -248,6 +263,7 @@ public class InputCompletionService {
      * (life totals, permanents destroyed, etc.) requiring SBA before continuation.
      */
     public void sbaProcessMayAbilitiesThenAutoPass(GameData gameData) {
+        if (resumeSuspendedInteraction(gameData)) return;
         if (gameData.pendingEffectResolutionEntry == null) {
             stateBasedActionService.performStateBasedActions(gameData);
         }
@@ -265,6 +281,7 @@ public class InputCompletionService {
      * battlefield handlers during mid-resolution processing.
      */
     public void sbaProcessMayAbilitiesThenAutoPassPreservingPriority(GameData gameData) {
+        if (resumeSuspendedInteraction(gameData)) return;
         if (gameData.pendingEffectResolutionEntry == null) {
             stateBasedActionService.performStateBasedActions(gameData);
         }
@@ -280,6 +297,7 @@ public class InputCompletionService {
      * itself. State is still observed only after SBA and auto-pass reach their stable point.
      */
     public void sbaThenAutoPassWithoutResumingParkedResolution(GameData gameData) {
+        if (resumeSuspendedInteraction(gameData)) return;
         stateBasedActionService.performStateBasedActions(gameData);
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;

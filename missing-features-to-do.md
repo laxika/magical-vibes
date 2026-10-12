@@ -52,30 +52,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 5. Nested player prompts during cost payment
-
-**Status:** open · **Found:** 2026-10-10
-
-**Failing tests:**
-- `DiamondLionTest.ordinaryManaAbilityCanActivateDuringCounterspellManaPayment()`
-
-**What's missing.** Activating a mana ability that needs its own choice (any-color mana) while
-another prompt is pending (a may-pay cost) queues the inner prompt behind the outer one, so the
-inner answer is rejected. The interaction state needs to support a nested prompt that is answered
-first and then returns to the outer one (e.g. mana abilities during cost payment, CR 605.3a).
-
-**Prompt to start it:**
-
-```
-Implement nested prompts for mana abilities activated while another prompt is pending
-(missing-features-to-do.md, entry 5). Failing test: DiamondLionTest
-.ordinaryManaAbilityCanActivateDuringCounterspellManaPayment. Verify CR 605.3 and 601.2g-h with
-the rules MCP. Keep single-prompt flows unchanged and add tests. Don't run the full suite; ask
-me. Don't commit until I say so.
-```
-
----
-
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

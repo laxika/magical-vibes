@@ -97,6 +97,20 @@ public class InteractionHandlerRegistry {
         }
     }
 
+    /**
+     * Once every prompt nested under a suspended interaction is answered, makes that interaction
+     * active again and re-delivers it under its original decision identity.
+     *
+     * @return {@code true} when an interaction was resumed
+     */
+    public boolean resumeSuspended(GameData gameData) {
+        if (!gameData.interaction.resumeSuspendedInteraction()) {
+            return false;
+        }
+        emitActiveDecision(gameData);
+        return true;
+    }
+
     private void emitActiveDecision(GameData gameData) {
         PendingInteraction active = gameData.interaction.activeInteraction();
         UUID decider = active.decidingPlayerId();

@@ -330,9 +330,13 @@ public final class AnyColorManaChoiceSupport {
                 && !sourceCard.getSubtypes().contains(CardSubtype.TREASURE);
     }
 
+    /**
+     * Opens the colour prompt now, or queues it behind the active interaction. A prompt opened by
+     * a mana ability activated while that interaction asks for mana nests instead (CR 605.3a).
+     */
     public static void beginOrQueueChoice(InteractionHandlerRegistry registry, GameData gameData,
                                            PendingInteraction.ColorChoice choice) {
-        if (gameData.interaction.isAwaitingInput()) {
+        if (gameData.interaction.isAwaitingInput() && !gameData.interaction.nestsNewPrompt()) {
             gameData.pendingInteractions.addLast(choice);
         } else {
             registry.begin(gameData, choice);

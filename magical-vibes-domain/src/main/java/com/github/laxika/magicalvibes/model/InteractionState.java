@@ -1,8 +1,17 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.UUID;
 
 public class InteractionState {
+
+    /**
+     * An interaction set aside, with its stable decision identity, while a nested prompt is
+     * answered first (see {@link #openNestedPromptWindow()}).
+     */
+    public record SuspendedInteraction(PendingInteraction interaction, UUID decisionId) {
+    }
 
     // --- Core state ---
     /** The currently active interaction — the registry handler owns prompting, answer
@@ -10,6 +19,10 @@ public class InteractionState {
     private PendingInteraction activeInteraction;
     /** Stable identity shared by the initial decision delivery and every reconnect replay. */
     private UUID activeDecisionId;
+    /** Outer interactions waiting for the nested prompts begun under them, innermost first. */
+    private final Deque<SuspendedInteraction> suspendedInteractions = new ArrayDeque<>();
+    /** The decision a nested-prompt window is open under, or {@code null} when none is open. */
+    private UUID nestedPromptWindowDecisionId;
 
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
@@ -51,6 +64,8 @@ public class InteractionState {
                     choice.etbTargetId(), copiedNameChoice, choice.options(), choice.prompt(), choice.disabledOptions());
         }
         copy.activeDecisionId = this.activeDecisionId;
+        copy.suspendedInteractions.addAll(this.suspendedInteractions);
+        copy.nestedPromptWindowDecisionId = this.nestedPromptWindowDecisionId;
         copy.permanentChoiceContext = copyPermanentChoiceContext(this.permanentChoiceContext);
         if (activeInteraction instanceof PendingInteraction.PermanentChoice choice) {
             PermanentChoiceContext context = choice.context() == this.permanentChoiceContext
@@ -108,8 +123,15 @@ public class InteractionState {
         beginInteraction(interaction, UUID.randomUUID());
     }
 
-    /** Restores an interaction with an existing stable identity (used by simulation copies). */
+    /**
+     * Restores an interaction with an existing stable identity (used by simulation copies). Inside
+     * an open nested-prompt window the interaction the window was opened under is suspended
+     * instead of overwritten.
+     */
     public void beginInteraction(PendingInteraction interaction, UUID decisionId) {
+        if (nestsNewPrompt()) {
+            suspendedInteractions.push(new SuspendedInteraction(activeInteraction, activeDecisionId));
+        }
         this.activeInteraction = interaction;
         this.activeDecisionId = decisionId;
     }
@@ -144,6 +166,50 @@ public class InteractionState {
     public void clearAwaitingInput() {
         this.activeInteraction = null;
         this.activeDecisionId = null;
+    }
+
+    /**
+     * Opens a window in which a prompt begun while the current interaction is active is answered
+     * first and the current one is suspended until then, instead of the new prompt waiting behind
+     * it. Used while a player activates a mana ability during a mana payment another prompt is
+     * asking for (CR 605.3a): the mana ability's own choices are part of that activation.
+     * Always paired with {@link #closeNestedPromptWindow()}.
+     */
+    public void openNestedPromptWindow() {
+        this.nestedPromptWindowDecisionId = this.activeDecisionId;
+    }
+
+    public void closeNestedPromptWindow() {
+        this.nestedPromptWindowDecisionId = null;
+    }
+
+    /**
+     * Whether a prompt begun now nests: a nested-prompt window is open and the interaction it was
+     * opened under is still the active one.
+     */
+    public boolean nestsNewPrompt() {
+        return activeInteraction != null && nestedPromptWindowDecisionId != null
+                && nestedPromptWindowDecisionId.equals(activeDecisionId);
+    }
+
+    public boolean hasSuspendedInteraction() {
+        return !suspendedInteractions.isEmpty();
+    }
+
+    /**
+     * Makes the innermost suspended interaction active again, with its original decision
+     * identity, once the prompts nested under it are answered.
+     *
+     * @return {@code false} when an interaction is still active or none is suspended
+     */
+    public boolean resumeSuspendedInteraction() {
+        if (activeInteraction != null || suspendedInteractions.isEmpty()) {
+            return false;
+        }
+        SuspendedInteraction suspended = suspendedInteractions.pop();
+        this.activeInteraction = suspended.interaction();
+        this.activeDecisionId = suspended.decisionId();
+        return true;
     }
 
     // ========================================================================
