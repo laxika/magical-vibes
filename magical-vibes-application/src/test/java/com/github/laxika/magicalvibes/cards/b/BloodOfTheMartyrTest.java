@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FireDrake;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Inferno;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,11 +15,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BloodOfTheMartyr.class, BrothersOfFire.class, FireDrake.class, Inferno.class})
+@CardUsed({BloodOfTheMartyr.class, BrothersOfFire.class, FireDrake.class, Inferno.class, BlightMamba.class,
+        GrizzlyBears.class})
 class BloodOfTheMartyrTest extends BaseCardTest {
 
     @Test
@@ -198,6 +201,33 @@ class BloodOfTheMartyrTest extends BaseCardTest {
         assertThat(secondChoice.playerId()).isEqualTo(otherPlayer.getId());
         harness.handleMayAbilityChosen(otherPlayer, true);
         assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Redirected combat damage from several sources keeps each source's damage")
+    void redirectedCombatDamageFromSeveralSourcesKeepsEachSource() {
+        harness.setLife(player1, 20);
+        Permanent mamba = addCreatureReady(player1, new BlightMamba());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        castBloodOfTheMartyr();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
+        gs.declareBlockers(gd, player1, List.of(
+                new BlockerAssignment(indexOf(player1, mamba), indexOf(player2, attacker)),
+                new BlockerAssignment(indexOf(player1, bears), indexOf(player2, attacker))));
+        resolveCombat(player2);
+        harness.handleCombatDamageAssigned(player2, indexOf(player2, attacker), Map.of(mamba.getId(), 2));
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice choice) {
+            // Take the 3 damage the blockers deal to the attacker; leave the Mamba's 2 alone.
+            harness.handleMayAbilityChosen(player1, choice.description().contains("3"));
+        }
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        // Blight Mamba's infect damage gives a poison counter; Grizzly Bears' damage costs life.
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 
     private void castBloodOfTheMartyr() {

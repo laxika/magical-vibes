@@ -4480,11 +4480,18 @@ public class CombatDamageService {
             return;
         }
         if (accepted) {
+            // The whole paused event is redirected, so each source keeps its own part of the damage.
+            DamageEvent paused = gameData.suspendedReplacementEvent instanceof DamageEvent event && event.combat()
+                    ? event : null;
             gameData.suspendedReplacementEvent = null;
-            if (source != null) {
+            if (paused != null && paused.hasPortions()) {
+                gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                        ability.controllerId(), null, ability.eventValue(), ability.controllerId()));
+                queueRedirectedCombatDamage(gameData, state, paused);
+            } else if (source != null) {
                 gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
                         ability.controllerId(), source.getId(), ability.eventValue(), ability.controllerId()));
-                queueRedirectedCombatDamage(gameData, state, null);
+                queueRedirectedCombatDamage(gameData, state, paused);
             }
         } else {
             damageSupport.resumeSuspendedCombatDamage(gameData, null, -1);
