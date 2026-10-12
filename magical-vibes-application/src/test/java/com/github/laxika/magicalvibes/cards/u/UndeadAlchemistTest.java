@@ -11,8 +11,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.f.ForbiddenAlchemy;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,13 +23,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UndeadAlchemist.class, GrizzlyBears.class, Shock.class})
+@CardUsed({UndeadAlchemist.class, GrizzlyBears.class, Shock.class, Fog.class})
 class UndeadAlchemistTest extends BaseCardTest {
 
 
     @Nested
     @DisplayName("Replacement effect — Zombie combat damage → mill")
-    @CardUsed({UndeadAlchemist.class, GrizzlyBears.class})
+    @CardUsed({UndeadAlchemist.class, GrizzlyBears.class, Fog.class})
     class ReplacementEffect {
 
         @Test
@@ -51,6 +53,53 @@ class UndeadAlchemistTest extends BaseCardTest {
             assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
             // 4 cards milled (attacker has 4 power)
             assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 4);
+        }
+
+        @Test
+        @DisplayName("Under Fog the damaged player may apply the mill replacement first")
+        void damagedPlayerMayMillBeforeFogPreventsTheDamage() {
+            int deckSizeBefore = attackWithZombieUnderFog();
+
+            chooseReplacement("Undead Alchemist: mill");
+
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 4);
+        }
+
+        @Test
+        @DisplayName("Under Fog the damaged player may prevent the damage so nothing is milled")
+        void damagedPlayerMayPreventBeforeTheMillReplacement() {
+            int deckSizeBefore = attackWithZombieUnderFog();
+
+            chooseReplacement("Prevent all combat damage");
+
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
+        }
+
+        private int attackWithZombieUnderFog() {
+            harness.addToBattlefield(player1, new UndeadAlchemist());
+            harness.setLife(player2, 20);
+            Permanent attacker = addCreatureReady(player1, new UndeadAlchemist());
+            attacker.setAttacking(true);
+            harness.setHand(player1, List.of(new Fog()));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+            harness.clearPriorityPassed();
+            harness.castAndResolveInstant(player1, 0);
+            int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+            harness.passBothPriorities();
+            return deckSizeBefore;
+        }
+
+        private void chooseReplacement(String optionPrefix) {
+            PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.playerId()).isEqualTo(player2.getId());
+            harness.handleListChoice(player2, choice.options().stream()
+                    .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
         }
 
         @Test

@@ -450,6 +450,8 @@ public class DamagePreventionService {
         ReplacementOption.Kind replacement = ReplacementOption.Kind.REPLACEMENT;
         ReplacementOption.Kind prevention = ReplacementOption.Kind.PREVENTION;
         List<CreatureDamageStep> steps = new ArrayList<>();
+        steps.add(preventAll("AllCombatDamagePrevented", "Prevent all combat damage",
+                (gd, c, damage) -> c.combatDamage() && gd.preventAllCombatDamage && preventable(gd, c)));
         steps.add(step("DestructionShield", "Destroy it instead", replacement, false,
                 (gd, c, damage) -> damage > 0 && c.permanent().getDamageDestructionShield() > 0
                         && gameQueryService.isCreature(gd, c.permanent())

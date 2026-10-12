@@ -34,8 +34,6 @@ original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplaces
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
 **Still open.**
-- Combat: "prevent all combat damage" (Fog) skips the damage step before the pool, so the affected
-  player can't apply another replacement first (Undead Alchemist's mill).
 - Taps through Piracy keep the old land-mana precedence; mana previews and the AI's
   `wouldTapForManaOpenChoice` do not yet treat a contested land as opening a choice; the
   "colored mana becomes white" replacement is applied after the others instead of being ordered.

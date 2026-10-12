@@ -970,27 +970,6 @@ class CombatDamageServiceTest {
         }
     }
 
-    // ===== Prevent All Combat Damage =====
-
-    @Nested
-    @DisplayName("Prevent All Combat Damage")
-    class PreventAllCombatDamageTest {
-
-        @Test
-        @DisplayName("Prevent all combat damage returns ADVANCE_AND_AUTO_PASS immediately")
-        void preventAllCombatDamageAdvancesImmediately() {
-            addAttacker("Bear", 2, 2);
-            addBlocker("Elf", 1, 1, 0);
-            gameData.preventAllCombatDamage = true;
-
-            CombatResult result = combatDamageService.resolveCombatDamage(gameData);
-
-            assertThat(result).isEqualTo(CombatResult.ADVANCE_AND_AUTO_PASS);
-            assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(20);
-            verify(permanentRemovalService, never()).destroyPermanentByStateBasedAction(eq(gameData), any());
-        }
-    }
-
     // ===== Orphaned Blocking State =====
 
     @Nested
