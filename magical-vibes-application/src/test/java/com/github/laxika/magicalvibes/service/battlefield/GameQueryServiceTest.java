@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -2903,9 +2904,8 @@ class GameQueryServiceTest {
     class ColorSourceDamageBonus {
 
         private void setBonus(UUID playerId, CardColor color, int bonus) {
-            gd.colorSourceDamageBonusThisTurn
-                    .computeIfAbsent(playerId, k -> new java.util.concurrent.ConcurrentHashMap<>())
-                    .put(color, bonus);
+            GameData.addDamageBonusGrant(gd.colorSourceDamageBonusThisTurn, playerId,
+                    new DamageBonusGrant("The Flame of Keld", color, bonus));
         }
 
         @Test
@@ -2952,6 +2952,29 @@ class GameQueryServiceTest {
             setBonus(player1Id, CardColor.RED, 2);
 
             assertThat(gqs.getColorSourceDamageBonus(gd, player1Id, null)).isZero();
+        }
+
+        @Test
+        @DisplayName("sums every matching grant")
+        void sumsEveryMatchingGrant() {
+            setBonus(player1Id, CardColor.RED, 2);
+            setBonus(player1Id, CardColor.RED, 3);
+            setBonus(player1Id, CardColor.GREEN, 1);
+
+            assertThat(gqs.getColorSourceDamageBonus(gd, player1Id, List.of(CardColor.RED))).isEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("lists each noncombat grant as its own bonus")
+        void listsEachNoncombatGrantSeparately() {
+            GameData.addDamageBonusGrant(gd.controllerNoncombatDamageBonusThisTurn, player1Id,
+                    new DamageBonusGrant("Taii Wakeen, Perfect Shot", null, 1));
+            GameData.addDamageBonusGrant(gd.controllerNoncombatDamageBonusThisTurn, player1Id,
+                    new DamageBonusGrant("Taii Wakeen, Perfect Shot", null, 2));
+
+            assertThat(gqs.getControllerNoncombatDamageBonuses(gd, player1Id))
+                    .extracting(GameQueryService.DamageBonus::amount).containsExactly(1, 2);
+            assertThat(gqs.getControllerNoncombatDamageBonuses(gd, player2Id)).isEmpty();
         }
 
         @Test

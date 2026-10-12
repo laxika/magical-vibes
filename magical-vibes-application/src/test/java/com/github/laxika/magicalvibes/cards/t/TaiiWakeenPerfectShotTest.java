@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TaiiWakeenPerfectShot.class, GrizzlyBears.class, Shock.class, ZuranSpellcaster.class, SamiteHealer.class})
+@CardUsed({TaiiWakeenPerfectShot.class, FurnaceOfRath.class, GrizzlyBears.class, Shock.class, ZuranSpellcaster.class, SamiteHealer.class})
 class TaiiWakeenPerfectShotTest extends BaseCardTest {
 
     @Test
@@ -63,6 +65,30 @@ class TaiiWakeenPerfectShotTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void eachActivationIsASeparateReplacementSoADoublerCanApplyBetweenThem() {
+        Permanent taii = addCreatureReady(player1, new TaiiWakeenPerfectShot());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase();
+        harness.activateAbility(player1, 0, 1, null);
+        harness.passBothPriorities();
+        taii.untap();
+        harness.activateAbility(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        chooseReplacement("Deal 1 more damage");
+        chooseReplacement("Furnace of Rath");
+
+        // (2 + 1) * 2 + 1 = 7: one activation, then Furnace of Rath, then the other activation.
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
     }
 
     @Test
@@ -256,5 +282,12 @@ class TaiiWakeenPerfectShotTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleListChoice(player2, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 }

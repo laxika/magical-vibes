@@ -34,9 +34,6 @@ original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplaces
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
 
 **Still open.**
-- The turn-scoped "+N" bonuses (this turn's color and controller bonuses, perpetual spell bonuses)
-  are stored as running totals, so each is one option; permanent and floating bonuses are one option
-  per effect.
 - Combat: "prevent all combat damage" (Fog) skips the damage step before the pool, so the affected
   player can't apply another replacement first (Undead Alchemist's mill).
 - Taps through Piracy keep the old land-mana precedence; mana previews and the AI's

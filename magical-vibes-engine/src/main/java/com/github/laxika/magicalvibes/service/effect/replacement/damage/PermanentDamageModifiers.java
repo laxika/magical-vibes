@@ -14,7 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.ToIntFunction;
 
 /**
  * Replacement effects that change how much damage a permanent is dealt: Benevolent Unicorn's
@@ -54,10 +53,10 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
                 bonusRule("SpellToOpponentsBonus", ctx -> ctx.combat() ? List.of()
                         : gameQueryService.getAdditionalSpellDamageToOpponentsBonuses(
                         ctx.gameData(), ctx.entry(), ctx.targetControllerId())),
-                bonus("ControllerNoncombatBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getControllerNoncombatDamageBonus(
-                        ctx.gameData(), ctx.sourceControllerId())),
-                bonus("PerpetualNoncombatBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getPerpetualNoncombatDamageBonus(
-                        ctx.gameData(), ctx.entry())),
+                bonusRule("ControllerNoncombatBonus", ctx -> ctx.combat() ? List.of()
+                        : gameQueryService.getControllerNoncombatDamageBonuses(ctx.gameData(), ctx.sourceControllerId())),
+                bonusRule("PerpetualNoncombatBonus", ctx -> ctx.combat() ? List.of()
+                        : gameQueryService.getPerpetualNoncombatDamageBonuses(ctx.gameData(), ctx.entry())),
                 pure("RecipientMultiplier", REPLACEMENT,
                         ctx -> recipientMultiplier(ctx) > 1,
                         ctx -> "Multiply damage to recipient by " + recipientMultiplier(ctx),
@@ -73,14 +72,6 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
     @Override
     protected List<Rule<PermanentDamageContext>> rules() {
         return rules;
-    }
-
-    private Rule<PermanentDamageContext> bonus(String family, ToIntFunction<PermanentDamageContext> bonus) {
-        return pure(family, REPLACEMENT,
-                ctx -> bonus.applyAsInt(ctx) != 0,
-                ctx -> "Deal " + bonus.applyAsInt(ctx) + " more damage",
-                ctx -> ctx.event().withAmount(ctx.amount() + bonus.applyAsInt(ctx)),
-                PermanentDamageCandidateSource::noLog);
     }
 
     /** Gisela: doubling keyed on who controls the damage source, as the spell or the fighting permanent. */

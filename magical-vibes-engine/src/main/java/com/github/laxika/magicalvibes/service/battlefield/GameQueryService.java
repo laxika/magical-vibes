@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -10793,20 +10794,18 @@ public class GameQueryService {
         return totalBonus(getDealingSourceDamageBonuses(gameData, entry));
     }
 
-    /**
-     * {@link #getDealingSourceDamageBonus}, one entry per effect; this turn's color and controller
-     * bonuses are kept as one total each.
-     */
+    /** {@link #getDealingSourceDamageBonus}, one entry per effect. */
     public List<DamageBonus> getDealingSourceDamageBonuses(GameData gameData, StackEntry entry) {
         Permanent source = dealingSourcePermanent(gameData, entry);
         UUID controllerId = dealingSourceController(gameData, entry, source);
         List<DamageBonus> bonuses = new ArrayList<>();
-        addTurnBonus(bonuses, "color-this-turn",
-                getColorSourceDamageBonus(gameData, entry.getControllerId(), entry.getCard().getColors()));
+        bonuses.addAll(getColorSourceDamageBonusesThisTurn(gameData, entry.getControllerId(),
+                entry.getCard().getColors()));
         bonuses.addAll(getColorSourcePermanentDamageBonuses(gameData, entry.getControllerId(),
                 entry.getEffectiveDamageSourceCard().getColors(), entry.getSourcePermanentId()));
         bonuses.addAll(getSubtypeSourceDamageBonuses(gameData, controllerId, entry.getEffectiveDamageSourceCard(), source));
-        addTurnBonus(bonuses, "controller-this-turn", getControllerDamageBonusThisTurn(gameData, controllerId));
+        bonuses.addAll(grantBonuses("controller-this-turn",
+                controllerId == null ? null : gameData.controllerDamageBonusThisTurn.get(controllerId), null));
         bonuses.addAll(getControllerDamageBonuses(gameData, entry));
         bonuses.addAll(getSpellDamageBonuses(gameData, entry));
         return bonuses;
@@ -11145,22 +11144,19 @@ public class GameQueryService {
         return totalBonus(getCombatSourceDamageBonuses(gameData, source));
     }
 
-    /**
-     * {@link #getCombatSourceDamageBonus}, one entry per effect; this turn's color and controller
-     * bonuses are kept as one total each.
-     */
+    /** {@link #getCombatSourceDamageBonus}, one entry per effect. */
     public List<DamageBonus> getCombatSourceDamageBonuses(GameData gameData, Permanent source) {
         UUID controllerId = findPermanentController(gameData, source.getId());
         if (controllerId == null) {
             return List.of();
         }
         List<DamageBonus> bonuses = new ArrayList<>();
-        addTurnBonus(bonuses, "color-this-turn",
-                getColorSourceDamageBonus(gameData, controllerId, source.getCard().getColors()));
+        bonuses.addAll(getColorSourceDamageBonusesThisTurn(gameData, controllerId, source.getCard().getColors()));
         bonuses.addAll(getColorSourcePermanentDamageBonuses(gameData, controllerId, source.getCard().getColors(),
                 source.getId()));
         bonuses.addAll(getSubtypeSourceDamageBonuses(gameData, controllerId, source.getCard(), source));
-        addTurnBonus(bonuses, "controller-this-turn", getControllerDamageBonusThisTurn(gameData, controllerId));
+        bonuses.addAll(grantBonuses("controller-this-turn",
+                controllerId == null ? null : gameData.controllerDamageBonusThisTurn.get(controllerId), null));
         return bonuses;
     }
 
@@ -11236,43 +11232,34 @@ public class GameQueryService {
      * color bonuses. Returns 0 if no bonus applies.
      */
     int getColorSourceDamageBonus(GameData gameData, UUID controllerId, List<CardColor> sourceColors) {
+        return totalBonus(getColorSourceDamageBonusesThisTurn(gameData, controllerId, sourceColors));
+    }
+
+    private List<DamageBonus> getColorSourceDamageBonusesThisTurn(GameData gameData, UUID controllerId,
+                                                                  List<CardColor> sourceColors) {
         if (controllerId == null || sourceColors == null || sourceColors.isEmpty()) {
-            return 0;
+            return List.of();
         }
-        Map<CardColor, Integer> colorMap = gameData.colorSourceDamageBonusThisTurn.get(controllerId);
-        if (colorMap == null || colorMap.isEmpty()) {
-            return 0;
-        }
-        int bonus = 0;
-        for (CardColor color : sourceColors) {
-            bonus += colorMap.getOrDefault(color, 0);
-        }
-        return bonus;
+        return grantBonuses("color-this-turn", gameData.colorSourceDamageBonusThisTurn.get(controllerId),
+                sourceColors);
     }
 
-    /** Returns the additive noncombat damage bonus for sources controlled by {@code controllerId}. */
-    public int getControllerNoncombatDamageBonus(GameData gameData, UUID controllerId) {
+    /** The noncombat damage bonuses this turn for sources controlled by {@code controllerId}, one per effect. */
+    public List<DamageBonus> getControllerNoncombatDamageBonuses(GameData gameData, UUID controllerId) {
         if (controllerId == null) {
-            return 0;
+            return List.of();
         }
-        return gameData.controllerNoncombatDamageBonusThisTurn.getOrDefault(controllerId, 0);
+        return grantBonuses("noncombat-this-turn", gameData.controllerNoncombatDamageBonusThisTurn.get(controllerId),
+                null);
     }
 
-    /** Returns the additive damage bonus for all sources controlled by {@code controllerId} this turn. */
-    int getControllerDamageBonusThisTurn(GameData gameData, UUID controllerId) {
-        if (controllerId == null) {
-            return 0;
-        }
-        return gameData.controllerDamageBonusThisTurn.getOrDefault(controllerId, 0);
-    }
-
-    /** Returns the perpetual noncombat damage bonus granted to the resolving spell card. */
-    public int getPerpetualNoncombatDamageBonus(GameData gameData, StackEntry entry) {
+    /** The perpetual noncombat damage bonuses granted to the resolving spell card, one per grant. */
+    public List<DamageBonus> getPerpetualNoncombatDamageBonuses(GameData gameData, StackEntry entry) {
         if (entry == null || entry.getEffectiveDamageSourceCard() == null) {
-            return 0;
+            return List.of();
         }
-        return gameData.perpetualNoncombatDamageBonuses.getOrDefault(
-                entry.getEffectiveDamageSourceCard().getId(), 0);
+        return grantBonuses("perpetual", gameData.perpetualNoncombatDamageBonuses.get(
+                entry.getEffectiveDamageSourceCard().getId()), null);
     }
 
     /**
@@ -11309,7 +11296,7 @@ public class GameQueryService {
 
     /**
      * One "deals that much damage plus N" effect: {@code instance} identifies the effect (a static
-     * ability of a permanent, a floating effect, or this turn's total of a turn-scoped bonus),
+     * ability of a permanent, a floating effect, or one grant of a turn-scoped or perpetual bonus),
      * {@code sourceName} names where it comes from and {@code amount} is N.
      */
     public record DamageBonus(String instance, String sourceName, int amount) {}
@@ -11318,10 +11305,23 @@ public class GameQueryService {
         return bonuses.stream().mapToInt(DamageBonus::amount).sum();
     }
 
-    private static void addTurnBonus(List<DamageBonus> bonuses, String instance, int amount) {
-        if (amount != 0) {
-            bonuses.add(new DamageBonus(instance, "this turn's effects", amount));
+    /**
+     * One bonus per grant in {@code grants}, keyed by its place in the list; with {@code sourceColors}
+     * only the grants of one of those colors count.
+     */
+    private static List<DamageBonus> grantBonuses(String family, List<DamageBonusGrant> grants,
+                                                  List<CardColor> sourceColors) {
+        if (grants == null || grants.isEmpty()) {
+            return List.of();
         }
+        List<DamageBonus> bonuses = new ArrayList<>();
+        for (int i = 0; i < grants.size(); i++) {
+            DamageBonusGrant grant = grants.get(i);
+            if (grant.amount() != 0 && (sourceColors == null || sourceColors.contains(grant.color()))) {
+                bonuses.add(new DamageBonus(family + "/" + i, grant.sourceName(), grant.amount()));
+            }
+        }
+        return bonuses;
     }
 
     /** Visits each static effect of {@code permanent} with an instance key unique to that effect. */

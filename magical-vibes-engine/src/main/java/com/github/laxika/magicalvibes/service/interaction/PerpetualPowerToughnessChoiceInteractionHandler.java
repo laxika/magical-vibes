@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -70,8 +71,8 @@ public class PerpetualPowerToughnessChoiceInteractionHandler
                     chosenCard.getId(), -interaction.genericCostReduction(), Integer::sum);
         }
         if (interaction.noncombatDamageBonus() != 0) {
-            gameData.perpetualNoncombatDamageBonuses.merge(
-                    chosenCard.getId(), interaction.noncombatDamageBonus(), Integer::sum);
+            GameData.addDamageBonusGrant(gameData.perpetualNoncombatDamageBonuses, chosenCard.getId(),
+                    new DamageBonusGrant(null, null, interaction.noncombatDamageBonus()));
         }
         if (interaction.spellCastingAbilityGrant() != null) {
             gameData.perpetualCardSpellCastingAbilityGrants.compute(chosenCard.getId(),

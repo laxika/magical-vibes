@@ -59,10 +59,10 @@ class PlayerDamageModifiers extends PlayerDamageCandidateSource {
                 ctx.sourcePermanent() == null ? ctx.entry().getSourcePermanentId() : ctx.sourcePermanent().getId())));
         all.add(bonusRule("SpellToOpponentsBonus", ctx -> gameQueryService.getAdditionalSpellDamageToOpponentsBonuses(
                 ctx.gameData(), ctx.entry(), ctx.playerId())));
-        all.add(bonus("ControllerNoncombatBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getControllerNoncombatDamageBonus(
-                ctx.gameData(), ctx.sourceControllerId())));
-        all.add(bonus("PerpetualNoncombatBonus", ctx -> ctx.combat() ? 0 : gameQueryService.getPerpetualNoncombatDamageBonus(
-                ctx.gameData(), ctx.entry())));
+        all.add(bonusRule("ControllerNoncombatBonus", ctx -> ctx.combat() ? List.of()
+                : gameQueryService.getControllerNoncombatDamageBonuses(ctx.gameData(), ctx.sourceControllerId())));
+        all.add(bonusRule("PerpetualNoncombatBonus", ctx -> ctx.combat() ? List.of()
+                : gameQueryService.getPerpetualNoncombatDamageBonuses(ctx.gameData(), ctx.entry())));
         all.add(bonusRule("ColorSourceToPlayerBonus", ctx -> gameQueryService.getDamageToPlayerColorSourceBonuses(
                 ctx.gameData(), ctx.damageSourceColors())));
         all.add(bonusRule("ToOpponentsBonus", ctx -> gameQueryService.getAdditionalDamageToOpponentsBonuses(
@@ -104,14 +104,6 @@ class PlayerDamageModifiers extends PlayerDamageCandidateSource {
                 ctx -> factor.applyAsInt(ctx) > 1,
                 ctx -> "Multiply " + description + " by " + factor.applyAsInt(ctx),
                 ctx -> ctx.event().withAmount(ctx.amount() * factor.applyAsInt(ctx)),
-                PlayerDamageCandidateSource::noLog);
-    }
-
-    private Rule<PlayerDamageContext> bonus(String family, ToIntFunction<PlayerDamageContext> bonus) {
-        return pure(family, REPLACEMENT,
-                ctx -> bonus.applyAsInt(ctx) != 0,
-                ctx -> "Deal " + bonus.applyAsInt(ctx) + " more damage",
-                ctx -> ctx.event().withAmount(ctx.amount() + bonus.applyAsInt(ctx)),
                 PlayerDamageCandidateSource::noLog);
     }
 

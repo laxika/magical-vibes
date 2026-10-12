@@ -411,8 +411,8 @@ public class GameData {
     public final Map<UUID, Integer> perpetualGenericCastCostIncreases = new ConcurrentHashMap<>();
     /** Perpetual colored mana-cost additions keyed by the affected card's identity. */
     public final Map<UUID, ManaCost> perpetualManaCostIncreases = new ConcurrentHashMap<>();
-    /** Perpetual noncombat damage bonuses keyed by the affected card's identity. */
-    public final Map<UUID, Integer> perpetualNoncombatDamageBonuses = new ConcurrentHashMap<>();
+    /** Perpetual noncombat damage bonuses keyed by the affected card's identity, one per grant. */
+    public final Map<UUID, List<DamageBonusGrant>> perpetualNoncombatDamageBonuses = new ConcurrentHashMap<>();
     /** Cards that perpetually let their controller spend mana as any color to cast them. */
     public final Set<UUID> perpetualAnyColorManaForCastCardIds = ConcurrentHashMap.newKeySet();
     /** Cards that perpetually enter the battlefield tapped, keyed by card identity. */
@@ -844,11 +844,12 @@ public class GameData {
     /** Counts already applied to members of the current simultaneous enchantment creature entry event. */
     public final Map<UUID, Integer> activeAdditionalCountersForEnchantmentCreatureEntryBatch =
             new ConcurrentHashMap<>();
-    /** Per-controller, per-color additive damage bonus this turn (e.g. The Flame of Keld Chapter III). */
-    public final Map<UUID, Map<CardColor, Integer>> colorSourceDamageBonusThisTurn = new ConcurrentHashMap<>();
-    /** Per-player additive damage bonus for all sources they control this turn. */
-    public final Map<UUID, Integer> controllerDamageBonusThisTurn = new ConcurrentHashMap<>();
-    public final Map<UUID, Integer> controllerNoncombatDamageBonusThisTurn = new ConcurrentHashMap<>();
+    /** Per-controller damage bonuses this turn for sources of one color (The Flame of Keld Chapter III), one per grant. */
+    public final Map<UUID, List<DamageBonusGrant>> colorSourceDamageBonusThisTurn = new ConcurrentHashMap<>();
+    /** Per-player damage bonuses this turn for all sources they control, one per grant. */
+    public final Map<UUID, List<DamageBonusGrant>> controllerDamageBonusThisTurn = new ConcurrentHashMap<>();
+    /** Per-player noncombat damage bonuses this turn for sources they control (Taii Wakeen), one per grant. */
+    public final Map<UUID, List<DamageBonusGrant>> controllerNoncombatDamageBonusThisTurn = new ConcurrentHashMap<>();
     public final Set<CardColor> preventDamageFromColors = ConcurrentHashMap.newKeySet();
     public UUID combatDamageRedirectTarget;
     public UUID combatDamageRedirectPlayer;
@@ -6789,9 +6790,8 @@ public class GameData {
                 this.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn);
         copy.activeAdditionalCountersForEnchantmentCreatureEntryBatch.putAll(
                 this.activeAdditionalCountersForEnchantmentCreatureEntryBatch);
-        this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
-                copy.colorSourceDamageBonusThisTurn.put(pid, new HashMap<>(colorMap)));
-        copy.controllerDamageBonusThisTurn.putAll(this.controllerDamageBonusThisTurn);
+        copyDamageBonusGrants(this.colorSourceDamageBonusThisTurn, copy.colorSourceDamageBonusThisTurn);
+        copyDamageBonusGrants(this.controllerDamageBonusThisTurn, copy.controllerDamageBonusThisTurn);
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
         copy.combatDamageRedirectPlayer = this.combatDamageRedirectPlayer;
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
@@ -7311,7 +7311,7 @@ public class GameData {
                 copy.perpetualKeywords.put(cardId, Set.copyOf(keywords)));
         copy.perpetualGenericCastCostIncreases.putAll(this.perpetualGenericCastCostIncreases);
         copy.perpetualManaCostIncreases.putAll(this.perpetualManaCostIncreases);
-        copy.perpetualNoncombatDamageBonuses.putAll(this.perpetualNoncombatDamageBonuses);
+        copyDamageBonusGrants(this.perpetualNoncombatDamageBonuses, copy.perpetualNoncombatDamageBonuses);
         copy.perpetualAnyColorManaForCastCardIds.addAll(this.perpetualAnyColorManaForCastCardIds);
         copy.perpetualEnterTappedCardIds.addAll(this.perpetualEnterTappedCardIds);
         copy.perpetualExileInsteadOfDyingCardIds.addAll(this.perpetualExileInsteadOfDyingCardIds);
@@ -8600,7 +8600,7 @@ public class GameData {
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);
 
-        copy.controllerNoncombatDamageBonusThisTurn.putAll(this.controllerNoncombatDamageBonusThisTurn);
+        copyDamageBonusGrants(this.controllerNoncombatDamageBonusThisTurn, copy.controllerNoncombatDamageBonusThisTurn);
         this.crimeCandidatesThisTurn.forEach((key, entries) ->
                 copy.crimeCandidatesThisTurn.put(key,
                         Collections.synchronizedList(new ArrayList<>(entries))));
@@ -8671,5 +8671,15 @@ public class GameData {
             target.interaction.beginInteraction(
                     source.activeInteraction(), source.activeDecisionId());
         }
+    }
+
+    /** Records one damage bonus grant under {@code key} in a grant map such as {@link #controllerDamageBonusThisTurn}. */
+    public static void addDamageBonusGrant(Map<UUID, List<DamageBonusGrant>> grants, UUID key, DamageBonusGrant grant) {
+        grants.computeIfAbsent(key, k -> new CopyOnWriteArrayList<>()).add(grant);
+    }
+
+    private static void copyDamageBonusGrants(Map<UUID, List<DamageBonusGrant>> from,
+                                              Map<UUID, List<DamageBonusGrant>> to) {
+        from.forEach((key, grants) -> to.put(key, new CopyOnWriteArrayList<>(grants)));
     }
 }

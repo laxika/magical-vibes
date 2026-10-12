@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.DamageBonusGrant;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
@@ -35,15 +37,15 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
 
                 boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.colorSourceDamageBonusThisTurn.get(player1Id).get(CardColor.RED)).isEqualTo(2);
+                assertThat(gd.colorSourceDamageBonusThisTurn.get(player1Id))
+                        .containsExactly(new DamageBonusGrant("The Flame of Keld", CardColor.RED, 2));
             }
 
             @Test
-            @DisplayName("stacks additively with existing bonus")
-            void stacksAdditively() {
-                gd.colorSourceDamageBonusThisTurn
-                        .computeIfAbsent(player1Id, k -> new java.util.concurrent.ConcurrentHashMap<>())
-                        .put(CardColor.RED, 2);
+            @DisplayName("keeps each grant as its own effect")
+            void keepsEachGrantSeparate() {
+                GameData.addDamageBonusGrant(gd.colorSourceDamageBonusThisTurn, player1Id,
+                        new DamageBonusGrant("The Flame of Keld", CardColor.RED, 2));
 
                 Card card = createCard("Second Flame");
                 BoostColorSourceDamageThisTurnEffect effect = new BoostColorSourceDamageThisTurnEffect(CardColor.RED, 3);
@@ -52,7 +54,9 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
 
                 boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.colorSourceDamageBonusThisTurn.get(player1Id).get(CardColor.RED)).isEqualTo(5);
+                assertThat(gd.colorSourceDamageBonusThisTurn.get(player1Id)).containsExactly(
+                        new DamageBonusGrant("The Flame of Keld", CardColor.RED, 2),
+                        new DamageBonusGrant("Second Flame", CardColor.RED, 3));
             }
 
             @Test
@@ -65,7 +69,6 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
 
                 boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.colorSourceDamageBonusThisTurn.getOrDefault(player2Id, java.util.Map.of()))
-                        .doesNotContainKey(CardColor.RED);
+                assertThat(gd.colorSourceDamageBonusThisTurn).doesNotContainKey(player2Id);
             }
 }

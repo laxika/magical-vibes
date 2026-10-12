@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -23,7 +24,8 @@ public class BoostControllerDamageThisTurnEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var bonus = (BoostControllerDamageThisTurnEffect) effect;
-        gameData.controllerDamageBonusThisTurn.merge(entry.getControllerId(), bonus.amount(), Integer::sum);
+        GameData.addDamageBonusGrant(gameData.controllerDamageBonusThisTurn, entry.getControllerId(),
+                new DamageBonusGrant(entry.getCard().getName(), null, bonus.amount()));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": damage dealt by sources you control gets +" + bonus.amount() + " this turn."));
     }
