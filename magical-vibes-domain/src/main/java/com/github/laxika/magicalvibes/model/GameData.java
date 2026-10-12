@@ -145,6 +145,14 @@ public class GameData {
     /** Players who have lost a game in the current match. */
     public final Set<UUID> playersWhoLostGameThisMatch = ConcurrentHashMap.newKeySet();
     public final Set<UUID> priorityPassedBy = ConcurrentHashMap.newKeySet();
+    /**
+     * The player who last received priority by acting while holding it (CR 117.3c: a player who
+     * casts a spell, activates an ability, or takes a special action while holding priority
+     * receives priority afterward). Priority moves on from this player in turn order, skipping
+     * players in {@link #priorityPassedBy}. {@code null} means the active player, who receives
+     * priority at the beginning of a step and after a spell or ability resolves (CR 117.3a, 117.3b).
+     */
+    public volatile UUID priorityHolderId;
     /** Players who met Knight of Lost Causes' "way behind" condition at any point this turn. */
     public final Set<UUID> playersWhoWereWayBehindThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
@@ -3312,6 +3320,44 @@ public class GameData {
     /** Returns the next CR 613.7 timestamp (strictly increasing, starting at 1). */
     public long nextTimestamp() {
         return ++timestampCounter;
+    }
+
+    /**
+     * Returns the player who currently holds priority: starting from {@link #priorityHolderId}
+     * (the active player when unset), the first player in turn order who is not in
+     * {@link #priorityPassedBy}. Returns {@code null} once every player has passed in succession
+     * (CR 117.4) or before the game has an active player.
+     */
+    public UUID currentPriorityPlayerId() {
+        UUID activeId = activePlayerId;
+        if (activeId == null) {
+            return null;
+        }
+        List<UUID> order;
+        synchronized (orderedPlayerIds) {
+            order = new ArrayList<>(orderedPlayerIds);
+        }
+        UUID holderId = priorityHolderId;
+        int start = order.indexOf(holderId != null ? holderId : activeId);
+        if (start < 0) {
+            start = Math.max(0, order.indexOf(activeId));
+        }
+        for (int i = 0; i < order.size(); i++) {
+            UUID candidate = order.get((start + i) % order.size());
+            if (!priorityPassedBy.contains(candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Hands priority back to the active player with no passes recorded, as at the beginning of a
+     * step and after a spell or ability resolves (CR 117.3a, 117.3b).
+     */
+    public void resetPriorityToActivePlayer() {
+        priorityHolderId = null;
+        priorityPassedBy.clear();
     }
 
     /** Captures the current turn state without exposing the snapshot to views or callers. */
@@ -7197,6 +7243,7 @@ public class GameData {
         copy.aiPlayerIds.addAll(this.aiPlayerIds);
         copy.playerKeptHand.addAll(this.playerKeptHand);
         copy.priorityPassedBy.addAll(this.priorityPassedBy);
+        copy.priorityHolderId = this.priorityHolderId;
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);

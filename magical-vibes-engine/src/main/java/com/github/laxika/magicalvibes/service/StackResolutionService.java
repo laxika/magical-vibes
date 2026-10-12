@@ -172,7 +172,8 @@ public class StackResolutionService {
                 && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
             gameData.spellsMadeUncounterable.remove(entry.getCard().getId());
         }
-        gameData.priorityPassedBy.clear();
+        // CR 117.3b: the active player receives priority after a spell or ability resolves.
+        gameData.resetPriorityToActivePlayer();
 
         // CR 603.8 — clean up state-trigger tracking when the ability leaves the stack
         stateTriggerService.cleanupResolvedStateTrigger(gameData, entry);

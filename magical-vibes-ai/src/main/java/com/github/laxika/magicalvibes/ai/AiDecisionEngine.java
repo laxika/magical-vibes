@@ -598,18 +598,7 @@ public abstract class AiDecisionEngine {
     }
 
     protected UUID getPriorityPlayerId(GameData gameData) {
-        if (gameData.activePlayerId == null) {
-            return null;
-        }
-        if (!gameData.priorityPassedBy.contains(gameData.activePlayerId)) {
-            return gameData.activePlayerId;
-        }
-        List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
-        UUID nonActive = ids.get(0).equals(gameData.activePlayerId) ? ids.get(1) : ids.get(0);
-        if (!gameData.priorityPassedBy.contains(nonActive)) {
-            return nonActive;
-        }
-        return null;
+        return gameData.currentPriorityPlayerId();
     }
 
     /**

@@ -144,7 +144,7 @@ public class TurnSupport {
         }
         turnCleanupService.drainManaPools(gameData);
         gameData.revertableManaActivations.clear();
-        gameData.priorityPassedBy.clear();
+        gameData.resetPriorityToActivePlayer();
         gameData.interaction.clearAwaitingInput();
         gameData.currentStep = TurnStep.POSTCOMBAT_MAIN;
     }
@@ -157,7 +157,7 @@ public class TurnSupport {
         gameData.currentStep = TurnStep.CLEANUP;
         creatureControlService.reconcileControl(gameData);
         gameData.controlLossUnattachTriggers.clear();
-        gameData.priorityPassedBy.clear();
+        gameData.resetPriorityToActivePlayer();
 
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId == null) {

@@ -1905,7 +1905,7 @@ public class GameTestHarness {
         }
 
         // Reset priority so active player gets first chance
-        gameData.priorityPassedBy.clear();
+        gameData.resetPriorityToActivePlayer();
 
         // Determine priority order based on active player
         Player first, second;
@@ -2094,8 +2094,8 @@ public class GameTestHarness {
 
     /**
      * Ensures the given player has priority without changing whose turn it is.
-     * If the player is the active player, clears their pass. If not, marks the
-     * active player as having passed so priority falls through to this player.
+     * Makes the player the priority holder and clears their pass; if they are not the
+     * active player, also marks the active player as having passed.
      * Called automatically by harness action methods (cast, activate, tap) so
      * tests don't need to manually set up priority state.
      */
@@ -2103,6 +2103,7 @@ public class GameTestHarness {
         if (gameData.activePlayerId == null) {
             gameData.activePlayerId = player.getId();
         }
+        gameData.priorityHolderId = player.getId();
         if (player.getId().equals(gameData.activePlayerId)) {
             gameData.priorityPassedBy.remove(player.getId());
         } else {
@@ -2144,7 +2145,7 @@ public class GameTestHarness {
     }
 
     public void clearPriorityPassed() {
-        gameData.priorityPassedBy.clear();
+        gameData.resetPriorityToActivePlayer();
     }
 
     public void assertLife(Player player, int expectedLife) {

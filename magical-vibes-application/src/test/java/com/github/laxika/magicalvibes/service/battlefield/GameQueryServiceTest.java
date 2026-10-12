@@ -731,6 +731,39 @@ class GameQueryServiceTest {
 
             assertThat(gqs.getPriorityPlayerId(gd)).isNull();
         }
+
+        @Test
+        @DisplayName("returns the non-active priority holder when no one has passed")
+        void returnsNonActiveHolder() {
+            gd.activePlayerId = player1Id;
+            gd.priorityPassedBy.clear();
+            gd.priorityHolderId = player2Id;
+
+            assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("passes from the non-active holder to the active player")
+        void returnsActivePlayerWhenNonActiveHolderPassed() {
+            gd.activePlayerId = player1Id;
+            gd.priorityPassedBy.clear();
+            gd.priorityHolderId = player2Id;
+            gd.priorityPassedBy.add(player2Id);
+
+            assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player1Id);
+        }
+
+        @Test
+        @DisplayName("resetting priority hands it back to the active player")
+        void resetReturnsPriorityToActivePlayer() {
+            gd.activePlayerId = player1Id;
+            gd.priorityHolderId = player2Id;
+            gd.priorityPassedBy.add(player1Id);
+
+            gd.resetPriorityToActivePlayer();
+
+            assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player1Id);
+        }
     }
 
     // ===== canPlayerLifeChange =====

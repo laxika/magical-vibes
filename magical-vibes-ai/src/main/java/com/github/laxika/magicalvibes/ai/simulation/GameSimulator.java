@@ -1130,16 +1130,7 @@ public class GameSimulator {
     }
 
     private UUID getPriorityPlayer(GameData gd) {
-        if (gd.activePlayerId == null) return null;
-        if (!gd.priorityPassedBy.contains(gd.activePlayerId)) {
-            return gd.activePlayerId;
-        }
-        for (UUID id : gd.orderedPlayerIds) {
-            if (!id.equals(gd.activePlayerId) && !gd.priorityPassedBy.contains(id)) {
-                return id;
-            }
-        }
-        return null;
+        return gd.currentPriorityPlayerId();
     }
 
     /**

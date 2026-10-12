@@ -221,7 +221,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWithDamageFromNamedPlanesPrevented.clear();
         gameData.playersWhoCantGainLifeRestOfGame.clear();
         gameData.playersWithHandRevealed.clear();
-        gameData.priorityPassedBy.clear();
+        gameData.resetPriorityToActivePlayer();
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
         gameData.clearDelayedActions(DelayedPermanentAction.class,
                 a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);

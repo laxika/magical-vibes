@@ -303,6 +303,20 @@ class StackResolutionServiceTest {
         }
 
         @Test
+        @DisplayName("Hands priority back to the active player after resolution")
+        void handsPriorityBackToActivePlayer() {
+            Card card = createCreature("Test Creature");
+            gd.stack.addLast(new StackEntry(card, PLAYER2_ID));
+            gd.priorityHolderId = PLAYER2_ID;
+            gd.priorityPassedBy.add(PLAYER1_ID);
+            gd.priorityPassedBy.add(PLAYER2_ID);
+
+            svc.resolveTopOfStack(gd);
+
+            assertThat(gd.priorityHolderId).isNull();
+        }
+
+        @Test
         @DisplayName("Resolves the top (last) entry from the stack")
         void resolvesTopEntry() {
             Card first = createCreature("First Creature");

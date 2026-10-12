@@ -147,7 +147,7 @@ public class TurnProgressionService {
         // Process end-of-combat sacrifices, exiles, and equipment destruction when leaving END_OF_COMBAT
         if (gameData.currentStep == TurnStep.END_OF_COMBAT && hasEndOfCombatActions(gameData)) {
             processEndOfCombatActions(gameData);
-            gameData.priorityPassedBy.clear();
+            gameData.resetPriorityToActivePlayer();
             return;
         }
 
@@ -170,7 +170,7 @@ public class TurnProgressionService {
             gameData.playerManaPools.values().forEach(manaPool -> manaPool.clearCombatMana());
         }
 
-        gameData.priorityPassedBy.clear();
+        gameData.resetPriorityToActivePlayer();
         gameData.interaction.clearAwaitingInput();
 
         if (gameData.currentStep == TurnStep.COMBAT_DAMAGE
@@ -528,7 +528,7 @@ public class TurnProgressionService {
         boolean phaseComplete = firstPlayerId.equals(nextPlayerId);
         gameData.activePlayerId = phaseComplete ? firstPlayerId : nextPlayerId;
         TurnStep nextStep = nextRunedTerrorStep(gameData.currentStep, phaseComplete);
-        gameData.priorityPassedBy.clear();
+        gameData.resetPriorityToActivePlayer();
         gameData.interaction.clearAwaitingInput();
         gameData.currentStep = nextStep;
         gameData.currentUpkeepIsAdditional = false;
@@ -1054,7 +1054,7 @@ public class TurnProgressionService {
         gameData.additionalUpkeepsRemaining = 0;
         gameData.currentUpkeepIsAdditional = false;
         gameData.interaction.clearAwaitingInput();
-        gameData.priorityPassedBy.clear();
+        gameData.resetPriorityToActivePlayer();
         gameData.playersWhoWereWayBehindThisTurn.clear();
         gameData.landsPlayedThisTurn.clear();
         gameData.playersWhoTappedLandForManaThisTurn.clear();
@@ -1663,7 +1663,7 @@ public class TurnProgressionService {
     /** Restarts the current turn from its untap step after a turn-start snapshot was restored. */
     public void restartTurnFromBeginning(GameData gameData) {
         gameData.currentStep = TurnStep.UNTAP;
-        gameData.priorityPassedBy.clear();
+        gameData.resetPriorityToActivePlayer();
         gameData.interaction.clearAwaitingInput();
         gameData.captureTurnStartSnapshot();
 

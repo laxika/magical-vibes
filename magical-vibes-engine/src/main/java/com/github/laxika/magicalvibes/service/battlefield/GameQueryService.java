@@ -1844,24 +1844,14 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the player ID of whoever currently has priority, following APNAP
-     * (Active Player, Non-Active Player) order. Returns {@code null} if both players
-     * have already passed priority.
+     * Returns the player ID of whoever currently has priority: the tracked priority holder
+     * (the active player unless someone acted while holding priority, CR 117.3c), moving on in
+     * turn order past players who have passed. Returns {@code null} if every player has passed in
+     * succession or a subgame is in progress.
      */
     public UUID getPriorityPlayerId(GameData data) {
         if (data.waitingForSubgame) return null;
-        if (data.activePlayerId == null) {
-            return null;
-        }
-        if (!data.priorityPassedBy.contains(data.activePlayerId)) {
-            return data.activePlayerId;
-        }
-        List<UUID> ids = new ArrayList<>(data.orderedPlayerIds);
-        UUID nonActive = ids.get(0).equals(data.activePlayerId) ? ids.get(1) : ids.get(0);
-        if (!data.priorityPassedBy.contains(nonActive)) {
-            return nonActive;
-        }
-        return null;
+        return data.currentPriorityPlayerId();
     }
 
     /**

@@ -240,6 +240,9 @@ public class GameService {
         if (priorityHolder == null || !priorityHolder.equals(player.getId())) {
             throw new IllegalStateException("You do not have priority");
         }
+        // CR 117.3c: a player who acts while holding priority receives priority afterward, so
+        // anchor priority on them before the action clears the recorded passes.
+        gameData.priorityHolderId = player.getId();
     }
 
     /**

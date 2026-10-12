@@ -40,36 +40,16 @@ replacements by each option's preview (least damage, most mana).
 
 ## 2. The caster keeps priority after casting
 
-**Status:** open · **Found:** 2026-10-12, while fixing E-card tests
+**Status:** done (2026-10-12) · **Found:** 2026-10-12, while fixing E-card tests
 
-**Failing tests:**
-- `ExquisiteFirecraftTest` (non-active caster keeps priority after casting a counterspell)
-- `ElectrosiphonTest` (illegal-target case)
-- `ExtinguishTest` (priority after player two casts)
-- `EnvelopTest` (player two passes after casting)
-
-**What the rules require.** CR 117.3c: "If a player has priority when they cast a spell, activate an
-ability, or take a special action, that player receives priority afterward." The engine doesn't store
-who holds priority. `GameQueryService.getPriorityPlayerId` works it out from `priorityPassedBy`
-(the active player unless they passed, then the other player). Casting clears `priorityPassedBy`,
-so after the non-active player casts, priority always goes back to the active player.
-
-**Why it's large.** Priority would need an explicit holder that casting, activating, special actions,
-resolution (CR 117.3b) and step changes all update. The harness helpers (`passBothPriorities`,
-`passUntil`, auto-pass), the AI and the networking priority view all assume the derived model.
-Thousands of tests rely on it, so it needs a full-suite run.
-
-**Prompt to start it:**
-
-```
-Make the engine track the priority holder explicitly so that a player who casts a spell, activates
-an ability or takes a special action while holding priority receives priority afterward (CR 117.3c),
-while the active player still receives priority after resolution (CR 117.3b). Verify rule numbers
-with the rules MCP. Today GameQueryService.getPriorityPlayerId derives priority from priorityPassedBy.
-Update the auto-pass, harness and AI paths. Start with ExquisiteFirecraftTest, ElectrosiphonTest and
-ExtinguishTest, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
+**Done.** `GameData.priorityHolderId` records who holds priority (unset means the active player), and
+`GameData.currentPriorityPlayerId()` walks turn order from it past players in `priorityPassedBy`.
+`GameService.requirePriority` anchors the holder on the acting player, so whoever casts a spell,
+activates an ability or takes a special action while holding priority receives it afterward
+(CR 117.3c). `resetPriorityToActivePlayer()` hands priority back to the active player when the top of
+the stack resolves (CR 117.3b) and on step and turn changes (CR 117.3a). `GameQueryService`, auto-pass,
+the AI (`AiDecisionEngine`, `GameSimulator`) and the test harness all read the same holder.
+`ExquisiteFirecraftTest`, `ElectrosiphonTest`, `ExtinguishTest` and `EnvelopTest` pass.
 
 ---
 
