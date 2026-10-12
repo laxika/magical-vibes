@@ -38,13 +38,26 @@ public class SetSelfBasePowerToughnessFromEnteringCreatureEffectHandler implemen
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent entering = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (source == null || entering == null) {
+        if (source == null) {
             return;
         }
 
-        int power = gameQueryService.getEffectivePower(gameData, entering);
-        int toughness = gameQueryService.getEffectiveToughness(gameData, entering);
+        int power;
+        int toughness;
+        Permanent entering = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (entering != null) {
+            power = gameQueryService.getEffectivePower(gameData, entering);
+            toughness = gameQueryService.getEffectiveToughness(gameData, entering);
+        } else {
+            Permanent departed = entry.getTriggeringCardId() == null
+                    ? null : gameData.departedPermanentSnapshots.get(entry.getTriggeringCardId());
+            if (departed == null || departed.getLastKnownPower() == null
+                    || departed.getLastKnownToughness() == null) {
+                return;
+            }
+            power = departed.getLastKnownPower();
+            toughness = departed.getLastKnownToughness();
+        }
 
         source.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
         source.setBasePowerOverride(power);

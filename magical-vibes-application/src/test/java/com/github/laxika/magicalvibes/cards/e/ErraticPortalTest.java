@@ -1,18 +1,22 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.c.CrashingBoars;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ErraticPortal.class, CrashingBoars.class})
+@CardUsed({ErraticPortal.class, CrashingBoars.class, ControlMagic.class})
 class ErraticPortalTest extends BaseCardTest {
 
     @Test
@@ -156,8 +160,19 @@ class ErraticPortalTest extends BaseCardTest {
     @Test
     void stolenCreatureReturnsToOwnerButControllerChoosesPayment() {
         addPortal();
-        Permanent target = addCreatureReady(player2, new CrashingBoars());
+        Permanent target = addCreatureReady(player1, new CrashingBoars());
         gd.stolenCreatures.put(target.getId(), player1.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ControlMagic()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 

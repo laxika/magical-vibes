@@ -96,6 +96,7 @@ class EusocialEngineeringTest extends BaseCardTest {
         harness.setHand(player1, List.of(enchantment, new Forest()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -108,7 +109,7 @@ class EusocialEngineeringTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(1);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(enchantment.getId())).isNotNull();
         harness.assertNotOnBattlefield(player1, "Eusocial Engineering");
@@ -124,7 +125,7 @@ class EusocialEngineeringTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Eusocial Engineering");
         assertThat(gd.findExiledCard(enchantment.getId())).isNull();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Eusocial Engineering");
     }

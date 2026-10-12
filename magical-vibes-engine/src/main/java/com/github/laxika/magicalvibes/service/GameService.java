@@ -1541,8 +1541,11 @@ public class GameService {
                         GameEventFact.RevealZone.HAND, List.of(toReveal));
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", toReveal, " to turn the permanent face up."));
-            } else if (manifestedOrCloaked || morphDiscardCost == null) {
-                ManaCost cost = new ManaCost(faceUpCost);
+            } else if (manifestedOrCloaked || morphDiscardCost == null
+                    || discardMorphCarriesCostIncrease(gameData, player.getId(), permanent)) {
+                // A discard-cost morph has no mana of its own; only a cost increase (Exiled Doomsayer)
+                // is paid here, as generic mana alongside the discard.
+                ManaCost cost = new ManaCost(!manifestedOrCloaked && morphDiscardCost != null ? "{0}" : faceUpCost);
                 int morphCostModifier = 0;
                 DynamicAmount morphCostReduction = permanent.getCard().getMorphCostReduction();
                 if (!manifestedOrCloaked && morphCostReduction != null && amountEvaluationService != null) {
@@ -1553,7 +1556,8 @@ public class GameService {
                 if (castingCostService != null) {
                     morphCostModifier += castingCostService.getTurnFaceUpCostModifier(
                             gameData, player.getId(), permanent.getCard(), permanent.getId());
-                    if (!manifestedOrCloaked) {
+                    if (!manifestedOrCloaked && !permanent.isFaceDownWard()) {
+                        // Disguise is a separate keyword from morph, so "morph costs" effects leave it alone.
                         morphCostModifier += castingCostService.getMorphCostModifier(
                                 gameData, player.getId(), permanent.getCard());
                     }
@@ -1626,6 +1630,16 @@ public class GameService {
             }
             finishTurningFaceUp(gameData, permanent, player.getId(), xValue, !manifestedOrCloaked, !manifestedOrCloaked);
         }
+    }
+
+    private boolean discardMorphCarriesCostIncrease(GameData gameData, UUID playerId, Permanent permanent) {
+        if (castingCostService == null || permanent.isManifested() || permanent.isCloaked()
+                || permanent.isFaceDownWard()) {
+            return false;
+        }
+        return castingCostService.getTurnFaceUpCostModifier(
+                gameData, playerId, permanent.getCard(), permanent.getId())
+                + castingCostService.getMorphCostModifier(gameData, playerId, permanent.getCard()) > 0;
     }
 
     private boolean canPayTurnFaceUpManaCost(GameData gameData, UUID playerId, Permanent permanent,

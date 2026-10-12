@@ -129,12 +129,12 @@ class EssenceFlareTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new EssenceFlare());
         aura.setAttachedTo(creature.getId());
         harness.setHand(player1, List.of(new Disenchant()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
 
         advanceToUpkeep(player2);
         assertThat(creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
         assertThat(gd.stack).hasSize(1);
 
+        harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player1, 0, aura.getId());
         harness.assertInGraveyard(player1, "Essence Flare");
         assertThat(creature.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();

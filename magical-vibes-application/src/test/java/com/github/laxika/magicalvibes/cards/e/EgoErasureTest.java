@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -41,14 +40,14 @@ class EgoErasureTest extends BaseCardTest {
     @DisplayName("Creatures target player controls lose all creature types")
     void stripsAllCreatureTypes() {
         Permanent changeling = harness.addToBattlefieldAndReturn(player2, new WoodlandChangeling());
-        assertThat(GameQueryService.permanentHasSubtype(changeling, CardSubtype.GOBLIN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(changeling, CardSubtype.KITHKIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, changeling, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, changeling, CardSubtype.KITHKIN)).isTrue();
 
         castEgoErasure(player2.getId());
 
-        assertThat(GameQueryService.permanentHasSubtype(changeling, CardSubtype.GOBLIN)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(changeling, CardSubtype.KITHKIN)).isFalse();
-        assertThat(GameQueryService.permanentHasSubtype(changeling, CardSubtype.SHAPESHIFTER)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, changeling, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, changeling, CardSubtype.KITHKIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, changeling, CardSubtype.SHAPESHIFTER)).isFalse();
     }
 
     @Test
@@ -75,7 +74,7 @@ class EgoErasureTest extends BaseCardTest {
         castEgoErasure(player2.getId());
 
         assertThat(gqs.getEffectivePower(gd, ownKnight)).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(ownKnight, CardSubtype.KITHKIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownKnight, CardSubtype.KITHKIN)).isTrue();
     }
 
     @Test
@@ -86,7 +85,7 @@ class EgoErasureTest extends BaseCardTest {
         castEgoErasure(player1.getId());
 
         assertThat(gqs.getEffectivePower(gd, ownKnight)).isEqualTo(0);
-        assertThat(GameQueryService.permanentHasSubtype(ownKnight, CardSubtype.KITHKIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, ownKnight, CardSubtype.KITHKIN)).isFalse();
     }
 
     @Test
@@ -98,9 +97,9 @@ class EgoErasureTest extends BaseCardTest {
 
         Permanent laterKnight = harness.addToBattlefieldAndReturn(player2, new KnightOfMeadowgrain());
         assertThat(gqs.getEffectivePower(gd, existingKnight)).isEqualTo(0);
-        assertThat(GameQueryService.permanentHasSubtype(existingKnight, CardSubtype.KITHKIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, existingKnight, CardSubtype.KITHKIN)).isFalse();
         assertThat(gqs.getEffectivePower(gd, laterKnight)).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(laterKnight, CardSubtype.KITHKIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, laterKnight, CardSubtype.KITHKIN)).isTrue();
     }
 
     @Test
@@ -122,12 +121,12 @@ class EgoErasureTest extends BaseCardTest {
 
         castEgoErasure(player2.getId());
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(0);
-        assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.KITHKIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, knight, CardSubtype.KITHKIN)).isFalse();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.KITHKIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, knight, CardSubtype.KITHKIN)).isTrue();
     }
 
     @Test
@@ -135,7 +134,7 @@ class EgoErasureTest extends BaseCardTest {
     void laterEffectGrantsCreatureTypes() {
         Permanent knight = harness.addToBattlefieldAndReturn(player2, new KnightOfMeadowgrain());
         castEgoErasure(player2.getId());
-        assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, knight, CardSubtype.GOBLIN)).isFalse();
 
         harness.setHand(player1, List.of(new BladesOfVelisVel()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -143,8 +142,8 @@ class EgoErasureTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(knight.getId()));
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.GOBLIN)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(knight, CardSubtype.KITHKIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, knight, CardSubtype.GOBLIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, knight, CardSubtype.KITHKIN)).isTrue();
     }
 
     @Test
@@ -154,7 +153,7 @@ class EgoErasureTest extends BaseCardTest {
 
         castEgoErasure(player2.getId());
 
-        assertThat(GameQueryService.permanentHasSubtype(changeling, CardSubtype.GOBLIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, changeling, CardSubtype.GOBLIN)).isFalse();
         assertThat(gqs.hasKeyword(gd, changeling, Keyword.CHANGELING)).isTrue();
     }
 

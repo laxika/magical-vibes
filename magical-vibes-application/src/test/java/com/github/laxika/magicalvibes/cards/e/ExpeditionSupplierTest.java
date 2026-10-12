@@ -150,7 +150,7 @@ class ExpeditionSupplierTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(countPermanents(player1, "Utility Knife")).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.enterBattlefieldAndReturn(player1, new BeskirShieldmate());
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);

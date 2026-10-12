@@ -14,7 +14,7 @@ public class EarthKingdomGeneral extends Card {
 
     public EarthKingdomGeneral() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EarthbendTargetLandEffect(2));
-        addEffect(EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
+        addEffect(EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANY_CREATURE,
                 OncePerTurnTriggerEffect.markOnAcceptance(
                         new MayEffect(new GainLifeEffect(new EventValue()), "Gain that much life?")));
     }

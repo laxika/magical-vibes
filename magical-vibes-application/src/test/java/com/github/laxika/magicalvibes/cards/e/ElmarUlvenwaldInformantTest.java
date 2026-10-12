@@ -160,7 +160,7 @@ class ElmarUlvenwaldInformantTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         elmar.tap();
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);

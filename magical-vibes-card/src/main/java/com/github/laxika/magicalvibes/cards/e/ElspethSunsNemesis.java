@@ -41,6 +41,6 @@ public class ElspethSunsNemesis extends Card {
 
         addCastingOption(new GraveyardCast(null, "{4}{W}{W}",
                 List.of(new ExileNCardsFromGraveyardCastingCost(null, "other cards", 4)),
-                null, false, true));
+                null, false, false, true));
     }
 }

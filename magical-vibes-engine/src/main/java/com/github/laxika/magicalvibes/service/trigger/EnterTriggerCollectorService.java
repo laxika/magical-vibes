@@ -1383,9 +1383,11 @@ public class EnterTriggerCollectorService {
                 return true;
             }
             if (mayPay.targetSpec() != TargetSpec.NONE) {
-                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                        sourceCard, match.controllerId(), new ArrayList<>(List.of(mayPay)),
-                        enteringPermanentId, enteringPermanentId));
+                for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                    match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                            sourceCard, match.controllerId(), new ArrayList<>(List.of(mayPay)),
+                            enteringPermanentId, enteringPermanentId));
+                }
             } else {
                 match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay,
                         pe.mayPayTargetCardId(), enteringPermanentId, eventValue);

@@ -340,6 +340,17 @@ public class GameTestHarness {
         return permanent;
     }
 
+    /** Puts a land onto the battlefield without playing it, firing its land-enters triggers. */
+    public Permanent enterLandBattlefieldAndReturn(Player player, Card card) {
+        Permanent permanent = new Permanent(card);
+        inMutationScope(() -> {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
+            battlefieldEntryService.processLandETBEffects(gameData, player.getId(), permanent.getCard());
+            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+        });
+        return permanent;
+    }
+
     /**
      * Runs a state-based check the way the engine does — inside a mutation scope.
      *
@@ -596,7 +607,7 @@ public class GameTestHarness {
     public void castFromGraveyardWithSacrifice(Player player, int graveyardCardIndex, UUID sacrificePermanentId) {
         ensurePriority(player);
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null,
-                List.of(), null, null, List.of(sacrificePermanentId), null, null);
+                List.of(), null, null, List.of(), null, sacrificePermanentId);
     }
 
     public void castFromGraveyardWithSacrifices(Player player, int graveyardCardIndex, UUID targetId,

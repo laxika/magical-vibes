@@ -378,6 +378,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID controllerId, Card sourceCard, SacrificeAnotherCreatureDrawAndMayPutPermanentEffect effect)
             implements PermanentChoiceContext {}
 
+    /**
+     * The losing player chooses which of several Exquisite Archangels replaces their game loss
+     * (CR 616.1); {@code lossReason} names the {@code LossReason} that triggered the replacement.
+     */
+    record ExquisiteArchangelLossReplacement(UUID playerId, String lossReason) implements PermanentChoiceContext {}
+
     /** Torment of Hailfire: {@code playerId} sacrifices the chosen nonland permanent they control. */
     record TormentSacrifice(UUID playerId) implements PermanentChoiceContext {}
 

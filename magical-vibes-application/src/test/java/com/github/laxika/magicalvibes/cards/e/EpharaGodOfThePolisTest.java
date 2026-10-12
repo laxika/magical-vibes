@@ -101,6 +101,7 @@ class EpharaGodOfThePolisTest extends BaseCardTest {
         addEphara();
         Card drawn = new GreatHart();
         harness.setLibrary(player1, List.of(drawn, new GreatHart()));
+        harness.setHand(player1, List.of());
         Permanent first = harness.enterBattlefieldAndReturn(player1, new GreatHart());
         Permanent second = harness.enterBattlefieldAndReturn(player1, new GreatHart());
         gd.playerBattlefields.get(player1.getId()).removeAll(List.of(first, second));
@@ -131,6 +132,7 @@ class EpharaGodOfThePolisTest extends BaseCardTest {
         addEphara();
         Card drawn = new GreatHart();
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
         harness.enterBattlefieldAndReturn(player1, new GreatHart());
 

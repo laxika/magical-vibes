@@ -109,7 +109,9 @@ import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -368,21 +370,32 @@ public class DrawService {
             return;
         }
 
+        Map<String, Permanent> exileReplacementSources = new LinkedHashMap<>();
         Permanent sharedFateSource = findSharedFateSource(gameData);
         if (sharedFateSource != null) {
-            resolveSharedFateDrawReplacement(gameData, playerId, sharedFateSource);
-            return;
+            exileReplacementSources.putIfAbsent(sharedFateSource.getCard().getName(), sharedFateSource);
         }
-
         Permanent exileTopCardsSource = findExileTopCardsMayPlayThisTurnDrawReplacementSource(gameData, playerId);
         if (exileTopCardsSource != null) {
-            resolveExileTopCardsMayPlayThisTurnDrawReplacement(gameData, playerId, exileTopCardsSource);
-            return;
+            exileReplacementSources.putIfAbsent(exileTopCardsSource.getCard().getName(), exileTopCardsSource);
         }
-
         Permanent exileTopCardSource = findExileTopCardFaceDownInsteadOfDrawSource(gameData, playerId);
         if (exileTopCardSource != null) {
-            resolveExileTopCardFaceDownInsteadOfDraw(gameData, playerId, exileTopCardSource);
+            exileReplacementSources.putIfAbsent(exileTopCardSource.getCard().getName(), exileTopCardSource);
+        }
+        if (exileReplacementSources.size() > 1) {
+            Map<String, UUID> sourceIds = new LinkedHashMap<>();
+            exileReplacementSources.forEach((name, source) -> sourceIds.put(name, source.getId()));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    playerId, null, null,
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.DrawReplacementSourceChoice(
+                            playerId, sourceIds),
+                    List.copyOf(sourceIds.keySet()),
+                    "Choose which replacement effect to apply to this draw."));
+            return;
+        }
+        if (!exileReplacementSources.isEmpty()) {
+            applyExileDrawReplacement(gameData, playerId, exileReplacementSources.values().iterator().next());
             return;
         }
 
@@ -1667,7 +1680,8 @@ public class DrawService {
     /**
      * Enduring Renewal replacement: reveal the top card of the drawing player's library. If it's a
      * creature card, put it into their graveyard (not drawn). Otherwise, draw that card (a real draw).
-     * An empty library reveals nothing and does not lose the game — the draw was replaced.
+     * An empty library reveals nothing, so the "otherwise" branch applies and the player attempts a real
+     * draw from an empty library.
      */
     private void resolveRevealTopCreatureToGraveyardElseDraw(GameData gameData, UUID playerId, Permanent source) {
         List<Card> deck = gameData.playerDecks.get(playerId);
@@ -1678,6 +1692,7 @@ public class DrawService {
                     playerName + "'s library is empty; ", source.getCard(), " reveals no cards."));
             log.info("Game {} - {} reveals no cards for {} (empty library)",
                     gameData.id, playerName, source.getCard().getName());
+            performDrawCard(gameData, playerId);
             return;
         }
 
@@ -1835,6 +1850,27 @@ public class DrawService {
                 false));
     }
 
+    /** Applies the competing draw replacement selected by the player who would draw (CR 616.1). */
+    public void resolveChosenDrawReplacementSource(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            throw new IllegalStateException("That draw replacement is no longer available");
+        }
+        applyExileDrawReplacement(gameData, playerId, source);
+    }
+
+    private void applyExileDrawReplacement(GameData gameData, UUID playerId, Permanent source) {
+        if (source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof SharedFateDrawReplacement)) {
+            resolveSharedFateDrawReplacement(gameData, playerId, source);
+        } else if (gameQueryService.getActiveStaticEffects(gameData, source).stream()
+                .anyMatch(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::isInstance)) {
+            resolveExileTopCardsMayPlayThisTurnDrawReplacement(gameData, playerId, source);
+        } else {
+            resolveExileTopCardFaceDownInsteadOfDraw(gameData, playerId, source);
+        }
+    }
+
     /** Applies the delayed library-look replacement selected by the player who would draw. */
     public void resolveChosenNextDrawLookAtTop(GameData gameData, UUID playerId, int count) {
         List<Integer> replacements = gameData.pendingNextDrawLookAtTop.get(playerId);
@@ -1966,13 +2002,18 @@ public class DrawService {
 
             // CR 704.5b — player who attempted to draw from an empty library loses the game
             gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
-            if (!gameData.deferPlayerLossCheck
-                    && gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
-                UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
-                String lossLog = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
-                gameLogService.append(gameData, GameLog.text(lossLog));
-                log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
-                gameOutcomeService.declareWinner(gameData, winnerId);
+            if (!gameData.deferPlayerLossCheck) {
+                // Consumed here, not left armed: a replaced loss does not carry over to the next state
+                // check, and a replacement that re-arms the flag (Lich's Mirror's seven-card draw) must
+                // keep it, so the flag is cleared before the replacement chain runs.
+                gameData.playersAttemptedDrawFromEmptyLibrary.remove(playerId);
+                if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EMPTY_LIBRARY) == LossOutcome.LOSES) {
+                    UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
+                    String lossLog = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
+                    gameLogService.append(gameData, GameLog.text(lossLog));
+                    log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
+                    gameOutcomeService.declareWinner(gameData, winnerId);
+                }
             }
             return;
         }
@@ -2604,7 +2645,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
-            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean hasEffect = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                     .filter(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::isInstance)
                     .map(ExileTopCardsMayPlayThisTurnDrawReplacementEffect.class::cast)
                     .anyMatch(effect -> !effect.withoutPayingManaCost());

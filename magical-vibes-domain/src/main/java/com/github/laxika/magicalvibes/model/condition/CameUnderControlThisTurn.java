@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.model.condition;
 /**
  * The source permanent came under its controller's control this turn — i.e. it is still
  * summoning sick at the point the condition is evaluated (summoning sickness is only cleared
- * during that player's untap step). Used by Erg Raiders' "unless it came under your control
- * this turn".
+ * during that player's untap step). "Your" is the controller of the ability being evaluated, so
+ * the condition is false while another player controls the source. Used by Erg Raiders' "unless
+ * it came under your control this turn".
  */
 public record CameUnderControlThisTurn() implements Condition {
 

@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -30,7 +32,7 @@ public class ElderGargaroth extends Card {
                 new ChooseOneEffect.ChooseOneOption("Draw a card.", new DrawCardEffect(1))
         ));
 
-        addEffect(EffectSlot.ON_ATTACK, attackOrBlockEffect);
-        addEffect(EffectSlot.ON_BLOCK, attackOrBlockEffect);
+        addEffect(EffectSlot.ON_ATTACK, new ChooseOneAtTriggerTimeEffect(attackOrBlockEffect));
+        addEffect(EffectSlot.ON_BLOCK, attackOrBlockEffect, TriggerMode.ONCE_PER_BLOCK);
     }
 }

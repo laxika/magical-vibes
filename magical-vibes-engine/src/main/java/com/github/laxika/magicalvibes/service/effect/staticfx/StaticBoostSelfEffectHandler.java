@@ -30,7 +30,9 @@ public class StaticBoostSelfEffectHandler implements StaticEffectHandlerBean {
         boolean inScope = boost.scope() == GrantScope.SELF
                 || ((boost.scope() == GrantScope.ALL_OWN_CREATURES
                 || boost.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF)
-                && support.matchesCreatureScope(context, boost.scope(), boost.filter()));
+                && support.matchesCreatureScope(context, boost.scope(), boost.filter()))
+                || (boost.scope() == GrantScope.ALL_LANDS_INCLUDING_SELF
+                && support.matchesLandScope(context, boost.scope(), boost.filter()));
         if (inScope && support.matchesStaticFilter(context, context.target(), boost.filter())) {
             int multiplier = boost.scalingCounter() == null
                     ? 1

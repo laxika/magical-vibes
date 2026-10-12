@@ -52,7 +52,7 @@ public class ExileAllCreaturesOfChosenManaValueParityEffectHandler implements No
         List<Permanent> toExile = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
-                int manaValue = permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue();
+                int manaValue = gameQueryService.getPermanentManaValue(permanent);
                 if (gameQueryService.isCreature(gameData, permanent)
                         && chosenParity.matches(manaValue)) {
                     toExile.add(permanent);

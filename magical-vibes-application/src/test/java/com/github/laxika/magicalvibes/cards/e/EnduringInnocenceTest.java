@@ -211,6 +211,7 @@ class EnduringInnocenceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new InquisitiveGlimmer()));
         harness.addMana(player1, ManaColor.WHITE, 1);

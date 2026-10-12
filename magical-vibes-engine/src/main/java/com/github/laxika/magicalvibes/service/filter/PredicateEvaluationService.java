@@ -2007,7 +2007,7 @@ public class PredicateEvaluationService {
                 if (filterContext == null || filterContext.xValue() == null) {
                     yield true;
                 }
-                yield permanent.getCard().getManaValue() <= filterContext.xValue();
+                yield (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) <= filterContext.xValue();
             }
             case PermanentManaValueEqualsXPredicate ignored -> {
                 // When xValue is null (e.g. during valid-target checks before X is chosen),
@@ -2015,13 +2015,13 @@ public class PredicateEvaluationService {
                 if (filterContext == null || filterContext.xValue() == null) {
                     yield true;
                 }
-                yield permanent.getCard().getManaValue() == filterContext.xValue();
+                yield (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) == filterContext.xValue();
             }
             case PermanentManaValueLessThanXPredicate ignored -> {
                 if (filterContext == null || filterContext.xValue() == null) {
                     yield true;
                 }
-                yield permanent.getCard().getManaValue() < filterContext.xValue();
+                yield (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) < filterContext.xValue();
             }
             case PermanentMaxManaValueXPredicate ignored -> {
                 // Same permissive fallback as the equals-X sibling: with no X chosen yet, every
@@ -2029,7 +2029,7 @@ public class PredicateEvaluationService {
                 if (filterContext == null || filterContext.xValue() == null) {
                     yield true;
                 }
-                yield permanent.getCard().getManaValue() <= filterContext.xValue();
+                yield (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) <= filterContext.xValue();
             }
             case PermanentMaxManaValueColorsSpentToCastPredicate ignored -> {
                 // During casting the colored-mana snapshot does not exist yet, so the target is
@@ -2559,11 +2559,19 @@ public class PredicateEvaluationService {
                 }
                 // "target creature with power <= this creature's power" (Earthshaker Khenra). When the
                 // source is already on the battlefield (e.g. the 4/4 Eternalize token choosing its
-                // target at trigger time), use its effective power. During cast-time ETB validation the
-                // source isn't a permanent yet, so fall back to the source card's base power.
+                // target at trigger time), use its effective power. Once the source has left the
+                // battlefield (e.g. a bounced token), its last known information supplies the power.
+                // During cast-time ETB validation the source isn't a permanent yet, so fall back to the
+                // source card's base power.
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+                boolean sourceIsLive = sourcePermanent != null;
+                if (!sourceIsLive && filterContext != null) {
+                    sourcePermanent = filterContext.sourcePermanentSnapshot();
+                }
                 Integer sourcePower = sourcePermanent != null
-                        ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
+                        ? Integer.valueOf(!sourceIsLive && sourcePermanent.getLastKnownPower() != null
+                                ? sourcePermanent.getLastKnownPower()
+                                : gameQueryService.getEffectivePower(gameData, sourcePermanent))
                         : basePowerOfCardInAnyZone(gameData, sourceCardId);
                 if (sourcePower == null) {
                     yield false;
@@ -4880,7 +4888,7 @@ public class PredicateEvaluationService {
             case StackEntryCardIdPredicate cardId ->
                     entry.getCard() != null && cardId.cardId().equals(entry.getCard().getId());
             case StackEntryCastWithWarpCostPredicate ignored -> entry.isCastWithWarp();
-            case StackEntryIsCopyPredicate ignored -> entry.isCopy();
+            case StackEntryIsCopyPredicate ignored -> entry.isCopy() && !entry.isCastCopy();
             case StackEntryKickedPredicate ignored -> entry.wasKicked();
             case StackEntryTruePredicate ignored -> true;
             case StackEntryIsSingleTargetPredicate ignored -> false;

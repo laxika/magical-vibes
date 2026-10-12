@@ -241,8 +241,13 @@ public class CombatTriggerService {
                                                     ? attackedTargetId
                                                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
                                     // An attack trigger granted by an Aura is an ability of the enchanted creature,
-                                    // so its source and controller are that creature (CR 113.7, CR 113.8).
-                                    UUID grantedAttackControllerId = finalCreatureControllerId;
+                                    // so its source and controller are that creature (CR 113.7, CR 113.8). An
+                                    // Aura's own "whenever enchanted creature attacks" ability is controlled by the
+                                    // Aura's controller and has the Aura as its source.
+                                    boolean auraOwnedAttackTrigger = slot == EffectSlot.ON_ATTACK
+                                            && perm.getCard().isAttackTriggerOwnedByAura();
+                                    UUID grantedAttackControllerId = auraOwnedAttackTrigger
+                                            ? auraOwnerId : finalCreatureControllerId;
                                     UUID targetChooserId = slot == EffectSlot.ON_ATTACK
                                             && perm.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
                                             ? defendingPlayerId : grantedAttackControllerId;
@@ -250,7 +255,8 @@ public class CombatTriggerService {
                                             slot == EffectSlot.ON_ATTACK
                                                     ? new PermanentChoiceContext.AttackTriggerTarget(
                                                             perm.getCard(), grantedAttackControllerId, effectsForStack,
-                                                            creature.getId(), targetChooserId, attackedTargetId, creature.getId())
+                                                            auraOwnedAttackTrigger ? perm.getId() : creature.getId(),
+                                                            targetChooserId, attackedTargetId, creature.getId())
                                                     : new PermanentChoiceContext.AttackTriggerTarget(
                                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
                                                             auraOwnerId, null, creature.getId()));

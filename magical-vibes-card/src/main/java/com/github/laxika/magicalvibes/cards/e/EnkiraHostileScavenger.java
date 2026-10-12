@@ -29,7 +29,7 @@ public class EnkiraHostileScavenger extends Card {
                 2, "Walker", 2, 2, CardColor.BLACK, List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new Equipped(),
                 new MustBeBlockedIfAbleEffect()));
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
                 new MinimumAttackingCreaturesOfSubtype(2, CardSubtype.ZOMBIE),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
     }

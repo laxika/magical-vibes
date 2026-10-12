@@ -68,13 +68,14 @@ class EmberGaleTest extends BaseCardTest {
     @Test
     @DisplayName("Target player's creatures can't block this turn")
     void creaturesCantBlock() {
-        Permanent red = addCreatureReady(player2, new PyreCharger());
-        Permanent ownRed = addCreatureReady(player1, new PyreCharger());
+        addCreatureReady(player2, new PyreCharger());
+        addCreatureReady(player1, new PyreCharger());
 
         castEmberGale();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
-        assertThat(red.isCantBlockThisTurn()).isTrue();
-        assertThat(ownRed.isCantBlockThisTurn()).isFalse();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -136,7 +137,7 @@ class EmberGaleTest extends BaseCardTest {
     @DisplayName("Can target the caster without affecting the opponent's creatures")
     void canTargetCaster() {
         addCreatureReady(player1, new ZealousGuardian());
-        Permanent ownRed = addCreatureReady(player1, new PyreCharger());
+        addCreatureReady(player1, new PyreCharger());
         Permanent opposingRed = addCreatureReady(player2, new PyreCharger());
         Permanent opposingBlue = addCreatureReady(player2, new DrownerInitiate());
         harness.setHand(player1, List.of(new EmberGale()));
@@ -145,10 +146,14 @@ class EmberGaleTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         harness.assertInGraveyard(player1, "Zealous Guardian");
-        assertThat(ownRed.isCantBlockThisTurn()).isTrue();
         assertThat(opposingRed.isCantBlockThisTurn()).isFalse();
         assertThat(opposingBlue.isCantBlockThisTurn()).isFalse();
         assertThat(opposingBlue.getMarkedDamage()).isZero();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void castEmberGale() {

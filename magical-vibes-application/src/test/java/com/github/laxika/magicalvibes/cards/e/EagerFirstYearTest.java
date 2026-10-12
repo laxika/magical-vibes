@@ -76,7 +76,9 @@ class EagerFirstYearTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(firstYear.getEffectivePower()).isEqualTo(2);
         assertThat(firstYear.getEffectiveToughness()).isEqualTo(2);

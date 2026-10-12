@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -52,15 +51,18 @@ public class AddManaEqualToEnchantedPermanentManaCostEffectHandler implements No
         }
         boolean fromMilledCost = ((AddManaEqualToEnchantedPermanentManaCostEffect) effect)
                 .coloredSymbolsOfMilledCostCards();
-        List<Set<ManaColor>> choices;
+        List<List<ManaCost.ManaProductionOption>> choices;
         if (fromMilledCost) {
             choices = entry.getCardsMilledAsActivationCost().stream()
                     .filter(card -> card.getParsedManaCost() != null)
                     .flatMap(card -> card.getParsedManaCost().getManaProductionChoices().stream())
-                    .filter(choice -> !choice.equals(Set.of(ManaColor.COLORLESS)))
+                    .filter(choice -> !isSingleGenericMana(choice))
                     .toList();
         } else {
-            if (enchanted == null || enchanted.getCard().getParsedManaCost() == null) return;
+            if (enchanted == null || enchanted.isFaceDown()
+                    || enchanted.getCard().getParsedManaCost() == null) {
+                return;
+            }
             choices = enchanted.getCard().getParsedManaCost().getManaProductionChoices();
         }
         if (choices.isEmpty()) {
@@ -69,12 +71,13 @@ public class AddManaEqualToEnchantedPermanentManaCostEffectHandler implements No
 
         UUID controllerId = entry.getControllerId();
         boolean fromCreature = aura != null && gameQueryService.isCreature(gameData, aura);
-        List<Set<ManaColor>> selectableChoices = choices.stream()
+        List<List<ManaCost.ManaProductionOption>> selectableChoices = choices.stream()
                 .filter(choice -> choice.size() > 1)
                 .toList();
-        for (Set<ManaColor> choice : choices) {
+        for (List<ManaCost.ManaProductionOption> choice : choices) {
             if (choice.size() == 1) {
-                addMana(gameData, controllerId, choice.iterator().next(), fromCreature);
+                ManaCost.ManaProductionOption option = choice.getFirst();
+                addMana(gameData, controllerId, option.color(), option.amount(), fromCreature);
             }
         }
 
@@ -83,24 +86,32 @@ public class AddManaEqualToEnchantedPermanentManaCostEffectHandler implements No
         }
     }
 
-    private void beginChoice(GameData gameData, UUID controllerId, List<Set<ManaColor>> choices,
-                             boolean fromCreature) {
+    private static boolean isSingleGenericMana(List<ManaCost.ManaProductionOption> choice) {
+        return choice.size() == 1
+                && choice.getFirst().color() == ManaColor.COLORLESS
+                && choice.getFirst().amount() == 1;
+    }
+
+    private void beginChoice(GameData gameData, UUID controllerId,
+                             List<List<ManaCost.ManaProductionOption>> choices, boolean fromCreature) {
         ChoiceContext.EnchantedManaCostChoice context =
                 new ChoiceContext.EnchantedManaCostChoice(controllerId, choices, fromCreature);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 controllerId, null, null, context,
-                choices.getFirst().stream().map(Enum::name).toList(),
+                choices.getFirst().stream().map(option -> option.color().name()).toList(),
                 "Choose a color of mana to add."));
     }
 
-    private void addMana(GameData gameData, UUID playerId, ManaColor color, boolean fromCreature) {
+    private void addMana(GameData gameData, UUID playerId, ManaColor color, int amount, boolean fromCreature) {
         ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, playerId, color);
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        pool.add(effectiveColor, 1);
+        pool.add(effectiveColor, amount);
         if (fromCreature) {
-            pool.addCreatureMana(effectiveColor, 1);
+            pool.addCreatureMana(effectiveColor, amount);
         }
         String playerName = gameData.playerIdToName.get(playerId);
-        gameLogService.append(gameData, GameLog.text(playerName + " adds one " + effectiveColor.getCode() + "."));
+        String amountText = amount == 1 ? "one" : String.valueOf(amount);
+        gameLogService.append(gameData, GameLog.text(playerName + " adds " + amountText + " "
+                + effectiveColor.getCode() + "."));
     }
 }

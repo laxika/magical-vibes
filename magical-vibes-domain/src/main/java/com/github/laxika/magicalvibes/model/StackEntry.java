@@ -80,6 +80,11 @@ public class StackEntry {
     @Setter private int xValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
+    /**
+     * Total mana cost of the single mode the spell was cast with, when that mode carries its own cost
+     * (a split card's chosen half). The spell's mana value on the stack is that of the chosen half.
+     */
+    @Setter private String castModeManaCost;
     @Setter private int phyrexianManaPaidWithLife;
     /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
     @Setter private Integer etbMode;
@@ -117,8 +122,13 @@ public class StackEntry {
     private final Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
+    /** Results of {@code DeterminedOnce} amounts already evaluated during this resolution (CR 608.2h). */
+    private final Map<com.github.laxika.magicalvibes.model.amount.DynamicAmount, Integer> amountsDeterminedOnce =
+            new HashMap<>();
     /** Effective power just before a permanent leaves during this resolution. */
     private final Map<UUID, Integer> lastKnownPermanentPowers = new HashMap<>();
+    /** Effective toughness just before a permanent leaves while an ability that references it is on the stack. */
+    private final Map<UUID, Integer> lastKnownPermanentToughnesses = new HashMap<>();
     private final Map<UUID, Map<CounterType, Integer>> lastKnownPermanentCounters = new HashMap<>();
     /** Permanents returned by a previous effect in this resolution, for follow-up effects. */
     private final Set<UUID> returnedPermanentIds = new LinkedHashSet<>();
@@ -807,6 +817,7 @@ public class StackEntry {
         this.nextSimultaneousGroup = source.nextSimultaneousGroup;
         this.xValue = source.xValue;
         this.modalModeCount = source.modalModeCount;
+        this.castModeManaCost = source.castModeManaCost;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
         this.etbMode = source.etbMode;
         this.targetId = source.targetId;
@@ -816,6 +827,7 @@ public class StackEntry {
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
         this.lastKnownPermanentPowers.putAll(source.lastKnownPermanentPowers);
+        this.lastKnownPermanentToughnesses.putAll(source.lastKnownPermanentToughnesses);
         source.lastKnownPermanentCounters.forEach((id, counts) ->
                 this.lastKnownPermanentCounters.put(id, new EnumMap<>(counts)));
         this.returnedPermanentIds.addAll(source.returnedPermanentIds);
@@ -1822,6 +1834,10 @@ public class StackEntry {
      * not at all when the cost has no {X}, e.g. an X chosen by another effect (CR 202.3e).
      */
     public int getSpellManaValue() {
+        if (castModeManaCost != null) {
+            ManaCost modeCost = new ManaCost(castModeManaCost);
+            return modeCost.getManaValue() + xValue * modeCost.getXSymbolCount();
+        }
         return spellManaValue(card, xValue);
     }
 

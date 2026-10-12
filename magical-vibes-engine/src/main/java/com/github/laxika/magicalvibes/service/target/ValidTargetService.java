@@ -1539,7 +1539,7 @@ public class ValidTargetService {
         }
 
         if (gameQueryService.cantBeTargetedByAbilityFromCardType(
-                gameData, perm, sourceCard, null, controllerId, CardType.ARTIFACT)) {
+                gameData, perm, sourceCard, null, controllerId)) {
             return false;
         }
 

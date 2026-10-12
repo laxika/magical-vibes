@@ -18,7 +18,7 @@ import java.util.List;
 public class Extruder extends Card {
 
     public Extruder() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{4}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{4}"));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

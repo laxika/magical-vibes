@@ -51,9 +51,9 @@ public class VivisPersistence extends Card {
 
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
-                        new PermanentIsCommanderPredicate(), returnToHand));
+                        new PermanentIsCommanderPredicate(true), returnToHand));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(
-                        new HasAttacker(new PermanentIsCommanderPredicate()), returnToHand));
+                        new HasAttacker(new PermanentIsCommanderPredicate(true)), returnToHand));
     }
 }

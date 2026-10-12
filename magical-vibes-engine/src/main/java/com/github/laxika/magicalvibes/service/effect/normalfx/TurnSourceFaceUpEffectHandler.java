@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -33,6 +34,11 @@ public class TurnSourceFaceUpEffectHandler implements NormalEffectHandlerBean {
         }
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null || !source.isFaceDown()) {
+            return;
+        }
+        // A manifested permanent represented by an instant or sorcery card stays face down.
+        if (source.isManifested()
+                && (source.getCard().hasType(CardType.INSTANT) || source.getCard().hasType(CardType.SORCERY))) {
             return;
         }
         gameServiceProvider.getObject().turnPermanentFaceUpWithoutPayingManaCost(gameData, source);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -26,7 +27,7 @@ public class Erode extends Card {
     public Erode() {
         // Destroy target creature or planeswalker. Its controller may search their library
         // for a basic land card, put it onto the battlefield tapped, then shuffle.
-        // (A restricted search can always fail to find, so "may search" needs no extra flag.)
+        // The controller chooses whether to search; the search itself is wrapped in a may prompt.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -34,12 +35,13 @@ public class Erode extends Card {
                 )),
                 "Target must be a creature or planeswalker"
         )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
-                new SearchLibraryEffect(
+                new MayEffect(new SearchLibraryEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSupertypePredicate(CardSupertype.BASIC),
                                 new CardTypePredicate(CardType.LAND)
                         )),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
+                        "Search your library for a basic land card?"),
                 ThenEffectRecipient.TARGET_CONTROLLER));
     }
 }

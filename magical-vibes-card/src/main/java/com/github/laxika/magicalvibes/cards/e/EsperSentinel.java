@@ -20,7 +20,7 @@ public class EsperSentinel extends Card {
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, SpellCastTriggerEffect.nth(
                 1,
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new DrawCardUnlessPaysEffect(1, new SourcePower()))
+                List.of(DrawCardUnlessPaysEffect.mandatory(1, new SourcePower()))
         ));
     }
 }

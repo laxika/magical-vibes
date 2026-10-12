@@ -105,7 +105,7 @@ class ElvenRaftSteererTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvenRaftSteerer());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new TheLordOfTheEagles());
 
-        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterLandBattlefieldAndReturn(player1, new Forest());
         harness.handleListChoice(player1, TAP);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();

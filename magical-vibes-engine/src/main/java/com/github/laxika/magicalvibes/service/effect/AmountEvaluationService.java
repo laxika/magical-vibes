@@ -143,6 +143,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestOpponentCardsDrawnThi
 import com.github.laxika.magicalvibes.model.amount.GreatestOpponentHandSize;
 import com.github.laxika.magicalvibes.model.amount.GreatestPermanentCountAmongOpponents;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.DeterminedOnce;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestStackSourceCountThisTurn;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
@@ -324,6 +325,19 @@ public class AmountEvaluationService {
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService));
     }
 
+    private int determinedOnce(GameData gameData, DeterminedOnce amount, AmountContext ctx) {
+        if (ctx.stackEntry() == null) {
+            return evaluate(gameData, amount.amount(), ctx);
+        }
+        Integer known = ctx.stackEntry().getAmountsDeterminedOnce().get(amount);
+        if (known != null) {
+            return known;
+        }
+        int value = evaluate(gameData, amount.amount(), ctx);
+        ctx.stackEntry().getAmountsDeterminedOnce().put(amount, value);
+        return value;
+    }
+
     /**
      * Evaluates the current value of the given amount.
      */
@@ -333,6 +347,8 @@ public class AmountEvaluationService {
                     gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn;
             case Fixed f ->
                     f.value();
+            case DeterminedOnce d ->
+                    determinedOnce(gameData, d, ctx);
             case FixedIfCondition a ->
                     conditionEvaluationService.isMet(gameData, a.condition(), conditionContext(gameData, ctx))
                             ? a.amount() : a.otherwise();
@@ -1254,16 +1270,36 @@ public class AmountEvaluationService {
         return ctx.stackEntry() == null ? 0 : ctx.stackEntry().getEventValue();
     }
 
-    /** Printed power of the targeted creature spell on the stack (Essence Backlash); 0 if gone. */
+    /**
+     * Power of the targeted creature spell (Essence Backlash). While the spell is on the stack its
+     * power is read from it; once this resolution has countered it, the last-known copy remembered
+     * on the resolving entry is used, with the countered spell's controller as the CDA's controller.
+     * Returns 0 when neither is available.
+     */
     private int targetSpellPower(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         for (StackEntry se : gameData.stack) {
             if (se.getTargetableId().equals(ctx.targetPermanentId())) {
-                Integer power = se.getCard().getPower();
-                return power == null ? 0 : Math.max(0, power);
+                return spellPowerForController(gameData, se.getCard(), se.getControllerId());
             }
         }
-        return 0;
+        StackEntry resolving = ctx.stackEntry();
+        Card lastKnown = resolving == null ? null : resolving.lastKnownPermanentCard(ctx.targetPermanentId());
+        if (lastKnown == null) return 0;
+        return spellPowerForController(gameData, lastKnown, resolving.getCounteredSpellControllerId());
+    }
+
+    /** A spell's power with its characteristic-defining P/T evaluated for the given controller. */
+    private int spellPowerForController(GameData gameData, Card card, UUID controllerId) {
+        for (var effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof SetPowerToughnessToAmountEffect cda) {
+                int power = evaluate(gameData, cda.power(),
+                        AmountContext.forStaticEffect(new Permanent(card), controllerId));
+                return Math.max(0, power);
+            }
+        }
+        Integer power = card.getPower();
+        return power == null ? 0 : Math.max(0, power);
     }
 
     /**
@@ -1703,6 +1739,16 @@ public class AmountEvaluationService {
                 if (card.isToken() || card.hasType(CardType.LAND) || card.getManaCost() == null) continue;
                 found.add(card.getManaCost());
             }
+        }
+        // A creature that returns from its owner's graveyard counts its own mana cost: it was still
+        // in that graveyard as it entered (Embodiment of Agonies' "counts itself" ruling).
+        Permanent source = ctx.sourcePermanent();
+        Card sourceCard = ctx.sourceCard();
+        if (source != null && sourceCard != null && source.getEnteredFromGraveyardOwnerId() != null
+                && !sourceCard.isToken() && !sourceCard.hasType(CardType.LAND)
+                && sourceCard.getManaCost() != null
+                && isPlayerInScope(gameData, source.getEnteredFromGraveyardOwnerId(), amount.scope(), ctx)) {
+            found.add(sourceCard.getManaCost());
         }
         return found.size();
     }
@@ -3264,12 +3310,18 @@ public class AmountEvaluationService {
             AmountContext ctx) {
         if (ctx.controllerId() == null) return 0;
         Set<UUID> damagedPlayers = new HashSet<>();
+        UUID abilitySourceId = ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId();
         gameData.combatDamageToPlayersThisTurn.forEach((sourceId, playerIds) -> {
+            // The named source must be the ability's own object: a creature that was blinked and
+            // returned is a new object, so its earlier combat damage is not dealt by it.
             boolean matchesName = amount.sourceName() != null
-                    && amount.sourceName().equals(gameData.combatDamageSourceNamesThisTurn.get(sourceId));
+                    && amount.sourceName().equals(gameData.combatDamageSourceNamesThisTurn.get(sourceId))
+                    && sourceId.equals(abilitySourceId);
+            // Changelings have every creature type, so they match any subtype.
             boolean matchesSubtype = amount.sourceSubtype() != null
-                    && gameData.combatDamageSourceSubtypesThisTurn
-                            .getOrDefault(sourceId, Set.of()).contains(amount.sourceSubtype());
+                    && (gameData.combatDamageSourcesWithChangelingThisTurn.contains(sourceId)
+                    || gameData.combatDamageSourceSubtypesThisTurn
+                            .getOrDefault(sourceId, Set.of()).contains(amount.sourceSubtype()));
             if (matchesName || matchesSubtype) {
                 damagedPlayers.addAll(playerIds);
             }

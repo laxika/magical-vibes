@@ -367,6 +367,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
         }
+        if (context instanceof MultiPermanentChoiceContext.EquipoisePhaseOut
+                && permanentIds.size() != maxCount) {
+            throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to phase out");
+        }
         if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " attacking creatures to sacrifice");
@@ -377,6 +381,10 @@ public class MultiPermanentChoiceHandlerService {
                 && reference.mandatory();
         if (mandatoryCounterChoice && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
+        }
+        if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock
+                && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one creature must be selected");
         }
         // Calamity, Galloping Inferno: "choose a nonlegendary creature that saddled it" is mandatory
         if (context instanceof MultiPermanentChoiceContext.CreateTokenCopiesOfSaddledCreature
@@ -2843,7 +2851,9 @@ public class MultiPermanentChoiceHandlerService {
             List<UUID> eligiblePlayerIds = new ArrayList<>();
             for (UUID candidatePlayerId : gameData.playerIds) {
                 if (gameData.playerPoisonCounters.getOrDefault(candidatePlayerId, 0) > 0
-                        || gameData.playerRadCounters.getOrDefault(candidatePlayerId, 0) > 0) {
+                        || gameData.playerRadCounters.getOrDefault(candidatePlayerId, 0) > 0
+                        || gameData.playerEnergyCounters.getOrDefault(candidatePlayerId, 0) > 0
+                        || gameData.playerExperienceCounters.getOrDefault(candidatePlayerId, 0) > 0) {
                     eligiblePlayerIds.add(candidatePlayerId);
                 }
             }

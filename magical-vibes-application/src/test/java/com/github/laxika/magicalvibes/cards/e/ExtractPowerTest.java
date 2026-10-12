@@ -150,6 +150,7 @@ class ExtractPowerTest extends BaseCardTest {
         Card creature = new GrizzlyBears();
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(creature, new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         castExtractPower();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);

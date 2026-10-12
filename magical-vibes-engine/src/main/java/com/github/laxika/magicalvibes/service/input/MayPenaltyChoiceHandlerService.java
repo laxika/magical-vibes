@@ -1006,10 +1006,12 @@ public class MayPenaltyChoiceHandlerService {
             // Accepted but can no longer pay either resource — fall through to destruction.
         }
 
-        // Declined (or unable to pay) — destroy the enchanted permanent.
+        // Declined (or unable to pay) — destroy the enchanted permanent. The Aura may already have left
+        // the battlefield; its last known attachment (CR 113.7a) still identifies the permanent.
         Permanent aura = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
-        if (aura != null && aura.isAttached()) {
-            Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        Permanent auraInfo = aura != null ? aura : ability.sourcePermanentSnapshot();
+        if (auraInfo != null && auraInfo.isAttached()) {
+            Permanent enchanted = gameQueryService.findPermanentById(gameData, auraInfo.getAttachedTo());
             if (enchanted != null) {
                 destructionSupport.tryDestroyAndLog(gameData, enchanted, ability.sourceCard().getName());
             }
@@ -1116,14 +1118,16 @@ public class MayPenaltyChoiceHandlerService {
                     inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
-                // Accepted but can't pay — fall through to optional draw.
+                // Accepted but can't pay — fall through to the controller's draw.
             } else {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " declines to pay. (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} declines to pay for {} draw prevention",
                         gameData.id, player.getUsername(), ability.sourceCard().getName());
             }
-            if (drawingPlayerId != null) {
+            if (drawingPlayerId != null && effect.mandatoryDraw()) {
+                drawService.resolveDrawCards(gameData, drawingPlayerId, effect.drawCount());
+            } else if (drawingPlayerId != null) {
                 DrawCardUnlessPaysEffectHandler.offerOptionalDraw(
                         gameData, ability.sourceCard(), effect, drawingPlayerId, ability.sourcePermanentId());
             }
@@ -1248,7 +1252,7 @@ public class MayPenaltyChoiceHandlerService {
             DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect effect) {
         UUID payingPlayerId = ability.controllerId(); // the damaging creature's controller — decision maker
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, payingPlayerId)
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
         boolean paid = accepted && canPay;
         if (paid) {
@@ -1303,7 +1307,7 @@ public class MayPenaltyChoiceHandlerService {
         UUID payingPlayerId = ability.controllerId(); // "that opponent" — the decision maker
         UUID thiefId = ability.targetCardId();        // the ability controller who steals it
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, payingPlayerId)
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {
@@ -1329,7 +1333,7 @@ public class MayPenaltyChoiceHandlerService {
         UUID payingPlayerId = ability.controllerId();    // the target creature's controller — decision maker
         UUID targetPermanentId = ability.targetCardId(); // the creature to tap on decline
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, payingPlayerId)
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {
@@ -1366,7 +1370,7 @@ public class MayPenaltyChoiceHandlerService {
 
         int lifeCost = destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler.lifeCostFor(gameData, target);
         boolean canPay = lifeCost == 0
-                || (gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
+                || (gameQueryService.canPlayerLoseLife(gameData, payingPlayerId)
                         && gameData.getLife(payingPlayerId) >= lifeCost);
 
         if (accepted && canPay) {

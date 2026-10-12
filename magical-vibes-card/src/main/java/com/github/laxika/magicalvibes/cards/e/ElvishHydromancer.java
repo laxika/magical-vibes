@@ -14,7 +14,7 @@ public class ElvishHydromancer extends Card {
 
     public ElvishHydromancer() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{3}{U}"));
-        targetWhenKicked(TargetFilters.creatureYouControl(), 0, 0, 1, 1)
+        target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new Kicked(), new CreateTokenCopyOfTargetPermanentEffect()));
     }

@@ -48,12 +48,15 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MayEffect) effect;
+        CardEffect declineBranch = e.elseEffect() instanceof MayEffect elseMay ? elseMay.wrapped() : e.elseEffect();
         if (e.wrapped() instanceof ReturnCardFromGraveyardEffect battlefieldReturn
                 && battlefieldReturn.targetGraveyard()
                 && battlefieldReturn.destination() == GraveyardChoiceDestination.BATTLEFIELD
-                && e.elseEffect() instanceof ReturnCardFromGraveyardEffect handReturn
+                && declineBranch instanceof ReturnCardFromGraveyardEffect handReturn
                 && handReturn.destination() == GraveyardChoiceDestination.HAND) {
-            Card card = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+            UUID graveyardTargetId = entry.getTargetId() != null ? entry.getTargetId()
+                    : entry.getTargetCardIds().isEmpty() ? null : entry.getTargetCardIds().getFirst();
+            Card card = gameQueryService.findCardInGraveyardById(gameData, graveyardTargetId);
             if (card != null && (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)
                     || card.isAura() && !hasLegalAuraAttachment(gameData, card, entry.getControllerId()))) {
                 insertElseEffect(entry, e);
@@ -191,6 +194,11 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
 
         boolean defendingPlayerChoice = e.choicePlayer() == MayChoicePlayer.DEFENDING_PLAYER;
+        if (e.choicePlayer() == MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER) {
+            // The resolved effect acts for the triggering permanent's controller as of resolution, which
+            // can differ from the trigger-time controller if control changed while the ability waited.
+            entry.setTriggeringPermanentControllerId(choicePlayerId);
+        }
 
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
@@ -207,7 +215,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 e.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER ? entry.getActivePlayerId() : null,
                 defendingPlayerChoice ? choicePlayerId : null,
                 entry.getSourcePermanentSnapshot(),
-                entry.getTriggeringPermanentControllerId(),
+                e.choicePlayer() == MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER
+                        ? choicePlayerId : entry.getTriggeringPermanentControllerId(),
                 entry.getTriggeringCardId(),
                 entry.getEventValue(),
                 entry.getTriggeringPermanentId(),

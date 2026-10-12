@@ -119,10 +119,12 @@ class ExaltedSunbornTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
+        harness.setHand(player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(sunborn.getId())).isNotNull();
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

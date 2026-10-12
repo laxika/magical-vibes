@@ -32,7 +32,7 @@ public class DestroyTargetPermanentWithManaValueConditionalEffectHandler impleme
             return;
         }
 
-        int manaValue = target.getCard().getManaValue();
+        int manaValue = target.isFaceDown() ? 0 : target.getCard().getManaValue();
         destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), false);
 
         if (manaValue <= destroy.maxManaValue()) {

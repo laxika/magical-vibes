@@ -17,7 +17,7 @@ public class EtherwroughtPage extends Card {
     public EtherwroughtPage() {
         // "At the beginning of your upkeep, choose one — You gain 2 life. / Surveil 1. /
         // Each opponent loses 1 life." A triggered modal ability: the mode is picked as the
-        // ability resolves (ChooseOneEffectHandler → ChooseModeChoice) since there is no cast.
+        // ability goes on the stack, before either player can respond to it.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("You gain 2 life.", new GainLifeEffect(2)),
                 new ChooseOneEffect.ChooseOneOption("Surveil 1.", new SurveilEffect(1)),

@@ -48,6 +48,9 @@ class CreateTokenEffectHandlerTest {
     @Mock
     private TriggerCollectionService triggerCollectionService;
 
+    @Mock
+    private EsixTokenReplacementSupport esixTokenReplacementSupport;
+
     private CreateTokenEffectHandler handler;
     private GameData gd;
     private UUID playerId;
@@ -63,7 +66,7 @@ class CreateTokenEffectHandlerTest {
                 permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler,
                 enchantedPermanentTokenCopyHandler,
                 chosenCreatureTokenCopyHandler,
-                triggerCollectionService);
+                triggerCollectionService, esixTokenReplacementSupport);
     }
 
     @Test

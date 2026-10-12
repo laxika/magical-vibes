@@ -55,8 +55,9 @@ public class ParadigmService {
     }
 
     /**
-     * Called after a spell with Paradigm resolves successfully. Exiles the spell and registers the
-     * delayed trigger the first time this player resolves a spell with this name.
+     * Called after a spell with Paradigm resolves successfully. Registers the delayed trigger the first
+     * time this player resolves a spell with this name (copies included), and exiles the spell when it
+     * is the original card rather than a copy.
      */
     public void onParadigmSpellResolved(GameData gameData, StackEntry entry) {
         Card card = entry.getCard();
@@ -67,18 +68,18 @@ public class ParadigmService {
         UUID controllerId = entry.getControllerId();
         String spellName = card.getName();
 
-        if (!entry.isCopy()) {
-            Set<String> resolved = gameData.paradigmResolvedSpellNames
-                    .computeIfAbsent(controllerId, id -> ConcurrentHashMap.newKeySet());
-            if (!resolved.contains(spellName)) {
-                resolved.add(spellName);
-                Card prototype = copySupport.createCopyCard(card);
-                gameData.paradigmDelayedTriggers.add(
-                        new GameData.ParadigmDelayedTrigger(controllerId, prototype));
-                gameLogService.append(gameData, GameLog.cardThen(card, " paradigm is registered."));
-                log.info("Game {} - {} paradigm registered for {}", gameData.id, spellName, controllerId);
-            }
+        Set<String> resolved = gameData.paradigmResolvedSpellNames
+                .computeIfAbsent(controllerId, id -> ConcurrentHashMap.newKeySet());
+        if (!resolved.contains(spellName)) {
+            resolved.add(spellName);
+            Card prototype = copySupport.createCopyCard(card);
+            gameData.paradigmDelayedTriggers.add(
+                    new GameData.ParadigmDelayedTrigger(controllerId, prototype));
+            gameLogService.append(gameData, GameLog.cardThen(card, " paradigm is registered."));
+            log.info("Game {} - {} paradigm registered for {}", gameData.id, spellName, controllerId);
+        }
 
+        if (!entry.isCopy()) {
             exileService.exileCard(gameData, controllerId, card);
             gameLogService.append(gameData, GameLog.cardThen(card, " is exiled (paradigm)."));
         }

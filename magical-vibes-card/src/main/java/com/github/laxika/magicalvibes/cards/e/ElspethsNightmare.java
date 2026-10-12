@@ -37,6 +37,7 @@ public class ElspethsNightmare extends Card {
                 new PermanentPredicateTargetFilter(
                         chapterOneFilter,
                         "Target must be a creature an opponent controls with power 2 or less")));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_I);
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new ChooseCardsFromTargetHandEffect(
                 1, List.of(CardType.CREATURE, CardType.LAND), HandChoiceDestination.DISCARD));

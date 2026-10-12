@@ -21,8 +21,6 @@ public class EpicEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (!entry.isCopy()) {
-            epicService.register(gameData, entry);
-        }
+        epicService.register(gameData, entry);
     }
 }

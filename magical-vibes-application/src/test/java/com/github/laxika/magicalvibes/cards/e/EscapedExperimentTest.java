@@ -112,6 +112,7 @@ class EscapedExperimentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
+        gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);

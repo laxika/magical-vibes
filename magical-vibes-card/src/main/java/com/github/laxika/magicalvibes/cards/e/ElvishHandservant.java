@@ -16,12 +16,12 @@ public class ElvishHandservant extends Card {
 
     public ElvishHandservant() {
         // Whenever a player casts a Giant spell, you may put a +1/+1 counter on this creature.
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardSubtypePredicate(CardSubtype.GIANT),
-                        List.of(new PutCountersOnSourceEffect(1, 1, 1))
-                ),
-                "Put a +1/+1 counter on Elvish Handservant?"
+        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(
+                new CardSubtypePredicate(CardSubtype.GIANT),
+                List.of(new MayEffect(
+                        new PutCountersOnSourceEffect(1, 1, 1),
+                        "Put a +1/+1 counter on Elvish Handservant?"
+                ))
         ));
     }
 }

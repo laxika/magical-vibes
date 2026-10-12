@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -12,6 +13,11 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +28,10 @@ import java.util.Set;
 public class EverquillPhoenix extends Card {
 
     public EverquillPhoenix() {
+        addCastingOption(AlternateHandCast.mutate("{3}{R}", new PermanentPredicateTargetFilter(
+                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)))),
+                "Mutate requires a non-Human creature with the spell's owner")));
         ActivatedAbility featherAbility = new ActivatedAbility(
                 false,
                 "{1}",

@@ -61,6 +61,14 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
         UUID copyControllerId = copyEffect.copyForTargetController()
                 ? targetEntry.getControllerId()
                 : entry.getControllerId();
+        int copyCount = copyEffect.copies() <= 1 ? 1 : copySupport.adjustedSpellCopyCount(gameData, copyEffect.copies());
+        for (int copyIndex = 0; copyIndex < copyCount; copyIndex++) {
+            createCopy(gameData, entry, copyEffect, targetEntry, copyControllerId);
+        }
+    }
+
+    private void createCopy(GameData gameData, StackEntry entry, CopySpellEffect copyEffect,
+                            StackEntry targetEntry, UUID copyControllerId) {
         Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
         if (copyEffect.removeLegendary()) {
             var supertypes = EnumSet.noneOf(CardSupertype.class);
@@ -89,7 +97,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
             copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
 
-        copySupport.addCopyToStack(gameData, copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry, copyEffect.copies() <= 1);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", targetEntry.getCard(), " is created."));
         log.info("Game {} - {} copies {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());

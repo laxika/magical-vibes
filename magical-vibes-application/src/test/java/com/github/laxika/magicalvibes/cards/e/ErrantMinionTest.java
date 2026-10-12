@@ -167,7 +167,7 @@ class ErrantMinionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
-        harness.tapPermanent(player2, gd.playerBattlefields.get(player2.getId()).indexOf(island));
+        gs.tapPermanent(gd, player2, gd.playerBattlefields.get(player2.getId()).indexOf(island));
         harness.handleXValueChosen(player2, 1);
 
         assertThat(island.isTapped()).isTrue();

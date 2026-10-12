@@ -8,8 +8,13 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -161,6 +166,9 @@ class EncroachingDragonstormTest extends BaseCardTest {
     void returnsToOwnerHand() {
         Permanent dragonstorm = harness.addToBattlefieldAndReturn(player1, new EncroachingDragonstorm());
         gd.stolenCreatures.put(dragonstorm.getId(), player2.getId());
+        GameTestEngineContext.get().getBean(CreatureControlService.class).applyControlEffect(gd, player1.getId(),
+                dragonstorm, new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                null, "Test control effect");
         harness.setHand(player1, List.of(new ShivanDragon()));
         harness.addMana(player1, ManaColor.RED, 6);
 

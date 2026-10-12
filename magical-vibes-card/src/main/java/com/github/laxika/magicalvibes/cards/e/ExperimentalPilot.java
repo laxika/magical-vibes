@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndStationEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect;
 
 import java.util.List;
 
@@ -33,6 +34,8 @@ public class ExperimentalPilot extends Card {
             "Thundering Chariot");
 
     public ExperimentalPilot() {
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
+
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
@@ -42,6 +45,6 @@ public class ExperimentalPilot extends Card {
         ));
 
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(
-                new PowerBoostForCrewAndStationEffect(2), GrantScope.SELF));
+                new PowerBoostForCrewAndSaddleEffect(2, true), GrantScope.SELF));
     }
 }

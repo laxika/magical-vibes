@@ -82,7 +82,7 @@ class EncroachingMycosynthTest extends BaseCardTest {
         assertThat(gqs.cardHasType(creature, CardType.ARTIFACT, gd, player1.getId())).isTrue();
         assertThat(gqs.cardHasType(creature, CardType.CREATURE, gd, player1.getId())).isTrue();
         harness.passBothPriorities();
-        assertThat(gqs.isArtifact(gd, gqs.findPermanentById(gd, creature.getId()))).isTrue();
+        assertThat(gqs.isArtifact(gd, findPermanent(player1, "Crawling Chorus"))).isTrue();
     }
 
     @Test

@@ -131,11 +131,11 @@ class EiganjoSeatOfTheEmpireTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.activateHandAbility(player1, 0, attacker.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Imperial Subduer");
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
     @Test

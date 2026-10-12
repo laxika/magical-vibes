@@ -14,7 +14,7 @@ public class ExperimentTwelve extends Card {
 
     public ExperimentTwelve() {
         addMorph("{4}{G}");
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP,
                 new PutCounterOnReferencedPermanentEffect(
                         PermanentReference.TRIGGERING,
                         CounterType.PLUS_ONE_PLUS_ONE,

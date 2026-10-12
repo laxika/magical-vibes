@@ -7,10 +7,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code EACH_UPKEEP_TRIGGERED} trigger that is the active player, so the prompt goes to the
  * player whose upkeep it is rather than to the source's controller (Emberwilde Djinn).
  *
- * <p>Only a yes/no choice is offered: accepting spends floating mana when the mana cost can be
- * paid, otherwise life. This mirrors {@link DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect}
- * — mana that would empty at end of step is strictly the cheaper resource, so the engine never
- * has to ask.
+ * <p>A player who can afford only one resource gets a yes/no choice and pays that resource. A
+ * player who can afford both picks mana, life, or neither.
  */
 public record TargetPlayerMayPayManaOrLifeEffect(String manaCost, int lifeCost, CardEffect wrapped,
                                                  String prompt) implements CardEffect {

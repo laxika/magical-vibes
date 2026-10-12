@@ -109,6 +109,7 @@ class EtherealForagerTest extends BaseCardTest {
         Card ponder = new Ponder();
         gd.addToExile(player1.getId(), ponder, forager.getId());
 
+        harness.setHand(player1, List.of());
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -126,6 +127,7 @@ class EtherealForagerTest extends BaseCardTest {
         gd.addToExile(player1.getId(), creature, forager.getId());
         harness.setExile(player1, List.of(unrelated));
 
+        harness.setHand(player1, List.of());
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -146,6 +148,7 @@ class EtherealForagerTest extends BaseCardTest {
         gd.addToExile(player1.getId(), shock, attacker.getId());
         gd.addToExile(player1.getId(), ponder, other.getId());
 
+        harness.setHand(player1, List.of());
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -159,6 +162,7 @@ class EtherealForagerTest extends BaseCardTest {
     void newControllerReturnsDelvedCardToOwner() {
         Card ponder = new Ponder();
         harness.setGraveyard(player1, List.of(ponder));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new EtherealForager()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

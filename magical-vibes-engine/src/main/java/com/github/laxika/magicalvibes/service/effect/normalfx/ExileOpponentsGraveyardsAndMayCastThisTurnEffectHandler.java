@@ -61,7 +61,7 @@ public class ExileOpponentsGraveyardsAndMayCastThisTurnEffectHandler
                     gameData.exilePlayAnyManaType.add(card.getId());
                 }
                 gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextEndStep(
-                        card.getId(), opponentId, entry.getCard()));
+                        card.getId(), opponentId, entry.getCard(), controllerId));
             }
 
             totalExiled += exiledCards.size();

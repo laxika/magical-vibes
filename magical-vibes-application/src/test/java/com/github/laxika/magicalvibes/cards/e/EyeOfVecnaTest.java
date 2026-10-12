@@ -105,7 +105,7 @@ class EyeOfVecnaTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandSize);
         harness.assertLife(player2, 18);
         harness.assertLife(player1, 20);
-        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
     @Test

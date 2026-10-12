@@ -18,11 +18,14 @@ public class Epicenter extends Card {
         PermanentIsLandPredicate land = new PermanentIsLandPredicate();
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
 
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new NotCondition(threshold),
-                new SacrificePermanentsEffect(1, land, SacrificeRecipient.TARGET_PLAYER)));
+        // "Instead" picks one clause when the spell starts resolving. The threshold clause goes first: the
+        // lands it sacrifices only add cards to the graveyard, so the non-threshold clause's check still
+        // sees the threshold state from before any sacrifice.
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 threshold,
                 new SacrificeEachMatchingPermanentEffect(land)));
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                new NotCondition(threshold),
+                new SacrificePermanentsEffect(1, land, SacrificeRecipient.TARGET_PLAYER)));
     }
 }

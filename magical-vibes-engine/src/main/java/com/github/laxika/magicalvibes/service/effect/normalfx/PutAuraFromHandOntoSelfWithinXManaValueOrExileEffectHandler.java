@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfWithinXManaValueOrExileEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ public class PutAuraFromHandOntoSelfWithinXManaValueOrExileEffectHandler impleme
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
+    private final AuraAttachmentService auraAttachmentService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,6 +42,13 @@ public class PutAuraFromHandOntoSelfWithinXManaValueOrExileEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         int maxManaValue = entry.getXValue();
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(entry.getCard().getId())
+                != entry.getTriggeringCardGraveyardEntryVersion()) {
+            // The card left the graveyard after this ability was activated, so a creature on the
+            // battlefield with the same card id is a new object (CR 400.7) and is not "this creature".
+            return;
+        }
 
         Permanent self = null;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -63,7 +72,8 @@ public class PutAuraFromHandOntoSelfWithinXManaValueOrExileEffectHandler impleme
         if (hand != null) {
             for (int i = 0; i < hand.size(); i++) {
                 Card c = hand.get(i);
-                if (c.isAura() && c.getManaValue() <= maxManaValue) {
+                if (c.isAura() && c.getManaValue() <= maxManaValue
+                        && auraAttachmentService.canEnchant(gameData, c, controllerId, self)) {
                     auraIndices.add(i);
                 }
             }

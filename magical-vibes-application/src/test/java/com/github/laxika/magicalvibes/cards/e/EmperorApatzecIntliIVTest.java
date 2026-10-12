@@ -23,7 +23,7 @@ class EmperorApatzecIntliIVTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EmperorApatzecIntliIV());
 
         Permanent entering = harness.enterBattlefieldAndReturn(player1, new LeatherbackBaloth());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, entering, Keyword.HASTE)).isTrue();
         harness.assertLife(player1, 24);
@@ -48,6 +48,7 @@ class EmperorApatzecIntliIVTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.addToBattlefield(player1, new EmperorApatzecIntliIV());
 
+        harness.setHand(player1, List.of());
         Permanent entering = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.passBothPriorities();
 

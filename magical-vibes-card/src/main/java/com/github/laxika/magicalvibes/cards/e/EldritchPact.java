@@ -18,13 +18,15 @@ public class EldritchPact extends Card {
 
     public EldritchPact() {
         var cardsInTargetGraveyard = new CardsInGraveyard(new CardTruePredicate(), CountScope.TARGET_PLAYER);
+        // X is fixed once on resolution, so the life loss runs before the draws: a draw replacement that
+        // mills cards from the target's graveyard must not change how much life is lost.
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(
-                        cardsInTargetGraveyard, false, true))
                 .addEffect(EffectSlot.SPELL, new LoseLifeEffect(
-                        cardsInTargetGraveyard, LoseLifeRecipient.TARGET_PLAYER));
+                        cardsInTargetGraveyard, LoseLifeRecipient.TARGET_PLAYER))
+                .addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect(
+                        cardsInTargetGraveyard, false, true));
     }
 }

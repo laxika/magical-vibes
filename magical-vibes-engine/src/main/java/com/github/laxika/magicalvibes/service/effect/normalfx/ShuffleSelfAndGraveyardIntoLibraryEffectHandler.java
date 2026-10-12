@@ -39,11 +39,16 @@ public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEf
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        // Move source permanent from battlefield to library (if still there)
+        // Move source permanent from battlefield to library (if still there). A stolen source goes to
+        // its owner's library, which is shuffled as well; the graveyard stays with its controller.
         boolean selfShuffled = false;
+        UUID selfOwnerId = controllerId;
         if (entry.getSourcePermanentId() != null) {
             Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (self != null) {
+                UUID cardOwnerId = self.getOriginalCard().getOwnerId();
+                selfOwnerId = gameData.stolenCreatures.getOrDefault(self.getId(),
+                        cardOwnerId != null ? cardOwnerId : controllerId);
                 permanentRemovalService.removePermanentToLibraryBottom(gameData, self);
                 permanentRemovalService.removeOrphanedAuras(gameData);
                 selfShuffled = true;
@@ -57,6 +62,9 @@ public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEf
 
         // Shuffle the library
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        if (selfShuffled && !selfOwnerId.equals(controllerId)) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, selfOwnerId);
+        }
 
         // Log
         if (selfShuffled && graveyardCount > 0) {

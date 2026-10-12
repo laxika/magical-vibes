@@ -81,8 +81,9 @@ class EyeOfNidhoggTest extends BaseCardTest {
 
     @Test
     void returnsToOwnerWhenControlledByAnotherPlayer() {
-        Permanent aura = attachAura(player1, addCreatureReady(player1, new GrizzlyBears()));
-        aura.getCard().setOwnerId(player2.getId());
+        EyeOfNidhogg eye = new EyeOfNidhogg();
+        eye.setOwnerId(player2.getId());
+        Permanent aura = attachAura(player1, addCreatureReady(player1, new GrizzlyBears()), eye);
         addCreatureReady(player2, new ElvishLyrist());
 
         harness.forceActivePlayer(player2);
@@ -113,7 +114,11 @@ class EyeOfNidhoggTest extends BaseCardTest {
         assertThat(als.getMustAttackRequirementCount(gd, creature)).isEqualTo(1);
     }
     private Permanent attachAura(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new EyeOfNidhogg());
+        return attachAura(controller, creature, new EyeOfNidhogg());
+    }
+
+    private Permanent attachAura(Player controller, Permanent creature, EyeOfNidhogg eye) {
+        Permanent aura = new Permanent(eye);
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;

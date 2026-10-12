@@ -151,7 +151,8 @@ class EbonyHorseTest extends BaseCardTest {
         Permanent attacker = addAttacker(player1, player2, 2, 2);
         attacker.tap();
 
-        activateEbonyHorse(ebonyHorse, attacker);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> activateEbonyHorse(ebonyHorse, attacker));
 
         assertThat(attacker.isTapped()).isFalse();
         assertThat(attacker.isAttacking()).isTrue();

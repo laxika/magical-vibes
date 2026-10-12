@@ -13,10 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "THS", collectorNumber = "85")
 @CardRegistration(set = "SLD", collectorNumber = "74")
@@ -26,7 +25,7 @@ public class ErebosGodOfTheDead extends Card {
     public ErebosGodOfTheDead() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.BLACK, 5)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new OpponentsCantGainLifeEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,

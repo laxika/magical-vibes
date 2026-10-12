@@ -98,6 +98,9 @@ public class StackResolutionService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.MutationSupport mutationSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final GameLogService gameLogService;
     private final EffectResolutionService effectResolutionService;
     private final PlayerInputService playerInputService;
@@ -319,6 +322,13 @@ public class StackResolutionService {
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
+        }
+
+        PendingInteraction.EspersToMagiciteCreatureChoice reflexiveCopyChoice = gameData
+                .pollPendingInteraction(PendingInteraction.EspersToMagiciteCreatureChoice.class);
+        if (reflexiveCopyChoice != null) {
+            interactionHandlerRegistry.begin(gameData, reflexiveCopyChoice);
+            return;
         }
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
@@ -1555,6 +1565,14 @@ public class StackResolutionService {
             return;
         }
         if (!isNonCopySpell(entry)) {
+            // A copy ceases to exist, but resolving it still counts as resolving a spell with that
+            // name, so a paradigm copy registers its delayed trigger here. Only the original is exiled.
+            if ((entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                    || entry.getEntryType() == StackEntryType.INSTANT_SPELL)
+                    && entry.isCopy()
+                    && entry.getCard() != null && entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
+                paradigmService.onParadigmSpellResolved(gameData, entry);
+            }
             return;
         }
 

@@ -14,7 +14,9 @@ public class ExtraArms extends Card {
         // Enchant creature
         target(TargetFilters.creature());
 
-        // Whenever enchanted creature attacks, it deals 2 damage to any target.
+        // Whenever enchanted creature attacks, it deals 2 damage to any target. The ability is the Aura's own,
+        // so its controller is the Aura's controller even when the enchanted creature is an opponent's.
+        setAttackTriggerOwnedByAura(true);
         addEffect(EffectSlot.ON_ATTACK, new DealDamageToAnyTargetEffect(
                 new Fixed(2), false, false, -1, null, false, false, false, true));
     }

@@ -43,8 +43,9 @@ public class ExileTopCardsChooseOneMayPlayThisTurnEffectHandler implements Norma
         Permanent source = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        var exileEffect = (ExileTopCardsChooseOneMayPlayThisTurnEffect) effect;
         int count = amountEvaluationService.evaluate(gameData,
-                ((ExileTopCardsChooseOneMayPlayThisTurnEffect) effect).count(),
+                exileEffect.count(),
                 AmountContext.forStackEntry(entry, source));
         if (count <= 0) {
             return;
@@ -67,7 +68,15 @@ public class ExileTopCardsChooseOneMayPlayThisTurnEffectHandler implements Norma
                     .text(" from the top of their library.").build());
         }
 
-        if (!exiledIds.isEmpty()) {
+        if (!exiledIds.isEmpty() && !exileEffect.chooseOnExile()) {
+            for (UUID exiledId : exiledIds) {
+                gameData.exilePlayPermissions.put(exiledId, controllerId);
+                gameData.exilePlayPermissionsExpireEndOfTurn.add(exiledId);
+            }
+            gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, exiledIds);
+            gameLogService.append(gameData, GameLog.text(
+                    controllerName + " may play one of those cards this turn."));
+        } else if (!exiledIds.isEmpty()) {
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.ExiledCardMayPlayChoice(controllerId, exiledIds, true));
             log.info("Game {} - {} chooses one card among {} exiled cards to play this turn",

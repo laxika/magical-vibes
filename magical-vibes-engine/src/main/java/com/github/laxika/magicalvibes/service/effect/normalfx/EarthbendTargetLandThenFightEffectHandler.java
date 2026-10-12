@@ -5,14 +5,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandThenFightEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +33,7 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
     private final TargetLegalityService targetLegalityService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -86,14 +90,20 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
             return;
         }
 
+        List<UUID> fightTargetIds = context.firstTargetId() == null
+                ? List.of(chosenId)
+                : List.of(context.firstTargetId(), chosenId);
         StackEntry fightEntry = new StackEntry(
-                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                StackEntryType.TRIGGERED_ABILITY,
                 context.sourceCard(), context.controllerId(),
                 context.sourceCard().getName() + "'s reflexive ability",
                 List.of(new FightTargetsEffect(context.firstTargetId(), chosenId)),
-                (UUID) null, context.sourcePermanentId());
-        fightEntry.setNonTargeting(true);
+                context.sourcePermanentId(), fightTargetIds);
+        fightEntry.setTargetFilters(context.firstTargetId() == null
+                ? List.of(TargetFilters.creatureAnOpponentControls())
+                : List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureAnOpponentControls()));
         gameData.stack.add(fightEntry);
+        triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
         finish(gameData);
     }
 

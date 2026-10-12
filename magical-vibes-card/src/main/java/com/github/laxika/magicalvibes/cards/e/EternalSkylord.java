@@ -56,6 +56,6 @@ public class EternalSkylord extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                 new PermanentIsTokenPredicate()));
         addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES, zombieToken));
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, zombieToken));
     }
 }

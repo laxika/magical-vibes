@@ -16,7 +16,9 @@ import com.github.laxika.magicalvibes.model.TurnStep;
  * <p>{@code onlyOnControllersTurn} narrows "at the beginning of the next X" to "at the beginning of
  * <em>your</em> next X" — the return waits for a step of the given kind on the controller's own turn
  * (Obzedat, Ghost Council). {@code grantHaste} gives the returning permanent haste for as long as it
- * remains on the battlefield.
+ * remains on the battlefield. {@code returnControllerByCardId} lets a single delayed return put individual
+ * cards back under a different player's control than {@code controllerId} (Eerie Interlude returns each
+ * creature under its owner's control).
  */
 public record PendingExileReturn(
         Card card,
@@ -42,7 +44,38 @@ public record PendingExileReturn(
         boolean returnLandsTapped,
         boolean returnCantBeBlockedUntilEndOfCombat,
         Card triggerSourceCard,
-        UUID triggerControllerId) implements DelayedAction {
+        UUID triggerControllerId,
+        Map<UUID, UUID> returnControllerByCardId) implements DelayedAction {
+
+    public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
+                              TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
+                              boolean onlyOnControllersTurn, boolean grantHaste, boolean returnAttacking,
+                              boolean returnToGraveyard, UUID timingControllerId, Card followUpSourceCard,
+                              boolean discardControllerCardsEqualToReturnedToughness,
+                              boolean plusOnePlusOneCountersOnlyOnCreatures, int loyaltyCountersOnPlaneswalkers,
+                              Set<UUID> cardsToAttachToPrimary, CounterType counterTypeOnReturn,
+                              int counterAmountOnReturn, Map<CounterType, Integer> countersOnReturn,
+                              boolean returnLandsTapped, boolean returnCantBeBlockedUntilEndOfCombat,
+                              Card triggerSourceCard, UUID triggerControllerId) {
+        this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking,
+                returnToGraveyard, timingControllerId, followUpSourceCard,
+                discardControllerCardsEqualToReturnedToughness, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkers, cardsToAttachToPrimary, counterTypeOnReturn,
+                counterAmountOnReturn, countersOnReturn, returnLandsTapped,
+                returnCantBeBlockedUntilEndOfCombat, triggerSourceCard, triggerControllerId, Map.of());
+    }
+
+    /** Returns a copy in which the given cards come back under the mapped player's control. */
+    public PendingExileReturn withReturnControllers(Map<UUID, UUID> controllerByCardId) {
+        return new PendingExileReturn(card, controllerId, returnTapped, returnToHand, returnStep,
+                plusOnePlusOneCounters, additionalCards, onlyOnControllersTurn, grantHaste,
+                returnAttacking, returnToGraveyard, timingControllerId, followUpSourceCard,
+                discardControllerCardsEqualToReturnedToughness, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkers, cardsToAttachToPrimary, counterTypeOnReturn,
+                counterAmountOnReturn, countersOnReturn, returnLandsTapped,
+                returnCantBeBlockedUntilEndOfCombat, triggerSourceCard, triggerControllerId, controllerByCardId);
+    }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
                               TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
@@ -88,7 +121,8 @@ public record PendingExileReturn(
                 discardControllerCardsEqualToReturnedToughness, plusOnePlusOneCountersOnlyOnCreatures,
                 loyaltyCountersOnPlaneswalkers, cardsToAttachToPrimary, counterTypeOnReturn,
                 counterAmountOnReturn, countersOnReturn, returnLandsTapped,
-                returnCantBeBlockedUntilEndOfCombat, triggerSourceCard, triggerControllerId);
+                returnCantBeBlockedUntilEndOfCombat, triggerSourceCard, triggerControllerId,
+                returnControllerByCardId);
     }
 
     /** Remembers the spell or ability that created this delayed return independently of its recipient. */
@@ -99,7 +133,8 @@ public record PendingExileReturn(
                 discardControllerCardsEqualToReturnedToughness, plusOnePlusOneCountersOnlyOnCreatures,
                 loyaltyCountersOnPlaneswalkers, cardsToAttachToPrimary, counterTypeOnReturn,
                 counterAmountOnReturn, countersOnReturn, returnLandsTapped,
-                returnCantBeBlockedUntilEndOfCombat, sourceCard, sourceControllerId);
+                returnCantBeBlockedUntilEndOfCombat, sourceCard, sourceControllerId,
+                returnControllerByCardId);
     }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped,
@@ -137,6 +172,7 @@ public record PendingExileReturn(
         additionalCards = additionalCards == null ? List.of() : List.copyOf(additionalCards);
         cardsToAttachToPrimary = cardsToAttachToPrimary == null ? Set.of() : Set.copyOf(cardsToAttachToPrimary);
         countersOnReturn = countersOnReturn == null ? Map.of() : Map.copyOf(countersOnReturn);
+        returnControllerByCardId = returnControllerByCardId == null ? Map.of() : Map.copyOf(returnControllerByCardId);
     }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,

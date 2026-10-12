@@ -56,9 +56,8 @@ class EndlingTest extends BaseCardTest {
         Permanent endling = harness.addToBattlefieldAndReturn(player1, new Endling());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 3, null, null);
+        harness.activateAbility(player1, 0, 3, 0, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "This creature gets +1/-1 until end of turn");
 
         assertThat(endling.getPowerModifier()).isEqualTo(1);
         assertThat(endling.getToughnessModifier()).isEqualTo(-1);
@@ -69,9 +68,8 @@ class EndlingTest extends BaseCardTest {
         Permanent endling = harness.addToBattlefieldAndReturn(player1, new Endling());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 3, null, null);
+        harness.activateAbility(player1, 0, 3, 1, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "This creature gets -1/+1 until end of turn");
 
         assertThat(endling.getPowerModifier()).isEqualTo(-1);
         assertThat(endling.getToughnessModifier()).isEqualTo(1);
@@ -157,9 +155,8 @@ class EndlingTest extends BaseCardTest {
     void powerToughnessChangeExpiresDuringCleanup() {
         Permanent endling = harness.addToBattlefieldAndReturn(player1, new Endling());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 0, 3, null, null);
+        harness.activateAbility(player1, 0, 3, 1, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "This creature gets -1/+1 until end of turn");
         assertThat(endling.getPowerModifier()).isEqualTo(-1);
         assertThat(endling.getToughnessModifier()).isEqualTo(1);
 

@@ -87,9 +87,9 @@ class ExcaliburSwordOfEdenTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A legal attachment to a nonlegendary creature survives state-based actions")
-    void nonlegendaryAttachmentRemainsAttached() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+    @DisplayName("A legal attachment to a legendary creature survives state-based actions")
+    void legendaryAttachmentRemainsAttached() {
+        Permanent creature = addCreatureReady(player1, new IsamaruHoundOfKonda());
         Permanent excalibur = harness.addToBattlefieldAndReturn(player1, new ExcaliburSwordOfEden());
         excalibur.setAttachedTo(creature.getId());
 

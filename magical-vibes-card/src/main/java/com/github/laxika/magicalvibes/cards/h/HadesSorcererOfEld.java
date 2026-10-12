@@ -18,6 +18,6 @@ public class HadesSorcererOfEld extends Card {
                 new ControllerTurn(), new CastSpellsFromGraveyardEffect(new CardTruePredicate())));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new ControllerTurn(), new PlayLandsFromGraveyardEffect()));
-        addEffect(EffectSlot.STATIC, new ExileOwnCardsInsteadOfGraveyardEffect());
+        addEffect(EffectSlot.STATIC, new ExileOwnCardsInsteadOfGraveyardEffect(true));
     }
 }

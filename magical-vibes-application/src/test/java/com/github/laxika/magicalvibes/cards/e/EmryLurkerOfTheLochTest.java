@@ -234,6 +234,7 @@ class EmryLurkerOfTheLochTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(artifact));
         activate(emry, artifact);
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

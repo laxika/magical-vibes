@@ -131,7 +131,7 @@ class EtherealChampionTest extends BaseCardTest {
 
         assertThat(champion.getDamagePreventionShield()).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(champion.getDamagePreventionShield()).isEqualTo(0);
     }

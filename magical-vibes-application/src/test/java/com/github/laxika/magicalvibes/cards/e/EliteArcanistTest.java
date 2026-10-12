@@ -104,18 +104,17 @@ class EliteArcanistTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With no exiled card, X is zero and the activated ability does nothing")
-    void canActivateWithoutImprintForZero() {
+    @DisplayName("With no exiled card, the value of X is undefined and the activated ability cannot be activated")
+    void cannotActivateWithoutImprint() {
         Permanent arcanist = harness.addToBattlefieldAndReturn(player1, new EliteArcanist());
         arcanist.setSummoningSick(false);
 
-        harness.activateAbility(player1, 0, 0, null);
-        assertThat(arcanist.isTapped()).isTrue();
-        harness.passBothPriorities();
-
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No card has been exiled");
+        assertThat(arcanist.isTapped()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
@@ -199,6 +198,7 @@ class EliteArcanistTest extends BaseCardTest {
         gd.exiledCards.add(new ExiledCardEntry(imprinted, player1.getId(), arcanist.getCard().getId()));
         arcanist.setSummoningSick(false);
         harness.setLibrary(player1, List.of(new Fog(), new Fog()));
+        harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 2, null);

@@ -31,6 +31,7 @@ class EsperSojournersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(forest.isTapped()).isTrue();
     }
@@ -46,6 +47,7 @@ class EsperSojournersTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(forest.isTapped()).isFalse();
     }
@@ -73,8 +75,13 @@ class EsperSojournersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.activateHandAbility(player1, 0, forest.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         assertThat(forest.isTapped()).isTrue();
         // The cycling draw still happens: Esper Sojourners discarded, the library card drawn.
@@ -106,7 +113,8 @@ class EsperSojournersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.activateHandAbility(player1, 0, forest.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, forest.getId());
 
         assertThat(gd.stack).hasSize(2);
         harness.assertInGraveyard(player1, "Esper Sojourners");
@@ -121,7 +129,8 @@ class EsperSojournersTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.activateHandAbility(player1, 0, bears.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, bears.getId());
 
         harness.setHand(player2, List.of(new FlameJavelin()));
         harness.addMana(player2, ManaColor.RED, 3);

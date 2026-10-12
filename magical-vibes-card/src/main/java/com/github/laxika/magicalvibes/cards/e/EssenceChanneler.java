@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTarg
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BLB", collectorNumber = "12")
@@ -26,6 +27,6 @@ public class EssenceChanneler extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_DEATH,
-                new MoveDyingSourceCountersToTargetCreatureEffect(true));
+                new MoveDyingSourceCountersToTargetCreatureEffect(Map.of(), true, false));
     }
 }

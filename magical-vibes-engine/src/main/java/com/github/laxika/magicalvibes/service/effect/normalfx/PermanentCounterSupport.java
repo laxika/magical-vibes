@@ -1401,7 +1401,6 @@ public class PermanentCounterSupport {
         if (!placingPlayerId.equals(creatureControllerId)) {
             return;
         }
-
         List<Permanent> battlefield = gameData.playerBattlefields.get(placingPlayerId);
         if (battlefield == null) {
             return;
@@ -1436,6 +1435,15 @@ public class PermanentCounterSupport {
                         GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
             }
         }
+    }
+
+    private void fireYouPutPlusOnePlusOneCountersOnAnyCreatureTriggers(
+            GameData gameData, int count, UUID placingPlayerId) {
+        if (count <= 0 || placingPlayerId == null) {
+            return;
+        }
+        firePlusOnePlusOneCountersPutOnControlledPermanentTriggers(gameData, placingPlayerId, count,
+                EffectSlot.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANY_CREATURE);
     }
 
     /** Fires Human-scoped +1/+1-counter watchers for the controller of the affected permanent. */
@@ -2047,6 +2055,7 @@ public class PermanentCounterSupport {
                 }
                 fireControllerPutPlusOnePlusOneCountersOnCreatureTriggers(
                         gameData, target, count, placingPlayerId, controllerId);
+                fireYouPutPlusOnePlusOneCountersOnAnyCreatureTriggers(gameData, count, placingPlayerId);
             }
             if (firstPlacementOnThisPermanent) {
                 fireFirstPlusOnePlusOneCounterPlacementOnAnotherPermanentTriggers(

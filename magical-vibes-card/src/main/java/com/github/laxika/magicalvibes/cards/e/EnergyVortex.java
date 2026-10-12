@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerUnlessPaysPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
@@ -17,8 +18,10 @@ import java.util.List;
 public class EnergyVortex extends Card {
 
     public EnergyVortex() {
-        // "As this enchantment enters, choose an opponent" — in a two-player game the chosen player
-        // is always the single opponent, so it is modelled implicitly (as Cursed Rack does).
+        // "As this enchantment enters, choose an opponent." The chosen player is recorded on entry and
+        // keeps being the chosen player if control of the enchantment changes.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
+
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveAllCountersEffect(CounterType.VORTEX));
 
         // At the beginning of the chosen player's upkeep, deal 3 damage to them unless they pay {1}

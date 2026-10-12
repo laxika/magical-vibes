@@ -320,8 +320,9 @@ public final class LayerClassifier {
         map.put(SourceBecomesChosenBasicLandTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(EnchantedPermanentBecomesOnlyLandEffect.class, fixed(Layer.L4_TYPE));
         // Aura animates the enchanted permanent (Living Terrain): the creature type is added in
-        // layer 4; the handler fills colour (5) and base P/T (7b) in the accumulator pass.
-        map.put(EnchantedPermanentBecomesCreatureEffect.class, fixed(Layer.L4_TYPE));
+        // layer 4; its base P/T is a timestamped 7b entry (Ensoul Artifact), while the colour (5)
+        // is still filled by the handler in the accumulator pass.
+        map.put(EnchantedPermanentBecomesCreatureEffect.class, fixed(Layer.L4_TYPE, Layer.L7B_SET_PT));
         map.put(EnchantedPermanentToughnessBecomesLoyaltyEffect.class, fixed(Layer.L7B_SET_PT));
         // All lands become creatures (Nature's Revolt): the creature type is added in layer 4;
         // the handler fills the fixed base P/T in the accumulator pass. When the effect also names

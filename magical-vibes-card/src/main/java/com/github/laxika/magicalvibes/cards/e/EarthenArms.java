@@ -30,6 +30,7 @@ public class EarthenArms extends Card {
 
     public EarthenArms() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{6}{G}"))));
+        setAllowSharedTargets(true);
 
         target(TargetFilters.permanent())
                 .addEffect(EffectSlot.SPELL,

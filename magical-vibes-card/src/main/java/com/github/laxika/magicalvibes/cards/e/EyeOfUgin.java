@@ -32,7 +32,10 @@ public class EyeOfUgin extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{7}",
-                List.of(new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE))),
+                List.of(new SearchLibraryEffect(new CardAllOfPredicate(List.of(
+                        new CardTypePredicate(CardType.CREATURE),
+                        new CardIsColorlessPredicate()
+                )))),
                 "{7}, {T}: Search your library for a colorless creature card, reveal it, put it into your hand, then shuffle."
         ));
     }

@@ -79,6 +79,7 @@ class ExploreTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.castFromHand(player1, new Explore(), "{1}{G}");
         harness.passBothPriorities();
+        harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(1);

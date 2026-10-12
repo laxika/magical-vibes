@@ -52,7 +52,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
             return;
         }
 
-        String name = target.getOriginalCard().getName();
+        String name = target.isFaceDown() ? null : target.getOriginalCard().getName();
         ExileTargetPermanentAndAllWithSameNameFromZonesEffect exileEffect =
                 (ExileTargetPermanentAndAllWithSameNameFromZonesEffect) effect;
         CardSubtype requiredTargetSubtype = exileEffect.requiredTargetSubtype();
@@ -71,6 +71,11 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
 
         if (chooseAnyNumber) {
             beginAnyNumberChoice(gameData, entry, controllerId, name, exileEffect.drawForHandExiled());
+            return;
+        }
+
+        if (exileEffect.hiddenZonesOptional()) {
+            beginHiddenZoneChoice(gameData, entry, controllerId, name);
             return;
         }
 
@@ -97,10 +102,34 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
         String controllerName = gameData.playerIdToName.get(controllerId);
         int total = fromGraveyard + fromHand + fromLibrary;
         gameLogService.append(gameData, GameLog.text(entry.getCard().getName() + " exiles " + total
-                + " card" + (total != 1 ? "s" : "") + " named " + name + " from " + controllerName
+                + " card" + (total != 1 ? "s" : "") + " named " + (name == null ? "(no name)" : name) + " from " + controllerName
                 + "'s graveyard, hand, and library. " + controllerName + " shuffles their library."));
         log.info("Game {} - {} exiled {} cards named {} from {}'s zones",
                 gameData.id, entry.getCard().getName(), total, name, controllerName);
+    }
+
+    private void beginHiddenZoneChoice(GameData gameData, StackEntry entry, UUID controllerId, String name) {
+        List<Card> exiledFromGraveyard = exileMatchingCards(gameData, controllerId,
+                gameData.playerGraveyards.get(controllerId), name);
+        if (!exiledFromGraveyard.isEmpty()) {
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, exiledFromGraveyard);
+        }
+        List<Card> hiddenZoneCards = new ArrayList<>();
+        addMatchingCards(hiddenZoneCards, gameData.playerHands.get(controllerId), name);
+        addMatchingCards(hiddenZoneCards, gameData.playerDecks.get(controllerId), name);
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        gameLogService.append(gameData, GameLog.text(entry.getCard().getName() + " exiles "
+                + exiledFromGraveyard.size() + " card" + (exiledFromGraveyard.size() != 1 ? "s" : "") + " named "
+                + (name == null ? "(no name)" : name) + " from " + controllerName + "'s graveyard."));
+        if (hiddenZoneCards.isEmpty()) {
+            List<Card> library = gameData.playerDecks.get(controllerId);
+            if (library != null) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
+            return;
+        }
+        playerInputService.beginMultiZoneExileChoice(
+                gameData, entry.getControllerId(), hiddenZoneCards, controllerId, name, false);
     }
 
     private void beginAnyNumberChoice(GameData gameData, StackEntry entry, UUID controllerId, String name,
@@ -113,7 +142,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
             }
             String controllerName = gameData.playerIdToName.get(controllerId);
             gameLogService.append(gameData, GameLog.text(entry.getCard().getName() + " exiles 0 cards named "
-                    + name + " from " + controllerName + "'s graveyard, hand, and library. "
+                    + (name == null ? "(no name)" : name) + " from " + controllerName + "'s graveyard, hand, and library. "
                     + controllerName + " shuffles their library."));
             return;
         }
@@ -130,7 +159,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
     }
 
     private void addMatchingCards(List<Card> matchingCards, List<Card> cards, String name) {
-        if (cards != null) {
+        if (cards != null && name != null) {
             matchingCards.addAll(cards.stream().filter(card -> card.getName().equals(name)).toList());
         }
     }
@@ -140,7 +169,7 @@ public class ExileTargetPermanentAndAllWithSameNameFromZonesEffectHandler implem
     }
 
     private List<Card> exileMatchingCards(GameData gameData, UUID playerId, List<Card> zone, String name) {
-        if (zone == null) {
+        if (zone == null || name == null) {
             return List.of();
         }
         List<Card> matches = new ArrayList<>();

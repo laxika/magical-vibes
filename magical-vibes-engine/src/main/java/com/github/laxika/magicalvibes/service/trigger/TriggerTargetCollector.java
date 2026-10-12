@@ -63,7 +63,13 @@ public class TriggerTargetCollector {
         if (!hasLegalGraveyardTarget(gameData, option.targetFilter(), controllerId, sourceCard)) return false;
         List<CardEffect> exileEffects = option.effectsForSelection().stream()
                 .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)).toList();
-        return exileEffects.isEmpty() || !collect(gameData, exileEffects, option.targetFilter(),
+        if (!exileEffects.isEmpty() && collect(gameData, exileEffects, option.targetFilter(),
+                controllerId, sourceCard, Options.END_STEP).validTargets().isEmpty()) {
+            return false;
+        }
+        List<CardEffect> permanentEffects = option.effectsForSelection().stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)).toList();
+        return permanentEffects.isEmpty() || !collect(gameData, permanentEffects, option.targetFilter(),
                 controllerId, sourceCard, Options.END_STEP).validTargets().isEmpty();
     }
 

@@ -194,6 +194,7 @@ class EternalDragonTest extends BaseCardTest {
     void multipleActivationsReturnDragonOnlyOnce() {
         EternalDragon dragon = new EternalDragon();
         harness.setGraveyard(player1, List.of(dragon));
+        harness.setHand(player1, List.of());
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.addMana(player1, ManaColor.COLORLESS, 6);

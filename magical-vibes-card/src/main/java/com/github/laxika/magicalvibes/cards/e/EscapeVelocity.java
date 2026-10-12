@@ -22,6 +22,7 @@ public class EscapeVelocity extends Card {
                         new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.ENCHANTED_CREATURE));
 
         addCastingOption(new GraveyardCast(null, "{1}{R}", List.of(
-                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 2))));
+                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 2)),
+                null, false, false, true));
     }
 }

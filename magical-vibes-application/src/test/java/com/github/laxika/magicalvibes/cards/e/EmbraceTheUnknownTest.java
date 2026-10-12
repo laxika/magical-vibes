@@ -34,8 +34,11 @@ class EmbraceTheUnknownTest extends BaseCardTest {
                 .containsEntry(first.getId(), player1.getId())
                 .containsEntry(second.getId(), player1.getId());
         assertThat(gd.exilePlayPermissionsExpireAtTurnEnd)
-                .containsEntry(first.getId(), gd.turnNumber + 2)
-                .containsEntry(second.getId(), gd.turnNumber + 2);
+                .containsEntry(first.getId(), Integer.MAX_VALUE)
+                .containsEntry(second.getId(), Integer.MAX_VALUE);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+                .containsEntry(first.getId(), player1.getId())
+                .containsEntry(second.getId(), player1.getId());
     }
 
     @Test
@@ -105,6 +108,7 @@ class EmbraceTheUnknownTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(land, creature, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new EmbraceTheUnknown()));
+        harness.setHand(player2, List.of());
         addMana();
         harness.castAndResolveSorcery(player1, 0, 0);
 

@@ -61,7 +61,7 @@ class ElementalAppealTest extends BaseCardTest {
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Elemental");
@@ -93,7 +93,7 @@ class ElementalAppealTest extends BaseCardTest {
         cast(true);
         Permanent token = elementalToken();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Elemental");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(14);

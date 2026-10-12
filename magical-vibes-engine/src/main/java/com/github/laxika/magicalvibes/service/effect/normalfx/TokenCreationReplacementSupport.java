@@ -26,6 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -59,11 +61,24 @@ public final class TokenCreationReplacementSupport {
             return tokenCard;
         }
         Card replacedToken = replaceTokenSubtypeIfApplicable(gameData, controllerId, tokenCard);
-        if (!replacedToken.hasType(CardType.CREATURE)
+        if (!entersAsCreature(replacedToken)
                 || !hasCreatureTokenReplacement(gameData, controllerId)) {
             return replacedToken;
         }
         return TokenCardFactory.create(DIVINE_VISITATION_TOKEN, 4, 4, replacedToken.getSetCode());
+    }
+
+    /**
+     * Whether the token is a creature as it enters. A token whose own static ability sets its card
+     * types without Creature (a copy that "is an artifact and loses all other card types") is not
+     * a creature token, so creature-token replacements such as Divine Visitation do not apply.
+     */
+    public static boolean entersAsCreature(Card tokenCard) {
+        return tokenCard.hasType(CardType.CREATURE)
+                && tokenCard.getEffects(EffectSlot.STATIC).stream()
+                .noneMatch(effect -> effect instanceof SetCardTypesEffect set
+                        && set.scope() == GrantScope.SELF
+                        && !set.cardTypes().contains(CardType.CREATURE));
     }
 
     /** Applies token-profile replacements before a token permanent is created. */

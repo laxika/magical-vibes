@@ -27,6 +27,7 @@ public class EntomberExarch extends Card {
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardTypePredicate(CardType.CREATURE))
+                                .targetGraveyard(true)
                                 .build()
                 ),
                 new ChooseOneEffect.ChooseOneOption(

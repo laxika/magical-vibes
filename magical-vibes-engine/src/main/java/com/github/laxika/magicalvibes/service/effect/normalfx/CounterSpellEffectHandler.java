@@ -39,6 +39,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
                 .orElse(null);
         if (targetOnStack != null) {
             entry.setCounteredSpellControllerId(targetOnStack.getControllerId());
+            entry.rememberLastKnownPermanentCard(counterTargetId, targetOnStack.getCard());
             Card targetingCard = targetOnStack.getTargetingCard();
             int xSymbols = targetingCard.getManaCost() == null
                     ? 0 : new ManaCost(targetingCard.getManaCost()).getXSymbolCount();

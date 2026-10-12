@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCopyTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -26,8 +25,6 @@ public class ExtusOriqOverlord extends Card {
         AwakenTheBloodAvatar backFace = new AwakenTheBloodAvatar();
         setBackFaceCard(backFace);
         setModalDoubleFaced(true);
-
-        addEffect(EffectSlot.STATIC, new SacrificeCreaturesForCostReductionEffect(2));
 
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

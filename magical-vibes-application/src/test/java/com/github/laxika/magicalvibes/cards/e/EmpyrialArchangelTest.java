@@ -108,7 +108,7 @@ class EmpyrialArchangelTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(first.getMarkedDamage()).isZero();
         assertThat(second.getMarkedDamage()).isZero();
-        harness.handlePermanentChosen(player2, second.getId());
+        harness.handleListChoice(player2, "Empyrial Archangel (2): deal the damage to it instead");
 
         harness.assertLife(player2, 20);
         assertThat(first.getMarkedDamage()).isZero();

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -19,8 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 public class EuruAcornScrounger extends Card {
 
     public EuruAcornScrounger() {
+        // "When you do" is a reflexive trigger (CR 603.12), so the conjure goes on the stack after forage.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new ForageEffect(new ConjureCardToBattlefieldEffect("MH2", "153")),
+                new ForageEffect(new QueueReflexiveAbilityEffect(
+                        new ConjureCardToBattlefieldEffect("MH2", "153"))),
                 "Forage?"));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,

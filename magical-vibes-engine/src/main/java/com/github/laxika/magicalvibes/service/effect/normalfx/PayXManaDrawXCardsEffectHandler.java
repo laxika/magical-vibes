@@ -84,10 +84,14 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
 
     private void beginXPrompt(GameData gameData, UUID controllerId, ManaCost cost,
                               String manaCost, String cardName, int maximumX) {
-        int maxX = maxPotentialX(gameData, controllerId, cost, maximumX);
-        if (maxX <= 0) {
+        if (maximumX <= 0) {
             return;
         }
+        ManaPool pool = potentialManaService.buildVirtualManaPool(gameData, controllerId);
+        if (!cost.canPay(pool, 0)) {
+            return;
+        }
+        int maxX = maxPotentialX(pool, cost, maximumX);
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.XValueChoice(
                         controllerId,
@@ -98,8 +102,7 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
                         manaCost));
     }
 
-    private int maxPotentialX(GameData gameData, UUID controllerId, ManaCost cost, int maximumX) {
-        ManaPool pool = potentialManaService.buildVirtualManaPool(gameData, controllerId);
+    private int maxPotentialX(ManaPool pool, ManaCost cost, int maximumX) {
         int low = 0;
         int high = maximumX;
         while (low < high) {

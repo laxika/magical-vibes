@@ -66,7 +66,7 @@ public class ExileAndCloakDisguisedCreaturesEffectHandler implements NormalEffec
 
     public void completeChoice(GameData gameData, List<UUID> permanentIds,
                                MultiPermanentChoiceContext.RecloakDisguisedCreatures context) {
-        List<CloakedCard> cards = new ArrayList<>();
+        List<Card> cards = new ArrayList<>();
         for (UUID permanentId : permanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent == null) {
@@ -79,7 +79,7 @@ public class ExileAndCloakDisguisedCreaturesEffectHandler implements NormalEffec
             for (Card card : leavingCards) {
                 ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
                 if (exiled != null) {
-                    cards.add(new CloakedCard(exiled.card(), exiled.ownerId()));
+                    cards.add(exiled.card());
                 }
             }
         }
@@ -90,20 +90,21 @@ public class ExileAndCloakDisguisedCreaturesEffectHandler implements NormalEffec
         Set<com.github.laxika.magicalvibes.model.CardType> enterTappedTypes =
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
-        for (CloakedCard card : cards) {
-            if (!gameData.removeFromExile(card.card().getId())) {
+        UUID cloakingPlayerId = context.resolvingEntry().getControllerId();
+        for (Card card : cards) {
+            if (!gameData.removeFromExile(card.getId())) {
                 continue;
             }
-            if (card.card().isToken()) {
+            if (card.isToken()) {
                 continue;
             }
-            Permanent cloaked = new Permanent(card.card());
+            Permanent cloaked = new Permanent(card);
             cloaked.setFaceDownAsCloaked();
             battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, card.ownerId(), cloaked, enterTappedTypes, simultaneouslyEntered);
+                    gameData, cloakingPlayerId, cloaked, enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(cloaked);
             battlefieldEntryService.processFaceDownCreatureETBTriggers(
-                    gameData, card.ownerId(), card.card());
+                    gameData, cloakingPlayerId, card);
         }
 
         if (!cards.isEmpty()) {
@@ -111,8 +112,5 @@ public class ExileAndCloakDisguisedCreaturesEffectHandler implements NormalEffec
                     gameData.playerIdToName.get(context.resolvingEntry().getControllerId())
                             + " exiles and cloaks " + cards.size() + " creature(s)."));
         }
-    }
-
-    private record CloakedCard(Card card, UUID ownerId) {
     }
 }

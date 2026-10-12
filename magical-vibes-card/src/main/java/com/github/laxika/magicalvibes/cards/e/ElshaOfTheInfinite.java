@@ -5,22 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-
-import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "208")
 @CardRegistration(set = "C19", collectorNumber = "40")
 public class ElshaOfTheInfinite extends Card {
 
     public ElshaOfTheInfinite() {
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new BoostSelfEffect(1, 1))));
         addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
         addEffect(EffectSlot.STATIC, AllowCastFromTopOfLibraryEffect.withFlash(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));

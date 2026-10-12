@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -60,19 +61,21 @@ public class ExileTargetCreatureWithHitCounterEffectHandler implements NormalEff
                 gameData.exiledCardHitCounters.merge(cardId, 1, Integer::sum);
                 gameLogService.append(gameData,
                         GameLog.cardThen(target.getCard(), " is exiled with a hit counter."));
-
-                long hitCounterCards = gameData.exiledCards.stream()
-                        .filter(card -> damagedPlayerId.equals(card.ownerId()))
-                        .filter(card -> gameData.exiledCardHitCounters.getOrDefault(card.card().getId(), 0) > 0)
-                        .count();
-                if (hitCounterCards >= 3) {
-                    targetPlayerLosesGameEffectHandler.resolve(gameData, entry,
-                            new TargetPlayerLosesGameEffect(damagedPlayerId));
-                }
             }
         }
 
+        // The loss check reads every card the player owns in exile with a hit counter, so it applies
+        // even when the exiled creature was a token that adds no counter (Etrata ruling, 2018-10-05).
+        long hitCounterCards = gameData.exiledCards.stream()
+                .filter(card -> damagedPlayerId.equals(card.ownerId()))
+                .filter(card -> gameData.exiledCardHitCounters.getOrDefault(card.card().getId(), 0) > 0)
+                .count();
+        // Etrata is shuffled away before the loss is declared, since a lost game stops further processing.
         shuffleSourceIntoOwnerLibrary(gameData, entry);
+        if (hitCounterCards >= 3) {
+            targetPlayerLosesGameEffectHandler.resolve(gameData, entry,
+                    new TargetPlayerLosesGameEffect(damagedPlayerId));
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
         log.info("Game {} - {} exiled a creature with a hit counter", gameData.id,
                 entry.getCard().getName());
@@ -81,16 +84,22 @@ public class ExileTargetCreatureWithHitCounterEffectHandler implements NormalEff
     private void shuffleSourceIntoOwnerLibrary(GameData gameData, StackEntry entry) {
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        boolean shuffled;
         if (source != null) {
-            shuffled = permanentRemovalService.removePermanentToLibraryShuffled(gameData, source);
-        } else {
-            shuffled = permanentRemovalService.shuffleCardIntoOwnerLibrary(
-                    gameData, entry.getCard(), entry.getControllerId());
+            boolean shuffled = permanentRemovalService.removePermanentToLibraryShuffled(gameData, source);
+            if (shuffled) {
+                gameLogService.append(gameData,
+                        GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
+            }
+            return;
         }
-        if (shuffled) {
+        // If Etrata left the battlefield while its ability was on the stack, it stays in its new zone and
+        // only its owner's library is shuffled (Etrata ruling, 2018-10-05).
+        UUID ownerId = entry.getCard().getOwnerId() != null
+                ? entry.getCard().getOwnerId() : entry.getControllerId();
+        if (gameData.playerDecks.get(ownerId) != null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
             gameLogService.append(gameData,
-                    GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
+                    GameLog.text(gameData.playerIdToName.get(ownerId) + "'s library is shuffled."));
         }
     }
 }

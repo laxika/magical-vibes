@@ -87,6 +87,7 @@ class EchoOfEonsTest extends BaseCardTest {
     void normalCastThenFlashback() {
         EchoOfEons spell = new EchoOfEons();
         harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, deckOf(20));
         harness.setLibrary(player2, deckOf(20));
         addNormalMana();

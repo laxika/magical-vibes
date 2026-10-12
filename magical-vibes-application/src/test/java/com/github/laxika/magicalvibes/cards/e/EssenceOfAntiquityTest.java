@@ -47,7 +47,7 @@ class EssenceOfAntiquityTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, essence, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isTrue();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, essence, Keyword.HEXPROOF)).isFalse();
         assertThat(gqs.hasKeyword(gd, ally, Keyword.HEXPROOF)).isFalse();
     }

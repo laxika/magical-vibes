@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -21,10 +22,10 @@ public class Exocrine extends Card {
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(
-                        new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),
+                        new SpellXAtLeast(5),
                         new DrawCardEffect()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MassDamageEffect(new XValue(), true, false,
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
+                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())), TriggerMode.INDEPENDENT);
     }
 }

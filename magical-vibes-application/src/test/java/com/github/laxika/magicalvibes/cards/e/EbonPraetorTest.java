@@ -134,6 +134,7 @@ class EbonPraetorTest extends BaseCardTest {
     @DisplayName("Ebon Praetor can sacrifice itself to pay its ability's cost")
     void canSacrificeItself() {
         Permanent praetor = addCreatureReady(player1, new EbonPraetor());
+        addCreatureReady(player1, new RiverMerfolk());
 
         beginUpkeep();
         activateSacrificeAbility(praetor);

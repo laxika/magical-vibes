@@ -32,8 +32,8 @@ class EquilibriumAdeptTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(topCard.getId()))
-                .isEqualTo(gd.turnNumber + 2);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer.get(topCard.getId()))
+                .isEqualTo(player1.getId());
     }
 
     @Test

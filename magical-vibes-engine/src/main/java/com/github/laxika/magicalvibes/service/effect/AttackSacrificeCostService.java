@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacr
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -38,6 +39,7 @@ public class AttackSacrificeCostService {
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
+    private final GameQueryService gameQueryService;
 
     /**
      * For each declared attacker carrying a {@link CantAttackUnlessSacrificeEffect}, sacrifices the
@@ -53,6 +55,7 @@ public class AttackSacrificeCostService {
         // Collect the costs from the attacker snapshot before any battlefield mutation, then pay them.
         Map<PermanentPredicate, Integer> costs = new LinkedHashMap<>();
         for (Permanent attacker : attackers) {
+            if (gameQueryService.hasLostPrintedAbilities(gameData, attacker)) continue;
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CantAttackUnlessSacrificeEffect sac) {
                     costs.merge(sac.filter(), sac.count(), Integer::sum);
@@ -79,6 +82,7 @@ public class AttackSacrificeCostService {
         List<Permanent> attackers = attackerIndices.stream().map(battlefield::get).toList();
         Map<PermanentPredicate, Integer> costs = collectGlobalCosts(gameData, playerId, attackers);
         for (Permanent attacker : attackers) {
+            if (gameQueryService.hasLostPrintedAbilities(gameData, attacker)) continue;
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CantAttackUnlessSacrificeEffect sacrifice) {
                     costs.merge(sacrifice.filter(), sacrifice.count(), Integer::sum);

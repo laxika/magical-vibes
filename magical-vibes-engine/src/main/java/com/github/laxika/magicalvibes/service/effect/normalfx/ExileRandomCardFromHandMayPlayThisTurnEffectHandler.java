@@ -52,7 +52,7 @@ public class ExileRandomCardFromHandMayPlayThisTurnEffectHandler implements Norm
         gameData.exilePlayPermissions.put(exiled.getId(), playerId);
         gameData.exilePlayPermissionsExpireEndOfTurn.add(exiled.getId());
         gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextEndStep(
-                exiled.getId(), playerId, entry.getCard()));
+                exiled.getId(), playerId, entry.getCard(), entry.getControllerId()));
 
         gameLogService.append(gameData, GameLog.builder()
                 .text(playerName + " exiles ").card(exiled)

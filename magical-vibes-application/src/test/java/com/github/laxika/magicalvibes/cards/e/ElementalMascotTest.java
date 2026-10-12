@@ -134,7 +134,7 @@ class ElementalMascotTest extends BaseCardTest {
 
         assertThat(mascot.getPowerModifier()).isEqualTo(2);
         assertThat(mascot.getToughnessModifier()).isZero();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(mascot.getPowerModifier()).isZero();
     }
 
@@ -188,6 +188,7 @@ class ElementalMascotTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 4);
         resolveAllTriggers();
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
@@ -210,6 +211,7 @@ class ElementalMascotTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 4);
         resolveAllTriggers();
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());

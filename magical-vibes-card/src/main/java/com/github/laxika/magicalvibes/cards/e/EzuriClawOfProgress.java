@@ -25,7 +25,7 @@ import java.util.List;
 public class EzuriClawOfProgress extends Card {
 
     public EzuriClawOfProgress() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMaxPowerConditionalEffect(2, new ExperienceCountersEffect(1)));
 
         PermanentAllOfPredicate anotherCreatureYouControl = new PermanentAllOfPredicate(List.of(

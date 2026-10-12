@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.IntrepidPaleontologist;
 import com.github.laxika.magicalvibes.cards.p.PanickedAltisaur;
 import com.github.laxika.magicalvibes.cards.q.QuintoriusKand;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -167,7 +168,7 @@ class EtalisFavorTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a discovered creature triggers Quintorius Kand's cast-from-exile ability")
     void discoveredCreatureIsCastFromExile() {
-        harness.addToBattlefield(player1, new QuintoriusKand());
+        harness.addToBattlefieldAndReturn(player1, new QuintoriusKand()).setCounterCount(CounterType.LOYALTY, 4);
         IntrepidPaleontologist discovered = new IntrepidPaleontologist();
         castOnOwnCreature(List.of(discovered));
         harness.passBothPriorities();
@@ -181,7 +182,7 @@ class EtalisFavorTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a discovered Aura triggers Quintorius Kand's cast-from-exile ability")
     void discoveredAuraIsCastFromExile() {
-        harness.addToBattlefield(player1, new QuintoriusKand());
+        harness.addToBattlefieldAndReturn(player1, new QuintoriusKand()).setCounterCount(CounterType.LOYALTY, 4);
         EtalisFavor discovered = new EtalisFavor();
         Permanent creature = castOnOwnCreature(List.of(discovered));
         harness.passBothPriorities();

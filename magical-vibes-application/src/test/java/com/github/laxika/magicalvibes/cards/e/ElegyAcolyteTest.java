@@ -162,6 +162,7 @@ class ElegyAcolyteTest extends BaseCardTest {
     void createsRobotAfterSpellIsWarped() {
         addCreatureReady(player1, new ElegyAcolyte());
         harness.setHand(player1, List.of(new StarbreachWhale()));
+        harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

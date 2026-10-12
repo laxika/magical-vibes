@@ -67,6 +67,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
         Permanent battle = addBattle(player1, player2.getId(), 5);
 
         harness.enterBattlefieldAndReturn(player1, new EtchedHostDoombringer());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
         harness.handleListChoice(player1,
                 "Choose target battle. If an opponent protects it, remove three defense counters from it. Otherwise, put three defense counters on it");
         harness.handlePermanentChosen(player1, battle.getId());

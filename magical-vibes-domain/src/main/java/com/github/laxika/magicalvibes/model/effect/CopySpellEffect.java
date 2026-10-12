@@ -20,11 +20,26 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  *                                or offering the usual retarget choice (Drafna, Founder of Lat-Nam)
  * @param removeLegendary         when true, the copy does not have the legendary supertype
  * @param colorOverride           when non-null, the copy has exactly this color
+ * @param copies                  how many copies this single copy event creates (Echo Mage copies a spell
+ *                                twice); global "additional copy" replacements apply once to the event
  */
 public record CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
                               boolean sacrificeAtEndStep, boolean copyForTargetController,
                               boolean tokenCopy, boolean permanentSpellToken, boolean removeLegendary,
-                              CardColor colorOverride) implements CardEffect {
+                              CardColor colorOverride, int copies) implements CardEffect {
+
+    public CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
+                           boolean sacrificeAtEndStep, boolean copyForTargetController,
+                           boolean tokenCopy, boolean permanentSpellToken, boolean removeLegendary,
+                           CardColor colorOverride) {
+        this(spellFilter, tokenWithHaste, sacrificeAtEndStep, copyForTargetController,
+                tokenCopy, permanentSpellToken, removeLegendary, colorOverride, 1);
+    }
+
+    /** Copies the target spell the given number of times as one copy event. */
+    public static CopySpellEffect times(int copies) {
+        return new CopySpellEffect(null, false, false, false, false, false, false, null, copies);
+    }
 
     public CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
                            boolean sacrificeAtEndStep, boolean copyForTargetController,

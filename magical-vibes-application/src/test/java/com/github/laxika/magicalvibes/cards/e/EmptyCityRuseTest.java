@@ -81,6 +81,8 @@ class EmptyCityRuseTest extends BaseCardTest {
     @Test
     @DisplayName("The caster keeps combat and the opponent resumes combat on their following turn")
     void onlyOpponentsNextTurnIsAffected() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new AlertShuInfantry());
         addCreatureReady(player2, new AlertShuInfantry());
         harness.setHand(player1, List.of(new EmptyCityRuse()));

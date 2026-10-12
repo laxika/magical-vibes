@@ -24,13 +24,17 @@ public class SetTargetBasePowerToughnessFromSourceEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
-        }
+        Permanent live = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        // A source that left the battlefield is read from its last-known information, which still
+        // includes bonuses from Auras and other effects that stopped applying when it left.
+        Permanent source = live != null ? live : entry.getSourcePermanentSnapshot();
 
-        int power = source == null ? 0 : gameQueryService.getEffectivePower(gameData, source);
-        int toughness = source == null ? 0 : gameQueryService.getEffectiveToughness(gameData, source);
+        int power = source == null ? 0
+                : live == null && source.getLastKnownPower() != null
+                ? source.getLastKnownPower() : gameQueryService.getEffectivePower(gameData, source);
+        int toughness = source == null ? 0
+                : live == null && source.getLastKnownToughness() != null
+                ? source.getLastKnownToughness() : gameQueryService.getEffectiveToughness(gameData, source);
 
         setBasePowerToughnessEffectHandler.resolve(gameData, entry,
                 new SetBasePowerToughnessEffect(power, toughness));

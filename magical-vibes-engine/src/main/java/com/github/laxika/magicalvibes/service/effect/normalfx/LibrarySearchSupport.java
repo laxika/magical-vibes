@@ -796,10 +796,19 @@ public class LibrarySearchSupport {
             return params;
         }
 
+        UUID controllerId = oppositionAgentControllerId(gameData, params.playerId());
+        return controllerId == null ? params : params.withDecisionPlayerId(controllerId);
+    }
+
+    /**
+     * Returns the controller of the most recently entered Opposition Agent controlled by an
+     * opponent of {@code searcherId}, or {@code null} when no opposing Agent is on the battlefield.
+     */
+    public UUID oppositionAgentControllerId(GameData gameData, UUID searcherId) {
         UUID controllerId = null;
         long newestTimestamp = Long.MIN_VALUE;
         for (UUID battlefieldControllerId : gameData.orderedPlayerIds) {
-            if (battlefieldControllerId.equals(params.playerId())) {
+            if (battlefieldControllerId.equals(searcherId)) {
                 continue;
             }
             List<Permanent> battlefield = gameData.playerBattlefields.get(battlefieldControllerId);
@@ -815,7 +824,7 @@ public class LibrarySearchSupport {
                 }
             }
         }
-        return controllerId == null ? params : params.withDecisionPlayerId(controllerId);
+        return controllerId;
     }
 
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,

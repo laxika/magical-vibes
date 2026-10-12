@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 public class EndriderSpikespitter extends Card {
 
     public EndriderSpikespitter() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.atTriggerTime(
                 new MaxSpeed(), new ExileTopCardMayPlayThisTurnEffect(false)));
     }
 }

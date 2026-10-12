@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class EcologicalAppreciationSearchChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.EcologicalAppreciationSearchChoice> {
 
+    private final ExileService exileService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final InputCompletionService inputCompletionService;
@@ -44,7 +46,7 @@ public class EcologicalAppreciationSearchChoiceInteractionHandler
     public void handleAnswer(GameData gameData, Player player,
                              PendingInteraction.EcologicalAppreciationSearchChoice interaction,
                              InteractionAnswer answer) {
-        if (!player.getId().equals(interaction.playerId())) {
+        if (!player.getId().equals(interaction.decidingPlayerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
@@ -77,6 +79,22 @@ public class EcologicalAppreciationSearchChoiceInteractionHandler
                 .toList();
         Set<UUID> graveyardCardIds = removeFromSourceZones(gameData, controllerId, selected);
         gameData.interaction.clearAwaitingInput();
+
+        if (interaction.decisionPlayerId() != null) {
+            List<Card> foundInLibrary = selected.stream()
+                    .filter(card -> !graveyardCardIds.contains(card.getId()))
+                    .toList();
+            for (Card card : foundInLibrary) {
+                exileService.exileCard(gameData, controllerId, card);
+                gameData.exilePlayPermissions.put(card.getId(), interaction.decisionPlayerId());
+                gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                gameLogService.append(gameData, GameLog.textCardText(
+                        gameData.playerIdToName.get(controllerId) + " exiles ", card,
+                        " and " + gameData.playerIdToName.get(interaction.decisionPlayerId())
+                                + " may play it for as long as it remains exiled."));
+            }
+            selected = selected.stream().filter(card -> graveyardCardIds.contains(card.getId())).toList();
+        }
 
         if (selected.size() <= 2) {
             gameData.playerDecks.computeIfAbsent(controllerId, ignored -> new ArrayList<>())

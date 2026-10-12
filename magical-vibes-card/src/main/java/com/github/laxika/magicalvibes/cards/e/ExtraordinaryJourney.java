@@ -18,8 +18,15 @@ public class ExtraordinaryJourney extends Card {
         targetUpTo(new XValue(), TargetFilters.creature(), 100)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentMayPlayWithOpponentTaxEffect(0));
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
-                new EnteringCreatureFromExileConditionalEffect(
-                        new OncePerTurnTriggerEffect(new DrawCardEffect(1))));
+        // The draw trigger also sees Extraordinary Journey's own entry when it is a creature (Opalescence).
+        // The any-other slot skips the source, so the self-or-ally slot covers that entry; the once-each-turn
+        // limit keeps the two from both drawing.
+        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, drawWhenCreatureEntersFromExile());
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, drawWhenCreatureEntersFromExile());
+    }
+
+    private static EnteringCreatureFromExileConditionalEffect drawWhenCreatureEntersFromExile() {
+        return new EnteringCreatureFromExileConditionalEffect(
+                new OncePerTurnTriggerEffect(new DrawCardEffect(1)));
     }
 }

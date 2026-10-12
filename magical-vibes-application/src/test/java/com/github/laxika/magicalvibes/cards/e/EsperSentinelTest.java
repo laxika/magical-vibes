@@ -241,7 +241,8 @@ class EsperSentinelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new SealOfRemoval()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.castEnchantment(player2, 0);

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -17,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -28,6 +31,8 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     private final com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService permanentCopierService;
     private final PlayerInputService playerInputService;
     private final AmountEvaluationService amountEvaluationService;
+    private final EsixTokenReplacementSupport esixTokenReplacementSupport;
+    private final ObjectProvider<CreateTokenCopyOfChosenCreatureEffectHandler> chosenCreatureCopyHandler;
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
         return TokenCopySupport.buildTokenCopyCard(sourceCard, effect);
@@ -62,6 +67,10 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             return;
         }
 
+        if (resolveEsixReplacement(gameData, entry, copyEffect, targetIds, copyCount)) {
+            return;
+        }
+
         if (targetIds.size() > 1 && !copyEffect.chooseAttackTarget() && !copyEffect.createForTargetController()
                 && !copyEffect.tappedAndAttacking()) {
             // One instruction ("for each of X target permanents, create X tokens"): every token enters
@@ -81,6 +90,45 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         for (UUID targetId : targetIds) {
             resolveForTarget(gameData, entry, copyEffect, targetId, copyCount);
         }
+    }
+
+    /**
+     * Esix, Fractal Bloom: the first token creation of the controller's turn may instead copy a chosen
+     * creature. The offer parks the creation in {@code pendingTokenCreationReplacement}; this effect is
+     * re-run once the optional replacement is answered and continues normally when it was declined.
+     *
+     * @return {@code true} when the effect has been fully handled by the replacement or is waiting for it
+     */
+    private boolean resolveEsixReplacement(GameData gameData, StackEntry entry,
+                                           CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                                           List<UUID> targetIds, int copyCount) {
+        PendingTokenCreationReplacement pending = gameData.pendingTokenCreationReplacement;
+        if (pending != null) {
+            if (!pending.copyChosenCreature()) {
+                return false;
+            }
+            gameData.pendingTokenCreationReplacement = null;
+            Boolean accepted = gameData.resolvedMayAccepted;
+            gameData.resolvedMayAccepted = null;
+            if (!Boolean.TRUE.equals(accepted)) {
+                return false;
+            }
+            chosenCreatureCopyHandler.getObject().resolve(gameData, entry,
+                    new CreateTokenCopyOfChosenCreatureEffect(pending.amount(), pending.replacementPermanentId()));
+            return true;
+        }
+        if (copyEffect.chooseAttackTarget() || copyEffect.createForTargetController()
+                || copyEffect.tappedAndAttacking()) {
+            return false;
+        }
+        long existingTargets = targetIds.stream()
+                .filter(targetId -> gameQueryService.findPermanentById(gameData, targetId) != null)
+                .count();
+        if (existingTargets == 0) {
+            return false;
+        }
+        return esixTokenReplacementSupport.offer(gameData, entry.getControllerId(),
+                (int) (copyCount * existingTargets), 0, 0);
     }
 
     private Card copySourceFor(Permanent targetPermanent) {

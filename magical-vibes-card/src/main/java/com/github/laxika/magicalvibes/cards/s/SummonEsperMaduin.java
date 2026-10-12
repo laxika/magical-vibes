@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandEffect;
@@ -33,7 +30,5 @@ public class SummonEsperMaduin extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostAllOwnCreaturesEffect(2, 2, OTHER_CREATURES));
         addEffect(EffectSlot.SAGA_CHAPTER_III,
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, OTHER_CREATURES));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.FINALITY, new Fixed(1)));
     }
 }

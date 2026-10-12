@@ -134,9 +134,9 @@ class ErgRaidersTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent erg = addErgRaiders(false);
         harness.setHand(player2, List.of(new RayOfCommand()));
-        harness.addMana(player2, ManaColor.BLUE, 4);
 
         advanceToEndStep();
+        harness.addMana(player2, ManaColor.BLUE, 4);
 
         assertThat(gd.stack).hasSize(1);
         harness.passPriority(player1);

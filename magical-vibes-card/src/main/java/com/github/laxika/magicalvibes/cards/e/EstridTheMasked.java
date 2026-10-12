@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -48,7 +49,7 @@ public class EstridTheMasked extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -1,
                 List.of(new CreateTokenAttachedToTargetEffect(
-                        maskToken(), new PermanentTruePredicate())),
+                        maskToken(), PlayerRelation.ANY, new PermanentTruePredicate())),
                 "−1: Create a white Aura enchantment token named Mask attached to another target permanent. "
                         + "The token has enchant permanent and umbra armor.",
                 new PermanentPredicateTargetFilter(anotherPermanent, "Target must be another permanent")
@@ -68,6 +69,7 @@ public class EstridTheMasked extends Card {
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(nonAuraEnchantment)
                                 .returnAll(true)
+                                .chooseAuraAttachment(true)
                                 .build(),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

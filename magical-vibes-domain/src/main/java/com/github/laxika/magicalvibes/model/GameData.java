@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
@@ -225,6 +226,12 @@ public class GameData {
      * {@link #getSpellCastOrdinalThisTurn}.
      */
     private final List<UUID> spellCastOrderThisTurn = Collections.synchronizedList(new ArrayList<>());
+    /**
+     * Spells cast this turn that were artifact spells at the time they were cast, whether printed or
+     * through a static grant such as Encroaching Mycosynth's. A grant that later ends doesn't
+     * change what an earlier cast was.
+     */
+    private final Set<UUID> artifactSpellsCastThisTurn = ConcurrentHashMap.newKeySet();
     /** Mana value each X spell cast this turn had on the stack, X included (CR 202.3e). */
     private final Map<UUID, Integer> spellCastStackManaValuesThisTurn = new ConcurrentHashMap<>();
     /** The spell most recently cast by any player this turn, regardless of controller. */
@@ -2159,8 +2166,11 @@ public class GameData {
      * @param counters      delay counters still on the card
      * @param originalEntry a snapshot of the stack entry the spell had, restored when the last
      *                      counter is removed so the spell keeps its X value and targets
+     * @param meddlerId     the controller of the resolved Ertai's Meddling, who controls its delay triggers
+     * @param meddlingCard  the Ertai's Meddling card that is the source of its delay triggers
      */
-    public record DelayedSpellExile(UUID cardId, UUID controllerId, int counters, StackEntry originalEntry) {}
+    public record DelayedSpellExile(UUID cardId, UUID controllerId, int counters, StackEntry originalEntry,
+                                    UUID meddlerId, Card meddlingCard) {}
 
     /** A spell exiled with suspend counters, waiting to be cast by its owner when the last counter is removed. */
     public record SuspendedSpellExile(UUID cardId, UUID ownerId, int counters) {}
@@ -2999,6 +3009,9 @@ public class GameData {
     public final Map<UUID, UUID> simultaneousDyingPermanentControllers = new ConcurrentHashMap<>();
     /** Last-known effective powers of creatures in the current simultaneous death event. */
     public final Map<UUID, Integer> simultaneousDyingPowers = new ConcurrentHashMap<>();
+    /** Last-known persist / undying instance counts of creatures in the current simultaneous death event. */
+    public final Map<UUID, Map<Keyword, Integer>> simultaneousDyingTriggerKeywordInstances =
+            new ConcurrentHashMap<>();
     /** Last-known continuously granted ON_ANY_CREATURE_DIES effects for the current death event. */
     public final Map<UUID, List<CardEffect>> simultaneousDyingGrantedCreatureDeathEffects =
             new ConcurrentHashMap<>();
@@ -3085,7 +3098,7 @@ public class GameData {
      * Players whose pending turn-control effect also grants them an extra turn after the controlled
      * turn (Emrakul, the Promised End). Consumed with {@link #pendingTurnControl} when that turn begins.
      */
-    public final Set<UUID> pendingTurnControlExtraTurn = ConcurrentHashMap.newKeySet();
+    public final List<UUID> pendingTurnControlExtraTurn = new CopyOnWriteArrayList<>();
     /** Delayed effect: targetPlayerId -> controllerId, consumed when target player's next combat begins. */
     public final Map<UUID, UUID> pendingCombatControl = new ConcurrentHashMap<>();
     /** Non-null when a player is being controlled this turn (the controlled player's ID). */
@@ -3428,6 +3441,14 @@ public class GameData {
         return version;
     }
 
+    /**
+     * Ends a card's continuous stay in a graveyard. The card is a new object once it has left, so
+     * anything remembering the old stay's identity no longer refers to it.
+     */
+    public synchronized void markGraveyardExit(UUID cardId) {
+        graveyardEntryVersions.put(cardId, ++graveyardEntryVersion);
+    }
+
     /** Returns the identity of the card's latest graveyard entry, or zero if it is untracked. */
     public long graveyardEntryVersion(UUID cardId) {
         return graveyardEntryVersions.getOrDefault(cardId, 0L);
@@ -3518,6 +3539,27 @@ public class GameData {
         this.opponentOwnedCardExiledListener = opponentOwnedCardExiledListener;
     }
 
+    private transient int cardExileBatchDepth;
+    private transient boolean cardExileBatchPending;
+
+    /**
+     * Runs {@code exiling} as one batch of card exiles, so that "one or more cards are put into
+     * exile" triggers fire once for the whole batch rather than once per card. Per-card bookkeeping
+     * (exile versions, turn counters) still happens for every card.
+     */
+    public void runAsSingleCardExileBatch(Runnable exiling) {
+        cardExileBatchDepth++;
+        try {
+            exiling.run();
+        } finally {
+            cardExileBatchDepth--;
+        }
+        if (cardExileBatchDepth == 0 && cardExileBatchPending) {
+            cardExileBatchPending = false;
+            fireCardsExiledListeners();
+        }
+    }
+
     private void notifyCardsExiled(Card card, boolean faceDown) {
         if (card != null) {
             long version = exileEntryVersions.merge(card.getId(), 1L, Long::sum);
@@ -3542,6 +3584,14 @@ public class GameData {
                         permanent.getId(), manaValue, Math::max));
         cardsExiledThisTurn++;
         cardPutIntoExileThisTurn = true;
+        if (cardExileBatchDepth > 0) {
+            cardExileBatchPending = true;
+            return;
+        }
+        fireCardsExiledListeners();
+    }
+
+    private void fireCardsExiledListeners() {
         Consumer<GameData> listener = cardsExiledListener;
         if (listener != null) {
             listener.accept(this);
@@ -4342,6 +4392,11 @@ public class GameData {
         }
         recordPlayerActionDuringOwnTurn(playerId);
         spellCastOrderThisTurn.add(card.getId());
+        if (card.hasType(CardType.ARTIFACT)
+                || perpetualCardTypes.getOrDefault(card.getId(), Set.of()).contains(CardType.ARTIFACT)
+                || grantedArtifactSpellType(playerId, card)) {
+            artifactSpellsCastThisTurn.add(card.getId());
+        }
         int xSymbols = card.getManaCost() == null ? 0 : card.getManaCost().split("\\{X\\}", -1).length - 1;
         if (xSymbols > 0) {
             stack.stream()
@@ -4389,6 +4444,26 @@ public class GameData {
     }
 
     /** Records a spell cast and whether it was cast for an alternate Warp cost. */
+    private boolean grantedArtifactSpellType(UUID playerId, Card card) {
+        if (card.getType() == null || !card.getType().isPermanentType() || card.hasType(CardType.LAND)) {
+            return false;
+        }
+        for (Permanent source : playerBattlefields.getOrDefault(playerId, List.of())) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GrantCardTypeToOwnNonlandPermanentsEffect grant
+                        && grant.cardType() == CardType.ARTIFACT) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Whether the spell with this card id was an artifact spell when it was cast this turn. */
+    public boolean wasArtifactSpellWhenCastThisTurn(UUID cardId) {
+        return artifactSpellsCastThisTurn.contains(cardId);
+    }
+
     public void recordSpellCast(UUID playerId, Card card, boolean castWithWarp) {
         recordSpellCast(playerId, card);
         if (castWithWarp) {
@@ -5317,6 +5392,7 @@ public class GameData {
         spellCastCountsByZoneThisTurn.clear();
         kickedSpellsCastThisTurn.clear();
         spellCastOrderThisTurn.clear();
+        artifactSpellsCastThisTurn.clear();
         spellCastStackManaValuesThisTurn.clear();
         mostRecentSpellCastThisTurn = null;
         spellWarpedThisTurn = false;
@@ -6102,6 +6178,9 @@ public class GameData {
     public boolean removeFromExile(UUID cardId) {
         boolean removed = exiledCards.removeIf(e -> e.card().getId().equals(cardId));
         if (removed) {
+            // A card that leaves exile is a new object (CR 400.7): delay-counter tracking from its
+            // earlier exile no longer applies, even if it is exiled again later.
+            delayedSpellExiles.removeIf(pending -> pending.cardId().equals(cardId));
             exiledVoyageCounters.remove(cardId);
             exiledVoyageControllerIds.remove(cardId);
             hauntingCardToPermanentId.remove(cardId);
@@ -7405,6 +7484,7 @@ public class GameData {
                 copy.kickedSpellsCastThisTurn.get(k).addAll(v));
         copy.spellWarpedThisTurn = this.spellWarpedThisTurn;
         copy.spellCastOrderThisTurn.addAll(this.spellCastOrderThisTurn);
+        copy.artifactSpellsCastThisTurn.addAll(this.artifactSpellsCastThisTurn);
         copy.spellCastStackManaValuesThisTurn.putAll(this.spellCastStackManaValuesThisTurn);
         copy.mostRecentSpellCastThisTurn = this.mostRecentSpellCastThisTurn;
         this.spellNameCastCountsThisGame.forEach((k, v) ->
@@ -7654,6 +7734,7 @@ public class GameData {
                 copy.departedPermanentSnapshots.put(cardId, new Permanent(permanent)));
         copy.simultaneousDyingPermanentControllers.putAll(this.simultaneousDyingPermanentControllers);
         copy.simultaneousDyingPowers.putAll(this.simultaneousDyingPowers);
+        copy.simultaneousDyingTriggerKeywordInstances.putAll(this.simultaneousDyingTriggerKeywordInstances);
         this.simultaneousDyingGrantedCreatureDeathEffects.forEach((permanentId, effects) ->
                 copy.simultaneousDyingGrantedCreatureDeathEffects.put(
                         permanentId, List.copyOf(effects)));

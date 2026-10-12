@@ -65,6 +65,7 @@ class EtherealInvestigatorTest extends BaseCardTest {
     @Test
     @DisplayName("A Clue costs two mana and is sacrificed to draw a card")
     void clueCanDrawTheSecondCard() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Mulldrifter(), new Mulldrifter()));
         harness.enterBattlefieldAndReturn(player1, new EtherealInvestigator());
         resolveAllTriggers();
@@ -146,6 +147,7 @@ class EtherealInvestigatorTest extends BaseCardTest {
     @Test
     @DisplayName("Drawing two cards from one ability creates exactly one Spirit")
     void drawingTwoCardsFromOneAbilityTriggersOnce() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new EtherealInvestigator());
         harness.setLibrary(player1, List.of(new Mulldrifter(), new Mulldrifter()));
 
@@ -159,6 +161,8 @@ class EtherealInvestigatorTest extends BaseCardTest {
     @Test
     @DisplayName("The draw count resets and Investigator triggers during an opponent's turn")
     void triggersAgainOnOpponentsTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new EtherealInvestigator());
         harness.setLibrary(player1, List.of(new Mulldrifter(), new Mulldrifter(),
                 new Mulldrifter(), new Mulldrifter()));

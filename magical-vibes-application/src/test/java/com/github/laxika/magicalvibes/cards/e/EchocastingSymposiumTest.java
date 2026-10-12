@@ -160,21 +160,22 @@ class EchocastingSymposiumTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new NoxiousNewt(), new NoxiousNewt(), new NoxiousNewt()));
         harness.setLibrary(player2, List.of(new NoxiousNewt(), new NoxiousNewt(), new NoxiousNewt()));
         harness.setHand(player1, List.of(new EchocastingSymposium()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 6);
         harness.castSorcery(player1, 0, List.of(player2.getId(), original.getId()));
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
 
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(null, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
         assertThat(gd.exiledCards).hasSize(1);
 
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(null, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());

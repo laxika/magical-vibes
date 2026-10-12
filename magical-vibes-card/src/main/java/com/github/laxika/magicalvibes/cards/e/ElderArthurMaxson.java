@@ -21,7 +21,7 @@ public class ElderArthurMaxson extends Card {
     public ElderArthurMaxson() {
         // Creature tokens you control have training.
         addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.TRAINING, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.TRAINING, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsTokenPredicate()));
 
         // Sacrifice another creature: Elder Arthur Maxson gains indestructible until end of turn.

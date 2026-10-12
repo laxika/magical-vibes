@@ -36,7 +36,7 @@ public class DestroyTargetPermanentAndAllWithSameNameEffectHandler implements No
         }
 
         var sameNameEffect = (DestroyTargetPermanentAndAllWithSameNameEffect) effect;
-        String targetName = target.getCard().getName();
+        String targetName = gameQueryService.getEffectiveName(gameData, target);
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
@@ -45,7 +45,7 @@ public class DestroyTargetPermanentAndAllWithSameNameEffectHandler implements No
         List<Permanent> toDestroy = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getName().equals(targetName)
+                if (targetName.equals(gameQueryService.getEffectiveName(gameData, permanent))
                         && predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, sameNameEffect.sameNamePredicate(), filterContext)) {
                     toDestroy.add(permanent);

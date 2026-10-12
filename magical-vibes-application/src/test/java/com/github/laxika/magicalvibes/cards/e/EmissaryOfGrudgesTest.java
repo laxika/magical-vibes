@@ -96,8 +96,6 @@ class EmissaryOfGrudgesTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
         return findPermanent(player1, "Emissary of Grudges");
     }
 

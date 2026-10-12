@@ -30,6 +30,8 @@ class EnduringScalelordTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0, bears.getId());
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -46,6 +48,8 @@ class EnduringScalelordTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0, hydra.getId());
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -61,6 +65,8 @@ class EnduringScalelordTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castInstant(player1, 0, bears.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

@@ -2000,17 +2000,18 @@ public class DamagePreventionService {
                 || gameData.eyeForAnEyeShields.isEmpty()) {
             return;
         }
+        UUID liveSourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
         var it = gameData.eyeForAnEyeShields.iterator();
         while (it.hasNext()) {
             var shield = it.next();
             if (shield.protectedPlayerId().equals(playerId) && shield.sourceId().equals(sourcePermanentId)) {
                 it.remove();
-                UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+                UUID sourceControllerId = liveSourceControllerId != null
+                        ? liveSourceControllerId : shield.sourceControllerId();
                 if (sourceControllerId != null) {
                     gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
                             sourceControllerId, damage, shield.eyeCard(), shield.eyeControllerId()));
                 }
-                return;
             }
         }
     }

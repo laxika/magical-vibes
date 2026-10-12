@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.UUID;
@@ -29,6 +31,7 @@ public class InteractionState {
     private Card pendingAuraCard;
     private Card pendingAuraOriginalCard;
     private UUID pendingAuraOwnerId;
+    private EnterWithCountersEffect pendingAuraEntryReplacement;
     private StackEntry pendingAuraResolutionEntry;
     private UUID pendingEquipmentAttachEquipmentId;
     private UUID pendingEquipmentAttachTargetId;
@@ -83,6 +86,7 @@ public class InteractionState {
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOriginalCard = this.pendingAuraOriginalCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
+        copy.pendingAuraEntryReplacement = this.pendingAuraEntryReplacement;
         copy.pendingAuraResolutionEntry = this.pendingAuraResolutionEntry == null
                 ? null : new StackEntry(this.pendingAuraResolutionEntry);
         copy.pendingEquipmentAttachEquipmentId = this.pendingEquipmentAttachEquipmentId;
@@ -270,6 +274,20 @@ public class InteractionState {
         UUID ownerId = this.pendingAuraOwnerId;
         this.pendingAuraOwnerId = null;
         return ownerId;
+    }
+
+    /**
+     * Entry replacement (e.g. a shield counter) the pending Aura enters with when it was put onto the
+     * battlefield by an effect that also specifies one; {@code null} when none applies.
+     */
+    public void setPendingAuraEntryReplacement(EnterWithCountersEffect replacement) {
+        this.pendingAuraEntryReplacement = replacement;
+    }
+
+    public EnterWithCountersEffect consumePendingAuraEntryReplacement() {
+        EnterWithCountersEffect replacement = this.pendingAuraEntryReplacement;
+        this.pendingAuraEntryReplacement = null;
+        return replacement;
     }
 
     public void setPendingAuraResolutionEntry(StackEntry entry) {

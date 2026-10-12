@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -72,11 +73,16 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentSnapshot(source)
                 .withSourcePermanentId(entry.getSourcePermanentId());
+        boolean resolvingSpellSource = source == null
+                && (entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                || entry.getEntryType() == StackEntryType.SORCERY_SPELL);
         for (Permanent creature : new ArrayList<>(candidates)) {
             if (!predicateEvaluationService.matchesPermanentPredicate(creature, e.predicate(), ctx)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && (source != null
                     ? gameQueryService.hasProtectionFromDamageSource(gameData, creature, source)
-                    : gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId()))) {
+                    : gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId())
+                    || resolvingSpellSource
+                    && gameQueryService.hasProtectionFromResolvingColoredSpell(gameData, creature, entry.getCard()))) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                 continue;
             }

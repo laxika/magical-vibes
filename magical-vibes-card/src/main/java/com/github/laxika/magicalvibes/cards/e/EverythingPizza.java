@@ -44,11 +44,11 @@ public class EverythingPizza extends Card {
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a creature, planeswalker, battle, or player");
-        TargetFilter targetCreatureYouControl = TargetFilters.creatureYouControl();
+        TargetFilter targetCreature = TargetFilters.creature();
 
         SpellTarget playerTarget = target(targetPlayer);
         SpellTarget damageTarget = target(anyTarget);
-        SpellTarget counterTarget = target(targetCreatureYouControl, 0, 1);
+        SpellTarget counterTarget = target(targetCreature, 0, 1);
 
         TargetPlayerGainsLifeEffect gainLife = new TargetPlayerGainsLifeEffect(3);
         DrawCardForTargetPlayerEffect draw = new DrawCardForTargetPlayerEffect(1, false, true);
@@ -75,7 +75,7 @@ public class EverythingPizza extends Card {
                         + "Each of your opponents discards a card. This artifact deals 3 damage to any target. "
                         + "Put three +1/+1 counters on up to one target creature.",
                 null, null, null, null,
-                List.of(targetPlayer, anyTarget, targetCreatureYouControl), 2, 3);
+                List.of(targetPlayer, anyTarget, targetCreature), 2, 3);
         addActivatedAbility(ability.withAllowSharedTargets());
     }
 }

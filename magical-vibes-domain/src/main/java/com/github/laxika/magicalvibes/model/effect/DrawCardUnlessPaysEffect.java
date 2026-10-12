@@ -15,10 +15,17 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param payAmount        generic mana the casting opponent can pay to prevent the draw offer
  * @param spellFilter      optional filter for which spells trigger this (null = any spell)
  * @param dynamicPayAmount optional dynamic payment amount (null = use {@code payAmount})
+ * @param mandatoryDraw    when {@code true} the source controller draws without a may choice once the
+ *                         opponent doesn't pay ("draw a card unless that player pays", Esper Sentinel)
  */
 public record DrawCardUnlessPaysEffect(int drawCount, int payAmount, CardPredicate spellFilter,
-                                       DynamicAmount dynamicPayAmount)
+                                       DynamicAmount dynamicPayAmount, boolean mandatoryDraw)
         implements CardDrawingEffect {
+
+    public DrawCardUnlessPaysEffect(int drawCount, int payAmount, CardPredicate spellFilter,
+                                    DynamicAmount dynamicPayAmount) {
+        this(drawCount, payAmount, spellFilter, dynamicPayAmount, false);
+    }
 
     public DrawCardUnlessPaysEffect(int drawCount, int payAmount) {
         this(drawCount, payAmount, null, null);
@@ -34,6 +41,11 @@ public record DrawCardUnlessPaysEffect(int drawCount, int payAmount, CardPredica
 
     public DrawCardUnlessPaysEffect(int drawCount, DynamicAmount dynamicPayAmount, CardPredicate spellFilter) {
         this(drawCount, 0, spellFilter, dynamicPayAmount);
+    }
+
+    /** "Draw a card unless that player pays {X}" with a mandatory (not may) draw. */
+    public static DrawCardUnlessPaysEffect mandatory(int drawCount, DynamicAmount dynamicPayAmount) {
+        return new DrawCardUnlessPaysEffect(drawCount, 0, null, dynamicPayAmount, true);
     }
 
     @Override

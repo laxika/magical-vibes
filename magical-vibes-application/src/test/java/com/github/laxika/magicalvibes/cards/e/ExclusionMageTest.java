@@ -2,6 +2,13 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -68,8 +75,8 @@ class ExclusionMageTest extends BaseCardTest {
 
     @Test
     void returnsStolenCreatureToOwnerRatherThanController() {
-        var creature = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        var creature = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
+        takeControl(player2, creature);
         castMage(creature.getId());
         resolveAllTriggers();
 
@@ -83,9 +90,7 @@ class ExclusionMageTest extends BaseCardTest {
         var creature = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
         castMage(creature.getId());
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player2.getId()).remove(creature);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        takeControl(player1, creature);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
@@ -107,6 +112,13 @@ class ExclusionMageTest extends BaseCardTest {
         harness.assertInHand(player2, "Colossal Dreadmaw");
         harness.assertNotOnBattlefield(player2, "Colossal Dreadmaw");
         assertThat(gd.stack).isEmpty();
+    }
+
+    private void takeControl(Player newController, Permanent creature) {
+        CreatureControlService controlService = GameTestEngineContext.get().getBean(CreatureControlService.class);
+        harness.inMutationScope(() -> controlService.applyControlEffect(gd, newController.getId(), creature,
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                null, "Control Magic"));
     }
 
     private void castMage(UUID targetId) {

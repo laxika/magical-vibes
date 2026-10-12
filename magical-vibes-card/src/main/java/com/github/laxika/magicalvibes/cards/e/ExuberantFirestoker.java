@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 import java.util.List;
@@ -21,7 +23,9 @@ public class ExuberantFirestoker extends Card {
         // At the beginning of your end step, if you control a creature with power 5 or greater,
         // you may have this creature deal 2 damage to target player or planeswalker.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(5)),
+                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentPowerAtLeastPredicate(5)))),
                 new MayEffect(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2),
                         "Deal 2 damage to target player or planeswalker?")));
 

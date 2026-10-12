@@ -25,6 +25,7 @@ public class GrantExileIfLeavesBattlefieldUntilEndOfTurnEffectHandler implements
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target != null) {
             target.setExileIfLeavesBattlefieldUntilEndOfTurn(true);
+            target.setExileIfLeavesBattlefieldUntilEndOfTurnTimestamp(gameData.nextTimestamp());
         }
     }
 }

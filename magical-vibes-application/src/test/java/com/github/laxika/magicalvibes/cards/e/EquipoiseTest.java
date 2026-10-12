@@ -195,7 +195,8 @@ class EquipoiseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land);
         assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(land);
 
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.setHand(player2, List.of());
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
         assertThat(gd.phasedOutPermanents.getOrDefault(player2.getId(), List.of()))

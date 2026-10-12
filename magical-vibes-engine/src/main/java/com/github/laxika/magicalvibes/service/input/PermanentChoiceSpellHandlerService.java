@@ -414,6 +414,7 @@ public class PermanentChoiceSpellHandlerService {
                             null
             );
             entry.setCopy(ect.copy());
+            entry.setCastCopy(ect.copy());
             entry.setPhysicalCard(ect.physicalCard());
             entry.setCastWithAdventure(ect.physicalCard() != null
                     && ect.physicalCard().getCastingOption(com.github.laxika.magicalvibes.model.AdventureCast.class).isPresent()
@@ -596,6 +597,7 @@ public class PermanentChoiceSpellHandlerService {
                 chosen
         );
         entry.setCopy(ect.copy());
+        entry.setCastCopy(ect.copy());
         entry.setPhysicalCard(ect.physicalCard());
         entry.setCastWithAdventure(ect.physicalCard() != null
                 && ect.physicalCard().getCastingOption(com.github.laxika.magicalvibes.model.AdventureCast.class).isPresent()
@@ -662,7 +664,9 @@ public class PermanentChoiceSpellHandlerService {
                 isGraveyardTarget = false;
             }
         }
-        if (target != null || isPlayerTarget || isGraveyardTarget) {
+        boolean isSpellTarget = !isGraveyardTarget && isValidSpellTarget(
+                gameData, spellCard, gct.spellEffects(), permanentId, gct.controllerId(), gct.xValue());
+        if (target != null || isPlayerTarget || isGraveyardTarget || isSpellTarget) {
             if (!gct.withoutPayingManaCost()) {
                 try {
                     spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), spellCard, gct.xValue(),
@@ -691,6 +695,7 @@ public class PermanentChoiceSpellHandlerService {
                     null
             );
             if (isGraveyardTarget) entry.setTargetZone(Zone.GRAVEYARD);
+            if (isSpellTarget) entry.setTargetZone(Zone.STACK);
             entry.setCastWithAdventure(gct.castWithAdventure());
             entry.setExileInsteadOfGraveyard(gct.exileInsteadOfGraveyard());
             entry.setOwnerIdOverride(gct.ownerId());
@@ -727,7 +732,8 @@ public class PermanentChoiceSpellHandlerService {
 
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
-                    : isGraveyardTarget ? graveyardTarget.getName() : target.getCard().getName();
+                    : isGraveyardTarget ? graveyardTarget.getName()
+                    : isSpellTarget ? getTargetDisplayName(gameData, permanentId) : target.getCard().getName();
             
             gameLogService.append(gameData, GameLog.builder().card(castCharacteristics).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-graveyard targets {}", gameData.id, spellCard.getName(), targetName);

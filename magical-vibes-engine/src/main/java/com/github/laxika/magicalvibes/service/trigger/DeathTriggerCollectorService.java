@@ -926,7 +926,9 @@ public class DeathTriggerCollectorService {
                 : DyingCreatureAttachmentSnapshot.capture(match.gameData(), dyingPermanent.getId());
         if (dyingPermanent == null
                 || !predicateEvaluationService.matchesPermanentPredicate(
-                        match.gameData(), dyingPermanent, effect.predicate())) {
+                        dyingPermanent, effect.predicate(), FilterContext.of(match.gameData())
+                                .withSourceControllerId(sd.controllerId())
+                                .withSourcePermanentId(match.permanent().getId()))) {
             return false;
         }
 
@@ -2311,7 +2313,7 @@ public class DeathTriggerCollectorService {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
         ReturnTriggeringCardToOwnerHandEffect baked = new ReturnTriggeringCardToOwnerHandEffect(
                 apg.dyingCard().getId(), apg.graveyardOwnerId());
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -2319,7 +2321,11 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(baked)),
                 null,
                 match.permanent().getId()
-        ));
+        );
+        entry.setTriggeringCardId(apg.dyingCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(apg.dyingCard().getId()));
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (permanent {} put into graveyard from battlefield)",
                 match.gameData().id, match.permanent().getCard().getName(), apg.dyingCard().getName());

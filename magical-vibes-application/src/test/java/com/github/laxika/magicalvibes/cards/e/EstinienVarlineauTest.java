@@ -92,7 +92,7 @@ class EstinienVarlineauTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.assertLife(player2, 18);
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
 
         assertThat(gqs.hasKeyword(gd, estinien, Keyword.FLYING)).isFalse();
@@ -179,13 +179,13 @@ class EstinienVarlineauTest extends BaseCardTest {
         Permanent estinien = addCreatureReady(player1, new EstinienVarlineau());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new Ephemerate()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             declareAttackers(List.of(0));
             resolveCombat();
             harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         });
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castInstant(player1, 0, estinien.getId());
         resolveAllTriggers();
         assertThat(findPermanent(player1, "Estinien Varlineau").getId()).isNotEqualTo(estinien.getId());
@@ -204,13 +204,13 @@ class EstinienVarlineauTest extends BaseCardTest {
         GrizzlyBears drawnCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new Ephemerate()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             declareAttackers(List.of(1));
             resolveCombat();
             harness.passUntil(player1, TurnStep.END_OF_COMBAT);
         });
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castInstant(player1, 0, dragon.getId());
         resolveAllTriggers();
         assertThat(findPermanent(player1, "Shivan Dragon").getId()).isNotEqualTo(dragon.getId());

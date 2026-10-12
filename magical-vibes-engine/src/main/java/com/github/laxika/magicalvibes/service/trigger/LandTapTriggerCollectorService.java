@@ -499,6 +499,7 @@ public class LandTapTriggerCollectorService {
             if (sourceCard == null) return false;
             Card imprintedCard = match.gameData().getImprintedCard(sourceCard);
             if (imprintedCard == null
+                    || match.gameData().findExiledCard(imprintedCard.getId()) == null
                     || !imprintedCard.getName().equals(tappedLand.getCard().getName())) {
                 return false;
             }

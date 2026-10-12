@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformAllEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -48,7 +49,8 @@ public class TheArgentEtchings extends Card {
         );
         var incubatorTokens = new PermanentAllOfPredicate(List.of(
                 new PermanentIsTokenPredicate(),
-                new PermanentNamedPredicate("Incubator")
+                new PermanentNamedPredicate("Incubator"),
+                new PermanentControlledBySourceControllerPredicate()
         ));
 
         addEffect(EffectSlot.SAGA_CHAPTER_I, SequenceEffect.of(
@@ -57,7 +59,7 @@ public class TheArgentEtchings extends Card {
         ));
         addEffect(EffectSlot.SAGA_CHAPTER_II, SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(1, 1),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.OWN_CREATURES)
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES)
         ));
 
         var otherPermanents = new PermanentAllOfPredicate(List.of(

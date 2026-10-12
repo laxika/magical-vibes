@@ -159,7 +159,7 @@ class EnragingLicidTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, host.getId());
         harness.passBothPriorities();
-        declareAttackers(List.of(1));
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThat(host.isAttacking()).isTrue();
     }

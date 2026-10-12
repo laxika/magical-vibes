@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * Describes a copy trigger checked when its spell is cast. Most counts are captured at cast
- * time; gravestorm evaluates its count when the trigger resolves.
+ * time; gravestorm and Echo Storm evaluate their counts when the trigger resolves.
  */
 public interface SpellCastCopyTriggerEffect extends CardEffect {
 

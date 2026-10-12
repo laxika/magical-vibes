@@ -161,10 +161,12 @@ public class ExileAndReturnTransformedService {
      * Exiles a graveyard-cast spell and immediately returns its physical card transformed under
      * its owner's control.
      *
+     * @param enterWithCounter counter placed on the returned permanent, or {@code null} for none
      * @return {@code true} when the spell had a back face and its physical card was exiled. A
      *         replacement effect may prevent it from entering transformed.
      */
-    public boolean exileSpellAndReturnTransformed(GameData gameData, StackEntry entry) {
+    public boolean exileSpellAndReturnTransformed(GameData gameData, StackEntry entry,
+                                                  CounterType enterWithCounter) {
         if (entry.getSourceZone() != Zone.GRAVEYARD) return false;
 
         Card originalCard = entry.getPhysicalCard();
@@ -178,9 +180,12 @@ public class ExileAndReturnTransformedService {
         Permanent newPerm = new Permanent(originalCard);
         newPerm.setCard(transformedFace);
         newPerm.setTransformed(true);
-        newPerm.setSummoningSick(false);
+        newPerm.setSummoningSick(true);
         newPerm.setCastFromZone(Zone.GRAVEYARD);
         newPerm.setEnteredFromGraveyardOwnerId(ownerId);
+        if (enterWithCounter != null) {
+            newPerm.setCounterCount(enterWithCounter, 1);
+        }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, newPerm);
         if (gameQueryService.findPermanentById(gameData, newPerm.getId()) == null) {

@@ -7,7 +7,12 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDealXDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -22,7 +27,7 @@ import java.util.UUID;
  * Resolves {@link PayXManaDealXDamageToAnyTargetEffect}: prompts the controller for X (capped by
  * how much of {@code manaCost} they can pay, including mana from untapped sources), charges
  * {@code manaCost}, then deals X damage to the target chosen when the ability was put on the
- * stack. Choosing X=0 declines. Mana abilities may be activated while the prompt is open
+ * stack (or, for the reflexive form, queues a reflexive damage ability whose target is chosen after payment). Choosing X=0 declines. Mana abilities may be activated while the prompt is open
  * (frontend allows tapping lands during {@code XValueChoice}).
  */
 @Slf4j
@@ -35,6 +40,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,7 +51,7 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PayXManaDealXDamageToAnyTargetEffect) effect;
         UUID targetId = entry.getTargetId();
-        if (targetId == null) return;
+        if (targetId == null && !e.reflexive()) return;
 
         UUID controllerId = entry.getControllerId();
         String cardName = entry.getCard().getName();
@@ -80,6 +86,11 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
             gameLogService.append(gameData, GameLog.text(playerName + " pays " + e.manaCost().replace("{X}", "{" + chosenValue + "}") + " for " + cardName + "."));
             log.info("Game {} - {} pays X={} for {}", gameData.id, playerName, chosenValue, cardName);
 
+            if (e.reflexive()) {
+                queueReflexiveDamage(gameData, entry, e, chosenValue);
+                return;
+            }
+
             int rawDamage = chosenValue;
             damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
             gameOutcomeService.checkWinCondition(gameData);
@@ -95,6 +106,14 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
             return;
         }
         beginXPrompt(gameData, controllerId, cost, e.manaCost(), cardName);
+    }
+
+    private void queueReflexiveDamage(GameData gameData, StackEntry entry,
+                                      PayXManaDealXDamageToAnyTargetEffect e, int damage) {
+        CardEffect reflexiveDamage = e.targetRestriction().admits(TargetPredicate.Kind.PERMANENT)
+                ? new DealDamageToAnyTargetEffect(damage)
+                : new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER);
+        queueReflexiveAbilityEffectHandler.resolve(gameData, entry, new QueueReflexiveAbilityEffect(reflexiveDamage));
     }
 
     private void beginXPrompt(GameData gameData, UUID controllerId, ManaCost cost, String manaCost, String cardName) {

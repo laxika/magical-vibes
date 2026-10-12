@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,15 +22,15 @@ public class ElectricSeaweed extends Card {
     public ElectricSeaweed() {
         // When this creature enters, until end of turn, whenever another creature dies, this
         // creature deals 1 damage to each non-Wall creature.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantEffectToSourceUntilEndOfTurnEffect(
-                EffectSlot.ON_ANY_CREATURE_DIES,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterDelayedCreatureDeathTriggerEffect(
                 new DealDamageToEachMatchingPermanentEffect(
                         1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(
                                         new PermanentHasSubtypePredicate(CardSubtype.WALL)))),
-                        EachPermanentScope.ALL_PLAYERS)));
+                        EachPermanentScope.ALL_PLAYERS),
+                true));
 
         // {T}: This creature deals 1 damage to any target.
         addActivatedAbility(new ActivatedAbility(

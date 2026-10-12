@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +27,8 @@ import org.springframework.stereotype.Component;
 public class ExileOpponentsGraveyardsAndCreateArtifactTokenCopyEffectHandler
         implements NormalEffectHandlerBean {
 
-    private static final int COMPLETED = -1;
-
     private final ExileService exileService;
     private final GraveyardService graveyardService;
-    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TokenCopySupport tokenCopySupport;
 
     @Override
@@ -40,56 +36,28 @@ public class ExileOpponentsGraveyardsAndCreateArtifactTokenCopyEffectHandler
         return ExileOpponentsGraveyardsAndCreateArtifactTokenCopyEffect.class;
     }
 
+    /**
+     * On the spell, exiles each opponent's graveyard and queues the reflexive trigger's target
+     * choice, which is made only once the spell has finished resolving and been put into its
+     * owner's graveyard. On the reflexive trigger, creates the artifact-only token copy of the
+     * chosen creature card if it is still exiled.
+     */
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getEventValue() == COMPLETED) {
-            return;
-        }
-
-        if (entry.getTargetId() != null) {
-            createTokenCopyIfStillLegal(gameData, entry, entry.getTargetId());
-            entry.setTargetId(null);
-            entry.setEventValue(COMPLETED);
-            return;
-        }
-
-        List<UUID> exiledCardIds = entry.getTargetCardIds();
-        if (exiledCardIds.isEmpty()) {
-            exiledCardIds = exileOpponentsGraveyards(gameData, entry);
-            if (!exiledCardIds.isEmpty()) {
-                queueReflexiveCopyAbility(gameData, entry, effect, exiledCardIds);
+        if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            if (entry.getTargetId() != null) {
+                createTokenCopyIfStillLegal(gameData, entry, entry.getTargetId());
             }
             return;
         }
 
-        List<UUID> eligibleCardIds = exiledCardIds.stream()
+        List<UUID> eligibleCardIds = exileOpponentsGraveyards(gameData, entry).stream()
                 .filter(cardId -> isEligibleCreatureCard(gameData, cardId))
                 .toList();
-        if (eligibleCardIds.isEmpty()) {
-            entry.setEventValue(COMPLETED);
-            return;
+        if (!eligibleCardIds.isEmpty()) {
+            gameData.pendingInteractions.addLast(new PendingInteraction.EspersToMagiciteCreatureChoice(
+                    entry.getControllerId(), eligibleCardIds, entry.getCard()));
         }
-
-        gameData.rerunCurrentEffectAfterInteraction = true;
-        interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.EspersToMagiciteCreatureChoice(
-                        entry.getControllerId(), eligibleCardIds));
-    }
-
-    private void queueReflexiveCopyAbility(GameData gameData, StackEntry entry,
-                                           CardEffect effect, List<UUID> exiledCardIds) {
-        StackEntry reflexiveAbility = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s reflexive ability",
-                List.of(effect),
-                entry.getSourcePermanentId(),
-                List.of());
-        reflexiveAbility.setTargetCardIds(exiledCardIds);
-        reflexiveAbility.setNonTargeting(true);
-        reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        gameData.stack.add(reflexiveAbility);
     }
 
     private List<UUID> exileOpponentsGraveyards(GameData gameData, StackEntry entry) {

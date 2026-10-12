@@ -78,7 +78,7 @@ class EchoingDeepsTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
@@ -91,7 +91,7 @@ class EchoingDeepsTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.handleMayAbilityChosen(player1, false);
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();

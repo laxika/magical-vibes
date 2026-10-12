@@ -25,6 +25,10 @@ public class GrantFreeCastForNextSpellOfChosenCardTypeEffectHandler implements N
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        // CR 113.7a / 608.2h: if the source has left the battlefield, its last known information is used.
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source == null || source.getChosenCardType() == null) {
             return;
         }

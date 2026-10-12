@@ -58,6 +58,7 @@ class EshkiTemursRoarTest extends BaseCardTest {
     @Test
     void opponentsCreatureSpellDoesNotTriggerEshki() {
         Permanent eshki = addCreatureReady(player1, new EshkiTemursRoar());
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, new CrawWurm(), "{4}{G}{G}");

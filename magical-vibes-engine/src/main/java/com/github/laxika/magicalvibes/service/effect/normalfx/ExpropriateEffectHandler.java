@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExpropriateEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -35,6 +37,7 @@ public class ExpropriateEffectHandler implements NormalEffectHandlerBean {
     private final CreatureControlService creatureControlService;
     private final VotingFinishedSupport votingFinishedSupport;
     private final VotingSupport votingSupport;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,6 +57,8 @@ public class ExpropriateEffectHandler implements NormalEffectHandlerBean {
             throw new IllegalArgumentException("Invalid Expropriate vote: " + choice);
         }
 
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(voterId)
+                + " votes for " + choice.toLowerCase() + "."));
         List<UUID> moneyVoterIds = new ArrayList<>(context.moneyVoterIds());
         int timeVotes = context.timeVotes();
         if (ChoiceContext.ExpropriateChoice.TIME.equals(choice)) {

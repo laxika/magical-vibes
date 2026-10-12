@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
@@ -64,6 +65,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         var e = (DestroyTargetPermanentThenEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
+            resolveForDepartedReferencedPermanent(gameData, entry, e);
             return;
         }
 
@@ -112,6 +114,49 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             return;
         }
 
+        resolveThenEffect(gameData, entry, e, statValue, targetControllerId, targetOwnerId);
+    }
+
+    /**
+     * An ability that merely references "that creature" without targeting it (Engulfing Slagwurm) still
+     * resolves after the creature has left the battlefield: nothing is destroyed, but the then-effect
+     * uses the creature's last known information.
+     */
+    private void resolveForDepartedReferencedPermanent(GameData gameData, StackEntry entry,
+                                                       DestroyTargetPermanentThenEffect e) {
+        UUID departedId = entry.getTargetId();
+        if (!entry.isNonTargeting() || departedId == null || e.thenCondition() != null || e.requiresDestruction()) {
+            return;
+        }
+        Card lastKnownCard = entry.lastKnownPermanentCard(departedId);
+        Integer lastKnownToughness = entry.getLastKnownPermanentToughnesses().get(departedId);
+        Integer lastKnownPower = entry.getLastKnownPermanentPowers().get(departedId);
+        int statValue;
+        switch (e.stat()) {
+            case NONE -> statValue = 0;
+            case MANA_VALUE -> {
+                if (lastKnownCard == null) return;
+                statValue = lastKnownCard.getManaValue();
+            }
+            case TOUGHNESS -> {
+                if (lastKnownToughness == null) return;
+                statValue = lastKnownToughness;
+            }
+            case POWER -> {
+                if (lastKnownPower == null) return;
+                statValue = Math.max(0, lastKnownPower);
+            }
+            default -> {
+                return;
+            }
+        }
+        UUID departedControllerId = entry.getRemovedPermanentControllers().get(departedId);
+        UUID departedOwnerId = lastKnownCard == null ? null : lastKnownCard.getOwnerId();
+        resolveThenEffect(gameData, entry, e, statValue, departedControllerId, departedOwnerId);
+    }
+
+    private void resolveThenEffect(GameData gameData, StackEntry entry, DestroyTargetPermanentThenEffect e,
+                                   int statValue, UUID targetControllerId, UUID targetOwnerId) {
         UUID thenControllerId = switch (e.recipient()) {
             case TARGET_CONTROLLER -> targetControllerId;
             case TARGET_OWNER -> targetOwnerId;

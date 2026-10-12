@@ -68,7 +68,7 @@ class ElementalMasteryTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(elementalCount()).isEqualTo(2);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(elementalCount()).isZero();
@@ -123,7 +123,7 @@ class ElementalMasteryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(elementalCount()).isEqualTo(2);
         assertThat(gd.stack).hasSize(1);
@@ -164,7 +164,7 @@ class ElementalMasteryTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(elementalCount()).isEqualTo(2);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         resolveAllTriggers();
         assertThat(elementalCount()).isZero();
     }
@@ -173,15 +173,15 @@ class ElementalMasteryTest extends BaseCardTest {
     @DisplayName("Tokens created during the end step survive until the following end step")
     void tokensCreatedDuringEndStepWaitForNextEndStep() {
         setupEnchantedCreature();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         assertThat(elementalCount()).isEqualTo(2);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(elementalCount()).isEqualTo(2);
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         resolveAllTriggers();
         assertThat(elementalCount()).isZero();
     }

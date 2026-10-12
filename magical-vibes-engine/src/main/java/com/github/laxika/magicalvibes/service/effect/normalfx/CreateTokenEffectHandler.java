@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCrea
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EsixFractalBloomEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
 import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
@@ -41,6 +40,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     private final CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler;
     private final CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler;
     private final TriggerCollectionService triggerCollectionService;
+    private final EsixTokenReplacementSupport esixTokenReplacementSupport;
 
     public CreateTokenEffectHandler(PermanentControlSupport permanentControlSupport,
                                     GameQueryService gameQueryService,
@@ -48,7 +48,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                                     CreateTokenCopyOfEquippedCreatureEffectHandler tokenCopyHandler,
                                     CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler,
                                     CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler,
-                                    @Lazy TriggerCollectionService triggerCollectionService) {
+                                    @Lazy TriggerCollectionService triggerCollectionService,
+                                    EsixTokenReplacementSupport esixTokenReplacementSupport) {
         this.permanentControlSupport = permanentControlSupport;
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
@@ -56,6 +57,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         this.enchantedPermanentTokenCopyHandler = enchantedPermanentTokenCopyHandler;
         this.chosenCreatureTokenCopyHandler = chosenCreatureTokenCopyHandler;
         this.triggerCollectionService = triggerCollectionService;
+        this.esixTokenReplacementSupport = esixTokenReplacementSupport;
     }
 
     @Override
@@ -163,18 +165,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                                 + " — You may create that many tokens that are copies of the enchanted permanent."));
                 return;
             }
-            Permanent esix = availableEsix(gameData, controllerId);
-            if (esix != null) {
-                gameData.tokenCreationReplacementUsedThisTurn.add(esix.getId());
-                gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
-                        esix.getId(), amount, power, toughness, false, true);
-                gameData.resolvingMayEffectFromStack = true;
-                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                        esix.getCard(),
-                        controllerId,
-                        List.of(new CreateTokenCopyOfChosenCreatureEffect(amount, esix.getId())),
-                        esix.getCard().getName()
-                                + " — You may instead choose a creature other than Esix and create that many tokens that are copies of it."));
+            if (esixTokenReplacementSupport.offer(gameData, controllerId, amount, power, toughness)) {
                 return;
             }
         }
@@ -229,7 +220,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     private boolean hasAvailableTokenCreationReplacement(GameData gameData, UUID controllerId) {
         return availableMirrormindCrown(gameData, controllerId) != null
                 || availableMoonlitMeditation(gameData, controllerId) != null
-                || availableEsix(gameData, controllerId) != null;
+                || esixTokenReplacementSupport.isAvailable(gameData, controllerId);
     }
 
     private Permanent availableMirrormindCrown(GameData gameData, UUID controllerId) {
@@ -264,31 +255,6 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             if (gameQueryService.findPermanentById(gameData, permanent.getAttachedTo()) != null) {
-                return permanent;
-            }
-        }
-        return null;
-    }
-
-    private Permanent availableEsix(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return null;
-        }
-        for (Permanent permanent : battlefield) {
-            if (gameData.tokenCreationReplacementUsedThisTurn.contains(permanent.getId())
-                    || permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || permanent.isStaticEffectSuppressed(EsixFractalBloomEffect.class)
-                    || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .noneMatch(EsixFractalBloomEffect.class::isInstance)) {
-                continue;
-            }
-            boolean hasOtherCreature = gameData.orderedPlayerIds.stream()
-                    .flatMap(playerId -> gameData.playerBattlefields
-                            .getOrDefault(playerId, List.of()).stream())
-                    .anyMatch(candidate -> !candidate.getId().equals(permanent.getId())
-                            && gameQueryService.isCreature(gameData, candidate));
-            if (hasOtherCreature) {
                 return permanent;
             }
         }

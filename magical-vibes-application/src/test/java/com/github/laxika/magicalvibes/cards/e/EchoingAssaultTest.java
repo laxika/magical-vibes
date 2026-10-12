@@ -35,9 +35,11 @@ class EchoingAssaultTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EchoingAssault());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        harness.handlePermanentChosen(player1, attacker.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+            harness.handlePermanentChosen(player1, attacker.getId());
+            resolveAllTriggers();
+        });
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -50,9 +52,7 @@ class EchoingAssaultTest extends BaseCardTest {
         assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
     }

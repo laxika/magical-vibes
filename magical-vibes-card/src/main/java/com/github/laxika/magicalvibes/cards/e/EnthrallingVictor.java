@@ -24,6 +24,9 @@ import java.util.List;
 public class EnthrallingVictor extends Card {
 
     public EnthrallingVictor() {
+        // When this creature enters, gain control of target creature an opponent controls
+        // with power 2 or less until end of turn. Untap that creature. It gains haste until end of turn.
+        // The effects are bound to the target so the power restriction is rechecked on resolution.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -31,12 +34,8 @@ public class EnthrallingVictor extends Card {
                         new PermanentPowerAtMostPredicate(2)
                 )),
                 "Target must be a creature an opponent controls with power 2 or less"
-        ));
-
-        // When this creature enters, gain control of target creature an opponent controls
-        // with power 2 or less until end of turn. Untap that creature. It gains haste until end of turn.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new UntapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new UntapPermanentsEffect(TapUntapScope.TARGET))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

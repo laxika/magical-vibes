@@ -13,8 +13,8 @@ public class ElvishArchivist extends Card {
 
     public ElvishArchivist() {
         addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
-                new OncePerTurnTriggerEffect(new PutCountersOnSourceEffect(1, 1, 2)));
+                OncePerTurnTriggerEffect.keyed(new PutCountersOnSourceEffect(1, 1, 2), "artifact"));
         addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
-                new OncePerTurnTriggerEffect(new DrawCardEffect(1)));
+                OncePerTurnTriggerEffect.keyed(new DrawCardEffect(1), "enchantment"));
     }
 }

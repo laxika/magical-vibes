@@ -16,7 +16,7 @@ public class EliminateTheCompetition extends Card {
         addEffect(EffectSlot.SPELL, new SacrificeAnyNumberOfPermanentsCost(
                 new PermanentIsCreaturePredicate()));
 
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
         ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());

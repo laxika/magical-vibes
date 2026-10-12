@@ -8,12 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardOfChosenCreatureTypeIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -48,10 +45,7 @@ public class ShuffleGraveyardOfChosenCreatureTypeIntoLibraryEffectHandler
 
         CardPredicate matchingCreature = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
-                new CardAnyOfPredicate(List.of(
-                        new CardSubtypePredicate(chosenSubtype),
-                        new CardKeywordPredicate(Keyword.CHANGELING)
-                ))
+                new CardSubtypePredicate(chosenSubtype)
         ));
         shuffleHandler.resolve(gameData, entry,
                 new ShuffleGraveyardIntoLibraryEffect(false, matchingCreature));

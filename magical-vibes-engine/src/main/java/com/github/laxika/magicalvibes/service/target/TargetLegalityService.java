@@ -132,6 +132,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPre
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -1165,9 +1166,9 @@ public class TargetLegalityService {
                 }
             }
             if (target != null && gameQueryService.cantBeTargetedByAbilityFromCardType(
-                    gameData, target, sourceCard, null, playerId, CardType.ARTIFACT)) {
+                    gameData, target, sourceCard, null, playerId)) {
                 throw new IllegalStateException(target.getCard().getName()
-                        + " can't be the target of abilities from artifact sources");
+                        + " can't be the target of abilities from restricted sources");
             }
         }
 
@@ -1755,7 +1756,7 @@ public class TargetLegalityService {
             return false;
         }
         if (gameQueryService.cantBeTargetedByAbilityFromCardType(
-                gameData, candidate, sourceCard, null, playerId, CardType.ARTIFACT)) {
+                gameData, candidate, sourceCard, null, playerId)) {
             return false;
         }
         if (hexproofFromColorReason(gameData, candidate, sourceCard, playerId) != null
@@ -3354,7 +3355,8 @@ public class TargetLegalityService {
                             entry.getControllerId(), entry.getSourcePermanentSnapshot(), entry.getXValue(), false)
                             .isEmpty();
                 } else {
-                    legal = isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, targetFilter);
+                    legal = isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, targetFilter)
+                            && assignmentTargetMatchesRestriction(gameData, entry, targetId);
                 }
                 if (legal) {
                     targetLegal[i] = true;
@@ -3563,7 +3565,8 @@ public class TargetLegalityService {
                     }
                     }
                 } else if (targetPerm != null) {
-                    targetFizzled = untargetableReason(gameData, targetPerm, entry.getControllerId()) != null;
+                    targetFizzled = untargetableReason(gameData, targetPerm, entry.getControllerId()) != null
+                            || violatesOpponentChosenTargetControl(gameData, entry, entry.getTargetId());
                     if (!targetFizzled && isBlockedByPeaceTalksForEntry(gameData, entry)) {
                         targetFizzled = true;
                     }
@@ -3575,6 +3578,11 @@ public class TargetLegalityService {
                     }
                     if (!targetFizzled) {
                         targetFizzled = isSpellProtected(gameData, targetPerm, entry);
+                    }
+                    if (!targetFizzled
+                            && (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                            || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)) {
+                        targetFizzled = isProtectedFromSource(gameData, targetPerm, entry);
                     }
                     if (!targetFizzled) {
                         targetFizzled = isHexproofFromColorBlocked(gameData, targetPerm, entry);
@@ -3912,6 +3920,44 @@ public class TargetLegalityService {
         return true;
     }
 
+    /**
+     * Rechecks the permanent restriction of a counter distribution ("target creatures you control")
+     * for a target that was announced through the amount assignments, which carry no target filter.
+     */
+    private boolean assignmentTargetMatchesRestriction(GameData gameData, StackEntry entry, UUID targetId) {
+        if (!entry.isTargetIdsFromAssignments()) {
+            return true;
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) {
+            return true;
+        }
+        FilterContext context = FilterContext.of(gameData).withSourceControllerId(entry.getControllerId());
+        for (CardEffect effect : entry.getEffectsToResolve()) {
+            if (effect instanceof DistributeCountersAmongTargetsEffect distribution
+                    && distribution.targetRestriction() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(
+                    target, distribution.targetRestriction(), context)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Whether the target no longer belongs to the opponent chosen as the spell was cast. Evangelize
+     * has that opponent pick the creature, so the target must still be under that opponent's control.
+     */
+    private boolean violatesOpponentChosenTargetControl(GameData gameData, StackEntry entry, UUID targetId) {
+        return entry.getOpponentChosenTargetPlayerId() != null
+                && entry.getEffectsToResolve().stream()
+                .filter(GainControlOfTargetEffect.class::isInstance)
+                .map(GainControlOfTargetEffect.class::cast)
+                .anyMatch(GainControlOfTargetEffect::opponentChoosesTarget)
+                && !entry.getOpponentChosenTargetPlayerId().equals(
+                gameQueryService.findPermanentController(gameData, targetId));
+    }
+
     private boolean isBattlefieldTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId,
                                                           TargetFilter targetFilter) {
         targetFilter = targetFilterForCast(targetFilter, entry.isKicked(), entry.isGiftPromised(),
@@ -3956,13 +4002,7 @@ public class TargetLegalityService {
             return true;
         }
 
-        if (entry.getOpponentChosenTargetPlayerId() != null
-                && entry.getEffectsToResolve().stream()
-                .filter(GainControlOfTargetEffect.class::isInstance)
-                .map(GainControlOfTargetEffect.class::cast)
-                .anyMatch(GainControlOfTargetEffect::opponentChoosesTarget)
-                && !entry.getOpponentChosenTargetPlayerId().equals(
-                gameQueryService.findPermanentController(gameData, targetId))) {
+        if (violatesOpponentChosenTargetControl(gameData, entry, targetId)) {
             return false;
         }
 
@@ -4338,7 +4378,7 @@ public class TargetLegalityService {
             if (targetController != null && !targetController.equals(sourcePlayerId)) return true;
         }
         return gameQueryService.cantBeTargetedByAbilityFromCardType(
-                gameData, target, sourceCard, sourcePermanentId, sourcePlayerId, CardType.ARTIFACT);
+                gameData, target, sourceCard, sourcePermanentId, sourcePlayerId);
     }
 
     private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {
@@ -4938,7 +4978,15 @@ public class TargetLegalityService {
                     new PermanentHasSubtypePredicate(source.getChosenSubtype()));
         }
         if (predicate instanceof StackEntryTypeInPredicate typeInPredicate) {
-            return typeInPredicate.spellTypes().contains(stackEntry.getEntryType());
+            if (typeInPredicate.spellTypes().contains(stackEntry.getEntryType())) {
+                return true;
+            }
+            // A spell whose card gained a card type from a static grant (Encroaching Mycosynth) has that
+            // type while on the stack, so "artifact spell" targeting matches it.
+            return typeInPredicate.spellTypes().contains(StackEntryType.ARTIFACT_SPELL)
+                    && stackEntry.getCard() != null
+                    && gameQueryService.cardHasType(stackEntry.getCard(), CardType.ARTIFACT, gameData,
+                    stackEntry.getControllerId());
         }
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
             return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).stream()
@@ -5021,15 +5069,10 @@ public class TargetLegalityService {
             return gameData.getSpellCastOrdinalThisTurn(stackEntry.getTargetableId()) == nthSpell.spellNumber();
         }
         if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
-            int manaValue = stackEntry.getCard().getManaValue()
-                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
-                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
-            return manaValue == manaValuePredicate.manaValue();
+            return stackEntry.getSpellManaValue() == manaValuePredicate.manaValue();
         }
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
-            int manaValue = stackEntry.isCastFaceDown() ? 0 : stackEntry.getCard().getManaValue()
-                    + (stackEntry.getCard().getParsedManaCost() == null ? 0
-                    : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
+            int manaValue = stackEntry.isCastFaceDown() ? 0 : stackEntry.getSpellManaValue();
             return manaValue <= maxManaValuePredicate.maxManaValue();
         }
         if (predicate instanceof StackEntryManaSpentLessThanManaValuePredicate) {
@@ -5195,7 +5238,7 @@ public class TargetLegalityService {
             return stackEntry.isCastWithWarp();
         }
         if (predicate instanceof StackEntryIsCopyPredicate) {
-            return stackEntry.isCopy();
+            return stackEntry.isCopy() && !stackEntry.isCastCopy();
         }
         if (predicate instanceof StackEntryKickedPredicate) {
             return stackEntry.wasKicked();

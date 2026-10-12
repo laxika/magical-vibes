@@ -36,7 +36,7 @@ public class EachPlayerChoosesNonlandPermanentAndPutCounterEffectHandler
         EachPlayerChoosesNonlandPermanentAndPutCounterEffect counterEffect =
                 (EachPlayerChoosesNonlandPermanentAndPutCounterEffect) effect;
         step(gameData, apnapPlayers(gameData), 0, List.of(), counterEffect.counterType(),
-                entry.getCard().getName());
+                entry.getCard().getName(), entry);
     }
 
     public void completeChoice(GameData gameData, List<UUID> chosenIds,
@@ -44,17 +44,17 @@ public class EachPlayerChoosesNonlandPermanentAndPutCounterEffectHandler
         List<UUID> allChosenIds = new ArrayList<>(context.chosenIds());
         allChosenIds.addAll(chosenIds);
         step(gameData, context.playerIds(), context.playerIndex() + 1, allChosenIds,
-                context.counterType(), context.sourceName());
+                context.counterType(), context.sourceName(), gameData.pendingEffectResolutionEntry);
     }
 
     private void step(GameData gameData, List<UUID> playerIds, int playerIndex,
                       List<UUID> chosenIds, CounterType counterType,
-                      String sourceName) {
+                      String sourceName, StackEntry resolvingEntry) {
         List<UUID> allChosenIds = new ArrayList<>(chosenIds);
 
         for (int currentPlayerIndex = playerIndex; currentPlayerIndex < playerIds.size(); currentPlayerIndex++) {
             UUID playerId = playerIds.get(currentPlayerIndex);
-            List<UUID> candidates = nonlandPermanentIds(gameData, playerId);
+            List<UUID> candidates = nonlandPermanentIds(gameData);
 
             if (candidates.isEmpty()) {
                 continue;
@@ -73,7 +73,7 @@ public class EachPlayerChoosesNonlandPermanentAndPutCounterEffectHandler
             return;
         }
 
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        StackEntry entry = resolvingEntry != null ? resolvingEntry : gameData.pendingEffectResolutionEntry;
         if (entry != null) {
             for (UUID permanentId : allChosenIds) {
                 Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
@@ -84,8 +84,9 @@ public class EachPlayerChoosesNonlandPermanentAndPutCounterEffectHandler
         }
     }
 
-    private List<UUID> nonlandPermanentIds(GameData gameData, UUID playerId) {
-        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+    private List<UUID> nonlandPermanentIds(GameData gameData) {
+        return gameData.orderedPlayerIds.stream()
+                .flatMap(ownerId -> gameData.playerBattlefields.getOrDefault(ownerId, List.of()).stream())
                 .filter(permanent -> !gameQueryService.isLand(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();

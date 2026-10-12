@@ -28,7 +28,11 @@ class EntreatTheDeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, 2, List.of(first.getId(), second.getId()));
+        harness.castSorcery(player1, 0, 2);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.maxCount()).isEqualTo(2);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

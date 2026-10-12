@@ -14,6 +14,6 @@ public class EndlessWhispers extends Card {
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_DEATH,
                 RegisterDelayedReturnDyingCreatureUnderControlEffect.forOpponent(),
-                GrantScope.ALL_CREATURES));
+                GrantScope.ALL_CREATURES_INCLUDING_SELF));
     }
 }

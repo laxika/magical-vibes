@@ -20,7 +20,7 @@ import java.util.Set;
 public class EtherealAbsolution extends Card {
 
     public EtherealAbsolution() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.OPPONENT_CREATURES));
 
         CreateTokenEffect spirit = new CreateTokenEffect(

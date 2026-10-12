@@ -28,7 +28,7 @@ class EvolvedSleeperTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, sleeper)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sleeper)).isEqualTo(2);
-        assertThat(sleeper.getGrantedSubtypes()).contains(CardSubtype.CLERIC);
+        assertThat(gqs.hasEffectiveSubtype(gd, sleeper, CardSubtype.CLERIC)).isTrue();
 
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -37,7 +37,7 @@ class EvolvedSleeperTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, sleeper)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, sleeper)).isEqualTo(3);
         assertThat(sleeper.getCounterCount(CounterType.DEATHTOUCH)).isEqualTo(1);
-        assertThat(sleeper.getGrantedSubtypes()).contains(CardSubtype.PHYREXIAN);
+        assertThat(gqs.hasEffectiveSubtype(gd, sleeper, CardSubtype.PHYREXIAN)).isTrue();
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());

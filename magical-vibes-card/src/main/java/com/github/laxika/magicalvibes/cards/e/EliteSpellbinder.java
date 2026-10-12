@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -22,7 +24,8 @@ public class EliteSpellbinder extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                ChooseCardsFromTargetHandEffect.exileAndGrantPlayPermission(1, List.of(CardType.LAND), 2),
+                new ChooseCardsFromTargetHandEffect(new Fixed(1), List.of(CardType.LAND), List.of(),
+                        HandChoiceDestination.EXILE, false, null, 0, false, false, false, false, true, false, 2),
                 "You may exile a nonland card from that hand."
         ));
     }

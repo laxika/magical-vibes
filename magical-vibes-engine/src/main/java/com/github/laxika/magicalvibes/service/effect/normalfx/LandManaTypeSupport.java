@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
@@ -141,6 +142,21 @@ public class LandManaTypeSupport {
                                 && predicateEvaluationService.matchesPermanentPredicate(
                                 gameData, land, mana.landPredicate())) {
                             types.addAll(manaTypesCouldProduce(gameData, land, new HashSet<>(visited)));
+                        }
+                    }
+                }
+            } else if (effect instanceof AwardManaOfColorsLandsCouldProduceEffect mana) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    boolean isController = playerId.equals(controllerId);
+                    if (mana.scope() == ManaColorLandScope.CONTROLLER ? !isController : isController) continue;
+                    for (Permanent land : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                        if (gameQueryService.isLand(gameData, land)
+                                && predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, land, mana.landPredicate())) {
+                            manaTypesCouldProduce(gameData, land, new HashSet<>(visited)).stream()
+                                    .filter(color -> color != ManaColor.COLORLESS)
+                                    .forEach(types::add);
                         }
                     }
                 }

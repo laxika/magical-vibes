@@ -73,6 +73,7 @@ class EerieGravestoneTest extends BaseCardTest {
         LurkingLizards olderCreature = new LurkingLizards();
         LurkingLizards first = new LurkingLizards();
         LurkingLizards second = new LurkingLizards();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(olderCreature));
         harness.addToBattlefield(player1, new EerieGravestone());
         harness.setLibrary(player1, List.of(first, second, new Shock(), new Forest()));
@@ -95,6 +96,7 @@ class EerieGravestoneTest extends BaseCardTest {
         LurkingLizards first = new LurkingLizards();
         LurkingLizards second = new LurkingLizards();
         LurkingLizards third = new LurkingLizards();
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new EerieGravestone());
         harness.setLibrary(player1, List.of(first, second, third, new Shock()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -114,6 +116,7 @@ class EerieGravestoneTest extends BaseCardTest {
     @Test
     void millsTheRemainingCardsWhenFewerThanFourRemain() {
         LurkingLizards creature = new LurkingLizards();
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new EerieGravestone());
         harness.setLibrary(player1, List.of(creature, new Shock()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

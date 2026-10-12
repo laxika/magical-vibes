@@ -7,17 +7,17 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class EmeriaShepherd extends Card {
         CardPredicate nonlandPermanent = new CardAllOfPredicate(List.of(
                 new CardIsPermanentPredicate(),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
-        TriggeringPermanentHasSubtype plains = new TriggeringPermanentHasSubtype(CardSubtype.PLAINS);
+        PermanentHasSubtypePredicate plains = new PermanentHasSubtypePredicate(CardSubtype.PLAINS);
         ReturnCardFromGraveyardEffect returnToHand = ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(nonlandPermanent)
@@ -40,17 +40,21 @@ public class EmeriaShepherd extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(nonlandPermanent)
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build();
+        MayEffect mayReturnToHand = new MayEffect(returnToHand, "Return that card to your hand?");
 
+        // Landfall - Whenever a land you control enters, you may return target nonland permanent card
+        // from your graveyard to your hand. If that land is a Plains, you may return that nonland
+        // permanent card to the battlefield instead. The land is checked as it entered.
         target(new GraveyardCardPredicateTargetFilter(
                 nonlandPermanent, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
                 .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                        ConditionalEffect.unless(plains,
+                        new TriggeringPermanentConditionalEffect(plains,
                                 new MayEffect(returnToBattlefield,
-                                        "Return that card to the battlefield instead?", returnToHand)))
+                                        "Return that card to the battlefield instead?", mayReturnToHand)))
                 .addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                        ConditionalEffect.unless(new NotCondition(plains),
-                                new MayEffect(returnToHand,
-                                        "Return that card to your hand?")));
+                        new TriggeringPermanentConditionalEffect(new PermanentNotPredicate(plains),
+                                mayReturnToHand));
     }
 }

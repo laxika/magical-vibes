@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -95,13 +97,16 @@ public class CopySpellForAnotherOpponentPermanentEffectHandler implements Normal
     private List<Permanent> eligibleTargets(GameData gameData,
                                              CopySpellForAnotherOpponentPermanentEffect effect,
                                              UUID sourceControllerId) {
+        StackEntry spellSnapshot = effect.spellSnapshot();
+        Set<UUID> spellTargetableIds = Set.copyOf(validTargetService.computeValidTargetsForSpell(
+                gameData, spellSnapshot.getCard(), effect.castingPlayerId(), List.of(),
+                spellSnapshot.getXValue(), null).validPermanentIds());
         List<Permanent> eligibleTargets = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (controllerId.equals(sourceControllerId)
                     || controllerId.equals(effect.originalTargetControllerId())) return;
             if (!gameData.playerIds.contains(controllerId) || gameQueryService.isLand(gameData, permanent)) return;
-            if (!validTargetService.canPermanentBeTargetedBySpell(
-                    gameData, permanent, effect.spellSnapshot().getCard(), effect.castingPlayerId())) return;
+            if (!spellTargetableIds.contains(permanent.getId())) return;
             eligibleTargets.add(permanent);
         });
         return eligibleTargets;
@@ -109,8 +114,14 @@ public class CopySpellForAnotherOpponentPermanentEffectHandler implements Normal
 
     private void createCopy(GameData gameData, StackEntry spellSnapshot, UUID controllerId, Permanent target) {
         Card copyCard = copySupport.createCopyCard(spellSnapshot.getCard());
-        StackEntry copyEntry = copySupport.createCopyStackEntry(
-                spellSnapshot, copyCard, controllerId, target.getId());
+        Map<UUID, Integer> damageAssignments = spellSnapshot.getDamageAssignments().isEmpty()
+                ? Map.of()
+                : Map.of(target.getId(), spellSnapshot.getDamageAssignments().values().stream()
+                        .mapToInt(Integer::intValue).sum());
+        StackEntry copyEntry = damageAssignments.isEmpty()
+                ? copySupport.createCopyStackEntry(spellSnapshot, copyCard, controllerId, target.getId())
+                : copySupport.createCopyStackEntry(spellSnapshot, copyCard, controllerId, target.getId(),
+                        damageAssignments, List.of(target.getId()));
         if (!spellSnapshot.getDeclaredTargetIds().isEmpty()) {
             copyEntry.setDeclaredTargetIds(spellSnapshot.getDeclaredTargetIds().stream()
                     .map(ignored -> target.getId())

@@ -768,7 +768,7 @@ public class SpellCastTriggerCollectorService {
             return false;
         }
         if (!hasAnotherOpponentPermanentTarget(match.gameData(), spellEntry.getCard(),
-                sc.castingPlayerId(), match.controllerId(), originalTargetControllerId)) {
+                sc.castingPlayerId(), match.controllerId(), originalTargetControllerId, spellEntry.getXValue())) {
             return false;
         }
 
@@ -895,14 +895,16 @@ public class SpellCastTriggerCollectorService {
     private boolean hasAnotherOpponentPermanentTarget(GameData gameData, Card spellCard,
                                                        UUID castingPlayerId,
                                                        UUID sourceControllerId,
-                                                       UUID originalTargetControllerId) {
+                                                       UUID originalTargetControllerId,
+                                                       int xValue) {
+        Set<UUID> spellTargetableIds = Set.copyOf(validTargetService.computeValidTargetsForSpell(
+                gameData, spellCard, castingPlayerId, List.of(), xValue, null).validPermanentIds());
         return gameData.playerBattlefields.entrySet().stream()
                 .filter(entry -> !entry.getKey().equals(sourceControllerId)
                         && !entry.getKey().equals(originalTargetControllerId))
                 .flatMap(entry -> entry.getValue().stream())
                 .anyMatch(permanent -> !gameQueryService.isLand(gameData, permanent)
-                        && validTargetService.canPermanentBeTargetedBySpell(
-                                gameData, permanent, spellCard, castingPlayerId));
+                        && spellTargetableIds.contains(permanent.getId()));
     }
 
     private StackEntry findInstantOrSorceryOnStack(TriggerMatchContext match, TriggerContext.SpellCast sc) {
@@ -1367,7 +1369,8 @@ public class SpellCastTriggerCollectorService {
     private boolean handleSameNameArtifactSpellCastTrigger(TriggerMatchContext match,
             SearchSameNameCardToBattlefieldOnArtifactSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!sc.spellCard().hasType(CardType.ARTIFACT)) {
+        if (!gameQueryService.cardHasType(sc.spellCard(), CardType.ARTIFACT, match.gameData(),
+                sc.castingPlayerId())) {
             return false;
         }
 
@@ -2408,6 +2411,14 @@ public class SpellCastTriggerCollectorService {
                 match.gameData(), sc.castingPlayerId())) return false;
 
         int manaValue = sc.spellCard().getManaValue();
+        StackEntry castSpell = match.gameData().stack.stream()
+                .filter(entry -> !entry.isCopy() && entry.getCard() != null
+                        && entry.getCard().getId().equals(sc.spellCard().getId()))
+                .findFirst().orElse(null);
+        if (castSpell != null && castSpell.getXValue() > 0 && sc.spellCard().getManaCost() != null) {
+            int xSymbols = sc.spellCard().getManaCost().split("\\{X\\}", -1).length - 1;
+            manaValue += xSymbols * castSpell.getXValue();
+        }
         int toughnessBoost = trigger.boostToughness() ? manaValue : 0;
         List<CardEffect> resolved = new ArrayList<>(List.of(new BoostSelfEffect(manaValue, toughnessBoost)));
         match.gameData().stack.add(new StackEntry(

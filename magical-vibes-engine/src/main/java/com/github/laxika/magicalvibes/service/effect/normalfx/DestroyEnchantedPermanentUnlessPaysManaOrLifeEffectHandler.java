@@ -40,12 +40,14 @@ public class DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler implemen
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect) effect;
 
+        // The trigger exists independently of its source (CR 113.7a), so when the Aura has already left
+        // the battlefield its last known attachment (captured on the stack entry) still identifies the land.
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null || !aura.isAttached()) {
-            // The Aura (and thus the permanent it was on) is already gone — nothing to do.
+        Permanent auraInfo = aura != null ? aura : entry.getSourcePermanentSnapshot();
+        if (auraInfo == null || !auraInfo.isAttached()) {
             return;
         }
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        Permanent enchanted = gameQueryService.findPermanentById(gameData, auraInfo.getAttachedTo());
         if (enchanted == null) {
             return;
         }
@@ -82,6 +84,7 @@ public class DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler implemen
         String prompt = "Pay " + e.manaCost() + " or " + e.lifeCost() + " life? If you don't, "
                 + enchanted.getCard().getName() + " is destroyed. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                entry.getCard(), payerId, List.of(e), prompt, null, e.manaCost(), entry.getSourcePermanentId()));
+                entry.getCard(), payerId, List.of(e), prompt, null, e.manaCost(), entry.getSourcePermanentId(),
+                null, 0, 0, null, null, null, entry.getSourcePermanentSnapshot(), null, null, 0));
     }
 }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -31,7 +30,6 @@ public class EarthKingdomProtectors extends Card {
                 "Sacrifice Earth Kingdom Protectors: Another target Ally you control gains indestructible until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.ALLY),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         )),

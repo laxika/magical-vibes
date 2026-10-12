@@ -340,29 +340,47 @@ public class ManaCost {
     }
 
     /**
-     * Returns the mana choices represented by this cost when an effect adds mana equal to it.
-     * Generic and snow symbols produce colorless mana, X symbols produce no mana, and hybrid or
-     * Phyrexian symbols retain the colors from which the produced mana may be chosen.
+     * One way to produce mana for a single mana symbol when an effect adds mana equal to a cost:
+     * {@code amount} mana of {@code color}.
      */
-    public List<Set<ManaColor>> getManaProductionChoices() {
-        List<Set<ManaColor>> choices = new ArrayList<>();
+    public record ManaProductionOption(ManaColor color, int amount) {
+    }
+
+    /**
+     * Returns the mana choices represented by this cost when an effect adds mana equal to it.
+     * Each choice is the set of options for one mana symbol; a choice with a single option is
+     * forced. Generic and snow symbols produce colorless mana, X symbols produce no mana, colored
+     * hybrid symbols offer one mana of each color, and a monocolored hybrid symbol such as {2/W}
+     * offers one mana of its color or the generic half's colorless amount (CR 106.8).
+     */
+    public List<List<ManaProductionOption>> getManaProductionChoices() {
+        List<List<ManaProductionOption>> choices = new ArrayList<>();
         for (int i = 0; i < genericCost + snowCost; i++) {
-            choices.add(Set.of(ManaColor.COLORLESS));
+            choices.add(List.of(new ManaProductionOption(ManaColor.COLORLESS, 1)));
         }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                choices.add(Set.of(entry.getKey()));
+                choices.add(List.of(new ManaProductionOption(entry.getKey(), 1)));
             }
         }
         for (Map.Entry<ManaColor, Integer> entry : phyrexianCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                choices.add(Set.of(entry.getKey()));
+                choices.add(List.of(new ManaProductionOption(entry.getKey(), 1)));
             }
         }
         for (HybridSymbol hybrid : hybridCosts) {
-            choices.add(hybrid.colors().isEmpty()
-                    ? Set.of(ManaColor.COLORLESS)
-                    : Set.copyOf(hybrid.colors()));
+            if (hybrid.colors().isEmpty()) {
+                choices.add(List.of(new ManaProductionOption(ManaColor.COLORLESS, 1)));
+                continue;
+            }
+            List<ManaProductionOption> options = new ArrayList<>();
+            for (ManaColor color : hybrid.colors()) {
+                options.add(new ManaProductionOption(color, 1));
+            }
+            if (hybrid.genericAlternative() > 0) {
+                options.add(new ManaProductionOption(ManaColor.COLORLESS, hybrid.genericAlternative()));
+            }
+            choices.add(List.copyOf(options));
         }
         return List.copyOf(choices);
     }
@@ -4123,10 +4141,21 @@ public class ManaCost {
      */
     public EnumMap<ManaColor, Integer> pay(ManaPool pool, int xValue, Set<ManaColor> xColorRestrictions,
                                            int additionalGenericCost) {
+        return pay(pool, xValue, xColorRestrictions, additionalGenericCost, false);
+    }
+
+    /**
+     * As {@link #pay(ManaPool, int, Set, int)}, and when {@code xEachColorAtMostOnce} is set no
+     * restricted color may be spent on X more than once.
+     *
+     * @return per-color counts of mana removed specifically for X (not for the rest of the cost)
+     */
+    public EnumMap<ManaColor, Integer> pay(ManaPool pool, int xValue, Set<ManaColor> xColorRestrictions,
+                                           int additionalGenericCost, boolean xEachColorAtMostOnce) {
         if (hasColorlessCost() && pool.getColorlessSpellOrPermanentAbilityMana() > 0) {
             pool.promoteColorlessSpellOrPermanentAbilityMana();
             try {
-                return pay(pool, xValue, xColorRestrictions, additionalGenericCost);
+                return pay(pool, xValue, xColorRestrictions, additionalGenericCost, xEachColorAtMostOnce);
             } finally {
                 pool.restorePromotedColorlessSpellOrPermanentAbilityMana();
             }
@@ -4145,7 +4174,8 @@ public class ManaCost {
         for (int i = 0; i < totalX; i++) {
             ManaColor chosen = null;
             for (ManaColor color : ManaColor.values()) {
-                if (xColorRestrictions.contains(color) && pool.get(color) > 0) {
+                if (xColorRestrictions.contains(color) && pool.get(color) > 0
+                        && !(xEachColorAtMostOnce && spentOnX.containsKey(color))) {
                     chosen = color;
                     break;
                 }

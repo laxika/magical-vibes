@@ -47,6 +47,7 @@ class EonFrolickerTest extends BaseCardTest {
     @Test
     @DisplayName("The protection ends at the controller's next turn")
     void protectionEndsAtNextTurn() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new JaceBeleren());
         castEon(player2.getId());
         harness.passBothPriorities();
@@ -58,7 +59,7 @@ class EonFrolickerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gd.playerProtectionFromPlayerIdsUntilNextTurn)
                 .doesNotContainKey(player1.getId());

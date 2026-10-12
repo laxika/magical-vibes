@@ -143,6 +143,12 @@ public class PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffec
         stateTriggerService.cleanupResolvedStateTrigger(gameData, targetSpell);
         if (!targetSpell.isCopy()) {
             Card spell = targetSpell.getCard();
+            if (targetSpell.isCastWithFlashback()) {
+                gameData.addToExile(targetSpell.getOwnerId(), spell);
+                gameLogService.append(gameData, GameLog.cardThen(spell,
+                        " is exiled instead of leaving the stack for another zone."));
+                return;
+            }
             UUID ownerId = spell.getOwnerId() != null ? spell.getOwnerId() : targetSpell.getOwnerId();
             gameData.playerDecks.get(ownerId).add(spell);
         }

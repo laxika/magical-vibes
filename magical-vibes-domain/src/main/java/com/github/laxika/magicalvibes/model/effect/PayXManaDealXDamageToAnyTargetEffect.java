@@ -15,20 +15,37 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
  * Tap lands during the prompt to fill the pool before confirming. Do NOT use
  * {@code MayPayManaEffect("{X}…", …)} — it can't pay/plumb {X} at resolution.
  *
+ *
+ * <p>The {@linkplain #reflexive(String, TargetPredicate) reflexive} form models "you may pay {X}.
+ * When you do, it deals X damage to target player" (Electro, Assaulting Battery): the ability has no
+ * target when it is put on the stack, and after the payment the handler queues a separate
+ * reflexive triggered ability dealing the paid X damage, whose target is chosen only then.
+ *
  * @param manaCost the payable cost including an {X} symbol, e.g. {@code "{X}{R}"}
  * @param targetRestriction the target predicate; the one-argument constructor uses any target
+ * @param reflexive whether the target belongs to a reflexive ability created after the payment
  */
 public record PayXManaDealXDamageToAnyTargetEffect(String manaCost,
-                                                   TargetPredicate targetRestriction)
+                                                   TargetPredicate targetRestriction,
+                                                   boolean reflexive)
         implements DamageDealingEffect {
 
     public PayXManaDealXDamageToAnyTargetEffect(String manaCost) {
-        this(manaCost, TargetPredicates.anyTarget());
+        this(manaCost, TargetPredicates.anyTarget(), false);
+    }
+
+    public PayXManaDealXDamageToAnyTargetEffect(String manaCost, TargetPredicate targetRestriction) {
+        this(manaCost, targetRestriction, false);
+    }
+
+    /** "You may pay {@code manaCost}. When you do, it deals X damage to target [restriction]." */
+    public static PayXManaDealXDamageToAnyTargetEffect reflexive(String manaCost, TargetPredicate targetRestriction) {
+        return new PayXManaDealXDamageToAnyTargetEffect(manaCost, targetRestriction, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(targetRestriction);
+        return reflexive ? TargetSpec.NONE : TargetSpec.harmful(targetRestriction);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.t.TragicSlip;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +31,7 @@ class ErdwalRipperTest extends BaseCardTest {
         ripper.setAttacking(true);
         harness.setLife(player2, 20);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         harness.assertLife(player2, 18);
         assertThat(ripper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -116,13 +117,13 @@ class ErdwalRipperTest extends BaseCardTest {
         Permanent other = addReadyRipper();
         attacker.setAttacking(true);
         harness.setHand(player2, List.of(new TragicSlip()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
         harness.setLife(player2, 20);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         harness.assertLife(player2, 18);
         assertThat(gd.stack).hasSize(1);
 
+        harness.addMana(player2, ManaColor.BLACK, 1);
         harness.castAndResolveInstant(player2, 0, attacker.getId());
         harness.assertInGraveyard(player1, "Erdwal Ripper");
         resolveAllTriggers();

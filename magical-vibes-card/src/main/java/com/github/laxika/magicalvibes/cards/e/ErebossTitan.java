@@ -29,7 +29,7 @@ public class ErebossTitan extends Card {
         // only while this card is in its owner's graveyard.
         addEffect(EffectSlot.GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD,
                 new MayEffect(
-                        new DiscardCardThenEffect(
+                        DiscardCardThenEffect.continuing(
                                 null,
                                 new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
                                 "a card"),

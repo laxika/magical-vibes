@@ -219,6 +219,7 @@ public class EffectResolutionService {
                     && may.targetSpec().declaredTarget() != null
                     && resolvingTargetGroup >= 0
                     && entry.targetsForEffect(effect).isEmpty()
+                    && entry.getTargetCardIds().isEmpty()
                     && !(entry.getTargetId() != null && entry.getTargetIds().isEmpty()
                     && entry.getCard().getSpellTargets().size() == 1)) {
                 continue;

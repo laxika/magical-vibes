@@ -72,7 +72,7 @@ class EmbodimentOfFuryTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, land)).isFalse();
         assertThat(gqs.hasKeyword(gd, land, Keyword.TRAMPLE)).isFalse();
@@ -94,7 +94,8 @@ class EmbodimentOfFuryTest extends BaseCardTest {
     @DisplayName("Landfall can animate the land that just entered")
     void landfallCanTargetEnteringLand() {
         addEmbodiment();
-        Permanent land = harness.enterBattlefieldAndReturn(player1, new Wastes());
+        triggerLandfall();
+        Permanent land = findPermanent(player1, "Wastes");
 
         harness.handlePermanentChosen(player1, land.getId());
         harness.passBothPriorities();

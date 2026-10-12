@@ -48,7 +48,9 @@ public class ReturnTargetPermanentAndAllWithSameNameToHandEffectHandler implemen
         List<Permanent> toReturn = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.getEffectiveName(gameData, permanent).equals(targetName)
+                boolean sharesName = permanent == target
+                        || (targetName != null && targetName.equals(gameQueryService.getEffectiveName(gameData, permanent)));
+                if (sharesName
                         && predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, sameNameEffect.sameNamePredicate(), filterContext)) {
                     toReturn.add(permanent);

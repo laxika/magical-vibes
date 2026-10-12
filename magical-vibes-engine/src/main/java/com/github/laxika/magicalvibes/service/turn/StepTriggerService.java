@@ -115,6 +115,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardAtNextEndStepUnlessPays;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -222,6 +223,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.ReturnDelayedGraveyardCardUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
@@ -1015,17 +1017,15 @@ public class StepTriggerService {
                 if (upkeepEffects.isEmpty()) continue;
             }
 
-            CardEffect targetedModal = upkeepEffects.stream()
+            // A modal upkeep trigger ("choose one —") picks its mode as it goes on the stack, whether or
+            // not the modes need targets, so the opponent responds knowing the chosen mode.
+            CardEffect chooseOne = upkeepEffects.stream()
                     .filter(ChooseOneEffect.class::isInstance)
-                    .filter(effect -> ChooseOneEffect.class.cast(effect).options().stream()
-                            .flatMap(option -> option.effects().stream())
-                            .anyMatch(optionEffect -> optionEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                                    || optionEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)))
                     .findFirst().orElse(null);
-            if (targetedModal != null) {
+            if (chooseOne != null) {
                 gameData.queueInteraction(new PermanentChoiceContext.UpkeepModalTrigger(
-                        perm.getCard(), activePlayerId, ChooseOneEffect.class.cast(targetedModal), perm.getId()));
-                upkeepEffects.remove(targetedModal);
+                        perm.getCard(), activePlayerId, ChooseOneEffect.class.cast(chooseOne), perm.getId()));
+                upkeepEffects.remove(chooseOne);
                 if (upkeepEffects.isEmpty()) continue;
             }
 
@@ -2073,24 +2073,25 @@ public class StepTriggerService {
         }
 
         // Ertai's Meddling: "At the beginning of each of that player's upkeeps, if that card is
-        // exiled, remove a delay counter from it." The trigger belongs to the exiled spell's
-        // controller, so it only fires on their own upkeeps.
+        // exiled, remove a delay counter from it." The trigger fires only on the exiled spell's
+        // controller's upkeeps, but it is controlled by the player who resolved Ertai's Meddling
+        // and its source is that Meddling card.
         for (GameData.DelayedSpellExile pending : new ArrayList<>(gameData.delayedSpellExiles)) {
             if (!pending.controllerId().equals(activePlayerId)) {
                 continue;
             }
-            Card delayedCard = pending.originalEntry().getCard();
+            Card meddlingCard = pending.meddlingCard();
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
-                    delayedCard,
-                    activePlayerId,
-                    delayedCard.getName() + "'s delay counter ability",
+                    meddlingCard,
+                    pending.meddlerId(),
+                    meddlingCard.getName() + " delay counter ability",
                     new ArrayList<>(List.of(new RemoveDelayCounterFromExiledSpellEffect(pending.cardId())))
             ));
 
             gameLogService.append(gameData,
-                    GameLog.cardThen(delayedCard, "'s delay counter ability triggers."));
-            log.info("Game {} - {} delay counter upkeep trigger pushed onto stack", gameData.id, delayedCard.getName());
+                    GameLog.cardThen(meddlingCard, "'s delay counter ability triggers."));
+            log.info("Game {} - {} delay counter upkeep trigger pushed onto stack", gameData.id, meddlingCard.getName());
         }
 
         // Suspend: remove a time counter from every suspended spell owned by the active player.
@@ -2306,7 +2307,14 @@ public class StepTriggerService {
                         .toList()
                 : trigger.effect().options();
 
-        if (remaining.isEmpty()) {
+        // CR 603.3c / 700.2b: a mode that would be illegal (no legal targets) can't be chosen. The
+        // ability is removed when no mode is left.
+        List<String> illegalLabels = remaining.stream()
+                .filter(option -> !upkeepModeHasLegalTargets(gameData, trigger.sourceCard(),
+                        trigger.controllerId(), option))
+                .map(ChooseOneEffect.ChooseOneOption::label)
+                .toList();
+        if (remaining.isEmpty() || illegalLabels.size() == remaining.size()) {
             gameLogService.append(gameData,
                     GameLog.cardThen(trigger.sourceCard(), "'s upkeep trigger has no modes left to choose."));
             processNextUpkeepModalTrigger(gameData);
@@ -2316,6 +2324,25 @@ public class StepTriggerService {
         gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers."));
         playerInputService.beginChooseModeChoice(gameData, trigger.controllerId(), trigger.sourceCard(),
                 new ChooseOneEffect(remaining), true, trigger.sourcePermanentId(), trigger.consumeModes());
+        if (!illegalLabels.isEmpty()) {
+            PendingInteraction.ColorChoice modeChoice =
+                    gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            gameData.interaction.replaceActiveInteraction(modeChoice.withDisabledOptions(illegalLabels));
+        }
+    }
+
+    private boolean upkeepModeHasLegalTargets(GameData gameData, Card sourceCard, UUID controllerId,
+                                              ChooseOneEffect.ChooseOneOption option) {
+        boolean needsPermanentTarget = option.effects().stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        && !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        if (!needsPermanentTarget) {
+            return true;
+        }
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .anyMatch(permanent -> validTargetService.isValidTriggeredAbilityPermanentTarget(
+                        gameData, sourceCard, option.effects(), option.targetFilter(), permanent, controllerId));
     }
 
     /**
@@ -3025,7 +3052,7 @@ public class StepTriggerService {
 
     public boolean playersSkipUpkeepStepApplies(GameData gameData) {
         boolean globalSkip = gameData.anyPermanentMatches(permanent ->
-                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                         .anyMatch(PlayersSkipUpkeepStepEffect::isGlobal));
         if (globalSkip) {
             return true;
@@ -3035,7 +3062,7 @@ public class StepTriggerService {
             return false;
         }
         return gameData.playerBattlefields.getOrDefault(gameData.activePlayerId, List.of()).stream()
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent).stream())
                 .anyMatch(PlayersSkipUpkeepStepEffect::isControllerScoped);
     }
 
@@ -3524,8 +3551,9 @@ public class StepTriggerService {
     /**
      * Fires triggered abilities that watch every player's first main phase, regardless of who
      * controls the source (Eladamri's Vineyard). The ability is controlled by the source's
-     * controller; the active player is carried as the entry's target so effects that act on
-     * "that player" know who the phase belongs to.
+     * controller. The active player is recorded as the entry's active player rather than as a
+     * target: these abilities do not target, so a player's hexproof or shroud must not make the
+     * entry fizzle, and effects that act on "that player" read it from the active player.
      */
     private void handleEachPrecombatMainTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
@@ -3549,7 +3577,7 @@ public class StepTriggerService {
                     playerId,
                     perm.getCard().getName() + "'s ability",
                     new ArrayList<>(triggering),
-                    activePlayerId,
+                    null,
                     perm.getId()
             );
             entry.setActivePlayerId(activePlayerId);
@@ -4167,7 +4195,8 @@ public class StepTriggerService {
             boolean attachToPrimary = primaryPermanent != null
                     && pending.cardsToAttachToPrimary().contains(card.getId());
             UUID cardControllerId = attachToPrimary && card.getOwnerId() != null
-                    ? card.getOwnerId() : controllerId;
+                    ? card.getOwnerId()
+                    : pending.returnControllerByCardId().getOrDefault(card.getId(), controllerId);
             if (attachToPrimary) {
                 perm.setAttachedTo(primaryPermanent.getId());
             }
@@ -4683,7 +4712,7 @@ public class StepTriggerService {
                 }
                 Card sourceCard = action.sourceCard() != null ? action.sourceCard() : exiled.card();
                 StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, sourceCard, action.ownerId(),
+                        StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
                         sourceCard.getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new PutTargetCardFromExileIntoOwnersGraveyardEffect())),
                         action.cardId(), Zone.EXILE, null);
@@ -5417,93 +5446,32 @@ public class StepTriggerService {
             }
         }
 
-        // Process delayed graveyard-to-battlefield-under-control returns (Seraph, Grave Betrayal, Lifeline)
+        // Delayed graveyard-to-battlefield-under-control returns (Seraph, Grave Betrayal, Endless Whispers)
+        // are delayed triggered abilities: they go on the stack as the end step begins.
         if (gameData.hasDelayedAction(DelayedGraveyardToBattlefieldUnderControl.class)) {
             List<DelayedGraveyardToBattlefieldUnderControl> pendingReturns =
                     gameData.drainDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class);
             for (DelayedGraveyardToBattlefieldUnderControl pending : pendingReturns) {
-                UUID ownerId = null;
-                Card cardToReturn = null;
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Card> graveyard = gameData.playerGraveyards.get(pid);
-                    if (graveyard == null) continue;
-                    for (Card card : graveyard) {
-                        if (card.getId().equals(pending.cardId())) {
-                            cardToReturn = card;
-                            ownerId = pid;
-                            break;
-                        }
-                    }
-                    if (cardToReturn != null) break;
-                }
-                if (cardToReturn == null) {
-                    // No longer in a graveyard (moved/exiled/reanimated already, or it was a token) —
-                    // you don't get it back.
+                Card returningCard = gameQueryService.findCardInGraveyardById(gameData, pending.cardId());
+                if (returningCard == null) {
                     log.info("Game {} - Delayed return under control for card {} skipped (no longer in a graveyard)",
                             gameData.id, pending.cardId());
                     continue;
                 }
-                if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(cardToReturn, " can't return from the graveyard; it stays in the graveyard."));
-                    continue;
-                }
-
                 Permanent sourcePermanent = pending.sourcePermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-                String sourceName = sourcePermanent != null ? sourcePermanent.getCard().getName() : "Delayed return";
-
-                // Shirei: "if Shirei is still on the battlefield". The permanent id is matched, so a
-                // Shirei that left and returned is a new object and the return does not happen.
-                if (pending.requireSourceOnBattlefield() && sourcePermanent == null) {
-                    log.info("Game {} - Delayed return under control for card {} skipped (source left the battlefield)",
-                            gameData.id, pending.cardId());
-                    continue;
-                }
-
-                permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
-                Permanent permanent = new Permanent(cardToReturn);
-                permanent.setEnteredFromGraveyardOwnerId(ownerId);
-                // "with an additional +1/+1 counter on it" / "is a black Zombie in addition to its
-                // other colors and types" (Grave Betrayal) — applied before the permanent enters.
-                if (pending.counterType() != null && pending.counterAmount() > 0) {
-                    permanent.setCounterCount(pending.counterType(), pending.counterAmount());
-                }
-                if (pending.grantColor() != null) {
-                    permanent.getGrantedColors().add(pending.grantColor());
-                }
-                if (pending.grantSubtype() != null && !permanent.getGrantedSubtypes().contains(pending.grantSubtype())) {
-                    permanent.getGrantedSubtypes().add(pending.grantSubtype());
-                }
-                UUID returnControllerId = pending.returnUnderOwnersControl() ? ownerId : pending.controllerId();
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, permanent);
-
-                // When the returned card belongs to another player, the controller keeps it via a
-                // permanent control effect (CR 613 layer 2) — without one it would revert to its owner
-                // — and its ownership is recorded so it dies to its owner's graveyard.
-                if (!pending.returnUnderOwnersControl() && !returnControllerId.equals(ownerId)) {
-                    gameData.stolenCreatures.put(permanent.getId(), ownerId);
-                    creatureControlService.applyControlEffect(gameData, returnControllerId, permanent,
-                            new GainControlOfTargetEffect(ControlDuration.PERMANENT),
-                            ControlDuration.PERMANENT.toEffectDuration(), null, sourceName);
-                }
-
-                String playerName = gameData.playerIdToName.get(returnControllerId);
-                gameLogService.append(gameData, GameLog.cardThen(cardToReturn,
-                        " returns to the battlefield under " + playerName + "'s control (" + sourceName + ")."));
-                log.info("Game {} - {} returns under {}'s control ({})", gameData.id, cardToReturn.getName(), playerName, sourceName);
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, returnControllerId, cardToReturn, null, false);
-
-                // Link to the Seraph for the control-loss sacrifice, but only if it is still on the
-                // battlefield — if it already left, you never have to sacrifice the returned creature.
-                if (!pending.returnUnderOwnersControl() && pending.sacrificeOnSourceControlLoss()
-                        && sourcePermanent != null) {
-                    gameData.seraphReturnedCreatures
-                            .computeIfAbsent(pending.sourcePermanentId(), k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                            .add(permanent.getId());
-                    gameData.seraphControlWatch.putIfAbsent(pending.sourcePermanentId(),
-                            gameQueryService.findPermanentController(gameData, sourcePermanent.getId()));
-                }
+                Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : returningCard;
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        sourceCard,
+                        pending.triggerControllerId(),
+                        sourceCard.getName() + "'s delayed return ability",
+                        new ArrayList<>(List.of(new ReturnDelayedGraveyardCardUnderControlEffect(pending))));
+                entry.setNonTargeting(true);
+                entry.setTriggeringCardId(pending.cardId());
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(sourceCard, "'s delayed return ability triggers."));
             }
         }
 

@@ -235,6 +235,8 @@ class EtherswornCanonistTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 

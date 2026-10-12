@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.n.NyxFleeceRam;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -108,10 +110,13 @@ class ElshaThreefoldMasterTest extends BaseCardTest {
     void combatDamageTriggerResolvesAfterElshaDies() {
         Permanent elsha = addCreatureReady(player1, new ElshaThreefoldMaster());
         elsha.setAttacking(true);
+        harness.setHand(player2, List.of(new Shock()));
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
         resolveCombat();
         assertThat(countPermanents(player1, "Monk")).isZero();
+        gd.playerAutoStopSteps.clear();
 
-        harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castInstant(player2, 0, elsha.getId());
         resolveAllTriggers();
@@ -146,6 +151,7 @@ class ElshaThreefoldMasterTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 1));
         resolveAllTriggers();
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);

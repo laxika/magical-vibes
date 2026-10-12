@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 
 @CardRegistration(set = "CON", collectorNumber = "44")
@@ -19,10 +22,13 @@ public class ExtractorDemon extends Card {
 
     public ExtractorDemon() {
         // Whenever another creature leaves the battlefield, you may have target player mill two cards.
-        // The "may" and the (any) player target are resolved on the stack via the MayEffect flow.
-        addEffect(EffectSlot.ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD,
-                new MayEffect(new MillEffect(2, MillRecipient.TARGET_PLAYER),
-                        "have target player mill two cards"));
+        // The target player is chosen when the trigger is put on the stack; the "may" is asked on resolution.
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player."))
+                .addEffect(EffectSlot.ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD,
+                        new MayEffect(new MillEffect(2, MillRecipient.TARGET_PLAYER),
+                                "have target player mill two cards"));
 
         // Unearth {2}{B}: Return this card from your graveyard to the battlefield. It gains haste.
         // Exile it at the beginning of the next end step. Unearth only as a sorcery.

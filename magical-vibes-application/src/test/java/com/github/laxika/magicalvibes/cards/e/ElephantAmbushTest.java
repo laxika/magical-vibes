@@ -99,11 +99,10 @@ class ElephantAmbushTest extends BaseCardTest {
     void flashesBackAtInstantSpeed() {
         ElephantAmbush ambush = new ElephantAmbush();
         harness.setGraveyard(player1, List.of(ambush));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        harness.passPriority(player2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.castAndResolveFlashback(player1, 0, null);
 

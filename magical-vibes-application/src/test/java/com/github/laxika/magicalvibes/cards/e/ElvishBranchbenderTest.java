@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -79,7 +80,8 @@ class ElvishBranchbenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, forest.getId());
         harness.passBothPriorities();
 
-        advanceToUpkeep(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(forest.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();

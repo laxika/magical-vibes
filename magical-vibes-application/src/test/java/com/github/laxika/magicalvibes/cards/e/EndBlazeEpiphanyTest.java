@@ -144,7 +144,7 @@ class EndBlazeEpiphanyTest extends BaseCardTest {
         Card top = new Forest();
         harness.setLibrary(player1, List.of(top));
         harness.setHand(player1, List.of(new EndBlazeEpiphany(), new Unsummon(), new Shock()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.GREEN, 2);
         var originalId = harness.getPermanentId(player1, "Grizzly Bears");
@@ -170,6 +170,7 @@ class EndBlazeEpiphanyTest extends BaseCardTest {
         Card chosen = new Shock();
         harness.setLibrary(player1, List.of(chosen, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new EndBlazeEpiphany()));
         harness.addMana(player1, ManaColor.RED, 3);
 

@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -42,7 +44,7 @@ public class EndlessSands extends Card {
         // battlefield under its owner's control.
         addActivatedAbility(new ActivatedAbility(
                 true, "{4}",
-                List.of(new SacrificeSelfCost(), new ReturnAllCardsExiledWithSourceEffect()),
+                List.of(new SacrificeSelfCost(), new ReturnAllCardsExiledWithSourceEffect(new CardTypePredicate(CardType.CREATURE))),
                 "{4}, {T}, Sacrifice this land: Return each creature card exiled with this land to the battlefield under its owner's control."
         ));
     }

@@ -186,6 +186,7 @@ class ExplodingBarrelTest extends BaseCardTest {
         Permanent barrel = addReadyBarrel();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.UPKEEP));
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, ManaColor.GREEN.name());

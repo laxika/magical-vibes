@@ -13,7 +13,8 @@ import java.util.Objects;
  */
 public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget,
                                            boolean useEventValueAsX,
-                                           boolean useEntryTargetAsTriggeringPermanent) implements CardEffect {
+                                           boolean useEntryTargetAsTriggeringPermanent)
+        implements CombatDamageTriggerContextEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
         this(effect, false, false, false);
@@ -30,5 +31,13 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTar
 
     public QueueReflexiveAbilityEffect {
         Objects.requireNonNull(effect, "effect");
+    }
+
+    /** A combat-damage trigger needs the context of the reflexive effect it queues ("that player"). */
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return effect instanceof CombatDamageTriggerContextEffect contextEffect
+                ? contextEffect.combatDamageTriggerContext()
+                : null;
     }
 }

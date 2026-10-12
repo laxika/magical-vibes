@@ -189,6 +189,8 @@ class ExclusionRitualTest extends BaseCardTest {
         assertThat(gd.findExiledCard(bears.getId())).isNull();
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Exclusion Ritual");
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");

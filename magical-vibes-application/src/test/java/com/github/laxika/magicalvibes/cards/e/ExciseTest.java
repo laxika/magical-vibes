@@ -143,7 +143,7 @@ class ExciseTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         int landIndex = gd.playerBattlefields.get(player1.getId()).indexOf(land);
-        harness.activateAbility(player1, landIndex, 0, null, null, null);
+        gs.activateAbility(gd, player1, landIndex, 0, null, null, null);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);

@@ -283,11 +283,11 @@ public class UntapStepService {
                 } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock
                         && !hasMatchingDoesntUntap && !hasCounterLock) {
                     // Freyalise's Winds: the untap is replaced by removing all counters of the
-                    // named type, so the permanent stays tapped this step.
-                    if (!replaceUntap(gameData, p, activePlayerId)) {
-                        if (tapUntapSupport.untapPermanent(gameData, p)) {
-                            untappedDuringStep.add(p);
-                        }
+                    // named type, so the permanent stays tapped this step. An untapped permanent
+                    // is not untapping, so no untap replacement applies to it.
+                    boolean replaced = p.isTapped() && replaceUntap(gameData, p, activePlayerId);
+                    if (!replaced && tapUntapSupport.untapPermanent(gameData, p)) {
+                        untappedDuringStep.add(p);
                     }
                 }
                 p.setSummoningSick(false);

@@ -38,7 +38,7 @@ class ElectroduplicateTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BearCub());
         castElectroduplicate(target.getId());
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -88,7 +88,7 @@ class ElectroduplicateTest extends BaseCardTest {
                 .filter(permanent -> permanent.getOriginalCard() instanceof Clone)
                 .findFirst().orElseThrow();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -107,7 +107,7 @@ class ElectroduplicateTest extends BaseCardTest {
         Permanent copy = token();
         harness.setHand(player1, List.of(new Stifle()));
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, gd.stack.getLast().getCard().getId());

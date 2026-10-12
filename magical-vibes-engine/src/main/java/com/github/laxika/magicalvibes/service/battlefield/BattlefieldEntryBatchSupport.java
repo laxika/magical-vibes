@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -67,6 +68,40 @@ public class BattlefieldEntryBatchSupport {
         List<BattlefieldEntryCard> remaining = new ArrayList<>(choice.remaining());
         remaining.set(0, remaining.getFirst().withPreparedPermanent(permanent, triggers));
         continueChoices(gameData, remaining, new ArrayList<>(choice.ready()), choice.libraryRemainders());
+    }
+
+    /**
+     * Starts the host choice for one Aura put onto the battlefield by an effect that also gives it an
+     * entry replacement (e.g. a shield counter). The replacement is carried to the placement that
+     * completes the choice. Returns {@code false} without changing anything when no legal host exists,
+     * so the Aura stays in its current zone.
+     */
+    public boolean beginSingleAuraHostChoice(GameData gameData, Card aura, UUID controllerId,
+                                             EnterWithCountersEffect entryReplacement) {
+        List<UUID> permanentIds = new ArrayList<>();
+        if (!aura.isEnchantPlayer()) {
+            gameData.forEachPermanent((ownerId, permanent) -> {
+                if (!gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                        && auraAttachmentService.canEnchant(gameData, aura, controllerId, permanent)) {
+                    permanentIds.add(permanent.getId());
+                }
+            });
+        }
+        List<UUID> playerIds = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (auraAttachmentService.canEnchantPlayer(gameData, aura, controllerId, playerId)) {
+                playerIds.add(playerId);
+            }
+        }
+        if (permanentIds.isEmpty() && playerIds.isEmpty()) {
+            return false;
+        }
+        gameData.interaction.setPendingAuraCard(aura);
+        gameData.interaction.setPendingAuraOwnerId(controllerId);
+        gameData.interaction.setPendingAuraEntryReplacement(entryReplacement);
+        playerInputService.beginAnyTargetChoice(gameData, controllerId, permanentIds, playerIds,
+                "Choose what " + aura.getName() + " enchants as it enters.");
+        return true;
     }
 
     private void continueChoices(GameData gameData, List<BattlefieldEntryCard> remaining,

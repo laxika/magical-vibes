@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.model.amount;
 
 /**
- * Printed power of the targeted creature spell still on the stack at resolution, or 0 if that
- * spell has left the stack / has no power characteristic. Used by "deals damage equal to that
- * spell's power to its controller" (Essence Backlash). Pair damage before a counter so the spell
- * is still on the stack when this is evaluated.
+ * Power of the targeted creature spell at resolution (Essence Backlash): read from the spell while it
+ * is on the stack, or from the copy remembered when an earlier effect of the same resolution countered
+ * it. Characteristic-defining P/T is evaluated. 0 if neither is available or the spell has no power.
  */
 public record TargetSpellPower() implements DynamicAmount {
 }

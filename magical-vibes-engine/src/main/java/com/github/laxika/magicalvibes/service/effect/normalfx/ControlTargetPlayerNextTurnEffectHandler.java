@@ -39,7 +39,7 @@ public class ControlTargetPlayerNextTurnEffectHandler implements NormalEffectHan
             gameData.pendingTurnControlExtraTurn.add(targetPlayerId);
         } else {
             // Overwriting Mindslaver-style control must not leave a stale Emrakul extra-turn flag.
-            gameData.pendingTurnControlExtraTurn.remove(targetPlayerId);
+            gameData.pendingTurnControlExtraTurn.removeIf(targetPlayerId::equals);
         }
 
         String controllerName = gameData.playerIdToName.get(controllerId);

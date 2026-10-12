@@ -44,8 +44,8 @@ public class ControlTargetPlayersNextTurnsEffectHandler implements NormalEffectH
         gameData.pendingCombatControl.remove(secondPlayerId);
         gameData.pendingTurnControl.put(secondPlayerId, firstPlayerId);
         gameData.pendingTurnControl.put(firstPlayerId, secondPlayerId);
-        gameData.pendingTurnControlExtraTurn.remove(firstPlayerId);
-        gameData.pendingTurnControlExtraTurn.remove(secondPlayerId);
+        gameData.pendingTurnControlExtraTurn.removeIf(firstPlayerId::equals);
+        gameData.pendingTurnControlExtraTurn.removeIf(secondPlayerId::equals);
 
         String firstName = gameData.playerIdToName.get(firstPlayerId);
         String secondName = gameData.playerIdToName.get(secondPlayerId);

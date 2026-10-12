@@ -115,14 +115,17 @@ class EivorWolfKissedTest extends BaseCardTest {
         Card eighthCard = new Mountain();
         harness.setLibrary(player1, List.of(milled.get(0), milled.get(1), milled.get(2),
                 milled.get(3), milled.get(4), milled.get(5), milled.get(6), eighthCard));
+        Card opponentsDrawnCard = new Mountain();
         Card opponentsCard = new Mountain();
-        harness.setLibrary(player2, List.of(opponentsCard));
+        harness.setLibrary(player2, List.of(opponentsDrawnCard, opponentsCard));
 
         resolveCombat();
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(eighthCard);
+        // The opponent's only change is the draw for the turn the game advances into after the trigger resolves.
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(milled)
                 .contains(oldSaga, oldLand).hasSize(9);
         harness.assertNotOnBattlefield(player1, "Ballad of the Black Flag");

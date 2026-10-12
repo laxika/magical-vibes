@@ -2485,7 +2485,10 @@ public class CombatBlockService {
         if (additionalBlocks == Integer.MAX_VALUE) {
             return Integer.MAX_VALUE;
         }
-        for (Permanent p : battlefield) {
+        List<Permanent> allPermanents = gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .toList();
+        for (Permanent p : allPermanents) {
             if (gameQueryService.hasLostAllAbilities(gameData, p)) {
                 continue;
             }
@@ -2496,6 +2499,14 @@ public class CombatBlockService {
                     continue;
                 }
                 if (effectiveEffect instanceof GrantAdditionalBlockEffect e) {
+                    boolean isAttachable = p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                            || p.getCard().isAura();
+                    // An attached Equipment or Aura works from any battlefield, since its controller
+                    // is separate from the equipped creature's controller; other sources only count
+                    // while they are on the defender's battlefield.
+                    if (!isAttachable && !battlefield.contains(p)) {
+                        continue;
+                    }
                     if (e.controlledFilter() != null) {
                         // Grant applies to each of the source controller's permanents matching the filter.
                         FilterContext ctx = FilterContext.of(gameData)
@@ -2506,8 +2517,6 @@ public class CombatBlockService {
                         }
                         continue;
                     }
-                    boolean isAttachable = p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                            || p.getCard().isAura();
                     if (isAttachable) {
                         if (creature.getId().equals(p.getAttachedTo())) {
                             additionalBlocks += e.additionalBlocks();
@@ -2630,7 +2639,20 @@ public class CombatBlockService {
                 residual[blockerNode][attackerNodes.get(attackerIdx)] = 1;
             }
         }
-        return maximumFlow(residual, source, sink);
+        int flow = maximumFlow(residual, source, sink);
+        if (globalMaxBlockers < blockerIndices.size()) {
+            // A global cap on blocking creatures (Dueling Grounds) also bounds how many requirements
+            // can be met: at most that many creatures block, each within its own block capacity.
+            int cappedFlow = blockerIndices.stream()
+                    .map(blockerIdx -> Math.min(getMaxBlocksForCreature(gameData,
+                            defenderBattlefield.get(blockerIdx), defenderBattlefield), attackerIndices.size()))
+                    .sorted(Comparator.reverseOrder())
+                    .limit(globalMaxBlockers)
+                    .mapToInt(Integer::intValue)
+                    .sum();
+            flow = Math.min(flow, cappedFlow);
+        }
+        return flow;
     }
 
     private int maximumFlow(int[][] residual, int source, int sink) {

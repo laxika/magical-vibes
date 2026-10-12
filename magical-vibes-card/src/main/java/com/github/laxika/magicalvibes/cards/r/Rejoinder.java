@@ -15,7 +15,7 @@ public class Rejoinder extends Card {
     public Rejoinder() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL,
-                        new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target creature?"))
+                        new MayEffect(new TapOrUntapTargetPermanentEffect(null, true), "Tap or untap target creature?"))
                 .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
     }
 }

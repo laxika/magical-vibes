@@ -66,6 +66,7 @@ class ExhibitionMagicianTest extends BaseCardTest {
     @Test
     void enteringWithoutCastingAllowsChoosingTreasure() {
         harness.enterBattlefieldAndReturn(player1, new ExhibitionMagician());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleListChoice(player1, "Create a Treasure token");

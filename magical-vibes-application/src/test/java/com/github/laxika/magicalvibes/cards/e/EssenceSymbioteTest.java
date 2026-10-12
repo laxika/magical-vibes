@@ -120,6 +120,8 @@ class EssenceSymbioteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castWithAlternateCost(player1, 0, host.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "TOP");
         resolveAllTriggers();
 
         assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

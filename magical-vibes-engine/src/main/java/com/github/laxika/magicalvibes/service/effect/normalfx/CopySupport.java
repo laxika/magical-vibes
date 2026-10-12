@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -118,8 +119,26 @@ public class CopySupport {
         return createCopyStackEntry(source, copyCard, controllerId, targetId, targetZone, targetCardIds);
     }
 
+    /**
+     * Creates a copy whose divided-damage assignments and target ids are replaced by the given ones, for copies
+     * that retarget every damage portion onto a single new permanent.
+     */
+    public StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId, UUID targetId,
+                                            Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        return createCopyStackEntry(source, copyCard, controllerId, targetId, source.getTargetZone(),
+                List.of(), damageAssignments, targetIds);
+    }
+
     private StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId,
                                              UUID targetId, Zone targetZone, List<UUID> targetCardIds) {
+        return createCopyStackEntry(source, copyCard, controllerId, targetId, targetZone, targetCardIds,
+                source.getDamageAssignments(),
+                source.getTargetIds() != null ? new ArrayList<>(source.getTargetIds()) : null);
+    }
+
+    private StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId,
+                                             UUID targetId, Zone targetZone, List<UUID> targetCardIds,
+                                             Map<UUID, Integer> damageAssignments, List<UUID> sourceTargetIds) {
         StackEntry copy = new StackEntry(
                 source.getEntryType(),
                 copyCard,
@@ -129,10 +148,10 @@ public class CopySupport {
                 copyCard.hasKeyword(Keyword.CONVERGE) ? 0 : source.getXValue(),
                 targetId,
                 source.getSourcePermanentId(),
-                source.getDamageAssignments(),
+                damageAssignments,
                 targetZone,
                 targetCardIds,
-                source.getTargetIds() != null ? new ArrayList<>(source.getTargetIds()) : null
+                sourceTargetIds
         );
         if (source.getTargetingCard() != source.getCard()) {
             copy.setCastCard(copyCard.createRuntimeCopyWithFace(source.getTargetingCard()));
@@ -148,6 +167,7 @@ public class CopySupport {
         copy.setRevealCardFromHandCostPaid(source.isRevealCardFromHandCostPaid());
         copy.setAdditionalEnterCounters(source.getAdditionalEnterCounters());
         copy.setTargetFilters(source.getTargetFilters());
+        copy.setOpponentChosenTargetPlayerId(source.getOpponentChosenTargetPlayerId());
         copy.getGrantedKeywordsOnEntry().addAll(source.getGrantedKeywordsOnEntry());
         return copy;
     }
@@ -201,6 +221,7 @@ public class CopySupport {
         copy.setKeywords(copiedKeywords);
         copy.setLoyalty(original.getLoyalty());
         copy.setXColorRestrictions(original.getXColorRestrictions());
+        copy.setSpellCastTimingRestriction(original.getSpellCastTimingRestriction());
         if (original.getXValueCap() != null) {
             copy.setXValueCap(original.getXValueCap());
         }

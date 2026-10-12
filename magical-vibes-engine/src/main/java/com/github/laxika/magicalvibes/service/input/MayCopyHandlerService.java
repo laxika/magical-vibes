@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnte
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -397,7 +398,17 @@ public class MayCopyHandlerService {
                 }
             }
 
+            UUID chosenOpponentId = copyEntry.getOpponentChosenTargetPlayerId();
+            boolean opponentChosenTargetOnly = chosenOpponentId != null && copyEntry.getEffectsToResolve().stream()
+                    .filter(GainControlOfTargetEffect.class::isInstance)
+                    .map(GainControlOfTargetEffect.class::cast)
+                    .anyMatch(GainControlOfTargetEffect::opponentChoosesTarget);
+
             for (UUID candidate : candidateTargets) {
+                if (opponentChosenTargetOnly
+                        && !chosenOpponentId.equals(gameQueryService.findPermanentController(gameData, candidate))) {
+                    continue;
+                }
                 try {
                     if (targetZone == Zone.GRAVEYARD) {
                         targetLegalityService.validateEffectTargetInZone(

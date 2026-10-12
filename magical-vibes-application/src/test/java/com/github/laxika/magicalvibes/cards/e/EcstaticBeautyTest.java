@@ -190,6 +190,7 @@ class EcstaticBeautyTest extends BaseCardTest {
                 assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), remaining);
             } else {
                 assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+                harness.passBothPriorities();
             }
         }
         return card;

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,6 +21,7 @@ import java.util.Set;
 public class AwakenTheBloodAvatar extends Card {
 
     public AwakenTheBloodAvatar() {
+        addEffect(EffectSlot.STATIC, new SacrificeCreaturesForCostReductionEffect(2));
         addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(

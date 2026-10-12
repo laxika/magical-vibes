@@ -126,7 +126,7 @@ public class TokenCopySupport {
                 copyException.accept(tokenTemplate);
             }
             int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                    gameData, tokenControllerId, 1, tokenTemplate.getSubtypes(), tokenTemplate.hasType(CardType.CREATURE));
+                    gameData, tokenControllerId, 1, tokenTemplate.getSubtypes(), TokenCreationReplacementSupport.entersAsCreature(tokenTemplate));
             CreateTokenEffect replacementOriginal = CreateTokenEffect.ofArtifactToken(
                     1, tokenTemplate.getName(), tokenTemplate.getSubtypes(), List.of());
             if (!TokenCreationReplacementSupport.academyManufactorTokenBlueprints(

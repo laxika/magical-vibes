@@ -140,7 +140,7 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         assertThat(firedancer.getToughnessModifier()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, firedancer, Keyword.DOUBLE_STRIKE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(firedancer.getPowerModifier()).isZero();
         assertThat(firedancer.getToughnessModifier()).isZero();

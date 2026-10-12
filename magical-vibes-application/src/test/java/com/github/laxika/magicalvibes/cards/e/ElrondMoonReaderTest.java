@@ -198,6 +198,7 @@ class ElrondMoonReaderTest extends BaseCardTest {
         addElrondMana(1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(bear.getId()));
         resolveAllTriggers();

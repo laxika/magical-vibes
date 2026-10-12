@@ -22,7 +22,7 @@ public class EngineeredExplosives extends Card {
 
     public EngineeredExplosives() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
+                new EnterWithCountersEffect(CounterType.CHARGE, new XValue(), true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

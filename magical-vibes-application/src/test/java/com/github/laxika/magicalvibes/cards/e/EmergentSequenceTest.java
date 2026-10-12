@@ -143,6 +143,7 @@ class EmergentSequenceTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 

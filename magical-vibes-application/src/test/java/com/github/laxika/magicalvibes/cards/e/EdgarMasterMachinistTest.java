@@ -142,6 +142,7 @@ class EdgarMasterMachinistTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

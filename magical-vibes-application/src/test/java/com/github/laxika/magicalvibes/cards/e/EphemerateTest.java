@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Ephemerate.class, GrizzlyBears.class})
+@CardUsed({Ephemerate.class, GrizzlyBears.class, ControlMagic.class})
 class EphemerateTest extends BaseCardTest {
 
     @Test
@@ -77,9 +78,13 @@ class EphemerateTest extends BaseCardTest {
     void returnsBorrowedCreatureUnderItsOwnersControl() {
         GrizzlyBears bear = new GrizzlyBears();
         bear.setOwnerId(player2.getId());
-        var original = harness.addToBattlefieldAndReturn(player1, bear);
-        gd.stolenCreatures.put(original.getId(), player2.getId());
-        harness.setHand(player1, List.of(new Ephemerate()));
+        var original = harness.addToBattlefieldAndReturn(player2, bear);
+        harness.setHand(player1, List.of(new ControlMagic(), new Ephemerate()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, original.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, original.getId());
@@ -126,7 +131,7 @@ class EphemerateTest extends BaseCardTest {
     }
 }
 
-@CardUsed({Ephemerate.class, GrizzlyBears.class})
+@CardUsed({Ephemerate.class, GrizzlyBears.class, ControlMagic.class})
 class Mh1EphemerateTest extends BaseCardTest {
 
     @Test

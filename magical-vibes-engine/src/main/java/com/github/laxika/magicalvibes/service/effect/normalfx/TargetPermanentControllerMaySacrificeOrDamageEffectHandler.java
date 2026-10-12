@@ -94,8 +94,7 @@ public class TargetPermanentControllerMaySacrificeOrDamageEffectHandler
 
     private boolean canSacrifice(GameData gameData, Permanent target, UUID targetControllerId,
             UUID sourceControllerId) {
-        return !gameQueryService.isLand(gameData, target)
-                && gameQueryService.canEffectCauseSacrifice(gameData, targetControllerId, sourceControllerId)
+        return gameQueryService.canEffectCauseSacrifice(gameData, targetControllerId, sourceControllerId)
                 && !gameQueryService.cantBeSacrificed(gameData, target);
     }
 

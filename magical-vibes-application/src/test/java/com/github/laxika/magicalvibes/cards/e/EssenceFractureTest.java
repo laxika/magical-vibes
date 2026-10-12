@@ -105,6 +105,7 @@ class EssenceFractureTest extends BaseCardTest {
     void doesNotResolveWhenBothTargetsLeaveBattlefield() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.setHand(player2, List.of());
         prepareEssenceFracture();
         harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
 

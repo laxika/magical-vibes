@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -147,6 +148,7 @@ class ExtravagantSpiritTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Extravagant Spirit");
         harness.assertInGraveyard(player1, "Extravagant Spirit");
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("pays"));
     }
 }

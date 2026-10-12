@@ -205,7 +205,7 @@ class ErosionTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Oasis");
         harness.assertInGraveyard(player1, "Erosion");
         harness.assertLife(player2, lifeBefore);
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test

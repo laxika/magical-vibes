@@ -108,9 +108,9 @@ class ElbrusTest extends BaseCardTest {
         harness.addToBattlefield(player1, new StrionicResonator());
         elbrus.setAttachedTo(creature.getId());
         creature.setAttacking(true);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         resolveCombat();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 2, null, gd.stack.getLast().getTargetableId());
         harness.passBothPriorities();
         harness.passBothPriorities();

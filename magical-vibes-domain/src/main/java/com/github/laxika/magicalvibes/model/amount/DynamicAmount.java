@@ -117,6 +117,7 @@ public sealed interface DynamicAmount permits
         EnchantedPermanentManaValue,
         EnchantedPermanentPower,
         EventValue,
+        DeterminedOnce,
         Fixed,
         PileGroupingOrGuessCountThisTurn,
         FixedIfCondition,

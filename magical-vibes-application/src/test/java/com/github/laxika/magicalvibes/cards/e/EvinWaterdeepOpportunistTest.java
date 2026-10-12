@@ -65,11 +65,10 @@ class EvinWaterdeepOpportunistTest extends BaseCardTest {
 
     @Test
     void sacrificingEvinItselfCreatesTreasure() {
-        Permanent evin = harness.addToBattlefieldAndReturn(player1, new EvinWaterdeepOpportunist());
+        harness.addToBattlefield(player1, new EvinWaterdeepOpportunist());
         Permanent altar = harness.addToBattlefieldAndReturn(player1, new AshnodsAltar());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(altar), null, null);
-        harness.handlePermanentChosen(player1, evin.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Evin, Waterdeep Opportunist");
@@ -143,7 +142,7 @@ class EvinWaterdeepOpportunistTest extends BaseCardTest {
         Permanent ownAltar = harness.addToBattlefieldAndReturn(player1, new AshnodsAltar());
         Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opposingAltar = harness.addToBattlefieldAndReturn(player2, new AshnodsAltar());
-        Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(ownAltar), null, null);
         harness.handlePermanentChosen(player1, ownBear.getId());
@@ -152,7 +151,6 @@ class EvinWaterdeepOpportunistTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(opposingAltar), null, null);
-        harness.handlePermanentChosen(player2, opposingBear.getId());
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);

@@ -67,7 +67,8 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
         gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldUnderControl(
                 dyingCardId, returnControllerId, sourcePermanentId,
                 e.sacrificeOnSourceControlLoss(), e.counterType(), e.counterAmount(),
-                e.grantColor(), e.grantSubtype(), e.returnUnderOwnersControl(), e.requireSourceOnBattlefield()));
+                e.grantColor(), e.grantSubtype(), e.returnUnderOwnersControl(), e.requireSourceOnBattlefield(),
+                gameData.graveyardEntryVersion(dyingCardId), entry.getControllerId()));
         log.info("Game {} - {} schedules a dying creature to return under control at the next end step",
                 gameData.id, entry.getCard().getName());
     }

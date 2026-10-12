@@ -1782,7 +1782,11 @@ public class LayerSystemService {
                     return;
                 }
                 for (PermanentSlot target : scopeTargets(gameData, instance, set.scope(), null, slots, slotsById, board)) {
-                    states.get(target.permanent().getId()).overrideCardTypes(set.cardTypes());
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    state.overrideCardTypes(set.cardTypes());
+                    if (!state.hasCardType(CardType.CREATURE)) {
+                        state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                    }
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
                             List.copyOf(set.cardTypes())));
@@ -2633,6 +2637,7 @@ public class LayerSystemService {
             // layered instance, so static grants still stick — the old accumulator behavior.
             state.loseAllAbilities(0);
         } else {
+            state.snapshotPrintedTriggerKeywords();
             state.addKeywords(permanent.getGrantedKeywords());
             state.addKeywords(permanent.getPersistentGrantedKeywords());
             state.addKeywords(permanent.getUntilNextTurnKeywords());
@@ -3134,6 +3139,17 @@ public class LayerSystemService {
                     }
                 }
                 case ConditionalEffect ignored ->
+                        applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                                (target, harvested) -> {
+                                    if (harvested.isBasePTOverridden()) {
+                                        entries.add(new BasePtEntry(target.permanent().getId(),
+                                                harvested.getBasePowerOverride(),
+                                                harvested.getBaseToughnessOverride(),
+                                                instance.timestamp(), instance.position(),
+                                                provenanceSourceName(instance)));
+                                    }
+                                });
+                case EnchantedPermanentBecomesCreatureEffect ignored ->
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {
                                     if (harvested.isBasePTOverridden()) {

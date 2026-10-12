@@ -24,7 +24,7 @@ public class EatenBySpiders extends Card {
                 )),
                 "Target must be a creature with flying"
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyAttachmentsOnTargetCreatureEffect(false, true))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
     }
 }

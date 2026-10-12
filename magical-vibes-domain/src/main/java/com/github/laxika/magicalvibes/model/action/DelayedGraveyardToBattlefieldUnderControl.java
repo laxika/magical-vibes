@@ -23,6 +23,12 @@ import java.util.UUID;
  * @param returnUnderOwnersControl      when true, return the card under its owner's control
  * @param requireSourceOnBattlefield   when true nothing returns unless {@code sourcePermanentId} is
  *                                     still on the battlefield (Shirei, Shizo's Caretaker)
+ * @param graveyardEntryVersion        the card's graveyard entry identity when the return was
+ *                                     scheduled; a card that has since left and re-entered the
+ *                                     graveyard is a new object and is not returned
+ * @param triggerControllerId          the player who controls the delayed triggered ability when it
+ *                                     goes on the stack; may differ from {@code controllerId}, the
+ *                                     player who puts the card onto the battlefield (Endless Whispers)
  */
 public record DelayedGraveyardToBattlefieldUnderControl(
         UUID cardId,
@@ -34,11 +40,28 @@ public record DelayedGraveyardToBattlefieldUnderControl(
         CardColor grantColor,
         CardSubtype grantSubtype,
         boolean returnUnderOwnersControl,
-        boolean requireSourceOnBattlefield
+        boolean requireSourceOnBattlefield,
+        long graveyardEntryVersion,
+        UUID triggerControllerId
 ) implements DelayedAction {
+
+    public DelayedGraveyardToBattlefieldUnderControl {
+        if (triggerControllerId == null) {
+            triggerControllerId = controllerId;
+        }
+    }
+
+    public DelayedGraveyardToBattlefieldUnderControl(
+            UUID cardId, UUID controllerId, UUID sourcePermanentId, boolean sacrificeOnSourceControlLoss,
+            CounterType counterType, int counterAmount, CardColor grantColor, CardSubtype grantSubtype,
+            boolean returnUnderOwnersControl, boolean requireSourceOnBattlefield, long graveyardEntryVersion) {
+        this(cardId, controllerId, sourcePermanentId, sacrificeOnSourceControlLoss, counterType, counterAmount,
+                grantColor, grantSubtype, returnUnderOwnersControl, requireSourceOnBattlefield,
+                graveyardEntryVersion, null);
+    }
 
     /** Seraph: plain return linked to the source permanent, no counters and no grants. */
     public DelayedGraveyardToBattlefieldUnderControl(UUID cardId, UUID controllerId, UUID sourcePermanentId) {
-        this(cardId, controllerId, sourcePermanentId, true, null, 0, null, null, false, false);
+        this(cardId, controllerId, sourcePermanentId, true, null, 0, null, null, false, false, 0L, null);
     }
 }

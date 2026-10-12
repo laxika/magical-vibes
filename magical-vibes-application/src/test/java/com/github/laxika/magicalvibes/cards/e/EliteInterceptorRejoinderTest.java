@@ -42,6 +42,7 @@ class EliteInterceptorRejoinderTest extends BaseCardTest {
         harness.castFromExile(player1, copyId, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Tap");
 
         assertThat(interceptor.isPrepared()).isFalse();
         assertThat(interceptor.getPreparedSpellCardId()).isNull();
@@ -96,6 +97,7 @@ class EliteInterceptorRejoinderTest extends BaseCardTest {
         harness.castFromExile(player1, interceptor.getPreparedSpellCardId(), target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Untap");
 
         assertThat(target.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);

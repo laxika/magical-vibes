@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -151,7 +152,10 @@ class EelUmbraTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, bears.getId());
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handlePermanentChosen(player1, second.getId());
+        PendingInteraction.ColorChoice umbraChoice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(umbraChoice.options()).hasSize(2);
+        harness.handleListChoice(player1, umbraChoice.options().get(1));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears, first).doesNotContain(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(second.getCard()).doesNotContain(first.getCard());

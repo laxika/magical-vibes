@@ -16,7 +16,7 @@ import java.util.List;
 public class ExpertLevelSafe extends Card {
 
     public ExpertLevelSafe() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardsToSourceEffect(2));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ExileTopCardsToSourceEffect.faceDownWithoutLookPermission(2));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",

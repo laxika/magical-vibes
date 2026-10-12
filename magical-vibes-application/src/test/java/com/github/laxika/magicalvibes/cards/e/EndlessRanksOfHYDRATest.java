@@ -124,6 +124,10 @@ class EndlessRanksOfHYDRATest extends BaseCardTest {
         harness.setExile(player1, List.of(commander));
         resolveAllTriggers();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.CommanderReturnChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerHands.get(player1.getId())).contains(ranks);

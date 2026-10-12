@@ -854,7 +854,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
 
                 List<UUID> matchingPermanentIds = destructionSupport.collectPermanentIds(gameData, payerId,
                         p -> (!sacrificePermanent.excludeSource() || !p.getId().equals(sourcePermanentId))
-                                && gameQueryService.canSacrificePermanentForCosts(gameData, p)
+                                && gameQueryService.canSacrificePermanentForEffect(gameData, p)
                                 && predicateEvaluationService.matchesPermanentPredicate(
                                 p, sacrificePermanent.filter(), costFilterContext));
 

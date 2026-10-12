@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -178,7 +180,7 @@ class ElixirOfImmortalityTest extends BaseCardTest {
         card.setOwnerId(player2.getId());
         Permanent elixir = harness.addToBattlefieldAndReturn(player1, card);
         gd.stolenCreatures.put(elixir.getId(), player2.getId());
-        harness.addToBattlefield(player1, new CosisTrickster());
+        Permanent trickster = harness.addToBattlefieldAndReturn(player1, new CosisTrickster());
         Card controllerGraveyardCard = new RuneclawBear();
         Card ownerGraveyardCard = new GiantSpider();
         harness.setGraveyard(player1, List.of(controllerGraveyardCard));
@@ -196,7 +198,10 @@ class ElixirOfImmortalityTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).contains(controllerGraveyardCard).doesNotContain(card);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(ownerGraveyardCard);
-        assertThat(gd.stack).anyMatch(entry -> entry.getCard() instanceof CosisTrickster);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

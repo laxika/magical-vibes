@@ -47,7 +47,7 @@ public class DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler
         int lifeCost = lifeCostFor(gameData, target);
         boolean canPay = targetControllerId != null
                 && (lifeCost == 0
-                        || (gameQueryService.canPlayerLifeChange(gameData, targetControllerId)
+                        || (gameQueryService.canPlayerLoseLife(gameData, targetControllerId)
                                 && gameData.getLife(targetControllerId) >= lifeCost));
 
         if (!canPay) {

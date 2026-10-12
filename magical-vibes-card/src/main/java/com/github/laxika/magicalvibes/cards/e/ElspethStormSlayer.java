@@ -40,7 +40,7 @@ public class ElspethStormSlayer extends Card {
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                         new GrantKeywordEffect(
-                                Keyword.FLYING, GrantScope.OWN_CREATURES, GrantDuration.UNTIL_YOUR_NEXT_TURN)
+                                Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, GrantDuration.UNTIL_YOUR_NEXT_TURN)
                 ),
                 "0: Put a +1/+1 counter on each creature you control. Those creatures gain flying until your next turn."
         ));

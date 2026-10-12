@@ -418,6 +418,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsSuspected;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.SourceToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
 import com.github.laxika.magicalvibes.model.condition.SourceRegeneratedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
@@ -577,7 +578,12 @@ public class ConditionEvaluationService {
                     anotherPermanentEnteredThisTurn(gameData, ctx, c);
             case CameUnderControlThisTurn ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
-                yield source != null && source.isSummoningSick();
+                UUID currentController = source == null ? null
+                        : gameQueryService.findPermanentController(gameData, source.getId());
+                // A source that has left the battlefield is judged by its last-known information.
+                yield source != null && source.isSummoningSick()
+                        && (ctx.controllerId() == null || currentController == null
+                        || ctx.controllerId().equals(currentController));
             }
             case CardDiscardedThisTurn ignored ->
                     ctx.controllerId() != null
@@ -1172,7 +1178,8 @@ public class ConditionEvaluationService {
                     totalPowerOfAttackingCreatures(gameData, ctx.controllerId()) >= c.threshold();
             case AttackingCreaturesGreaterThanSourceCounters c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
-                yield source != null && ctx.xValue() > source.getCounterCount(c.counterType());
+                yield source != null
+                        && countAttackingCreatures(gameData, ctx.controllerId()) > source.getCounterCount(c.counterType());
             }
             case AttackedTargetMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
@@ -1920,6 +1927,12 @@ public class ConditionEvaluationService {
             }
             case SourceIsOnBattlefield ignored -> ctx.sourcePermanentId() != null
                     && gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId()) != null;
+            case SourceToughnessAtLeast c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null
+                        && gameQueryService.findPermanentById(gameData, source.getId()) != null
+                        && gameQueryService.getEffectiveToughness(gameData, source) >= c.threshold();
+            }
             case SourcePowerAtLeast c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 int power = source == null ? 0
@@ -2400,6 +2413,7 @@ public class ConditionEvaluationService {
                     .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
                     .anyMatch(target -> target != null
                             && gameQueryService.isLand(gameData, target)
+                            && !gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)
                             && controllerId.equals(gameQueryService.findPermanentController(gameData, target.getId()))
                             && (effect.targetSpec().predicate() == null
                             || matchesPermanent(gameData, target, effect.targetSpec().predicate(), targetSpellContext)));
@@ -2425,6 +2439,7 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         return battlefield != null && battlefield.stream()
                 .filter(permanent -> gameQueryService.isLand(gameData, permanent))
+                .filter(permanent -> !gameQueryService.hasKeyword(gameData, permanent, Keyword.INDESTRUCTIBLE))
                 .anyMatch(permanent -> matchesPermanent(gameData, permanent, filter, ctx));
     }
 

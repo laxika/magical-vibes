@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerMaySacrificeOrDamageEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DSC", collectorNumber = "164")
@@ -16,6 +17,6 @@ public class EnchantersBane extends Card {
         // value to its controller unless that player sacrifices it.
         target(TargetFilters.enchantment()).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 TargetPermanentControllerMaySacrificeOrDamageEffect.withTargetAsDamageSource(
-                        new TargetManaValue()));
+                        new TargetManaValue(), new PermanentIsEnchantmentPredicate()));
     }
 }

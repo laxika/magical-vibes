@@ -74,6 +74,8 @@ public class MayCastHandlerService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService graveyardTargetingService;
     private final AdditionalSpellCostService additionalSpellCostService;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDividedDamageSupport dealDividedDamageSupport;
@@ -791,6 +793,9 @@ public class MayCastHandlerService {
                         freeCast.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
                         freeCast.setOwnerIdOverride(graveyardOwnerId);
                         freeCast.setSourceZone(Zone.GRAVEYARD);
+                        if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, freeCast)) {
+                            return;
+                        }
                         gameData.stack.add(freeCast);
 
                         int adjustedCopyCount = copySupport.adjustedSpellCopyCount(gameData, copyCount);
@@ -1430,8 +1435,8 @@ public class MayCastHandlerService {
         ManaCost cost = new ManaCost(costStr);
         int tax = castingCostService.getCastCostModifier(gameData, player.getId(), cardToCast, 0,
                 "madness".equals(costLabel) ? Zone.EXILE : Zone.HAND);
-        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, player.getId()),
-                tax - xReduction);
+        int maxX = Math.min(cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, player.getId()),
+                tax - xReduction), xScaledGraveyardTargetCap(gameData, player.getId(), cardToCast));
 
         if (maxX <= 0 && !cost.canPayWithAdditionalGenericCost(gameData.playerManaPools.get(player.getId()), 0, tax)) {
             gameLogService.append(gameData, GameLog.textCardText(
@@ -1447,6 +1452,24 @@ public class MayCastHandlerService {
                 + " for its " + costLabel + " cost (" + costStr + ").";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.AlternateCastXValueChoice(
                 player.getId(), cardToCast.getId(), costStr, maxX, prompt, cardToCast.getName(), costLabel, xReduction));
+    }
+
+    /**
+     * The most X can be when the spell needs exactly X target cards in the caster's graveyard
+     * ("Return X target creature cards from your graveyard to the battlefield"), so the announced X
+     * never exceeds the number of legal targets. Unbounded for every other spell.
+     */
+    private int xScaledGraveyardTargetCap(GameData gameData, UUID playerId, Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            if (effect instanceof com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect
+                    && returnEffect.xScaled()) {
+                return (int) gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                        .filter(c -> predicateEvaluationService.matchesCardPredicate(
+                                c, returnEffect.filter(), card.getId(), gameData, playerId))
+                        .count();
+            }
+        }
+        return Integer.MAX_VALUE;
     }
 
     /**
@@ -2052,6 +2075,29 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (!castingPermissionService.isSpellCastingAllowed(gameData, player.getId(), cardToCast)) {
+            queueDeclineEffect(gameData, ability);
+            if (scryIfDeclined) queueScryFallback(gameData);
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast right now and remains in hand."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Casting without paying the mana cost is an alternative cost, so cost increases still apply.
+        Card taxPayment = cardToCast.createRuntimeCopy();
+        taxPayment.setManaCost("{0}");
+        try {
+            spellCastingService.paySpellManaCost(gameData, player.getId(), taxPayment, 0, List.of());
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            queueDeclineEffect(gameData, ability);
+            if (scryIfDeclined) queueScryFallback(gameData);
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " cannot be cast because its additional mana cost cannot be paid."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // Remove remaining may-cast-from-hand abilities (only cast one spell)
         if (pendingEffectType != null) {
             gameData.pendingMayAbilities.removeIf(pma ->
@@ -2212,7 +2258,26 @@ public class MayCastHandlerService {
                 ? List.of()
                 : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
 
-        boolean zeroOptionalTargets = hasOnlyOptionalDeclaredTargets(card, xValue)
+        com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect xScaledGraveyardReturn =
+                spellEffects.stream()
+                        .filter(com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
+                        .map(com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::cast)
+                        .filter(com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect::xScaled)
+                        .findFirst().orElse(null);
+        if (xScaledGraveyardReturn != null && xValue > 0) {
+            // "Return X target creature cards from your graveyard": exactly X graveyard targets are
+            // chosen now; the spell goes on the stack once they are chosen.
+            gameLogService.append(gameData,
+                    GameLog.textCardText(playerName + " casts ", card, costPhrase + " — choosing targets."));
+            log.info("Game {} - {} casts {} from hand, choosing {} graveyard targets",
+                    gameData.id, playerName, card.getName(), xValue);
+            graveyardTargetingService.handleExactNGraveyardSpellTargeting(
+                    gameData, playerId, card, spellType, xValue, xScaledGraveyardReturn.filter(),
+                    "to the battlefield", spellEffects, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
+            return;
+        }
+        boolean zeroOptionalTargets = xScaledGraveyardReturn != null
+                || hasOnlyOptionalDeclaredTargets(card, xValue)
                 && buildValidSpellTargets(gameData, card, spellEffects, playerId, xValue,
                 "madness".equals(costLabel)).isEmpty();
         boolean zeroDividedDamage = "madness".equals(costLabel)

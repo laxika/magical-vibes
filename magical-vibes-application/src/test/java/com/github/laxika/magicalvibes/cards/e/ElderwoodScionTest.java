@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -126,13 +127,14 @@ class ElderwoodScionTest extends BaseCardTest {
     void trampleAndLifelinkApplyToCombatDamage() {
         Permanent scion = harness.addToBattlefieldAndReturn(player1, new ElderwoodScion());
         scion.setSummoningSick(false);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(bears.getId(), 2, player2.getId(), 2));
 
         harness.assertLife(player1, 24);
         harness.assertLife(player2, 18);

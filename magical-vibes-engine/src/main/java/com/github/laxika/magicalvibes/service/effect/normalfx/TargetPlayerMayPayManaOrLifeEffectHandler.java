@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +21,8 @@ import org.springframework.stereotype.Component;
  * entry's {@code targetId} (the active player for an {@code EACH_UPKEEP_TRIGGERED} trigger), not
  * the source's controller. A player who can pay neither resource is never asked.
  *
- * <p>Queues the choice through the resolution-time may-ability path, so the wrapped effect
+ * <p>When the player can afford both halves they pick one (or decline) from a list; otherwise the
+ * choice is queued through the resolution-time may-ability path, so the wrapped effect
  * resolves on the same stack entry once the player accepts (see
  * {@code EffectResolutionService}'s CR 603.5 re-entry branch).
  */
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerMayPayManaOrLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,6 +51,18 @@ public class TargetPlayerMayPayManaOrLifeEffectHandler implements NormalEffectHa
         boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, payerId)
                 && gameData.getLife(payerId) >= e.lifeCost();
         if (!canPayMana && !canPayLife) {
+            return;
+        }
+
+        if (canPayMana && canPayLife) {
+            var context = new ChoiceContext.TargetPlayerManaOrLifePaymentChoice(
+                    payerId, entry.getCard().getName(), e.manaCost(), e.lifeCost());
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    payerId, null, null, context,
+                    List.of(context.payManaOption(), context.payLifeOption(),
+                            ChoiceContext.TargetPlayerManaOrLifePaymentChoice.DECLINE),
+                    entry.getCard().getName() + " - " + e.prompt()));
             return;
         }
 

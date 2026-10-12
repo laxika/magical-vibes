@@ -30,6 +30,6 @@ public class ElectroAssaultingBattery extends Card {
                 List.of(new AwardManaEffect(ManaColor.RED))));
 
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new PayXManaDealXDamageToAnyTargetEffect("{X}", TargetPredicates.player()));
+                PayXManaDealXDamageToAnyTargetEffect.reflexive("{X}", TargetPredicates.player()));
     }
 }

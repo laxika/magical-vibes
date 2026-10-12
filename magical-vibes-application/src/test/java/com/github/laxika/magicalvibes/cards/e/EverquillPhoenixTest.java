@@ -79,6 +79,8 @@ class EverquillPhoenixTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castWithAlternateCost(player1, 0, host.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "TOP");
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Feather")).isEqualTo(1);

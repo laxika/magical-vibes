@@ -383,6 +383,7 @@ public sealed interface Condition permits
         SourceIsFaceDown,
         SourceIsOnBattlefield,
         SourcePowerAtLeast,
+        SourceToughnessAtLeast,
         SourceEntryCostPaid,
         SourceWasBlockedThisTurn,
         SourceIsPaired,

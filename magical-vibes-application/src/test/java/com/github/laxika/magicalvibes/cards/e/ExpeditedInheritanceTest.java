@@ -159,7 +159,8 @@ class ExpeditedInheritanceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player2.getId());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
@@ -179,9 +180,10 @@ class ExpeditedInheritanceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 

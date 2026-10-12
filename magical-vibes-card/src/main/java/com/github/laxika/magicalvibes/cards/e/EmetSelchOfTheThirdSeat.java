@@ -20,7 +20,7 @@ public class EmetSelchOfTheThirdSeat extends Card {
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
                 new CardTruePredicate(), 2, CostModificationScope.SELF, Zone.GRAVEYARD));
 
-        addEffect(EffectSlot.ON_OPPONENT_LOSES_LIFE, new OncePerTurnTriggerEffect(
+        addEffect(EffectSlot.ON_OPPONENT_LOSES_LIFE, OncePerTurnTriggerEffect.markOnAcceptance(
                 new CastTargetInstantOrSorceryFromGraveyardEffect(
                         GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, true)));
     }

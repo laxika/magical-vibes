@@ -40,8 +40,8 @@ public class ErtaiResurrected extends Card {
                                 "Target must be a spell, activated ability, or triggered ability.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy another target creature or planeswalker. Its controller draws a card",
-                        List.of(new TargetPermanentControllerDrawsCardEffect(),
-                                new DestroyTargetPermanentEffect(anotherCreatureOrPlaneswalker)),
+                        List.of(new DestroyTargetPermanentEffect(anotherCreatureOrPlaneswalker),
+                                new TargetPermanentControllerDrawsCardEffect()),
                         new PermanentPredicateTargetFilter(
                                 anotherCreatureOrPlaneswalker,
                                 "Target must be another creature or planeswalker."))

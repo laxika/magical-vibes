@@ -13,7 +13,9 @@ import org.springframework.stereotype.Component;
  * Resolves a modal ability whose modes all apply to the ability's single creature target: prompts
  * the controller for the mode through the same {@code ChooseModeChoice} flow
  * {@link ChooseOneEffectHandler} uses, then the chosen mode's effects are spliced into this
- * ability's paused resolution and read the target already on the stack entry.
+ * ability's paused resolution and read the target already on the stack entry. When the ability has no
+ * legal creature target left (for example "up to one" with none chosen), there is nothing for the chosen
+ * mode to act on, so no mode is asked for.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,6 +30,9 @@ public class ChooseOneForTargetCreatureEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (entry.getTargetId() == null && entry.getTargetIds().isEmpty()) {
+            return;
+        }
         var modal = (ChooseOneForTargetCreatureEffect) effect;
         playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
                 new ChooseOneEffect(modal.options()));

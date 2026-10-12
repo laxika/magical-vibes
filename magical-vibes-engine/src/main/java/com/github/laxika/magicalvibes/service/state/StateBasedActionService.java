@@ -127,6 +127,12 @@ public class StateBasedActionService {
         triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
         initializeSpeedForPlayers(gameData);
 
+        // CR 603.8 — a state trigger fires as soon as the game state matches, which can be a state
+        // that state-based actions are about to destroy (e.g. a creature with toughness 0 counting
+        // toward the condition). Check before performing SBAs as well as after; the
+        // stateTriggerOnStack guard keeps the second check from triggering the same ability again.
+        stateTriggerService.checkStateTriggers(gameData);
+
         // CR 704.3-704.4 — all applicable state-based actions are performed as a batch, then the
         // check repeats until none are performed. One pass is not enough: a death can remove a
         // static effect (e.g. an anthem) and make another creature's marked damage newly lethal.
@@ -143,15 +149,18 @@ public class StateBasedActionService {
                     && scopedPermanents.stream().noneMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                             gameData, permanent, floating.scope()))).isEmpty();
             anyPerformed |= enforceCounterLimits(gameData);
-            anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
-            if (graveyardService.hasPendingRegenerationChoice(gameData)) return;
-            anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
             // CR 704.5a — player with 0 or less life loses the game
             // CR 704.5c — player with ten or more poison counters loses the game
+            // Checked before lethal creatures are destroyed: a loss replacement that exiles a creature
+            // dying to the same damage (Exquisite Archangel) must still find that creature on the battlefield.
             if (gameOutcomeService.checkWinCondition(gameData)) {
                 return;
             }
+
+            anyPerformed |= destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
+            if (graveyardService.hasPendingRegenerationChoice(gameData)) return;
+            anyPerformed |= removeTokensOutsideBattlefield(gameData);
 
             anyPerformed |= sacrificeCompletedSagas(gameData, processedIds);
             anyPerformed |= sacrificeCreaturesOnSeraphControlLoss(gameData);
@@ -482,6 +491,11 @@ public class StateBasedActionService {
                         gameData.simultaneousDyingControllers.put(entry.permanent().getId(), controllerId);
                         gameData.simultaneousDyingPowers.put(entry.permanent().getId(),
                                 gameQueryService.getEffectivePower(gameData, entry.permanent()));
+                        gameData.simultaneousDyingTriggerKeywordInstances.put(entry.permanent().getId(), Map.of(
+                                Keyword.PERSIST, gameQueryService.triggerKeywordInstances(
+                                        gameData, entry.permanent(), Keyword.PERSIST),
+                                Keyword.UNDYING, gameQueryService.triggerKeywordInstances(
+                                        gameData, entry.permanent(), Keyword.UNDYING)));
                         List<CardEffect> grantedCreatureDeathEffects = new ArrayList<>(
                                 entry.permanent().getTemporaryTriggeredEffects(EffectSlot.ON_ANY_CREATURE_DIES));
                         grantedCreatureDeathEffects.addAll(triggerCollectionService.grantedTriggeredEffects(
@@ -529,6 +543,7 @@ public class StateBasedActionService {
             gameData.simultaneousDyingPermanents.clear();
             gameData.simultaneousDyingPermanentControllers.clear();
             gameData.simultaneousDyingPowers.clear();
+            gameData.simultaneousDyingTriggerKeywordInstances.clear();
             gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
             gameData.simultaneousDyingGrantedSelfDeathEffects.clear();
         }

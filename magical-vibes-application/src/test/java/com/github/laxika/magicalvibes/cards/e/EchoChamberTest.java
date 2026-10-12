@@ -91,7 +91,7 @@ class EchoChamberTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(tokenCopy()).isNotNull();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(tokenCopy());
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();

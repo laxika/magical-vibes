@@ -42,7 +42,7 @@ class EpochrasiteTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
 
         harness.handleMayAbilityChosen(player1, true);
@@ -78,7 +78,7 @@ class EpochrasiteTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
 
         harness.handleMayAbilityChosen(player1, false);

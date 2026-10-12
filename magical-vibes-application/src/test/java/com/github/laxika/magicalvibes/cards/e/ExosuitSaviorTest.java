@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.LayClaim;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExosuitSavior.class, Forest.class})
+@CardUsed({ExosuitSavior.class, Forest.class, LayClaim.class})
 class ExosuitSaviorTest extends BaseCardTest {
 
     @Test
@@ -80,8 +81,12 @@ class ExosuitSaviorTest extends BaseCardTest {
     @Test
     @DisplayName("A borrowed permanent returns to its owner rather than its controller")
     void returnsBorrowedPermanentToOwner() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        gd.stolenCreatures.put(forest.getId(), player2.getId());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new LayClaim()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Forest");
         castExosuitSavior(List.of(forest.getId()));
 
         resolveAllTriggers();
@@ -100,7 +105,6 @@ class ExosuitSaviorTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(forest);
         gd.playerBattlefields.get(player2.getId()).add(forest);
-        gd.stolenCreatures.put(forest.getId(), player1.getId());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Forest");

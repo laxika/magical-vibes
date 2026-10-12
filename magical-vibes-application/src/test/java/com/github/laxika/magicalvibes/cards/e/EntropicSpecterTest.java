@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -28,9 +29,7 @@ class EntropicSpecterTest extends BaseCardTest {
         harness.castFromHand(player1, new EntropicSpecter(), "{3}{B}{B}");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
-
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         Permanent specter = findPermanent(player1, "Entropic Specter");
         assertThat(gqs.getEffectivePower(gd, specter)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, specter)).isEqualTo(3);
@@ -42,9 +41,6 @@ class EntropicSpecterTest extends BaseCardTest {
         harness.setHand(player2, handOf(3));
         harness.castFromHand(player1, new EntropicSpecter(), "{3}{B}{B}");
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
-            harness.handlePermanentChosen(player1, player2.getId());
-        }
         Permanent specter = findPermanent(player1, "Entropic Specter");
         harness.setHand(player1, handOf(5));
         addCreatureReady(player2, new DominatingLicid());
@@ -119,6 +115,8 @@ class EntropicSpecterTest extends BaseCardTest {
                 List.of(new DealDamageToAnyTargetEffect(1)),
                 "{T}: This creature deals 1 damage to any target."));
         Permanent specter = addCreatureReady(player1, card);
+        specter.setRememberedTargetPlayerId(player2.getId());
+        specter.getChosenPlayerIds().add(player2.getId());
 
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(specter), null, player2.getId());
@@ -133,8 +131,12 @@ class EntropicSpecterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 
-    private Permanent addSpecter(com.github.laxika.magicalvibes.model.Player player) {
-        return addCreatureReady(player, new EntropicSpecter());
+    private Permanent addSpecter(Player player) {
+        Player opponent = player == player1 ? player2 : player1;
+        Permanent specter = addCreatureReady(player, new EntropicSpecter());
+        specter.setRememberedTargetPlayerId(opponent.getId());
+        specter.getChosenPlayerIds().add(opponent.getId());
+        return specter;
     }
 
     private List<Card> handOf(int count) {

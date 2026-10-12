@@ -85,7 +85,11 @@ public class BattlefieldEntryService {
             List<UUID> opponents = gameData.orderedPlayerIds.stream()
                     .filter(id -> !id.equals(controllerId)).toList();
             if (opponents.size() == 1) {
-                permanent.getChosenPlayerIds().add(opponents.getFirst());
+                UUID onlyOpponentId = opponents.getFirst();
+                permanent.getChosenPlayerIds().add(onlyOpponentId);
+                permanent.getProtectionFromPlayerIdsPermanently().clear();
+                permanent.getProtectionFromPlayerIdsPermanently().add(onlyOpponentId);
+                permanent.setRememberedTargetPlayerId(onlyOpponentId);
             }
         }
         return effect != null && effect.handAccess() == ChooseCardNameOnEnterEffect.HandAccess.NONE

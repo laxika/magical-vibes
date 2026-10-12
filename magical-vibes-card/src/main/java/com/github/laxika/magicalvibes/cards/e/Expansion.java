@@ -32,6 +32,7 @@ import java.util.Set;
 public class Expansion extends Card {
 
     public Expansion() {
+        setAllowSharedTargets(true);
         TargetFilter instantOrSorceryWithManaValueAtMostFour = new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),

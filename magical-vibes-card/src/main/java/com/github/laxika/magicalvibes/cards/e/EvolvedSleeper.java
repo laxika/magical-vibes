@@ -20,7 +20,8 @@ public class EvolvedSleeper extends Card {
 
     public EvolvedSleeper() {
         addActivatedAbility(new ActivatedAbility(false, "{B}",
-                List.of(new BecomeCreatureTypeWithBasePowerToughnessEffect(2, 2, CardSubtype.CLERIC)),
+                List.of(BecomeCreatureTypeWithBasePowerToughnessEffect.replacingSubtype(2, 2, CardSubtype.CLERIC, null,
+                        CardSubtype.PHYREXIAN)),
                 "{B}: This creature becomes a Human Cleric with base power and toughness 2/2."));
 
         addActivatedAbility(new ActivatedAbility(false, "{1}{B}", List.of(

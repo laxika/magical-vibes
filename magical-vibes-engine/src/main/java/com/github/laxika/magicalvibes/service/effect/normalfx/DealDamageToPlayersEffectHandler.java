@@ -228,7 +228,10 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    /** TARGET_SPELL_CONTROLLER: victim = the controller of the targeted spell still on the stack. */
+    /**
+     * TARGET_SPELL_CONTROLLER: victim = the controller of the targeted spell. When an earlier effect
+     * of this resolution countered the spell, the controller remembered at that counter is used.
+     */
     private void resolveTargetSpellController(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
@@ -240,9 +243,9 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                 break;
             }
         }
-        if (targetSpell == null) return;
+        UUID victimId = targetSpell != null ? targetSpell.getControllerId() : entry.getCounteredSpellControllerId();
+        if (victimId == null) return;
 
-        UUID victimId = targetSpell.getControllerId();
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             int amount = evaluateAmount(gameData, entry, e, victimId);
             if (amount <= 0) return;

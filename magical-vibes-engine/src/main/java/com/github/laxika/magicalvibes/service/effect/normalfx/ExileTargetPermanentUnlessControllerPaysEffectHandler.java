@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ExileTargetPermanentUnlessControllerPaysEffectHandler implements No
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
     private final ExileTargetPermanentEffectHandler exileTargetPermanentEffectHandler;
+    private final PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,16 +51,19 @@ public class ExileTargetPermanentUnlessControllerPaysEffectHandler implements No
             return;
         }
 
-        int amount = amountEvaluationService.evaluate(gameData, e.manaAmount(),
-                AmountContext.forStackEntry(entry, null));
-        if (amount <= 0) {
-            return;
-        }
+        // "Unless its controller pays {X}" still offers the choice at X = 0: paying {0} keeps the
+        // target, declining exiles it.
+        int amount = Math.max(0, amountEvaluationService.evaluate(gameData, e.manaAmount(),
+                AmountContext.forStackEntry(entry, null)));
 
         String manaCost = "{" + amount + "}";
         ManaCost cost = new ManaCost(manaCost);
         ManaPool pool = gameData.playerManaPools.get(targetControllerId);
-        if (!cost.canPay(pool)) {
+        // Mana abilities may be activated while the choice is open (the payment is made as the
+        // choice resolves), so untapped mana sources count toward what the controller can pay.
+        boolean canPayWithSources = potentialManaService
+                .buildVirtualManaPool(gameData, targetControllerId).getTotal() >= amount;
+        if (!cost.canPay(pool) && !canPayWithSources) {
             exileTargetPermanent(gameData, entry.getCard(), entry.getControllerId(),
                     targetPermanentId, entry.getSourcePermanentId());
             return;

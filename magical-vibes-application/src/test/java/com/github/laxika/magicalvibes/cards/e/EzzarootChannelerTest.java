@@ -129,7 +129,7 @@ class EzzarootChannelerTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "test life loss");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "test life loss"));
         addCreatureReady(player1, new EzzarootChanneler());
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();

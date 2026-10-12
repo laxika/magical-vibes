@@ -87,8 +87,7 @@ class EtherealEscortTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.PerpetualPowerToughnessChoice.class);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

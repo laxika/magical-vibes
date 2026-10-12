@@ -131,7 +131,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         } else if (e.restDestination() == LookDestination.TOP_OF_LIBRARY) {
             resolveRestOnTop(gameData, entry, lookCount);
         } else if (e.restDestination() == LookDestination.EXILE) {
-            resolveRestToExile(gameData, entry, lookCount, chooseCount);
+            resolveRestToExile(gameData, entry, e, lookCount, chooseCount);
         } else if (e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM) {
             resolveRestToBottom(gameData, entry, e, lookCount, chooseCount, true);
         } else {
@@ -637,14 +637,22 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
     // ===== exile the rest (Browse) =====
 
-    private void resolveRestToExile(GameData gameData, StackEntry entry, int lookCount, int chooseCount) {
+    private void resolveRestToExile(GameData gameData, StackEntry entry, LookAtTopCardsEffect e,
+            int lookCount, int chooseCount) {
         LibraryRevealSupport.TopCardsResult result =
-                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, !e.reveal());
         if (result == null) return;
 
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
+
+        if (e.reveal()) {
+            GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals ");
+            appendCardList(revealBuilder, topCards);
+            revealBuilder.text(" from the top of their library with ").card(entry.getCard()).text(".");
+            gameLogService.append(gameData, revealBuilder.build());
+        }
 
         if (chooseCount == 0) {
             for (Card card : topCards) {

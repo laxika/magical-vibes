@@ -12,6 +12,11 @@ public record ControllerLifeAtMost(int threshold, boolean halfStartingLife) impl
     }
 
     @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
+
+    @Override
     public String conditionName() {
         return halfStartingLife ? "life at or below half the starting life total"
                 : "life at or below " + threshold;

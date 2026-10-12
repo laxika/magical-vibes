@@ -31,7 +31,7 @@ class EnergyStormTest extends BaseCardTest {
         harness.forceActivePlayer(currentActivePlayer);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
+        harness.passUntil(nextActivePlayer, TurnStep.UPKEEP);
     }
 
     @Test
@@ -172,7 +172,6 @@ class EnergyStormTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         advanceToNextTurn(player2);
-        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

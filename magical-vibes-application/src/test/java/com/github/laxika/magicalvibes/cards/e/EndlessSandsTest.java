@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.f.FeralProwler;
 import com.github.laxika.magicalvibes.cards.h.HostileDesert;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EndlessSands.class, FeralProwler.class, HostileDesert.class})
+@CardUsed({EndlessSands.class, FeralProwler.class, HostileDesert.class, ControlMagic.class})
 class EndlessSandsTest extends BaseCardTest {
 
     @Test
@@ -155,8 +156,13 @@ class EndlessSandsTest extends BaseCardTest {
     void returnsEveryExiledCreatureToItsOwner() {
         Permanent sands = harness.addToBattlefieldAndReturn(player1, new EndlessSands());
         Permanent own = harness.addToBattlefieldAndReturn(player1, new FeralProwler());
-        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new FeralProwler());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, new FeralProwler());
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        harness.setHand(player1, List.of(new ControlMagic()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, stolen.getId());
+        harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, 1, null, own.getId());

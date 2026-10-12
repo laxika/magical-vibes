@@ -24,6 +24,6 @@ public class ElectrostaticBlast extends Card {
         addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
         addEffect(EffectSlot.SPELL, RegisterDelayedControllerSpellCastTriggerEffect.oneShotUntilConsumed(
                 INSTANT_OR_SORCERY,
-                List.of(new ExileTopCardsChooseOneMayPlayThisTurnEffect(3))));
+                List.of(ExileTopCardsChooseOneMayPlayThisTurnEffect.mayPlayOneOfThem(3))));
     }
 }

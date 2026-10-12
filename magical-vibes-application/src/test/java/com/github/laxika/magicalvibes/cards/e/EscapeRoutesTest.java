@@ -8,8 +8,13 @@ import com.github.laxika.magicalvibes.cards.t.ThornscapeFamiliar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -103,8 +108,8 @@ class EscapeRoutesTest extends BaseCardTest {
         addEscapeRoutes(player1);
         SunscapeFamiliar card = new SunscapeFamiliar();
         card.setOwnerId(player2.getId());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, card);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, card);
+        gainControl(player1, target);
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -125,9 +130,7 @@ class EscapeRoutesTest extends BaseCardTest {
         addAbilityMana();
         harness.activateAbility(player1, 0, null, target.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        gainControl(player2, target);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Sunscape Familiar");
@@ -197,6 +200,13 @@ class EscapeRoutesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Sunscape Familiar");
         harness.assertNotInHand(player1, "Sunscape Familiar");
+    }
+
+    private void gainControl(Player newController, Permanent target) {
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, newController.getId(), target,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
     }
 
     private void addEscapeRoutes(Player player) {

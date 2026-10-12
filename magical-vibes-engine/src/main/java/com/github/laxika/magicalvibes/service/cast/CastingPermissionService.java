@@ -753,7 +753,8 @@ public class CastingPermissionService {
         if (gameQueryService.cardHasType(card, CardType.ARTIFACT, gameData, playerId)) return false;
         if (!anyPlayerControlsEtherswornCanonist(gameData)) return false;
         return gameData.getSpellsCastThisTurn(playerId).stream()
-                .anyMatch(cast -> !gameQueryService.cardHasType(cast, CardType.ARTIFACT, gameData, playerId));
+                .anyMatch(cast -> !cast.hasType(CardType.ARTIFACT)
+                        && !gameData.wasArtifactSpellWhenCastThisTurn(cast.getId()));
     }
 
     public boolean isAdditionalNonPhyrexianSpellRestricted(GameData gameData, UUID playerId, Card card) {
@@ -843,6 +844,7 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof CantCastAdditionalNonartifactSpellsEffect) return true;
                 }
@@ -867,8 +869,9 @@ public class CastingPermissionService {
                         if (cantCast.opponentsOnly() && pid.equals(castingPlayerId)) {
                             continue;
                         }
+                        // The restriction names the exiled card, so it ends once that card leaves exile.
                         Card imprinted = gameData.getImprintedCard(perm.getCard());
-                        if (imprinted != null) {
+                        if (imprinted != null && gameData.findExiledCard(imprinted.getId()) != null) {
                             forbidden.add(imprinted.getName());
                         }
                         gameData.getCardsExiledByPermanent(perm.getId()).stream()
@@ -2247,11 +2250,20 @@ public class CastingPermissionService {
         return card.getId().equals(gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.get(playerId));
     }
 
-    /** Returns whether the owner may privately look at their own top card via that card's ability. */
+    /**
+     * Returns whether the owner may privately look at their own top card via a static ability of a
+     * permanent they control. A card in the library has no abilities that function there, so the
+     * card on top of the library does not grant this permission to itself.
+     */
     public boolean mayLookAtOwnLibraryTop(GameData gameData, UUID playerId) {
-        List<Card> deck = gameData.playerDecks.get(playerId);
-        return deck != null && !deck.isEmpty()
-                && deck.getFirst().getEffects(EffectSlot.STATIC).stream()
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .filter(permanent -> !permanent.isFaceDown())
+                .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
+                .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent).stream())
                 .anyMatch(effect -> effect instanceof LookAtTopCardOfOwnLibraryEffect
                         || effect instanceof ConditionalEffect conditional
                         && conditional.wrapped() instanceof LookAtTopCardOfOwnLibraryEffect

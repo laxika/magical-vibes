@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -111,8 +110,8 @@ class ElvishFarmerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, amoeboid.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, farmer, Keyword.CHANGELING)).isTrue();
-        assertThat(gqs.hasKeyword(gd, amoeboid, Keyword.CHANGELING)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, farmer, CardSubtype.SAPROLING)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, amoeboid)).isEmpty();
 
         harness.activateAbility(player1, 1, 1, null, null);
         harness.passBothPriorities();

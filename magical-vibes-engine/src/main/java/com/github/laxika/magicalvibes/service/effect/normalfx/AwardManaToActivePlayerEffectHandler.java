@@ -21,8 +21,8 @@ import java.util.UUID;
 
 /**
  * Resolves {@link AwardManaToActivePlayerEffect} — Eladamri's Vineyard's "that player adds
- * {@code {G}{G}}". The mana goes to the player recorded as the entry's target (the active player
- * at trigger time), falling back to the entry's controller when no target was recorded.
+ * {@code {G}{G}}". The mana goes to the entry's active player (the active player at trigger time),
+ * falling back to the entry's target and then its controller when no active player was recorded.
  */
 @Slf4j
 @Component
@@ -54,7 +54,8 @@ public class AwardManaToActivePlayerEffectHandler implements NormalEffectHandler
             return;
         }
 
-        UUID recipientId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
+        UUID recipientId = entry.getActivePlayerId() != null ? entry.getActivePlayerId()
+                : entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(recipientId);
         if (pool == null) {
             return;

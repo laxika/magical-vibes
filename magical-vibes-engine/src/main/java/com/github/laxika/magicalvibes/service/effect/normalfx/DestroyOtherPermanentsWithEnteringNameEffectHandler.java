@@ -46,7 +46,7 @@ public class DestroyOtherPermanentsWithEnteringNameEffectHandler implements Norm
                 if (enteringId != null && perm.getId().equals(enteringId)) {
                     continue;
                 }
-                if (name.equals(perm.getCard().getName())) {
+                if (name.equals(gameQueryService.getEffectiveName(gameData, perm))) {
                     toDestroy.add(perm);
                 }
             }
@@ -60,7 +60,7 @@ public class DestroyOtherPermanentsWithEnteringNameEffectHandler implements Norm
         if (enteringId != null) {
             Permanent entering = gameQueryService.findPermanentById(gameData, enteringId);
             if (entering != null) {
-                return entering.getCard().getName();
+                return gameQueryService.getEffectiveName(gameData, entering);
             }
         }
         UUID cardId = entry.getTriggeringCardId();
@@ -81,6 +81,13 @@ public class DestroyOtherPermanentsWithEnteringNameEffectHandler implements Norm
         }
         for (var graveyard : gameData.playerGraveyards.values()) {
             for (Card card : graveyard) {
+                if (card.getId().equals(cardId)) {
+                    return card;
+                }
+            }
+        }
+        for (var hand : gameData.playerHands.values()) {
+            for (Card card : hand) {
                 if (card.getId().equals(cardId)) {
                     return card;
                 }

@@ -152,9 +152,30 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                 ctx.entry().getSourcePermanentId(), ctx.combat());
     }
 
+    /**
+     * The option label for an absorber. Replacement choices are answered by label, so when several
+     * absorbers share a name they are numbered in battlefield order to keep every label distinct.
+     */
     private String absorberName(PlayerDamageContext ctx, String instance) {
         Permanent absorber = gameQueryService.findPermanentById(ctx.gameData(), UUID.fromString(instance));
-        return absorber == null ? "A permanent" : absorber.getCard().getName();
+        if (absorber == null) {
+            return "A permanent";
+        }
+        String name = absorber.getCard().getName();
+        List<Permanent> sameName = absorbers(ctx).stream()
+                .filter(candidate -> candidate.getCard().getName().equals(name))
+                .toList();
+        if (sameName.size() < 2) {
+            return name;
+        }
+        int position = 1;
+        for (Permanent candidate : sameName) {
+            if (candidate.getId().equals(absorber.getId())) {
+                break;
+            }
+            position++;
+        }
+        return name + " (" + position + ")";
     }
 
     @Override

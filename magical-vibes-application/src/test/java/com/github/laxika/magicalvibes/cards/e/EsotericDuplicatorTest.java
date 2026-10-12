@@ -117,6 +117,7 @@ class EsotericDuplicatorTest extends BaseCardTest {
     @DisplayName("A copied Duplicator retains its abilities and can itself be copied")
     void sacrificedTokenCanBeCopiedAgain() {
         Permanent duplicator = addCreatureReady(player1, new EsotericDuplicator());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new EsotericDuplicator(), new EsotericDuplicator(),
                 new EsotericDuplicator(), new EsotericDuplicator()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -149,16 +150,19 @@ class EsotericDuplicatorTest extends BaseCardTest {
     @DisplayName("Sacrificing during an end step waits until the next turn's end step")
     void sacrificeDuringEndStepWaitsForNextEndStep() {
         Permanent duplicator = addCreatureReady(player1, new EsotericDuplicator());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new EsotericDuplicator(), new EsotericDuplicator()));
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.activateAbility(player1, 0, null, duplicator.getId());
-        resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
-        resolveAllTriggers();
-        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, null, duplicator.getId());
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
+            assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        });
 
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

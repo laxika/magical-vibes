@@ -79,14 +79,9 @@ class EdgarsAwakeningTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isEqualTo("{B}");
 
         harness.handleMayAbilityChosen(player1, true);
-        while (!gd.stack.isEmpty() || gd.interaction.isAwaitingInput()) {
-            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-                harness.handleMayAbilityChosen(player1, false);
-                continue;
-            }
-            if (gd.interaction.isAwaitingInput()) {
-                break;
-            }
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
 
@@ -150,6 +145,7 @@ class EdgarsAwakeningTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
@@ -195,6 +191,7 @@ class EdgarsAwakeningTest extends BaseCardTest {
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
             harness.handleMayAbilityChosen(player1, true);
+            harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
             harness.assertInGraveyard(player1, "Grizzly Bears");
             harness.assertNotInHand(player1, "Grizzly Bears");
@@ -251,8 +248,8 @@ class EdgarsAwakeningTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }

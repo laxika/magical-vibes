@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -620,10 +621,11 @@ public class PermanentChoiceTriggerHandlerService {
                 permanentId,
                 ctt.sourcePermanentId()
         );
+        entry.setTargetFilter(TargetFilters.creatureAnOpponentControls());
         pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, permanentId);
-        
+
         gameLogService.append(gameData, GameLog.builder().card(ctt.sourceCard()).text("'s clash trigger targets " + targetName + ".").build());
         log.info("Game {} - {} clash trigger targets {}", gameData.id, ctt.sourceCard().getName(), targetName);
 

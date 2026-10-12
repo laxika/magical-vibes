@@ -5,8 +5,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -124,8 +129,14 @@ class EnnisDebateModeratorTest extends BaseCardTest {
     @Test
     @DisplayName("A borrowed creature returns under its owner's control")
     void returnsBorrowedCreatureToOwner() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new EternalStudent());
+        EternalStudent ownedByPlayer2 = new EternalStudent();
+        ownedByPlayer2.setOwnerId(player2.getId());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, ownedByPlayer2);
         gd.stolenCreatures.put(creature.getId(), player2.getId());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), creature,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
         castEnnis(List.of(creature.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -146,6 +157,7 @@ class EnnisDebateModeratorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         Permanent token = findPermanent(player1, "Inkling");

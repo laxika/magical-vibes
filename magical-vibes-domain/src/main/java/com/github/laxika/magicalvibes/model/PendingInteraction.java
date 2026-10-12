@@ -237,7 +237,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     record EcologicalAppreciationSearchChoice(UUID playerId, java.util.List<Card> pool,
-                                               int maxManaValue)
+                                               int maxManaValue, UUID decisionPlayerId)
             implements PendingInteraction {
         public EcologicalAppreciationSearchChoice {
             pool = java.util.List.copyOf(pool);
@@ -249,7 +249,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public UUID decidingPlayerId() {
-            return playerId;
+            return decisionPlayerId != null ? decisionPlayerId : playerId;
         }
 
         @Override
@@ -6240,7 +6240,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    record EspersToMagiciteCreatureChoice(UUID playerId, java.util.List<UUID> validCardIds)
+    /**
+     * Target choice of the reflexive "when you exile one or more cards this way" trigger, made when
+     * that trigger is put onto the stack after the spell has finished resolving.
+     */
+    record EspersToMagiciteCreatureChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                          Card sourceCard)
             implements PendingInteraction {
         public EspersToMagiciteCreatureChoice {
             validCardIds = java.util.List.copyOf(validCardIds);

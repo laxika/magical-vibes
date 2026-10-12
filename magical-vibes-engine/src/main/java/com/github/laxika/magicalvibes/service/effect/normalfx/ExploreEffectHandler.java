@@ -44,7 +44,6 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         ExploreEffect exploreEffect = (ExploreEffect) effect;
-        UUID controllerId = entry.getControllerId();
         UUID exploringPermanentId = findExploringPermanentId(gameData, entry, exploreEffect);
         if (exploreEffect.permanentId() != null
                 && gameQueryService.findPermanentById(gameData, exploreEffect.permanentId()) == null) {
@@ -55,6 +54,9 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
         }
         Permanent exploringPermanent = exploringPermanentId == null
                 ? null : gameQueryService.findPermanentById(gameData, exploringPermanentId);
+        UUID controllerId = exploringPermanent == null
+                ? entry.getControllerId()
+                : gameQueryService.findPermanentController(gameData, exploringPermanent.getId());
         int exploreCount = exploreEffect.amount() == null
                 ? 1
                 : Math.max(0, amountEvaluationService.evaluate(gameData, exploreEffect.amount(),

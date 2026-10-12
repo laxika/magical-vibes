@@ -18,13 +18,13 @@ public class EssenceBacklash extends Card {
 
     public EssenceBacklash() {
         // Counter target creature spell. Essence Backlash deals damage equal to that spell's power
-        // to its controller. Damage before the counter so the spell is still on the stack for
-        // TargetSpellPower / TARGET_SPELL_CONTROLLER (rules-equivalent; also covers uncounterable).
+        // to its controller. Effects run in printed order: the counter first, then the damage, which
+        // reads the countered spell's last-known power and controller.
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                 "Target must be a creature spell."
-        )).addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
-                new TargetSpellPower(), DamageRecipient.TARGET_SPELL_CONTROLLER))
-          .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect())
+          .addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
+                new TargetSpellPower(), DamageRecipient.TARGET_SPELL_CONTROLLER));
     }
 }

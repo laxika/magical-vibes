@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VotingResult;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ErestorOfTheCouncilEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -35,7 +36,7 @@ public class ErestorOfTheCouncilEffectHandler implements NormalEffectHandlerBean
         UUID controllerId = entry.getControllerId();
         Set<String> controllerChoices = result.choicesByPlayer()
                 .getOrDefault(controllerId, Set.of());
-        int matchingOpponents = 0;
+        List<UUID> matchingOpponents = new ArrayList<>();
         int opponentsWithDifferentChoice = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {
@@ -46,7 +47,7 @@ public class ErestorOfTheCouncilEffectHandler implements NormalEffectHandlerBean
                 continue;
             }
             if (opponentChoices.stream().anyMatch(controllerChoices::contains)) {
-                matchingOpponents++;
+                matchingOpponents.add(playerId);
             }
             if (opponentChoices.stream().anyMatch(choice -> !controllerChoices.contains(choice))) {
                 opponentsWithDifferentChoice++;
@@ -54,7 +55,9 @@ public class ErestorOfTheCouncilEffectHandler implements NormalEffectHandlerBean
         }
 
         List<CardEffect> followUps = new ArrayList<>();
-        followUps.add(CreateTokenEffect.ofTreasureToken(matchingOpponents));
+        for (UUID opponentId : matchingOpponents) {
+            followUps.add(new CreateTokenForPlayerEffect(opponentId, CreateTokenEffect.ofTreasureToken(1)));
+        }
         followUps.add(new ScryEffect(opponentsWithDifferentChoice));
         followUps.add(new DrawCardEffect());
         entry.insertEffectsToResolve(1, followUps);

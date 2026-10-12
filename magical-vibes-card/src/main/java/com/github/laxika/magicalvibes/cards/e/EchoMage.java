@@ -55,9 +55,7 @@ public class EchoMage extends Card {
     }
 
     private static ActivatedAbility copyAbility(int copyCount) {
-        List<CardEffect> copies = copyCount == 1
-                ? List.of(new CopySpellEffect())
-                : List.of(new CopySpellEffect(), new CopySpellEffect());
+        List<CardEffect> copies = List.of(copyCount == 1 ? new CopySpellEffect() : CopySpellEffect.times(copyCount));
         return new ActivatedAbility(
                 true,
                 "{U}{U}",

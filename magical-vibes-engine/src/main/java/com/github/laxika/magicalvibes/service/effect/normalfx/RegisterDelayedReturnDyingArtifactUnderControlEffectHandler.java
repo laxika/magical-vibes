@@ -29,7 +29,8 @@ public class RegisterDelayedReturnDyingArtifactUnderControlEffectHandler impleme
         }
 
         gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldUnderControl(
-                artifactCardId, controllerId, null, false, null, 0, null, null, true, false));
+                artifactCardId, controllerId, null, false, null, 0, null, null, true, false,
+                gameData.graveyardEntryVersion(artifactCardId)));
         log.info("Game {} - {} schedules an artifact to return at the next end step",
                 gameData.id, entry.getDescription());
     }

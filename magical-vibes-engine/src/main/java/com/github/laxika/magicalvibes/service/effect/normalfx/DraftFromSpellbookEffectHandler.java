@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftCardIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -47,7 +48,9 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
                         Card preview = factory.get();
                         return new ChooseOneEffect.ChooseOneOption(
                                 preview.getName(),
-                                new ConjureCardOntoBattlefieldEffect(factory, Set.of(CardType.LAND),
+                                draft.mode() == DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND
+                                        ? new DraftCardIntoHandEffect(factory)
+                                        : new ConjureCardOntoBattlefieldEffect(factory, Set.of(CardType.LAND),
                                         draft.conjure()));
                     })
                     .toList();

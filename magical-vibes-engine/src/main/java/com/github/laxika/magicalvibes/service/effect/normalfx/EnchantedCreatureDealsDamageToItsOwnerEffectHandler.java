@@ -31,9 +31,18 @@ public class EnchantedCreatureDealsDamageToItsOwnerEffectHandler implements Norm
         var e = (EnchantedCreatureDealsDamageToItsOwnerEffect) effect;
 
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null || !aura.isAttached()) return;
+        UUID enchantedCreatureId;
+        if (aura != null) {
+            if (!aura.isAttached()) return;
+            enchantedCreatureId = aura.getAttachedTo();
+        } else {
+            // The aura has left the battlefield: the ability still resolves against the creature
+            // it enchanted when the trigger was put on the stack (last known information).
+            if (entry.getAttachedPermanentSnapshot() == null) return;
+            enchantedCreatureId = entry.getAttachedPermanentSnapshot().getId();
+        }
 
-        Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        Permanent creature = gameQueryService.findPermanentById(gameData, enchantedCreatureId);
         if (creature == null) return;
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());

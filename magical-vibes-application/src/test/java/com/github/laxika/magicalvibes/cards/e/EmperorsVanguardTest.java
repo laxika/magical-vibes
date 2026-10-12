@@ -7,10 +7,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -148,6 +151,7 @@ class EmperorsVanguardTest extends BaseCardTest {
         Card creature = new GrizzlyBears();
         gd.playerDecks.get(player1.getId()).addFirst(creature);
 
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
         resolveCombat();
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(vanguard);
@@ -169,6 +173,7 @@ class EmperorsVanguardTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).addFirst(originalControllersLand);
         gd.playerDecks.get(player2.getId()).addFirst(currentControllersLand);
 
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of(TurnStep.COMBAT_DAMAGE));
         resolveCombat();
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(vanguard);

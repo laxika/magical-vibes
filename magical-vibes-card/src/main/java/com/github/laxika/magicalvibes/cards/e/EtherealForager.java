@@ -22,7 +22,7 @@ public class EtherealForager extends Card {
 
         addEffect(EffectSlot.SPELL, new DelveCost());
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
-                new PutCardExiledWithSourceIntoHandEffect(instantOrSorcery),
+                new PutCardExiledWithSourceIntoHandEffect(null, instantOrSorcery, true),
                 "Return an instant or sorcery card exiled with Ethereal Forager to its owner's hand?"));
     }
 }

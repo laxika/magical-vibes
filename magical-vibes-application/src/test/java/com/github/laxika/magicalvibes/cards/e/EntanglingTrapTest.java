@@ -171,7 +171,9 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CloudcrownOak()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player2.getId()));
+        // Entangling Trap's "whenever you clash" is controlled by player1, so player1 must be the clasher
+        // (the opponent's spell or ability causing the clash still lets the trigger fire, per the 2013-09-20 ruling).
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
@@ -193,7 +195,9 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new CloudcrownOak()));
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player2.getId()));
+        // Entangling Trap's "whenever you clash" is controlled by player1, so player1 must be the clasher
+        // (the opponent's spell or ability causing the clash still lets the trigger fire, per the 2013-09-20 ruling).
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().performClash(gd, player1.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());

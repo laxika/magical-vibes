@@ -47,10 +47,7 @@ public class DamageTargetPlayerUnlessPaysPerCounterEffectHandler implements Norm
         }
 
         int counters = self.getCounterCount(e.counterType());
-        if (counters <= 0) {
-            return;
-        }
-
+        // With no counters the cost is zero: the payer may still "pay" {0} to avoid the damage.
         EachPlayerTakesDamageUnlessPaysEffect payOrDamage = new EachPlayerTakesDamageUnlessPaysEffect(
                 e.damage(), e.costPerCounter().repeat(counters));
         eachPlayerTakesDamageUnlessPaysEffectHandler.offerToPlayers(

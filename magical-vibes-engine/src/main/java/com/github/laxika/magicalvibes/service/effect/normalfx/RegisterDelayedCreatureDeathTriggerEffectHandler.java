@@ -28,7 +28,8 @@ public class RegisterDelayedCreatureDeathTriggerEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         RegisterDelayedCreatureDeathTriggerEffect delayed = (RegisterDelayedCreatureDeathTriggerEffect) effect;
         gameData.creatureDeathTriggerWatchers.add(
-                new CreatureDeathTriggerWatcher(entry.getControllerId(), entry.getCard(), delayed.effect()));
+                new CreatureDeathTriggerWatcher(entry.getControllerId(), entry.getCard(), delayed.effect(),
+                        delayed.onlyOthers() ? entry.getSourcePermanentId() : null));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": whenever a creature dies this turn, its delayed ability triggers."));
         log.info("Game {} - {} registers a creature-death trigger for the turn",

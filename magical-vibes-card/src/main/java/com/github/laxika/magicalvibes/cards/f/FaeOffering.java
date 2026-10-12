@@ -29,7 +29,7 @@ public class FaeOffering extends Card {
                                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))
                 )),
                 SequenceEffect.of(
-                        CreateTokenEffect.ofClueToken(1),
+                        CreateTokenEffect.ofClueToken(1).withInvestigate(false),
                         foodToken(),
                         CreateTokenEffect.ofTreasureToken(1))));
     }

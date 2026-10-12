@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.b.BeskirShieldmate;
 import com.github.laxika.magicalvibes.cards.j.JasperaSentinel;
 import com.github.laxika.magicalvibes.cards.t.TyvarKell;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -119,8 +120,9 @@ class ElvishWarmasterTest extends BaseCardTest {
 
     @Test
     void triggerResetsOnTheNextTurnAndAcceptsElfTokens() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new ElvishWarmaster());
-        harness.addToBattlefield(player1, new TyvarKell());
+        harness.addToBattlefieldAndReturn(player1, new TyvarKell()).setCounterCount(CounterType.LOYALTY, 3);
         harness.activateAbility(player1, 1, 1, null, null);
         harness.passBothPriorities();
         harness.passBothPriorities();

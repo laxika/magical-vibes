@@ -67,6 +67,7 @@ class ErrantEphemeronTest extends BaseCardTest {
         }
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -89,6 +90,7 @@ class ErrantEphemeronTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
@@ -164,10 +166,13 @@ class ErrantEphemeronTest extends BaseCardTest {
     @DisplayName("Suspend haste ends when the caster loses control of the creature")
     void suspendHasteEndsOnControlChange() {
         suspendCard();
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         var creature = findPermanent(player1, "Errant Ephemeron");

@@ -162,8 +162,11 @@ class EmptinessTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
+
+        assertThat(harness.getGameData().interaction.isAwaitingInput()).isTrue();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         harness.assertOnBattlefield(player1, "Emptiness");

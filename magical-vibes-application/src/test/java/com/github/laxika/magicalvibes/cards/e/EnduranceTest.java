@@ -68,7 +68,7 @@ class EnduranceTest extends BaseCardTest {
 
         harness.castInstantWithAlternateExileFromHand(player1, 0, player2.getId(), 1);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(greenCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();

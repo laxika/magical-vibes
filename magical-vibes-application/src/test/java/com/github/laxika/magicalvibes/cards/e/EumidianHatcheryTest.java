@@ -46,7 +46,7 @@ class EumidianHatcheryTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castSorcery(player2, 0, hatchery.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Insect")).hasSize(2)
                 .allMatch(token -> token.getCard().getPower() == 1

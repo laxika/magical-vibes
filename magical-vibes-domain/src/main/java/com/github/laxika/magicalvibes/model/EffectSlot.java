@@ -1041,6 +1041,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_PERMANENT,
     /** Triggers whenever one or more +1/+1 counters are put on a creature the controller controls. */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_CREATURE,
+    /** Triggers whenever one or more +1/+1 counters are put on a creature, regardless of that
+     *  creature's controller, including the source itself. Fired once per counter-placement event. */
+    ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANY_CREATURE,
     /** Triggers whenever one or more +1/+1 counters are put on another Hero the controller controls. */
     ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO,
     /** Triggers whenever the controller puts one or more +1/+1 counters on another creature. */

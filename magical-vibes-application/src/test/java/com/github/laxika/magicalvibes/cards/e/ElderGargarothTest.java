@@ -111,9 +111,8 @@ class ElderGargarothTest extends BaseCardTest {
                 new BlockerAssignment(blockerIndex, gd.playerBattlefields.get(player1.getId()).indexOf(first)),
                 new BlockerAssignment(blockerIndex, gd.playerBattlefields.get(player1.getId()).indexOf(second))));
         resolveTriggerAndChoose(player2, GAIN_LIFE);
-        harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(23);
     }
 
@@ -183,7 +182,8 @@ class ElderGargarothTest extends BaseCardTest {
     }
 
     private void resolveTriggerAndChoose(String mode) {
-        resolveTriggerAndChoose(player1, mode);
+        harness.handleListChoice(player1, mode);
+        harness.passBothPriorities();
     }
 
     private void resolveTriggerAndChoose(com.github.laxika.magicalvibes.model.Player player, String mode) {

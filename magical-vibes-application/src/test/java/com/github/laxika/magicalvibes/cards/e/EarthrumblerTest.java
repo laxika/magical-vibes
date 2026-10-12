@@ -82,7 +82,7 @@ class EarthrumblerTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, earthrumbler)).isTrue();
         assertThat(earthrumbler.isTapped()).isFalse();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.isCreature(gd, earthrumbler)).isFalse();
         harness.assertInGraveyard(player1, "Spellbook");
     }
@@ -115,7 +115,7 @@ class EarthrumblerTest extends BaseCardTest {
         assertThat(memnite.isTapped()).isTrue();
         assertThat(earthrumbler.isTapped()).isFalse();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.isCreature(gd, earthrumbler)).isFalse();
     }
 

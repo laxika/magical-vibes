@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -133,11 +134,15 @@ public class EnsnaredByTheMaraVillainousChoiceEffectHandler implements NormalEff
         }
 
         List<Card> library = gameData.playerDecks.get(opponentId);
-        int totalManaValue = 0;
+        List<Card> exiledCards = new ArrayList<>();
         for (int i = 0; i < 4 && library != null && !library.isEmpty(); i++) {
-            Card card = library.removeFirst();
+            exiledCards.add(library.removeFirst());
+        }
+        gameData.runAsSingleCardExileBatch(() -> exiledCards.forEach(
+                card -> exileService.exileCard(gameData, opponentId, card)));
+        int totalManaValue = 0;
+        for (Card card : exiledCards) {
             totalManaValue += card.getManaValue();
-            exileService.exileCard(gameData, opponentId, card);
             gameLogService.append(gameData, GameLog.builder()
                     .text(gameData.playerIdToName.get(opponentId) + " exiles ")
                     .card(card).text(" from the top of their library.").build());

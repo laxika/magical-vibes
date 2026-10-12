@@ -499,6 +499,8 @@ public class Permanent {
     private final Set<UUID> protectionFromPlayerIdsPermanently = new HashSet<>();
     /** Players from whom this permanent has protection until end of turn. */
     private final Set<UUID> protectionFromPlayerIdsUntilEndOfTurn = new HashSet<>();
+    /** Players this permanent has protection from until a player's next turn, keyed by that player (Eon Frolicker). */
+    private final Map<UUID, Set<UUID>> protectionFromPlayerIdsUntilNextTurnOf = new HashMap<>();
     /** Subtypes for "protection from non-[subtype] creatures" granted until end of turn.
      *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
      *  Cleared by {@link #resetModifiers()}. */
@@ -536,6 +538,8 @@ public class Permanent {
     @Setter private Integer lastKnownEquipmentCount;
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield this turn. */
     @Setter private boolean exileIfLeavesBattlefieldUntilEndOfTurn;
+    /** Timestamp of the grant of {@link #exileIfLeavesBattlefieldUntilEndOfTurn}, used to tell whether a later loss of abilities removed it. */
+    @Setter private long exileIfLeavesBattlefieldUntilEndOfTurnTimestamp;
     @Setter private boolean enteredViaUnearth;
     /** When this permanent entered the battlefield from a graveyard, the ID of the player whose graveyard
      *  it came from; {@code null} otherwise. Read during the entering creature's ETB processing to fire
@@ -1001,6 +1005,8 @@ public class Permanent {
         this.protectionFromOpponentsPermanently = source.protectionFromOpponentsPermanently;
         this.protectionFromPlayerIdsPermanently.addAll(source.protectionFromPlayerIdsPermanently);
         this.protectionFromPlayerIdsUntilEndOfTurn.addAll(source.protectionFromPlayerIdsUntilEndOfTurn);
+        source.protectionFromPlayerIdsUntilNextTurnOf.forEach((untilTurnOfPlayerId, playerIds) ->
+                this.protectionFromPlayerIdsUntilNextTurnOf.put(untilTurnOfPlayerId, new HashSet<>(playerIds)));
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
         this.protectionFromOpponentCreaturesUntilEndOfTurn = source.protectionFromOpponentCreaturesUntilEndOfTurn;
         this.protectionRemovedUntilEndOfTurn = source.protectionRemovedUntilEndOfTurn;
@@ -1012,6 +1018,7 @@ public class Permanent {
         this.lastKnownAuraCount = source.lastKnownAuraCount;
         this.lastKnownEquipmentCount = source.lastKnownEquipmentCount;
         this.exileIfLeavesBattlefieldUntilEndOfTurn = source.exileIfLeavesBattlefieldUntilEndOfTurn;
+        this.exileIfLeavesBattlefieldUntilEndOfTurnTimestamp = source.exileIfLeavesBattlefieldUntilEndOfTurnTimestamp;
         this.enteredViaUnearth = source.enteredViaUnearth;
         this.shroudIgnoredByPlayersUntilEndOfTurn.addAll(source.shroudIgnoredByPlayersUntilEndOfTurn);
         this.cantBlockIds.addAll(source.cantBlockIds);
@@ -2022,6 +2029,21 @@ public class Permanent {
      * and land animation (e.g. Sylvan Awakening). Called at the beginning of the controller's
      * next turn, not at end of turn.
      */
+    public void addProtectionFromPlayerUntilNextTurnOf(UUID untilTurnOfPlayerId, UUID protectedFromPlayerId) {
+        protectionFromPlayerIdsUntilNextTurnOf
+                .computeIfAbsent(untilTurnOfPlayerId, ignored -> new HashSet<>()).add(protectedFromPlayerId);
+    }
+
+    /** Ends the protection-from-player grants that last until {@code untilTurnOfPlayerId}'s next turn. */
+    public void clearProtectionFromPlayersUntilTurnOf(UUID untilTurnOfPlayerId) {
+        protectionFromPlayerIdsUntilNextTurnOf.remove(untilTurnOfPlayerId);
+    }
+
+    public boolean hasProtectionFromPlayerUntilNextTurn(UUID protectedFromPlayerId) {
+        return protectionFromPlayerIdsUntilNextTurnOf.values().stream()
+                .anyMatch(playerIds -> playerIds.contains(protectedFromPlayerId));
+    }
+
     public void clearUntilNextTurnEffects() {
         this.untilNextTurnActivatedAbilities.clear();
         this.animatedUntilNextTurn = false;

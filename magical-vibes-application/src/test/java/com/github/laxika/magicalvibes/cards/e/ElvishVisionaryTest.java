@@ -91,10 +91,10 @@ class ElvishVisionaryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ElvishVisionary(), new Unsummon()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Elvish Visionary"));
         harness.passBothPriorities();
 

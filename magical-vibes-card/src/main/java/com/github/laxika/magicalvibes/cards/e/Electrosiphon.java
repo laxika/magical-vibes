@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 public class Electrosiphon extends Card {
 
     public Electrosiphon() {
-        addEffect(EffectSlot.SPELL, new EnergyCountersEffect(new TargetSpellManaValue()));
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addEffect(EffectSlot.SPELL, new EnergyCountersEffect(new TargetSpellManaValue()));
     }
 }

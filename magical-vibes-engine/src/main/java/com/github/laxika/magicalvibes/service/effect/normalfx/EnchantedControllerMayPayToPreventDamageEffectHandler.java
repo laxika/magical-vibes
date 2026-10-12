@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedControllerMayPayToPreventDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,6 +57,10 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
             int paid = gameData.chosenXValue;
             gameData.chosenXValue = null;
 
+            // Paid mana prevents damage only while damage is preventable (Skullcrack); otherwise the
+            // mana is still spent but the full amount is dealt.
+            boolean preventable = gameQueryService.isDamagePreventable(gameData);
+            int prevented = preventable ? paid : 0;
             if (paid > 0) {
                 // Cap was based on potential mana so the player could tap lands during the
                 // prompt; re-check the actual pool before charging.
@@ -69,12 +75,13 @@ public class EnchantedControllerMayPayToPreventDamageEffectHandler implements No
                     return;
                 }
                 new ManaCost("{0}").pay(pool, paid);
-                gameLogService.append(gameData, GameLog.text(
-                        playerName + " pays {" + paid + "} to prevent " + paid + " damage from " + cardName + "."));
+                gameLogService.append(gameData, GameLog.text(preventable
+                        ? playerName + " pays {" + paid + "} to prevent " + paid + " damage from " + cardName + "."
+                        : playerName + " pays {" + paid + "}, but the damage from " + cardName + " can't be prevented."));
                 log.info("Game {} - {} pays {} to prevent damage from {}", gameData.id, playerName, paid, cardName);
             }
 
-            dealRemainingDamage(gameData, entry, playerId, e.amount() - paid);
+            dealRemainingDamage(gameData, entry, playerId, e.amount() - prevented);
             gameOutcomeService.checkWinCondition(gameData);
             return;
         }

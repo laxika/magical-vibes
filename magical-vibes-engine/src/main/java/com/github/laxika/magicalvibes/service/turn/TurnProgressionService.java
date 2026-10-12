@@ -208,7 +208,7 @@ public class TurnProgressionService {
                 }
                 next = TurnStep.DRAW;
             } else if (gameData.currentStep == TurnStep.UNTAP) {
-                next = additionalBeginningPhaseUpkeep ? TurnStep.DRAW : TurnStep.PRECOMBAT_MAIN;
+                next = TurnStep.DRAW;
             }
             logSkippedPhase(gameData, "upkeep");
         }
@@ -994,7 +994,10 @@ public class TurnProgressionService {
 
         // Check for pending Mindslaver control on the new active player
         UUID pendingController = gameData.pendingTurnControl.remove(nextActive);
-        boolean grantExtraTurnAfter = gameData.pendingTurnControlExtraTurn.remove(nextActive);
+        int extraTurnsAfter = 0;
+        while (gameData.pendingTurnControlExtraTurn.remove(nextActive)) {
+            extraTurnsAfter++;
+        }
         if (pendingController != null && gameData.playerIds.contains(pendingController)) {
             gameData.mindControlledPlayerId = nextActive;
             gameData.mindControllerPlayerId = pendingController;
@@ -1004,7 +1007,7 @@ public class TurnProgressionService {
             gameLogService.append(gameData, GameLog.text(controlLog));
             log.info("Game {} - {} controls {} this turn (Mindslaver)", gameData.id, controllerName, nextActiveName);
             // Emrakul: schedule the extra turn only once control actually activates (after that turn).
-            if (grantExtraTurnAfter) {
+            for (int i = 0; i < extraTurnsAfter; i++) {
                 gameData.queueExtraTurnFirst(nextActive, false);
                 String extraLog = nextActiveName + " takes an extra turn after this one.";
                 gameLogService.append(gameData, GameLog.text(extraLog));
@@ -1373,6 +1376,9 @@ public class TurnProgressionService {
         gameData.playersWithProtectionFromEverythingUntilNextTurn.remove(nextActive);
         gameData.playersWithLifeTotalCantChangeUntilNextTurn.remove(nextActive);
         gameData.playerProtectionFromPlayerIdsUntilNextTurn.remove(nextActive);
+        final UUID turnStartPlayerId = nextActive;
+        gameData.forEachPermanent((ignored, permanent) ->
+                permanent.clearProtectionFromPlayersUntilTurnOf(turnStartPlayerId));
         gameData.playerKeywordsUntilNextTurn.remove(nextActive);
         // Jace, Architect of Thought +1: the delayed "whenever a creature an opponent controls
         // attacks" trigger lasts until its controller's next turn, so it expires here rather than at

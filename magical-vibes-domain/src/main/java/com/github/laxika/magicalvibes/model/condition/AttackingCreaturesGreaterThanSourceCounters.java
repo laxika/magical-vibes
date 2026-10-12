@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.condition;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 
-/** True when the trigger-time attacker count exceeds the source's counter count. */
+/** True when the number of attacking creatures its controller controls exceeds the source's counter count. */
 public record AttackingCreaturesGreaterThanSourceCounters(CounterType counterType) implements Condition {
 
     @Override

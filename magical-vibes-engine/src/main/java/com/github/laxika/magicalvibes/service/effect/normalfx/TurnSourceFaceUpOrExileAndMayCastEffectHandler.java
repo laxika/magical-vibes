@@ -37,12 +37,14 @@ public class TurnSourceFaceUpOrExileAndMayCastEffectHandler implements NormalEff
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = sourcePermanentId == null
                 ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || !source.isFaceDown()) {
+        if (source == null) {
             return;
         }
 
         Card originalCard = source.getOriginalCard();
-        boolean canTurnFaceUp = gameQueryService.isCreature(gameData, source)
+        // A permanent that is already face up can't be turned face up, so it is exiled instead.
+        boolean canTurnFaceUp = source.isFaceDown()
+                && gameQueryService.isCreature(gameData, source)
                 && !gameQueryService.isTurnFaceUpPrevented(gameData, source)
                 && !originalCard.hasType(CardType.INSTANT)
                 && !originalCard.hasType(CardType.SORCERY);

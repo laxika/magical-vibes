@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -57,6 +59,7 @@ class ElspethStormSlayerTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();

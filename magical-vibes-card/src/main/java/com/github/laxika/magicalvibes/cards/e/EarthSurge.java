@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class EarthSurge extends Card {
 
     public EarthSurge() {
-        // Each land gets +2/+2 as long as it's a creature.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_LANDS,
+        // Each land gets +2/+2 as long as it's a creature. Earth Surge is a land too, so it boosts itself.
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_LANDS_INCLUDING_SELF,
                 new PermanentIsCreaturePredicate()));
     }
 }

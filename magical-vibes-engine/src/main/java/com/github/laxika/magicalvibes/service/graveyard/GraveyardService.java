@@ -2102,6 +2102,7 @@ public class GraveyardService {
 
     private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count, List<Card> cards) {
         cards.forEach(card -> gameData.graveyardCardCastPermissionsUntilEndOfTurn.remove(card.getId()));
+        cards.forEach(card -> gameData.markGraveyardExit(card.getId()));
         // Record that one or more cards left this player's graveyard this turn (regardless of
         // batching), for "if one or more cards left your graveyard this turn" effects.
         gameData.playersWhoseCardsLeftGraveyardThisTurn.add(ownerId);
@@ -2477,7 +2478,8 @@ public class GraveyardService {
         }
         List<Card> moving = graveyard.stream()
                 .filter(card -> !isToken(gameData, card))
-                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, filter, sourceCardId))
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, filter, sourceCardId,
+                        gameData, ownerId))
                 .toList();
         if (moving.isEmpty()) {
             return List.of();

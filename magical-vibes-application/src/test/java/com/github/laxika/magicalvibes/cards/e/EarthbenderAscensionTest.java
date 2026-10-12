@@ -201,7 +201,7 @@ class EarthbenderAscensionTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
         assertThat(gqs.isLand(gd, land)).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
 

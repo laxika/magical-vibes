@@ -12,7 +12,8 @@ import java.util.function.Supplier;
  *
  * <p>With {@code conjure} set ("conjure a card of your choice from … spellbook") the chosen card counts
  * as conjured, so "whenever you conjure" abilities trigger; see {@link #conjureIntoHand} and
- * {@link #conjureOntoBattlefield}. Card factories put the chosen card onto the battlefield.
+ * {@link #conjureOntoBattlefield}. Card factories put the chosen card onto the battlefield, unless the
+ * mode is {@link DraftMode#CONJURE_TO_HAND} (see {@link #draftIntoHand}), which puts it into hand.
  */
 public record DraftFromSpellbookEffect(
         List<SpellbookCard> spellbook,
@@ -51,6 +52,12 @@ public record DraftFromSpellbookEffect(
 
     public DraftFromSpellbookEffect(List<Supplier<? extends Card>> cardFactories) {
         this(cardFactories, 3);
+    }
+
+    /** "Draft a card from this spellbook": the chosen card goes into the controller's hand, not conjured. */
+    public static DraftFromSpellbookEffect draftIntoHand(List<Supplier<? extends Card>> cardFactories) {
+        return new DraftFromSpellbookEffect(List.of(), cardFactories, Math.min(3, cardFactories.size()),
+                DraftMode.CONJURE_TO_HAND, false);
     }
 
     /** "Conjure a card of your choice from … spellbook onto the battlefield." */

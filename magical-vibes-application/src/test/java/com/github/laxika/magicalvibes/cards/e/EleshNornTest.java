@@ -94,7 +94,7 @@ class EleshNornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Incubator")).isEmpty();
-        List<Permanent> phyrexians = findPermanents(player1, "Phyrexian");
+        List<Permanent> phyrexians = findPermanents(player1, "Phyrexian Token");
         assertThat(phyrexians).hasSize(5);
         assertThat(phyrexians).allSatisfy(token -> {
             assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -202,7 +202,7 @@ class EleshNornTest extends BaseCardTest {
 
         assertThat(opposingIncubator.isTransformed()).isFalse();
         assertThat(gqs.isCreature(gd, opposingIncubator)).isFalse();
-        assertThat(findPermanents(player1, "Phyrexian")).hasSize(5);
+        assertThat(findPermanents(player1, "Phyrexian Token")).hasSize(5);
     }
 
     @Test
@@ -218,7 +218,7 @@ class EleshNornTest extends BaseCardTest {
 
         assertThat(existingIncubator.isTransformed()).isTrue();
         assertThat(existingIncubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        assertThat(findPermanents(player1, "Phyrexian")).hasSize(6);
+        assertThat(findPermanents(player1, "Phyrexian Token")).hasSize(6);
     }
 
     @Test
@@ -316,7 +316,7 @@ class EleshNornTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "The Argent Etchings");
         assertThat(findPermanent(player2, "The Argent Etchings").isTransformed()).isTrue();
-        assertThat(findPermanents(player2, "Phyrexian")).hasSize(5);
+        assertThat(findPermanents(player2, "Phyrexian Token")).hasSize(5);
     }
 
     private Permanent addBackFaceSaga(int lore) {

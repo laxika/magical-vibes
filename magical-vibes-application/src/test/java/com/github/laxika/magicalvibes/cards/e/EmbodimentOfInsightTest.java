@@ -91,7 +91,7 @@ class EmbodimentOfInsightTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(forest.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
@@ -109,10 +109,8 @@ class EmbodimentOfInsightTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () ->
-                gs.declareAttackers(gd, player1,
-                        List.of(gd.playerBattlefields.get(player1.getId()).indexOf(forest))));
+        int forestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forest);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> declareAttackers(List.of(forestIndex)));
 
         assertThat(forest.isAttacking()).isTrue();
         assertThat(forest.isTapped()).isFalse();

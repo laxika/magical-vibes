@@ -78,6 +78,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -307,6 +308,9 @@ public class DestructionSupport {
             gameData.simultaneousDyingCreatures.put(perm.getId(), snapshot);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
             gameData.simultaneousDyingPowers.put(perm.getId(), gameQueryService.getEffectivePower(gameData, perm));
+            gameData.simultaneousDyingTriggerKeywordInstances.put(perm.getId(), Map.of(
+                    Keyword.PERSIST, gameQueryService.triggerKeywordInstances(gameData, perm, Keyword.PERSIST),
+                    Keyword.UNDYING, gameQueryService.triggerKeywordInstances(gameData, perm, Keyword.UNDYING)));
             gameData.simultaneousDyingGrantedCreatureDeathEffects.put(
                     perm.getId(), List.copyOf(triggerCollectionService.grantedTriggeredEffects(
                             gameData, perm, EffectSlot.ON_ANY_CREATURE_DIES)));
@@ -319,6 +323,7 @@ public class DestructionSupport {
         gameData.simultaneousDyingPermanents.clear();
         gameData.simultaneousDyingPermanentControllers.clear();
         gameData.simultaneousDyingPowers.clear();
+        gameData.simultaneousDyingTriggerKeywordInstances.clear();
         gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
         gameData.simultaneousDyingGrantedSelfDeathEffects.clear();
     }
@@ -346,6 +351,7 @@ public class DestructionSupport {
 
     public void sacrificeAndLog(GameData gameData, Permanent creature, UUID playerId) {
         Card sacrificedCard = creature.getCard();
+        boolean sacrificedCreature = gameQueryService.isCreature(gameData, creature);
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
         gameData.playersWhoSacrificedPermanentsThisTurn.add(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
@@ -353,7 +359,8 @@ public class DestructionSupport {
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, sacrificedCard.getName());
         // Collect both ally-permanent-sacrificed and global creature-sacrificed triggers for the
         // edict / chosen / forced-sacrifice paths that funnel through this shared helper.
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacrificedCard);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacrificedCard, null,
+                sacrificedCreature);
     }
 
     /**

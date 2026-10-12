@@ -41,12 +41,11 @@ class EyesOfTheWisentTest extends BaseCardTest {
         harness.castInstant(player2, 0, bearsId);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Elemental");
         assertThat(token).isNotNull();
@@ -126,10 +125,11 @@ class EyesOfTheWisentTest extends BaseCardTest {
         harness.castInstant(player2, 0, bearsId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Elemental");
         harness.assertNotOnBattlefield(player2, "Elemental");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -143,8 +143,9 @@ class EyesOfTheWisentTest extends BaseCardTest {
         harness.castInstant(player2, 0, bearsId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().getName().equals("Elemental"))

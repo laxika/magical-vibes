@@ -92,6 +92,7 @@ class EmrakulsInfluenceTest extends BaseCardTest {
         WoodlandPatrol libraryCard = new WoodlandPatrol();
         harness.setLibrary(player1, List.of(libraryCard));
         harness.setLibrary(player2, List.of(new WoodlandPatrol()));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new WretchedGryff()));
         harness.addMana(player2, ManaColor.COLORLESS, 7);
         harness.forceActivePlayer(player2);
@@ -109,6 +110,7 @@ class EmrakulsInfluenceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EmrakulsInfluence());
         WoodlandPatrol libraryCard = new WoodlandPatrol();
         harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of());
 
         harness.enterBattlefieldAndReturn(player1, new WretchedGryff());
         resolveAllTriggers();

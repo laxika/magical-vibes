@@ -96,13 +96,13 @@ class ExaltedAngelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent angel = findPermanent(player1, "Exalted Angel");
         angel.setSummoningSick(false);
         angel.setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         harness.assertLife(player1, 10);
@@ -116,7 +116,6 @@ class ExaltedAngelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent angel = findPermanent(player1, "Exalted Angel");
         angel.setBlocking(true);
@@ -125,6 +124,7 @@ class ExaltedAngelTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         resolveCombat(player2);
+        harness.passBothPriorities();
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Exalted Angel");

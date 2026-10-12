@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
 import com.github.laxika.magicalvibes.cards.w.WuInfantry;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -120,6 +121,7 @@ class EightfoldMazeTest extends BaseCardTest {
         Permanent directAttacker = addCreatureReady(player1, new WuInfantry());
         Permanent planeswalkerAttacker = addCreatureReady(player1, new WuInfantry());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player2, List.of(new EightfoldMaze(), new EightfoldMaze()));
         harness.addMana(player2, ManaColor.WHITE, 6);
         harness.forceActivePlayer(player1);

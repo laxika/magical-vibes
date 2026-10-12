@@ -9,9 +9,20 @@ import java.util.UUID;
  * @param suspendTimeCounters number of suspend time counters to put on the exiled spell
  * @param screamCounterCount number of scream counters to put on the exiled spell
  * @param sourcePermanentId the permanent that should track the exiled spell, if any
+ * @param immediately when {@code true} the spell is exiled at this effect's position in the resolution
+ *                    order rather than after its last effect, for a spell whose later instructions pause
+ *                    for a choice (Emergency Powers)
  */
 public record ExileSpellEffect(int suspendTimeCounters, int screamCounterCount,
-                               UUID sourcePermanentId) implements CardEffect {
+                               UUID sourcePermanentId, boolean exileImmediately) implements CardEffect {
+
+    public ExileSpellEffect(int suspendTimeCounters, int screamCounterCount, UUID sourcePermanentId) {
+        this(suspendTimeCounters, screamCounterCount, sourcePermanentId, false);
+    }
+
+    public static ExileSpellEffect immediately() {
+        return new ExileSpellEffect(0, 0, null, true);
+    }
 
     public ExileSpellEffect() {
         this(0, 0, null);

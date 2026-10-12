@@ -234,6 +234,13 @@ public class Card {
     /** Whether this card's targeted attack trigger is chosen by the defending player. */
     private boolean attackTriggerTargetChosenByDefendingPlayer;
     /**
+     * Whether this Aura's {@code ON_ATTACK} trigger is the Aura's own ability ("Whenever enchanted creature
+     * attacks, ...", controlled by the Aura's controller) rather than an ability it grants to the enchanted
+     * creature ("Enchanted creature has 'Whenever this creature attacks, ...'", controlled by the creature's
+     * controller).
+     */
+    private boolean attackTriggerOwnedByAura;
+    /**
      * Optional cross-target restriction on the whole set of chosen targets (e.g. Rivals' Duel's
      * "two target creatures that share no creature types"), checked at announcement in addition
      * to the per-position filters. Null for spells with no such restriction.
@@ -318,6 +325,9 @@ public class Card {
     /** Per-chapter target groups for Saga abilities with more than one target. */
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<SagaChapterTargetGroup>> sagaChapterTargetGroups = new EnumMap<>(EffectSlot.class);
+    /** Saga chapters whose single target is mandatory (no "up to one"), so it cannot be skipped. */
+    @Getter(AccessLevel.NONE)
+    private Set<EffectSlot> sagaChaptersWithRequiredTarget = java.util.EnumSet.noneOf(EffectSlot.class);
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
     private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
     /** Abilities activatable while this card is in its owner's hand (e.g. Reinforce). */
@@ -429,6 +439,7 @@ public class Card {
         this.allowSharedTargets = source.allowSharedTargets;
         this.opponentChosenSpellTargetIndices = source.opponentChosenSpellTargetIndices;
         this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
+        this.attackTriggerOwnedByAura = source.attackTriggerOwnedByAura;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.targetControllersFixedAtCast = source.targetControllersFixedAtCast;
         this.spellTargets.addAll(source.spellTargets);
@@ -458,6 +469,7 @@ public class Card {
                 this.effectRegistrations.put(slot, new ArrayList<>(regs)));
         // effectCache intentionally left empty — rebuilt lazily by getEffects()
         this.sagaChapterTargetFilters.putAll(source.sagaChapterTargetFilters);
+        this.sagaChaptersWithRequiredTarget.addAll(source.sagaChaptersWithRequiredTarget);
         source.sagaChapterTargetGroups.forEach((slot, groups) ->
                 this.sagaChapterTargetGroups.put(slot, List.copyOf(groups)));
         this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
@@ -509,6 +521,8 @@ public class Card {
 
         copy.sagaChapterTargetFilters.clear();
         copy.sagaChapterTargetFilters.putAll(textSource.sagaChapterTargetFilters);
+        copy.sagaChaptersWithRequiredTarget.clear();
+        copy.sagaChaptersWithRequiredTarget.addAll(textSource.sagaChaptersWithRequiredTarget);
         copy.sagaChapterTargetGroups.clear();
         textSource.sagaChapterTargetGroups.forEach((slot, groups) ->
                 copy.sagaChapterTargetGroups.put(slot, List.copyOf(groups)));
@@ -600,6 +614,8 @@ public class Card {
         this.effectCache.clear();
         this.sagaChapterTargetFilters.clear();
         this.sagaChapterTargetFilters.putAll(face.sagaChapterTargetFilters);
+        this.sagaChaptersWithRequiredTarget.clear();
+        this.sagaChaptersWithRequiredTarget.addAll(face.sagaChaptersWithRequiredTarget);
         this.activatedAbilities = new ArrayList<>(face.activatedAbilities);
         this.graveyardActivatedAbilities = new ArrayList<>(face.graveyardActivatedAbilities);
         this.handActivatedAbilities = new ArrayList<>(face.handActivatedAbilities);
@@ -701,6 +717,10 @@ public class Card {
         assertMutable();
         this.attackTriggerTargetChosenByDefendingPlayer = chosenByDefendingPlayer;
     }
+    public void setAttackTriggerOwnedByAura(boolean ownedByAura) {
+        assertMutable();
+        this.attackTriggerOwnedByAura = ownedByAura;
+    }
     public void setMultiTargetConstraint(MultiTargetConstraint multiTargetConstraint) { assertMutable(); this.multiTargetConstraint = multiTargetConstraint; }
     public void setTargetControllersFixedAtCast(boolean targetControllersFixedAtCast) { assertMutable(); this.targetControllersFixedAtCast = targetControllersFixedAtCast; }
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
@@ -745,6 +765,7 @@ public class Card {
         setAllowSharedTargets(false);
         setOpponentChosenSpellTargetIndices(List.of());
         setAttackTriggerTargetChosenByDefendingPlayer(false);
+        setAttackTriggerOwnedByAura(false);
         setMultiTargetConstraint(null);
         setTargetControllersFixedAtCast(false);
         setCastTimeTargetFilter(null);
@@ -773,6 +794,7 @@ public class Card {
         effectCache.clear();
         sagaChapterTargetFilters.clear();
         sagaChapterTargetGroups.clear();
+        sagaChaptersWithRequiredTarget.clear();
         activatedAbilities.clear();
         graveyardActivatedAbilities.clear();
         handActivatedAbilities.clear();
@@ -798,6 +820,7 @@ public class Card {
         effectTargetIndexMap.clear();
         sagaChapterTargetFilters.clear();
         sagaChapterTargetGroups.clear();
+        sagaChaptersWithRequiredTarget.clear();
         activatedAbilities.clear();
         graveyardActivatedAbilities.clear();
         handActivatedAbilities.clear();
@@ -1305,6 +1328,15 @@ public class Card {
         if (effect instanceof ConditionalEffect conditional) {
             return targetIndicesForEffect(conditional.wrapped());
         }
+        for (Map.Entry<CardEffect, List<Integer>> registered : effectTargetIndexMap.entrySet()) {
+            CardEffect wrapped = registered.getKey() instanceof TriggeringPermanentConditionalEffect permanentConditional
+                    ? permanentConditional.wrapped()
+                    : registered.getKey() instanceof TriggeringCardConditionalEffect cardConditional
+                    ? cardConditional.wrapped() : null;
+            if (wrapped == effect) {
+                return registered.getValue();
+            }
+        }
         return null;
     }
 
@@ -1666,6 +1698,16 @@ public class Card {
 
     public Set<TargetFilter> getSagaChapterTargetFilters(EffectSlot slot) {
         return sagaChapterTargetFilters.getOrDefault(slot, Set.of());
+    }
+
+    /** Marks a Saga chapter's single target as mandatory: it must be chosen whenever a legal one exists. */
+    public void setSagaChapterTargetRequired(EffectSlot slot) {
+        assertMutable();
+        sagaChaptersWithRequiredTarget.add(slot);
+    }
+
+    public boolean isSagaChapterTargetRequired(EffectSlot slot) {
+        return sagaChaptersWithRequiredTarget.contains(slot);
     }
 
     public void setSagaChapterTargetGroups(EffectSlot slot, List<SagaChapterTargetGroup> groups) {

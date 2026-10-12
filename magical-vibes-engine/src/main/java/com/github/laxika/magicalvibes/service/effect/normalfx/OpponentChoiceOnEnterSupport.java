@@ -22,6 +22,8 @@ public final class OpponentChoiceOnEnterSupport {
             if (permanent.getChosenPlayerIds().isEmpty() && gameData.playerIds.size() == 2
                     && permanent.getRememberedTargetPlayerId() != null) {
                 permanent.getChosenPlayerIds().add(permanent.getRememberedTargetPlayerId());
+                permanent.getProtectionFromPlayerIdsPermanently().clear();
+                permanent.getProtectionFromPlayerIdsPermanently().add(permanent.getRememberedTargetPlayerId());
             }
         }
     }

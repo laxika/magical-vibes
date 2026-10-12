@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -34,6 +36,8 @@ public class EachPlayerMayPutCardFromHandToBattlefieldSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    private final AuraAttachmentService auraAttachmentService;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
     /** Begins the next eligible player's optional choice, or places the accumulated choices. */
@@ -100,11 +104,26 @@ public class EachPlayerMayPutCardFromHandToBattlefieldSupport {
         if (chosenCard == null) {
             return false;
         }
+        UUID attachmentId = null;
+        if (chosenCard.isAura() && !chosenCard.isEnchantZone()) {
+            List<UUID> hosts = auraHostIds(gameData, playerId, chosenCard);
+            if (hosts.size() != 1) {
+                // An Aura with no legal host stays in its current zone (CR 303.4g). Several legal hosts
+                // would need the host choice of CR 303.4f, which this sequential path does not offer yet.
+                log.info("Game {} - {} stays in hand: {} legal hosts", gameData.id, chosenCard.getName(), hosts.size());
+                return false;
+            }
+            attachmentId = hosts.getFirst();
+        }
         hand.remove(chosenCard);
 
         Permanent permanent = new Permanent(chosenCard);
+        permanent.setAttachedTo(attachmentId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent,
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of());
+        if (gameQueryService.findPermanentController(gameData, permanent.getId()) != null) {
+            battlefieldEntryService.processCreatureETBEffects(gameData, playerId, chosenCard, null, false);
+        }
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(playerId) + " puts ")
                 .card(chosenCard)
@@ -112,6 +131,24 @@ public class EachPlayerMayPutCardFromHandToBattlefieldSupport {
                 .build());
         log.info("Game {} - Put chosen {} card onto the battlefield", gameData.id, chosenCard.getName());
         return true;
+    }
+
+    private List<UUID> auraHostIds(GameData gameData, UUID playerId, Card aura) {
+        List<UUID> hosts = new ArrayList<>();
+        if (!aura.isEnchantPlayer()) {
+            gameData.forEachPermanent((controllerId, permanent) -> {
+                if (!gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                        && auraAttachmentService.canEnchant(gameData, aura, playerId, permanent)) {
+                    hosts.add(permanent.getId());
+                }
+            });
+        }
+        for (UUID hostPlayerId : gameData.orderedPlayerIds) {
+            if (auraAttachmentService.canEnchantPlayer(gameData, aura, playerId, hostPlayerId)) {
+                hosts.add(hostPlayerId);
+            }
+        }
+        return hosts;
     }
 
     private List<UUID> validCardIds(GameData gameData, UUID playerId,

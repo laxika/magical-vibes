@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.service.outcome.ExquisiteArchangelLossReplacer;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
@@ -30,6 +32,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -146,6 +149,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler sacrificedEquipmentSupport;
 
     private final InputCompletionService inputCompletionService;
+    private final ExquisiteArchangelLossReplacer exquisiteArchangelLossReplacer;
     private final GameQueryService gameQueryService;
     private final AuraAttachmentService auraAttachmentService;
     private final EquipSupport equipSupport;
@@ -2313,16 +2317,22 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleEyeForAnEyeSourceChoice(GameData gameData, UUID permanentId,
                                               PermanentChoiceContext.EyeForAnEyeSourceChoice ctx) {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        StackEntry chosenSpell = chosenPermanent == null
+                ? gameQueryService.findStackEntryByCardId(gameData, permanentId) : null;
+        if (chosenPermanent == null && chosenSpell == null) {
+            throw new IllegalStateException("Chosen source no longer exists");
         }
 
         UUID controllerId = ctx.controllerId();
+        UUID sourceControllerId = chosenPermanent != null
+                ? gameQueryService.findPermanentController(gameData, permanentId)
+                : chosenSpell.getControllerId();
         gameData.eyeForAnEyeShields.add(new com.github.laxika.magicalvibes.model.EyeForAnEyeShield(
-                controllerId, permanentId, ctx.eyeCard(), controllerId));
+                controllerId, permanentId, ctx.eyeCard(), controllerId, sourceControllerId));
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = chosenPermanent.getCard().getName();
+        String sourceName = chosenPermanent != null
+                ? chosenPermanent.getCard().getName() : chosenSpell.getCard().getName();
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
                 + " this turn, that much damage is also dealt to " + sourceName + "'s controller.";
         gameLogService.append(gameData, GameLog.text(logEntry));
@@ -3010,6 +3020,18 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /** The losing player picked which Exquisite Archangel replaces their game loss; apply it and carry on. */
+    public void handleExquisiteArchangelLossReplacement(GameData gameData, UUID permanentId,
+                                                        PermanentChoiceContext.ExquisiteArchangelLossReplacement ctx) {
+        Permanent angel = gameQueryService.findPermanentById(gameData, permanentId);
+        if (angel == null) {
+            throw new IllegalStateException("Chosen Exquisite Archangel no longer exists");
+        }
+        exquisiteArchangelLossReplacer.applyReplacement(gameData, ctx.playerId(), angel,
+                LossReason.valueOf(ctx.lossReason()));
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleSacrificeCreatureCreateTokensEqualToToughness(GameData gameData, UUID permanentId,
                                                                     PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness ctx) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
@@ -3375,6 +3397,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         UUID auraOwnerId = gameData.interaction.consumePendingAuraOwnerId();
         // If an explicit aura owner was set (e.g. Necrotic Plague), use it instead of the chooser
         UUID auraControllerId = auraOwnerId != null ? auraOwnerId : playerId;
+        EnterWithCountersEffect auraEntryReplacement = gameData.interaction.consumePendingAuraEntryReplacement();
 
         Permanent enchantTarget = gameQueryService.findPermanentById(gameData, permanentId);
         boolean playerTarget = gameData.playerIds.contains(permanentId);
@@ -3418,7 +3441,12 @@ public class PermanentChoiceBattlefieldHandlerService {
             Permanent auraPerm = new Permanent(auraOriginalCard != null ? auraOriginalCard : auraCard);
             auraPerm.setCard(auraCard);
             auraPerm.setAttachedTo(permanentId);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm);
+            if (auraEntryReplacement != null) {
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm,
+                        battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), auraEntryReplacement);
+            } else {
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm);
+            }
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, auraControllerId, auraCard, null, false);
 
             boolean hasControlEffect = enchantTarget != null && auraCard.getEffects(EffectSlot.STATIC).stream()

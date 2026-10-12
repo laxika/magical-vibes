@@ -38,14 +38,14 @@ public class ControlTargetPlayerNextCombatOrTurnEffectHandler implements NormalE
         if (entry.isWaterbendCostPaid()) {
             gameData.pendingCombatControl.remove(targetPlayerId);
             gameData.pendingTurnControl.put(targetPlayerId, controllerId);
-            gameData.pendingTurnControlExtraTurn.remove(targetPlayerId);
+            gameData.pendingTurnControlExtraTurn.removeIf(targetPlayerId::equals);
             gameLogService.append(gameData, GameLog.text(controllerName + " will control " + targetName
                     + " during their next turn."));
             log.info("Game {} - {} will control {} during their next turn", gameData.id,
                     controllerName, targetName);
         } else {
             gameData.pendingTurnControl.remove(targetPlayerId);
-            gameData.pendingTurnControlExtraTurn.remove(targetPlayerId);
+            gameData.pendingTurnControlExtraTurn.removeIf(targetPlayerId::equals);
             gameData.pendingCombatControl.put(targetPlayerId, controllerId);
             gameLogService.append(gameData, GameLog.text(controllerName + " will control " + targetName
                     + " during their next combat phase."));

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final BattleDefeatSupport battleDefeatSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -70,6 +72,9 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
                 : removed + " " + counterName + " counters removed from ";
         gameLogService.append(gameData, GameLog.textCardText(prefix, target.getCard(), "."));
         log.info("Game {} - {} {} counter(s) removed from {}", gameData.id, removed, counterType, target.getCard().getName());
+        if (counterType == CounterType.DEFENSE) {
+            battleDefeatSupport.checkAfterDefenseRemoved(gameData, target);
+        }
         return true;
     }
 }

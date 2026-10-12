@@ -662,6 +662,15 @@ public class CombatDamageService {
         snapshotSelfDealsDamageEffects(gameData, state);
         Map<UUID, List<TriggerCollectionService.AllyDamageTriggerSnapshot>> allyDamageWatchers =
                 triggerCollectionService.snapshotAllyCreaturesDealDamageToOpponentTriggers(gameData);
+        // "Whenever a [creature] deals damage" abilities trigger as the damage is dealt, so a watcher
+        // that is destroyed by that same damage (a Sliver watching itself) must be scanned before
+        // state-based actions remove it. The triggers are put on the stack after the other combat
+        // damage triggers, as they were when this ran after the state-based actions.
+        int beforeSourceDamageReflections = gameData.stack.size();
+        processSourceDealsDamageReflectionTriggers(gameData, state, defenderId, damagedCreatureSnapshots);
+        List<StackEntry> sourceDamageReflectionTriggers = new ArrayList<>(
+                gameData.stack.subList(beforeSourceDamageReflections, gameData.stack.size()));
+        gameData.stack.subList(beforeSourceDamageReflections, gameData.stack.size()).clear();
         boolean damageEventTriggersQueued = gameData.stack.size() > stackSizeBeforeDamageEvents;
         stateBasedActionService.performStateBasedActions(gameData);
 
@@ -821,9 +830,10 @@ public class CombatDamageService {
 
         recordCombatDamageBySource(gameData, state);
 
-        // Process ON_ANY_SOURCE_DEALS_DAMAGE reflection triggers (e.g. Justice). combatDamageDealt is
-        // already summed per source for this step, matching the "add up all the damage" ruling.
-        processSourceDealsDamageReflectionTriggers(gameData, state, defenderId, damagedCreatureSnapshots);
+        // ON_ANY_SOURCE_DEALS_DAMAGE reflection triggers (e.g. Justice) were collected before the
+        // state-based actions; combatDamageDealt is already summed per source for this step, matching
+        // the "add up all the damage" ruling.
+        gameData.stack.addAll(sourceDamageReflectionTriggers);
 
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeDamageTriggers, activeId);
 
@@ -2376,6 +2386,8 @@ public class CombatDamageService {
                         );
                         if (creature.getId().equals(sourcePermanentId)) {
                             se.setSourcePermanentSnapshot(new Permanent(creature));
+                        } else if (perm.getId().equals(sourcePermanentId)) {
+                            se.setSourcePermanentSnapshot(new Permanent(perm));
                         }
                         for (CardEffect effect : effects) {
                             setCombatDamageEventValue(se, effect, damageDealt);
@@ -4331,6 +4343,12 @@ public class CombatDamageService {
             // CR 510.1b: If the planeswalker left the battlefield, the creature assigns no combat damage
             Permanent pw = gameQueryService.findPermanentById(gameData, attackTarget);
             if (pw == null) return;
+            if (gameQueryService.isDamagePreventable(gameData, true)
+                    && !gameQueryService.damageCantBePreventedFromSource(gameData, atk, true)
+                    && !pw.isDamageCantBePreventedOrRedirectedThisTurn()
+                    && gameQueryService.hasProtectionFromDamageSource(gameData, pw, atk)) {
+                return;
+            }
             collectCombatDamage(gameData, state, atk, atkStats, pw.getId(), pw, damage, sourceUnblocked);
             return;
         }

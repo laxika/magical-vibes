@@ -457,10 +457,10 @@ public sealed interface ChoiceContext {
         }
     }
 
-    record EnchantedManaCostChoice(UUID playerId, List<Set<ManaColor>> choices,
+    record EnchantedManaCostChoice(UUID playerId, List<List<ManaCost.ManaProductionOption>> choices,
                                    boolean fromCreature) implements ChoiceContext {
         public EnchantedManaCostChoice {
-            choices = choices.stream().map(Set::copyOf).toList();
+            choices = choices.stream().map(List::copyOf).toList();
         }
     }
 
@@ -1063,6 +1063,16 @@ public sealed interface ChoiceContext {
     }
 
     record DrawReplacementChoice(UUID playerId, DrawReplacementKind kind) implements ChoiceContext {}
+    /**
+     * The affected player picks which of several competing exile-instead-of-draw replacement effects
+     * applies to one draw (CR 616.1); keys are the option labels, values the source permanents.
+     */
+    record DrawReplacementSourceChoice(UUID playerId, java.util.Map<String, UUID> sourcePermanentIds)
+            implements ChoiceContext {
+        public DrawReplacementSourceChoice {
+            sourcePermanentIds = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(sourcePermanentIds));
+        }
+    }
     /** The affected player orders competing delayed library-look replacements for one draw. */
     record DrawLookReplacementOrder(UUID playerId, List<Integer> counts) implements ChoiceContext {
         public DrawLookReplacementOrder {
@@ -2766,6 +2776,24 @@ public sealed interface ChoiceContext {
     record EnchantedPermanentManaOrLifePaymentChoice(
             UUID affectedPlayerId, String sourceCardName, UUID sourcePermanentId,
             String manaCost, int lifeCost) implements ChoiceContext {
+
+        public static final String DECLINE = "Don't pay";
+
+        public String payManaOption() {
+            return "Pay " + manaCost;
+        }
+
+        public String payLifeOption() {
+            return "Pay " + lifeCost + " life";
+        }
+    }
+
+    /**
+     * Chooses how to pay, or not pay, "that player may pay {M} or N life" (Emberwilde Djinn). Offered
+     * only when the player can afford both halves; otherwise the plain yes/no prompt is enough.
+     */
+    record TargetPlayerManaOrLifePaymentChoice(
+            UUID payerId, String sourceCardName, String manaCost, int lifeCost) implements ChoiceContext {
 
         public static final String DECLINE = "Don't pay";
 

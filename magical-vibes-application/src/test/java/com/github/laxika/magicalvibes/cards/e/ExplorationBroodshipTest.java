@@ -39,12 +39,12 @@ class ExplorationBroodshipTest extends BaseCardTest {
         Permanent broodship = harness.addToBattlefieldAndReturn(player1, new ExplorationBroodship());
 
         broodship.setCounterCount(CounterType.CHARGE, 2);
-        assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(1);
+        assertThat(gqs.getMaxLandsThisTurn(gd, player1.getId())).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, broodship, Keyword.FLYING)).isFalse();
         assertThat(gqs.isCreature(gd, broodship)).isFalse();
 
         broodship.setCounterCount(CounterType.CHARGE, 3);
-        assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(2);
+        assertThat(gqs.getMaxLandsThisTurn(gd, player1.getId())).isEqualTo(2);
 
         broodship.setCounterCount(CounterType.CHARGE, 7);
         assertThat(gqs.hasKeyword(gd, broodship, Keyword.FLYING)).isFalse();

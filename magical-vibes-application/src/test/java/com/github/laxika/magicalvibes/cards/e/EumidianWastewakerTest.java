@@ -21,7 +21,7 @@ class EumidianWastewakerTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking counts lands discarded or sacrificed and draws that many cards")
     void attackCountsLandsPutIntoGraveyards() {
-        Permanent wastewaker = harness.addToBattlefieldAndReturn(player1, new EumidianWastewaker());
+        Permanent wastewaker = addCreatureReady(player1, new EumidianWastewaker());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new Forest());
         harness.setHand(player1, List.of(new Forest()));
@@ -49,6 +49,8 @@ class EumidianWastewakerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setGraveyard(player1, List.of(new EumidianWastewaker()));
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
@@ -58,9 +60,19 @@ class EumidianWastewakerTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Eumidian Wastewaker");
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(gqs.hasKeyword(gd, token, com.github.laxika.magicalvibes.model.Keyword.HASTE)).isTrue();
+        assertThat(token.isAttacking()).isFalse();
+
+        int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
+        declareAttackers(List.of(tokenIndex));
+
         assertThat(token.isTapped()).isTrue();
         assertThat(token.isAttacking()).isTrue();
         assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1,
+                ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
+        harness.handleCardChosen(player1, 0);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);

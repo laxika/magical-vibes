@@ -118,6 +118,7 @@ class EarthKingdomSoldierTest extends BaseCardTest {
         addMana();
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     private void chooseTargets(List<UUID> targetIds) {

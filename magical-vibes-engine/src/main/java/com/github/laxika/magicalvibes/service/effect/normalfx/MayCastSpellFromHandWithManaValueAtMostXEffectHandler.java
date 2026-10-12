@@ -42,7 +42,7 @@ public class MayCastSpellFromHandWithManaValueAtMostXEffectHandler implements No
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     card,
                     controllerId,
-                    List.of(new MayCastFromHandWithoutPayingManaCostEffect()),
+                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
                     "Cast " + card.getName() + " without paying its mana cost?"
             ));
         }

@@ -1146,6 +1146,9 @@ public class BattlefieldPlacementService {
                     .map(e -> (CreaturesEnterAsCopyOfSourceEffect) e)
                     .findFirst().orElse(null);
             if (effect != null) {
+                if (!gameQueryService.hasActiveStaticEffect(gameData, source, CreaturesEnterAsCopyOfSourceEffect.class)) {
+                    continue;
+                }
                 if (effect.nontokenOnly() && entering.getCard().isToken()) {
                     continue;
                 }
@@ -1892,8 +1895,13 @@ public class BattlefieldPlacementService {
                                               EnterWithCountersEffect enterWith, int xValue,
                                               List<String> repeatedAdditionalCosts, int convokeCreatureCount,
                                               Card sourceCard, StackEntry sourceStackEntry) {
+        // Sunburst / Converge counters read the distinct colors spent on the casting, not the paid X,
+        // which is separate even when the card also has an {X} cost.
+        int counterX = enterWith.countColorsSpent()
+                ? gameData.getSpellCastConvergeValue(sourceCard.getId())
+                : xValue;
         int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
-                new AmountContext(controllerId, permanent, null, xValue, 0, false, null,
+                new AmountContext(controllerId, permanent, null, counterX, 0, false, null,
                         repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, sourceCard,
                         sourceStackEntry, null, null, 0, 0, List.of(), false, convokeCreatureCount,
                         List.of()));

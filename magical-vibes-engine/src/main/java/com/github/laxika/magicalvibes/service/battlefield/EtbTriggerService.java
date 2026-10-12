@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -621,6 +622,10 @@ public class EtbTriggerService {
         if (effect instanceof ReplacementEffect) {
             return true;
         }
+        // "This creature enters prepared" is applied as the permanent enters, not as a triggered ability.
+        if (effect instanceof BecomePreparedEffect) {
+            return true;
+        }
         if (effect instanceof ConditionalEffect conditional) {
             return isEntryReplacementEffect(conditional.wrapped());
         }
@@ -896,17 +901,17 @@ public class EtbTriggerService {
                     && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
-            // A cast permanent whose "up to N" targets were legitimately chosen as zero at cast time
-            // (CR 601.2c) still has its ETB trigger, but with no targets it has nothing to ask for.
+            // A cast permanent whose fixed-size "up to N" targets were declared as zero up front has
+            // nothing to ask for. Groups sized by X are still chosen as the trigger goes on the stack.
             boolean castChoseZeroOptionalTargets = enteringPermanent != null && enteringPermanent.isCast()
-                    && !hasTarget && etbNeedsTarget
+                    && !hasTarget && etbNeedsTarget && !hasDynamicTargetCount
                     && otherEffects.stream()
                     .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
                     .allMatch(e -> allowsZeroCastTimeTargets(card, e));
 
-            if ((hasDynamicTargetCount && etbNeedsTarget && !hasTarget && !castChoseZeroOptionalTargets)
+            if ((hasDynamicTargetCount && etbNeedsTarget && !hasTarget)
                     || hasUnselectedDynamicEtbTargetGroup(card, otherEffects, targetId, targetIds)
                     || gateConditionalNeedsTarget
                     || mayPayManaNeedsTarget
@@ -916,8 +921,6 @@ public class EtbTriggerService {
                 // an intervening-if, or the permanent wasn't cast (token copy, or returned from
                 // a graveyard via undying / reanimation). The controller must choose a target
                 // as the triggered ability is put on the stack.
-                // For non-token casts with "up to N" abilities where 0 was chosen,
-                // the ETB still triggers but has no effect — we skip queueing it.
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
 

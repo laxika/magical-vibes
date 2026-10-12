@@ -187,6 +187,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -1102,9 +1103,6 @@ public class CombatAttackService {
                         && ce.condition() instanceof ControlsPermanentCount
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(attacker, playerId)));
-                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce
-                        && ce.interveningIf()
-                        && ce.condition() instanceof ControlsPermanentCount ? ce.wrapped() : e);
 
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.interveningIf()
@@ -2286,9 +2284,13 @@ public class CombatAttackService {
                 gameData, playerId, attackerIndices.size());
 
         // Check for graveyard-based "whenever you attack with N or more creatures" triggers
-        // (GRAVEYARD_ON_ALLY_CREATURES_ATTACK). These fire from the controller's graveyard.
-        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-        if (graveyard != null) {
+        // (GRAVEYARD_ON_ALLY_CREATURES_ATTACK). These fire from the controller's graveyard; "whenever your
+        // commander attacks" abilities also fire from the graveyard of a commander's owner who isn't
+        // the attacking player.
+        for (UUID graveyardOwnerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+            if (graveyard == null) continue;
+            boolean attackingPlayersGraveyard = graveyardOwnerId.equals(playerId);
             for (Card card : new ArrayList<>(graveyard)) {
                 List<CardEffect> gyAttackEffects = gameQueryService.getEffectiveGraveyardEffects(
                         gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK);
@@ -2296,6 +2298,40 @@ public class CombatAttackService {
 
                 for (CardEffect effect : gyAttackEffects) {
                     CardEffect innerEffect = effect;
+
+                    if (isOwnedCommanderAttackTrigger(effect)) {
+                        ConditionalEffect commanderTrigger = (ConditionalEffect) effect;
+                        PermanentPredicate commanderPredicate = ((HasAttacker) commanderTrigger.condition()).predicate();
+                        long attackingCommanders = attackerIndices.stream()
+                                .map(battlefield::get)
+                                .filter(attacker -> predicateEvaluationService.matchesPermanentPredicate(
+                                        attacker, commanderPredicate, FilterContext.of(gameData)
+                                                .withSourceCardId(card.getId())
+                                                .withSourceControllerId(graveyardOwnerId)))
+                                .count();
+                        for (long i = 0; i < attackingCommanders; i++) {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    card,
+                                    graveyardOwnerId,
+                                    card.getName() + "'s graveyard attack trigger",
+                                    new ArrayList<>(List.of(commanderTrigger.wrapped())),
+                                    1,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null
+                            ));
+                            gameLogService.append(gameData,
+                                    GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());
+                            log.info("Game {} - {} graveyard commander attack trigger pushed onto stack",
+                                    gameData.id, card.getName());
+                        }
+                        continue;
+                    }
+                    if (!attackingPlayersGraveyard) continue;
 
                     ConditionContext triggerContext = new ConditionContext(playerId, null, null, card,
                             false, false, false, false, null, attackerIndices.size(), null, null, false);
@@ -3596,7 +3632,9 @@ public class CombatAttackService {
      * attacks, this creature also attacks if able" requirement must be declared whenever any
      * other creature its controller controls is declared as an attacker. The requirement is
      * waived when attacking would cost the player mana (CR 508.1d — optional attack costs are
-     * never mandatory), matching {@code validateMaximumAttackRequirements}.
+     * never mandatory), matching {@code validateMaximumAttackRequirements}. The requirement is also
+     * waived when the Cyclops has lost all abilities, or when it or another declared attacker can only
+     * attack alone, since it then cannot be declared alongside the other creature.
      */
     private void validateAttacksAlongsideOtherCreature(GameData gameData, UUID playerId,
                                                        List<Integer> attackableIndices,
@@ -3611,10 +3649,13 @@ public class CombatAttackService {
                 continue;
             }
             Permanent creature = battlefield.get(idx);
-            boolean conditional = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean conditional = !gameQueryService.hasLostAllAbilities(gameData, creature)
+                    && creature.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
             if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)
-                    && !canOnlyAttackAlone(gameData, creature)) {
+                    && !canOnlyAttackAlone(gameData, creature)
+                    && declaredAttackerIndices.stream()
+                    .noneMatch(attacker -> canOnlyAttackAlone(gameData, battlefield.get(attacker)))) {
                 throw new IllegalStateException(creature.getCard().getName()
                         + " must also attack when another creature you control attacks");
             }
@@ -3990,6 +4031,14 @@ public class CombatAttackService {
             }
         }
         return lifeCost;
+    }
+
+    /** Whether a graveyard attack ability is a "whenever your commander attacks" trigger (one per attacking commander). */
+    private static boolean isOwnedCommanderAttackTrigger(CardEffect effect) {
+        return effect instanceof ConditionalEffect conditional
+                && conditional.condition() instanceof HasAttacker hasAttacker
+                && hasAttacker.predicate() instanceof PermanentIsCommanderPredicate commander
+                && commander.ownedBySourceController();
     }
 
     private boolean graveyardAttackConditionsMet(

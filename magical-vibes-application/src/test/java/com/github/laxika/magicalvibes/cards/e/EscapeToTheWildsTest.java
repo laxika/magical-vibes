@@ -42,12 +42,12 @@ class EscapeToTheWildsTest extends BaseCardTest {
                 .containsEntry(third.getId(), player1.getId())
                 .containsEntry(fourth.getId(), player1.getId())
                 .containsEntry(fifth.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd)
-                .containsEntry(first.getId(), gd.turnNumber + 2)
-                .containsEntry(second.getId(), gd.turnNumber + 2)
-                .containsEntry(third.getId(), gd.turnNumber + 2)
-                .containsEntry(fourth.getId(), gd.turnNumber + 2)
-                .containsEntry(fifth.getId(), gd.turnNumber + 2);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+                .containsEntry(first.getId(), player1.getId())
+                .containsEntry(second.getId(), player1.getId())
+                .containsEntry(third.getId(), player1.getId())
+                .containsEntry(fourth.getId(), player1.getId())
+                .containsEntry(fifth.getId(), player1.getId());
         assertThat(gd.getMaxLandsThisTurn(player1.getId())).isEqualTo(2);
     }
 
@@ -183,6 +183,8 @@ class EscapeToTheWildsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
     }
 
     private void addManaForEscape() {

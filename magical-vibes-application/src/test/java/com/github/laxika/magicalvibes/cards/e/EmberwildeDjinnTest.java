@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,8 +28,8 @@ class EmberwildeDjinnTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, "Pay {R}{R}");
 
         assertThat(controls(player2, djinnId)).isTrue();
         assertThat(controls(player1, djinnId)).isFalse();
@@ -110,7 +112,7 @@ class EmberwildeDjinnTest extends BaseCardTest {
 
         harness.addMana(player2, ManaColor.RED, 2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        harness.handleListChoice(player2, "Pay {R}{R}");
 
         assertThat(controls(player1, returned.getId())).isTrue();
         assertThat(controls(player2, returned.getId())).isFalse();
@@ -122,6 +124,7 @@ class EmberwildeDjinnTest extends BaseCardTest {
     void canChooseLifeInsteadOfAvailableMana() {
         UUID djinnId = harness.addToBattlefieldAndReturn(player1, new EmberwildeDjinn()).getId();
         advanceToUpkeep(player2);
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.UPKEEP));
         harness.addMana(player2, ManaColor.RED, 2);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -143,6 +146,7 @@ class EmberwildeDjinnTest extends BaseCardTest {
     void insufficientRedManaPaysLife() {
         UUID djinnId = harness.addToBattlefieldAndReturn(player1, new EmberwildeDjinn()).getId();
         advanceToUpkeep(player2);
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of(TurnStep.UPKEEP));
         harness.addMana(player2, ManaColor.RED, 1);
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 

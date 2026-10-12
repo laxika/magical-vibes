@@ -10,7 +10,10 @@ import java.util.UUID;
  * {@code cardId} is still in exile, it is put into {@code ownerId}'s graveyard and its play
  * permission is removed. Drained in {@code StepTriggerService.handleEndStepTriggers} with no
  * active-player filter — "the next end step" is chronological, not "your next end step".
+ * The delayed ability is controlled by {@code controllerId}, the controller of the ability that
+ * created it (CR 603.7e), which is not necessarily the player the card was exiled from.
  */
-public record ExileToOwnerGraveyardAtNextEndStep(UUID cardId, UUID ownerId, Card sourceCard)
+public record ExileToOwnerGraveyardAtNextEndStep(UUID cardId, UUID ownerId, Card sourceCard,
+                                                 UUID controllerId)
         implements DelayedAction {
 }

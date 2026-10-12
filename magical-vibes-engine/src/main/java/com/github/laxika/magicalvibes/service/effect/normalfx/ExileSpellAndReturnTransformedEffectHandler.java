@@ -29,7 +29,8 @@ public class ExileSpellAndReturnTransformedEffectHandler implements NormalEffect
             return;
         }
 
-        if (exileAndReturnTransformedService.exileSpellAndReturnTransformed(gameData, entry)) {
+        if (exileAndReturnTransformedService.exileSpellAndReturnTransformed(gameData, entry,
+                ((ExileSpellAndReturnTransformedEffect) effect).enterWithCounter())) {
             entry.setSpellDispositionHandled(true);
         }
     }

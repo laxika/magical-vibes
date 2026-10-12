@@ -173,9 +173,9 @@ class EgonGodOfDeathTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.setLibrary(player1, List.of(drawCard));
         harness.setHand(player2, List.of(new FeedTheSerpent()));
-        harness.addMana(player2, ManaColor.BLACK, 4);
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.BLACK, 4);
         harness.castAndResolveInstant(player2, 0, egon.getId());
         resolveAllTriggers();
 
@@ -193,9 +193,9 @@ class EgonGodOfDeathTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(first, second));
         harness.setLibrary(player1, List.of(drawCard));
         harness.setHand(player2, List.of(new FeedTheSerpent()));
-        harness.addMana(player2, ManaColor.BLACK, 4);
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.BLACK, 4);
         harness.castAndResolveInstant(player2, 0, egon.getId());
         resolveAllTriggers();
 

@@ -1288,12 +1288,15 @@ public class LibraryChoiceHandlerService {
             }
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles ", chosenCard,
                     shuffleAfterSelection ? ". Library is shuffled." : "."));
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    chosenCard,
-                    playerId,
-                    List.of(new MayCastExiledCardWithNormalCostEffect(UUID.randomUUID(), false)),
-                    "Cast " + chosenCard.getName() + "?",
-                    chosenCard.getId()));
+            // CR 305.9: a land that is also another card type can't be cast, so a may-cast offer is never made for it.
+            if (!chosenCard.hasType(CardType.LAND)) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        chosenCard,
+                        playerId,
+                        List.of(new MayCastExiledCardWithNormalCostEffect(UUID.randomUUID(), false)),
+                        "Cast " + chosenCard.getName() + "?",
+                        chosenCard.getId()));
+            }
             finishSearchAndResume(gameData);
             return;
         }
@@ -2640,19 +2643,6 @@ public class LibraryChoiceHandlerService {
             java.util.Collections.shuffle(gameData.playerDecks.get(ownerId));
         }
 
-        if (animateFound != null && !permanents.isEmpty()) {
-            StackEntry parked = gameData.pendingEffectResolutionEntry;
-            String sourceName = parked != null && parked.getCard() != null ? parked.getCard().getName() : "";
-            UUID sourcePermanentId = parked != null ? parked.getSourcePermanentId() : null;
-            var ctx = com.github.laxika.magicalvibes.service.effect.AmountContext.forEstimation(ownerId);
-            int power = amountEvaluationService.evaluate(gameData, animateFound.power(), ctx);
-            int toughness = amountEvaluationService.evaluate(gameData, animateFound.toughness(), ctx);
-            for (Permanent perm : permanents) {
-                animationSupport.animatePermanently(gameData, perm, animateFound, power, toughness,
-                        sourceName, sourcePermanentId, ownerId);
-            }
-        }
-
         // Phase 2: Process ETB triggers after all permanents are on the battlefield (CR 608.2f)
         for (int i = 0; i < placedCards.size(); i++) {
             Card card = placedCards.get(i);
@@ -2666,6 +2656,21 @@ public class LibraryChoiceHandlerService {
             if (!cloaked && card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
                 perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
                 perm.setSummoningSick(false);
+            }
+        }
+
+        // Animation follows the enter-the-battlefield triggers: the permanents enter as non-creature
+        // lands and only then become creatures, so creature-entering triggers must not see them as creatures.
+        if (animateFound != null && !permanents.isEmpty()) {
+            StackEntry parked = gameData.pendingEffectResolutionEntry;
+            String sourceName = parked != null && parked.getCard() != null ? parked.getCard().getName() : "";
+            UUID sourcePermanentId = parked != null ? parked.getSourcePermanentId() : null;
+            var ctx = com.github.laxika.magicalvibes.service.effect.AmountContext.forEstimation(ownerId);
+            int power = amountEvaluationService.evaluate(gameData, animateFound.power(), ctx);
+            int toughness = amountEvaluationService.evaluate(gameData, animateFound.toughness(), ctx);
+            for (Permanent perm : permanents) {
+                animationSupport.animatePermanently(gameData, perm, animateFound, power, toughness,
+                        sourceName, sourcePermanentId, ownerId);
             }
         }
 
@@ -3255,6 +3260,15 @@ public class LibraryChoiceHandlerService {
                     new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
                             controllerId, controllerId, aura, Zone.LIBRARY, null)));
             if (!gameData.interaction.isAwaitingInput() && library.remove(aura)) {
+                remainingCards.add(aura);
+            }
+        } else if (selectedCards.size() == 1 && selectedCards.getFirst().isAura()
+                && !libraryRevealChoice.selectedToBattlefieldCloaked()
+                && !libraryRevealChoice.selectedToBattlefieldTapped()
+                && libraryRevealChoice.battlefieldEntryReplacement() != null) {
+            Card aura = selectedCards.getFirst();
+            if (!battlefieldEntryBatchSupport.beginSingleAuraHostChoice(
+                    gameData, aura, controllerId, libraryRevealChoice.battlefieldEntryReplacement())) {
                 remainingCards.add(aura);
             }
         } else if (libraryRevealChoice.selectedToBattlefieldSimultaneously()) {
@@ -4443,6 +4457,16 @@ public class LibraryChoiceHandlerService {
         }
 
         sourceCards.removeIf(card -> card.getId().equals(discovered.getId()));
+        if (cast && discovered.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.CostEffect.class::isInstance)) {
+            // A spell with additional costs is cast through the free-cast queue, which makes the player pay
+            // them; if the cast can't be completed the card is put into the discoverer's hand instead.
+            putExiledCardsOnBottom(gameData, deck, sourceCards);
+            gameData.pendingExileFreeCastRemainderToHand.add(discovered.getId());
+            exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, List.of(discovered.getId()));
+            checkDiscoverTriggers(gameData, player.getId(), discoverValue);
+            return;
+        }
         gameData.removeFromExile(discovered.getId());
         putExiledCardsOnBottom(gameData, deck, sourceCards);
 

@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffec
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
@@ -436,6 +437,17 @@ public class ChoiceHandlerService {
                     gameData.stack.set(i, entries.get(ordered.get(stackIndex++)));
                 }
             }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.DrawReplacementSourceChoice choice) {
+            UUID sourceId = choice.sourcePermanentIds().get(colorName);
+            if (sourceId == null || !colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            drawService.resolveChosenDrawReplacementSource(gameData, choice.playerId(), sourceId);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -1497,6 +1509,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ForgottenLorePaymentChoice ctx) {
             handleForgottenLorePaymentChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.TargetPlayerManaOrLifePaymentChoice ctx) {
+            handleTargetPlayerManaOrLifePaymentChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
@@ -2640,25 +2656,32 @@ public class ChoiceHandlerService {
         }
 
         ManaColor chosenColor = ManaColor.valueOf(colorName);
+        ManaCost.ManaProductionOption chosenOption = ctx.choices().getFirst().stream()
+                .filter(option -> option.color() == chosenColor)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid mana color choice: " + colorName));
         ManaColor effectiveColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosenColor);
         gameData.interaction.clearAwaitingInput();
 
         ManaPool pool = gameData.playerManaPools.get(ctx.playerId());
-        pool.add(effectiveColor, 1);
+        int amount = chosenOption.amount();
+        pool.add(effectiveColor, amount);
         if (ctx.fromCreature()) {
-            pool.addCreatureMana(effectiveColor, 1);
+            pool.addCreatureMana(effectiveColor, amount);
         }
-        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds one "
+        String amountText = amount == 1 ? "one" : String.valueOf(amount);
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds " + amountText + " "
                 + effectiveColor.getCode() + "."));
 
-        List<Set<ManaColor>> remainingChoices = ctx.choices().subList(1, ctx.choices().size());
+        List<List<ManaCost.ManaProductionOption>> remainingChoices =
+                ctx.choices().subList(1, ctx.choices().size());
         if (!remainingChoices.isEmpty()) {
             ChoiceContext.EnchantedManaCostChoice nextContext =
                     new ChoiceContext.EnchantedManaCostChoice(
                             ctx.playerId(), remainingChoices, ctx.fromCreature());
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     ctx.playerId(), null, null, nextContext,
-                    remainingChoices.getFirst().stream().map(Enum::name).toList(),
+                    remainingChoices.getFirst().stream().map(option -> option.color().name()).toList(),
                     "Choose a color of mana to add."));
             inputCompletionService.publishStateAfterInput(gameData);
             return;
@@ -5205,7 +5228,11 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.eachPlayerSacrificeOrDiscard.chosenMode = chosen;
+        if (gameData.eumidianWastewaker.active && gameData.eumidianWastewaker.currentPlayerId != null) {
+            gameData.eumidianWastewaker.chosenMode = chosen;
+        } else {
+            gameData.eachPlayerSacrificeOrDiscard.chosenMode = chosen;
+        }
 
         gameLogService.append(gameData, GameLog.text(
                 player.getUsername() + " chooses \"" + chosen + "\" for " + ctx.sourceCardName() + "."));
@@ -5322,6 +5349,37 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), chosen, ctx.sourceCardName());
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void handleTargetPlayerManaOrLifePaymentChoice(
+            GameData gameData, String chosen, ChoiceContext.TargetPlayerManaOrLifePaymentChoice ctx) {
+        PendingInteraction.ColorChoice active =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active == null || !active.options().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid mana-or-life payment choice: " + chosen);
+        }
+
+        boolean paid = false;
+        if (ctx.payManaOption().equals(chosen)) {
+            ManaCost cost = new ManaCost(ctx.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(ctx.payerId());
+            if (pool != null && cost.canPay(pool)) {
+                cost.pay(pool);
+                paid = true;
+            }
+        } else if (ctx.payLifeOption().equals(chosen)
+                && gameQueryService.canPlayerLifeChange(gameData, ctx.payerId())
+                && gameData.getLife(ctx.payerId()) >= ctx.lifeCost()) {
+            lifeSupport.applyLifePayment(gameData, ctx.payerId(), ctx.lifeCost(), ctx.sourceCardName());
+            paid = true;
+        } else if (!ChoiceContext.TargetPlayerManaOrLifePaymentChoice.DECLINE.equals(chosen)) {
+            throw new IllegalArgumentException("Invalid mana-or-life payment choice: " + chosen);
+        }
+
+        gameData.interaction.clearAwaitingInput();
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        gameData.resolvedMayAccepted = paid;
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleEnchantedPermanentManaOrLifePaymentChoice(
@@ -6408,8 +6466,10 @@ public class ChoiceHandlerService {
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isLand(gameData, permanent)) {
-                    GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
-                            permanent, subtype, EffectDuration.UNTIL_END_OF_TURN, true);
+                    gameData.addFloatingEffect(new FloatingContinuousEffect(
+                            UUID.randomUUID(), "Elsewhere Flask", null, ctx.controllerId(),
+                            new GrantSubtypeEffect(subtype, GrantScope.TARGET, true),
+                            permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
                 }
             }
         }

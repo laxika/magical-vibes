@@ -169,7 +169,7 @@ class EntropicBattlecruiserTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(heldCard);
     }
 

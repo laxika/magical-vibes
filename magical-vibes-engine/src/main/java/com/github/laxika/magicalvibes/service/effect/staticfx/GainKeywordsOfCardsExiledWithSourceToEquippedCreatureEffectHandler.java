@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import org.springframework.stereotype.Component;
@@ -37,6 +38,9 @@ public class GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffectHandler
             for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
                 if (staticEffect instanceof ProtectionGrantingEffect protection
                         && protection.protectionScope() == null) {
+                    accumulator.addGrantedEffect(staticEffect);
+                } else if (staticEffect instanceof TargetingRestrictionEffect restriction
+                        && restriction.hexproofLike()) {
                     accumulator.addGrantedEffect(staticEffect);
                 }
             }

@@ -81,8 +81,8 @@ class ElsewhereFlaskTest extends BaseCardTest {
 
         activateAndChoose("ISLAND");
 
-        assertThat(forestA.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
-        assertThat(forestB.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forestA)).containsExactly(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forestB)).containsExactly(CardSubtype.ISLAND);
     }
 
     @Test
@@ -110,7 +110,7 @@ class ElsewhereFlaskTest extends BaseCardTest {
 
         activateAndChoose("ISLAND");
 
-        assertThat(opponentForest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.effectiveBasicLandTypes(gd, opponentForest)).containsExactly(CardSubtype.FOREST);
     }
 
     @Test
@@ -121,11 +121,11 @@ class ElsewhereFlaskTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         activateAndChoose("ISLAND");
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(forest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
 
     @Test

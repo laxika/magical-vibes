@@ -1971,6 +1971,7 @@ public class AbilityActivationService {
                         Map.of()
                 );
         stackEntry.setSourceZone(Zone.GRAVEYARD);
+        stackEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
         gameData.recordActivatedAbilityOfGraveyardCard(playerId);
@@ -7109,7 +7110,10 @@ public class AbilityActivationService {
             if (imprintedCard == null) {
                 throw new IllegalStateException("No card has been exiled with " + permanent.getCard().getName());
             }
-            int requiredX = imprintedCard.getManaValue();
+            List<Card> exiledWithSource = gameData.getCardsExiledByPermanent(permanent.getId());
+            int requiredX = exiledWithSource.size() > 1
+                    ? exiledWithSource.stream().mapToInt(Card::getManaValue).sum()
+                    : imprintedCard.getManaValue();
             if (effectiveXValue != requiredX) {
                 throw new IllegalStateException("X must equal the mana value of the imprinted card (" + requiredX + ")");
             }
@@ -7948,7 +7952,7 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated at sorcery speed during your main phase");
                 }
                 if (!gameData.stack.isEmpty()) {
-                    throw new IllegalStateException("This ability can only be activated when the stack is empty");
+                    throw new IllegalStateException("This ability can only be activated at sorcery speed when the stack is empty");
                 }
             }
         }
@@ -8413,9 +8417,10 @@ public class AbilityActivationService {
                                            String abilityCost, int effectiveXValue,
                                            boolean artifactContext, boolean myrContext,
                                            int additionalCost) {
+        Set<CardSubtype> sourceSubtypes = cardSourceSpellOrAbilitySubtypes(sourceCard);
         if (!sourceCard.hasType(CardType.CREATURE)) {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
-                    null, additionalCost);
+                    sourceSubtypes, additionalCost);
             return;
         }
 
@@ -8424,7 +8429,7 @@ public class AbilityActivationService {
         EnumMap<ManaColor, Integer> promotedCreatureSourceMana = pool.promoteCreatureSpellOrAbilityMana();
         try {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
-                    null, additionalCost);
+                    sourceSubtypes, additionalCost);
         } finally {
             pool.restorePromotedCreatureSpellOrAbilityMana(promotedCreatureSourceMana, regularManaBefore);
         }
@@ -8576,9 +8581,34 @@ public class AbilityActivationService {
         return subtypes;
     }
 
+    private Set<CardSubtype> cardSourceSpellOrAbilitySubtypes(Card card) {
+        Set<CardSubtype> subtypes = new HashSet<>(card.getSubtypes());
+        if (card.hasKeyword(Keyword.CHANGELING)) {
+            subtypes.addAll(allCreatureSubtypes());
+        }
+        return subtypes;
+    }
+
+    private Set<CardSubtype> allCreatureSubtypes() {
+        EnumSet<CardSubtype> creatureSubtypes = EnumSet.noneOf(CardSubtype.class);
+        for (CardSubtype subtype : CardSubtype.values()) {
+            if (gameQueryService.isCreatureSubtype(subtype)) {
+                creatureSubtypes.add(subtype);
+            }
+        }
+        return creatureSubtypes;
+    }
+
     private Set<CardSubtype> effectiveSpellOrAbilitySubtypes(GameData gameData, Permanent permanent,
                                                               ActivatedAbility ability) {
         Set<CardSubtype> subtypes = effectiveSubtypes(permanent);
+        Set<CardSubtype> layeredCreatureSubtypes = gameQueryService.effectiveCreatureSubtypes(gameData, permanent);
+        subtypes.removeIf(subtype -> gameQueryService.isCreatureSubtype(subtype)
+                && !layeredCreatureSubtypes.contains(subtype));
+        subtypes.addAll(layeredCreatureSubtypes);
+        if (gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)) {
+            subtypes.addAll(allCreatureSubtypes());
+        }
         if (ability.getEffects().stream().anyMatch(EquipEffect.class::isInstance)) {
             subtypes.add(CardSubtype.EQUIPMENT);
         } else {
@@ -9873,6 +9903,7 @@ public class AbilityActivationService {
     public boolean isManaAbilityAt(GameData gameData, UUID playerId, int permanentIndex, Integer abilityIndex) {
         Permanent perm = resolveActivationSource(gameData, playerId, permanentIndex, abilityIndex);
         if (perm == null) return false;
+        if (getEffectiveActivatedAbilities(gameData, perm).isEmpty()) return false;
         ActivatedAbility ability = resolveAbility(gameData, perm, abilityIndex);
         return isManaAbility(ability);
     }

@@ -27,6 +27,7 @@ public class ExtractFromDarkness extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .filter(new CardTypePredicate(CardType.CREATURE))
+                .mandatory(true)
                 .build());
     }
 }

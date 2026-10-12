@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GoldmawChampion;
 import com.github.laxika.magicalvibes.cards.k.KayaTheInexorable;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.t.TyvarKell;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -98,6 +99,7 @@ class EradicatorValkyrieTest extends BaseCardTest {
         Permanent valkyrie = addCreatureReady(player1, new EradicatorValkyrie());
         addCreatureReady(player2, new GoldmawChampion());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new TyvarKell());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         valkyrie.setAttackedThisTurn(true);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -168,7 +170,8 @@ class EradicatorValkyrieTest extends BaseCardTest {
     @Test
     void ownPlaneswalkerCanTargetValkyrie() {
         Permanent valkyrie = addCreatureReady(player1, new EradicatorValkyrie());
-        harness.addToBattlefield(player1, new KayaTheInexorable());
+        Permanent kaya = harness.addToBattlefieldAndReturn(player1, new KayaTheInexorable());
+        kaya.setCounterCount(CounterType.LOYALTY, 3);
 
         harness.activateAbility(player1, 1, 1, null, valkyrie.getId());
         harness.passBothPriorities();

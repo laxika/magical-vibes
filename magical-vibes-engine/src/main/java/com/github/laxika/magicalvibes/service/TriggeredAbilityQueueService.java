@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -2040,14 +2041,15 @@ public class TriggeredAbilityQueueService {
             }
 
             List<UUID> allChoices = new ArrayList<>(validPermanentTargets);
-            List<UUID> playerChoices = List.of(pending.controllerId());
+            boolean targetRequired = sagaChapterTargetRequired(pending);
+            List<UUID> playerChoices = targetRequired ? List.of() : List.of(pending.controllerId());
             boolean creaturesOnly = sagaChapterTargetsCreaturesOnly(pending);
             String targetDescription = creaturesOnly ? "target creature" : "target permanent";
 
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(), allChoices, playerChoices,
                     pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
-                            + " — Choose " + targetDescription + ", or yourself to skip.");
+                            + " — Choose " + targetDescription + (targetRequired ? "." : ", or yourself to skip."));
 
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s chapter " + pending.chapterName() + " - choose " + targetDescription + "."));
@@ -3058,6 +3060,8 @@ public class TriggeredAbilityQueueService {
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
                     if (!gameQueryService.isCreature(gameData, p)) continue;
+                    if (!validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, pending.sourceCard(),
+                            pending.effects(), TargetFilters.creatureAnOpponentControls(), p, pending.controllerId())) continue;
                     validTargets.add(p.getId());
                 }
             }
@@ -3125,6 +3129,19 @@ public class TriggeredAbilityQueueService {
             }
         }
         return validPermanentTargets;
+    }
+
+    private boolean sagaChapterTargetRequired(PermanentChoiceContext.SagaChapterTarget pending) {
+        EffectSlot slot = switch (pending.chapterName()) {
+            case "I" -> EffectSlot.SAGA_CHAPTER_I;
+            case "II" -> EffectSlot.SAGA_CHAPTER_II;
+            case "III" -> EffectSlot.SAGA_CHAPTER_III;
+            case "IV" -> EffectSlot.SAGA_CHAPTER_IV;
+            case "V" -> EffectSlot.SAGA_CHAPTER_V;
+            case "VI" -> EffectSlot.SAGA_CHAPTER_VI;
+            default -> null;
+        };
+        return slot != null && pending.sourceCard().isSagaChapterTargetRequired(slot);
     }
 
     private boolean sagaChapterTargetsCreaturesOnly(PermanentChoiceContext.SagaChapterTarget pending) {

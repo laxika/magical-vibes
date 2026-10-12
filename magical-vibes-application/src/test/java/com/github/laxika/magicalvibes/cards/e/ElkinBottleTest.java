@@ -190,6 +190,8 @@ class ElkinBottleTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         Card top = activateBottleWithTop(new ElkinBottle());
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))

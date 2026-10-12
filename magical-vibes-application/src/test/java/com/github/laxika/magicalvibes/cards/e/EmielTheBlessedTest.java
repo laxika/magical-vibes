@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HardenedScales;
 import com.github.laxika.magicalvibes.cards.z.ZebraUnicorn;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EmielTheBlessed.class, GrizzlyBears.class, ZebraUnicorn.class, HardenedScales.class})
+@CardUsed({EmielTheBlessed.class, ControlMagic.class, GrizzlyBears.class, ZebraUnicorn.class, HardenedScales.class})
 class EmielTheBlessedTest extends BaseCardTest {
 
     @Test
@@ -155,9 +156,12 @@ class EmielTheBlessedTest extends BaseCardTest {
     void stolenCreatureReturnsToOwner() {
         Permanent emiel = harness.addToBattlefieldAndReturn(player1, new EmielTheBlessed());
         Permanent unicorn = harness.addToBattlefieldAndReturn(player2, new ZebraUnicorn());
-        gd.playerBattlefields.get(player2.getId()).remove(unicorn);
-        gd.playerBattlefields.get(player1.getId()).add(unicorn);
-        gd.stolenCreatures.put(unicorn.getId(), player2.getId());
+        harness.setHand(player1, List.of(new ControlMagic()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, unicorn.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(unicorn.getId()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         int emielIndex = gd.playerBattlefields.get(player1.getId()).indexOf(emiel);

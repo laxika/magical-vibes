@@ -75,6 +75,7 @@ class EyekiteTest extends BaseCardTest {
     @DisplayName("The bonus resets next turn and can apply on an opponent's turn")
     void bonusResetsAndCanApplyDuringOpponentsTurn() {
         Permanent eyekite = harness.addToBattlefieldAndReturn(player1, new Eyekite());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new SnowCoveredIsland(), new SnowCoveredIsland(),
                 new SnowCoveredIsland(), new SnowCoveredIsland()));
         harness.setLibrary(player2, List.of(new SnowCoveredIsland(), new SnowCoveredIsland()));
@@ -82,7 +83,7 @@ class EyekiteTest extends BaseCardTest {
         draw(player1);
         assertThat(gqs.getEffectivePower(gd, eyekite)).isEqualTo(3);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, eyekite)).isEqualTo(1);
 
         draw(player1);

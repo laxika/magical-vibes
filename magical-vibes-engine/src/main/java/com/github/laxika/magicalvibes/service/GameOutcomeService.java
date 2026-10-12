@@ -105,11 +105,18 @@ public class GameOutcomeService {
             else if (gameData.getLife(playerId) <= 0) candidates.put(playerId, LossReason.LIFE);
         }
         List<UUID> losers = new ArrayList<>();
-        candidates.forEach((player, reason) -> {
+        boolean replaced = false;
+        for (var candidate : candidates.entrySet()) {
+            UUID player = candidate.getKey();
+            LossReason reason = candidate.getValue();
             if (reason == LossReason.EMPTY_LIBRARY) gameData.playersAttemptedDrawFromEmptyLibrary.remove(player);
-            if (resolveLoss(gameData, player, reason) == LossOutcome.LOSES) losers.add(player);
-        });
-        if (losers.isEmpty()) return false;
+            LossOutcome outcome = resolveLoss(gameData, player, reason);
+            if (outcome == LossOutcome.LOSES) losers.add(player);
+            if (outcome == LossOutcome.REPLACED && !gameData.interaction.isAwaitingInput()) replaced = true;
+        }
+        // A replaced loss leaves the state changed (the replacer may have reset life or exiled a
+        // permanent), so any other loss that now holds is evaluated before reporting "no game end".
+        if (losers.isEmpty()) return replaced && checkWinCondition(gameData);
         if (losers.size() == gameData.playerIds.size()) {
             declareDraw(gameData);
             return true;

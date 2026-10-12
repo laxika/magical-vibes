@@ -65,7 +65,7 @@ public class ExileTargetSpellWithDelayCountersEffectHandler implements NormalEff
 
         exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
         gameData.delayedSpellExiles.add(new GameData.DelayedSpellExile(
-                targetCardId, target.getControllerId(), counters, snapshot));
+                targetCardId, target.getControllerId(), counters, snapshot, entry.getControllerId(), entry.getCard()));
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " is exiled with " + counters + " delay counter" + (counters == 1 ? "" : "s") + " on it."));

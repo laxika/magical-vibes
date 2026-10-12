@@ -32,6 +32,8 @@ public class ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControlle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect exileEffect =
+                (ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect) effect;
         UUID damagedPlayerId = entry.getTargetId();
         UUID creatureControllerId = entry.getTriggeringPermanentControllerId() != null
                 ? entry.getTriggeringPermanentControllerId() : entry.getControllerId();
@@ -51,7 +53,9 @@ public class ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControlle
         exileService.exileCardFaceDown(gameData, damagedPlayerId, topCard,
                 entry.getSourcePermanentId(), creatureControllerId);
         gameData.exilePlayPermissions.put(topCard.getId(), creatureControllerId);
-        gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
+        if (exileEffect.anyManaTypeSpendable()) {
+            gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
+        }
 
         String creatureControllerName = gameData.playerIdToName.get(creatureControllerId);
         gameLogService.append(gameData, GameLog.text(

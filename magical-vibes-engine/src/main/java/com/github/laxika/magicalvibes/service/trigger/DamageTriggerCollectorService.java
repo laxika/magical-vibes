@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerExilesRandomHandCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.GhyrsonStarnKelermorphEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.SourceDamageGainLifeForSourceControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -1910,6 +1912,40 @@ public class DamageTriggerCollectorService {
                         + gameData.playerIdToName.get(recipientId) + "."));
         log.info("Game {} - {} reflects {} damage to {}", gameData.id, watcher.getCard().getName(),
                 sd.totalDamage(), gameData.playerIdToName.get(recipientId));
+        return true;
+    }
+
+    @CollectsTrigger(value = SourceDamageGainLifeForSourceControllerEffect.class,
+            slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    private boolean handleSourceDamageGainLifeForSourceController(TriggerMatchContext match,
+            SourceDamageGainLifeForSourceControllerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
+        if (sd.totalDamage() <= 0 || sd.sourceCard() == null) return false;
+        if (!predicateEvaluationService.matchesCardPredicate(sd.sourceCard(), trigger.sourceFilter(),
+                sd.sourceCard().getId(), match.gameData(), sd.sourceControllerId())) return false;
+
+        GameData gameData = match.gameData();
+        UUID recipientId = sd.sourceControllerId();
+        if (recipientId == null || !gameData.playerIds.contains(recipientId)) return false;
+
+        Permanent watcher = match.permanent();
+        // The watcher's controller controls the ability, but the life goes to the damage source's
+        // controller. The recipient rides in the target channel, so the ability is not targeted.
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new GainLifeEffect(new EventValue(), GainLifeRecipient.TRIGGERING_PLAYER))),
+                recipientId,
+                watcher.getId());
+        entry.setEventValue(sd.totalDamage());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers for {} damage from {}'s source", gameData.id,
+                watcher.getCard().getName(), sd.totalDamage(), gameData.playerIdToName.get(recipientId));
         return true;
     }
 

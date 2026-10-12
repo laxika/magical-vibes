@@ -385,7 +385,7 @@ public class PermanentRemovalService {
         Set<CardSubtype> creatureSubtypesAtDeath = wasCreature
                 ? effectiveCreatureSubtypesAtDeath(gameData, target)
                 : Set.of();
-        boolean hadUndying = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.UNDYING);
+        int undyingInstances = wasCreature ? countUndyingInstances(gameData, target) : 0;
         int persistInstances = wasCreature ? countPersistInstances(gameData, target) : 0;
         boolean creatureDeathTriggersSuppressed = gameQueryService.areCreatureDeathTriggersSuppressed(gameData, target);
         boolean selfGraveyardTriggerSuppressed = selfGraveyardTriggerSuppressed(gameData, target);
@@ -415,7 +415,7 @@ public class PermanentRemovalService {
                     gameData, target, controllerId, Zone.GRAVEYARD);
         }
         processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
-                wasLand, creatureSubtypesAtDeath, hadUndying, persistInstances, controllerId, ownerId,
+                wasLand, creatureSubtypesAtDeath, undyingInstances, persistInstances, controllerId, ownerId,
                 destroyedBySpellOrAbility, grantedDeathEffects, dyingPowerAtDeath,
                 dyingToughnessAtDeath, selfGraveyardTriggerSuppressed, creatureDeathTriggersSuppressed,
                 wasSacrificed, removed.get().hadPrintedAbilities());
@@ -558,7 +558,7 @@ public class PermanentRemovalService {
         Set<CardSubtype> creatureSubtypesAtDeath = wasCreature
                 ? effectiveCreatureSubtypesAtDeath(gameData, target)
                 : Set.of();
-        boolean hadUndying = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.UNDYING);
+        int undyingInstances = wasCreature ? countUndyingInstances(gameData, target) : 0;
         int persistInstances = wasCreature ? countPersistInstances(gameData, target) : 0;
         boolean creatureDeathTriggersSuppressed = gameQueryService.areCreatureDeathTriggersSuppressed(gameData, target);
         boolean selfGraveyardTriggerSuppressed = selfGraveyardTriggerSuppressed(gameData, target);
@@ -584,7 +584,7 @@ public class PermanentRemovalService {
                     gameData, target, info.controllerId(), Zone.GRAVEYARD);
         }
         processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
-                wasLand, creatureSubtypesAtDeath, hadUndying, persistInstances, info.controllerId(), info.ownerId(), false,
+                wasLand, creatureSubtypesAtDeath, undyingInstances, persistInstances, info.controllerId(), info.ownerId(), false,
                 grantedDeathEffects, dyingPowerAtDeath, dyingToughnessAtDeath, selfGraveyardTriggerSuppressed,
                 creatureDeathTriggersSuppressed, false, info.hadPrintedAbilities());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
@@ -1529,7 +1529,9 @@ public class PermanentRemovalService {
                 && target.getOriginalCard() != null
                 && gameData.perpetualExileInsteadOfDyingCardIds.contains(target.getOriginalCard().getId());
         if (!target.isExileIfLeavesBattlefield()
-                && !target.isExileIfLeavesBattlefieldUntilEndOfTurn()
+                && !(target.isExileIfLeavesBattlefieldUntilEndOfTurn()
+                        && gameQueryService.grantedAbilitySurvivesRemoval(
+                                gameData, target, target.getExileIfLeavesBattlefieldUntilEndOfTurnTimestamp()))
                 && !(checkExileInsteadOfDie && target.isExileIfDying()
                         && gameQueryService.grantedAbilitySurvivesRemoval(
                                 gameData, target, target.getExileIfDyingTimestamp()))
@@ -1690,6 +1692,7 @@ public class PermanentRemovalService {
                             || entry.getDeclaredTargetIds().contains(target.getId())) {
                         entry.rememberLastKnownPermanentCard(target.getId(), lastKnownCard);
                         entry.getLastKnownPermanentPowers().put(target.getId(), target.getLastKnownPower());
+                        entry.getLastKnownPermanentToughnesses().put(target.getId(), target.getLastKnownToughness());
                         entry.getLastKnownTargetColors().put(target.getId(),
                                 Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
                     }
@@ -2131,7 +2134,7 @@ public class PermanentRemovalService {
                                               boolean wasEnchantment,
                                               boolean wasLand,
                                               Set<CardSubtype> creatureSubtypesAtDeath,
-                                              boolean hadUndying, int persistInstances,
+                                              int undyingInstances, int persistInstances,
                                               UUID controllerId, UUID ownerId,
                                               boolean destroyedBySpellOrAbility,
                                               List<CardEffect> grantedDeathEffects,
@@ -2377,7 +2380,7 @@ public class PermanentRemovalService {
                             gameData, target.getId(), controllerId, target.getCard(), dyingPowerAtDeath,
                             target, creatureSubtypesAtDeath);
                     triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
-                    collectUndyingTrigger(gameData, target, controllerId, hadUndying);
+                    collectUndyingTrigger(gameData, target, controllerId, undyingInstances);
                     collectPersistTriggers(gameData, target, controllerId, persistInstances);
                 }
             }
@@ -2520,20 +2523,34 @@ public class PermanentRemovalService {
      * "if it had no +1/+1 counters" intervening-if uses the counter count at the moment it died (the
      * permanent has already left the battlefield, so this is last-known information).
      */
-    private void collectUndyingTrigger(GameData gameData, Permanent dyingPermanent, UUID controllerId, boolean hadUndying) {
-        if (!hadUndying) return;
+    private int countUndyingInstances(GameData gameData, Permanent permanent) {
+        return triggerKeywordInstancesAtDeath(gameData, permanent, Keyword.UNDYING);
+    }
+
+    private int triggerKeywordInstancesAtDeath(GameData gameData, Permanent permanent, Keyword keyword) {
+        Map<Keyword, Integer> simultaneous = gameData.simultaneousDyingTriggerKeywordInstances.get(permanent.getId());
+        if (simultaneous != null) {
+            return simultaneous.getOrDefault(keyword, 0);
+        }
+        return gameQueryService.triggerKeywordInstances(gameData, permanent, keyword);
+    }
+
+    private void collectUndyingTrigger(GameData gameData, Permanent dyingPermanent, UUID controllerId, int undyingInstances) {
+        if (undyingInstances == 0) return;
         if (dyingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) return;
 
         Card dyingCard = dyingPermanent.getOriginalCard();
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                dyingCard,
-                controllerId,
-                dyingCard.getName() + "'s undying ability",
-                new ArrayList<>(List.of(new UndyingReturnEffect()))
-        ));
+        for (int instance = 0; instance < undyingInstances; instance++) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    dyingCard,
+                    controllerId,
+                    dyingCard.getName() + "'s undying ability",
+                    new ArrayList<>(List.of(new UndyingReturnEffect()))
+            ));
+        }
         gameLogService.append(gameData, GameLog.cardThen(dyingCard, "'s undying ability triggers."));
-        log.info("Game {} - {} undying triggers", gameData.id, dyingCard.getName());
+        log.info("Game {} - {} undying triggers ({} instance(s))", gameData.id, dyingCard.getName(), undyingInstances);
     }
 
     /**
@@ -2543,19 +2560,7 @@ public class PermanentRemovalService {
      * permanent has already left the battlefield, so this is last-known information).
      */
     private int countPersistInstances(GameData gameData, Permanent permanent) {
-        if (!gameQueryService.hasKeyword(gameData, permanent, Keyword.PERSIST)) return 0;
-        int instances = !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
-                && permanent.getCard().getKeywords().contains(Keyword.PERSIST) ? 1 : 0;
-        synchronized (gameData.floatingEffects) {
-            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
-                if (permanent.getId().equals(floating.affectedPermanentId())
-                        && floating.effect() instanceof GrantKeywordEffect grant
-                        && grant.keywords().contains(Keyword.PERSIST)) {
-                    instances++;
-                }
-            }
-        }
-        return Math.max(1, instances);
+        return triggerKeywordInstancesAtDeath(gameData, permanent, Keyword.PERSIST);
     }
 
     private void collectPersistTriggers(GameData gameData, Permanent dyingPermanent, UUID controllerId,

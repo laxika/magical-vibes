@@ -62,19 +62,19 @@ public class MillControllerAndMayPutMilledSagaAndLandOntoBattlefieldEffectHandle
 
         int count = Math.max(0, amountEvaluationService.evaluate(gameData, millEffect.count(),
                 AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot())));
-        List<Card> milled = graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), count);
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(gameData, entry.getControllerId(), count);
         CardSubtypePredicate sagaPredicate = new CardSubtypePredicate(CardSubtype.SAGA);
         CardTypePredicate landPredicate = new CardTypePredicate(CardType.LAND);
         List<UUID> sagaCardIds = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, sagaPredicate, entry.getCard().getId(), gameData, entry.getControllerId()))
-                .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null)
+                .filter(card -> findMilledCard(gameData, card.getId()) != null)
                 .map(Card::getId)
                 .toList();
         List<UUID> landCardIds = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, landPredicate, entry.getCard().getId(), gameData, entry.getControllerId()))
-                .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null)
+                .filter(card -> findMilledCard(gameData, card.getId()) != null)
                 .map(Card::getId)
                 .toList();
 
@@ -90,7 +90,7 @@ public class MillControllerAndMayPutMilledSagaAndLandOntoBattlefieldEffectHandle
         while (categoryIndex < 2) {
             List<UUID> candidateIds = categoryIndex == 0 ? context.sagaCardIds() : context.landCardIds();
             List<Card> candidates = candidateIds.stream()
-                    .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                    .map(cardId -> findMilledCard(gameData, cardId))
                     .filter(Objects::nonNull)
                     .toList();
             if (!candidates.isEmpty()) {
@@ -114,14 +114,28 @@ public class MillControllerAndMayPutMilledSagaAndLandOntoBattlefieldEffectHandle
         gameData.graveyardTargetOperation.milledSagaAndLandReturn = null;
         gameData.rerunCurrentEffectAfterInteraction = false;
         List<Card> selectedCards = context.selectedCardIds().stream()
-                .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                .map(cardId -> findMilledCard(gameData, cardId))
                 .filter(Objects::nonNull)
                 .toList();
         if (selectedCards.isEmpty()) {
             return;
         }
-        selectedCards.forEach(card -> permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId()));
+        selectedCards.forEach(card -> removeMilledCard(gameData, card.getId()));
         graveyardReturnSupport.putCardsOntoBattlefieldSimultaneously(
                 gameData, Map.of(entry.getControllerId(), selectedCards), false, null);
+    }
+
+    /** Finds a milled card in the graveyard, or in exile when a replacement effect diverted it there (CR 701.17c). */
+    private Card findMilledCard(GameData gameData, UUID cardId) {
+        Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+        return card != null ? card : gameQueryService.findCardInExileById(gameData, cardId);
+    }
+
+    private void removeMilledCard(GameData gameData, UUID cardId) {
+        if (gameQueryService.findCardInGraveyardById(gameData, cardId) != null) {
+            permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
+        } else {
+            gameData.removeFromExile(cardId);
+        }
     }
 }

@@ -903,13 +903,21 @@ public class ActivatedAbility {
      * Whether this is a cycling ability (or typecycling / landcycling variant). Detected from the
      * ability description's name segment ending in {@code "cycling"} (engine convention —
      * {@code "Cycling {2} …"}, {@code "Islandcycling {2} …"}, {@code "Basic landcycling {2} …"}).
+     * The name segment ends at the first brace, parenthesis or em dash, so a cycling cost written
+     * in words ({@code "Cycling—Sacrifice a land (…)"}) is recognised too.
      */
     public boolean isCyclingAbility() {
         if (description == null) {
             return false;
         }
-        int brace = description.indexOf('{');
-        String namePart = (brace >= 0 ? description.substring(0, brace) : description).trim();
+        int end = description.length();
+        for (char stop : new char[] {'{', '(', '\u2014'}) {
+            int index = description.indexOf(stop);
+            if (index >= 0 && index < end) {
+                end = index;
+            }
+        }
+        String namePart = description.substring(0, end).trim();
         return namePart.toLowerCase().endsWith("cycling");
     }
 }

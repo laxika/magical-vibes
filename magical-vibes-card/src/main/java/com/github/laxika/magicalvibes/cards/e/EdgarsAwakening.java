@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -24,12 +25,14 @@ public class EdgarsAwakening extends Card {
 
         // When you discard this card, you may pay {B}. When you do, return target creature card
         // from your graveyard to your hand.
+        // The "when you do" return is a separate reflexive trigger, so it goes on the stack after the
+        // payment and can be responded to (CR 603.12).
         addEffect(EffectSlot.ON_SELF_DISCARDED, new MayPayManaEffect("{B}",
-                ReturnCardFromGraveyardEffect.builder()
+                new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
-                        .build(),
+                        .build()),
                 "Pay {B} to return a creature card from your graveyard to your hand?"));
     }
 }

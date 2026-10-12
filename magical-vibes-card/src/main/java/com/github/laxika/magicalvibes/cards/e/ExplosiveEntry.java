@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ExplosiveEntry extends Card {
 
     public ExplosiveEntry() {
+        setAllowSharedTargets(true);
         target(TargetFilters.artifact(), 0, 1)
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
         target(TargetFilters.creature(), 0, 1)

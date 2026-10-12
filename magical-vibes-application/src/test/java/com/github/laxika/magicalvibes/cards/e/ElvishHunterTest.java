@@ -32,13 +32,13 @@ class ElvishHunterTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(target.isTapped()).isTrue();
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -75,8 +75,10 @@ class ElvishHunterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, hunter.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(hunter.isTapped()).isTrue();
     }
 
@@ -89,14 +91,14 @@ class ElvishHunterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(target.isTapped()).isFalse();
 
         target.tap();
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(target.isTapped()).isFalse();
     }
 
@@ -115,13 +117,13 @@ class ElvishHunterTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(target.isTapped()).isTrue();
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(target.isTapped()).isFalse();
     }
 

@@ -171,6 +171,7 @@ class ElspethResplendentTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+        harness.handlePermanentChosen(player1, creature.getId());
 
         Permanent entered = findPermanent(player1, "Witness Protection");
         assertThat(entered.getAttachedTo()).isEqualTo(creature.getId());

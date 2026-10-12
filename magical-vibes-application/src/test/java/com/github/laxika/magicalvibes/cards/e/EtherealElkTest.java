@@ -32,6 +32,7 @@ class EtherealElkTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMultipleCardsChosen(player1, List.of(searchChoice().pool().getFirst().getId()));
 
         harness.assertInHand(player1, "Vivien, Nature's Avenger");
         harness.assertNotInGraveyard(player1, "Vivien, Nature's Avenger");
@@ -46,11 +47,10 @@ class EtherealElkTest extends BaseCardTest {
 
         resolveMay(true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().cards()).hasSize(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().cards().getFirst().getName()).isEqualTo("Vivien, Nature's Avenger");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(searchChoice().pool()).hasSize(1);
+        assertThat(searchChoice().pool().getFirst().getName()).isEqualTo("Vivien, Nature's Avenger");
+        assertThat(searchChoice().libraryCardIds()).containsExactly(vivien.getId());
     }
 
     @Test
@@ -73,7 +73,7 @@ class EtherealElkTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(vivien.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(vivien);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -87,7 +87,7 @@ class EtherealElkTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(vivien);
@@ -121,6 +121,10 @@ class EtherealElkTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private PendingInteraction.SearchLibraryAndOrGraveyardChoice searchChoice() {
+        return gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
     }
 
     private void setupAndCast() {

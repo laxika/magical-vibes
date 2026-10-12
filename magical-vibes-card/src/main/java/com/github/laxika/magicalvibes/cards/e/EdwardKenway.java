@@ -36,6 +36,6 @@ public class EdwardKenway extends Card {
                 new TriggeringPermanentControllerConditionalEffect(
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.VEHICLE)),
-                                new ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect())));
+                                new ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect(false))));
     }
 }

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.LichDuelMasteryLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NefariousLichLifeGainReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.EnduringAngelLifeTotalReplacementEffect;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -39,6 +41,9 @@ public class LifeSupport {
     private final PermanentRemovalService permanentRemovalService;
     @Lazy
     private final DrawService drawService;
+    @Autowired
+    @Lazy
+    private AnimationSupport animationSupport;
 
     public LifeSupport(GameQueryService gameQueryService,
                        GameLogService gameLogService,
@@ -184,6 +189,9 @@ public class LifeSupport {
             }
             int lifeLoss = (currentLife - newLife)
                     * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            if (replaceLethalLifeReduction(gameData, playerId, lifeLoss)) {
+                return true;
+            }
             gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
             triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         }
@@ -201,6 +209,9 @@ public class LifeSupport {
             return;
         }
         amount *= gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        if (replaceLethalLifeReduction(gameData, playerId, amount)) {
+            return;
+        }
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, currentLife - amount);
 
@@ -239,6 +250,10 @@ public class LifeSupport {
 
         int currentLife = gameData.getLife(playerId);
         int lifeLoss = amount * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+        if (replaceLethalLifeReduction(gameData, playerId, lifeLoss)) {
+            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, amount);
+            return;
+        }
         gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -248,6 +263,40 @@ public class LifeSupport {
 
         triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, amount);
+    }
+
+    /**
+     * Enduring Angel's replacement of a life reduction: when {@code reduction} would take the player's life
+     * total to 0 or less, the angel transforms and the life total becomes 3 instead.
+     *
+     * @return true if the reduction was replaced and must not be applied
+     */
+    private boolean replaceLethalLifeReduction(GameData gameData, UUID playerId, int reduction) {
+        return reduction > 0 && gameData.getLife(playerId) - reduction <= 0
+                && applyEnduringAngelReplacement(gameData, playerId);
+    }
+
+    /**
+     * Transforms the first Enduring Angel the player controls and makes the player's life total 3.
+     *
+     * @return true if an angel transformed and the life total was set
+     */
+    public boolean applyEnduringAngelReplacement(GameData gameData, UUID playerId) {
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent angel : battlefield) {
+            boolean hasReplacement = angel.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(EnduringAngelLifeTotalReplacementEffect.class::isInstance);
+            if (hasReplacement && animationSupport.transformToBackFace(gameData, angel)) {
+                return applySetLifeTotal(gameData, playerId, 3);
+            }
+        }
+        return false;
     }
 
     public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName) {

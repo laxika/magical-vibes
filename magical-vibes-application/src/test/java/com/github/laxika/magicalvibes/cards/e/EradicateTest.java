@@ -9,6 +9,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -79,8 +84,11 @@ class EradicateTest extends BaseCardTest {
     @Test
     @DisplayName("A stolen target goes to its owner's exile but its controller's zones are searched")
     void stolenTargetSearchesControllerRatherThanOwner() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoliathBeetle());
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), target,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
         GoliathBeetle ownerCopy = new GoliathBeetle();
         GoliathBeetle controllerCopy = new GoliathBeetle();
         harness.setGraveyard(player1, List.of(ownerCopy));
@@ -100,15 +108,18 @@ class EradicateTest extends BaseCardTest {
     @DisplayName("Exiles the target creature and every same-name copy from graveyard, hand, and library")
     void exilesTargetAndAllCopies() {
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new GoliathBeetle()).getId();
-        harness.setHand(player2, List.of(new GoliathBeetle(), new BraidwoodCup()));
+        GoliathBeetle handCopy = new GoliathBeetle();
+        GoliathBeetle libraryCopy = new GoliathBeetle();
+        harness.setHand(player2, List.of(handCopy, new BraidwoodCup()));
         harness.setGraveyard(player2, List.of(new GoliathBeetle(), new BraidwoodCup()));
 
-        harness.setLibrary(player2, List.of(new GoliathBeetle(), new BraidwoodCup()));
+        harness.setLibrary(player2, List.of(libraryCopy, new BraidwoodCup()));
 
         harness.setHand(player1, List.of(new Eradicate()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
+        harness.handleMultipleCardsChosen(player1, List.of(handCopy.getId(), libraryCopy.getId()));
 
         harness.assertNotOnBattlefield(player2, "Goliath Beetle");
         assertThat(gd.getPlayerExiledCards(player2.getId()))

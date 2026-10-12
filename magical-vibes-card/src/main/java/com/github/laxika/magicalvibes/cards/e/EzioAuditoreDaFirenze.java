@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFreerunningToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -25,7 +26,7 @@ public class EzioAuditoreDaFirenze extends Card {
                         new TargetPlayerLifeAtMost(10),
                         new MayPayManaEffect(
                                 "{W}{U}{B}{R}{G}",
-                                new TargetPlayerLosesGameEffect(null),
+                                new QueueReflexiveAbilityEffect(new TargetPlayerLosesGameEffect(null)),
                                 "Pay {W}{U}{B}{R}{G} to make that player lose the game?")));
     }
 }

@@ -223,7 +223,7 @@ class ElkinLairTest extends BaseCardTest {
         harness.setHand(player1, List.of(land));
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -239,7 +239,7 @@ class ElkinLairTest extends BaseCardTest {
         harness.setHand(player1, List.of(lion));
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, lion.getId()))

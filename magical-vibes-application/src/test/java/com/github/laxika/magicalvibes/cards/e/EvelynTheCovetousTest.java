@@ -153,6 +153,7 @@ class EvelynTheCovetousTest extends BaseCardTest {
         Card second = new GrizzlyBears();
         harness.setLibrary(player1, List.of(first, new Mountain(), new Mountain()));
         harness.setLibrary(player2, List.of(second, new Mountain(), new Mountain()));
+        harness.setHand(player2, List.of());
         castVampireAndResolveTrigger();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castFromExile(player1, first.getId());

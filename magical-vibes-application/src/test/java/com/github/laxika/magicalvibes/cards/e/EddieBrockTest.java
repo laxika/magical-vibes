@@ -146,7 +146,7 @@ class EddieBrockTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindStone()));
         harness.setLibrary(player1, List.of(new Opt(), new Opt()));
 
-        declareAttackers(List.of(0));
+        declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

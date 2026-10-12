@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SummonEsperMaduin;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellAndReturnTransformedEffect;
@@ -18,7 +19,7 @@ public class EsperOrigins extends Card {
 
         addEffect(EffectSlot.SPELL, new SurveilEffect(2));
         addEffect(EffectSlot.SPELL, new GainLifeEffect(2));
-        addEffect(EffectSlot.SPELL, new ExileSpellAndReturnTransformedEffect());
+        addEffect(EffectSlot.SPELL, new ExileSpellAndReturnTransformedEffect(CounterType.FINALITY));
         addCastingOption(new FlashbackCast("{3}{G}"));
     }
 

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFreeCastForNextSpellOfChosenCardTypeEffect;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 public class ApexObservatory extends Card {
 
     public ApexObservatory() {
+        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 ChooseCardTypeOnEnterEffect.forSharedCraftMaterials());
         addActivatedAbility(new ActivatedAbility(

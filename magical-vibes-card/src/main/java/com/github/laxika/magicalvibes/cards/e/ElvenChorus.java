@@ -20,6 +20,6 @@ public class ElvenChorus extends Card {
         addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
         addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE)));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                ManaAbilities.tapForAnyColor(), GrantScope.OWN_CREATURES));
+                ManaAbilities.tapForAnyColor(), GrantScope.ALL_OWN_CREATURES));
     }
 }

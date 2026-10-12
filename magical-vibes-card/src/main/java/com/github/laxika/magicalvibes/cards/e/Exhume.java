@@ -16,7 +16,7 @@ public class Exhume extends Card {
 
     public Exhume() {
         addEffect(EffectSlot.SPELL,
-                new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(
+                EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.mandatory(
                         1,
                         new CardTypePredicate(CardType.CREATURE)));
     }

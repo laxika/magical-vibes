@@ -103,7 +103,7 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             case StackEntryAnyOfPredicate anyOf ->
                     anyOf.predicates().stream().anyMatch(p -> matchesTargetPredicate(stackEntry, p));
             case StackEntryIsSingleTargetPredicate ignored -> stackEntry.isSingleTarget();
-            case StackEntryIsCopyPredicate ignored -> stackEntry.isCopy();
+            case StackEntryIsCopyPredicate ignored -> stackEntry.isCopy() && !stackEntry.isCastCopy();
             default -> true;
         };
     }

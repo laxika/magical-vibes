@@ -79,9 +79,12 @@ class ElegantEdgecraftersTest extends BaseCardTest {
     private void castElegantEdgecrafters(int mode) {
         harness.setHand(player1, List.of(new ElegantEdgecrafters()));
         harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleListChoice(player1, mode == 0
+                ? "Put two +1/+1 counters on Elegant Edgecrafters"
+                : "Create two 1/1 colorless Servo artifact creature tokens");
     }
 
     @Test
@@ -89,7 +92,7 @@ class ElegantEdgecraftersTest extends BaseCardTest {
     void fabricateCreatesServosWhenSourceIsGone() {
         harness.setHand(player1, List.of(new ElegantEdgecrafters()));
         harness.addMana(player1, ManaColor.GREEN, 6);
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         Permanent edgecrafters = findPermanent(player1, "Elegant Edgecrafters");

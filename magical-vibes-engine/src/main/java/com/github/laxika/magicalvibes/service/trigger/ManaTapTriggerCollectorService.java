@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,12 +17,15 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /** Trigger collectors for controller-scoped creature-mana events. */
 @Slf4j
@@ -29,6 +35,7 @@ public class ManaTapTriggerCollectorService {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @CollectsTrigger(value = GainControlOfTargetEffect.class,
             slot = EffectSlot.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)
@@ -148,7 +155,33 @@ public class ManaTapTriggerCollectorService {
             return false;
         }
 
-        ManaColor manaColor = permanentTap.producedManaTypes().iterator().next();
+        if (trigger.requiredColor() == null && permanentTap.producedManaTypes().size() > 1) {
+            GameData gameData = match.gameData();
+            UUID tappingPlayerId = permanentTap.tappingPlayerId();
+            List<ManaColor> choices = permanentTap.producedManaTypes().stream().sorted().toList();
+            StackEntry followUp = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(),
+                    null,
+                    match.permanent() == null ? null : match.permanent().getId());
+            followUp.setNonTargeting(true);
+            AnyColorManaChoiceSupport.beginOrQueueChoice(interactionHandlerRegistry, gameData,
+                    new PendingInteraction.ColorChoice(tappingPlayerId, null, null,
+                            new ChoiceContext.FixedManaColorThenEffectsChoice(tappingPlayerId, choices, 1, followUp),
+                            choices.stream().map(Enum::name).toList(),
+                            "Choose a type of mana the permanent produced."));
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} awaits a choice of mana type on permanent tap for mana",
+                    gameData.id, sourceCard.getName());
+            return true;
+        }
+
+        ManaColor manaColor = trigger.requiredColor() != null
+                ? trigger.requiredColor()
+                : permanentTap.producedManaTypes().iterator().next();
         match.gameData().playerManaPools.get(permanentTap.tappingPlayerId()).add(manaColor);
         gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
                 " triggers — " + match.gameData().playerIdToName.get(permanentTap.tappingPlayerId())

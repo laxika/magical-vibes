@@ -20,7 +20,7 @@ public class EnergyArc extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
-        ), 0, 99).addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
+        ), 0, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
                 .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatToTargetCreatures())
                 .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures());
     }

@@ -28,6 +28,6 @@ public class Eradicate extends Card {
         target(new PermanentPredicateTargetFilter(
                 nonblackCreature,
                 "Target must be a nonblack creature"
-        )).addEffect(EffectSlot.SPELL, new ExileTargetPermanentAndAllWithSameNameFromZonesEffect(nonblackCreature));
+        )).addEffect(EffectSlot.SPELL, ExileTargetPermanentAndAllWithSameNameFromZonesEffect.allCopiesHiddenZonesOptional(nonblackCreature));
     }
 }

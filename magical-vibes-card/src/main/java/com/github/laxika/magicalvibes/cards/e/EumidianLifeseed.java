@@ -30,7 +30,7 @@ import java.util.List;
 public class EumidianLifeseed extends Card {
 
     public EumidianLifeseed() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DraftFromSpellbookEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DraftFromSpellbookEffect.draftIntoHand(List.of(
                 AdagiaWindsweptBastion::new,
                 BlastZone::new,
                 CascadingCataracts::new,

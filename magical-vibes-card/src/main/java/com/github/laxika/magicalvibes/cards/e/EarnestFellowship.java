@@ -25,7 +25,7 @@ public class EarnestFellowship extends Card {
     private GrantEffectEffect protectionFromOwnColor(CardColor color) {
         return new GrantEffectEffect(
                 new ProtectionFromColorsEffect(Set.of(color)),
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentColorInPredicate(Set.of(color)));
     }
 }

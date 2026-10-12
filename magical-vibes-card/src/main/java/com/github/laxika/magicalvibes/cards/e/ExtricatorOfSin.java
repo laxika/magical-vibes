@@ -28,7 +28,7 @@ public class ExtricatorOfSin extends Card {
                 new SacrificePermanentThenEffect(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
                         eldraziHorrorToken(),
-                        "another permanent"),
+                        "another permanent", false, false),
                 "Sacrifice another permanent?"));
 
         // Delirium — At the beginning of your upkeep, if there are four or more card types among

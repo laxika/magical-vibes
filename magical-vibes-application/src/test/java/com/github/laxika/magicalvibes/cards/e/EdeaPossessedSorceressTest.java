@@ -50,6 +50,7 @@ class EdeaPossessedSorceressTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, opposingCreature.getId());
         harness.passBothPriorities();
+        gs.declareAttackers(gd, player1, List.of());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -71,13 +72,14 @@ class EdeaPossessedSorceressTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, opposingCreature.getId());
         harness.passBothPriorities();
+        gs.declareAttackers(gd, player1, List.of());
 
         opposingCreature.setMarkedDamage(2);
         harness.runStateBasedActions();
         resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
-                .contains(opposingCreature.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getCard)
+                .contains(opposingCreature.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
                 .doesNotContain(opposingCreature.getId());
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);

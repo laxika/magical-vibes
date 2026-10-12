@@ -13,9 +13,12 @@ import java.util.UUID;
  * source's controller, dealt by {@code eyeCard} under {@code eyeControllerId}'s control.
  *
  * @param protectedPlayerId the player Eye for an Eye's controller protected (its controller)
- * @param sourceId          the chosen source permanent
+ * @param sourceId          the chosen source (a permanent, or a spell on the stack by its card id)
  * @param eyeCard           the Eye for an Eye card that deals the reflected damage
  * @param eyeControllerId   the controller of the reflected damage
+ * @param sourceControllerId the source's controller when it was chosen; used when the source has
+ *                          left the battlefield (or was a spell) by the time the damage is dealt
  */
-public record EyeForAnEyeShield(UUID protectedPlayerId, UUID sourceId, Card eyeCard, UUID eyeControllerId) {
+public record EyeForAnEyeShield(UUID protectedPlayerId, UUID sourceId, Card eyeCard, UUID eyeControllerId,
+                                UUID sourceControllerId) {
 }

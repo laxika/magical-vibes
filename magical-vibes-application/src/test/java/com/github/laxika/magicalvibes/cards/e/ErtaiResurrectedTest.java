@@ -52,10 +52,11 @@ class ErtaiResurrectedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passPriority(player1);
+        java.util.UUID abilityId = gd.stack.getFirst().getTargetableId();
 
         harness.setLibrary(player1, List.of(new Forest()));
-        castErtai(player2, 0, icyManipulator.getId());
-        resolveCounterErtai(player2, icyManipulator.getId());
+        castErtai(player2, 0, abilityId);
+        resolveCounterErtai(player2, abilityId);
 
         assertThat(bears.isTapped()).isFalse();
         harness.assertInHand(player1, "Forest");
@@ -72,10 +73,11 @@ class ErtaiResurrectedTest extends BaseCardTest {
         harness.castCreature(player1, 0, bears.getId());
         harness.passBothPriorities();
         harness.passPriority(player1);
+        java.util.UUID abilityId = gd.stack.getFirst().getTargetableId();
 
         harness.setLibrary(player1, List.of(new Forest()));
-        castErtai(player2, 0, trickster.getId());
-        resolveCounterErtai(player2, trickster.getId());
+        castErtai(player2, 0, abilityId);
+        resolveCounterErtai(player2, abilityId);
 
         assertThat(bears.isTapped()).isFalse();
         harness.assertInHand(player1, "Forest");
@@ -161,9 +163,10 @@ class ErtaiResurrectedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passPriority(player1);
+        java.util.UUID abilityId = gd.stack.getFirst().getTargetableId();
 
-        castErtai(player2, 0, sleeper.getId());
-        resolveCounterErtai(player2, sleeper.getId());
+        castErtai(player2, 0, abilityId);
+        resolveCounterErtai(player2, abilityId);
 
         assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Evolved Sleeper");

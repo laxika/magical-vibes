@@ -38,6 +38,78 @@ replacements by each option's preview (least damage, most mana).
 
 ---
 
+## 2. The caster keeps priority after casting
+
+**Status:** open · **Found:** 2026-10-12, while fixing E-card tests
+
+**Failing tests:**
+- `ExquisiteFirecraftTest` (non-active caster keeps priority after casting a counterspell)
+- `ElectrosiphonTest` (illegal-target case)
+- `ExtinguishTest` (priority after player two casts)
+- `EnvelopTest` (player two passes after casting)
+
+**What the rules require.** CR 117.3c: "If a player has priority when they cast a spell, activate an
+ability, or take a special action, that player receives priority afterward." The engine doesn't store
+who holds priority. `GameQueryService.getPriorityPlayerId` works it out from `priorityPassedBy`
+(the active player unless they passed, then the other player). Casting clears `priorityPassedBy`,
+so after the non-active player casts, priority always goes back to the active player.
+
+**Why it's large.** Priority would need an explicit holder that casting, activating, special actions,
+resolution (CR 117.3b) and step changes all update. The harness helpers (`passBothPriorities`,
+`passUntil`, auto-pass), the AI and the networking priority view all assume the derived model.
+Thousands of tests rely on it, so it needs a full-suite run.
+
+**Prompt to start it:**
+
+```
+Make the engine track the priority holder explicitly so that a player who casts a spell, activates
+an ability or takes a special action while holding priority receives priority afterward (CR 117.3c),
+while the active player still receives priority after resolution (CR 117.3b). Verify rule numbers
+with the rules MCP. Today GameQueryService.getPriorityPlayerId derives priority from priorityPassedBy.
+Update the auto-pass, harness and AI paths. Start with ExquisiteFirecraftTest, ElectrosiphonTest and
+ExtinguishTest, then ask me to run the full suite.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 3. Choosing ETB trigger targets when the trigger goes on the stack
+
+**Status:** open · **Found:** 2026-10-12, while fixing E-card tests
+
+**Failing tests:**
+- `EarthKingdomSoldierTest` (7 tests: "up to two" ETB targets after a cast with none chosen)
+- `EnduranceTest` (ETB target prompt, evoke)
+- `ExpeditionRaptorTest` (support targets after entering)
+
+**What the rules require.** A permanent spell's ETB triggered ability chooses its targets when the
+trigger is put on the stack (CR 603.3d), not while the permanent spell is cast. The engine lets the
+caster pick a cast permanent's ETB targets during casting (`target(...)` groups on the card) and carries
+them to the trigger. `EtbTriggerService` then skips an "up to N" ETB trigger entirely when zero
+targets were picked at cast (`castChoseZeroOptionalTargets`), so the controller never gets the
+trigger-time prompt the tests expect. Targets picked at cast can also be stale by the time the
+trigger exists (the spell can be responded to).
+
+**Why it's large.** Every creature, artifact and enchantment card with a targeted ETB and every test
+that passes ETB targets to `castCreature` relies on cast-time selection. Removing the shortcut in one
+place (tried during this fix run) broke `EnnisDebateModeratorTest` and was rolled back to an X-only
+exception. A correct fix moves ETB target selection for cast permanents to trigger time across the
+cast, harness and AI paths, and needs a full-suite run.
+
+**Prompt to start it:**
+
+```
+Move ETB triggered-ability target selection for cast permanents from cast time to when the trigger is
+put on the stack (CR 603.3d — verify with the rules MCP). Today cards declare ETB targets with target(...)
+groups that SpellCastingService fills during casting, and EtbTriggerService reuses them or skips "up to N"
+triggers with no cast-time targets (castChoseZeroOptionalTargets). Start with EarthKingdomSoldierTest,
+EnduranceTest and ExpeditionRaptorTest, keep EnnisDebateModeratorTest and ExtraordinaryJourneyTest green,
+update the harness/AI cast paths, then ask me to run the full suite.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

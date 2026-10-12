@@ -143,7 +143,7 @@ class EmberheartChallengerTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(firstCard);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(firstCard.getId());

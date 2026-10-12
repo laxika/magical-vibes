@@ -1659,7 +1659,10 @@ public class DamageSupport {
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (sourcePermanent == null) return null;
 
-        List<CardEffect> effects = new ArrayList<>(sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+        List<CardEffect> effects = new ArrayList<>();
+        if (!sourcePermanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
+            effects.addAll(sourceCard.getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+        }
         effects.addAll(sourcePermanent.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
         effects.addAll(sourcePermanent.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
         effects.addAll(triggerCollectionService.grantedTriggeredEffects(

@@ -35,7 +35,7 @@ public class EstinienVarlineau extends Card {
 
         var qualifyingCombatDamage = new OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn(
                 "Estinien Varlineau", CardSubtype.DRAGON);
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, SequenceEffect.of(
+        addEffect(EffectSlot.SECOND_MAIN_PHASE_TRIGGERED, SequenceEffect.of(
                 new DrawCardEffect(qualifyingCombatDamage),
                 new LoseLifeEffect(qualifyingCombatDamage, LoseLifeRecipient.CONTROLLER)
         ));

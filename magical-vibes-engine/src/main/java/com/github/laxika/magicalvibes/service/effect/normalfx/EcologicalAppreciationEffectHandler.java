@@ -45,7 +45,10 @@ public class EcologicalAppreciationEffectHandler implements NormalEffectHandlerB
         if (!librarySearchPrevented) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
             gameData.playersWhoSearchedLibraryThisTurn.add(controllerId);
-            addMatchingCards(pool, gameData.playerDecks.get(controllerId), maxManaValue);
+            List<Card> deck = gameData.playerDecks.get(controllerId);
+            int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
+            addMatchingCards(pool, deck == null ? null : deck.subList(0, Math.min(topLimit, deck.size())),
+                    maxManaValue);
         }
         addMatchingCards(pool, gameData.playerGraveyards.get(controllerId), maxManaValue);
 
@@ -61,7 +64,9 @@ public class EcologicalAppreciationEffectHandler implements NormalEffectHandlerB
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.EcologicalAppreciationSearchChoice(
-                        controllerId, pool, maxManaValue));
+                        controllerId, pool, maxManaValue,
+                        librarySearchPrevented ? null
+                                : librarySearchSupport.oppositionAgentControllerId(gameData, controllerId)));
         log.info("Game {} - Awaiting {} to choose Ecological Appreciation cards from a pool of {}",
                 gameData.id, gameData.playerIdToName.get(controllerId), pool.size());
     }

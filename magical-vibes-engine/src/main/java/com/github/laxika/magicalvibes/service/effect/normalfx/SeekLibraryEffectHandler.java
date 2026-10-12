@@ -52,9 +52,10 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
         SeekLibraryEffect seek = (SeekLibraryEffect) effect;
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
-        Permanent source = entry.getSourcePermanentId() == null
+        Permanent currentSource = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent source = currentSource != null ? currentSource : entry.getSourcePermanentSnapshot();
         Card sourceCard = source == null ? entry.getTargetingCard() : source.getCard();
         List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = sourceCard == null
                 ? List.of()

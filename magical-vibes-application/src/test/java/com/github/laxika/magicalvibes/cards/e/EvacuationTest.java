@@ -100,6 +100,7 @@ class EvacuationTest extends BaseCardTest {
     @DisplayName("Returns opposing creatures with hexproof without targeting them")
     void returnsOpposingHexproofCreatures() {
         harness.addToBattlefield(player2, new TrollAscetic());
+        harness.setHand(player2, List.of());
 
         harness.castFromHand(player1, new Evacuation(), "{3}{U}{U}");
         harness.passBothPriorities();

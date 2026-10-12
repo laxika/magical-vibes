@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
+import com.github.laxika.magicalvibes.model.condition.CastDuringMainPhase;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
@@ -22,8 +22,9 @@ public class EmergencyPowers extends Card {
     public EmergencyPowers() {
         addEffect(EffectSlot.SPELL, new EachPlayerShufflesZonesIntoLibraryEffect());
         addEffect(EffectSlot.SPELL, new EachPlayerDrawsCardEffect(7));
+        addEffect(EffectSlot.SPELL, ExileSpellEffect.immediately());
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new ControllerMainPhase(),
+                new CastDuringMainPhase(),
                 new MayEffect(
                         new PutUpToCardsFromHandOntoBattlefieldEffect(
                                 new CardAllOfPredicate(List.of(
@@ -36,6 +37,5 @@ public class EmergencyPowers extends Card {
                         "Put a permanent card with mana value 7 or less from your hand onto the battlefield?"
                 )
         ));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
     }
 }

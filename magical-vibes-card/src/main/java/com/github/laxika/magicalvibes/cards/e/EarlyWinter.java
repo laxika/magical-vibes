@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesPermanentE
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -26,7 +29,10 @@ public class EarlyWinter extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent exiles an enchantment they control",
                         new TargetPlayerChoosesPermanentExileEffect(
-                                new PermanentIsEnchantmentPredicate(), "enchantment"))
+                                new PermanentIsEnchantmentPredicate(), "enchantment"),
+                        new PlayerPredicateTargetFilter(
+                                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                                "Target must be an opponent"))
         )));
     }
 }

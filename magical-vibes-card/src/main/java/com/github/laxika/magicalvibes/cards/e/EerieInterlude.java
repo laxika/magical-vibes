@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class EerieInterlude extends Card {
 
     public EerieInterlude() {
-        target(TargetFilters.creatureYouControl(), 0, 99)
+        target(TargetFilters.creatureYouControl(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, FlickerEffect.exileTargetReturnAtEndStep());
     }
 }

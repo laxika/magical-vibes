@@ -41,7 +41,7 @@ public class EntropicBattlecruiser extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, new ConditionalEffect(
+        addEffect(EffectSlot.ON_OPPONENT_DISCARDS, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(1, CounterType.CHARGE),
                 new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PLAYER)));
 
@@ -55,6 +55,8 @@ public class EntropicBattlecruiser extends Card {
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DEATHTOUCH), GrantScope.SELF)));
 
-        addEffect(EffectSlot.ON_ATTACK, new EachOpponentDiscardsOrLosesLifeEffect(3));
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
+                new SourceCounterThreshold(8, CounterType.CHARGE),
+                new EachOpponentDiscardsOrLosesLifeEffect(3)));
     }
 }

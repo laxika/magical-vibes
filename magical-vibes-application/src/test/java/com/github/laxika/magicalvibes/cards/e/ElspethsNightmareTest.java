@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -90,10 +91,15 @@ class ElspethsNightmareTest extends BaseCardTest {
     void enteringTriggersChapterI() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        Permanent saga = harness.enterBattlefieldAndReturn(player1, new ElspethsNightmare());
+        harness.setHand(player1, List.of(new ElspethsNightmare()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
+        Permanent saga = findPermanent(player1, "Elspeth's Nightmare");
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);

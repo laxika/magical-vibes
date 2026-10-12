@@ -14,7 +14,7 @@ import java.util.List;
 public class GrovesBounty extends Card {
 
     public GrovesBounty() {
-        addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
+        addEffect(EffectSlot.SPELL, DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new XValue(),
                 new PermanentAllOfPredicate(List.of(

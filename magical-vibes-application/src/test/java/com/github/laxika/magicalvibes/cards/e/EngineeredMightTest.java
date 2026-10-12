@@ -56,7 +56,7 @@ class EngineeredMightTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
@@ -115,7 +115,7 @@ class EngineeredMightTest extends BaseCardTest {
         Permanent second = addCreatureReady(player1, new GrizzlyBears());
         cast(1, List.of());
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         for (Permanent creature : List.of(first, second)) {
             assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);

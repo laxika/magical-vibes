@@ -17,10 +17,12 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -36,6 +38,8 @@ import java.util.Set;
  */
 @Getter
 public class CharacteristicState {
+
+    private static final Set<Keyword> TRIGGER_INSTANCE_KEYWORDS = EnumSet.of(Keyword.PERSIST, Keyword.UNDYING);
 
     private String name;
     private final Set<CardType> cardTypes = EnumSet.noneOf(CardType.class);
@@ -54,6 +58,8 @@ public class CharacteristicState {
     private final Set<Keyword> keywords = new HashSet<>();
     private int flankingInstances;
     private int meleeInstances;
+    /** Stackable-trigger keywords (persist, undying) each trigger once per instance the object has. */
+    private final Map<Keyword, Integer> triggerKeywordInstances = new EnumMap<>(Keyword.class);
     private boolean seeded;
     /** Keywords this permanent is prohibited from having or gaining by a granted restriction. */
     private final Set<Keyword> blockedKeywords = new HashSet<>();
@@ -188,6 +194,7 @@ public class CharacteristicState {
         this.keywords.addAll(source.keywords);
         this.flankingInstances = source.flankingInstances;
         this.meleeInstances = source.meleeInstances;
+        this.triggerKeywordInstances.putAll(source.triggerKeywordInstances);
         this.seeded = source.seeded;
         this.blockedKeywords.addAll(source.blockedKeywords);
         this.seededKeywords.addAll(source.seededKeywords);
@@ -279,6 +286,20 @@ public class CharacteristicState {
         seededKeywords.addAll(keywords);
     }
 
+    /**
+     * Counts the object's printed persist / undying abilities as one instance each. Called before the
+     * legacy one-shot keyword buckets are seeded: those buckets mirror grants that are also replayed as
+     * floating effects, which count their own instance, so counting the bucket here would double it.
+     */
+    public void snapshotPrintedTriggerKeywords() {
+        triggerKeywordInstances.clear();
+        for (Keyword keyword : TRIGGER_INSTANCE_KEYWORDS) {
+            if (keywords.contains(keyword)) {
+                triggerKeywordInstances.put(keyword, 1);
+            }
+        }
+    }
+
     // --- Layer 5 (colors) ---
 
     public void addColor(CardColor color) {
@@ -309,6 +330,7 @@ public class CharacteristicState {
         if (!blockedKeywords.contains(keyword)) {
             if (seeded && keyword == Keyword.FLANKING) flankingInstances++;
             if (seeded && keyword == Keyword.MELEE) meleeInstances++;
+            countTriggerKeywordInstance(keyword);
             keywords.add(keyword);
         }
     }
@@ -321,14 +343,27 @@ public class CharacteristicState {
                     flankingInstances++;
                 }
                 if (seeded && keyword == Keyword.MELEE) meleeInstances++;
+                countTriggerKeywordInstance(keyword);
                 keywords.add(keyword);
             }
         }
     }
 
+    private void countTriggerKeywordInstance(Keyword keyword) {
+        if (seeded && TRIGGER_INSTANCE_KEYWORDS.contains(keyword)) {
+            triggerKeywordInstances.merge(keyword, 1, Integer::sum);
+        }
+    }
+
+    /** How many separate instances of the keyword the object currently has (0 when it lacks it). */
+    public int triggerKeywordInstances(Keyword keyword) {
+        return triggerKeywordInstances.getOrDefault(keyword, 0);
+    }
+
     public void removeKeyword(Keyword keyword) {
         if (keyword == Keyword.FLANKING) flankingInstances = 0;
         if (keyword == Keyword.MELEE) meleeInstances = 0;
+        triggerKeywordInstances.remove(keyword);
         keywords.remove(keyword);
     }
 
@@ -336,6 +371,7 @@ public class CharacteristicState {
     public void blockKeyword(Keyword keyword) {
         if (keyword == Keyword.FLANKING) flankingInstances = 0;
         if (keyword == Keyword.MELEE) meleeInstances = 0;
+        triggerKeywordInstances.remove(keyword);
         blockedKeywords.add(keyword);
         keywords.remove(keyword);
     }
@@ -395,6 +431,7 @@ public class CharacteristicState {
     public void loseAllAbilities(long timestamp) {
         flankingInstances = 0;
         meleeInstances = 0;
+        triggerKeywordInstances.clear();
         keywords.clear();
         blockedKeywords.clear();
         protectionColors.clear();
@@ -416,6 +453,7 @@ public class CharacteristicState {
     public void loseAllNonManaAbilities(long timestamp) {
         flankingInstances = 0;
         meleeInstances = 0;
+        triggerKeywordInstances.clear();
         keywords.clear();
         blockedKeywords.clear();
         protectionColors.clear();

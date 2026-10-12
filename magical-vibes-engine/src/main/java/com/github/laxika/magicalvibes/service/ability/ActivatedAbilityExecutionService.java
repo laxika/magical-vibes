@@ -1225,6 +1225,9 @@ public class ActivatedAbilityExecutionService {
                     } else {
                         pool.add(effectiveColor, amount);
                     }
+                    if (manaSourceColorSupport.canProduceMultipleColors(gameData, permanent)) {
+                        pool.addMulticoloredSourceManaTag(effectiveColor, amount);
+                    }
                     if (caveSource) {
                         pool.addCaveManaTag(effectiveColor, amount);
                     }

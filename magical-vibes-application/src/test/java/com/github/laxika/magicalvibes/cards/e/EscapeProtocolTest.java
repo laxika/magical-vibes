@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.c.Censor;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
 import com.github.laxika.magicalvibes.cards.c.ChitteringHost;
 import com.github.laxika.magicalvibes.cards.d.DrannithHealer;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EscapeProtocol.class, Censor.class, GrizzlyBears.class, GusthasScepter.class,
+@CardUsed({EscapeProtocol.class, Censor.class, ControlMagic.class, GrizzlyBears.class, GusthasScepter.class,
         DrannithHealer.class, FacetReader.class, AlmightyBrushwagg.class,
         GrafRats.class, MidnightScavengers.class, ChitteringHost.class})
 class EscapeProtocolTest extends BaseCardTest {
@@ -127,9 +128,8 @@ class EscapeProtocolTest extends BaseCardTest {
     void returnsStolenCreatureToItsOwner() {
         harness.addToBattlefield(player1, new EscapeProtocol());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlmightyBrushwagg());
-        gd.playerBattlefields.get(player2.getId()).remove(creature);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        Permanent controlMagic = harness.addToBattlefieldAndReturn(player1, new ControlMagic());
+        controlMagic.setAttachedTo(creature.getId());
         harness.setHand(player1, List.of(new DrannithHealer()));
         harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -50,6 +51,25 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         QueueReflexiveAbilityEffect queueEffect = (QueueReflexiveAbilityEffect) effect;
+        if (queueEffect.effect() instanceof CombatDamageTriggerContextEffect contextEffect
+                && contextEffect.combatDamageTriggerContext()
+                == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
+                && entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
+            // "That player" refers to the damaged player already identified by the original trigger,
+            // so the reflexive ability does not choose a target of its own.
+            StackEntry thatPlayerEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    entry.getCard(),
+                    entry.getControllerId(),
+                    entry.getCard().getName() + "'s reflexive ability",
+                    new ArrayList<>(List.of(queueEffect.effect())),
+                    entry.getTargetId(),
+                    entry.getSourcePermanentId());
+            thatPlayerEntry.setNonTargeting(true);
+            thatPlayerEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+            gameData.stack.add(thatPlayerEntry);
+            return;
+        }
         int targetGroupIndex = entry.getCard().getEffectTargetIndex(queueEffect.effect());
         if (isMultiTargetGroup(entry, targetGroupIndex)) {
             int reflexiveXValue = queueEffect.useEventValueAsX()

@@ -40,6 +40,7 @@ public class ElrondOfTheWhiteCouncilEffectHandler implements NormalEffectHandler
     private final CreatureControlService creatureControlService;
     private final GrantStaticEffectToTargetEffectHandler grantStaticEffectToTargetEffectHandler;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final VotingSupport votingSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +49,8 @@ public class ElrondOfTheWhiteCouncilEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(gameData,
+                        orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
                 entry.getControllerId(), List.of(), 0, entry.getCard().getName());
     }
 
@@ -86,8 +88,8 @@ public class ElrondOfTheWhiteCouncilEffectHandler implements NormalEffectHandler
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         if (remaining.isEmpty()) {
             votingFinishedSupport.finishVoting(gameData, effectControllerId);
-            beginNextFellowshipChoice(gameData, fellowshipVoterIds, List.of(), effectControllerId,
-                    aidVotes, sourceName);
+            beginNextFellowshipChoice(gameData, inActivePlayerOrder(gameData, fellowshipVoterIds), List.of(),
+                    effectControllerId, aidVotes, sourceName);
             return;
         }
 
@@ -170,6 +172,22 @@ public class ElrondOfTheWhiteCouncilEffectHandler implements NormalEffectHandler
                         gameData, entry, permanent, CounterType.PLUS_ONE_PLUS_ONE, aidVotes);
             }
         }
+    }
+
+    /**
+     * Orders the fellowship voters so the active player's creature choice comes first (CR 101.4),
+     * keeping one entry per vote so a player with extra votes still chooses once per vote.
+     */
+    private List<UUID> inActivePlayerOrder(GameData gameData, List<UUID> voterIds) {
+        List<UUID> ordered = new ArrayList<>();
+        for (UUID playerId : orderStartingWith(gameData, gameData.activePlayerId)) {
+            for (UUID voterId : voterIds) {
+                if (voterId.equals(playerId)) {
+                    ordered.add(voterId);
+                }
+            }
+        }
+        return ordered;
     }
 
     private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {

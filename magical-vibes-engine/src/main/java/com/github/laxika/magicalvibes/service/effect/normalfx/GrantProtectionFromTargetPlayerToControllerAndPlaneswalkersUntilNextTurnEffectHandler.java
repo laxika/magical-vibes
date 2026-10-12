@@ -2,14 +2,17 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,6 +23,7 @@ public class GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNex
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,6 +40,16 @@ public class GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNex
         gameData.playerProtectionFromPlayerIdsUntilNextTurn
                 .computeIfAbsent(entry.getControllerId(), ignored -> ConcurrentHashMap.newKeySet())
                 .add(targetPlayerId);
+        // Only the planeswalkers controlled as this resolves gain protection (CR 611.2c); it stays on
+        // each of them if control changes and does not reach planeswalkers that enter later.
+        List<Permanent> controlled = gameData.playerBattlefields.get(entry.getControllerId());
+        if (controlled != null) {
+            for (Permanent permanent : controlled) {
+                if (gameQueryService.isPlaneswalker(gameData, permanent)) {
+                    permanent.addProtectionFromPlayerUntilNextTurnOf(entry.getControllerId(), targetPlayerId);
+                }
+            }
+        }
 
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(entry.getControllerId())

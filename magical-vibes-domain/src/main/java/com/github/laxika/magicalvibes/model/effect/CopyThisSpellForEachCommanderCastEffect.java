@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * Trigger descriptor for a spell that copies itself once for each time its controller has cast a
- * commander from the command zone this game.
+ * commander from the command zone this game, counted when the copy trigger resolves.
  */
 public record CopyThisSpellForEachCommanderCastEffect(boolean tokenCopy) implements SpellCastCopyTriggerEffect {
 

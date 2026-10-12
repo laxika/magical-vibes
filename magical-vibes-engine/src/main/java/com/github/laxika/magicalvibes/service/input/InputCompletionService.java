@@ -180,6 +180,12 @@ public class InputCompletionService {
                     interactionHandlerRegistry.begin(gameData, reflexiveTarget);
                     return;
                 }
+                var reflexiveCopyChoice = gameData
+                        .pollPendingInteraction(PendingInteraction.EspersToMagiciteCreatureChoice.class);
+                if (reflexiveCopyChoice != null) {
+                    interactionHandlerRegistry.begin(gameData, reflexiveCopyChoice);
+                    return;
+                }
             }
             if (gameData.stack.isEmpty() && !gameData.pendingLibraryBottomReorders.isEmpty()) {
                 warpWorldService.beginNextPendingLibraryBottomReorder(gameData);

@@ -151,7 +151,7 @@ class EldraziObligatorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Eldrazi Obligator");
@@ -167,7 +167,7 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(target.isTapped()).isTrue();
         harness.assertOnBattlefield(player2, "Canopy Gorger");
     }
@@ -206,7 +206,7 @@ class EldraziObligatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Eldrazi Obligator");
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
     }
 
     private Permanent addTargetCreature() {

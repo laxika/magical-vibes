@@ -89,7 +89,8 @@ class EffieFastLearnerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(supporter.isTapped()).isFalse();
-        assertThat(gqs.getEffectivePower(gd, effie)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, effie)).isEqualTo(4);
+        assertThat(effie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

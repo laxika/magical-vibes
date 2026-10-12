@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -103,12 +104,14 @@ class ExcavaTheRisenPastTest extends BaseCardTest {
         addCreatureReady(player1, new ExcavaTheRisenPast());
         harness.addToBattlefield(player1, new ImpactTremors());
 
-        declareAttackers(player1, List.of(0));
-        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
-        harness.passBothPriorities();
-        if (!gd.stack.isEmpty()) {
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
             harness.passBothPriorities();
-        }
+            if (!gd.stack.isEmpty()) {
+                harness.passBothPriorities();
+            }
+        });
 
         harness.assertLife(player2, 19);
         Permanent returned = findPermanent(player1, artifact.getName());
@@ -151,13 +154,13 @@ class ExcavaTheRisenPastTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
-        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, excava);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, excava));
 
         Permanent returned = findPermanent(player1, creature.getName());
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
-        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, returned);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, returned));
 
         harness.assertNotOnBattlefield(player1, creature.getName());
         harness.assertNotInGraveyard(player1, creature.getName());

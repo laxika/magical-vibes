@@ -155,7 +155,7 @@ class EvasiveActionTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.assertNotInGraveyard(player1, "Gaea's Skyfolk");
-        harness.tapPermanent(player1, 0);
+        gs.tapPermanent(gd, player1, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

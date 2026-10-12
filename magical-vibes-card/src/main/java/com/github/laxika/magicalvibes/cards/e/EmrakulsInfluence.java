@@ -22,7 +22,7 @@ public class EmrakulsInfluence extends Card {
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.ELDRAZI),
-                        new CardMinManaValuePredicate(7)
+                        new CardMinManaValuePredicate(7, true)
                 )),
                 List.of(new DrawCardEffect(2))));
     }

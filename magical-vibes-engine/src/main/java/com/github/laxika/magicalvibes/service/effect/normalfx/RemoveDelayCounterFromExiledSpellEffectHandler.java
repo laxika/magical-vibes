@@ -50,7 +50,8 @@ public class RemoveDelayCounterFromExiledSpellEffectHandler implements NormalEff
         int remaining = pending.counters() - 1;
         if (remaining > 0) {
             gameData.delayedSpellExiles.set(index, new GameData.DelayedSpellExile(
-                    cardId, pending.controllerId(), remaining, pending.originalEntry()));
+                    cardId, pending.controllerId(), remaining, pending.originalEntry(),
+                    pending.meddlerId(), pending.meddlingCard()));
             gameLogService.append(gameData, GameLog.cardThen(pending.originalEntry().getCard(),
                     " loses a delay counter (" + remaining + " left)."));
             return;

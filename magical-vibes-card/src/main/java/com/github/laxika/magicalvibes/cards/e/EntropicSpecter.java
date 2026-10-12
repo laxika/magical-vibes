@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -13,7 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 public class EntropicSpecter extends Card {
 
     public EntropicSpecter() {
-        CardsInHand chosenOpponentHand = new CardsInHand(CountScope.OPPONENTS);
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
+
+        CardsInHand chosenOpponentHand = new CardsInHand(CountScope.CHOSEN_PLAYER);
         addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(chosenOpponentHand, chosenOpponentHand));
 
         addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,

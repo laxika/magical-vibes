@@ -52,7 +52,7 @@ class EfflorescenceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castInstant(player1, 0, creature.getId());
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -64,7 +64,7 @@ class EfflorescenceTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HungryGraffalon());
         harness.setHand(player1, List.of(new Efflorescence()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
@@ -77,7 +77,7 @@ class EfflorescenceTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new HungryGraffalon());
         harness.setHand(player1, List.of(new Efflorescence()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.castAndResolveInstant(player1, 0, creature.getId());
         assertThat(creature.getGrantedKeywords()).contains(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE);
 
@@ -100,7 +100,7 @@ class EfflorescenceTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player2, new HungryGraffalon());
         harness.setHand(player1, List.of(new Efflorescence()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.castInstant(player1, 0, target.getId());
         gd.playerBattlefields.get(player2.getId()).remove(target);
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -46,7 +47,7 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
             return;
         }
 
-        Card sourceCard = targetPermanent.getCard();
+        Card sourceCard = targetPermanent.isFaceDown() ? faceDownCopySource() : targetPermanent.getCard();
         int tokenCount = gameQueryService.getTokenCreationAmount(
                 gameData, tokenControllerId, 1, sourceCard.getSubtypes(), true);
         for (int copy = 0; copy < tokenCount; copy++) {
@@ -67,6 +68,17 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
         }
     }
 
+    /** A face-down permanent's copiable values are those of a nameless 2/2 creature with no abilities (CR 707.2). */
+    private Card faceDownCopySource() {
+        Card visible = new Card();
+        visible.setName("");
+        visible.setManaCost("");
+        visible.setType(CardType.CREATURE);
+        visible.setPower(2);
+        visible.setToughness(2);
+        return visible;
+    }
+
     private Card buildTokenCopy(Card sourceCard) {
         Card tokenCard = new Card();
         tokenCard.setName(sourceCard.getName());
@@ -75,6 +87,7 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
         tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
         tokenCard.setToken(true);
         tokenCard.setColor(sourceCard.getColor());
+        tokenCard.setColors(sourceCard.getColors() == null ? new ArrayList<>() : new ArrayList<>(sourceCard.getColors()));
         tokenCard.setSupertypes(sourceCard.getSupertypes());
         tokenCard.setPower(sourceCard.getPower());
         tokenCard.setToughness(sourceCard.getToughness());

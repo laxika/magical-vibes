@@ -37,7 +37,7 @@ public class EumidianHatchery extends Card {
 
         // When this land is put into a graveyard from the battlefield, for each hatchling counter
         // on it, create a 1/1 black Insect creature token with flying.
-        addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addEffect(EffectSlot.ON_DEATH,
                 new CreateTokensForEachDyingSourceCounterEffect(
                         CounterType.HATCHLING,
                         new CreateTokenEffect("Insect", 1, 1, CardColor.BLACK,

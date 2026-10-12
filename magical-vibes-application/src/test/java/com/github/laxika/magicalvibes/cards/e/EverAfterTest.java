@@ -144,7 +144,7 @@ class EverAfterTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(permanent -> {
             assertThat(permanent.getCard()).isSameAs(wolf);
-            assertThat(permanent.getEffectiveColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLACK);
+            assertThat(gqs.getEffectiveColors(gd, permanent)).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLACK);
             assertThat(permanent.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
             assertThat(gqs.hasEffectiveSubtype(gd, permanent, CardSubtype.WOLF)).isTrue();
             assertThat(gqs.hasEffectiveSubtype(gd, permanent, CardSubtype.ZOMBIE)).isTrue();
