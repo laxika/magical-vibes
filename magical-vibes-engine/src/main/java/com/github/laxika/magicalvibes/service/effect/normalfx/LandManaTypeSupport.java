@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -44,6 +46,7 @@ public class LandManaTypeSupport {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final LandManaReplacementService landManaReplacementService;
 
     public Set<ManaColor> manaTypesCouldProduce(GameData gameData, Permanent land) {
         return manaTypesCouldProduce(gameData, land, new HashSet<>());
@@ -75,34 +78,48 @@ public class LandManaTypeSupport {
             return Set.of();
         }
 
-        ManaColor fixedColor = gameQueryService.fixedLandManaColor(gameData, land);
-        if (fixedColor != null) {
-            return Set.of(fixedColor);
-        }
-
-        if (gameQueryService.basicLandManaProducesAnyColor(gameData, land)) {
-            return EnumSet.copyOf(ManaColor.COLORS);
-        }
-
-        if (!overriddenColors.isEmpty()) {
-            return EnumSet.copyOf(overriddenColors);
-        }
-
         Set<ManaColor> types = EnumSet.noneOf(ManaColor.class);
-        Set<ManaColor> twistedColors = gameQueryService.twistedLandManaColors(gameData, land);
-        if (!twistedColors.isEmpty()) {
-            types.addAll(twistedColors);
+        int amount = 1;
+        if (!overriddenColors.isEmpty()) {
+            types.addAll(overriddenColors);
+        } else {
+            for (CardSubtype subtype : basicLandTypes) {
+                types.add(EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(subtype));
+            }
+            addManaTypesFromEffects(gameData, printedTapEffects, land, types, visited);
+            amount = Math.max(amount, fixedManaAmount(printedTapEffects));
+            for (ActivatedAbility ability : abilities) {
+                addManaTypesFromEffects(gameData, ability.getEffects(), land, types, visited);
+                amount = Math.max(amount, fixedManaAmount(ability.getEffects()));
+            }
+        }
+        return withLandManaReplacements(gameData, land, types, amount);
+    }
+
+    /**
+     * The types {@code types} can become under the land-mana replacements in any order its
+     * controller may choose (CR 106.7).
+     */
+    private Set<ManaColor> withLandManaReplacements(GameData gameData, Permanent land, Set<ManaColor> types,
+                                                    int amount) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, land.getId());
+        if (types.isEmpty() || controllerId == null) {
             return types;
         }
+        LandManaReplacementService.Preview preview = landManaReplacementService.preview(
+                gameData, controllerId, land, types, amount);
+        return preview == null ? types : EnumSet.copyOf(preview.colors());
+    }
 
-        for (CardSubtype subtype : basicLandTypes) {
-            types.add(EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(subtype));
+    /** The mana one activation of these effects adds, counting only fixed amounts. */
+    private static int fixedManaAmount(List<CardEffect> effects) {
+        int amount = 0;
+        for (CardEffect effect : effects) {
+            if (effect instanceof AwardManaEffect mana && mana.amount() instanceof Fixed fixed) {
+                amount += fixed.value();
+            }
         }
-        addManaTypesFromEffects(gameData, printedTapEffects, land, types, visited);
-        for (ActivatedAbility ability : abilities) {
-            addManaTypesFromEffects(gameData, ability.getEffects(), land, types, visited);
-        }
-        return types;
+        return amount;
     }
 
     private boolean isManaEffect(CardEffect effect) {

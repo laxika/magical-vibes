@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.a.AncientZiggurat;
 import com.github.laxika.magicalvibes.cards.c.ChromaticLantern;
 import com.github.laxika.magicalvibes.cards.e.ExoticOrchard;
+import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.ManaReflection;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RealityTwist;
 import com.github.laxika.magicalvibes.cards.u.UrzasMine;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FellwarStone.class, AncientZiggurat.class, ChromaticLantern.class, ExoticOrchard.class, Forest.class,
-        Island.class, ManaReflection.class, RealityTwist.class, UrzasMine.class})
+        InfernalDarkness.class, Island.class, ManaReflection.class, Plains.class, RealityTwist.class,
+        UrzasMine.class})
 class FellwarStoneTest extends BaseCardTest {
 
     @Test
@@ -148,6 +151,22 @@ class FellwarStoneTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent land could produce every type its replacements give in any order")
+    void opponentLandCouldProduceEveryReplacementOrder() {
+        harness.addToBattlefield(player1, new FellwarStone());
+        harness.addToBattlefield(player2, new InfernalDarkness());
+        harness.addToBattlefield(player2, new RealityTwist());
+        harness.addToBattlefield(player2, new Plains());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        // CR 106.7: Infernal Darkness last gives {B}; Reality Twist last turns the Plains' mana into {R}.
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("BLACK", "RED");
     }
 
     @Test

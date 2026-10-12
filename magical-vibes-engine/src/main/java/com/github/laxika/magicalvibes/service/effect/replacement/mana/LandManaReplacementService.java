@@ -181,8 +181,13 @@ public class LandManaReplacementService {
                 ? new ChoiceContext.SpellOnlyManaColorChoice(event.playerId(), event.production().fromCreature(),
                         event.amount(), false)
                 : event.production().withAmount(event.amount());
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+        PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
                 event.playerId(), null, null, context, colors,
-                event.spellOnly() ? "Choose a color of mana to add (spells only)." : "Choose a color of mana to add."));
+                event.spellOnly() ? "Choose a color of mana to add (spells only)." : "Choose a color of mana to add.");
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.queueInteraction(choice);
+        } else {
+            interactionHandlerRegistry.begin(gameData, choice);
+        }
     }
 }

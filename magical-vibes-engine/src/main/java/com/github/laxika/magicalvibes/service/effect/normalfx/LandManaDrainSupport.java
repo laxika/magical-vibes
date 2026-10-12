@@ -20,18 +20,21 @@ import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Shared "activate a mana ability of each land" path used by Drain Power and Pygmy Hippo.
- * Fixed single-color lands are exact; multi-ability lands use their first available tap-for-mana
- * ability, and any required color choice is made by the land's controller.
+ * Shared "activate a mana ability of each land" path used by Pygmy Hippo. Each land's mana runs
+ * through the land-mana replacements like a tap (CR 616.1); multi-ability lands use their first
+ * available tap-for-mana ability, and any required order or color choice is made by the land's
+ * controller.
  */
 @Component
 @RequiredArgsConstructor
@@ -41,6 +44,7 @@ public class LandManaDrainSupport {
     private final AmountEvaluationService amountEvaluationService;
     private final TapUntapSupport tapUntapSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final LandManaReplacementService landManaReplacementService;
 
     /**
      * Activates a mana ability of each untapped land {@code playerId} controls, adding the produced
@@ -80,66 +84,21 @@ public class LandManaDrainSupport {
 
     boolean produceLandMana(GameData gameData, UUID playerId, UUID manaRecipientId,
                             ManaPool pool, Permanent perm, int multiplier) {
-        ManaColor fixedLandColor = gameQueryService.fixedLandManaColor(gameData, perm);
-        if (fixedLandColor != null) {
-            int amount = 0;
-            ManaColor overridden = gameQueryService.getOverriddenLandManaColor(gameData, perm);
-            if (overridden != null) {
-                amount = multiplier;
-            } else if (PotentialManaService.hasOnTapManaEffects(perm.getCard())) {
-                for (CardEffect e : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                    if (e instanceof AwardManaEffect award) {
-                        amount += amountEvaluationService.evaluate(gameData, award.amount(),
-                                AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                    } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
-                        amount += evaluate(gameData, playerId, perm, anyColor) * multiplier;
-                    }
-                }
-            } else {
-                for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
-                    if (!PotentialManaService.isFreeTapManaAbility(ability)) {
-                        continue;
-                    }
-                    for (CardEffect e : ability.getEffects()) {
-                        if (e instanceof AwardManaEffect award) {
-                            amount += amountEvaluationService.evaluate(gameData, award.amount(),
-                                    AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                        } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
-                            amount += evaluate(gameData, playerId, perm, anyColor) * multiplier;
-                        }
-                    }
-                    break;
-                }
-            }
-            if (amount > 0) {
-                pool.add(fixedLandColor, amount);
+        java.util.List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, perm);
+        if (!overriddenColors.isEmpty()) {
+            if (replacedByLandManaEffects(gameData, playerId, perm, Set.copyOf(overriddenColors), 1)) {
                 return true;
             }
-            return false;
-        }
-        Set<ManaColor> twisted = gameQueryService.twistedLandManaColors(gameData, perm);
-        if (!twisted.isEmpty()) {
-            ManaColor color = twisted.iterator().next();
-            pool.add(color, multiplier);
-            return true;
-        }
-        ManaColor overridden = gameQueryService.getOverriddenLandManaColor(gameData, perm);
-        if (overridden != null) {
-            pool.add(overridden, multiplier);
+            if (overriddenColors.size() == 1) {
+                pool.add(overriddenColors.getFirst(), multiplier);
+            } else {
+                queueColorChoice(gameData, playerId, manaRecipientId, multiplier, overriddenColors);
+            }
             return true;
         }
         if (PotentialManaService.hasOnTapManaEffects(perm.getCard())) {
-            for (CardEffect e : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (e instanceof AwardManaEffect award) {
-                    int amount = amountEvaluationService.evaluate(gameData, award.amount(),
-                            AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                    pool.add(award.color(), amount);
-                } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
-                    queueAnyColorChoice(gameData, playerId, manaRecipientId, anyColor,
-                            evaluate(gameData, playerId, perm, anyColor) * multiplier,
-                            availableColors(gameData, playerId, anyColor));
-                }
-            }
+            produceFromEffects(gameData, playerId, manaRecipientId, pool, perm, multiplier,
+                    perm.getCard().getEffects(EffectSlot.ON_TAP));
             return true;
         }
         for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
@@ -153,20 +112,65 @@ public class LandManaDrainSupport {
                 }
                 cost.pay(pool);
             }
-            for (CardEffect e : ability.getEffects()) {
-                if (e instanceof AwardManaEffect award) {
-                    int amount = amountEvaluationService.evaluate(gameData, award.amount(),
-                            AmountContext.forManaAbility(perm, playerId)) * multiplier;
-                    pool.add(award.color(), amount);
-                } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
-                    queueAnyColorChoice(gameData, playerId, manaRecipientId, anyColor,
-                            evaluate(gameData, playerId, perm, anyColor) * multiplier,
-                            availableColors(gameData, playerId, anyColor));
-                }
-            }
+            produceFromEffects(gameData, playerId, manaRecipientId, pool, perm, multiplier, ability.getEffects());
             return true;
         }
         return false;
+    }
+
+    /**
+     * Adds the mana {@code effects} produce, after the land-mana replacements (CR 616.1) whose
+     * order and color choices are queued for {@code playerId} like any other tap.
+     */
+    private void produceFromEffects(GameData gameData, UUID playerId, UUID manaRecipientId, ManaPool pool,
+                                    Permanent perm, int multiplier, java.util.List<CardEffect> effects) {
+        Set<ManaColor> baseColors = EnumSet.noneOf(ManaColor.class);
+        int baseAmount = 0;
+        for (CardEffect e : effects) {
+            if (e instanceof AwardManaEffect award) {
+                baseColors.add(award.color());
+                baseAmount += amountEvaluationService.evaluate(gameData, award.amount(),
+                        AmountContext.forManaAbility(perm, playerId));
+            } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
+                baseColors.addAll(availableColors(gameData, playerId, anyColor));
+                baseAmount += evaluate(gameData, playerId, perm, anyColor);
+            }
+        }
+        if (replacedByLandManaEffects(gameData, playerId, perm, baseColors, baseAmount)) {
+            return;
+        }
+        for (CardEffect e : effects) {
+            if (e instanceof AwardManaEffect award) {
+                int amount = amountEvaluationService.evaluate(gameData, award.amount(),
+                        AmountContext.forManaAbility(perm, playerId)) * multiplier;
+                pool.add(award.color(), amount);
+            } else if (e instanceof AwardAnyColorManaEffect anyColor && ordinaryPoolAnyColor(anyColor)) {
+                queueAnyColorChoice(gameData, playerId, manaRecipientId, anyColor,
+                        evaluate(gameData, playerId, perm, anyColor) * multiplier,
+                        availableColors(gameData, playerId, anyColor));
+            }
+        }
+    }
+
+    /** Runs the land's mana through the land-mana replacements; false when none changes its type. */
+    private boolean replacedByLandManaEffects(GameData gameData, UUID playerId, Permanent perm,
+                                              Set<ManaColor> baseColors, int baseAmount) {
+        return !(landManaReplacementService.produce(gameData, playerId, perm, baseColors, baseAmount,
+                new ChoiceContext.ManaColorChoice(playerId, gameQueryService.isCreature(gameData, perm), 0))
+                instanceof LandManaReplacementService.Resolution.Unchanged);
+    }
+
+    private void queueColorChoice(GameData gameData, UUID playerId, UUID recipientPlayerId, int amount,
+                                  java.util.List<ManaColor> colors) {
+        PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
+                playerId, null, null,
+                new ChoiceContext.ChosenPlayerManaColorChoice(playerId, playerId, recipientPlayerId, false, amount),
+                colors.stream().map(Enum::name).toList(), "Choose a color of mana to add.");
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.queueInteraction(choice);
+        } else {
+            interactionHandlerRegistry.begin(gameData, choice);
+        }
     }
 
     private void queueAnyColorChoice(GameData gameData, UUID playerId, UUID recipientPlayerId,
