@@ -11,7 +11,7 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 1. Choosing the order of competing replacement effects
 
-**Status:** in progress (phases A–F landed) · **Found:** 2026-10-10, while fixing D-card tests
+**Status:** done (2026-10-12) · **Found:** 2026-10-10, while fixing D-card tests
 
 **Done.** CR 616.1 ordering runs through `ReplacementOrderService` for land mana (every land-type
 replacement on both tap paths, plus Mana Reflection-style multipliers) and for damage to a player or a
@@ -32,19 +32,9 @@ has left or is no longer a battle, creature or planeswalker does nothing (CR 614
 redirect option per absorber instead of routing combat damage before the pool. The
 original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage`,
 `DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
-
-**Still open.**
-- The AI answers a replacement-order prompt with the first option instead of the least harmful one.
-
-**Prompt to start it:**
-
-```
-Continue CR 616.1 replacement-effect ordering (see missing-features-to-do.md, entry 1, "Still open").
-Read the "Replacement ordering (CR 616.1)" bullet in agent-docs/ARCHITECTURE.md first.
-1. Pick the next open item, e.g. route the remaining fixed-chain damage paths through DamageSupport.
-Verify every CR number with the rules MCP. List shared engine files changed after each phase.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
+Piracy taps, mana previews, the AI's mana planning, "the mana a land could produce" (CR 106.7), Pygmy
+Hippo's drain, False Dawn and Quarum Trench Gnomes all go through the land-mana pool, and the AI orders
+replacements by each option's preview (least damage, most mana).
 
 ---
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
+import com.github.laxika.magicalvibes.ai.interaction.ReplacementOrderChoice;
 import com.github.laxika.magicalvibes.ai.AiManaManager;
 import com.github.laxika.magicalvibes.ai.AiUtils;
 import com.github.laxika.magicalvibes.ai.BoardEvaluator;
@@ -972,8 +973,10 @@ public class GameSimulator {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("LAND"));
                 } else if (ccCtx.context() instanceof ChoiceContext.TeferisRealmTypeChoice) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("CREATURE"));
-                } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice
-                        || ccCtx.context() instanceof ChoiceContext.ReplacementEffectOrder) {
+                } else if (ccCtx.context() instanceof ChoiceContext.ReplacementEffectOrder order) {
+                    gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(
+                            ReplacementOrderChoice.choose(order, ccCtx.options())));
+                } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(ccCtx.options().getFirst()));
                 } else {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("RED"));

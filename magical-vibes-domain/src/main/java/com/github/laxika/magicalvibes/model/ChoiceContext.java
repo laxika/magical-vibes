@@ -116,13 +116,21 @@ public sealed interface ChoiceContext {
 
     /**
      * CR 616.1: the event's chooser picks which of {@code options} — the replacement and/or
-     * prevention effects that currently apply to {@code event} — to apply next.
+     * prevention effects that currently apply to {@code event} — to apply next. {@code previews}
+     * summarizes, per option, what choosing it can still lead to (empty when not computed).
      */
     record ReplacementEffectOrder(com.github.laxika.magicalvibes.model.replacement.ReplacementEvent event,
-                                  List<com.github.laxika.magicalvibes.model.replacement.ReplacementOption> options)
+                                  List<com.github.laxika.magicalvibes.model.replacement.ReplacementOption> options,
+                                  List<com.github.laxika.magicalvibes.model.replacement.ReplacementOptionPreview> previews)
             implements ChoiceContext {
         public ReplacementEffectOrder {
             options = List.copyOf(options);
+            previews = List.copyOf(previews);
+        }
+
+        public ReplacementEffectOrder(com.github.laxika.magicalvibes.model.replacement.ReplacementEvent event,
+                                      List<com.github.laxika.magicalvibes.model.replacement.ReplacementOption> options) {
+            this(event, options, List.of());
         }
     }
 

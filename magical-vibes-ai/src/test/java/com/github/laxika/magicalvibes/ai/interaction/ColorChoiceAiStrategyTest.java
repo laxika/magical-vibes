@@ -5,10 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
+import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
+import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.model.replacement.ReplacementOptionPreview;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,6 +55,46 @@ class ColorChoiceAiStrategyTest {
     void setUp() {
         aiPlayerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "test", aiPlayerId, "AI");
+    }
+
+    @Test
+    @DisplayName("Replacement order applies next the effect that can lead to the least damage")
+    void replacementOrderPicksLeastDamage() {
+        DamageEvent event = DamageEvent.toPlayer(null, aiPlayerId, 2, false);
+        String answer = answerReplacementOrder(event, List.of(
+                new ReplacementOptionPreview("Multiply damage to recipient by 2", 3, 6),
+                new ReplacementOptionPreview("Prevent 1 damage", 2, 2)));
+
+        assertThat(answer).isEqualTo("Prevent 1 damage");
+    }
+
+    @Test
+    @DisplayName("Replacement order for a land tapped for mana applies next the effect that can lead to the most mana")
+    void replacementOrderPicksMostMana() {
+        LandManaEvent event = new LandManaEvent(aiPlayerId, UUID.randomUUID(), Set.of(ManaColor.GREEN), 2,
+                new ChoiceContext.ManaColorChoice(aiPlayerId, false, 0), Set.of(), false);
+        String answer = answerReplacementOrder(event, List.of(
+                new ReplacementOptionPreview("Damping Sphere: produces {C} instead", 1, 2),
+                new ReplacementOptionPreview("Mana Reflection: produces 2 times as much", 1, 4)));
+
+        assertThat(answer).isEqualTo("Mana Reflection: produces 2 times as much");
+    }
+
+    private String answerReplacementOrder(com.github.laxika.magicalvibes.model.replacement.ReplacementEvent event,
+                                          List<ReplacementOptionPreview> previews) {
+        List<String> labels = previews.stream().map(ReplacementOptionPreview::label).toList();
+        List<ReplacementOption> options = labels.stream()
+                .map(label -> new ReplacementOption(label, label, ReplacementOption.Kind.REPLACEMENT, true))
+                .toList();
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(aiPlayerId, null, null,
+                new ChoiceContext.ReplacementEffectOrder(event, options, previews), labels, "Choose");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        return ((InteractionAnswer.ListChoiceMade) captor.getValue()).choice();
     }
 
     @Test

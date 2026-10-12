@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.replacement.ReplacementOptionPreview;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -248,6 +250,26 @@ class EmbermawHellionTest extends BaseCardTest {
         // The two legal orders deal 5 or 6 damage; the recipient must choose first.
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The order prompt previews the damage each choice can still lead to")
+    void orderPromptPreviewsReachableDamage() {
+        harness.addToBattlefield(player1, new EmbermawHellion());
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        ChoiceContext.ReplacementEffectOrder order = (ChoiceContext.ReplacementEffectOrder) choice.context();
+        // Hellion first: (2 + 1) * 2 = 6. Furnace first: 2 * 2 + 1 = 5.
+        assertThat(order.previews()).extracting(ReplacementOptionPreview::fewest).containsExactlyInAnyOrder(6, 5);
+        assertThat(order.previews())
+                .filteredOn(preview -> preview.label().startsWith("Furnace of Rath"))
+                .singleElement().extracting(ReplacementOptionPreview::most).isEqualTo(5);
     }
 
     @Test

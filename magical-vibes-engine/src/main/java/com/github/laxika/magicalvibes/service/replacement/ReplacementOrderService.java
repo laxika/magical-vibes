@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.model.replacement.ReplacementOptionPreview;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -213,8 +214,15 @@ public class ReplacementOrderService {
 
     private <E extends ReplacementEvent> void prompt(GameData gameData, E event, List<Candidate<E>> candidates) {
         List<ReplacementOption> options = candidates.stream().map(Candidate::option).toList();
+        List<ReplacementOptionPreview> previews = new ArrayList<>();
+        for (Candidate<E> candidate : candidates) {
+            Set<E> outcomes = possibleOutcomes(gameData, preview(gameData, event, candidate));
+            previews.add(new ReplacementOptionPreview(candidate.option().label(),
+                    outcomes.stream().mapToInt(ReplacementEvent::amount).min().orElse(event.amount()),
+                    outcomes.stream().mapToInt(ReplacementEvent::amount).max().orElse(event.amount())));
+        }
         PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
-                event.chooserId(), null, null, new ChoiceContext.ReplacementEffectOrder(event, options),
+                event.chooserId(), null, null, new ChoiceContext.ReplacementEffectOrder(event, options, previews),
                 options.stream().map(ReplacementOption::label).toList(), PROMPT);
         if (gameData.interaction.isAwaitingInput()) {
             gameData.queueInteraction(choice);

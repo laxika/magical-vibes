@@ -60,10 +60,16 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.ReplacementEffectOrder order) {
+            String chosen = ReplacementOrderChoice.choose(order, interaction.options());
+            log.info("AI: Applying replacement effect \"{}\" next in game {}", chosen, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosen));
+            return;
+        }
+
         if (context instanceof ChoiceContext.ChooseModeChoice
-                || context instanceof ChoiceContext.LibraryCastModeChoice
-                || context instanceof ChoiceContext.ReplacementEffectOrder) {
-            // Modal abilities, free-cast modal spells and replacement-effect orders take the first option.
+                || context instanceof ChoiceContext.LibraryCastModeChoice) {
+            // Modal abilities and free-cast modal spells take the first option.
             String chosenMode = interaction.options().getFirst();
             log.info("AI: Choosing modal option \"{}\" in game {}", chosenMode, gameId);
             ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(chosenMode));

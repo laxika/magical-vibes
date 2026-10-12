@@ -13,6 +13,9 @@ public sealed interface ReplacementEvent permits DamageEvent, LandManaEvent {
     /** The affected player, or the affected object's controller, who orders the effects. */
     UUID chooserId();
 
+    /** How much the event does: the damage still to be dealt, or the mana to be produced. */
+    int amount();
+
     /** Keys of the {@link ReplacementOption}s already applied to this event. */
     Set<String> appliedKeys();
 

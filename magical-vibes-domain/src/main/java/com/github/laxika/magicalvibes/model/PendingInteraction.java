@@ -2907,7 +2907,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             }
             if (context instanceof ChoiceContext.ReplacementEffectOrder order) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,
-                        new ChoiceContext.ReplacementEffectOrder(order.event().copyForSimulation(), order.options()),
+                        new ChoiceContext.ReplacementEffectOrder(order.event().copyForSimulation(), order.options(),
+                                order.previews()),
                         options, prompt, disabledOptions);
             }
             if (context instanceof ChoiceContext.CounterReplacementOrder order) {
