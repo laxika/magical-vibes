@@ -166,8 +166,13 @@ public class StackResolutionService {
         if (gameData.stack.isEmpty()) return;
 
         StackEntry entry = gameQueryService.stackUsesFirstInFirstOut(gameData)
-                ? gameData.stack.removeFirst()
-                : gameData.stack.removeLast();
+                ? gameData.stack.getFirst()
+                : gameData.stack.getLast();
+        // CR 608.2n: an instant or sorcery stays on the stack until the final part of its resolution,
+        // so spells cast while it resolves can still target it.
+        if (!isInstantOrSorcerySpell(entry)) {
+            gameData.removeResolvingSpellFromStack(entry);
+        }
         if (entry.getCard() != null && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                 && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
             gameData.spellsMadeUncounterable.remove(entry.getCard().getId());
@@ -1395,6 +1400,7 @@ public class StackResolutionService {
             log.info("Game {} - {} fizzles, target {} is illegal",
                     gameData.id, entry.getDescription(), entry.getTargetId());
 
+            gameData.removeResolvingSpellFromStack(entry);
             triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, entry);
 
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
@@ -1432,6 +1438,7 @@ public class StackResolutionService {
 
             if (gameData.restartTurnRequested) {
                 gameData.restartTurnRequested = false;
+                gameData.removeResolvingSpellFromStack(entry);
                 if (isNonCopySpell(entry)) {
                     Card cardToExile = entry.getPhysicalCard();
                     removeCardFromRestartedSourceZone(gameData, entry, cardToExile);
@@ -1443,6 +1450,7 @@ public class StackResolutionService {
             // Rule 723.1b: "End the turn" exiles the resolving spell itself (copies cease to exist per rule 707.10a)
             if (gameData.endTurnRequested) {
                 gameData.endTurnRequested = false;
+                gameData.removeResolvingSpellFromStack(entry);
                 if (isNonCopySpell(entry)) {
                     exileService.exileCard(gameData, entry.getOwnerId(), entry.getPhysicalCard());
                 }
@@ -1483,6 +1491,11 @@ public class StackResolutionService {
         checkSagaFinalChapterResolution(gameData, entry);
         handleSpellDisposition(gameData, entry);
         CardAdvantagePostResolutionService.process(gameData, entry);
+    }
+
+    private static boolean isInstantOrSorcerySpell(StackEntry entry) {
+        return entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                || entry.getEntryType() == StackEntryType.SORCERY_SPELL;
     }
 
     private boolean exileWithRebound(GameData gameData, StackEntry entry) {
@@ -1562,6 +1575,7 @@ public class StackResolutionService {
      * Copies cease to exist per rule 707.10a and abilities have no card to dispose of.
      */
     private void handleSpellDisposition(GameData gameData, StackEntry entry) {
+        gameData.removeResolvingSpellFromStack(entry);
         if (entry.isSpellDispositionHandled()) {
             return;
         }

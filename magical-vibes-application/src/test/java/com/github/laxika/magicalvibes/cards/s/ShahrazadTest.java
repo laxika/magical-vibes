@@ -277,7 +277,7 @@ class ShahrazadTest extends BaseCardTest {
                 new InteractionAnswer.LibraryCardChosen(search.params().cards().indexOf(thragtusk)));
         assertThat(child.playerHands.get(player1.getId())).contains(thragtusk);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getName()).containsExactly("Shahrazad");
         assertThat(gd.suspendedZoneTriggers).hasSize(1);
         assertThat(child.playerBattlefields.get(player1.getId())).isEmpty();
         gs.surrender(child, player2);

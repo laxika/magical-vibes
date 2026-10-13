@@ -3360,6 +3360,29 @@ public class GameData {
         priorityPassedBy.clear();
     }
 
+    /**
+     * Removes a resolving instant or sorcery from the stack. It stays on the stack, targetable and
+     * counterable, until the final part of its resolution (CR 608.2n), or until it leaves the stack
+     * earlier while it continues to resolve (CR 608.2m).
+     */
+    public void removeResolvingSpellFromStack(StackEntry entry) {
+        stack.removeIf(stackEntry -> stackEntry == entry);
+    }
+
+    private StackEntry copyOnStack(GameData copy, StackEntry original, StackEntry fallback) {
+        if (original == null) {
+            return fallback;
+        }
+        synchronized (stack) {
+            for (int i = 0; i < stack.size(); i++) {
+                if (stack.get(i) == original) {
+                    return copy.stack.get(i);
+                }
+            }
+        }
+        return fallback;
+    }
+
     /** Captures the current turn state without exposing the snapshot to views or callers. */
     public void captureTurnStartSnapshot() {
         GameData snapshot = simulationFrameCopy();
@@ -7893,6 +7916,12 @@ public class GameData {
 
         // --- List<StackEntry> (deep copy each StackEntry) ---
         this.stack.forEach(se -> copy.stack.add(new StackEntry(se)));
+        // A resolving instant or sorcery is still on the stack (CR 608.2n), so its parked entry must
+        // stay the same object as its stack copy for the final step to remove it.
+        copy.pendingEffectResolutionEntry = copyOnStack(copy, this.pendingEffectResolutionEntry,
+                copy.pendingEffectResolutionEntry);
+        copy.wordOfCommandPendingResolutionEntry = copyOnStack(copy, this.wordOfCommandPendingResolutionEntry,
+                copy.wordOfCommandPendingResolutionEntry);
         this.pendingManaAbilityTriggers.forEach(se -> copy.pendingManaAbilityTriggers.add(new StackEntry(se)));
         this.pendingSpellCastCostTriggers.forEach(se -> copy.pendingSpellCastCostTriggers.add(new StackEntry(se)));
         this.pendingActivatedAbilityCostTriggers.forEach(se -> copy.pendingActivatedAbilityCostTriggers.add(new StackEntry(se)));

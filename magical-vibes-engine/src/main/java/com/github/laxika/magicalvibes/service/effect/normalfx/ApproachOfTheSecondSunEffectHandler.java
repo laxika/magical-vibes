@@ -50,6 +50,8 @@ public class ApproachOfTheSecondSunEffectHandler implements NormalEffectHandlerB
         if (!entry.isCopy()) {
             List<Card> library = gameData.playerDecks.get(entry.getOwnerId());
             int position = Math.min(SEVENTH_FROM_TOP, library.size());
+            // CR 608.2m: the spell leaves the stack now but keeps resolving.
+            gameData.removeResolvingSpellFromStack(entry);
             library.add(position, entry.getPhysicalCard());
             entry.setSpellMovedDuringResolution(true);
             triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, entry.getOwnerId(), 1);

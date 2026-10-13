@@ -30,6 +30,8 @@ public class ExileSpellEffectHandler implements NormalEffectHandlerBean {
         if (!((ExileSpellEffect) effect).exileImmediately() || entry.isCopy() || entry.isSpellMovedDuringResolution()) {
             return;
         }
+        // CR 608.2m: the spell leaves the stack now but keeps resolving.
+        gameData.removeResolvingSpellFromStack(entry);
         gameData.addToExile(entry.getOwnerId(), entry.getPhysicalCard());
         entry.setSpellMovedDuringResolution(true);
         gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));

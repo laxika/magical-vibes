@@ -9,36 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 1. A resolving instant or sorcery can be targeted until it finishes resolving
-
-**Status:** open · **Found:** 2026-10-12, while fixing E-card tests
-
-**Failing tests:**
-- `ElectrodominanceTest.freeSpellCanTargetResolvingElectrodominance()`
-- `EmergentUltimatumTest` ("A free counterspell can target Emergent Ultimatum while it is resolving")
-
-**What the rules require.** CR 608.2n: "As the final part of an instant or sorcery spell's resolution, the spell is put into
-its owner's graveyard." Until then the spell is still on the stack, so a spell cast during its
-resolution (Electrodominance's free cast, Emergent Ultimatum's opponent-chosen free cast) can target
-it. `StackResolutionService.resolveTopOfStack` takes the entry off `gameData.stack` before its effects
-run, so `findSpellOnStack`, `ValidTargetService` and `TargetLegalityService` never see it.
-
-**Why it's large.** The resolving entry has to stay on the stack and be targetable (and counterable) through every
-resolution-time cast path (`MayCastHandlerService`, `ExileCastTargetSupport`, `SpellCastingService`),
-while the rest of the engine, including fizzle checks and stack views, still treats it as resolving.
-That touches the core resolution loop.
-
-**Prompt to start it:**
-
-```
-Keep a resolving instant or sorcery on the stack, targetable and counterable, until the final step of
-its resolution (CR 608.2n — verify with the rules MCP). Today StackResolutionService removes the entry
-before its effects run, so a spell cast during resolution can't target it. Start with
-ElectrodominanceTest and EmergentUltimatumTest, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
 
 ## 2. Demonstrate is a triggered ability whose choice is made on resolution
 
