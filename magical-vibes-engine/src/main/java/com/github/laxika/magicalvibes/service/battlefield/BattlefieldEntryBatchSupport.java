@@ -216,6 +216,8 @@ public class BattlefieldEntryBatchSupport {
             BattlefieldEntryCard candidate = remaining.get(i);
             Permanent permanent = candidate.preparedPermanent() == null
                     ? new Permanent(candidate.card(), candidate.origin()) : candidate.preparedPermanent();
+            // continueChoices already offered every member its copy replacement before any of them moved.
+            permanent.setCopyEntryResolved(true);
             permanent.setAttachedTo(candidate.attachmentId());
             permanent.setProtectorPlayerId(candidate.protectorPlayerId());
             if (candidate.origin() == Zone.EXILE) permanent.setEnteredFromExile(true);

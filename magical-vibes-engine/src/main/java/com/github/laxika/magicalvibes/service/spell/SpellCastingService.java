@@ -198,7 +198,6 @@ import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.HandCastCardCharacteristicsService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -264,7 +263,6 @@ public class SpellCastingService {
     private final GameMutationCoordinator mutationCoordinator;
     private final StateBasedActionService stateBasedActionService;
     private final LifeSupport lifeSupport;
-    private final LandCopyOnEnterService landCopyOnEnterService;
     @Lazy private final PlayerInputService playerInputService;
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -4911,16 +4909,13 @@ public class SpellCastingService {
         if (card.hasType(CardType.LAND) && !castingFaceDown) {
             // Lands bypass the stack — go directly onto battlefield
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
-            if (landCopyOnEnterService.prepare(gameData, playerId, card, landFace,
-                    true, false, null, castSourceZone)) {
-                return;
-            }
             Permanent permanent = new Permanent(playingModalBackLand ? preparedCard : card);
             permanent.setCard(landFace);
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
             gameLogService.append(gameData, GameLog.playerPlays(player.getUsername(), landFace));
             log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), landFace.getName());
             if (cloneService.prepareCloneReplacementEffect(gameData, playerId, landFace, null, effectiveXValue, true)) {
+                gameData.cloneOperation.preparedPermanent = permanent;
                 return;
             }
             battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent, castSourceZone);
@@ -10164,10 +10159,6 @@ public class SpellCastingService {
         permanentRemovalService.removeCardFromGraveyardById(gameData, graveyardCard.getId());
         gameData.graveyardPlayPermissions.remove(graveyardCard.getId());
         gameData.graveyardPlayPermissionsExpireEndOfTurn.remove(graveyardCard.getId());
-        if (landCopyOnEnterService.prepare(gameData, playerId, graveyardCard, landFace,
-                true, entersTapped, " from graveyard.", Zone.GRAVEYARD)) {
-            return;
-        }
         Permanent permanent = new Permanent(graveyardCard);
         permanent.setCard(landFace);
         permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
@@ -10243,10 +10234,6 @@ public class SpellCastingService {
         commitExileCast(gameData, player.getId(), exileCardId,
                 false, false, false, false, false, card);
         Card landFace = selectedModalDoubleFacedLandFace(card, 0);
-        if (landCopyOnEnterService.prepare(gameData, player.getId(), card, landFace,
-                true, entersTapped, " from exile.", Zone.EXILE)) {
-            return true;
-        }
 
         Permanent permanent = new Permanent(card);
         permanent.setCard(landFace);
@@ -10676,10 +10663,6 @@ public class SpellCastingService {
             commitExileCast(gameData, playerId, exileCardId, sourceFreeCast,
                     collectionCounterPermission, copy, directExilePlayPermission, fromOutsideGame, card);
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
-            if (landCopyOnEnterService.prepare(gameData, playerId, card, landFace,
-                    true, entersTapped, " from exile.", Zone.EXILE)) {
-                return;
-            }
             Permanent permanent = new Permanent(card);
             permanent.setCard(landFace);
             if (entersTapped) {
@@ -10693,6 +10676,7 @@ public class SpellCastingService {
             log.info("Game {} - {} plays {} from {}", gameData.id, player.getUsername(), landFace.getName(),
                     fromOutsideGame ? "outside the game" : "exile");
             if (cloneService.prepareCloneReplacementEffect(gameData, playerId, landFace, null, effectiveXValue, true)) {
+                gameData.cloneOperation.preparedPermanent = permanent;
                 return;
             }
             battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent, Zone.EXILE);
@@ -11410,10 +11394,6 @@ public class SpellCastingService {
                 gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
             }
             Card landFace = selectedModalDoubleFacedLandFace(card, effectiveXValue);
-            if (landCopyOnEnterService.prepare(gameData, playerId, card, landFace,
-                    true, false, " from the top of their library.", Zone.LIBRARY)) {
-                return;
-            }
             Permanent permanent = new Permanent(card);
             permanent.setCard(landFace);
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
@@ -11421,6 +11401,7 @@ public class SpellCastingService {
                     GameLog.playerPlays(player.getUsername(), landFace, " from the top of their library."));
             log.info("Game {} - {} plays {} from library top", gameData.id, player.getUsername(), landFace.getName());
             if (cloneService.prepareCloneReplacementEffect(gameData, playerId, landFace, null, effectiveXValue, true)) {
+                gameData.cloneOperation.preparedPermanent = permanent;
                 return;
             }
             battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent, Zone.LIBRARY);

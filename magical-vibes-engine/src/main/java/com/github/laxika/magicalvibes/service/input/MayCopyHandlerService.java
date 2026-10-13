@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetE
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -33,7 +32,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -65,7 +63,6 @@ public class MayCopyHandlerService {
     private final TargetLegalityService targetLegalityService;
     private final TriggerCollectionService triggerCollectionService;
     private final ValidTargetService validTargetService;
-    private final LandCopyOnEnterService landCopyOnEnterService;
     private final TargetRedirectionSupport targetRedirectionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport psychicBattleSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -141,24 +138,6 @@ public class MayCopyHandlerService {
 
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
-    }
-
-    public void handleCopyLandFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
-                                                   PendingMayAbility ability,
-                                                   CopyLandFromGraveyardOnEnterEffect copyEffect) {
-        if (accepted) {
-            landCopyOnEnterService.beginGraveyardChoice(gameData, ability.controllerId());
-            gameLogService.append(gameData, GameLog.text(
-                    player.getUsername() + " accepts — choosing a land card in a graveyard to copy."));
-            log.info("Game {} - {} accepts copy from a graveyard", gameData.id, player.getUsername());
-            return;
-        }
-
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " declines to copy a land card from a graveyard. ",
-                ability.sourceCard(), " It enters without copying."));
-        log.info("Game {} - {} declines copy from a graveyard", gameData.id, player.getUsername());
-        landCopyOnEnterService.complete(gameData, null);
     }
 
     public void handleCopyCreatureCardInGraveyardOnEnterChoice(

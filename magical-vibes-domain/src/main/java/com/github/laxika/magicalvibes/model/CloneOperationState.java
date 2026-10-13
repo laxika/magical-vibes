@@ -15,6 +15,8 @@ public class CloneOperationState {
     public Card physicalCard;
     public Permanent preparedPermanent;
     public PermanentChoiceContext.AuraEntryBatchChoice battlefieldEntryBatch;
+    // An effect-driven entry paused in battlefield placement; the answered copy resumes this request.
+    public BattlefieldEntryRequest entryRequest;
     public boolean transformed;
     public UUID controllerId;
     public UUID etbTargetId;

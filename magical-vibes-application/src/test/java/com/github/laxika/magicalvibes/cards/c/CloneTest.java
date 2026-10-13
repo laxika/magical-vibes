@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TreasureHunter;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Clone.class, AirElemental.class, AngelOfMercy.class, AngelicChorus.class,
         ChoMannoRevolutionary.class, GloriousAnthem.class, GrizzlyBears.class, Spellbook.class, Shock.class,
-        TreasureHunter.class, Unsummon.class})
+        TreasureHunter.class, Unsummon.class, Zombify.class})
 class CloneTest extends BaseCardTest {
 
     @Test
@@ -439,5 +440,44 @@ class CloneTest extends BaseCardTest {
         assertThat(copy.getOriginalCard().getName()).isEqualTo("Clone");
         assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Clone put onto the battlefield by an effect still offers its copy choice")
+    void returnedByAnEffectOffersCopyChoice() {
+        Clone clone = new Clone();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(clone));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, clone.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        Permanent clonePerm = findPermanent(player1, "Grizzly Bears");
+        assertThat(clonePerm.getOriginalCard()).isSameAs(clone);
+        assertThat(clonePerm.getCard().getPower()).isEqualTo(2);
+        harness.assertNotInGraveyard(player1, "Clone");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Clone put onto the battlefield by an effect dies as a 0/0 when its controller declines")
+    void returnedByAnEffectDiesWhenControllerDeclines() {
+        Clone clone = new Clone();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(clone));
+        harness.setHand(player1, List.of(new Zombify()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, clone.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Clone");
+        harness.assertInGraveyard(player1, "Clone");
     }
 }

@@ -933,7 +933,6 @@ public class GameData {
     public PermanentChoiceContext.AuraEntryBatchChoice pendingBattlefieldEntryBatch;
     /** Answered and pending entry requests, keyed by the physical card's ID. */
     public final Map<UUID, BattlefieldEntryRequest> pendingBattlefieldEntryRequests = new ConcurrentHashMap<>();
-    public final LandCopyOperationState landCopyOperation = new LandCopyOperationState();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
     /** Votes collected while a voting spell or ability is resolving, keyed by its controller. */
@@ -8203,6 +8202,8 @@ public class GameData {
                 ? null : new Permanent(this.cloneOperation.preparedPermanent);
         copy.cloneOperation.battlefieldEntryBatch = this.cloneOperation.battlefieldEntryBatch == null
                 ? null : this.cloneOperation.battlefieldEntryBatch.deepCopy();
+        copy.cloneOperation.entryRequest = this.cloneOperation.entryRequest == null
+                ? null : this.cloneOperation.entryRequest.deepCopy();
         copy.cloneOperation.transformed = this.cloneOperation.transformed;
         copy.cloneOperation.controllerId = this.cloneOperation.controllerId;
         copy.cloneOperation.etbTargetId = this.cloneOperation.etbTargetId;
@@ -8254,14 +8255,6 @@ public class GameData {
         copy.cloneOperation.exileTwoAndAddOtherPowerCounters =
                 this.cloneOperation.exileTwoAndAddOtherPowerCounters;
         copy.cloneOperation.selectedGraveyardCopyCardIds = this.cloneOperation.selectedGraveyardCopyCardIds;
-
-        copy.landCopyOperation.physicalCard = this.landCopyOperation.physicalCard;
-        copy.landCopyOperation.enteringCard = this.landCopyOperation.enteringCard;
-        copy.landCopyOperation.controllerId = this.landCopyOperation.controllerId;
-        copy.landCopyOperation.landPlay = this.landCopyOperation.landPlay;
-        copy.landCopyOperation.landPlayZone = this.landCopyOperation.landPlayZone;
-        copy.landCopyOperation.initiallyTapped = this.landCopyOperation.initiallyTapped;
-        copy.landCopyOperation.logSuffix = this.landCopyOperation.logSuffix;
 
         // --- WarpWorldOperationState ---
         copy.warpWorldOperation.pendingAuraChoices.addAll(this.warpWorldOperation.pendingAuraChoices);

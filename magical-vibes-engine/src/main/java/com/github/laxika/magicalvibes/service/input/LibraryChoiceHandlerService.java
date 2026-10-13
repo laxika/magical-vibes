@@ -2453,6 +2453,11 @@ public class LibraryChoiceHandlerService {
         }
         StackEntry pending = gameData.pendingEffectResolutionEntry;
         if (pending != null) {
+            // A found card's entry choice (e.g. "enter as a copy") is still open; answering it finishes
+            // that entry and then resumes the rest of the effect.
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
             effectResolutionService.resolveEffectsFrom(gameData, pending, gameData.pendingEffectResolutionIndex);
             if (gameData.interaction.isAwaitingInput()) {
                 return;

@@ -2,10 +2,15 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
+import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "271")
 @CardRegistration(set = "LCI", collectorNumber = "346")
@@ -16,7 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.CopyLandFromGraveyardOnEnterE
 public class EchoingDeeps extends Card {
 
     public EchoingDeeps() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyLandFromGraveyardOnEnterEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CopyPermanentOnEnterEffect.fromAnyGraveyard(
+                new CardTypePredicate(CardType.LAND), "land card", true, Set.of(CardSubtype.CAVE)));
         // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }

@@ -269,9 +269,20 @@ public record CopyPermanentOnEnterEffect(PermanentPredicate filter, String typeL
 
     /** Copy a matching card from any graveyard as the entering permanent. */
     public static CopyPermanentOnEnterEffect fromAnyGraveyard(CardPredicate cardFilter, String typeLabel) {
+        return fromAnyGraveyard(cardFilter, typeLabel, false, Set.of());
+    }
+
+    /**
+     * Copy a matching card from any graveyard, entering tapped and gaining the given subtypes only when
+     * it copies (Echoing Deeps: "enter tapped as a copy of any land card in a graveyard, except it's a
+     * Cave in addition to its other types").
+     */
+    public static CopyPermanentOnEnterEffect fromAnyGraveyard(CardPredicate cardFilter, String typeLabel,
+                                                              boolean entersTapped,
+                                                              Set<CardSubtype> additionalSubtypesOverride) {
         return new CopyPermanentOnEnterEffect(null, typeLabel, null, null, Set.of(), List.of(), null, null, false,
-                null, Set.of(), Map.of(), false, false, null, Set.of(), Set.of(), false, true, Set.of(), false,
-                false, cardFilter, false, false);
+                null, additionalSubtypesOverride, Map.of(), false, entersTapped, null, Set.of(), Set.of(), false,
+                true, Set.of(), false, false, cardFilter, false, false);
     }
 
     /** Clone that gains a shield counter when the copied permanent is controlled by its controller. */

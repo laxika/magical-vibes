@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.c.CosmiumConfluence;
+import com.github.laxika.magicalvibes.cards.c.CrucibleOfWorlds;
 import com.github.laxika.magicalvibes.cards.s.SunkenCitadel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EchoingDeeps.class, Forest.class, SunkenCitadel.class, CosmiumConfluence.class})
+@CardUsed({EchoingDeeps.class, Forest.class, SunkenCitadel.class, CosmiumConfluence.class, CrucibleOfWorlds.class})
 class EchoingDeepsTest extends BaseCardTest {
 
     @Test
@@ -44,8 +46,8 @@ class EchoingDeepsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
 
         Permanent entered = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(entered.isTapped()).isTrue();
@@ -105,7 +107,7 @@ class EchoingDeepsTest extends BaseCardTest {
 
         harness.playLand(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
 
         Permanent entered = findPermanent(player1, "Forest");
         assertThat(entered.isTapped()).isTrue();
@@ -118,11 +120,12 @@ class EchoingDeepsTest extends BaseCardTest {
     @Test
     void copiedLandMakesItsAsEntersChoiceAndUsesItsManaAbility() {
         harness.setHand(player1, List.of(new EchoingDeeps()));
-        harness.setGraveyard(player2, List.of(new SunkenCitadel()));
+        SunkenCitadel citadel = new SunkenCitadel();
+        harness.setGraveyard(player2, List.of(citadel));
 
         harness.playLand(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(citadel.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "BLUE");
@@ -140,8 +143,9 @@ class EchoingDeepsTest extends BaseCardTest {
 
     @Test
     void landPutOntoBattlefieldByAnEffectStillOffersCopyChoice() {
+        Forest forest = new Forest();
         harness.setLibrary(player1, List.of(new EchoingDeeps()));
-        harness.setGraveyard(player2, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(forest));
         harness.setHand(player1, List.of(new CosmiumConfluence()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -151,14 +155,56 @@ class EchoingDeepsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
 
         Permanent entered = findPermanent(player1, "Forest");
         assertThat(entered.isTapped()).isTrue();
         assertThat(gqs.effectiveLandTypes(gd, entered)).contains(CardSubtype.FOREST, CardSubtype.CAVE);
         assertThat(gd.landsPlayedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
-        harness.handleCardChosen(player1, -1);
-        harness.handleCardChosen(player1, -1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Cosmium Confluence");
+    }
+
+    @Test
+    void copyChoiceFinishesBeforeTheRestOfTheSpellResolves() {
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(new EchoingDeeps()));
+        harness.setGraveyard(player2, List.of(forest));
+        harness.setHand(player1, List.of(new CosmiumConfluence()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeRepeatedModeSelection(3, 0, 1, 1));
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+        Permanent entered = findPermanent(player1, "Forest");
+        assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(gqs.isCreature(gd, entered)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void playingItFromAGraveyardOffersCopyChoice() {
+        EchoingDeeps deeps = new EchoingDeeps();
+        Forest forest = new Forest();
+        harness.addToBattlefield(player1, new CrucibleOfWorlds());
+        harness.setGraveyard(player1, List.of(deeps));
+        harness.setGraveyard(player2, List.of(forest));
+
+        harness.playGraveyardLand(player1, deeps.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+
+        Permanent entered = findPermanent(player1, "Forest");
+        assertThat(entered.getOriginalCard()).isSameAs(deeps);
+        assertThat(entered.isTapped()).isTrue();
+        assertThat(gqs.effectiveLandTypes(gd, entered)).contains(CardSubtype.FOREST, CardSubtype.CAVE);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(deeps);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
     }
 }

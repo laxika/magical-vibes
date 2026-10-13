@@ -5572,7 +5572,7 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 - `CopyPermanentOnEnterEffect.fromAnyGraveyard(CardPredicate, String)` — the copy-on-entry flow chooses one matching card from any graveyard instead of a battlefield permanent (Body Double).
 - `CopyPermanentOnEnterEffect.withVanishingIfCopiedPermanentLacksIt(PermanentPredicate, String)` — copy-on-entry exception that adds vanishing 3, its three time counters, and its upkeep sacrifice trigger only when the chosen creature lacks vanishing (Flesh Duplicate).
 
-- `CopyLandFromGraveyardOnEnterEffect()` — Echoing Deeps may enter tapped as a copy of any land card in a graveyard, with Cave added to the copied land. The land-play path pauses before entry and leaves the chosen card in its graveyard.
+- `CopyPermanentOnEnterEffect.fromAnyGraveyard(CardPredicate, String, boolean entersTapped, Set<CardSubtype>)` — graveyard copy that also enters tapped and adds subtypes, both only when it copies (Echoing Deeps: land card, tapped, Cave). The chosen card stays in its graveyard.
 - `BecomeCopyOfTargetArtifactUntilEndOfTurnEffect(boolean retainsAbility)` — source permanent becomes a copy of target artifact until end of turn; when `retainsAbility` is true, the source's matching activated ability is re-added to the copy (Mizzium Transreliquat)
 
 - `CopyTargetActivatedOrTriggeredAbilityEffect()` — activated ability: copy target activated or triggered ability on the stack (may choose new targets). Pair with `StackEntryPredicateTargetFilter(ACTIVATED_ABILITY + TRIGGERED_ABILITY + ControlledBy)`. Spec `SPELL_ON_STACK`. Peter Parker's Camera

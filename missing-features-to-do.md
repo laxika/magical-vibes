@@ -10,34 +10,6 @@ Remove an entry once the feature has landed and its tests pass.
 ---
 
 
-## 3. "Enter as a copy" for lands put onto the battlefield by effects
-
-**Status:** open · **Found:** 2026-10-12, while fixing E-card tests
-
-**Failing tests:**
-- `EchoingDeepsTest.landPutOntoBattlefieldByAnEffectStillOffersCopyChoice()`
-
-**What the rules require.** "As [this permanent] enters..." and "[this permanent] enters as..." are replacement effects
-(CR 614.1c) that apply however the permanent enters. Echoing Deeps' copy choice is only offered on
-the land-play paths in `SpellCastingService` (`LandCopyOnEnterService.prepare`). Lands put onto the
-battlefield by an effect (library search, `LibraryChoiceHandlerService`, `putPermanentOntoBattlefield`,
-`BattlefieldEntryBatchSupport`) enter without it, and Clone-style permanents have the same gap.
-
-**Why it's large.** Every effect-driven battlefield entry needs an async replacement choice, including the batch entry
-path. `LandCopyOnEnterService` depends on `BattlefieldEntryService`, so wiring it in risks a
-dependency cycle.
-
-**Prompt to start it:**
-
-```
-Offer "enter as a copy" replacements (CR 614.1c — verify with the rules MCP) on every
-battlefield-entry path, not just land plays and casts: library searches, direct puts and batch entry.
-Start with EchoingDeepsTest, check the Clone-style cards, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 4. Sacrificing several permanents as one cost happens simultaneously
 
 **Status:** open · **Found:** 2026-10-12, while fixing E-card tests
@@ -88,6 +60,43 @@ Stop large power and toughness values from overflowing (Exponential Growth doubl
 Integer.MAX_VALUE). Decide with me whether to move P/T to long or saturate at a cap, then implement it
 across the model, layer system, damage and views. Start with ExponentialGrowthTest, then ask me to run
 the full suite.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 6. Several "enter as a copy" choices in one non-batch entry
+
+**Status:** open · **Found:** 2026-10-13, while adding copy choices to every battlefield entry
+
+**Failing tests:**
+- None yet. Write one first, e.g. a search that puts two Echoing Deeps onto the battlefield at once
+  (`LibraryChoiceHandlerService.placeCardsOnBattlefieldSimultaneously`), or a flicker that returns two
+  Clones together.
+
+**What the rules require.** "[This permanent] enters as . . ." is a replacement effect (CR 614.1c), so
+every permanent with one gets its own copy choice, however many enter together. The engine offers the
+choice from `BattlefieldPlacementService.place` through `CloneService.beginEntryCopyChoice`, but
+`GameData.cloneOperation` holds only one open choice. When a second copy-capable permanent reaches
+placement while the first choice is open, it enters without being offered a copy. Paths that go through
+`BattlefieldEntryBatchSupport` are fine, because it asks for every copy choice before any card moves.
+
+**Why it's large.** The non-batch simultaneous paths keep placing the rest of the group after the first
+entry pauses, so they also break the "can't see each other" rule (CR 614.12) for copy targets. The clean fix
+is to move those paths (simultaneous library placement, multi-card flicker returns and similar loops)
+onto `BattlefieldEntryBatchSupport`. The other option is to queue open copy choices instead of keeping
+one `CloneOperationState`. Either way the change touches many entry paths and their follow-up work
+(counters, delayed actions, ETB collection).
+
+**Prompt to start it:**
+
+```
+Make every copy-capable permanent in one simultaneous entry get its own "enter as a copy" choice
+(CR 614.1c — verify with the rules MCP). Today GameData.cloneOperation holds one open choice, so a
+second Clone/Echoing Deeps entering in the same non-batch placement enters without a choice. Start
+by writing a failing test (two Echoing Deeps put onto the battlefield by one search, or two Clones
+flickered together), then move those paths onto BattlefieldEntryBatchSupport or queue the copy
+choices. Then ask me to run the full suite.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

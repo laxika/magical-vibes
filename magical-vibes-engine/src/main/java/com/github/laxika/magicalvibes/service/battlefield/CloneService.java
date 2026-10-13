@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -75,6 +77,31 @@ public class CloneService {
     @Autowired
     @Lazy
     private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    @Autowired
+    @Lazy
+    private BattlefieldPlacementService battlefieldPlacementService;
+
+    /**
+     * Offers an "enter as a copy" replacement (CR 614.1c) to a permanent whose entry reached battlefield
+     * placement without that choice having been offered, such as a card put onto the battlefield by a
+     * library search or another effect. Returns {@code true} when placement is paused for the choice;
+     * the answered copy resumes the same entry request.
+     */
+    public boolean beginEntryCopyChoice(GameData gameData, BattlefieldEntryRequest request) {
+        Permanent permanent = request.permanent();
+        if (permanent.isCopyEntryResolved() || permanent.isFaceDown() || gameData.cloneOperation.card != null) {
+            return false;
+        }
+        if (gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, request.controllerId(), permanent)
+                || !prepareCloneReplacementEffect(gameData, request.controllerId(), permanent.getCard(), null,
+                request.xValue(), permanent.getOriginalCard(), false)) {
+            permanent.setCopyEntryResolved(true);
+            return false;
+        }
+        gameData.cloneOperation.preparedPermanent = permanent;
+        gameData.cloneOperation.entryRequest = request;
+        return true;
+    }
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
         return prepareCloneReplacementEffect(gameData, controllerId, card, targetId, 0, false);
@@ -514,6 +541,7 @@ public class CloneService {
         Card physicalCard = gameData.cloneOperation.physicalCard;
         Permanent preparedPermanent = gameData.cloneOperation.preparedPermanent;
         PermanentChoiceContext.AuraEntryBatchChoice battlefieldEntryBatch = gameData.cloneOperation.battlefieldEntryBatch;
+        BattlefieldEntryRequest entryRequest = gameData.cloneOperation.entryRequest;
         boolean transformed = gameData.cloneOperation.transformed;
         UUID controllerId = gameData.cloneOperation.controllerId;
         UUID etbTargetId = gameData.cloneOperation.etbTargetId;
@@ -553,6 +581,7 @@ public class CloneService {
         gameData.cloneOperation.physicalCard = null;
         gameData.cloneOperation.preparedPermanent = null;
         gameData.cloneOperation.battlefieldEntryBatch = null;
+        gameData.cloneOperation.entryRequest = null;
         gameData.cloneOperation.transformed = false;
         gameData.cloneOperation.controllerId = null;
         gameData.cloneOperation.etbTargetId = null;
@@ -685,8 +714,10 @@ public class CloneService {
                 perm.getCard(), etbTargetId, xValue, perm.getOriginalCard(), transformed)) {
             gameData.cloneOperation.preparedPermanent = perm;
             gameData.cloneOperation.battlefieldEntryBatch = battlefieldEntryBatch;
+            gameData.cloneOperation.entryRequest = entryRequest;
             return;
         }
+        perm.setCopyEntryResolved(true);
 
         if (battlefieldEntryBatch != null) {
             List<StackEntry> triggers = new ArrayList<>();
@@ -731,7 +762,12 @@ public class CloneService {
             }
         }
 
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, xValue, false);
+        if (entryRequest != null) {
+            battlefieldPlacementService.place(gameData,
+                    entryRequest.withPermanent(perm, entryRequest.simultaneouslyEntered()));
+        } else {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, xValue, false);
+        }
         if (ninjutsuEntry) {
             perm.setAttacking(true);
             perm.setAttackTarget(ninjutsuAttackTargetId);
@@ -758,14 +794,16 @@ public class CloneService {
             log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
         }
 
-        if (landPlay) {
+        Zone landPlayZone = entryRequest == null ? null : entryRequest.landPlayZone();
+        if (landPlay || landPlayZone != null) {
             battlefieldEntryService.processLandETBEffects(gameData, controllerId, perm.getCard());
             if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard());
+                triggerCollectionService.checkControllerPlaysLandTriggers(gameData, controllerId, perm.getCard(),
+                        landPlayZone == null ? Zone.HAND : landPlayZone);
             }
         } else {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId,
-                    !ninjutsuEntry);
+                    !ninjutsuEntry && entryRequest == null);
         }
 
         if (exileCopiedGraveyardCard && targetCard != null) {

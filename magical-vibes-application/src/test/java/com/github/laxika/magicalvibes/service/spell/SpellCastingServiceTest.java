@@ -67,7 +67,6 @@ import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -176,9 +175,6 @@ class SpellCastingServiceTest {
     private LifeSupport lifeSupport;
 
     @Mock
-    private LandCopyOnEnterService landCopyOnEnterService;
-
-    @Mock
     private PlayerInputService playerInputService;
 
     private SpellCastingService svc;
@@ -251,7 +247,7 @@ class SpellCastingServiceTest {
                 graveyardService, exileService, amountEvaluationService, conditionEvaluationService,
                 new AdditionalSpellCostService(gameQueryService, predicateEvaluationService),
                 waterbendPaymentService,
-                mutationCoordinator, stateBasedActionService, lifeSupport, landCopyOnEnterService,
+                mutationCoordinator, stateBasedActionService, lifeSupport,
                 playerInputService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

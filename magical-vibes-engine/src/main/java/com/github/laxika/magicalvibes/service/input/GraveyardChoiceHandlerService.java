@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileDragonApproachAndSearchSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CollectEvidenceEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LandCopyOnEnterService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayExileGraveyardCardsSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
@@ -106,7 +105,6 @@ public class GraveyardChoiceHandlerService {
     private final DestructionSupport destructionSupport;
     private final ExileDragonApproachAndSearchSupport exileDragonApproachAndSearchSupport;
     private final CollectEvidenceEffectHandler collectEvidenceEffectHandler;
-    private final LandCopyOnEnterService landCopyOnEnterService;
     private final StateBasedActionService stateBasedActionService;
     private final EachPlayerMayExileGraveyardCardsSupport eachPlayerMayExileGraveyardCardsSupport;
     private final DredgeSupport dredgeSupport;
@@ -138,7 +136,6 @@ public class GraveyardChoiceHandlerService {
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
-                    || destination == GraveyardChoiceDestination.COPY_ON_ENTER
                     || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
@@ -335,7 +332,6 @@ public class GraveyardChoiceHandlerService {
                     || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
                     || destination == GraveyardChoiceDestination.RANDOM_PLAYER_GRAVEYARD_COPY
                     || destination == GraveyardChoiceDestination.CONJURE_DUPLICATE_INTO_HAND
-                    || destination == GraveyardChoiceDestination.COPY_ON_ENTER
                     || destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD
                     || graveyardChoice.mandatory()) {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
@@ -373,8 +369,6 @@ public class GraveyardChoiceHandlerService {
                 } else {
                     card = gameData.playerGraveyards.get(playerId).get(cardIndex);
                 }
-            } else if (destination == GraveyardChoiceDestination.COPY_ON_ENTER) {
-                card = cardPool.get(cardIndex);
             } else if (destination == GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD) {
                 card = cardPool.get(cardIndex);
             } else if (cardPool != null) {
@@ -530,13 +524,6 @@ public class GraveyardChoiceHandlerService {
                     if (!gameData.interaction.isAwaitingInput()) {
                         legendRuleService.checkLegendRule(gameData, battlefieldControllerId);
                     }
-                }
-                case COPY_ON_ENTER -> {
-                    landCopyOnEnterService.complete(gameData, card);
-                    if (!gameData.interaction.isAwaitingInput()) {
-                        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-                    }
-                    return;
                 }
                 case COPY_FROM_LEAVING_GRAVEYARD -> {
                     StackEntry entry = new StackEntry(

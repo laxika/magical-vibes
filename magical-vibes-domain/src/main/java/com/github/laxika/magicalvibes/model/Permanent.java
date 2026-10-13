@@ -55,6 +55,8 @@ public class Permanent {
     @Setter private boolean creaturePositionPending;
     /** Whether the native simultaneous-entry devour choice has already finished. */
     @Setter private boolean nativeDevourResolved;
+    /** Whether this entry's "enter as a copy" replacement choice has already been offered and answered. */
+    @Setter private boolean copyEntryResolved;
     private boolean attacking;
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     private UUID attackTarget;
@@ -827,6 +829,7 @@ public class Permanent {
         this.chosenCreaturePosition = source.chosenCreaturePosition;
         this.creaturePositionPending = source.creaturePositionPending;
         this.nativeDevourResolved = source.nativeDevourResolved;
+        this.copyEntryResolved = source.copyEntryResolved;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;

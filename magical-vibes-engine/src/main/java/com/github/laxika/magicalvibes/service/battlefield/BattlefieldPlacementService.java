@@ -116,6 +116,9 @@ public class BattlefieldPlacementService {
     private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     @Autowired @Lazy
+    private CloneService cloneService;
+
+    @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.RegisterEchoAtNextUpkeepEffectHandler echoHandler;
 
     private final GameQueryService gameQueryService;
@@ -246,6 +249,7 @@ public class BattlefieldPlacementService {
     }
 
     public void place(GameData gameData, BattlefieldEntryRequest request) {
+        if (cloneService != null && cloneService.beginEntryCopyChoice(gameData, request)) return;
         if (beginAmplifyChoice(gameData, request)) return;
         if (beginUnleashChoice(gameData, request)) return;
         if (beginRiotChoices(gameData, request)) return;
