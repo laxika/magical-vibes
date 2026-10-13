@@ -36,6 +36,8 @@ public class InputCompletionService {
     @Autowired private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.CloneService cloneService;
+    @Autowired @Lazy
+    private LibraryChoiceHandlerService libraryChoiceHandlerService;
 
 
     private final PlayerInputService playerInputService;
@@ -89,6 +91,8 @@ public class InputCompletionService {
         if (resumeSuspendedInteraction(gameData)) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         if (cloneService != null && cloneService.beginNextQueuedEntryCopyChoice(gameData)) return;
+        if (libraryChoiceHandlerService != null && gameData.pendingEntryCopyChoices.isEmpty()
+                && libraryChoiceHandlerService.resumeLibraryRevealRemainder(gameData)) return;
         var queuedMergedOrder = gameData.pendingInteractions.stream()
                 .filter(pending -> pending instanceof PendingInteraction.LibraryReorder order
                         && order.destinationZone() != null)

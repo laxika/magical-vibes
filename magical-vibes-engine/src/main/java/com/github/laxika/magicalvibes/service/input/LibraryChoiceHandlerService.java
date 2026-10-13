@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingEachPlayerLibraryExile;
 import com.github.laxika.magicalvibes.model.PendingDubiousChallengeChoice;
 import com.github.laxika.magicalvibes.model.PendingGuildFeud;
+import com.github.laxika.magicalvibes.model.PendingLibraryRevealRemainder;
 import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManifoldInsightsChoice;
@@ -3327,7 +3328,37 @@ public class LibraryChoiceHandlerService {
         queueLibrarySelectionFollowUp(gameData, libraryRevealChoice.battlefieldSelectionFollowUp(),
                 selectedPermanentIds);
 
-        // Handle remaining cards based on destination
+        // A placed card's "enter as a copy" choice is part of its entering (CR 614.1c), so the rest of
+        // the revealed cards wait until it is answered.
+        if (gameData.cloneOperation.card != null || !gameData.pendingEntryCopyChoices.isEmpty()) {
+            gameData.queueInteraction(new PendingLibraryRevealRemainder(
+                    libraryRevealChoice, selectedCards, remainingCards));
+            return;
+        }
+
+        finishRevealedCards(gameData, libraryRevealChoice, selectedCards, remainingCards);
+    }
+
+    /**
+     * Handles the unchosen cards of a reveal choice whose chosen cards' copy choices were answered,
+     * once {@link PendingLibraryRevealRemainder} is the next thing to do. Returns {@code false} when
+     * none is parked.
+     */
+    public boolean resumeLibraryRevealRemainder(GameData gameData) {
+        PendingLibraryRevealRemainder remainder = gameData.pollPendingInteraction(PendingLibraryRevealRemainder.class);
+        if (remainder == null) {
+            return false;
+        }
+        finishRevealedCards(gameData, remainder.choice(), new ArrayList<>(remainder.selectedCards()),
+                new ArrayList<>(remainder.remainingCards()));
+        return true;
+    }
+
+    private void finishRevealedCards(GameData gameData, PendingInteraction.LibraryRevealChoice libraryRevealChoice,
+                                     List<Card> selectedCards, List<Card> remainingCards) {
+        UUID controllerId = libraryRevealChoice.playerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
         if (libraryRevealChoice.remainingToGraveyard()) {
             for (Card card : remainingCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);

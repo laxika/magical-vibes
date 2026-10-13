@@ -65,37 +65,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 7. Reveal-and-put effects keep going while a found card's copy choice is open
-
-**Status:** open · **Found:** 2026-10-13, while giving each simultaneous entry its own copy choice
-
-**Failing tests:**
-- None yet. Write one first, e.g. Collected Company putting a Phantasmal Image onto the battlefield
-  while another creature is on the battlefield.
-
-**What the rules require.** "Enter as a copy" is a replacement effect (CR 614.1c), so the Image's
-choice is made as it enters, before the spell goes on to put the rest of the cards on the bottom.
-`LibraryChoiceHandlerService.handleLibraryRevealChoice` places the selected cards and then begins the
-`LibraryReorder` for the rest right away. That replaces the open "enter as a copy" may-ability prompt,
-so the Image never gets its choice answered. Library searches already stop when a found card's entry
-choice is open (`finishSearchAndResume`); the reveal path doesn't.
-
-**Why it's large.** `handleLibraryRevealChoice` has many destination branches (graveyard, exile, hand,
-random bottom, ordered bottom, shuffle) that all run after placement, plus follow-ups and the parked
-spell. Each needs to wait for the entry choice and then resume.
-
-**Prompt to start it:**
-
-```
-Make library reveal-and-put effects (Collected Company and similar) wait for a placed card's
-"enter as a copy" choice before handling the rest of the revealed cards (CR 614.1c — verify with the
-rules MCP). Today handleLibraryRevealChoice begins the LibraryReorder over the open copy prompt.
-Start with a failing Collected Company + Phantasmal Image test, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

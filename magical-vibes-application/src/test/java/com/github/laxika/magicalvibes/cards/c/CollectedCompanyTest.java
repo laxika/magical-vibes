@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.p.PhantasmalImage;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -21,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CollectedCompany.class, GrizzlyBears.class, HillGiant.class,
-        LlanowarElves.class, Shock.class, Forest.class, TrollAscetic.class, GrafdiggersCage.class})
+        LlanowarElves.class, Shock.class, Forest.class, TrollAscetic.class, GrafdiggersCage.class,
+        PhantasmalImage.class})
 class CollectedCompanyTest extends BaseCardTest {
 
     @Test
@@ -174,6 +177,58 @@ class CollectedCompanyTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(
                 remaining.indexOf(forest), remaining.indexOf(bears), remaining.indexOf(shock))));
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest, bears, shock);
+    }
+
+    @Test
+    @DisplayName("Phantasmal Image chooses what to copy before the rest go to the bottom")
+    void phantasmalImageCopyChoiceIsAnsweredBeforeBottomOrder() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        PhantasmalImage image = new PhantasmalImage();
+        Shock shock = new Shock();
+        Forest forest = new Forest();
+        setLibrary(image, shock, forest);
+
+        castCollectedCompany();
+        harness.handleMultipleCardsChosen(player1, List.of(image.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.LibraryReorder.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, giant.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement()
+                .matches(permanent -> permanent.getOriginalCard() == image
+                        && permanent.getCard().getName().equals("Hill Giant"));
+        var remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        assertThat(remaining).containsExactlyInAnyOrder(shock, forest);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(
+                remaining.indexOf(forest), remaining.indexOf(shock))));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest, shock);
+        harness.assertInGraveyard(player1, "Collected Company");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Phantasmal Image declining to copy still lets the rest go to the bottom")
+    void phantasmalImageDecliningCopyThenBottomOrder() {
+        harness.addToBattlefield(player2, new HillGiant());
+        PhantasmalImage image = new PhantasmalImage();
+        Shock shock = new Shock();
+        Forest forest = new Forest();
+        setLibrary(image, shock, forest);
+
+        castCollectedCompany();
+        harness.handleMultipleCardsChosen(player1, List.of(image.getId()));
+        harness.handleMayAbilityChosen(player1, false);
+
+        var remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
+        assertThat(remaining).containsExactlyInAnyOrder(shock, forest);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(
+                remaining.indexOf(shock), remaining.indexOf(forest))));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock, forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castCollectedCompany() {
