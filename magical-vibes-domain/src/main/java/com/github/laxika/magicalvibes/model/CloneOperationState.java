@@ -17,6 +17,8 @@ public class CloneOperationState {
     public PermanentChoiceContext.AuraEntryBatchChoice battlefieldEntryBatch;
     // An effect-driven entry paused in battlefield placement; the answered copy resumes this request.
     public BattlefieldEntryRequest entryRequest;
+    // Permanents on the battlefield as an effect-driven entry reached its copy choice; null when unrestricted.
+    public Set<UUID> copyablePermanentIds;
     public boolean transformed;
     public UUID controllerId;
     public UUID etbTargetId;

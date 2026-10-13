@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AetherAdept;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DefenseOfTheHeart;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GideonsLawkeeper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,7 +24,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PhantasmalImage.class, GrizzlyBears.class, GiantGrowth.class, GideonsLawkeeper.class, AetherAdept.class})
+@CardUsed({PhantasmalImage.class, GrizzlyBears.class, GiantGrowth.class, GideonsLawkeeper.class, AetherAdept.class,
+        DefenseOfTheHeart.class, Forest.class, HillGiant.class})
 class PhantasmalImageTest extends BaseCardTest {
 
     private Permanent copyGrizzlyBears() {
@@ -182,5 +188,55 @@ class PhantasmalImageTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Phantasmal Image");
         harness.assertNotOnBattlefield(player1, "Phantasmal Image");
+    }
+
+    @Test
+    @DisplayName("Two Images entering together each get their own copy choice and can't copy each other")
+    void imagesEnteringTogetherEachChooseWithoutSeeingEachOther() {
+        PhantasmalImage first = new PhantasmalImage();
+        PhantasmalImage second = new PhantasmalImage();
+        List<UUID> giantIds = searchWithDefenseOfTheHeart(first, second);
+
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrderElementsOf(giantIds);
+        harness.handlePermanentChosen(player1, giantIds.getFirst());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrderElementsOf(giantIds);
+        harness.handlePermanentChosen(player1, giantIds.getFirst());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getOriginalCard)
+                .containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allMatch(permanent -> permanent.getCard().getName().equals("Hill Giant"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Image can't copy a creature entering at the same time")
+    void cannotCopyCreatureEnteringAtTheSameTime() {
+        List<UUID> giantIds = searchWithDefenseOfTheHeart(new PhantasmalImage(), new GrizzlyBears());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrderElementsOf(giantIds);
+    }
+
+    private List<UUID> searchWithDefenseOfTheHeart(Card image, Card other) {
+        harness.castFromHand(player1, new DefenseOfTheHeart(), "{3}{G}");
+        harness.passBothPriorities();
+        List<UUID> giantIds = List.of(
+                harness.addToBattlefieldAndReturn(player2, new HillGiant()).getId(),
+                harness.addToBattlefieldAndReturn(player2, new HillGiant()).getId(),
+                harness.addToBattlefieldAndReturn(player2, new HillGiant()).getId());
+        harness.setLibrary(player1, List.of(image, other, new Forest()));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        return giantIds;
     }
 }

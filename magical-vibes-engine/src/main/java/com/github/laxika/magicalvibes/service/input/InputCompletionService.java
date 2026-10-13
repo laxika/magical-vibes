@@ -34,6 +34,8 @@ public class InputCompletionService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.DrainTargetPlayersLandManaEffectHandler
             landManaDrainHandler;
     @Autowired private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.CloneService cloneService;
 
 
     private final PlayerInputService playerInputService;
@@ -86,6 +88,7 @@ public class InputCompletionService {
         if (gameData.interaction.isAwaitingInput()) return;
         if (resumeSuspendedInteraction(gameData)) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
+        if (cloneService != null && cloneService.beginNextQueuedEntryCopyChoice(gameData)) return;
         var queuedMergedOrder = gameData.pendingInteractions.stream()
                 .filter(pending -> pending instanceof PendingInteraction.LibraryReorder order
                         && order.destinationZone() != null)

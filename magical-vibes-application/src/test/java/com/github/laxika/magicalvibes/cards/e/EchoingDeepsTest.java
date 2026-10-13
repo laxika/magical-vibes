@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.c.CosmiumConfluence;
 import com.github.laxika.magicalvibes.cards.c.CrucibleOfWorlds;
+import com.github.laxika.magicalvibes.cards.h.HourOfPromise;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SunkenCitadel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -20,7 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EchoingDeeps.class, Forest.class, SunkenCitadel.class, CosmiumConfluence.class, CrucibleOfWorlds.class})
+@CardUsed({EchoingDeeps.class, Forest.class, SunkenCitadel.class, CosmiumConfluence.class, CrucibleOfWorlds.class,
+        HourOfPromise.class, Plains.class})
 class EchoingDeepsTest extends BaseCardTest {
 
     @Test
@@ -206,5 +209,37 @@ class EchoingDeepsTest extends BaseCardTest {
         assertThat(gqs.effectiveLandTypes(gd, entered)).contains(CardSubtype.FOREST, CardSubtype.CAVE);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(deeps);
         assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void eachDeepsFetchedTogetherGetsItsOwnCopyChoice() {
+        EchoingDeeps first = new EchoingDeeps();
+        EchoingDeeps second = new EchoingDeeps();
+        Forest forest = new Forest();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setGraveyard(player2, List.of(forest, plains));
+        harness.castFromHand(player1, new HourOfPromise(), "{4}{G}");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(plains.getId()));
+
+        Permanent forestCopy = findPermanent(player1, "Forest");
+        Permanent plainsCopy = findPermanent(player1, "Plains");
+        assertThat(List.of(forestCopy.getOriginalCard(), plainsCopy.getOriginalCard()))
+                .containsExactlyInAnyOrder(first, second);
+        assertThat(forestCopy.isTapped()).isTrue();
+        assertThat(plainsCopy.isTapped()).isTrue();
+        assertThat(gqs.effectiveLandTypes(gd, plainsCopy)).contains(CardSubtype.PLAINS, CardSubtype.CAVE);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Hour of Promise");
     }
 }

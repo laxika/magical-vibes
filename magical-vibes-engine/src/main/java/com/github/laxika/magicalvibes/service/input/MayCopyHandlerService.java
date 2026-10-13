@@ -99,10 +99,17 @@ public class MayCopyHandlerService {
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
                     if (p.getCard().getId().equals(ability.sourceCard().getId())) continue;
+                    if (!cloneService.isCopyableByOpenChoice(gameData, p)) continue;
                     if (predicateEvaluationService.matchesPermanentPredicate(p, copyEffect.filter(), filterContext)) {
                         validIds.add(p.getId());
                     }
                 }
+            }
+            if (validIds.isEmpty()) {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        "There is no " + typeLabel + " to copy. ", ability.sourceCard(), " enters without copying."));
+                enterWithoutCopy(gameData);
+                return;
             }
             playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validIds, "Choose a " + typeLabel + " to copy.");
 
@@ -110,34 +117,37 @@ public class MayCopyHandlerService {
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} accepts copy {}", gameData.id, player.getUsername(), typeLabel);
         } else {
-            gameData.interaction.clearPermanentChoiceContext();
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to copy a " + typeLabel + ". " , ability.sourceCard(), " enters without copying."));
             log.info("Game {} - {} declines copy {}", gameData.id, player.getUsername(), typeLabel);
+            enterWithoutCopy(gameData);
+        }
+    }
 
-            cloneService.completeCloneEntry(gameData, null);
-            stateBasedActionService.performStateBasedActions(gameData);
+    private void enterWithoutCopy(GameData gameData) {
+        gameData.interaction.clearPermanentChoiceContext();
+        cloneService.completeCloneEntry(gameData, null);
+        stateBasedActionService.performStateBasedActions(gameData);
 
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-                triggerCollectionService.processNextDeathTriggerTarget(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-                triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-
-            if (!gameData.pendingMayAbilities.isEmpty()) {
-                playerInputService.processNextMayAbility(gameData);
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
+            triggerCollectionService.processNextDeathTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
-
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     public void handleCopyCreatureCardInGraveyardOnEnterChoice(

@@ -933,6 +933,12 @@ public class GameData {
     public PermanentChoiceContext.AuraEntryBatchChoice pendingBattlefieldEntryBatch;
     /** Answered and pending entry requests, keyed by the physical card's ID. */
     public final Map<UUID, BattlefieldEntryRequest> pendingBattlefieldEntryRequests = new ConcurrentHashMap<>();
+    /**
+     * Entries that reached their "enter as a copy" choice while another copy choice was open, such as
+     * the second of two Clones entering together. Each is offered its own choice once {@link #cloneOperation}
+     * is free again.
+     */
+    public final List<PendingEntryCopyChoice> pendingEntryCopyChoices = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
     /** Votes collected while a voting spell or ability is resolving, keyed by its controller. */
@@ -8197,6 +8203,7 @@ public class GameData {
                 ? null : this.pendingBattlefieldEntryBatch.deepCopy();
         this.pendingBattlefieldEntryRequests.forEach((id, request) ->
                 copy.pendingBattlefieldEntryRequests.put(id, request.deepCopy()));
+        this.pendingEntryCopyChoices.forEach(choice -> copy.pendingEntryCopyChoices.add(choice.deepCopy()));
         copy.cloneOperation.physicalCard = this.cloneOperation.physicalCard;
         copy.cloneOperation.preparedPermanent = this.cloneOperation.preparedPermanent == null
                 ? null : new Permanent(this.cloneOperation.preparedPermanent);
@@ -8204,6 +8211,7 @@ public class GameData {
                 ? null : this.cloneOperation.battlefieldEntryBatch.deepCopy();
         copy.cloneOperation.entryRequest = this.cloneOperation.entryRequest == null
                 ? null : this.cloneOperation.entryRequest.deepCopy();
+        copy.cloneOperation.copyablePermanentIds = this.cloneOperation.copyablePermanentIds;
         copy.cloneOperation.transformed = this.cloneOperation.transformed;
         copy.cloneOperation.controllerId = this.cloneOperation.controllerId;
         copy.cloneOperation.etbTargetId = this.cloneOperation.etbTargetId;

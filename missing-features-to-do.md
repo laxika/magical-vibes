@@ -65,38 +65,32 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 6. Several "enter as a copy" choices in one non-batch entry
+## 7. Reveal-and-put effects keep going while a found card's copy choice is open
 
-**Status:** open · **Found:** 2026-10-13, while adding copy choices to every battlefield entry
+**Status:** open · **Found:** 2026-10-13, while giving each simultaneous entry its own copy choice
 
 **Failing tests:**
-- None yet. Write one first, e.g. a search that puts two Echoing Deeps onto the battlefield at once
-  (`LibraryChoiceHandlerService.placeCardsOnBattlefieldSimultaneously`), or a flicker that returns two
-  Clones together.
+- None yet. Write one first, e.g. Collected Company putting a Phantasmal Image onto the battlefield
+  while another creature is on the battlefield.
 
-**What the rules require.** "[This permanent] enters as . . ." is a replacement effect (CR 614.1c), so
-every permanent with one gets its own copy choice, however many enter together. The engine offers the
-choice from `BattlefieldPlacementService.place` through `CloneService.beginEntryCopyChoice`, but
-`GameData.cloneOperation` holds only one open choice. When a second copy-capable permanent reaches
-placement while the first choice is open, it enters without being offered a copy. Paths that go through
-`BattlefieldEntryBatchSupport` are fine, because it asks for every copy choice before any card moves.
+**What the rules require.** "Enter as a copy" is a replacement effect (CR 614.1c), so the Image's
+choice is made as it enters, before the spell goes on to put the rest of the cards on the bottom.
+`LibraryChoiceHandlerService.handleLibraryRevealChoice` places the selected cards and then begins the
+`LibraryReorder` for the rest right away. That replaces the open "enter as a copy" may-ability prompt,
+so the Image never gets its choice answered. Library searches already stop when a found card's entry
+choice is open (`finishSearchAndResume`); the reveal path doesn't.
 
-**Why it's large.** The non-batch simultaneous paths keep placing the rest of the group after the first
-entry pauses, so they also break the "can't see each other" rule (CR 614.12) for copy targets. The clean fix
-is to move those paths (simultaneous library placement, multi-card flicker returns and similar loops)
-onto `BattlefieldEntryBatchSupport`. The other option is to queue open copy choices instead of keeping
-one `CloneOperationState`. Either way the change touches many entry paths and their follow-up work
-(counters, delayed actions, ETB collection).
+**Why it's large.** `handleLibraryRevealChoice` has many destination branches (graveyard, exile, hand,
+random bottom, ordered bottom, shuffle) that all run after placement, plus follow-ups and the parked
+spell. Each needs to wait for the entry choice and then resume.
 
 **Prompt to start it:**
 
 ```
-Make every copy-capable permanent in one simultaneous entry get its own "enter as a copy" choice
-(CR 614.1c — verify with the rules MCP). Today GameData.cloneOperation holds one open choice, so a
-second Clone/Echoing Deeps entering in the same non-batch placement enters without a choice. Start
-by writing a failing test (two Echoing Deeps put onto the battlefield by one search, or two Clones
-flickered together), then move those paths onto BattlefieldEntryBatchSupport or queue the copy
-choices. Then ask me to run the full suite.
+Make library reveal-and-put effects (Collected Company and similar) wait for a placed card's
+"enter as a copy" choice before handling the rest of the revealed cards (CR 614.1c — verify with the
+rules MCP). Today handleLibraryRevealChoice begins the LibraryReorder over the open copy prompt.
+Start with a failing Collected Company + Phantasmal Image test, then ask me to run the full suite.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

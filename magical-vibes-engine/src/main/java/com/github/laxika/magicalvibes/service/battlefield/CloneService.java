@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingEntryCopyChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardFromGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInExileOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -47,6 +49,7 @@ import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,22 +88,97 @@ public class CloneService {
      * Offers an "enter as a copy" replacement (CR 614.1c) to a permanent whose entry reached battlefield
      * placement without that choice having been offered, such as a card put onto the battlefield by a
      * library search or another effect. Returns {@code true} when placement is paused for the choice;
-     * the answered copy resumes the same entry request.
+     * the answered copy resumes the same entry request. When another copy choice is already open (two
+     * Clones entering together), the entry waits in {@link GameData#pendingEntryCopyChoices} for its own
+     * choice.
      */
     public boolean beginEntryCopyChoice(GameData gameData, BattlefieldEntryRequest request) {
+        return beginEntryCopyChoice(gameData, request, null);
+    }
+
+    private boolean beginEntryCopyChoice(GameData gameData, BattlefieldEntryRequest request,
+                                         Set<UUID> copyablePermanentIds) {
         Permanent permanent = request.permanent();
-        if (permanent.isCopyEntryResolved() || permanent.isFaceDown() || gameData.cloneOperation.card != null) {
+        if (permanent.isCopyEntryResolved() || permanent.isFaceDown()) {
             return false;
         }
         if (gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, request.controllerId(), permanent)
-                || !prepareCloneReplacementEffect(gameData, request.controllerId(), permanent.getCard(), null,
+                || !hasEntryCopyReplacement(gameData, request.controllerId(), permanent.getCard())) {
+            permanent.setCopyEntryResolved(true);
+            return false;
+        }
+        Set<UUID> copyable = copyablePermanentIds != null ? copyablePermanentIds
+                : permanentsOnBattlefieldBefore(gameData, request);
+        if (gameData.cloneOperation.card != null) {
+            gameData.pendingEntryCopyChoices.add(new PendingEntryCopyChoice(request, copyable));
+            return true;
+        }
+        gameData.cloneOperation.entryRequest = request;
+        gameData.cloneOperation.copyablePermanentIds = copyable;
+        if (!prepareCloneReplacementEffect(gameData, request.controllerId(), permanent.getCard(), null,
                 request.xValue(), permanent.getOriginalCard(), false)) {
+            gameData.cloneOperation.entryRequest = null;
+            gameData.cloneOperation.copyablePermanentIds = null;
             permanent.setCopyEntryResolved(true);
             return false;
         }
         gameData.cloneOperation.preparedPermanent = permanent;
-        gameData.cloneOperation.entryRequest = request;
         return true;
+    }
+
+    /**
+     * Offers the next entry waiting in {@link GameData#pendingEntryCopyChoices} its copy choice once no
+     * other choice is open. An entry with nothing left to copy enters as itself. Returns {@code true}
+     * when a choice was started.
+     */
+    public boolean beginNextQueuedEntryCopyChoice(GameData gameData) {
+        while (!gameData.pendingEntryCopyChoices.isEmpty() && gameData.cloneOperation.card == null
+                && gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+            PendingEntryCopyChoice next = gameData.pendingEntryCopyChoices.removeFirst();
+            BattlefieldEntryRequest request = next.request();
+            if (beginEntryCopyChoice(gameData, request, next.copyablePermanentIds())) return true;
+            Permanent permanent = request.permanent();
+            battlefieldPlacementService.place(gameData, request);
+            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(
+                    permanent.getCard(), gameData.playerIdToName.get(request.controllerId())));
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, request.controllerId(), permanent.getCard(), null, false);
+            if (!gameData.interaction.isAwaitingInput()) {
+                legendRuleService.checkLegendRule(gameData, request.controllerId());
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether {@code permanent} may be chosen by the open copy choice. A permanent put onto the
+     * battlefield by an effect can copy only what was already there as it entered, not the permanents
+     * entering with it or after it.
+     */
+    public boolean isCopyableByOpenChoice(GameData gameData, Permanent permanent) {
+        Set<UUID> copyable = gameData.cloneOperation.copyablePermanentIds;
+        return copyable == null || copyable.contains(permanent.getId());
+    }
+
+    private Set<UUID> permanentsOnBattlefieldBefore(GameData gameData, BattlefieldEntryRequest request) {
+        Set<UUID> enteringTogether = new HashSet<>();
+        for (Permanent entering : request.simultaneouslyEntered()) {
+            enteringTogether.add(entering.getId());
+        }
+        Set<UUID> ids = new HashSet<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!enteringTogether.contains(permanent.getId())) ids.add(permanent.getId());
+        });
+        return ids;
+    }
+
+    private boolean hasEntryCopyReplacement(GameData gameData, UUID controllerId, Card card) {
+        if (findCopyEffect(gameData, controllerId, card) != null || findMimeoplasmEffect(card) != null
+                || findGraveyardCopyEffect(card) != null || findFixedGraveyardCopyEffect(card) != null) {
+            return true;
+        }
+        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(CopyCreatureCardInExileOnEnterEffect.class::isInstance);
     }
 
     public boolean prepareCloneReplacementEffect(GameData gameData, UUID controllerId, Card card, UUID targetId) {
@@ -187,7 +265,8 @@ public class CloneService {
             }
         } else {
             gameData.forEachPermanent((pid, p) -> {
-                if (predicateEvaluationService.matchesPermanentPredicate(p, copyEffect.filter(), filterContext)) {
+                if (isCopyableByOpenChoice(gameData, p)
+                        && predicateEvaluationService.matchesPermanentPredicate(p, copyEffect.filter(), filterContext)) {
                     validIds.add(p.getId());
                 }
             });
@@ -542,6 +621,7 @@ public class CloneService {
         Permanent preparedPermanent = gameData.cloneOperation.preparedPermanent;
         PermanentChoiceContext.AuraEntryBatchChoice battlefieldEntryBatch = gameData.cloneOperation.battlefieldEntryBatch;
         BattlefieldEntryRequest entryRequest = gameData.cloneOperation.entryRequest;
+        Set<UUID> copyablePermanentIds = gameData.cloneOperation.copyablePermanentIds;
         boolean transformed = gameData.cloneOperation.transformed;
         UUID controllerId = gameData.cloneOperation.controllerId;
         UUID etbTargetId = gameData.cloneOperation.etbTargetId;
@@ -582,6 +662,7 @@ public class CloneService {
         gameData.cloneOperation.preparedPermanent = null;
         gameData.cloneOperation.battlefieldEntryBatch = null;
         gameData.cloneOperation.entryRequest = null;
+        gameData.cloneOperation.copyablePermanentIds = null;
         gameData.cloneOperation.transformed = false;
         gameData.cloneOperation.controllerId = null;
         gameData.cloneOperation.etbTargetId = null;
@@ -710,13 +791,16 @@ public class CloneService {
             perm.tap();
         }
 
+        gameData.cloneOperation.entryRequest = entryRequest;
+        gameData.cloneOperation.copyablePermanentIds = copyablePermanentIds;
         if (copiedCard != null && prepareCloneReplacementEffect(gameData, controllerId,
                 perm.getCard(), etbTargetId, xValue, perm.getOriginalCard(), transformed)) {
             gameData.cloneOperation.preparedPermanent = perm;
             gameData.cloneOperation.battlefieldEntryBatch = battlefieldEntryBatch;
-            gameData.cloneOperation.entryRequest = entryRequest;
             return;
         }
+        gameData.cloneOperation.entryRequest = null;
+        gameData.cloneOperation.copyablePermanentIds = null;
         perm.setCopyEntryResolved(true);
 
         if (battlefieldEntryBatch != null) {
@@ -831,6 +915,7 @@ public class CloneService {
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
         }
+        beginNextQueuedEntryCopyChoice(gameData);
     }
 
     private void applyAdditionalPlusOnePlusOneCounters(GameData gameData, UUID controllerId, Permanent perm,
