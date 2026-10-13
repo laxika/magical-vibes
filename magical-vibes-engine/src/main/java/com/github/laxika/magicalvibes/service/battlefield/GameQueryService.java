@@ -1945,10 +1945,13 @@ public class GameQueryService {
     /**
      * Returns whether {@code permanent} may be sacrificed as a cost. The permanent's current
      * characteristics are used, so a land creature is still permitted by Yasharn while a nonland
-     * creature is not.
+     * creature is not. A permanent already chosen for the cost being paid can't be chosen again.
      */
     public boolean canSacrificePermanentForCosts(GameData gameData, Permanent permanent) {
         if (permanent == null) {
+            return false;
+        }
+        if (gameData.pendingActivationCostSacrificeIds.contains(permanent.getId())) {
             return false;
         }
         if (cantBeSacrificed(gameData, permanent)) {

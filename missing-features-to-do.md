@@ -10,35 +10,6 @@ Remove an entry once the feature has landed and its tests pass.
 ---
 
 
-## 4. Sacrificing several permanents as one cost happens simultaneously
-
-**Status:** open · **Found:** 2026-10-12, while fixing E-card tests
-
-**Failing tests:**
-- `EmrakulsEvangelTest.sacrificedObserversSeeEachOtherDieSimultaneously()`
-
-**What the rules require.** Emrakul's Evangel sacrifices itself and any number of other non-Eldrazi creatures as one cost, so
-they all leave the battlefield at the same time. Leaves-the-battlefield triggers look back in time
-(CR 603.10a), so two Ulvenwald Observers should each see the other die (4 draws). The engine pays
-activation-cost sacrifices one at a time through `AbilityActivationService.sacrificePermanentAsCost`
-(and `SacrificeXPermanentsCostHandler`), so the second Observer never sees the first (3 draws).
-
-**Why it's large.** Cost sacrifices are paid across several async prompts and completion paths in
-`AbilityActivationService`. They all need to collect the chosen permanents and remove them as one
-simultaneous batch, with dies triggers collected against the batch.
-
-**Prompt to start it:**
-
-```
-Make multi-permanent sacrifice costs remove all chosen permanents simultaneously, so dies triggers
-look back across the whole batch (CR 603.10a — verify with the rules MCP). Today
-AbilityActivationService sacrifices them one at a time. Start with EmrakulsEvangelTest, then ask me to
-run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 5. Power and toughness larger than a 32-bit int
 
 **Status:** open · **Found:** 2026-10-12, while fixing E-card tests

@@ -82,6 +82,8 @@ Damage events retain snapshots of damaged permanents before state-based actions.
 
 Simultaneous death batches snapshot continuously granted `ON_DEATH` abilities before moving any permanent. The snapshot preserves abilities supplied by a paired creature or another permanent dying in the same event and is cleared when that event ends.
 
+A permanent's activated ability keeps the permanents chosen for its sacrifice costs in `GameData.pendingActivationCostSacrificeIds`; they stay on the battlefield (and can't be chosen again) until every cost choice is made. `ActivatedAbilityExecutionService` then sacrifices them and a `SacrificeSelfCost` source in one `performSimultaneousRemovals` batch, so their dies triggers see each other. A failed activation drops its pending choices. Graveyard and hand abilities still sacrifice each chosen permanent immediately.
+
 Myriad prepares copies and applies token replacements before choosing a player or planeswalker for each token to attack. `PreparedOpponentTokenCopiesAttacking` holds the prepared batch until every choice completes; doubled tokens have independent choices and enter simultaneously.
 
 `SourceCardInGraveyard` can retain an expected graveyard entry version. Graveyard creature-put triggers bind this version when collected, so leaving and reentering the graveyard cannot satisfy an older Bridge from Below ability.

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -97,7 +98,9 @@ class WestvaleAbbeyTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(abbey), TRANSFORM_ABILITY, null, null);
         harness.handlePermanentChosen(player1, foxes.getFirst().getId());
 
-        assertThat(countPermanents(player1, "Devilthorn Fox")).isEqualTo(5);
+        assertThat(countPermanents(player1, "Devilthorn Fox")).isEqualTo(6);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .doesNotContain(foxes.getFirst().getId());
         for (int i = 1; i < 5; i++) {
             harness.handlePermanentChosen(player1, foxes.get(i).getId());
         }

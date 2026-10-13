@@ -234,6 +234,49 @@ public class ActivatedAbilityExecutionService {
     }
 
     /**
+     * Sacrifices the source (when the ability has a sacrifice-self cost) and every permanent chosen
+     * for the ability's other sacrifice costs as one simultaneous event, so each one's dies triggers
+     * see the others leave too (CR 603.10a).
+     */
+    private void sacrificeCostPermanents(GameData gameData, Player player, Permanent source,
+                                         boolean sacrificeSource) {
+        List<Permanent> sacrificed = new ArrayList<>();
+        if (sacrificeSource) {
+            sacrificed.add(source);
+        }
+        List<UUID> chosenIds = List.copyOf(gameData.pendingActivationCostSacrificeIds);
+        gameData.pendingActivationCostSacrificeIds.clear();
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
+        for (UUID chosenId : chosenIds) {
+            if (sacrificeSource && chosenId.equals(source.getId())) {
+                continue;
+            }
+            battlefield.stream()
+                    .filter(p -> p.getId().equals(chosenId))
+                    .findFirst()
+                    .ifPresent(sacrificed::add);
+        }
+        if (sacrificed.isEmpty()) {
+            return;
+        }
+        List<Card> sacrificedCards = sacrificed.stream()
+                .map(p -> permanentRemovalService.snapshotEffectivePermanentCard(gameData, p))
+                .toList();
+        permanentRemovalService.performSimultaneousRemovals(gameData, sacrificed, () -> {
+            for (int i = 0; i < sacrificed.size(); i++) {
+                Permanent sacrificedPermanent = sacrificed.get(i);
+                permanentRemovalService.sacrificePermanentToGraveyard(gameData, sacrificedPermanent);
+                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                        gameData, player.getId(), sacrificedCards.get(i));
+                if (!sacrificeSource || sacrificedPermanent != source) {
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " sacrifices ", sacrificedPermanent.getCard(), "."));
+                }
+            }
+        });
+    }
+
+    /**
      * Completes an activated ability activation after all additional costs (mana, sacrifice creature,
      * discard, exile from graveyard, etc.) have already been paid by the caller.
      *
@@ -655,10 +698,8 @@ public class ActivatedAbilityExecutionService {
             if (sacrificeSelfCost.get().trackPower()) {
                 effectiveXValue = Math.max(0, gameQueryService.getEffectivePower(gameData, permanent));
             }
-            Card sacrificedCard = permanentRemovalService.snapshotEffectivePermanentCard(gameData, permanent);
-            permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent);
-            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, player.getId(), sacrificedCard);
         }
+        sacrificeCostPermanents(gameData, player, permanent, sacrificeSelfCost.isPresent());
 
         // Sacrifice the source equipment (e.g. Blazing Torch's "{T}, Sacrifice Blazing Torch: ...")
         // Snapshot the equipment's card before sacrifice so it can be used as the damage source

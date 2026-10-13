@@ -533,6 +533,10 @@ public class GameData {
     public final List<StackEntry> pendingSpellCastCostTriggers = Collections.synchronizedList(new ArrayList<>());
     /** Triggered abilities collected while an activated ability's discard cost is being paid. */
     public final List<StackEntry> pendingActivatedAbilityCostTriggers = Collections.synchronizedList(new ArrayList<>());
+    /** Permanents chosen to be sacrificed for the activated ability whose costs are being paid. They
+     *  stay on the battlefield until every cost choice is made, then leave together with any
+     *  sacrificed source as one simultaneous event (CR 603.10a look-back for their dies triggers). */
+    public final List<UUID> pendingActivationCostSacrificeIds = Collections.synchronizedList(new ArrayList<>());
     /** Mana-ability activations that can still be undone by the MTGO-style "cancel casting" UI
      *  (untap the source, drain the produced mana). Cleared whenever a non-mana action happens
      *  (casting, non-mana ability activation, passing priority, step change); each entry is also
@@ -7930,6 +7934,7 @@ public class GameData {
         this.pendingManaAbilityTriggers.forEach(se -> copy.pendingManaAbilityTriggers.add(new StackEntry(se)));
         this.pendingSpellCastCostTriggers.forEach(se -> copy.pendingSpellCastCostTriggers.add(new StackEntry(se)));
         this.pendingActivatedAbilityCostTriggers.forEach(se -> copy.pendingActivatedAbilityCostTriggers.add(new StackEntry(se)));
+        copy.pendingActivationCostSacrificeIds.addAll(this.pendingActivationCostSacrificeIds);
 
         // --- InteractionState ---
         InteractionState copiedInteraction = this.interaction.deepCopy();

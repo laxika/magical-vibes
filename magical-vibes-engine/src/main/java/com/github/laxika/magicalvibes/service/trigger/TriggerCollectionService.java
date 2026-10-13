@@ -8738,6 +8738,8 @@ public class TriggerCollectionService {
         List<StackEntry> entries = new ArrayList<>();
         List<CardEffect> effects = new ArrayList<>();
         gameData.forEachPermanent((ownerId, perm) -> {
+            // Sacrificed for this activation's costs, so gone by the time the ability is activated.
+            if (gameData.pendingActivationCostSacrificeIds.contains(perm.getId())) return;
             boolean watchesController = ownerId.equals(activatingPlayerId);
             EffectSlot slot = watchesController
                     ? EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY

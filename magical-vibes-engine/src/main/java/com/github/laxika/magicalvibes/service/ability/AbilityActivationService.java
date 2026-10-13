@@ -3683,12 +3683,20 @@ public class AbilityActivationService {
         boolean promotedLandAbilityOnlyMana = pool != null
                 && isLandAbilitySource(gameData, player.getId(), permanentIndex, preResolvedSource)
                 && pool.promoteLandAbilityOnlyMana() > 0;
+        int pendingCostSacrificesBefore = gameData.pendingActivationCostSacrificeIds.size();
         try {
             activateAbilityInternalImpl(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone,
                     discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource,
                     exileXGraveyardCardIndices, exileAnyGraveyardCardIds,
                     exileInstantOrSorcerySpellCardId, opponentTargetAlreadyChosen, revealedHandCardIds,
                     putExiledCardIntoGraveyardCardId, putBottomLibraryCardIds);
+        } catch (RuntimeException e) {
+            // A failed activation sacrifices nothing it had chosen.
+            List<UUID> pending = gameData.pendingActivationCostSacrificeIds;
+            while (pending.size() > pendingCostSacrificesBefore) {
+                pending.removeLast();
+            }
+            throw e;
         } finally {
             if (pool != null) {
                 pool.setBlueSpendableAsAnyColorForActivatedAbilities(previousBlueSpendPermission);
@@ -5342,7 +5350,7 @@ public class AbilityActivationService {
                 "a Food", false);
         return new MultiplePermanentSacrificeCostHandler(foodCost, predicateEvaluationService,
                 gameQueryService, (data, player, food) -> {
-                    sacrificePermanentAsCost(data, player, food);
+                    chooseSacrificeAsCost(data, player, food);
                     triggerCollectionService.checkForageTriggers(data, player.getId());
                 }, sourcePermanentId) {
             @Override public CardEffect costEffect() { return ForageOrPayManaCost.forageOnly(); }
@@ -5363,7 +5371,10 @@ public class AbilityActivationService {
         if (effect instanceof ForageOrPayManaCost) {
             return forageFoodCostHandler(gameData, sourcePermanentId);
         }
-        PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
+        // A permanent's activation removes all of its cost sacrifices together once costs are paid.
+        PermanentSacrificeAction sacAction = sourcePermanentId != null
+                ? this::chooseSacrificeAsCost
+                : this::sacrificePermanentAsCost;
         PermanentExileAction exileAction = this::exilePermanentAsCost;
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof UnattachEquipmentFromSourceCost cost) {
@@ -5376,7 +5387,8 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction);
         if (effect instanceof SacrificeDistinctNamePermanentsCost c) return new DistinctNamePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, chosenSoFar);
         if (effect instanceof SacrificeAllMatchingPermanentsCost c) return new AllMatchingPermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction);
-        if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, chosenSoFar, sourcePermanentId, permanentRemovalService);
+        if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, gameQueryService, sacAction, chosenSoFar, sourcePermanentId,
+                sourcePermanentId != null ? null : permanentRemovalService);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
@@ -6000,7 +6012,7 @@ public class AbilityActivationService {
                 source.getCard(), costDerivedXValue);
         for (UUID permanentId : permanentIds) {
             Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
-            sacrificePermanentAsCost(gameData, player, chosen);
+            chooseSacrificeAsCost(gameData, player, chosen);
         }
         boolean nonTargeting = !ability.isNeedsSpellTarget()
                 && !EffectResolution.needsTarget(abilityEffects, List.of(), false, false);
@@ -7704,6 +7716,22 @@ public class AbilityActivationService {
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, sacTarget);
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, playerId, sacrificedSnapshot);
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " sacrifices " , sacTarget.getCard(), "."));
+    }
+
+    /**
+     * Chooses a permanent to sacrifice for a permanent's activated ability. It stays on the battlefield
+     * until all costs are chosen; {@link ActivatedAbilityExecutionService} then sacrifices every chosen
+     * permanent and the source together, so their dies triggers look back across the whole batch.
+     */
+    private void chooseSacrificeAsCost(GameData gameData, Player player, Permanent sacTarget) {
+        List<Permanent> playerBf = gameData.playerBattlefields.get(player.getId());
+        if (playerBf == null || !playerBf.contains(sacTarget)) {
+            throw new IllegalStateException("Must sacrifice a permanent you control");
+        }
+        if (gameData.pendingActivationCostSacrificeIds.contains(sacTarget.getId())) {
+            throw new IllegalStateException("That permanent is already being sacrificed");
+        }
+        gameData.pendingActivationCostSacrificeIds.add(sacTarget.getId());
     }
 
     private void exilePermanentAsCost(GameData gameData, Player player, Permanent exileTarget) {
