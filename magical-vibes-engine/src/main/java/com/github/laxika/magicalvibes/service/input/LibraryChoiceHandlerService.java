@@ -3219,7 +3219,7 @@ public class LibraryChoiceHandlerService {
 
         if (libraryRevealChoice.selectedCardMayGoToHandIfBattlefieldDeclined()) {
             resolveMayPutSelectedCardOntoBattlefieldElseToHand(
-                    gameData, controllerId, selectedCards, remainingCards);
+                    gameData, libraryRevealChoice, controllerId, selectedCards, remainingCards);
             return;
         }
 
@@ -3340,14 +3340,20 @@ public class LibraryChoiceHandlerService {
     }
 
     /**
-     * Handles the unchosen cards of a reveal choice whose chosen cards' copy choices were answered,
-     * once {@link PendingLibraryRevealRemainder} is the next thing to do. Returns {@code false} when
-     * none is parked.
+     * Handles the unchosen cards of a reveal choice once its chosen cards have finished entering
+     * (their copy choices, or Whiskervale Forerunner's battlefield-or-hand choice, are answered).
+     * Returns {@code false} when none is parked.
      */
     public boolean resumeLibraryRevealRemainder(GameData gameData) {
         PendingLibraryRevealRemainder remainder = gameData.pollPendingInteraction(PendingLibraryRevealRemainder.class);
         if (remainder == null) {
             return false;
+        }
+        if (remainder.choice().selectedCardMayGoToHandIfBattlefieldDeclined()) {
+            putUnchosenOnBottomInRandomOrder(gameData, remainder.choice().playerId(),
+                    new ArrayList<>(remainder.remainingCards()));
+            finishSearchAndResume(gameData);
+            return true;
         }
         finishRevealedCards(gameData, remainder.choice(), new ArrayList<>(remainder.selectedCards()),
                 new ArrayList<>(remainder.remainingCards()));
@@ -3468,6 +3474,10 @@ public class LibraryChoiceHandlerService {
                 .filter(card -> !card.hasType(battlefieldType))
                 .toList();
 
+        // The rest go to the bottom before the revealed lands enter, so a land's "enter as a copy"
+        // choice (CR 614.1c) is the last thing left when it opens.
+        putUnchosenOnBottomInRandomOrder(gameData, controllerId, remainingCards);
+
         if (!battlefieldCards.isEmpty()) {
             placeCardsOnBattlefieldSimultaneously(gameData, battlefieldCards, controllerId,
                     battlefieldTapped, false, false, false, null, null, null);
@@ -3481,14 +3491,17 @@ public class LibraryChoiceHandlerService {
                             .text(" and puts them into their hand.").build());
         }
 
-        if (!remainingCards.isEmpty()) {
-            Collections.shuffle(remainingCards);
-            gameData.playerDecks.get(controllerId).addAll(remainingCards);
-            gameLogService.append(gameData, GameLog.text(playerName
-                    + " puts the unchosen cards on the bottom of their library in a random order."));
-        }
-
         finishSearchAndResume(gameData);
+    }
+
+    private void putUnchosenOnBottomInRandomOrder(GameData gameData, UUID controllerId, List<Card> remainingCards) {
+        if (remainingCards.isEmpty()) {
+            return;
+        }
+        Collections.shuffle(remainingCards);
+        gameData.playerDecks.get(controllerId).addAll(remainingCards);
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
+                + " puts the unchosen cards on the bottom of their library in a random order."));
     }
 
     private void insertSelectedCardFollowUpIfApplicable(GameData gameData, List<Card> selectedCards,
@@ -3514,21 +3527,26 @@ public class LibraryChoiceHandlerService {
     }
 
     private void resolveMayPutSelectedCardOntoBattlefieldElseToHand(
-            GameData gameData, UUID controllerId, List<Card> selectedCards, List<Card> remainingCards) {
-        Collections.shuffle(remainingCards);
-        gameData.playerDecks.get(controllerId).addAll(remainingCards);
-        if (selectedCards.isEmpty()) {
+            GameData gameData, PendingInteraction.LibraryRevealChoice choice, UUID controllerId,
+            List<Card> selectedCards, List<Card> remainingCards) {
+        if (!selectedCards.isEmpty()) {
+            gameLogService.append(gameData, appendCards(GameLog.builder()
+                    .text(gameData.playerIdToName.get(controllerId) + " reveals "), selectedCards).text(".").build());
+        }
+        // "If you don't put it onto the battlefield, put it into your hand": a card that can't enter
+        // (Grafdigger's Cage) goes to hand the same way as on another player's turn.
+        if (selectedCards.isEmpty() || !controllerId.equals(gameData.activePlayerId)
+                || gameQueryService.isCardBlockedFromEnteringFromZone(gameData, selectedCards.getFirst(), Zone.LIBRARY)) {
+            selectedCards.forEach(card -> gameData.addCardToHand(controllerId, card));
+            putUnchosenOnBottomInRandomOrder(gameData, controllerId, remainingCards);
             finishSearchAndResume(gameData);
             return;
         }
 
+        // The rest go to the bottom only after the revealed card has been put onto the battlefield,
+        // including its "enter as a copy" choice (CR 614.1c), or into its owner's hand.
+        gameData.queueInteraction(new PendingLibraryRevealRemainder(choice, selectedCards, remainingCards));
         Card selectedCard = selectedCards.getFirst();
-        if (!controllerId.equals(gameData.activePlayerId)) {
-            gameData.addCardToHand(controllerId, selectedCard);
-            finishSearchAndResume(gameData);
-            return;
-        }
-
         gameData.playerDecks.get(controllerId).addFirst(selectedCard);
         StackEntry pending = gameData.pendingEffectResolutionEntry;
         Card sourceCard = pending != null ? pending.getCard() : selectedCard;

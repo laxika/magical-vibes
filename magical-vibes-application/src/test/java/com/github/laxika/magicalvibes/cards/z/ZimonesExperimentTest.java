@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.e.EchoingDeeps;
 import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ZimonesExperiment.class, Forest.class, GrizzlyBears.class, LlanowarElves.class,
-        Shock.class, DryadArbor.class, GrafdiggersCage.class})
+        Shock.class, DryadArbor.class, GrafdiggersCage.class, EchoingDeeps.class})
 class ZimonesExperimentTest extends BaseCardTest {
 
     @Test
@@ -215,6 +218,45 @@ class ZimonesExperimentTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).subList(0, 2)).containsExactly(sixth, seventh);
         assertThat(gd.playerDecks.get(player1.getId()).subList(2, 6))
                 .containsExactlyInAnyOrder(first, second, third, fourth);
+    }
+
+    @Test
+    @DisplayName("The rest are on the bottom before a revealed Echoing Deeps chooses what to copy")
+    void restGoToBottomBeforeEchoingDeepsCopyChoice() {
+        Card graveyardForest = new Forest();
+        harness.setGraveyard(player2, List.of(graveyardForest));
+        Card deeps = new EchoingDeeps();
+        Card shock = new Shock();
+        Card bears = new GrizzlyBears();
+        setLibrary(deeps, shock, bears);
+
+        resolveExperiment();
+        harness.handleMultipleCardsChosen(player1, List.of(deeps.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(shock, bears);
+        List<String> log = gd.gameLog.stream().map(entry -> entry.plainText()).toList();
+        assertThat(log.indexOf("Alice puts the unchosen cards on the bottom of their library in a random order."))
+                .isNotNegative()
+                .isLessThan(indexOfFirst(log, "Echoing Deeps enters"));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardForest.getId()));
+
+        Permanent entered = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(entered.getOriginalCard()).isSameAs(deeps);
+        assertThat(entered.isTapped()).isTrue();
+        assertThat(gqs.effectiveLandTypes(gd, entered)).contains(CardSubtype.FOREST, CardSubtype.CAVE);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Zimone's Experiment");
+    }
+
+    private static int indexOfFirst(List<String> log, String prefix) {
+        for (int i = 0; i < log.size(); i++) {
+            if (log.get(i).contains(prefix)) {
+                return i;
+            }
+        }
+        return Integer.MAX_VALUE;
     }
 
     private void resolveExperiment() {

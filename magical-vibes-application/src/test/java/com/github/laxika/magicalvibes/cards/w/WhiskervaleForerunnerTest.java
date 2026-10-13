@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.p.PhantasmalImage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WhiskervaleForerunner.class, GiantGrowth.class, GrizzlyBears.class, Forest.class, BarkformHarvester.class, BrambleguardCaptain.class, GrafdiggersCage.class})
+@CardUsed({WhiskervaleForerunner.class, GiantGrowth.class, GrizzlyBears.class, Forest.class, BarkformHarvester.class, BrambleguardCaptain.class, GrafdiggersCage.class,
+        HillGiant.class, PhantasmalImage.class})
 class WhiskervaleForerunnerTest extends BaseCardTest {
 
     @Test
@@ -235,6 +238,31 @@ class WhiskervaleForerunnerTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Barkform Harvester")).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).contains(harvester);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1).doesNotContain(harvester);
+    }
+
+    @Test
+    @DisplayName("Phantasmal Image chooses what to copy before the rest go to the bottom")
+    void phantasmalImageCopiesBeforeRestGoToBottom() {
+        Permanent forerunner = addForerunner();
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        PhantasmalImage image = new PhantasmalImage();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), image));
+        castGrowth(player1, forerunner);
+
+        harness.handleMultipleCardsChosen(player1, List.of(image.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getOriginalCard() == image
+                        && permanent.getCard().getName().equals("Hill Giant"));
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4).allMatch(card -> card instanceof Forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent addForerunner() {
