@@ -50,7 +50,8 @@ class IncarnationTechniqueTest extends BaseCardTest {
         harness.setLibrary(player2, fiveShocks());
         giveIncarnationTechnique();
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         resolveGraveyardChoices();
@@ -75,7 +76,8 @@ class IncarnationTechniqueTest extends BaseCardTest {
         harness.setLibrary(player1, fiveShocks());
         giveIncarnationTechnique();
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -95,7 +97,8 @@ class IncarnationTechniqueTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(noncreature, creature));
         giveIncarnationTechnique();
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -118,7 +121,8 @@ class IncarnationTechniqueTest extends BaseCardTest {
         harness.setLibrary(player1, fiveShocks());
         giveIncarnationTechnique();
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -143,7 +147,8 @@ class IncarnationTechniqueTest extends BaseCardTest {
         harness.setLibrary(player2, fiveShocks());
         giveIncarnationTechnique();
 
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

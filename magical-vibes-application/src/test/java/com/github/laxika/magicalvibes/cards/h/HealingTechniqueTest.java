@@ -27,6 +27,7 @@ class HealingTechniqueTest extends BaseCardTest {
         harness.setLife(player1, 10);
 
         harness.castSorcery(player1, 0, returnedCard.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -45,6 +46,7 @@ class HealingTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, returnedCard.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).hasSize(1);
@@ -59,8 +61,10 @@ class HealingTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, returnedCard.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2)
@@ -89,6 +93,7 @@ class HealingTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, returnedCard.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -108,6 +113,7 @@ class HealingTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, returnedCard.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
@@ -128,8 +134,8 @@ class HealingTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, originalTarget.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())

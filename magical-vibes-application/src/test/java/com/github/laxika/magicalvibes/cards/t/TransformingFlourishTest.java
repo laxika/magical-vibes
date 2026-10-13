@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ class TransformingFlourishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -85,8 +87,8 @@ class TransformingFlourishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castInstant(player1, 0, target.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.isAwaitingInput())
                 .as("The caster may choose a different target before the opponent creates their copy")
@@ -104,16 +106,18 @@ class TransformingFlourishTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.castInstant(player1, 0, target.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, spell.getId());
         harness.assertInGraveyard(player1, "Transforming Flourish");
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.stack.stream().anyMatch(entry -> entry.isCopy())
-                || gd.interaction.isAwaitingInput())
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy)
                 .as("The independent demonstrate trigger must still copy the countered spell")
-                .isTrue();
+                .extracting(StackEntry::getControllerId)
+                .containsExactly(player1.getId(), player2.getId());
     }
 
     @Test
@@ -126,6 +130,7 @@ class TransformingFlourishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
@@ -146,6 +151,7 @@ class TransformingFlourishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -165,6 +171,7 @@ class TransformingFlourishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 

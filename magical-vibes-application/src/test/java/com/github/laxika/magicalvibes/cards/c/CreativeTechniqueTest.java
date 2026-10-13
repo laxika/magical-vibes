@@ -22,6 +22,7 @@ class CreativeTechniqueTest extends BaseCardTest {
     void revealsUntilNonlandAndCastsTheCardForFree() {
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
         harness.castFromHand(player1, new CreativeTechnique(), "{4}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -37,8 +38,8 @@ class CreativeTechniqueTest extends BaseCardTest {
     @Test
     void demonstrateCreatesCopiesForControllerAndChosenOpponent() {
         harness.castFromHand(player1, new CreativeTechnique(), "{4}{R}");
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2)
@@ -51,6 +52,7 @@ class CreativeTechniqueTest extends BaseCardTest {
         CreativeTechnique revealed = new CreativeTechnique();
         harness.setLibrary(player1, List.of(revealed));
         harness.castFromHand(player1, new CreativeTechnique(), "{4}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -66,6 +68,7 @@ class CreativeTechniqueTest extends BaseCardTest {
         CreativeTechnique revealed = new CreativeTechnique();
         harness.setLibrary(player1, List.of(revealed));
         harness.castFromHand(player1, new CreativeTechnique(), "{4}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -77,6 +80,7 @@ class CreativeTechniqueTest extends BaseCardTest {
     void emptyLibraryResolvesWithoutACastingChoice() {
         harness.setLibrary(player1, List.of());
         harness.castFromHand(player1, new CreativeTechnique(), "{4}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -91,6 +95,7 @@ class CreativeTechniqueTest extends BaseCardTest {
         Forest second = new Forest();
         harness.setLibrary(player1, List.of(first, second));
         harness.castFromHand(player1, new CreativeTechnique(), "{4}{R}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -103,7 +108,6 @@ class CreativeTechniqueTest extends BaseCardTest {
     void demonstrateStillCopiesTheSpellAfterItIsCountered() {
         CreativeTechnique original = new CreativeTechnique();
         harness.castFromHand(player1, original, "{4}{R}");
-        harness.handleMayAbilityChosen(player1, true);
         harness.setHand(player2, List.of(new ArcaneDenial()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -112,6 +116,7 @@ class CreativeTechniqueTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Creative Technique");
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).hasSize(2).allMatch(StackEntry::isCopy)
                 .extracting(StackEntry::getControllerId)

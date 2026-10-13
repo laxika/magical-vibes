@@ -26,6 +26,7 @@ class ReplicationTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).hasSize(1);
@@ -39,8 +40,10 @@ class ReplicationTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, bears.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2)
@@ -55,6 +58,7 @@ class ReplicationTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -72,8 +76,8 @@ class ReplicationTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, ring.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(choice).isNotNull();
@@ -90,6 +94,7 @@ class ReplicationTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, ring.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -120,6 +125,7 @@ class ReplicationTechniqueTest extends BaseCardTest {
         addMana();
 
         harness.castSorcery(player1, 0, jace.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 

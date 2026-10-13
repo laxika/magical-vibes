@@ -46,8 +46,8 @@ class StrixhavenTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         harness.castInstant(player2, 0);
-        harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.stack).filteredOn(entry -> entry.isCopy())
                 .extracting(entry -> entry.getControllerId())
@@ -83,8 +83,8 @@ class StrixhavenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castSorcery(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).filteredOn(entry -> entry.isCopy())
                 .extracting(entry -> entry.getControllerId())
@@ -99,6 +99,7 @@ class StrixhavenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).noneMatch(entry -> entry.isCopy());
@@ -127,8 +128,8 @@ class StrixhavenTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
@@ -165,13 +166,14 @@ class StrixhavenTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
         harness.castInstant(player2, 0, original.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(original);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).filteredOn(entry -> entry.isCopy())
                 .extracting(entry -> entry.getControllerId())

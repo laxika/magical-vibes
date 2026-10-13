@@ -1760,18 +1760,12 @@ public class TriggerCollectionService {
                         gameData.id, pendingSpellOrAbilityCopies, spellCard.getName());
             }
         }
-        if (gameQueryService.hasSpellCastingAbilityGrant(
-                gameData, castingPlayerId, spellCard, Keyword.DEMONSTRATE, castZone)) {
-            selfCastEffects.add(new MayEffect(
-                    new DemonstrateEffect(), "Copy " + spellCard.getName() + "?"));
-        }
+        // Each granted instance of demonstrate triggers separately (e.g. two Silverquill Lecturers).
+        gameQueryService.getSpellCastingAbilityGrantValues(
+                        gameData, castingPlayerId, spellCard, Keyword.DEMONSTRATE, castZone)
+                .forEach(grant -> selfCastEffects.add(new MayEffect(
+                        new DemonstrateEffect(), "Copy " + spellCard.getName() + "?")));
         selfCastEffects.addAll(spellCard.getEffects(EffectSlot.ON_SELF_CAST));
-        if (selfCastEffects.stream().noneMatch(DemonstrateEffect::isWrappedBy)
-                && gameQueryService.hasSpellCastingAbilityGrant(
-                gameData, castingPlayerId, spellCard, Keyword.DEMONSTRATE, castZone)) {
-            selfCastEffects.add(new MayEffect(
-                    new DemonstrateEffect(), "Copy " + spellCard.getName() + "?"));
-        }
         Map<EffectSlot, List<CardEffect>> perpetualGrants =
                 gameData.perpetualTriggeredAbilityGrants.get(spellCard.getId());
         if (perpetualGrants != null) {
@@ -1973,6 +1967,17 @@ public class TriggerCollectionService {
                 cascadeTrigger.setKicked(selfCastSpellEntry != null && selfCastSpellEntry.wasKicked());
                 cascadeTrigger.setSourceZone(castZone);
                 gameData.stack.add(cascadeTrigger);
+            } else if (DemonstrateEffect.isWrappedBy(effect)) {
+                // CR 702.144a / CR 603.5 — demonstrate goes on the stack when the spell is cast;
+                // whether to copy is decided when the trigger resolves.
+                StackEntry demonstrateTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        spellCard, castingPlayerId, spellCard.getName() + "'s demonstrate ability",
+                        new ArrayList<>(List.of(effect)));
+                demonstrateTrigger.setSourceZone(castZone);
+                demonstrateTrigger.setTriggeringCardId(spellCard.getId());
+                demonstrateTrigger.setNonTargeting(true);
+                gameData.stack.add(demonstrateTrigger);
+                gameLogService.append(gameData, GameLog.abilityTriggers(spellCard));
             } else {
                 selfCastTriggeredEffects.add(effect);
             }

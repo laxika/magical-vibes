@@ -2,28 +2,27 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Handles the resolution-time opponent choice made by demonstrate. */
-@Slf4j
+/**
+ * Resolves an accepted demonstrate trigger (CR 702.144a): copies the spell for its controller and
+ * for a chosen opponent, each of whom may choose new targets for their copy.
+ */
 @Component
 @RequiredArgsConstructor
 public class DemonstrateEffectHandler implements NormalEffectHandlerBean {
 
-    private final CopySupport copySupport;
-    private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -55,41 +54,42 @@ public class DemonstrateEffectHandler implements NormalEffectHandlerBean {
         }
 
         StackEntry spellSnapshot = new StackEntry(spell);
-        createCopy(gameData, spellSnapshot, spellSnapshot.getControllerId());
-
+        UUID controllerId = entry.getControllerId();
         List<UUID> opponents = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(entry.getControllerId()))
+                .filter(playerId -> !playerId.equals(controllerId))
                 .toList();
-        if (opponents.isEmpty()) {
+        if (opponents.size() > 1) {
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.DemonstrateOpponentChoice(
+                    spellSnapshot, controllerId));
+            playerInputService.beginPlayerChoice(gameData, controllerId, opponents,
+                    spellCard.getName() + " — choose an opponent to copy it.");
             return;
         }
-        if (opponents.size() == 1) {
-            createCopy(gameData, spellSnapshot, opponents.getFirst());
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.DemonstrateOpponentChoice(
-                spellSnapshot, entry.getControllerId()));
-        playerInputService.beginPlayerChoice(gameData, entry.getControllerId(), opponents,
-                spellCard.getName() + " — choose an opponent to copy it.");
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                copySteps(spellSnapshot, controllerId, opponents.isEmpty() ? null : opponents.getFirst()));
     }
 
     public void completeOpponentChoice(GameData gameData, UUID chosenOpponentId,
                                        PermanentChoiceContext.DemonstrateOpponentChoice context) {
         if (!gameData.playerIds.contains(chosenOpponentId)
-                || chosenOpponentId.equals(context.controllerId())) {
+                || chosenOpponentId.equals(context.controllerId())
+                || gameData.pendingEffectResolutionEntry == null) {
             return;
         }
-        createCopy(gameData, context.spellSnapshot(), chosenOpponentId);
+        gameData.pendingEffectResolutionEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                copySteps(context.spellSnapshot(), context.controllerId(), chosenOpponentId));
     }
 
-    private void createCopy(GameData gameData, StackEntry spellSnapshot, UUID controllerId) {
-        Card copyCard = copySupport.createCopyCard(spellSnapshot.getCard());
-        StackEntry copyEntry = copySupport.createCopyStackEntry(
-                spellSnapshot, copyCard, controllerId, spellSnapshot.getTargetId());
-        copySupport.addCopyToStack(gameData, copyEntry);
-        gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellSnapshot.getCard(), " is created."));
-        log.info("Game {} - demonstrate creates a copy of {} for {}",
-                gameData.id, spellSnapshot.getCard().getName(), controllerId);
+    /**
+     * The controller's copy, then the opponent's. Each runs as its own resolution step so the
+     * controller settles their copy's targets (CR 707.10c) before the opponent's copy exists.
+     */
+    private List<CardEffect> copySteps(StackEntry spellSnapshot, UUID controllerId, UUID opponentId) {
+        List<CardEffect> steps = new ArrayList<>();
+        steps.add(new CopyControllerCastSpellEffect(spellSnapshot, controllerId));
+        if (opponentId != null) {
+            steps.add(new CopyControllerCastSpellEffect(spellSnapshot, opponentId));
+        }
+        return steps;
     }
 }

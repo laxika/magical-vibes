@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LingeringSouls;
 import com.github.laxika.magicalvibes.cards.s.SavingGrasp;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheTwelfthDoctor.class, LingeringSouls.class, SavingGrasp.class})
+@CardUsed({TheTwelfthDoctor.class, LingeringSouls.class, SavingGrasp.class, GrizzlyBears.class})
 class TheTwelfthDoctorTest extends BaseCardTest {
 
     @Test
@@ -129,8 +130,10 @@ class TheTwelfthDoctorTest extends BaseCardTest {
     }
 
     @Test
-    void demonstrateOffersNewTargetsForTargetedSpellCopy() {
+    void demonstrateOffersEachPlayerNewTargetsForTheirCopy() {
         Permanent doctor = addDoctor();
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
         harness.setGraveyard(player1, List.of(new SavingGrasp()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -138,9 +141,19 @@ class TheTwelfthDoctorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.isAwaitingInput())
-                .as("Demonstrate must let the copying player choose new targets before making the opponent's copy")
-                .isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, ownBears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, opponentBears.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(doctor);
     }
 
     private Permanent addDoctor() {

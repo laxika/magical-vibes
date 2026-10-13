@@ -20,10 +20,12 @@ class SilverquillLecturerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SilverquillLecturer());
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2)
                 .extracting(StackEntry::getControllerId)
@@ -47,6 +49,7 @@ class SilverquillLecturerTest extends BaseCardTest {
     void decliningDemonstrateCreatesNoCopies() {
         harness.addToBattlefield(player1, new SilverquillLecturer());
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
@@ -60,6 +63,7 @@ class SilverquillLecturerTest extends BaseCardTest {
     void demonstratedCreatureCopiesResolveAsTokensWithoutBeingCast() {
         harness.addToBattlefield(player1, new SilverquillLecturer());
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -101,6 +105,7 @@ class SilverquillLecturerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SilverquillLecturer());
         harness.addToBattlefield(player1, new SilverquillLecturer());
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
