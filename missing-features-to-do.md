@@ -10,37 +10,6 @@ Remove an entry once the feature has landed and its tests pass.
 ---
 
 
-## 2. Demonstrate is a triggered ability whose choice is made on resolution
-
-**Status:** open · **Found:** 2026-10-12, while fixing E-card tests
-
-**Failing tests:**
-- `ExcavationTechniqueTest` ("Demonstrate offers the caster a chance to choose a new copy target",
-  "The decision to demonstrate is made when the trigger resolves")
-
-**What the rules require.** CR 702.144a: demonstrate is a triggered ability ("When you cast this spell, you may copy it and you
-may choose new targets for the copy..."), and CR 603.5 says an optional trigger goes on the stack and
-"the choice is made when the ability resolves". `TriggerCollectionService` turns a lone no-target
-`MayEffect` in `ON_SELF_CAST` into a `PendingMayAbility` right at cast time, so the player decides
-before the trigger is on the stack. The new-target choice for the caster's and the opponent's copies
-is also missing.
-
-**Why it's large.** The tests for Healing Technique, Incarnation Technique, Replication Technique, Creative Technique,
-Transforming Flourish and The Twelfth Doctor all answer the may prompt right after casting, so they
-need to change too, and the copy new-target prompts are new interactions.
-
-**Prompt to start it:**
-
-```
-Make demonstrate (CR 702.144a — verify with the rules MCP) a trigger that goes on the stack when the
-spell is cast, with the "may copy" decided on resolution (CR 603.5) and new targets offered for both
-copies. Today TriggerCollectionService asks the may at cast time. Start with ExcavationTechniqueTest,
-update the other demonstrate cards' tests, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 3. "Enter as a copy" for lands put onto the battlefield by effects
 
 **Status:** open · **Found:** 2026-10-12, while fixing E-card tests
