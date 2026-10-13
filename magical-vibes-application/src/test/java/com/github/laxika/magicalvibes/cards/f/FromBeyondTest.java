@@ -84,6 +84,7 @@ class FromBeyondTest extends BaseCardTest {
     @DisplayName("May fail to find even when an Eldrazi is in the library")
     void mayFailToFindEldrazi() {
         harness.addToBattlefield(player1, new FromBeyond());
+        harness.setHand(player1, List.of());
         DrownerOfHope eldrazi = new DrownerOfHope();
         harness.setLibrary(player1, List.of(eldrazi));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -103,6 +104,7 @@ class FromBeyondTest extends BaseCardTest {
     @DisplayName("Searching an empty library still sacrifices From Beyond")
     void searchesEmptyLibrary() {
         harness.addToBattlefield(player1, new FromBeyond());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -136,6 +138,7 @@ class FromBeyondTest extends BaseCardTest {
     @DisplayName("Pays mana and sacrifices From Beyond before the search resolves")
     void paysCostsBeforeSearchResolves() {
         harness.addToBattlefield(player1, new FromBeyond());
+        harness.setHand(player1, List.of());
         DrownerOfHope eldrazi = new DrownerOfHope();
         harness.setLibrary(player1, List.of(eldrazi));
         harness.addMana(player1, ManaColor.GREEN, 1);

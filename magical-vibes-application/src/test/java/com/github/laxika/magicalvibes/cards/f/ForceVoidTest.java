@@ -133,7 +133,7 @@ class ForceVoidTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player2.getId()).size();
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
 
         harness.passUntil(player1, TurnStep.UPKEEP);

@@ -22,6 +22,6 @@ public class FruitOfTizerus extends Card {
                 "Target must be a player"
         )).addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
         addCastingOption(new GraveyardCast(null, "{3}{B}", List.of(
-                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)), null, false, true));
+                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)), null, false, false, true));
     }
 }

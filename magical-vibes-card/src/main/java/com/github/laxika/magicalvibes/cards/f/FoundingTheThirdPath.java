@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -21,6 +23,7 @@ import java.util.List;
 public class FoundingTheThirdPath extends Card {
 
     public FoundingTheThirdPath() {
+        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
         CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
@@ -28,7 +31,7 @@ public class FoundingTheThirdPath extends Card {
         // Chapter I: You may cast an instant or sorcery spell with mana value 1 or 2
         // from your hand without paying its mana cost.
         CardPredicate lowManaInstantOrSorcery = new CardAllOfPredicate(List.of(
-                instantOrSorcery, new CardMaxManaValuePredicate(2)));
+                instantOrSorcery, new CardMinManaValuePredicate(1), new CardMaxManaValuePredicate(2)));
         addEffect(EffectSlot.SAGA_CHAPTER_I,
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(lowManaInstantOrSorcery));
 

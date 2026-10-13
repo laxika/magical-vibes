@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.p.Persuasion;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -89,6 +90,7 @@ class FealtyToTheRealmTest extends BaseCardTest {
     void canAttackAuraControllersPlaneswalker() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         castFealtyToTheRealm(player1, creature);
         gd.monarchPlayerId = player2.getId();
         harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()

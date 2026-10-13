@@ -1271,7 +1271,8 @@ public class CastingPermissionService {
                 .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
                 .filter(Objects::nonNull)
                 .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, permanent, predicate));
+                        permanent, predicate, new FilterContext(gameData, card.getId(), playerId,
+                                null, null, null, false, null, null, null, null)));
     }
 
     /**
@@ -1617,10 +1618,11 @@ public class CastingPermissionService {
      * nonland card on top of their library.
      */
     public boolean canPlotNonlandCardsFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
-        if (card.hasType(CardType.LAND)) return false;
+        if (card.hasType(CardType.LAND) || card.getManaCost() == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
+            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PlotNonlandCardsFromTopOfLibraryEffect) {
                     return true;

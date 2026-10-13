@@ -59,7 +59,7 @@ public class FishersTalent extends Card {
                 CardSubtype.FISH,
                 new CreateTokenEffect(
                         "Shark", 3, 3, CardColor.BLUE, List.of(CardSubtype.SHARK), Set.of(), Set.of()),
-                1));
+                2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -77,6 +77,6 @@ public class FishersTalent extends Card {
                 CardSubtype.SHARK,
                 new CreateTokenEffect(
                         "Octopus", 8, 8, CardColor.BLUE, List.of(CardSubtype.OCTOPUS), Set.of(), Set.of()),
-                2));
+                3));
     }
 }

@@ -20,10 +20,10 @@ public class FolkHero extends Card {
     public FolkHero() {
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                new OncePerTurnTriggerEffect(new SpellCastTriggerEffect(
+                OncePerTurnTriggerEffect.perGrant(new SpellCastTriggerEffect(
                         new CardSharesCreatureTypeWithSourcePredicate(),
                         List.of(new DrawCardEffect(1)))),
-                GrantScope.ALL_OWN_CREATURES,
-                new PermanentIsCommanderPredicate()));
+                GrantScope.ALL_CREATURES,
+                new PermanentIsCommanderPredicate(true)));
     }
 }

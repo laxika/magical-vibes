@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -125,6 +130,10 @@ class FickleEfreetTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(efreet);
         gd.playerBattlefields.get(player2.getId()).add(efreet);
         gd.stolenCreatures.put(efreet.getId(), player1.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), "Test control change", null, player2.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), efreet.getId(), null, null,
+                EffectDuration.PERMANENT, 0));
         efreet.setAttacking(false);
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);

@@ -20,10 +20,10 @@ public class FiligreeVector extends Card {
     public FiligreeVector() {
         setAllowSharedTargets(true);
 
-        target(TargetFilters.creature(), 0, 99)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        target(TargetFilters.artifact(), 0, 99)
+        target(TargetFilters.artifact(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnTargetPermanentEffect(CounterType.CHARGE));
 

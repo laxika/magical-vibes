@@ -93,10 +93,10 @@ class FurnaceScampTest extends BaseCardTest {
         Permanent scamp = addCreatureReady(player1, new FurnaceScamp());
         scamp.setAttacking(true);
         resolveCombat();
-        harness.handleMayAbilityChosen(player1, true);
 
         gd.playerBattlefields.get(player1.getId()).remove(scamp);
         gd.playerGraveyards.get(player1.getId()).add(scamp.getCard());
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Furnace Scamp");
@@ -110,11 +110,11 @@ class FurnaceScampTest extends BaseCardTest {
         Permanent scamp = addCreatureReady(player1, new FurnaceScamp());
         scamp.setAttacking(true);
         resolveCombat();
-        harness.handleMayAbilityChosen(player1, true);
 
         gd.playerBattlefields.get(player1.getId()).remove(scamp);
         gd.playerBattlefields.get(player2.getId()).add(scamp);
         scamp.setAttacking(false);
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Furnace Scamp");

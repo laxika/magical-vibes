@@ -33,8 +33,9 @@ public class ForebodingSteamboat extends Card {
                 new EachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesEffect(eligibleCreature, 2));
 
         // Whenever this Vehicle attacks, put a card exiled with it into its owner's graveyard. If you do, investigate.
+        // The card is chosen on resolution (not targeted).
         addEffect(EffectSlot.ON_ATTACK,
-                new PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffect());
+                new PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffect(null, true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

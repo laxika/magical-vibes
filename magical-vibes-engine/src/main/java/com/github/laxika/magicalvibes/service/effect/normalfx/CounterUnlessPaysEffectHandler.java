@@ -85,7 +85,8 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 }
             }
             // Not paid (couldn't afford): resolve any rider against the spell's controller (Power Sink).
-            counterSupport.resolveNotPaidRider(gameData, entry.getCard(), targetControllerId, e.onNotPaidEffects());
+            counterSupport.resolveNotPaidRider(gameData, entry.getCard(), entry.getControllerId(),
+                    targetControllerId, e.onNotPaidEffects());
         } else {
             String costText = manaCost.equals("{0}") && lifeCost > 0
                     ? lifeCost + " life"

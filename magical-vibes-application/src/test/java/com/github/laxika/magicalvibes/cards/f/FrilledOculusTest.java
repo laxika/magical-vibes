@@ -51,7 +51,7 @@ class FrilledOculusTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, oculus)).isEqualTo(3);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, oculus)).isEqualTo(1);
     }
@@ -98,7 +98,7 @@ class FrilledOculusTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, oculus)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, oculus)).isEqualTo(3);
         harness.addMana(player1, ManaColor.GREEN, 2);

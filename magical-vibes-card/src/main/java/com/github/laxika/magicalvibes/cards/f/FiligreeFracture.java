@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -25,9 +25,8 @@ import java.util.Set;
 public class FiligreeFracture extends Card {
 
     public FiligreeFracture() {
-        // The draw checks the target's colour, so it runs while the permanent is still on the
-        // battlefield — before the destroy. Colour doesn't change when it's destroyed, so this is
-        // equivalent to the printed "was blue or black" wording.
+        // The colour check uses the destroyed permanent's last-known colour, and the draw happens
+        // only after the destroy, so a Thought Reflection-style draw replacement no longer applies.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
@@ -35,10 +34,10 @@ public class FiligreeFracture extends Card {
                 )),
                 "Target must be an artifact or enchantment."
         ))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                        new TargetPermanentMatches(
-                                new PermanentColorInPredicate(Set.of(CardColor.BLUE, CardColor.BLACK))),
-                        new DrawCardEffect(1)))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                        EventStat.NONE,
+                        new DrawCardEffect(1),
+                        ThenEffectRecipient.CONTROLLER,
+                        new PermanentColorInPredicate(Set.of(CardColor.BLUE, CardColor.BLACK))));
     }
 }

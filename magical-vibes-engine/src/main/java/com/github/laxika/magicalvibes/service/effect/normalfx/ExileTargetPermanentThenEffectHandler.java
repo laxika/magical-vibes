@@ -63,7 +63,7 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
         UUID targetOwnerId = gameData.defaultControllerOf(target.getId());
         int statValue = switch (e.stat()) {
             case NONE, BASIC_LAND_SEARCH_COUNT -> 0;
-            case MANA_VALUE -> target.getCard().getManaValue();
+            case MANA_VALUE -> target.isFaceDown() ? 0 : target.getCard().getManaValue();
             case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
             case POWER -> gameQueryService.getPowerBasedDamage(gameData, target);
             case TOTAL_COUNTERS -> target.getTotalCounterCount();

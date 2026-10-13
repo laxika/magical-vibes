@@ -24,17 +24,20 @@ class FollowTheLumaretsTest extends BaseCardTest {
     @Test
     @DisplayName("Without gaining life, offers a single-pick of the creature/land cards among top four")
     void baseModeOffersSinglePick() {
-        harness.setLibrary(player1, List.of(new LlanowarElves(), new Shock(), new Forest(), new Shock()));
+        LlanowarElves elves = new LlanowarElves();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(elves, new Shock(), forest, new Shock()));
         harness.setHand(player1, List.of(new FollowTheLumarets()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .extracting(Card::getName)
-                .containsExactlyInAnyOrder("Llanowar Elves", "Forest");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(elves.getId(), forest.getId());
     }
 
     @Test
@@ -83,7 +86,7 @@ class FollowTheLumaretsTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(elves.getId()));
 
         harness.assertInHand(player1, "Llanowar Elves");
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -129,7 +132,7 @@ class FollowTheLumaretsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -168,13 +171,14 @@ class FollowTheLumaretsTest extends BaseCardTest {
 
     @Test
     void opponentsLifeGainDoesNotEnableInfusion() {
-        harness.setLibrary(player1, List.of(new Forest(), new LlanowarElves(), new GrizzlyBears(), new Shock()));
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest, new LlanowarElves(), new GrizzlyBears(), new Shock()));
         harness.setHand(player1, List.of(new FollowTheLumarets()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         gd.lifeGainedThisTurn.put(player2.getId(), 3);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();

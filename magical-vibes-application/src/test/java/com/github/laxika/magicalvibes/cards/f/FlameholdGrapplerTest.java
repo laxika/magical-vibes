@@ -129,6 +129,7 @@ class FlameholdGrapplerTest extends BaseCardTest {
         harness.castFromHand(player1, new FlameholdGrappler(), "{U}{R}{W}");
         resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new KrumarInitiate(), "{1}{B}");
         resolveAllTriggers();

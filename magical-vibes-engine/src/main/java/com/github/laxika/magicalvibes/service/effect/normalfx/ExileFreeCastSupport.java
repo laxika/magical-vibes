@@ -155,7 +155,8 @@ public class ExileFreeCastSupport {
         Card card = face == 1 ? physicalCard.createRuntimeCopyWithFace(physicalCard.getBackFaceCard()) : physicalCard;
         ChooseOneEffect splitModes = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
-                .filter(modal -> modal.options().stream().anyMatch(option -> option.manaCost() != null))
+                .filter(modal -> modal.options().stream().anyMatch(option -> option.manaCost() != null)
+                        || (modal.choicesRequired() == 1 && !modal.modesMayRepeat()))
                 .findFirst().orElse(null);
         List<CardEffect> chosenEffects = null;
         if (splitModes != null) {

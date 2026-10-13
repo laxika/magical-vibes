@@ -393,6 +393,11 @@ public class PlanechaseService {
             }
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controller,
                     card.getName() + "'s ability", List.of(effect));
+            // "Select target player at random" is a target chosen when the ability is put on the stack.
+            if (effect instanceof RandomPlayerDiscardsAndLosesLifeIfLandEffect && !game.playerIds.isEmpty()) {
+                List<UUID> players = new ArrayList<>(game.playerIds);
+                entry.setTargetId(players.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(players.size())));
+            }
             entry.setSourcePlanarObject(object.copy());
             game.enqueueTrigger(entry);
         }

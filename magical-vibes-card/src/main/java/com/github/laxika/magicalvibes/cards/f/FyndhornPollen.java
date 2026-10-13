@@ -20,7 +20,7 @@ public class FyndhornPollen extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"));
 
         // All creatures get -1/-0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF));
 
         // {1}{G}: All creatures get -1/-0 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{1}{G}",

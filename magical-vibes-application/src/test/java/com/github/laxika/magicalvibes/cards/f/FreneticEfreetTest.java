@@ -64,10 +64,13 @@ class FreneticEfreetTest extends BaseCardTest {
         assertThat(isPhasedOut(efreet)).isTrue();
 
         harness.setHand(player2, List.of());
-        harness.passUntil(player2, TurnStep.CLEANUP);
+        harness.setHand(player1, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.CLEANUP);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(efreet);
 
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
     }
 

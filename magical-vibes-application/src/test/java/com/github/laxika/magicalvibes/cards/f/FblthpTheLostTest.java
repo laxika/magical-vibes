@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KioraBehemothBeckoner;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.Wargate;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -86,6 +87,7 @@ class FblthpTheLostTest extends BaseCardTest {
         KioraBehemothBeckoner drawn2 = new KioraBehemothBeckoner();
         BolassCitadel remaining = new BolassCitadel();
         harness.setLibrary(player1, List.of(new FblthpTheLost(), drawn1, drawn2, remaining));
+        harness.setHand(player1, List.of());
 
         harness.castAndResolveFromLibraryTop(player1);
         harness.passBothPriorities();
@@ -103,6 +105,7 @@ class FblthpTheLostTest extends BaseCardTest {
         FblthpTheLost fblthp = new FblthpTheLost();
         harness.setLibrary(player1, List.of(fblthp, new KioraBehemothBeckoner(),
                 new KioraBehemothBeckoner(), new BolassCitadel()));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
@@ -125,7 +128,8 @@ class FblthpTheLostTest extends BaseCardTest {
     void activatedAbilityDoesNotTriggerShuffle() {
         Permanent fblthp = harness.addToBattlefieldAndReturn(player1, new FblthpTheLost());
         fblthp.tap();
-        harness.addToBattlefield(player1, new KioraBehemothBeckoner());
+        Permanent kiora = harness.addToBattlefieldAndReturn(player1, new KioraBehemothBeckoner());
+        kiora.setCounterCount(CounterType.LOYALTY, 7);
 
         harness.activateAbility(player1, 1, null, fblthp.getId());
         harness.passBothPriorities();
@@ -143,6 +147,7 @@ class FblthpTheLostTest extends BaseCardTest {
         KioraBehemothBeckoner drawn = new KioraBehemothBeckoner();
         BolassCitadel remaining = new BolassCitadel();
         harness.setLibrary(player2, List.of(fblthp));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(drawn, remaining));
         harness.setHand(player1, List.of(new Bribery()));
         harness.addMana(player1, ManaColor.BLUE, 5);

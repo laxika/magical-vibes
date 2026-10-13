@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DeferredSpellCopy;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -8,6 +9,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -87,6 +91,64 @@ public class CopySupport {
         }
     }
 
+    /**
+     * Copies a spell just cast from a graveyard. When the resolving spell still has other cards to
+     * cast with copies pending (Finale of Promise: "copy each of those spells"), the copies wait
+     * until the last of them has been cast or declined, so they end up above every original.
+     */
+    public void copyGraveyardCastSpell(GameData gameData, StackEntry original, Card cardToCast,
+                                       UUID controllerId, int requestedCopies) {
+        if (requestedCopies > 0) {
+            gameData.deferredGraveyardCastCopies.add(
+                    new DeferredSpellCopy(original, cardToCast, controllerId, requestedCopies));
+        }
+        flushDeferredGraveyardCastCopies(gameData);
+    }
+
+    private static boolean castsFromGraveyardWithCopies(CardEffect effect) {
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            return castsFromGraveyardWithCopies(replacement.upgradedEffect())
+                    || castsFromGraveyardWithCopies(replacement.baseEffect());
+        }
+        return effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect cast && cast.copyCount() > 0;
+    }
+
+    /** Creates the held-back copies once no further graveyard cast with copies is pending. */
+    public void flushDeferredGraveyardCastCopies(GameData gameData) {
+        if (gameData.deferredGraveyardCastCopies.isEmpty()) {
+            return;
+        }
+        boolean moreCastsPending = gameData.pendingMayAbilities.stream().anyMatch(pending ->
+                pending.effects().stream().anyMatch(CopySupport::castsFromGraveyardWithCopies));
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (!moreCastsPending && parked != null) {
+            List<CardEffect> parkedEffects = parked.getEffectsToResolve();
+            moreCastsPending = parkedEffects.subList(
+                    Math.min(gameData.pendingEffectResolutionIndex, parkedEffects.size()), parkedEffects.size())
+                    .stream().anyMatch(CopySupport::castsFromGraveyardWithCopies);
+        }
+        if (moreCastsPending) {
+            return;
+        }
+        List<DeferredSpellCopy> deferred = new ArrayList<>(gameData.deferredGraveyardCastCopies);
+        gameData.deferredGraveyardCastCopies.clear();
+        for (DeferredSpellCopy pending : deferred) {
+            int copyCount = adjustedSpellCopyCount(gameData, pending.requestedCopies());
+            for (int i = 0; i < copyCount; i++) {
+                Card copyCard = createCopyCard(pending.cardToCast());
+                StackEntry copyEntry = createCopyStackEntry(
+                        pending.original(), copyCard, pending.controllerId(), pending.original().getTargetId());
+                addCopyToStack(gameData, copyEntry, false);
+                if (copyEntry.getTargetId() != null) {
+                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                            pending.cardToCast(), pending.controllerId(), List.of(new CopySpellEffect()),
+                            "Choose new targets for the copy of " + pending.cardToCast().getName() + "?",
+                            copyCard.getId()));
+                }
+            }
+        }
+    }
+
     /** Adjusts a counted spell-copy event for active global spell-copy replacements. */
     public int adjustedSpellCopyCount(GameData gameData, int requestedCopies) {
         if (requestedCopies <= 0 || gameQueryService == null) {
@@ -160,8 +222,12 @@ public class CopySupport {
         copy.setSourcePermanentSnapshot(source.getSourcePermanentSnapshot() == null
                 ? null : new com.github.laxika.magicalvibes.model.Permanent(source.getSourcePermanentSnapshot()));
         copy.setSourcePlanarObject(source.getSourcePlanarObject() == null ? null : source.getSourcePlanarObject().copy());
+        // CR 707.10: a copy refers to the objects used to pay the original's costs (e.g. a sacrificed permanent).
+        copy.setSacrificedPermanentSnapshot(source.getSacrificedPermanentSnapshot() == null
+                ? null : new com.github.laxika.magicalvibes.model.Permanent(source.getSacrificedPermanentSnapshot()));
         copy.setKicked(source.isKicked());
         copy.setAlternateCost(source.isAlternateCost());
+        copy.setWaterbendCostPaid(source.isWaterbendCostPaid());
         copy.setCastForForetell(source.isCastForForetell());
         copy.setRepeatedAdditionalCosts(source.getRepeatedAdditionalCosts());
         copy.setRevealCardFromHandCostPaid(source.isRevealCardFromHandCostPaid());

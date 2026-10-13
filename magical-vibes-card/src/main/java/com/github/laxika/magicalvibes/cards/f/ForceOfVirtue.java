@@ -20,6 +20,6 @@ public class ForceOfVirtue extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.WHITE), "white")),
                 new NotControllerTurn(), false));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
     }
 }

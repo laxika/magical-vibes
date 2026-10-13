@@ -18,7 +18,7 @@ public class FirjaJudgeOfValor extends Card {
     public FirjaJudgeOfValor() {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new NthSpellCastTriggerEffect(
                 2,
-                List.of(LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1))
+                List.of(LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1))
         ));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceAndTopCardChooseOneMayPlayUntilNextTurnEffect;
@@ -11,7 +10,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,7 +28,7 @@ public class ExileSourceAndTopCardChooseOneMayPlayUntilNextTurnEffectHandler
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final ExileService exileService;
-    private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final ExileSupport exileSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -74,7 +72,9 @@ public class ExileSourceAndTopCardChooseOneMayPlayUntilNextTurnEffectHandler
                     .build());
         }
 
-        interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.ExiledCardMayPlayChoice(controllerId, exiledIds));
+        for (UUID exiledId : exiledIds) {
+            exileSupport.grantPlayUntilOwnersNextTurn(gameData, exiledId, controllerId);
+        }
+        gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, exiledIds);
     }
 }

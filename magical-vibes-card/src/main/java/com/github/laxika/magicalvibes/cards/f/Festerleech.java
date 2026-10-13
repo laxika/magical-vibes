@@ -14,7 +14,7 @@ import java.util.List;
 public class Festerleech extends Card {
 
     public Festerleech() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillEffect(2, MillRecipient.CONTROLLER));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",

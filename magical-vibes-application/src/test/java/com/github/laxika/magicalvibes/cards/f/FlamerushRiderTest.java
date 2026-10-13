@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.UginTheSpiritDragon;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -62,9 +63,7 @@ class FlamerushRiderTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(copy.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy);
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
@@ -94,9 +93,8 @@ class FlamerushRiderTest extends BaseCardTest {
         Permanent rider = findPermanent(player1, "Flamerush Rider");
         assertThat(rider.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Flamerush Rider");
         harness.assertNotOnBattlefield(player1, "Flamerush Rider");
@@ -108,6 +106,7 @@ class FlamerushRiderTest extends BaseCardTest {
         Permanent rider = addCreatureReady(player1, new FlamerushRider());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         Permanent ugin = harness.addToBattlefieldAndReturn(player2, new UginTheSpiritDragon());
+        ugin.setCounterCount(CounterType.LOYALTY, 7);
         keepCombatOpen();
 
         declareAttackers(player1, List.of(0, 1));

@@ -36,7 +36,7 @@ class FarrelitePriestTest extends BaseCardTest {
         }
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
@@ -54,7 +54,7 @@ class FarrelitePriestTest extends BaseCardTest {
         }
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         harness.passBothPriorities();
@@ -74,7 +74,7 @@ class FarrelitePriestTest extends BaseCardTest {
         }
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(2);
@@ -99,7 +99,7 @@ class FarrelitePriestTest extends BaseCardTest {
         }
 
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Farrelite Priest");
@@ -116,12 +116,12 @@ class FarrelitePriestTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
         }
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         for (int i = 0; i < 3; i++) {
             harness.activateAbility(player1, 0, null, null);
         }
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Farrelite Priest");
@@ -139,7 +139,7 @@ class FarrelitePriestTest extends BaseCardTest {
         }
         harness.activateAbility(player1, 0, null, null);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();

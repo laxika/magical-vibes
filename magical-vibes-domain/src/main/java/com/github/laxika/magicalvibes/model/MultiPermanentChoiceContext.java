@@ -298,6 +298,10 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificeAttackCost(int requiredCount) implements MultiPermanentChoiceContext {
     }
 
+    /** The attacking player chooses permanents to return to their owners' hands as an additional attack cost. */
+    record ReturnToHandAttackCost(int requiredCount) implements MultiPermanentChoiceContext {
+    }
+
     /** The controller exiles the chosen attacking creatures (Resounding Silence cycling trigger). */
     record ExileAttackingCreatures() implements MultiPermanentChoiceContext {
     }

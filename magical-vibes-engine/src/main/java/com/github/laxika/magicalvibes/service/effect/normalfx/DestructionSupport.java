@@ -1066,6 +1066,9 @@ public class DestructionSupport {
                 log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
                         tokenToCreate.tokenName(), playerName);
             }
+            if (tokenToCreate.investigate()) {
+                triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
+            }
         }
     }
 

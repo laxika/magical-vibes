@@ -182,9 +182,12 @@ class FracturedIdentityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FracturedIdentity()));
         addFracturedIdentityMana(player1);
         harness.castSorcery(player1, 0, target.getId());
-        gd.playerBattlefields.get(player2.getId()).remove(target);
-        gd.playerBattlefields.get(player1.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), target,
+                        new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
+                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "Test"));
 
         harness.passBothPriorities();
 

@@ -81,11 +81,15 @@ public class BasicLandSearchQueueSupport {
         while (!remaining.isEmpty()) {
             LibrarySearchFollowUp.BasicLandsPick pick = remaining.removeFirst();
             LibrarySearchFollowUp.BasicLandSearchQueue nextQueue = queue.withRemainingPicks(remaining);
-            if (!librarySearchSupport.isSearchPrevented(gameData, pick.playerId())) {
+            boolean searchAllowed = !librarySearchSupport.isSearchPrevented(gameData, pick.playerId());
+            if (searchAllowed && !markSearchedOnPick(queue)) {
                 nextQueue = nextQueue.withSearchedPlayer(pick.playerId());
             }
             if (startSearch(gameData, pick, followUp.withBasicLandSearchQueue(nextQueue))) {
                 return true;
+            }
+            if (searchAllowed) {
+                nextQueue = nextQueue.withSearchedPlayer(pick.playerId());
             }
             queue = nextQueue;
         }
@@ -93,6 +97,15 @@ public class BasicLandSearchQueueSupport {
         placeSelectedLands(gameData, queue);
         shuffleAfterQueue(gameData, queue);
         return beginSacrifices(gameData, queue);
+    }
+
+    /**
+     * Whether a player counts as having searched only once they take a card: an optional search whose
+     * searchers shuffle together after the queue ("each player who searched this way shuffles") leaves
+     * the player who declines unshuffled.
+     */
+    public static boolean markSearchedOnPick(LibrarySearchFollowUp.BasicLandSearchQueue queue) {
+        return queue.optionalSearch() && queue.shuffleAfterQueue();
     }
 
     private void placeSelectedLands(GameData gameData, LibrarySearchFollowUp.BasicLandSearchQueue queue) {
@@ -151,7 +164,8 @@ public class BasicLandSearchQueueSupport {
                         || (card.hasType(CardType.LAND)
                         && gameQueryService.cardHasSupertype(card, CardSupertype.BASIC, gameData, playerId)))
                 .toList();
-        if (basicLands.isEmpty()) {
+        boolean choosesWhetherToSearch = markSearchedOnPick(followUp.basicLandSearchQueue());
+        if (basicLands.isEmpty() && !choosesWhetherToSearch) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
             if (!shuffleAfterQueue) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
@@ -183,8 +197,7 @@ public class BasicLandSearchQueueSupport {
                 + (destinationToHand ? " to reveal and put them" : " and put them")
                 + destinationText + " (" + count + " remaining).";
 
-        librarySearchSupport.sendLibrarySearchToPlayer(gameData, playerId,
-                LibrarySearchParams.builder(playerId, new ArrayList<>(basicLands))
+        LibrarySearchParams searchParams = LibrarySearchParams.builder(playerId, new ArrayList<>(basicLands))
                         .remainingCount(count)
                         .canFailToFind(true)
                         .reveals(destinationToHand)
@@ -196,7 +209,13 @@ public class BasicLandSearchQueueSupport {
                         .filterPredicate(BASIC_LAND_SEARCH)
                         .shuffleAfterSelection(!shuffleAfterQueue)
                         .followUp(followUp)
-                        .build(), prompt, true);
+                        .build();
+        if (choosesWhetherToSearch) {
+            librarySearchSupport.sendLibrarySearchToPlayer(gameData, playerId, searchParams, prompt, true,
+                    playerName + " may search their library.");
+        } else {
+            librarySearchSupport.sendLibrarySearchToPlayer(gameData, playerId, searchParams, prompt, true);
+        }
         return true;
     }
 

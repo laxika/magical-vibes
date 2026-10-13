@@ -16,13 +16,9 @@ public class FranticScapegoat extends Card {
 
     public FranticScapegoat() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SuspectEffect(GrantScope.SELF));
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD, suspectAnotherCreature());
-        addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, suspectAnotherCreature());
-    }
-
-    private MayEffect suspectAnotherCreature() {
-        return new MayEffect(
-                new ConditionalEffect(new SourceIsSuspected(), new SuspectChosenOtherCreatureEffect()),
-                "Suspect another creature and stop suspecting this creature?");
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD, new ConditionalEffect(
+                new SourceIsSuspected(),
+                new MayEffect(new SuspectChosenOtherCreatureEffect(),
+                        "Suspect another creature and stop suspecting this creature?")));
     }
 }

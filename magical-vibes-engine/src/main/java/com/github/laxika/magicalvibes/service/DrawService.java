@@ -534,6 +534,7 @@ public class DrawService {
             interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                     .builder(playerId, validIndices, GraveyardChoiceDestination.HAND,
                             "Return a card from your graveyard to your hand.")
+                    .mandatory(true)
                     .build());
             return;
         }

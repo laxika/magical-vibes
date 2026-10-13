@@ -16,10 +16,13 @@ import java.util.List;
 public class FountainWatch extends Card {
 
     public FountainWatch() {
+        var artifactOrEnchantment = new PermanentAnyOfPredicate(List.of(
+                new PermanentIsArtifactPredicate(),
+                new PermanentIsEnchantmentPredicate()
+        ));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS,
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsEnchantmentPredicate()
-                ))));
+                artifactOrEnchantment));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF,
+                artifactOrEnchantment));
     }
 }

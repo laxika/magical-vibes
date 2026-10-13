@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JoustingDummy;
 import com.github.laxika.magicalvibes.cards.m.MagnifyingGlass;
 import com.github.laxika.magicalvibes.cards.t.TezzeretBetrayerOfFlesh;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -180,7 +181,8 @@ class ForensicGadgeteerTest extends BaseCardTest {
     @CardUsed({ForensicGadgeteer.class, MagnifyingGlass.class, TezzeretBetrayerOfFlesh.class})
     void unrestrictedReductionCanMakeClueActivationFreeDespiteGadgeteer() {
         harness.addToBattlefield(player1, new ForensicGadgeteer());
-        harness.addToBattlefield(player1, new TezzeretBetrayerOfFlesh());
+        Permanent tezzeret = harness.addToBattlefieldAndReturn(player1, new TezzeretBetrayerOfFlesh());
+        tezzeret.setCounterCount(CounterType.LOYALTY, 4);
         harness.setLibrary(player1, List.of(new ForensicGadgeteer()));
         harness.castFromHand(player1, new MagnifyingGlass(), "{3}");
         resolveAllTriggers();

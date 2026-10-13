@@ -107,12 +107,12 @@ class FungalBehemothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        resolveAllTriggers();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -176,15 +176,15 @@ class FungalBehemothTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
-        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-        resolveAllTriggers();
+        for (int prompt = 0; prompt < 2; prompt++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            var may = gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player1, may.description().contains("+1/+1 counter"));
+            resolveAllTriggers();
+        }
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());

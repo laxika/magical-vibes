@@ -1501,6 +1501,8 @@ public class TriggeredAbilityQueueService {
                                         gameQueryService.findPermanentController(gameData, id)))
                                 .toList();
                     }
+                    validPermanentTargets = restrictToEffectPermanentRestriction(
+                            gameData, pending.effects(), validPermanentTargets);
                 } else {
                     FilterContext filterContext = FilterContext.of(gameData)
                             .withSourceControllerId(pending.controllerId())
@@ -1921,6 +1923,25 @@ public class TriggeredAbilityQueueService {
      *
      * <p>Players are added by the callers — every one of them offers all of them.</p>
      */
+    private List<UUID> restrictToEffectPermanentRestriction(GameData gameData, List<CardEffect> effects,
+                                                           List<UUID> candidates) {
+        java.util.Optional<PermanentPredicate> restriction = effects.stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                .findFirst()
+                .flatMap(effect -> effect.targetSpec().targetPredicate().permanentRestriction());
+        if (restriction.isEmpty()) {
+            return candidates;
+        }
+        return candidates.stream()
+                .filter(id -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    return permanent != null
+                            && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
+                            restriction.get());
+                })
+                .toList();
+    }
+
     private List<UUID> anyTargetPermanents(GameData gameData, UUID controllerId, Card sourceCard) {
         FilterContext filterContext =
                 new FilterContext(gameData, sourceCard == null ? null : sourceCard.getId(), controllerId, null, null);
@@ -3123,6 +3144,9 @@ public class TriggeredAbilityQueueService {
                 }
                 if (hasChapterFilters
                         && !predicateEvaluationService.matchesFilters(p, chapterFilters, filterContext)) {
+                    continue;
+                }
+                if (validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, p, pending.controllerId())) {
                     continue;
                 }
                 validPermanentTargets.add(p.getId());

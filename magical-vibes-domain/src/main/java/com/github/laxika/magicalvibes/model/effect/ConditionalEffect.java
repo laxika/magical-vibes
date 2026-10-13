@@ -70,6 +70,11 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean
     }
 
     @Override
+    public boolean resolvesWhenTargetIllegal() {
+        return wrapped.resolvesWhenTargetIllegal();
+    }
+
+    @Override
     public boolean usesEnteringPermanentReference() {
         return wrapped.usesEnteringPermanentReference();
     }

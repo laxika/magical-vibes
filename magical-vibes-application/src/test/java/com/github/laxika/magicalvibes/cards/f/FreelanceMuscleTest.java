@@ -139,19 +139,21 @@ class FreelanceMuscleTest extends BaseCardTest {
     @DisplayName("Triggers only once when blocking multiple attackers")
     void triggersOnceWhenBlockingMultipleCreatures() {
         Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
-        firstAttacker.setAttacking(true);
-        firstAttacker.setAttackTarget(player2.getId());
         Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
-        secondAttacker.setAttacking(true);
-        secondAttacker.setAttackTarget(player2.getId());
         Permanent muscle = addCreatureReady(player2, new FreelanceMuscle());
         addCreatureReady(player2, new FreelanceMuscle());
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        firstAttacker.setAttacking(true);
+        firstAttacker.setAttackTarget(player2.getId());
+        secondAttacker.setAttacking(true);
+        secondAttacker.setAttackTarget(player2.getId());
         harness.setHand(player2, List.of(new Yare()));
         harness.addMana(player2, ManaColor.WHITE, 3);
-        harness.castInstant(player2, 0, muscle.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.castInstant(player2, 0, muscle.getId());
+            harness.passBothPriorities();
+        });
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(

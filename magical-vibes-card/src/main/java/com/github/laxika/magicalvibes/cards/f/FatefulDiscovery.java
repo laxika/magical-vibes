@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class FatefulDiscovery extends Card {
 
     public FatefulDiscovery() {
-        addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, new DrawCardEffect(1));
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, new DrawCardEffect(1));
     }
 }

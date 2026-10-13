@@ -545,7 +545,7 @@ public final class TokenCreationReplacementSupport {
             if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
                 continue;
             }
-            int sourceLevel = permanent.getCounterCount(CounterType.LEVEL);
+            int sourceLevel = permanent.getClassLevel();
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ReplaceTokenSubtypeCreationEffect replacement
                         && sourceLevel >= replacement.minimumSourceLevel()

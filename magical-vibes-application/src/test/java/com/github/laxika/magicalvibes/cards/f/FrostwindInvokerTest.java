@@ -41,7 +41,7 @@ class FrostwindInvokerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isFalse();
     }

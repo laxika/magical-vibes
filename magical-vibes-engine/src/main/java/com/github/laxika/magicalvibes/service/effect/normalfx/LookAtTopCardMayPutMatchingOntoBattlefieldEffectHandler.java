@@ -58,6 +58,13 @@ public class LookAtTopCardMayPutMatchingOntoBattlefieldEffectHandler implements 
         cardRevealService.revealToPlayer(gameData, controllerId, GameEventFact.RevealZone.LIBRARY,
                 List.of(topCard), controllerId);
         if (!predicateEvaluationService.matchesCardPredicate(topCard, typed.predicate(), entry.getCard().getId())) {
+            if (typed.otherwiseToHand()) {
+                deck.removeFirst();
+                gameData.playerHands.get(controllerId).add(topCard);
+                gameLogService.append(gameData,
+                        GameLog.text(playerName + " puts the top card of their library into their hand (" + sourceName + ")."));
+                return;
+            }
             gameLogService.append(gameData,
                     GameLog.text(playerName + " leaves the top card on their library (" + sourceName + ")."));
             return;

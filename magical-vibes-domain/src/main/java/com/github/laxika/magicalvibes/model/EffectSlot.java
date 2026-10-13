@@ -47,6 +47,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. */
     COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+    /** "Whenever an artifact you control enters" with no "another" wording, so the source's own entry
+     *  also triggers it when the source is an artifact as it enters (CR 603.6a: all permanents on the
+     *  battlefield, including the newcomers, are checked). Scanned in
+     *  {@code TriggerCollectionService.checkAllyArtifactEntersTriggers} without the self-exclusion. */
+    ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
     /** "Whenever one or more tokens you control enter the battlefield." */
     ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
     ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
@@ -1205,8 +1210,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
     /** Triggers whenever the controller of this permanent, or any permanent they control, becomes
      *  the target of a spell or ability controlled by an opponent. Fires for all permanent types
-     *  and for player targets. Checked in {@code TriggerCollectionService} from both the spell and
-     *  ability target paths. */
+     *  and for player targets. Wrap effects in {@code TriggeringPermanentConditionalEffect} to limit
+     *  them to a target type (player targets never match a permanent predicate). Checked in
+     *  {@code TriggerCollectionService} from both the spell and ability target paths. */
     ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
     ON_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
     /** Triggers once for each other permanent controlled by this permanent's controller that

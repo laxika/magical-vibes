@@ -758,8 +758,7 @@ public class CloneService {
                     applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
                             additionalPlusOnePlusOneCounters, xValue);
                 }
-                if (addVanishingIfCopiedPermanentLacksIt && !copiedPermanentHasVanishing
-                        && perm.getCard().hasType(CardType.CREATURE)) {
+                if (addVanishingIfCopiedPermanentLacksIt && !copiedPermanentHasVanishing) {
                     applyAdditionalCopyCharacteristics(perm.getCard(), Set.of(), Set.of(Keyword.VANISHING));
                     perm.getCard().addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                             new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));

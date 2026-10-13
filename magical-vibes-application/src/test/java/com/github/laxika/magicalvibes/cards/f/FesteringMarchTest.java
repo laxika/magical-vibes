@@ -67,6 +67,7 @@ class FesteringMarchTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -86,6 +87,7 @@ class FesteringMarchTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 

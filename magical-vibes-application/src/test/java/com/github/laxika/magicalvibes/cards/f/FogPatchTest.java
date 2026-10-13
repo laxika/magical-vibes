@@ -122,10 +122,13 @@ class FogPatchTest extends BaseCardTest {
     void attackingPlayerCanCastFogPatchWithoutTargetingTheirAttackers() {
         Permanent attacker = addCreatureReady(player1, new Mossdog());
         addCreatureReady(player2, new Mossdog());
+        harness.setHand(player1, List.of(new FogPatch()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
-        harness.castFromHand(player1, new FogPatch(), "{1}{G}");
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(attacker.isBlockedWithoutBlockers()).isTrue();

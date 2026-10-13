@@ -20,7 +20,7 @@ import java.util.List;
 public class ForsakenMonument extends Card {
 
     public ForsakenMonument() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsColorlessPredicate()));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
                 new AddManaOfTypeProducedByTappedPermanentEffect(ManaColor.COLORLESS));

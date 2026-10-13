@@ -1438,88 +1438,97 @@ public class CombatBlockService {
             if (!attacker.isAttacking() || isBlocked(defenderBattlefield, attacker)) {
                 continue;
             }
-            List<CardEffect> effects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED));
-            effects.addAll(triggerCollectionService.grantedTriggeredEffects(
-                    gameData, attacker, EffectSlot.ON_ATTACKS_UNBLOCKED));
-            List<UUID> defendingCreatureIds = defenderBattlefield == null ? List.of() : defenderBattlefield.stream()
-                    .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                    .filter(permanent -> targetLegalityService.checkTriggeredPermanentTargetableReason(
-                            gameData, permanent, attacker.getCard(), activeId).isEmpty())
-                    .map(Permanent::getId)
-                    .toList();
-            effects = effects.stream().map(effect -> {
-                if (!(effect instanceof MayEffect may)
-                        || !(may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect sacrifice)) {
-                    return effect;
-                }
-                if (defendingCreatureIds.isEmpty()) {
-                    return null;
-                }
-                return new MayEffect(
-                        new SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect(
-                                sacrifice.cannotBeRegenerated(), defendingCreatureIds),
-                        may.prompt(), may.elseEffect(), may.choicePlayer());
-            }).filter(java.util.Objects::nonNull).toList();
-            GraveyardCardChoosingEffect graveyardChoice = effects.stream()
-                    .filter(GraveyardCardChoosingEffect.class::isInstance)
-                    .map(GraveyardCardChoosingEffect.class::cast)
-                    .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
-                    .findFirst()
-                    .orElse(null);
-            if (graveyardChoice != null) {
-                // "you may exile up to two target creature cards from defending player's graveyard"
-                // (Rysorian Badger): the targets are chosen as the trigger goes on the stack, so the
-                // service owns pushing the entry (and its own logging).
-                graveyardTargetingService.handleUnblockedAttackGraveyardChoiceTargeting(gameData, activeId,
-                        attacker.getCard(), effects, attacker.getId(), defenderId, graveyardChoice);
-                pushed++;
-            } else if (!effects.isEmpty() && attacker.getCard().getSpellTargets().size() > 1) {
-                // "destroy target creature and target land" (Goblin Grenadiers): two positional target
-                // groups, so the single-target may/attack pipelines can't collect them. Reuse the ETB
-                // slot-by-slot picker — the targets are chosen as the trigger goes on the stack
-                // (CR 603.3d) and the "you may sacrifice it" is still made at resolution.
-                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        attacker.getCard(), activeId, effects, attacker.getId(), List.of(), 0, 0));
-                gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
-                        "'s unblocked-attack ability triggers."));
-                log.info("Game {} - {} unblocked-attack multi-target trigger queued", gameData.id,
-                        attacker.getCard().getName());
-                pushed++;
-            } else if (!effects.isEmpty()) {
-                // Targets of a triggered ability are chosen before its controller makes any choice
-                // the ability asks for during resolution.
-                List<CardEffect> targetingMayEffects = effects.stream()
-                        .filter(e -> (e instanceof MayEffect || e instanceof MayPayManaEffect)
-                                && e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+            List<CardEffect> printedEffects = attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED);
+            List<List<CardEffect>> abilityInstances = new ArrayList<>();
+            if (!printedEffects.isEmpty()) {
+                abilityInstances.add(new ArrayList<>(printedEffects));
+            }
+            // Each granted instance is a separate ability (CR 702.68b for frenzy), so it gets its own trigger.
+            for (CardEffect granted : triggerCollectionService.grantedTriggeredEffects(
+                    gameData, attacker, EffectSlot.ON_ATTACKS_UNBLOCKED)) {
+                abilityInstances.add(List.of(granted));
+            }
+            for (List<CardEffect> effects : abilityInstances) {
+                List<UUID> defendingCreatureIds = defenderBattlefield == null ? List.of() : defenderBattlefield.stream()
+                        .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                        .filter(permanent -> targetLegalityService.checkTriggeredPermanentTargetableReason(
+                                gameData, permanent, attacker.getCard(), activeId).isEmpty())
+                        .map(Permanent::getId)
                         .toList();
-                List<CardEffect> otherEffects = effects.stream()
-                        .filter(e -> !targetingMayEffects.contains(e))
-                        .toList();
-                for (CardEffect effect : targetingMayEffects) {
-                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            attacker.getCard(), activeId, List.of(effect), attacker.getId(), activeId, defenderId));
+                effects = effects.stream().map(effect -> {
+                    if (!(effect instanceof MayEffect may)
+                            || !(may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect sacrifice)) {
+                        return effect;
+                    }
+                    if (defendingCreatureIds.isEmpty()) {
+                        return null;
+                    }
+                    return new MayEffect(
+                            new SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect(
+                                    sacrifice.cannotBeRegenerated(), defendingCreatureIds),
+                            may.prompt(), may.elseEffect(), may.choicePlayer());
+                }).filter(java.util.Objects::nonNull).toList();
+                GraveyardCardChoosingEffect graveyardChoice = effects.stream()
+                        .filter(GraveyardCardChoosingEffect.class::isInstance)
+                        .map(GraveyardCardChoosingEffect.class::cast)
+                        .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
+                        .findFirst()
+                        .orElse(null);
+                if (graveyardChoice != null) {
+                    // "you may exile up to two target creature cards from defending player's graveyard"
+                    // (Rysorian Badger): the targets are chosen as the trigger goes on the stack, so the
+                    // service owns pushing the entry (and its own logging).
+                    graveyardTargetingService.handleUnblockedAttackGraveyardChoiceTargeting(gameData, activeId,
+                            attacker.getCard(), effects, attacker.getId(), defenderId, graveyardChoice);
+                    pushed++;
+                } else if (!effects.isEmpty() && attacker.getCard().getSpellTargets().size() > 1) {
+                    // "destroy target creature and target land" (Goblin Grenadiers): two positional target
+                    // groups, so the single-target may/attack pipelines can't collect them. Reuse the ETB
+                    // slot-by-slot picker — the targets are chosen as the trigger goes on the stack
+                    // (CR 603.3d) and the "you may sacrifice it" is still made at resolution.
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                            attacker.getCard(), activeId, effects, attacker.getId(), List.of(), 0, 0));
                     gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
                             "'s unblocked-attack ability triggers."));
-                    log.info("Game {} - {} unblocked-attack targeting-may trigger queued for target selection",
-                            gameData.id, attacker.getCard().getName());
+                    log.info("Game {} - {} unblocked-attack multi-target trigger queued", gameData.id,
+                            attacker.getCard().getName());
                     pushed++;
-                }
-                if (!otherEffects.isEmpty()) {
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            attacker.getCard(),
-                            activeId,
-                            attacker.getCard().getName() + "'s unblocked-attack trigger",
-                            new ArrayList<>(otherEffects),
-                            defenderId,
-                            attacker.getId());
-                    // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
-                    trigger.setNonTargeting(true);
-                    gameData.stack.add(trigger);
-                    gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
-                            "'s unblocked-attack ability triggers."));
-                    log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
-                    pushed++;
+                } else if (!effects.isEmpty()) {
+                    // Targets of a triggered ability are chosen before its controller makes any choice
+                    // the ability asks for during resolution.
+                    List<CardEffect> targetingMayEffects = effects.stream()
+                            .filter(e -> (e instanceof MayEffect || e instanceof MayPayManaEffect)
+                                    && e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                            .toList();
+                    List<CardEffect> otherEffects = effects.stream()
+                            .filter(e -> !targetingMayEffects.contains(e))
+                            .toList();
+                    for (CardEffect effect : targetingMayEffects) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                attacker.getCard(), activeId, List.of(effect), attacker.getId(), activeId, defenderId));
+                        gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                                "'s unblocked-attack ability triggers."));
+                        log.info("Game {} - {} unblocked-attack targeting-may trigger queued for target selection",
+                                gameData.id, attacker.getCard().getName());
+                        pushed++;
+                    }
+                    if (!otherEffects.isEmpty()) {
+                        StackEntry trigger = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                attacker.getCard(),
+                                activeId,
+                                attacker.getCard().getName() + "'s unblocked-attack trigger",
+                                new ArrayList<>(otherEffects),
+                                defenderId,
+                                attacker.getId());
+                        // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
+                        trigger.setNonTargeting(true);
+                        gameData.stack.add(trigger);
+                        gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
+                                "'s unblocked-attack ability triggers."));
+                        log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                        pushed++;
+                    }
                 }
             }
             // "Whenever enchanted creature attacks and isn't blocked" (aura) triggers on this attacker.
@@ -1533,8 +1542,9 @@ public class CombatBlockService {
      * ({@link EffectSlot#ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED}) triggers for every aura attached to
      * the given unblocked attacker. Non-targeting effects bake in the enchanted attacker as
      * {@code sourcePermanentId} and the defending player as {@code targetId}. Permanent-targeting
-     * {@link MayEffect}s instead defer target selection and let the enchanted creature's controller
-     * make the may choice. Used by Cloak of Confusion and Farrel's Mantle.
+     * {@link MayEffect}s instead queue target selection for the aura's controller, and the may choice
+     * is made on resolution by whoever the effect names as its choice player. Used by Cloak of
+     * Confusion and Farrel's Mantle.
      */
     private int collectEnchantedCreatureUnblockedTriggers(GameData gameData, UUID defenderId, Permanent attacker) {
         int[] pushed = {0};
@@ -1551,9 +1561,11 @@ public class CombatBlockService {
                             && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     .toList();
             for (CardEffect effect : targetingMayEffects) {
-                UUID attackerControllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
-                gameData.queueMayAbilityForPlayer(perm.getCard(), auraOwnerId, (MayEffect) effect,
-                        null, attacker.getId(), attackerControllerId, new Permanent(attacker));
+                // CR 603.3d: the aura's controller chooses the target as the trigger goes on the stack;
+                // CR 603.5: the enchanted creature's controller makes the "may" choice on resolution.
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        perm.getCard(), auraOwnerId, List.of(effect), attacker.getId(), auraOwnerId,
+                        defenderId, attacker.getId()));
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} enchanted-creature targeting-may trigger pushed onto stack",
                         gameData.id, perm.getCard().getName());
@@ -2789,33 +2801,79 @@ public class CombatBlockService {
             return;
         }
 
-        // Collect which blockers are already assigned and which are free
-        Set<Integer> assignedBlockerIndices = new HashSet<>();
         Set<Integer> blockedAttackerIndices = new HashSet<>();
         for (BlockerAssignment assignment : blockerAssignments) {
-            assignedBlockerIndices.add(assignment.blockerIndex());
             blockedAttackerIndices.add(assignment.attackerIndex());
         }
-
-        // For each "must be blocked if able" attacker that is NOT currently blocked,
-        // check if there is a free blocker that could have blocked it
-        for (int attackerIdx : mustBeBlockedAttackerIndices) {
+        List<Integer> mustBeBlockedAttackers = List.copyOf(mustBeBlockedAttackerIndices);
+        int obeyed = 0;
+        Integer firstUnblocked = null;
+        for (int attackerIdx : mustBeBlockedAttackers) {
             if (blockedAttackerIndices.contains(attackerIdx)) {
-                continue; // already blocked by at least one creature
-            }
-            Permanent attacker = attackerBattlefield.get(attackerIdx);
-            for (int blockerIdx : blockable) {
-                if (assignedBlockerIndices.contains(blockerIdx)
-                        && blockerAssignments.stream().anyMatch(assignment ->
-                        assignment.blockerIndex() == blockerIdx
-                                && mustBeBlockedAttackerIndices.contains(assignment.attackerIndex()))) continue;
-                if (canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
-                        defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
-                    throw new IllegalStateException(attacker.getCard().getName()
-                            + " must be blocked if able");
-                }
+                obeyed++;
+            } else if (firstUnblocked == null) {
+                firstUnblocked = attackerIdx;
             }
         }
+        // CR 509.1c: the declaration is illegal when fewer requirements are obeyed than the maximum
+        // that some declaration violating no restrictions could obey.
+        if (firstUnblocked != null && maxObeyableMustBeBlockedAttackers(gameData, blockContext,
+                attackerBattlefield, defenderBattlefield, blockable, mustBeBlockedAttackers) > obeyed) {
+            throw new IllegalStateException(attackerBattlefield.get(firstUnblocked).getCard().getName()
+                    + " must be blocked if able");
+        }
+    }
+
+    private int maxObeyableMustBeBlockedAttackers(GameData gameData,
+                                                  BlockLegalityContext blockContext,
+                                                  List<Permanent> attackerBattlefield,
+                                                  List<Permanent> defenderBattlefield,
+                                                  List<Integer> blockable,
+                                                  List<Integer> mustBeBlockedAttackers) {
+        List<Integer> blockerSlots = new ArrayList<>();
+        for (int blockerIdx : blockable) {
+            int capacity = Math.min(
+                    getMaxBlocksForCreature(gameData, defenderBattlefield.get(blockerIdx), defenderBattlefield),
+                    mustBeBlockedAttackers.size());
+            for (int slot = 0; slot < capacity; slot++) {
+                blockerSlots.add(blockerIdx);
+            }
+        }
+        Integer[] slotAttacker = new Integer[blockerSlots.size()];
+        int matched = 0;
+        for (int attackerIdx : mustBeBlockedAttackers) {
+            if (assignBlockerSlotToMustBeBlockedAttacker(gameData, blockContext, attackerBattlefield,
+                    defenderBattlefield, blockable, blockerSlots, slotAttacker,
+                    new boolean[blockerSlots.size()], attackerIdx)) {
+                matched++;
+            }
+        }
+        return matched;
+    }
+
+    private boolean assignBlockerSlotToMustBeBlockedAttacker(GameData gameData,
+                                                             BlockLegalityContext blockContext,
+                                                             List<Permanent> attackerBattlefield,
+                                                             List<Permanent> defenderBattlefield,
+                                                             List<Integer> blockable,
+                                                             List<Integer> blockerSlots,
+                                                             Integer[] slotAttacker,
+                                                             boolean[] visited,
+                                                             int attackerIdx) {
+        for (int slot = 0; slot < blockerSlots.size(); slot++) {
+            if (visited[slot] || !canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
+                    defenderBattlefield, blockable, blockerSlots.get(slot), attackerIdx)) {
+                continue;
+            }
+            visited[slot] = true;
+            if (slotAttacker[slot] == null || assignBlockerSlotToMustBeBlockedAttacker(gameData, blockContext,
+                    attackerBattlefield, defenderBattlefield, blockable, blockerSlots, slotAttacker, visited,
+                    slotAttacker[slot])) {
+                slotAttacker[slot] = attackerIdx;
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateMustBeBlockedByMatchingCreatureIfAbleRequirements(

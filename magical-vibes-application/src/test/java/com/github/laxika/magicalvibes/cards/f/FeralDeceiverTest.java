@@ -87,7 +87,7 @@ class FeralDeceiverTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(4);
         assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
         assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isFalse();
@@ -148,7 +148,7 @@ class FeralDeceiverTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(5);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.activateAbility(player1, 0, 1, null, null);

@@ -95,7 +95,8 @@ class FranticScapegoatTest extends BaseCardTest {
     @Test
     void unsuspectedScapegoatDoesNotTrigger() {
         Permanent scapegoat = addCreatureReady(player1, new FranticScapegoat());
-        castCodebreaker();
+        harness.castFromHand(player1, new FugitiveCodebreaker(), "{1}{R}");
+        harness.passBothPriorities();
 
         assertThat(scapegoat.isSuspected()).isFalse();
         assertThat(findPermanent(player1, "Fugitive Codebreaker").isSuspected()).isFalse();

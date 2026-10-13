@@ -121,7 +121,7 @@ class FleshformerTest extends BaseCardTest {
         payFullCost();
 
         harness.activateAbility(player1, indexOf(fleshformer), null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(fleshformer.getEffectivePower()).isEqualTo(4);
         assertThat(fleshformer.getEffectiveToughness()).isEqualTo(4);

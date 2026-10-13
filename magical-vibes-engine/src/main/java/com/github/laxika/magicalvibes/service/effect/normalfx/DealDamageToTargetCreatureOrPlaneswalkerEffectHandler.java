@@ -18,7 +18,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -65,6 +67,13 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
         Map<UUID, Integer> damageBefore = e.exileInsteadOfDie()
                 ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn) : Map.of();
         List<UUID> effectTargets = entry.targetsForEffect(e);
+        Set<UUID> exileTargetIds = new HashSet<>();
+        if (effectTargets != null) {
+            exileTargetIds.addAll(effectTargets);
+        }
+        if (entry.getTargetId() != null) {
+            exileTargetIds.add(entry.getTargetId());
+        }
         if (effectTargets != null && !effectTargets.isEmpty()
                 && (effectTargets.size() > 1 || entry.getTargetId() == null)) {
             for (UUID targetId : effectTargets) {
@@ -74,12 +83,12 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
                     damageSupport.dealCreatureDamage(gameData, entry, target, damage);
                 }
             }
-            markDamagedPermanentsForExile(gameData, e, damageBefore);
+            markDamagedPermanentsForExile(gameData, e, damageBefore, exileTargetIds);
             return;
         }
 
         int damageDealt = damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
-        markDamagedPermanentsForExile(gameData, e, damageBefore);
+        markDamagedPermanentsForExile(gameData, e, damageBefore, exileTargetIds);
         if (tracksExcess) {
             entry.setEventValue(singleTarget == null
                     ? 0
@@ -96,11 +105,13 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
     }
 
     private void markDamagedPermanentsForExile(GameData gameData,
-            DealDamageToTargetCreatureOrPlaneswalkerEffect effect, Map<UUID, Integer> damageBefore) {
+            DealDamageToTargetCreatureOrPlaneswalkerEffect effect, Map<UUID, Integer> damageBefore,
+            Set<UUID> targetIds) {
         if (!effect.exileInsteadOfDie()) return;
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
-                if (gameData.damageDealtToPermanentsThisTurn.getOrDefault(permanent.getId(), 0)
+                if (targetIds.contains(permanent.getId())
+                        || gameData.damageDealtToPermanentsThisTurn.getOrDefault(permanent.getId(), 0)
                         > damageBefore.getOrDefault(permanent.getId(), 0)) {
                     permanent.setExileInsteadOfDieThisTurn(true);
                 }

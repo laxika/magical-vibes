@@ -34,7 +34,7 @@ class FireFieldOgreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Fire-Field Ogre");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(perm.hasKeyword(Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Fire-Field Ogre");
     }
 
@@ -50,7 +50,7 @@ class FireFieldOgreTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Fire-Field Ogre");

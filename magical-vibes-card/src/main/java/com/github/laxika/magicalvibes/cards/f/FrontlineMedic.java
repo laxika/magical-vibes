@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
@@ -25,9 +24,7 @@ public class FrontlineMedic extends Card {
     public FrontlineMedic() {
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new MinimumAttackers(3),
-                SequenceEffect.of(
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF))));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

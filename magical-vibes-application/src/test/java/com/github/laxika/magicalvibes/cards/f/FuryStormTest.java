@@ -44,7 +44,8 @@ class FuryStormTest extends BaseCardTest {
     void cannotTargetCreatureSpell() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears, new FuryStorm()));
-        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castCreature(player1, 0);

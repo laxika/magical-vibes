@@ -79,7 +79,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
 
-        if (xValue > 0) {
+        if (e.requireManaValueEqualsX() && xValue > 0) {
             List<Card> opponentDeck = gameData.playerDecks.get(result.originalOwnerId());
             List<Card> opponentGraveyard = gameData.playerGraveyards.get(result.originalOwnerId());
             int cardsToMill = Math.min(xValue, opponentDeck.size());

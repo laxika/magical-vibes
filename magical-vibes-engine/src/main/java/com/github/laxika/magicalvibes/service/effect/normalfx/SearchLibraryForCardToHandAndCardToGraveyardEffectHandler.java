@@ -50,6 +50,7 @@ public class SearchLibraryForCardToHandAndCardToGraveyardEffectHandler implement
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             return;

@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -27,10 +24,6 @@ public class FugitiveCodebreaker extends Card {
         )), CountScope.CONTROLLER);
 
         addMorph("{5}{R}", instantSorceryCount);
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
-                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new BoostSelfEffect(1, 1))
-        ));
         addEffect(EffectSlot.ON_TURNED_FACE_UP, new DiscardOwnHandThenDrawEffect(new Fixed(3)));
     }
 }

@@ -122,7 +122,7 @@ class FrostwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, frostwalla)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, frostwalla)).isEqualTo(2);

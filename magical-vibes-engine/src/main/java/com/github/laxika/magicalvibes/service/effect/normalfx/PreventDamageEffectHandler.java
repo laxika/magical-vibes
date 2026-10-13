@@ -374,7 +374,11 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
         UUID sourceId = entry.getSourcePermanentId();
         if (sourceId == null) return;
 
+        // An Aura that has left the battlefield uses what it was last attached to (CR 608.2h).
         Permanent aura = gameQueryService.findPermanentById(gameData, sourceId);
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
         if (aura == null || aura.getAttachedTo() == null) return;
 
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());

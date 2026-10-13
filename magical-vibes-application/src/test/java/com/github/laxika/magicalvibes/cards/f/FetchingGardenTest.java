@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeScout;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +48,8 @@ class FetchingGardenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FetchingGarden());
 
         harness.tapPermanent(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)
                 + gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);

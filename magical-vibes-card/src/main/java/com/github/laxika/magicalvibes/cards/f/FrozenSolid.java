@@ -16,6 +16,6 @@ public class FrozenSolid extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
                 .addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
-                        new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

@@ -34,12 +34,11 @@ class FaridEnterprisingSalvagerTest extends BaseCardTest {
     @Test
     void counterModePutsACounterOnFaridAndGrantsMenace() {
         Permanent farid = addReadyFarid();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new FountainOfYouth());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null);
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
 
         assertThat(farid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -50,13 +49,12 @@ class FaridEnterprisingSalvagerTest extends BaseCardTest {
     @Test
     void goadModeGoadsTargetCreature() {
         addReadyFarid();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new FountainOfYouth());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 1, target.getId());
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
 
         assertThat(gqs.isGoaded(gd, target)).isTrue();
@@ -65,7 +63,7 @@ class FaridEnterprisingSalvagerTest extends BaseCardTest {
     @Test
     void rummageModeDiscardsThenDraws() {
         addReadyFarid();
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new FountainOfYouth());
         Forest discarded = new Forest();
         GrizzlyBears drawn = new GrizzlyBears();
         harness.setHand(player1, List.of(discarded));
@@ -74,7 +72,6 @@ class FaridEnterprisingSalvagerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 2, null);
-        harness.handlePermanentChosen(player1, artifact.getId());
         resolveAllTriggers();
         harness.handleCardChosen(player1, 0);
 

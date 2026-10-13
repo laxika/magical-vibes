@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -47,6 +48,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 @Slf4j
 @Component
@@ -61,6 +63,8 @@ public class ETBTokenTargetService {
     private final GraveyardTargetingService graveyardTargetingService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    @Autowired
+    private ObjectProvider<TriggerCollectionService> triggerCollectionService;
 
     @Autowired
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -940,6 +944,9 @@ public class ETBTokenTargetService {
             etbEntry.setRepeatedAdditionalCosts(List.copyOf(pending.repeatedAdditionalCosts()));
         }
         gameData.stack.add(etbEntry);
+        if (triggerCollectionService != null) {
+            triggerCollectionService.getObject().checkCrimeTriggers(gameData, etbEntry);
+        }
         gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
         log.info("Game {} - {} multi-target ability pushed onto stack ({} targets)",
                 gameData.id, card.getName(), pending.chosenTargetsSoFar().size());

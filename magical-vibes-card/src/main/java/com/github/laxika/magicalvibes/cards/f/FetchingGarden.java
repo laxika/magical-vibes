@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
@@ -43,5 +46,11 @@ public class FetchingGarden extends Card {
     public FetchingGarden() {
         addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
                 new EnteredFromZone(Zone.HAND), new EntersTappedEffect()));
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
+                List.of(new AwardManaOfColorsEffect(List.of(ManaColor.GREEN, ManaColor.WHITE))),
+                "{T}: Add {G} or {W}."
+        ));
     }
 }

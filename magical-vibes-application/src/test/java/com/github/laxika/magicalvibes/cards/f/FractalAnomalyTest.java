@@ -19,15 +19,15 @@ class FractalAnomalyTest extends BaseCardTest {
     @DisplayName("Counts actual draws made before resolution and does not resize the token afterward")
     void countsDrawsAtResolution() {
         harness.setLibrary(player1, List.of(new FractalAnomaly(), new FractalAnomaly(), new FractalAnomaly()));
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.castFromHand(player1, new FractalAnomaly(), "{U}");
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.passBothPriorities();
 
         Permanent fractal = findPermanent(player1, "Fractal");
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 

@@ -66,6 +66,7 @@ class FloodwatersTest extends BaseCardTest {
         ownCard.setOwnerId(player1.getId());
         Permanent own = harness.addToBattlefieldAndReturn(player2, ownCard);
         harness.setHand(player1, List.of(new Floodwaters()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castSorcery(player1, 0, List.of(stolen.getId(), own.getId()));
@@ -83,6 +84,7 @@ class FloodwatersTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new DuneBeetle());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new DuneBeetle());
         harness.setHand(player1, List.of(new Floodwaters()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 6);
         harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
 
@@ -101,6 +103,7 @@ class FloodwatersTest extends BaseCardTest {
     void doesNotReturnAnIllegalTarget() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DuneBeetle());
         harness.setHand(player1, List.of(new Floodwaters()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 6);
         harness.castSorcery(player1, 0, List.of(creature.getId()));
 

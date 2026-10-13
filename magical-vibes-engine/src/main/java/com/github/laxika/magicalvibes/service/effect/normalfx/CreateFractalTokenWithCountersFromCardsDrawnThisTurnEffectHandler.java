@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -36,6 +37,7 @@ public class CreateFractalTokenWithCountersFromCardsDrawnThisTurnEffectHandler i
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         int x = gameData.cardsDrawnThisTurn.getOrDefault(controllerId, 0);
+        Set<UUID> permanentIdsBefore = permanentIdsOn(gameData, controllerId);
 
         CreateTokenEffect tokenEffect = new CreateTokenEffect(
                 1, FRACTAL, 0, 0,
@@ -48,26 +50,30 @@ public class CreateFractalTokenWithCountersFromCardsDrawnThisTurnEffectHandler i
             return;
         }
 
-        Permanent token = findLastMatchingToken(gameData, controllerId);
-        if (token == null || gameQueryService.cantHaveCounters(gameData, token)) {
-            return;
+        for (Permanent token : findNewFractalTokens(gameData, controllerId, permanentIdsBefore)) {
+            if (gameQueryService.cantHaveCounters(gameData, token)) {
+                continue;
+            }
+            permanentCounterSupport.placeCounterOnPermanent(
+                    gameData, entry, token, CounterType.PLUS_ONE_PLUS_ONE, x);
         }
-
-        permanentCounterSupport.placeCounterOnPermanent(
-                gameData, entry, token, CounterType.PLUS_ONE_PLUS_ONE, x);
     }
 
-    private Permanent findLastMatchingToken(GameData gameData, UUID controllerId) {
+    private Set<UUID> permanentIdsOn(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        return battlefield == null ? Set.of()
+                : battlefield.stream().map(Permanent::getId).collect(Collectors.toSet());
+    }
+
+    /** Every Fractal token this effect created, so a replacement that makes several gets counters on each. */
+    private List<Permanent> findNewFractalTokens(GameData gameData, UUID controllerId, Set<UUID> permanentIdsBefore) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
-            return null;
+            return List.of();
         }
-        Permanent lastMatch = null;
-        for (Permanent permanent : battlefield) {
-            if (permanent.getCard().isToken() && FRACTAL.equals(permanent.getCard().getName())) {
-                lastMatch = permanent;
-            }
-        }
-        return lastMatch;
+        return battlefield.stream()
+                .filter(permanent -> !permanentIdsBefore.contains(permanent.getId()))
+                .filter(permanent -> permanent.getCard().isToken() && FRACTAL.equals(permanent.getCard().getName()))
+                .toList();
     }
 }

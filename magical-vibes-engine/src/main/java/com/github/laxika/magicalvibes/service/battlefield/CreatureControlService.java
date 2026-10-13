@@ -473,17 +473,26 @@ public class CreatureControlService {
         for (Permanent aura : controlAuras) {
             Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
             if (enchanted == null) continue;
+            CardEffect controlEffect = aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(e -> e instanceof ControlEnchantedCreatureEffect)
+                    .findFirst()
+                    .orElseThrow();
+            boolean monarchBound = ((ControlEnchantedCreatureEffect) controlEffect).controlledByMonarch();
+            UUID controllingPlayerId = monarchBound
+                    ? gameData.monarchPlayerId
+                    : gameData.findControllerOf(aura);
+            if (monarchBound) {
+                gameData.floatingEffects.removeIf(fe -> fe.duration() == EffectDuration.WHILE_ATTACHED
+                        && fe.isControlEffect()
+                        && aura.getId().equals(fe.sourcePermanentId())
+                        && !Objects.equals(fe.controllerId(), controllingPlayerId));
+            }
             boolean present = gameData.controlEffectsFor(enchanted.getId()).stream()
                     .anyMatch(fe -> fe.duration() == EffectDuration.WHILE_ATTACHED
                             && aura.getId().equals(fe.sourcePermanentId()));
-            if (!present) {
-                UUID auraController = gameData.findControllerOf(aura);
-                CardEffect controlEffect = aura.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .filter(e -> e instanceof ControlEnchantedCreatureEffect)
-                        .findFirst()
-                        .orElseThrow();
+            if (!present && controllingPlayerId != null) {
                 gameData.floatingEffects.add(new FloatingContinuousEffect(
-                        UUID.randomUUID(), aura.getCard().getName(), aura.getId(), auraController,
+                        UUID.randomUUID(), aura.getCard().getName(), aura.getId(), controllingPlayerId,
                         controlEffect, enchanted.getId(), null, null,
                         EffectDuration.WHILE_ATTACHED, aura.getTimestamp()));
             }

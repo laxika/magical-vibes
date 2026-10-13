@@ -120,6 +120,7 @@ class FlameWaveTest extends BaseCardTest {
     @DisplayName("An absent planeswalker target prevents all damage, including damage to its controller's creatures")
     void absentPlaneswalkerTargetPreventsAllDamage() {
         var planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
         var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new FlameWave()));

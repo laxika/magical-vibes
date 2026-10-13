@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCountersOnTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceDamageGainLifeForSourceControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -83,8 +84,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -122,12 +123,20 @@ public class DamageTriggerCollectorService {
         Permanent fightingCreature = fights.fightingCreature();
         if (fightingCreature == null) return false;
 
-        match.gameData().queueDelayedAction(new PutCounterOnPermanentAtNextEndStep(
-                match.permanent().getCard(), match.controllerId(), fightingCreature.getId(), trigger));
-        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                " triggers to put counters on " + fightingCreature.getCard().getName() + " at the next end step."));
-        log.info("Game {} - {} schedules counters for {} at the next end step",
-                match.gameData().id, match.permanent().getCard().getName(), fightingCreature.getCard().getName());
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(new RegisterDelayedCountersOnTriggeringPermanentEffect(trigger))),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringPermanentId(fightingCreature.getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers to schedule counters for {} at the next end step",
+                match.gameData().id, sourceCard.getName(), fightingCreature.getCard().getName());
         return true;
     }
 
@@ -1087,9 +1096,13 @@ public class DamageTriggerCollectorService {
         if (dc.damageDealt() <= 0) return false;
 
         Permanent equipment = match.permanent();
+        Permanent damagedCreature = dc.damagedCreature();
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 equipment.getCard(), match.controllerId(), new ArrayList<>(List.of(trigger)), false,
-                targetFilterForTriggeredEffect(equipment.getCard(), trigger), 0, equipment.getId()));
+                targetFilterForTriggeredEffect(equipment.getCard(), trigger), 0, equipment.getId(),
+                null, false, damagedCreature.getId(), null, match.controllerId(), null, null, false, null,
+                new Permanent(damagedCreature),
+                gameQueryService.getEffectivePower(match.gameData(), damagedCreature)));
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE targeted power trigger fires",
@@ -2345,6 +2358,9 @@ public class DamageTriggerCollectorService {
                 watcher.getId());
         // Snapshot the damage dealt so an EventValue amount can read it back at resolution.
         entry.setEventValue(sd.totalDamage());
+        // Snapshot the watcher so a transform instruction can tell whether it has already transformed
+        // since this trigger was put on the stack (CR 701.27f).
+        entry.setSourcePermanentSnapshot(new Permanent(watcher));
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
@@ -2682,21 +2698,24 @@ public class DamageTriggerCollectorService {
         }
 
         GameData gameData = match.gameData();
-        boolean hasCreature = gameData.playerBattlefields.getOrDefault(damage.damagedPlayerId(), List.of()).stream()
-                .anyMatch(permanent -> gameQueryService.isCreature(gameData, permanent));
-        if (!hasCreature) return false;
+        DealDamageToTargetCreatureDamagedPlayerControlsEffect damageEffect =
+                effect instanceof ConditionalEffect conditional
+                        ? (DealDamageToTargetCreatureDamagedPlayerControlsEffect) conditional.wrapped()
+                        : (DealDamageToTargetCreatureDamagedPlayerControlsEffect) effect;
+        DealDamageToTargetCreatureEffect bound =
+                (DealDamageToTargetCreatureEffect) damageEffect.forDamagedPlayer(damage.damagedPlayerId());
+        CardEffect targeted = damageEffect.damage() instanceof EventValue
+                ? new DealDamageToTargetCreatureEffect(new Fixed(damage.damageAmount()),
+                        bound.unpreventable(), bound.targetPredicate())
+                : bound;
+        if (effect instanceof ConditionalEffect conditional) {
+            targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
+        }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcher.getCard(),
-                match.controllerId(),
-                watcher.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                damage.damagedPlayerId(),
-                watcher.getId());
-        entry.setEventValue(damage.damageAmount());
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
+        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                watcher.getCard(), match.controllerId(), List.of(targeted), watcher.getId(),
+                damageEffect.targetChooserId(damage.damagedPlayerId(), match.controllerId()),
+                damage.damagedPlayerId()));
 
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
         log.info("Game {} - {} triggers for {} noncombat damage dealt to opponent {}",

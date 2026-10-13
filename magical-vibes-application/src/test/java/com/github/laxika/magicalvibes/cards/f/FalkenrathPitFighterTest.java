@@ -105,10 +105,10 @@ class FalkenrathPitFighterTest extends BaseCardTest {
         fighter.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        dealShockTo(player2);
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.withAutoStop(TurnStep.END_STEP, () -> dealShockTo(player2));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);

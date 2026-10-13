@@ -37,7 +37,7 @@ public class FiveHundredYearDiary extends Card {
         ));
 
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{2}",
                 List.of(new SacrificeSelfCost(), new DrawCardEffect()),
                 "{2}, Sacrifice Five Hundred Year Diary: Draw a card."

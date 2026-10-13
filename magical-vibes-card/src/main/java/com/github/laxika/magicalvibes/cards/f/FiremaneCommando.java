@@ -26,8 +26,8 @@ public class FiremaneCommando extends Card {
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
                 new ConditionalEffect(new AllOf(List.of(
                         new MinimumAttackers(2),
-                        new AttackedTargetIsOpponent(),
-                        new NotCondition(new OpponentAttacksWithAtLeastCreatures(1, false)))),
-                        new DrawCardForTargetPlayerEffect(1)));
+                        new AttackedTargetIsOpponent())),
+                        new ConditionalEffect(new NotCondition(new OpponentAttacksWithAtLeastCreatures(1, false)),
+                                new DrawCardForTargetPlayerEffect(1))));
     }
 }

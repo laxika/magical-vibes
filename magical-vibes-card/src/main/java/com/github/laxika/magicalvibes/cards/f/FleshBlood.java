@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -57,7 +58,8 @@ public class FleshBlood extends Card {
         TargetFilter anyTarget = new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentIsPlaneswalkerPredicate()
+                        new PermanentIsPlaneswalkerPredicate(),
+                        new PermanentIsBattlePredicate()
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target");

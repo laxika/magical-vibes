@@ -102,6 +102,7 @@ class FireOmenCraneTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         harness.handlePermanentChosen(player1, opposing.getId());
         harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(opposing.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

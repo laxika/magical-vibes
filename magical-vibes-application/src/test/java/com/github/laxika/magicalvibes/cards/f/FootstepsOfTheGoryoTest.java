@@ -63,7 +63,7 @@ class FootstepsOfTheGoryoTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
         assertThat(gd.stack.getFirst().getCard()).isInstanceOf(FootstepsOfTheGoryo.class);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.assertOnBattlefield(player2, "Ronin Cavekeeper");
         harness.assertNotInGraveyard(player1, "Ronin Cavekeeper");

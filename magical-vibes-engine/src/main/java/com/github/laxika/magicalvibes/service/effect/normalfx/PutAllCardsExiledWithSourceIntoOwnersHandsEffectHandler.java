@@ -34,14 +34,14 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
         if (sourcePermanentId == null && entry.getSourcePermanentSnapshot() != null) {
             sourcePermanentId = entry.getSourcePermanentSnapshot().getId();
         }
-        if (sourcePermanentId == null) {
+        if (sourcePermanentId == null && !returnEffect.anySourcePermanent()) {
             entry.setEventValue(0);
             return;
         }
 
         UUID sourceId = sourcePermanentId;
         List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
-                .filter(exiled -> sourceId.equals(exiled.sourcePermanentId())
+                .filter(exiled -> (returnEffect.anySourcePermanent() || sourceId.equals(exiled.sourcePermanentId()))
                         && (!returnEffect.onlyControllerOwned()
                         || entry.getControllerId().equals(exiled.ownerId()))
                         && (!returnEffect.onlyIntelCounters()

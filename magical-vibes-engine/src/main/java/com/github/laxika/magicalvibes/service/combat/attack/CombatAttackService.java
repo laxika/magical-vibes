@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
+import com.github.laxika.magicalvibes.model.condition.OpponentsAttackWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
@@ -1887,6 +1888,25 @@ public class CombatAttackService {
             }
             if (filteredEffects.isEmpty()) continue;
 
+            List<UUID> filteredDeclaredAttackerIds = null;
+            for (int effectIndex = 0; effectIndex < filteredEffects.size(); effectIndex++) {
+                if (filteredEffects.get(effectIndex) instanceof GrantKeywordEffect grant
+                        && grant.scope() == GrantScope.TARGETS && grant.filter() != null) {
+                    FilterContext attackFilterContext = FilterContext.of(gameData)
+                            .withSourceCardId(perm.getCard().getId())
+                            .withSourceControllerId(playerId);
+                    filteredDeclaredAttackerIds = attackerIndices.stream()
+                            .map(battlefield::get)
+                            .filter(attacker -> predicateEvaluationService.matchesPermanentPredicate(
+                                    attacker, grant.filter(), attackFilterContext))
+                            .map(Permanent::getId)
+                            .toList();
+                    filteredEffects.set(effectIndex, new GrantKeywordEffect(grant.keywords(), GrantScope.TARGETS,
+                            null, grant.duration(), grant.grantCondition()));
+                }
+            }
+            if (filteredDeclaredAttackerIds != null && filteredDeclaredAttackerIds.isEmpty()) continue;
+
             int previousCopies = oncePerTurn ? gameData.beginTriggeredAbilityCopies(1)
                     : beginAttackTriggerCopies(gameData, playerId, perm);
             try {
@@ -1943,7 +1963,9 @@ public class CombatAttackService {
                                 null,
                                 null,
                                 null,
-                                referencesDeclaredAttackers
+                                filteredDeclaredAttackerIds != null
+                                        ? filteredDeclaredAttackerIds
+                                        : referencesDeclaredAttackers
                                         ? attackerIndices.stream().map(battlefield::get).map(Permanent::getId).toList()
                                         : null
                         );
@@ -1959,6 +1981,10 @@ public class CombatAttackService {
                         attackTrigger.setAttackingPermanentSnapshots(attackerIndices.stream()
                                 .map(battlefield::get).map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
                         gameData.stack.add(attackTrigger);
+                        if (perm.isAttacking()) {
+                            triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                                    gameData, perm, attackTrigger);
+                        }
                         if (oncePerTurnForPlayer) {
                             markFirstQualifyingAttackThisTurn(gameData, playerId);
                         } else if (oncePerTurn && !markOncePerTurnOnAcceptance) {
@@ -2074,8 +2100,9 @@ public class CombatAttackService {
                     perCreatureAttackEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
                     perCreatureAttackEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
                 }
-                perCreatureAttackEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
-                        gameData, perm, EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+                List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                        gameData, perm, EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                perCreatureAttackEffects.addAll(grantedAttackEffects);
                 if (perCreatureAttackEffects.isEmpty()) continue;
 
                 List<CardEffect> matchingEffects = new ArrayList<>();
@@ -2118,6 +2145,14 @@ public class CombatAttackService {
 
                 matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.condition() instanceof SourceAttackedThisCombat
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(perm, playerId)));
+
+                // An intervening-if (CR 603.4) on the ability stops it from triggering at all, so its
+                // targets are not chosen for a trigger that would never go on the stack (e.g. a Class's
+                // higher-level ability while the Class is a lower level).
+                matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.interveningIf()
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(perm, playerId)));
 
@@ -2195,6 +2230,21 @@ public class CombatAttackService {
                             }
                             if (bundledEffects.remove(registeredEffect)) {
                                 abilities.add(List.of(registeredEffect));
+                            }
+                        }
+                        for (CardEffect grantedEffect : grantedAttackEffects) {
+                            CardEffect unwrappedGranted = grantedEffect;
+                            if (unwrappedGranted instanceof TriggeringCardConditionalEffect conditional) {
+                                unwrappedGranted = conditional.wrapped();
+                            } else if (unwrappedGranted instanceof TriggeringPermanentConditionalEffect conditional) {
+                                unwrappedGranted = conditional.wrapped();
+                            } else if (unwrappedGranted instanceof ConditionalEffect conditional
+                                    && (conditional.condition() instanceof AttacksAlone
+                                    || conditional.condition() instanceof AttacksPlayerAlone)) {
+                                unwrappedGranted = conditional.wrapped();
+                            }
+                            if (bundledEffects.remove(unwrappedGranted)) {
+                                abilities.add(List.of(unwrappedGranted));
                             }
                         }
                         if (!bundledEffects.isEmpty()) {
@@ -2811,6 +2861,7 @@ public class CombatAttackService {
                         if (conditional.condition() instanceof AttacksEnchantedPlayer
                                 || conditional.condition() instanceof ControllerAndEnchantedPlayerAttackEachOther
                                 || conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
+                                || conditional.condition() instanceof OpponentsAttackWithAtLeastCreatures
                                 || conditional.condition() instanceof OpponentAttacksPlaneswalker
                                 || conditional.condition() instanceof PlayerAttacksNotController) {
                             if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
@@ -2831,6 +2882,7 @@ public class CombatAttackService {
                             && (conditional.condition() instanceof AttacksEnchantedPlayer
                             || conditional.condition() instanceof ControllerAndEnchantedPlayerAttackEachOther
                             || conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
+                            || conditional.condition() instanceof OpponentsAttackWithAtLeastCreatures
                             || conditional.condition() instanceof OpponentAttacksPlaneswalker)) {
                         playerAttackEffects.add(conditional.wrapped());
                     } else {

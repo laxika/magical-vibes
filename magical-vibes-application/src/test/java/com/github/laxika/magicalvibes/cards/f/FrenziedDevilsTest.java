@@ -67,7 +67,7 @@ class FrenziedDevilsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, devils)).isEqualTo(5);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, devils)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, devils)).isEqualTo(3);

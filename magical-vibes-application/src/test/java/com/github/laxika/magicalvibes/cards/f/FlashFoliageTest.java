@@ -107,7 +107,7 @@ class FlashFoliageTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
 
-        castFlashFoliage(attacker);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> castFlashFoliage(attacker));
 
         Permanent token = findPermanents(player2, "Saproling").getFirst();
         assertThat(token.isBlocking()).isTrue();

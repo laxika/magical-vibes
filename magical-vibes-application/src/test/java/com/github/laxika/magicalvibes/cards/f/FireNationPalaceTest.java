@@ -62,11 +62,11 @@ class FireNationPalaceTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
 
         declareAttackers(List.of(2));
-        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(4);
 
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(null, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
@@ -124,6 +124,8 @@ class FireNationPalaceTest extends BaseCardTest {
     @DisplayName("Granted firebending expires at end of turn")
     void grantedFirebendingExpires() {
         harness.addToBattlefield(player1, new FireNationPalace());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -131,12 +133,12 @@ class FireNationPalaceTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isFalse();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         declareAttackers(List.of(1));
-        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_OF_COMBAT);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
     private Permanent playLand(Player player, com.github.laxika.magicalvibes.model.Card land) {

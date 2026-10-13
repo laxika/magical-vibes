@@ -78,7 +78,7 @@ class FaerieDuelistTest extends BaseCardTest {
     void canCastDuringOpponentTurn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
 
         castFaerieDuelist(bears.getId());

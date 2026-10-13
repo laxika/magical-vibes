@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,6 +48,11 @@ class FangOfShigekiTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         harness.passBothPriorities();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                fang.getId(), 1,
+                player2.getId(), 5
+        ));
 
         harness.assertInGraveyard(player1, "Greater Tanuki");
         harness.assertInGraveyard(player2, "Fang of Shigeki");

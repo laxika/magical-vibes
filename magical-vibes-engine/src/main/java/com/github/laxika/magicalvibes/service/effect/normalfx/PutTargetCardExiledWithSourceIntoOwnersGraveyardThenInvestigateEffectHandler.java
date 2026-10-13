@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,7 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardExiledWithSource
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
@@ -28,6 +31,7 @@ public class PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffe
     private final PredicateEvaluationService predicateEvaluationService;
     @Lazy
     private final TriggerCollectionService triggerCollectionService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,18 +40,37 @@ public class PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetId = entry.getTargetId();
-        ExiledCardEntry exiled = targetId == null ? null : gameData.findExiledCard(targetId);
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId == null && entry.getSourcePermanentSnapshot() != null) {
-            sourcePermanentId = entry.getSourcePermanentSnapshot().getId();
-        }
         var putEffect = (PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffect) effect;
+        UUID targetId = entry.getTargetId();
+        if (putEffect.chooseAtResolution()) {
+            UUID sourceId = sourcePermanentId(entry);
+            List<UUID> available = gameData.orderedPlayerIds.stream()
+                    .flatMap(owner -> gameData.getPlayerExiledCards(owner).stream())
+                    .map(card -> gameData.findExiledCard(card.getId()))
+                    .filter(exiled -> exiled != null && !exiled.faceDown()
+                            && sourceId != null && sourceId.equals(exiled.sourcePermanentId()))
+                    .map(exiled -> exiled.card().getId())
+                    .filter(id -> putEffect.filter() == null || matchesFilter(gameData, entry, putEffect, id))
+                    .toList();
+            if (available.isEmpty()) return;
+            if (available.size() > 1) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledCardChoice(
+                        entry.getControllerId(), available, entry.getCard().getName(), entry, effect));
+                return;
+            }
+            targetId = available.getFirst();
+        }
+        putChosenCardIntoGraveyard(gameData, entry, putEffect, targetId);
+    }
+
+    public void putChosenCardIntoGraveyard(GameData gameData, StackEntry entry,
+            PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffect putEffect, UUID targetId) {
+        ExiledCardEntry exiled = targetId == null ? null : gameData.findExiledCard(targetId);
+        UUID sourcePermanentId = sourcePermanentId(entry);
         if (exiled == null || sourcePermanentId == null
                 || !sourcePermanentId.equals(exiled.sourcePermanentId())
                 || exiled.faceDown()
-                || (putEffect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                        exiled.card(), putEffect.filter(), entry.getCard().getId(), gameData, exiled.ownerId()))) {
+                || (putEffect.filter() != null && !matchesFilter(gameData, entry, putEffect, targetId))) {
             return;
         }
         if (!gameData.removeFromExile(targetId)) {
@@ -60,5 +83,19 @@ public class PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffe
         permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
                 CreateTokenEffect.ofClueToken(1), entry.getCard().getSetCode());
         triggerCollectionService.checkInvestigateTriggers(gameData, entry.getControllerId());
+    }
+
+    private UUID sourcePermanentId(StackEntry entry) {
+        if (entry.getSourcePermanentId() != null) {
+            return entry.getSourcePermanentId();
+        }
+        return entry.getSourcePermanentSnapshot() == null ? null : entry.getSourcePermanentSnapshot().getId();
+    }
+
+    private boolean matchesFilter(GameData gameData, StackEntry entry,
+            PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffect putEffect, UUID cardId) {
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        return exiled != null && predicateEvaluationService.matchesCardPredicate(
+                exiled.card(), putEffect.filter(), entry.getCard().getId(), gameData, exiled.ownerId());
     }
 }

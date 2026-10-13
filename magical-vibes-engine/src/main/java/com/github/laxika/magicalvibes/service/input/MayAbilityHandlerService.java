@@ -772,7 +772,9 @@ public class MayAbilityHandlerService {
         if (accepted) {
             if (requiresSourceSacrifice(ability.effects())
                     && (ability.sourcePermanentId() == null
-                    || gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) == null)) {
+                    || gameData.playerBattlefields.get(ability.controllerId()) == null
+                    || gameData.playerBattlefields.get(ability.controllerId()).stream()
+                    .noneMatch(p -> p.getId().equals(ability.sourcePermanentId())))) {
                 accepted = false;
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " cannot sacrifice ", ability.sourceCard(), "."));

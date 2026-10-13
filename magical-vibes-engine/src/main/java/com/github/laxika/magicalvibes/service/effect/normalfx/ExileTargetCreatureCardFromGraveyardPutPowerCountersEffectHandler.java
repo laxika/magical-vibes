@@ -17,8 +17,8 @@ import java.util.UUID;
 
 /**
  * Handler for {@link ExileTargetCreatureCardFromGraveyardPutPowerCountersEffect} (Flesh): capture the
- * graveyard target's printed power, exile it, then put that many +1/+1 counters on the targeted
- * creature.
+ * graveyard target's power (including characteristic-defining values), exile it, then put that many
+ * +1/+1 counters on the targeted creature.
  *
  * <p>The two targets are handled independently (CR 608.2b): a graveyard card that already left its
  * graveyard makes X zero, and a creature that is no longer a legal target still leaves the exile
@@ -48,7 +48,8 @@ public class ExileTargetCreatureCardFromGraveyardPutPowerCountersEffectHandler i
             UUID graveyardCardId = graveyardGroup.getFirst();
             Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, graveyardCardId);
             if (graveyardCard != null) {
-                counters = graveyardCard.getPower() == null ? 0 : Math.max(0, graveyardCard.getPower());
+                Integer power = gameQueryService.getEffectiveCardPower(gameData, graveyardCard);
+                counters = power == null ? 0 : Math.max(0, power);
                 graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, graveyardCardId, graveyardCard);
                 String playerName = gameData.playerIdToName.get(entry.getControllerId());
                 gameLogService.append(gameData,

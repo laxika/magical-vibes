@@ -47,8 +47,56 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         Set<CardSupertype> additionalSupertypes,
         boolean chooseAttackTarget,
         List<CardColor> additionalColors,
-        String nameOverride
+        String nameOverride,
+        boolean replaceCardTypes
 ) implements CardEffect {
+    /** Backward-compatible constructor for copies whose card types are added to, not replaced. */
+    public CreateTokenCopyOfTargetPermanentEffect(
+            List<CardSubtype> additionalSubtypes,
+            Set<CardType> additionalTypes,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            boolean sacrificeAtEndStep,
+            boolean tappedAndAttacking,
+            boolean trackWithSource,
+            boolean createForTargetController,
+            CardColor colorOverride,
+            Set<Keyword> additionalKeywords,
+            boolean sacrificeAtNextUpkeep,
+            Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+            List<CardSubtype> creatureSubtypeOverride,
+            boolean tapped,
+            boolean removeLegendary,
+            DynamicAmount amount,
+            boolean exileAtEndOfCombat,
+            Set<CardSupertype> additionalSupertypes,
+            boolean chooseAttackTarget,
+            List<CardColor> additionalColors,
+            String nameOverride) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource,
+                createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep,
+                additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount,
+                exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors, nameOverride,
+                false);
+    }
+
+    /**
+     * Returns this copy effect with its card types replaced by {@code additionalTypes} instead of added to
+     * the copied types, for "except it's a [type]" wording (CR 707.9b).
+     */
+    public CreateTokenCopyOfTargetPermanentEffect withReplacedCardTypes() {
+        return new CreateTokenCopyOfTargetPermanentEffect(additionalSubtypes, additionalTypes, powerOverride,
+                toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep,
+                tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
+                sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary,
+                amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
+                nameOverride, true);
+    }
+
     /** Backward-compatible full constructor without a name override. */
     public CreateTokenCopyOfTargetPermanentEffect(
             List<CardSubtype> additionalSubtypes,
@@ -342,6 +390,14 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, true,
                 false, false, null, Set.of(), false, Map.of(), List.of(), false, false,
                 new Fixed(1), false, Set.of(), true);
+    }
+
+    /** Creates a tapped and attacking copy the controller sends at a chosen defender, exiled at end of combat. */
+    public static CreateTokenCopyOfTargetPermanentEffect tappedAndAttackingWithTargetChoiceExiledAtEndOfCombat() {
+        return new CreateTokenCopyOfTargetPermanentEffect(
+                List.of(), Set.of(), null, null, Map.of(), false, false, false, true,
+                false, false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                new Fixed(1), true, Set.of(), true);
     }
 
     /** Creates a tapped and attacking copy with optional legendary removal and end-step exile. */

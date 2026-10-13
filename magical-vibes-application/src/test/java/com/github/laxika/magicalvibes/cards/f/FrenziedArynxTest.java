@@ -64,9 +64,10 @@ class FrenziedArynxTest extends BaseCardTest {
     void multipleRiotInstancesAddSeparateCounters() {
         harness.addToBattlefield(player1, new RhythmOfTheWild());
 
-        Permanent arynx = castArynx(true);
+        castArynxAnsweringFirstRiot(true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
+        Permanent arynx = arynxOnBattlefield();
 
         assertThat(arynx.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, arynx)).isEqualTo(5);
@@ -79,9 +80,10 @@ class FrenziedArynxTest extends BaseCardTest {
     void multipleRiotInstancesAllowCounterAndHaste() {
         harness.addToBattlefield(player1, new RhythmOfTheWild());
 
-        Permanent arynx = castArynx(true);
+        castArynxAnsweringFirstRiot(true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
+        Permanent arynx = arynxOnBattlefield();
 
         assertThat(arynx.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, arynx, Keyword.HASTE)).isTrue();
@@ -127,6 +129,20 @@ class FrenziedArynxTest extends BaseCardTest {
     }
 
     private Permanent castArynx(boolean chooseCounter) {
+        castArynxAnsweringFirstRiot(chooseCounter);
+        return arynxOnBattlefield();
+    }
+
+    private Permanent arynxOnBattlefield() {
+        return gqs.findPermanentById(gd, harness.getPermanentId(player1, "Frenzied Arynx"));
+    }
+
+    /**
+     * Casts Arynx and answers the first riot prompt only. With Rhythm of the Wild each riot instance is a
+     * separate choice made as Arynx enters (CR 702.136b), so Arynx is not on the battlefield until the
+     * remaining choices are answered.
+     */
+    private void castArynxAnsweringFirstRiot(boolean chooseCounter) {
         harness.setHand(player1, List.of(new FrenziedArynx()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -140,7 +156,6 @@ class FrenziedArynxTest extends BaseCardTest {
         if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
             harness.handleMayAbilityChosen(player1, chooseCounter);
         }
-        return gqs.findPermanentById(gd, harness.getPermanentId(player1, "Frenzied Arynx"));
     }
 
     private Permanent addReadyArynx() {

@@ -26,7 +26,7 @@ class FairgroundsTrumpeterTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, 3, land.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(trumpeter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -47,7 +47,7 @@ class FairgroundsTrumpeterTest extends BaseCardTest {
         harness.activateAbility(player2, 0, 0, 2, land.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(trumpeter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -66,7 +66,7 @@ class FairgroundsTrumpeterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, 0, 1, land.getId());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(trumpeter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -82,7 +82,7 @@ class FairgroundsTrumpeterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, 1, land.getId());
         harness.passBothPriorities();
         Permanent trumpeter = harness.enterBattlefieldAndReturn(player1, new FairgroundsTrumpeter());
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(trumpeter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -95,7 +95,7 @@ class FairgroundsTrumpeterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new WakerOfTheWilds());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.activateAbility(player1, 1, 0, 1, land.getId());

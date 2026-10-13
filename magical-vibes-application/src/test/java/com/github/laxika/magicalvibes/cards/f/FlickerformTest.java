@@ -141,8 +141,9 @@ class FlickerformTest extends BaseCardTest {
     @Test
     @DisplayName("The delayed return belongs to Flickerform's controller, even on an opponent's creature")
     void delayedReturnRetainsTheActivatedAbilityControllerAndSource() {
-        Permanent creature = addCreatureReady(player2, new CourierHawk());
-        creature.getCard().setOwnerId(player2.getId());
+        CourierHawk hawk = new CourierHawk();
+        hawk.setOwnerId(player2.getId());
+        Permanent creature = addCreatureReady(player2, hawk);
         Flickerform card = new Flickerform();
         card.setOwnerId(player1.getId());
         Permanent aura = new Permanent(card);

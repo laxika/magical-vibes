@@ -616,6 +616,17 @@ public class UntapStepService {
      *
      * @return {@code true} if the untap was replaced, {@code false} if the permanent should untap
      */
+    /**
+     * Applies any untap replacement that would stop {@code permanent} from untapping, such as
+     * Freyalise's Winds removing its wind counters, for an untap that happens outside the untap
+     * step sequence (a "may choose not to untap" permanent the controller chose to untap).
+     *
+     * @return {@code true} if an untap replacement applied and the permanent stays tapped
+     */
+    public boolean replaceUntapIfApplicable(GameData gameData, Permanent permanent, UUID permanentControllerId) {
+        return replaceUntap(gameData, permanent, permanentControllerId);
+    }
+
     private boolean replaceUntap(GameData gameData, Permanent permanent, UUID permanentControllerId) {
         final boolean[] replaced = {false};
         gameData.forEachBattlefield((sourceControllerId, battlefield) -> {

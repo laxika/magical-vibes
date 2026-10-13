@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -30,9 +32,12 @@ public class FLiThePathfinder extends Card {
                 new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES)));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardAllOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.DWARF),
-                                new CardNotPredicate(new CardIsTokenPredicate())
+                        new CardAnyOfPredicate(List.of(
+                                new CardIsSelfPredicate(),
+                                new CardAllOfPredicate(List.of(
+                                        new CardSubtypePredicate(CardSubtype.DWARF),
+                                        new CardNotPredicate(new CardIsTokenPredicate())
+                                ))
                         )),
                         new CreateTokenEffect("Dwarf", 2, 2, CardColor.RED,
                                 List.of(CardSubtype.DWARF), Set.of(), Set.of())

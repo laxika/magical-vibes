@@ -38,6 +38,8 @@ public class EachOpponentLosesAllCountersEffectHandler implements NormalEffectHa
             gameData.playerPoisonCounters.remove(playerId);
             gameData.removePlayerEnergyCounters(playerId, Integer.MAX_VALUE);
             gameData.playerExperienceCounters.remove(playerId);
+            gameData.playerRadCounters.remove(playerId);
+            gameData.playerSparkCounters.remove(playerId);
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.getOrDefault(playerId, "Player")
                             + " loses all counters from " + entry.getCard().getName() + "."));

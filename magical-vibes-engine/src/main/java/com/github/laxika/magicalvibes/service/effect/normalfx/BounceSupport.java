@@ -167,6 +167,15 @@ public class BounceSupport {
         if (!target.isCopy()) {
             Card spell = target.getPhysicalCard();
             UUID ownerId = spell.getOwnerId() != null ? spell.getOwnerId() : target.getControllerId();
+            if (target.isCastWithFlashback()) {
+                // CR 702.34a / 702.127a: a flashback or aftermath spell is exiled instead of going anywhere else
+                // when it would leave the stack.
+                gameData.addToExile(ownerId, spell);
+                gameLogService.append(gameData, GameLog.isExiled(target.getCard()));
+                log.info("Game {} - {} exiled {} instead of returning it to hand", gameData.id,
+                        source.getCard().getName(), target.getCard().getName());
+                return;
+            }
             gameData.playerHands.computeIfAbsent(ownerId, id -> new java.util.ArrayList<>()).add(spell);
         }
 

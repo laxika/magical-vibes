@@ -32,13 +32,19 @@ public class EnchantedCreatureDealsPowerDamageToAnyTargetEffectHandler implement
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent aura = entry.getSourcePermanentSnapshot() != null
-                && entry.getSourcePermanentSnapshot().getCard().isAura()
-                ? entry.getSourcePermanentSnapshot()
-                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent creature = aura != null && aura.isAttached()
-                ? gameQueryService.findPermanentById(gameData, aura.getAttachedTo())
-                : null;
+        Permanent triggeringCreature = entry.getTriggeringPermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        Permanent aura = null;
+        Permanent creature = triggeringCreature;
+        if (creature == null && entry.getTriggeringPermanentPowerAtTrigger() == null) {
+            aura = entry.getSourcePermanentSnapshot() != null
+                    && entry.getSourcePermanentSnapshot().getCard().isAura()
+                    ? entry.getSourcePermanentSnapshot()
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            creature = aura != null && aura.isAttached()
+                    ? gameQueryService.findPermanentById(gameData, aura.getAttachedTo())
+                    : null;
+        }
         if (creature == null) {
             creature = entry.getAttachedPermanentSnapshot();
         }
@@ -52,12 +58,22 @@ public class EnchantedCreatureDealsPowerDamageToAnyTargetEffectHandler implement
             controllerId = entry.getTriggeringPermanentControllerId();
         }
         if (controllerId == null) {
+            controllerId = entry.getControllerId();
+        }
+        if (controllerId == null) {
             return;
         }
 
-        int damage = amountEvaluationService.evaluate(gameData,
-                ((EnchantedCreatureDealsPowerDamageToAnyTargetEffect) effect).damageAmount(),
-                AmountContext.forStackEntry(entry, aura != null && aura.isAttached() ? aura : null));
+        int damage;
+        if (triggeringCreature != null) {
+            damage = Math.max(0, gameQueryService.getEffectivePower(gameData, triggeringCreature));
+        } else if (entry.getTriggeringPermanentPowerAtTrigger() != null) {
+            damage = Math.max(0, entry.getTriggeringPermanentPowerAtTrigger());
+        } else {
+            damage = amountEvaluationService.evaluate(gameData,
+                    ((EnchantedCreatureDealsPowerDamageToAnyTargetEffect) effect).damageAmount(),
+                    AmountContext.forStackEntry(entry, aura != null && aura.isAttached() ? aura : null));
+        }
         StackEntry damageEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 creature.getCard(),

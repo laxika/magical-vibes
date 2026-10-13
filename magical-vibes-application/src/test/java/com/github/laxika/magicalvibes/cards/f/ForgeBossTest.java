@@ -80,7 +80,6 @@ class ForgeBossTest extends BaseCardTest {
         addSacrificeMana();
 
         harness.activateAbility(player1, 1, null, null);
-        harness.handlePermanentChosen(player1, boss.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(boss.getCard());
@@ -98,7 +97,6 @@ class ForgeBossTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.activateAbility(player2, 0, null, null);
-        harness.handlePermanentChosen(player2, sacrificed.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(sacrificed.getCard());

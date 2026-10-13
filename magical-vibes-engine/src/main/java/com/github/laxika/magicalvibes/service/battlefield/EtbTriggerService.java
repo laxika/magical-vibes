@@ -483,7 +483,7 @@ public class EtbTriggerService {
             if (evoked && triggeredEffects.stream().anyMatch(
                     com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect.class::isInstance)) {
                 queueMandatoryETBEffects(gameData, controllerId, card, null, List.of(),
-                        List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect()),
+                        List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect(true)),
                         null, extraTriggerCopies, etbMode, xValue, repeatedAdditionalCosts, convokeCreatureIds);
             }
             for (ChooseOneAtTriggerTimeEffect triggerTimeChoice : triggerTimeChoices) {

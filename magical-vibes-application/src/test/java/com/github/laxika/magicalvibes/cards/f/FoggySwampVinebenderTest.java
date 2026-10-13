@@ -95,16 +95,19 @@ class FoggySwampVinebenderTest extends BaseCardTest {
     void waterbendWithManaDuringEndStep() {
         Permanent vinebender = harness.addToBattlefieldAndReturn(player1, new FoggySwampVinebender());
         vinebender.tap();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.GREEN, 10);
 
-        harness.activateAbility(player1, 0, null, null);
-        assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.passBothPriorities();
-        assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            harness.passBothPriorities();
+            assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        });
         assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(vinebender.isTapped()).isTrue();
     }

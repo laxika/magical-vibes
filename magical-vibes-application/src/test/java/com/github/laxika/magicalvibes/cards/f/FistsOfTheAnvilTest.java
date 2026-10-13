@@ -201,8 +201,9 @@ class FistsOfTheAnvilTest extends BaseCardTest {
         Permanent otherBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
 
-        harness.castAndResolveInstant(player1, 0, bearId);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.castAndResolveInstant(player1, 0, bearId));
 
         assertThat(findPermanent(player1, "Grizzly Bears").getEffectivePower()).isEqualTo(6);
         assertThat(otherBear.getEffectivePower()).isEqualTo(2);

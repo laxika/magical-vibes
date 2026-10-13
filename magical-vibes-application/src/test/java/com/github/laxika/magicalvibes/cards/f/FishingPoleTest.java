@@ -147,7 +147,7 @@ class FishingPoleTest extends BaseCardTest {
         pole.setCounterCount(CounterType.BAIT, 1);
         creature.tap();
 
-        advanceToUpkeep(player1);
+        harness.performUntapStep(player1);
         pole.setCounterCount(CounterType.BAIT, 0);
         harness.passBothPriorities();
 
@@ -178,7 +178,7 @@ class FishingPoleTest extends BaseCardTest {
         pole.setAttachedTo(creature.getId());
         creature.tap();
 
-        advanceToUpkeep(player1);
+        harness.performUntapStep(player1);
         pole.setCounterCount(CounterType.BAIT, 1);
         harness.passBothPriorities();
 

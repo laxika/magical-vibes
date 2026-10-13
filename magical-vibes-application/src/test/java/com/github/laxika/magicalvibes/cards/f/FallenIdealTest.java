@@ -171,10 +171,9 @@ class FallenIdealTest extends BaseCardTest {
     @Test
     @DisplayName("The enchanted creature can sacrifice itself and the Aura returns")
     void enchantedCreatureCanSacrificeItself() {
-        Permanent bear = attachAuraToBears();
+        attachAuraToBears();
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
         if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();

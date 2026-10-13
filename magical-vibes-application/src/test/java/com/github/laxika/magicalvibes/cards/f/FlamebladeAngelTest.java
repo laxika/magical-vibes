@@ -108,7 +108,7 @@ class FlamebladeAngelTest extends BaseCardTest {
     @Test
     void opponentCombatDamageToControllerTriggers() {
         harness.addToBattlefield(player1, new FlamebladeAngel());
-        harness.addToBattlefield(player2, new DevilthornFox());
+        addCreatureReady(player2, new DevilthornFox());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());

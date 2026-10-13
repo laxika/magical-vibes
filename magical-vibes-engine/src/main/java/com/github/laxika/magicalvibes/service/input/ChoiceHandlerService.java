@@ -1206,6 +1206,20 @@ public class ChoiceHandlerService {
             handleMoveOneCounterChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SourceCounterCostTypeChoice ctx) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            abilityActivationService.handleSourceCounterCostTypeChosen(gameData, player, ctx, colorName);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ControlledCounterCostTypeChoice ctx) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            abilityActivationService.handleControlledCounterCostTypeChosen(gameData, player, ctx, colorName);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.DismantleCounterTypeChoice ctx) {
             handleDismantleCounterTypeChoice(gameData, colorName, ctx);
             return;
@@ -3150,8 +3164,11 @@ public class ChoiceHandlerService {
                 player.getUsername() + " chooses "
                         + chosenModes.stream().map(ChooseOneEffect.ChooseOneOption::label).toList()
                         + " for ", ctx.sourceCard(), "."));
+        // CR 608.2c: the chosen modes are followed in the order written on the card, not the order picked.
+        List<ChooseOneEffect.ChooseOneOption> modesInPrintedOrder = new ArrayList<>(chosenModes);
+        modesInPrintedOrder.sort(java.util.Comparator.comparingInt(mode -> ctx.effect().options().indexOf(mode)));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                ctx.sourcePermanentId(), chosenModes, ctx.triggeringCardId(), ctx.attackedTargetId(),
+                ctx.sourcePermanentId(), modesInPrintedOrder, ctx.triggeringCardId(), ctx.attackedTargetId(),
                 ctx.triggeringPermanentId());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
@@ -3619,7 +3636,10 @@ public class ChoiceHandlerService {
                     permanentCounterSupport.placeCounterOnPermanent(
                             gameData, gameData.pendingEffectResolutionEntry, target, ctx.counterType(), 1);
                 } else if (target.getCounterCount(ctx.counterType()) > 0) {
-                    target.setCounterCount(ctx.counterType(), target.getCounterCount(ctx.counterType()) - 1);
+                    int previousCount = target.getCounterCount(ctx.counterType());
+                    target.setCounterCount(ctx.counterType(), previousCount - 1);
+                    permanentCounterSupport.checkLastTimeCounterRemoved(gameData, target, ctx.counterType(),
+                            previousCount);
                     permanentCounterSupport.notifyLastCounterRemoved(gameData, target, ctx.counterType(),
                             1, gameData.pendingEffectResolutionEntry == null ? null
                                     : gameData.pendingEffectResolutionEntry.getControllerId());

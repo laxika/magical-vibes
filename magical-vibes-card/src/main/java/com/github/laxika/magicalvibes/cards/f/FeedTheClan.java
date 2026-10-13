@@ -7,13 +7,19 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "132")
 public class FeedTheClan extends Card {
 
     public FeedTheClan() {
-        var ferocious = new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4));
+        var ferocious = new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentPowerAtLeastPredicate(4))));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(ferocious, new GainLifeEffect(10)));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(new NotCondition(ferocious), new GainLifeEffect(5)));
     }

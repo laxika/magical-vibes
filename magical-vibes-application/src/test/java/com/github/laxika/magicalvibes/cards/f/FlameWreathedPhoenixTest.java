@@ -82,7 +82,7 @@ class FlameWreathedPhoenixTest extends BaseCardTest {
         Permanent phoenix = castPhoenix();
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, phoenix, Keyword.HASTE)).isTrue();
         phoenix.setMarkedDamage(gqs.getEffectiveToughness(gd, phoenix));

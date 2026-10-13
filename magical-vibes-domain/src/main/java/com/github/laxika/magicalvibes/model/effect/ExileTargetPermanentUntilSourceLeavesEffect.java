@@ -13,15 +13,24 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param targetPredicate optional restriction on the permanent target
  * @param exileIfSourceAlreadyLeft whether the target is still exiled if the source left before
  *                                 this effect resolved; no later return is registered in that case
+ * @param returnsOnSourceLeavesTrigger whether the return happens through the source's
+ *                                     leaves-the-battlefield triggered ability (Faceless Devourer)
+ *                                     rather than immediately when the source leaves
  */
 public record ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint,
                                                           PermanentPredicate targetPredicate,
-                                                          boolean exileIfSourceAlreadyLeft)
+                                                          boolean exileIfSourceAlreadyLeft,
+                                                          boolean returnsOnSourceLeavesTrigger)
         implements CardEffect {
+
+    public ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint, PermanentPredicate targetPredicate,
+                                                       boolean exileIfSourceAlreadyLeft) {
+        this(imprint, targetPredicate, exileIfSourceAlreadyLeft, false);
+    }
 
     /** Default constructor — no imprint. */
     public ExileTargetPermanentUntilSourceLeavesEffect() {
-        this(false, null, false);
+        this(false, null, false, false);
     }
 
     public ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint) {

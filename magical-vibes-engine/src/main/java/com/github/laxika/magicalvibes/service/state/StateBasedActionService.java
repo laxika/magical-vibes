@@ -477,6 +477,14 @@ public class StateBasedActionService {
                 dyingSnapshot.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, entry.permanent()));
                 dyingSnapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, entry.permanent()));
                 dyingSnapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, entry.permanent()));
+                for (StackEntry stackEntry : gameData.stack) {
+                    Permanent stackSource = stackEntry.getSourcePermanentSnapshot();
+                    if (entry.permanent().getId().equals(stackEntry.getSourcePermanentId())
+                            && stackSource != null && stackSource.getLastKnownPower() == null) {
+                        stackSource.setLastKnownPower(dyingSnapshot.getLastKnownPower());
+                        stackSource.setLastKnownToughness(dyingSnapshot.getLastKnownToughness());
+                    }
+                }
                 dyingSnapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, entry.permanent()));
                 gameData.simultaneousDyingGrantedSelfDeathEffects.put(entry.permanent().getId(),
                         List.copyOf(triggerCollectionService.grantedTriggeredEffects(

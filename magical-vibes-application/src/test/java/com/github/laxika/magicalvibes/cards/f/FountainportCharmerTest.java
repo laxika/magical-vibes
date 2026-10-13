@@ -141,6 +141,6 @@ class FountainportCharmerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("not playable");
     }
 }

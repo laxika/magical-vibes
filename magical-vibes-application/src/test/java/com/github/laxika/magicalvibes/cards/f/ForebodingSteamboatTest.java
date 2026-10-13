@@ -99,7 +99,7 @@ class ForebodingSteamboatTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(steamboat)));
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, cardToPutIntoGraveyard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(cardToPutIntoGraveyard.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");

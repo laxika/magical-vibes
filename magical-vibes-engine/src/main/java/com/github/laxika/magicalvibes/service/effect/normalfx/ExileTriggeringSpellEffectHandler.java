@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +34,9 @@ public class ExileTriggeringSpellEffectHandler implements NormalEffectHandlerBea
                 .orElse(null);
         if (spell == null) return;
 
+        // A spell that shuffles itself into its owner's library never goes to the graveyard, so the
+        // "exile instead of putting it into the graveyard" replacement has nothing to replace.
+        if (spell.getEffectsToResolve().stream().anyMatch(ShuffleIntoLibraryEffect.class::isInstance)) return;
         if (spell.getEffectsToResolve().stream().noneMatch(ExileSpellEffect.class::isInstance)) {
             spell.getEffectsToResolve().add(ExileSpellEffect.withSource(entry.getSourcePermanentId()));
         }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
@@ -28,13 +29,15 @@ import java.util.List;
 public class FiendHunter extends Card {
 
     public FiendHunter() {
+        PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+        ));
         target(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                )),
+                anotherCreature,
                 "Target must be another creature"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayEffect(new ExileTargetPermanentUntilSourceLeavesEffect(), "Exile another target creature?"));
+                new MayEffect(new ExileTargetPermanentUntilSourceLeavesEffect(false, anotherCreature, true, true),
+                        "Exile another target creature?"));
     }
 }

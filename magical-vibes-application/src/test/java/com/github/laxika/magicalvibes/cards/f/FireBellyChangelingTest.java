@@ -68,7 +68,7 @@ class FireBellyChangelingTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(changeling.getPowerModifier()).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(changeling.getPowerModifier()).isEqualTo(0);
     }
@@ -123,7 +123,7 @@ class FireBellyChangelingTest extends BaseCardTest {
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
         }
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(changeling.getPowerModifier()).isZero();
         harness.addMana(player1, ManaColor.RED, 3);
 

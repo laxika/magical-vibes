@@ -48,7 +48,8 @@ class FelhideSpiritbinderTest extends BaseCardTest {
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.ENCHANTMENT);
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
+                        false, null, null, player1.getId(), false, spiritbinder.getCard()));
     }
 
     @Test
@@ -89,7 +90,7 @@ class FelhideSpiritbinderTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken());
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().isToken());
         assertThat(gd.stack).hasSize(1);
@@ -107,7 +108,13 @@ class FelhideSpiritbinderTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new FatedInfatuation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castAndResolveInstant(player1, 0, token.getId());
+        harness.castInstant(player1, 0, token.getId());
+        PendingInteraction.PermanentChoice skirmisherTarget =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, skirmisherTarget.validIds().iterator().next());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
 
         Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken() && permanent != token)
@@ -116,7 +123,7 @@ class FelhideSpiritbinderTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gqs.hasKeyword(gd, copy, Keyword.HASTE)).isFalse();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(copy).doesNotContain(token);
     }
@@ -131,7 +138,7 @@ class FelhideSpiritbinderTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(token);
         gd.playerBattlefields.get(player2.getId()).add(token);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
@@ -201,6 +208,6 @@ class FelhideSpiritbinderTest extends BaseCardTest {
     private void advanceToUntapStep() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
     }
 }

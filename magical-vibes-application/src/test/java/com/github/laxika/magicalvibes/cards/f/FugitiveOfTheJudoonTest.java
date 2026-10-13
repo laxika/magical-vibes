@@ -107,7 +107,7 @@ class FugitiveOfTheJudoonTest extends BaseCardTest {
     void humanWardCountersAnOpponentsSpellWhenPaymentIsDeclined() {
         Permanent human = createChapterOneHuman();
         harness.setHand(player2, List.of(new SwordsToPlowshares()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.WHITE, 3);
 
         harness.castInstant(player2, 0, human.getId());
         harness.passBothPriorities();

@@ -44,6 +44,18 @@ public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAccepta
         return wrapped.targetSpec();
     }
 
+    /** Placeholder key that {@code GrantTriggeredAbilityEffect} replaces with one key per granting permanent. */
+    public static final String PER_GRANT_KEY = "per-grant";
+
+    /**
+     * For a granted ability: each granting permanent gives its own copy of the ability, so each has
+     * its own once-per-turn limit on the receiving permanent. Only valid on slots whose collector
+     * marks through {@code OncePerTurnTriggerSupport} (keyed marks).
+     */
+    public static OncePerTurnTriggerEffect perGrant(CardEffect wrapped) {
+        return new OncePerTurnTriggerEffect(wrapped, false, PER_GRANT_KEY);
+    }
+
     public OncePerTurnTriggerEffect(CardEffect wrapped) {
         this(wrapped, false, null);
     }

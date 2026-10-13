@@ -105,7 +105,7 @@ class FirefistAdeptTest extends BaseCardTest {
         bouncePermanent(player1, "Academy Journeymage");
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2)).singleElement()
+        assertThat(gd.playerBattlefields.get(player2.getId())).singleElement()
                 .satisfies(target -> assertThat(target.getMarkedDamage()).isEqualTo(1));
     }
 
@@ -119,7 +119,7 @@ class FirefistAdeptTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Firefist Adept");
-        assertThat(gd.playerBattlefields.get(player2)).singleElement()
+        assertThat(gd.playerBattlefields.get(player2.getId())).singleElement()
                 .satisfies(target -> assertThat(target.getMarkedDamage()).isZero());
         assertThat(gd.stack).isEmpty();
     }
@@ -134,7 +134,7 @@ class FirefistAdeptTest extends BaseCardTest {
         bouncePermanent(player1, "Firefist Adept");
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2)).singleElement()
+        assertThat(gd.playerBattlefields.get(player2.getId())).singleElement()
                 .satisfies(target -> assertThat(target.getMarkedDamage()).isEqualTo(1));
     }
 

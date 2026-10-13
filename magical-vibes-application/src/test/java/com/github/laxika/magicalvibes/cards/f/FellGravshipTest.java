@@ -113,6 +113,7 @@ class FellGravshipTest extends BaseCardTest {
         harness.castFromHand(player1, new FellGravship(), "{2}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
         assertThat(gd.stack).isEmpty();

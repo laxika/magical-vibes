@@ -17,9 +17,8 @@ public class ForbiddenFriendship extends Card {
     public ForbiddenFriendship() {
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(
                 "Dinosaur", 1, 1, CardColor.RED, List.of(CardSubtype.DINOSAUR),
-                Set.of(Keyword.HASTE), Set.of()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
-                "Human Soldier", 1, 1, CardColor.WHITE,
-                List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
+                Set.of(Keyword.HASTE), Set.of()).withSimultaneousTokens(List.of(
+                new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
+                        List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()))));
     }
 }

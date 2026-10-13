@@ -116,7 +116,8 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         if (e.mayChooseNewTargets() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
             psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), castingPlayerId,
                     copyEntry.getTargetableId(), 0);
-        } else if (e.mayChooseNewTargets() && copyEntry.getTargetId() != null) {
+        } else if (e.mayChooseNewTargets()
+                && (copyEntry.getTargetId() != null || copyEntry.getTargetIds().size() == 1)) {
             PendingMayAbility retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     castingPlayerId,
@@ -125,8 +126,6 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
                     copyCard.getId()
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);
-        } else if (e.mayChooseNewTargets() && copyEntry.getTargetIds().size() == 1) {
-            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), castingPlayerId, copyCard.getId(), 0);
         }
     }
 

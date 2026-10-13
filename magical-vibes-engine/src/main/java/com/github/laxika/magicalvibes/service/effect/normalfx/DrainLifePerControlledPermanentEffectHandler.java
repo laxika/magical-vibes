@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +21,6 @@ import java.util.UUID;
 public class DrainLifePerControlledPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
 
@@ -50,20 +48,14 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
         }
 
         // Target loses life
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
-            gameLogService.append(gameData, GameLog.text(targetName + "'s life total can't change."));
-        } else {
-            int targetCurrentLife = gameData.getLife(targetPlayerId);
-            int lifeLoss = drainAmount
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
-            gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - lifeLoss);
-
-            gameLogService.append(gameData, GameLog.textCardText(targetName + " loses " + drainAmount + " life (" , entry.getCard(), ")."));
-            log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, drainAmount, entry.getCard().getName());
-        }
+        int targetLifeBefore = gameData.getLife(targetPlayerId);
+        lifeSupport.applyLifeLoss(gameData, targetPlayerId, drainAmount, entry.getCard().getName());
+        int lifeLost = targetLifeBefore - gameData.getLife(targetPlayerId);
 
         // Controller gains life
-        lifeSupport.applyGainLife(gameData, controllerId, drainAmount);
+        int lifeGained = e.gainsOnlyLifeLost() ? lifeLost : drainAmount;
+        if (lifeGained > 0) {
+            lifeSupport.applyGainLife(gameData, controllerId, lifeGained);
+        }
     }
 }

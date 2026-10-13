@@ -272,6 +272,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
@@ -568,7 +569,7 @@ public class PredicateEvaluationService {
                         && card.hasKeyword(Keyword.CHANGELING));
             }
             case CardSharesCreatureTypeWithSourcePredicate ignored -> {
-                if (gameData == null || !card.hasType(CardType.CREATURE)) {
+                if (gameData == null || !card.hasType(CardType.CREATURE) && !card.hasType(CardType.KINDRED)) {
                     yield false;
                 }
                 Permanent source = sourcePermanentSnapshot;
@@ -966,6 +967,12 @@ public class PredicateEvaluationService {
                 yield toughness != null && toughness <= p.maxToughness();
             }
             case CardToughnessGreaterThanPowerPredicate ignored -> {
+                Permanent onBattlefield = gameData == null || card == null
+                        ? null : findPermanentByOriginalCardId(gameData, card.getId());
+                if (onBattlefield != null) {
+                    yield gameQueryService.getEffectiveToughness(gameData, onBattlefield)
+                            > gameQueryService.getEffectivePower(gameData, onBattlefield);
+                }
                 Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
                 Integer toughness = gameQueryService.getEffectiveCardToughness(gameData, card);
                 yield power != null && toughness != null && toughness > power;
@@ -2345,6 +2352,8 @@ public class PredicateEvaluationService {
             case PermanentIsSourceCardPredicate ignored -> filterContext.sourcePermanentId() != null
                     ? permanent.getId().equals(filterContext.sourcePermanentId())
                     : sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
+            case PermanentIsTargetCardPredicate ignored -> filterContext.targetCardId() != null
+                    && permanent.getOriginalCard().getId().equals(filterContext.targetCardId());
             case PermanentIsSpecificPermanentPredicate specific ->
                     specific.permanentId() != null && specific.permanentId().equals(permanent.getId());
             case PermanentControlledBySourceControllerPredicate ignored -> {

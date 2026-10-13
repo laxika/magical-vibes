@@ -10,20 +10,27 @@ import java.util.UUID;
 
 /**
  * Trigger descriptor for Coststorm: copies the spell for each different mana value among the
- * controller's other spells and lands played this turn.
+ * controller's other spells and lands played this turn. The count is evaluated when the trigger
+ * resolves, so spells cast in response to it are counted, and a spell's mana value on the stack
+ * includes its chosen X.
  */
 public record CoststormEffect() implements SpellCastCopyTriggerEffect {
 
     @Override
     public int copyCount(GameData gameData, UUID castingPlayerId) {
-        List<Card> spells = gameData.getSpellsCastThisTurn(castingPlayerId);
+        return copyCount(gameData, castingPlayerId, null);
+    }
+
+    @Override
+    public int copyCount(GameData gameData, UUID castingPlayerId, Card spellCard) {
         Set<Integer> manaValues = new HashSet<>();
-        int spellsToCount = Math.max(0, spells.size() - 1);
-        for (int i = 0; i < spellsToCount; i++) {
-            manaValues.add(spells.get(i).getManaValue());
+        for (Card spell : gameData.getSpellsCastThisTurn(castingPlayerId)) {
+            if (spellCard == null || !spell.getId().equals(spellCard.getId())) {
+                manaValues.add(gameData.getSpellCastStackManaValue(spell));
+            }
         }
-        if (gameData.landsPlayedThisTurn.getOrDefault(castingPlayerId, 0) > 0) {
-            manaValues.add(0);
+        for (Card land : gameData.landCardsPlayedThisTurn.getOrDefault(castingPlayerId, List.of())) {
+            manaValues.add(land.getManaValue());
         }
         return manaValues.size();
     }

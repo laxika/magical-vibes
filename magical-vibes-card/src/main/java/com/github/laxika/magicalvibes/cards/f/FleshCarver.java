@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
@@ -29,7 +29,7 @@ public class FleshCarver extends Card {
                 "{1}{B}, Sacrifice another creature: Put two +1/+1 counters on this creature."
         ));
 
-        addEffect(EffectSlot.ON_DEATH, new CreateTokenWithDyingSourcePowerCountersEffect(
+        addEffect(EffectSlot.ON_DEATH, new CreateTokenWithDyingSourcePowerEffect(
                 new CreateTokenEffect("Horror", 0, 0, CardColor.BLACK,
                         List.of(CardSubtype.HORROR), Set.of(), Set.of())
         ));

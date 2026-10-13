@@ -261,6 +261,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 
 | `PermanentSharesCardTypeWithSourcePermanentPredicate` | `()` | permanents that share a permanent card type with the source permanent snapshot; used for source-relative type comparisons | `FilterContext.sourcePermanentSnapshot` |
 | `PermanentSharesCardTypeWithTargetCardPredicate` | `()` | permanents that share a permanent card type with the selected graveyard card; used when a sacrifice filter depends on a card targeted by the same ability | `FilterContext.gameData` + `targetCardId` |
+| `PermanentIsTargetCardPredicate` | `()` | the permanent whose card is the card targeted by the same ability ("another" relative to a surviving target; Feast of Worms sacrifices another land) | `FilterContext.targetCardId`; `SacrificePermanentsEffectHandler` and the destroy-then handler set it from the then-entry's `targetCardIds` |
 
 ### Source-relative predicates
 

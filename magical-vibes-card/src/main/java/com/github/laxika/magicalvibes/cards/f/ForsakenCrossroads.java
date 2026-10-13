@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 
@@ -31,12 +30,12 @@ public class ForsakenCrossroads extends Card {
 
         // When Forsaken Crossroads enters the battlefield, scry 1. If you weren't the starting
         // player, you may untap Forsaken Crossroads instead.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
-                new ScryEffect(1),
-                ConditionalEffect.unless(
-                        new NotCondition(new ControllerIsStartingPlayer()),
-                        new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF),
-                                "Untap Forsaken Crossroads instead?"))));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                new ControllerIsStartingPlayer(), new ScryEffect(1)));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                new NotCondition(new ControllerIsStartingPlayer()),
+                new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF),
+                        "Untap Forsaken Crossroads instead?", new ScryEffect(1))));
 
         // {T}: Add one mana of the chosen color.
         addActivatedAbility(new ActivatedAbility(true, null,

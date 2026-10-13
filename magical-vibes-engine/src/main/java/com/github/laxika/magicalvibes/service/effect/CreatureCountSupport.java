@@ -33,6 +33,11 @@ public final class CreatureCountSupport {
 
     /** Returns the number contributed by one permanent after its static effects are applied. */
     public static int creatureCount(GameData gameData, Permanent permanent, GameQueryService gameQueryService) {
+        // A permanent that has lost all abilities until end of turn (Humble) no longer has its
+        // "counts as N creatures" static ability, so it contributes one creature.
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return 1;
+        }
         if (GameQueryService.isStaticEvaluationActive()) {
             int count = 1;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {

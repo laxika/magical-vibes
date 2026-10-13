@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -17,7 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class FearOfMissingOut extends Card {
 
     public FearOfMissingOut() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardAndDrawCardEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK, new OncePerTurnTriggerEffect(
                 new ConditionalEffect(new Delirium(), SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),

@@ -142,7 +142,7 @@ class FugitiveDruidTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CanopySpider()));
         harness.setHand(player2, List.of(new Pacifism(), new SearingTouch(), new SearingTouch()));
         harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 3);
         harness.forceActivePlayer(player2);
 
         harness.castEnchantment(player2, 0, druid.getId());

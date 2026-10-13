@@ -93,13 +93,15 @@ class FoulTongueShriekTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.setHand(player2, List.of(new Flatten()));
         harness.addMana(player2, ManaColor.BLACK, 4);
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0, 1)));
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, removedAttacker.getId());
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            harness.castInstant(player1, 0, player2.getId());
+            harness.passPriority(player1);
+            harness.castAndResolveInstant(player2, 0, removedAttacker.getId());
+            harness.assertInGraveyard(player1, "Grizzly Bears");
+            harness.passBothPriorities();
+        });
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 19);
@@ -128,11 +130,13 @@ class FoulTongueShriekTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new FoulTongueShriek()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
-        harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+            assertThat(gd.stack).hasSize(1);
+            harness.passBothPriorities();
+        });
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 19);

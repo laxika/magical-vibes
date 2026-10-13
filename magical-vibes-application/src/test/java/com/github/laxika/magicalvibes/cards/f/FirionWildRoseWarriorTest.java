@@ -60,6 +60,7 @@ class FirionWildRoseWarriorTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard().isToken());
 
         advanceToUpkeep(player2);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());

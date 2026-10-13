@@ -17,7 +17,7 @@ import java.util.List;
 public class FortifyingProvisions extends Card {
 
     public FortifyingProvisions() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodToken());
     }
 

@@ -2214,6 +2214,45 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /**
+     * The controller picks which kind of counter a "remove a counter from this permanent" activation
+     * cost spends when the source holds several kinds. Carries the suspended activation so it can be
+     * re-entered with the chosen kind.
+     */
+    record SourceCounterCostTypeChoice(UUID sourcePermanentId, Integer abilityIndex, Integer xValue,
+                                       UUID targetId, Zone targetZone, List<UUID> targetIds,
+                                       Map<UUID, Integer> damageAssignments,
+                                       List<CounterType> counterTypes) implements ChoiceContext {
+
+        public SourceCounterCostTypeChoice {
+            targetIds = targetIds != null ? List.copyOf(targetIds) : null;
+            damageAssignments = damageAssignments != null ? Map.copyOf(damageAssignments) : null;
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            return counterTypes.stream().map(AdjustChosenCounterTypeChoice::counterLabel).toList();
+        }
+    }
+
+    /**
+     * The controller picks which kind of counter to remove from the permanent they chose to pay a
+     * "remove a counter from a creature you control" activation cost with. Carries the suspended
+     * permanent-choice context so payment can resume with the chosen kind.
+     */
+    record ControlledCounterCostTypeChoice(PermanentChoiceContext.ActivatedAbilityCostChoice costChoice,
+                                           UUID chosenPermanentId,
+                                           List<CounterType> counterTypes) implements ChoiceContext {
+
+        public ControlledCounterCostTypeChoice {
+            counterTypes = List.copyOf(counterTypes);
+        }
+
+        public List<String> options() {
+            return counterTypes.stream().map(AdjustChosenCounterTypeChoice::counterLabel).toList();
+        }
+    }
+
     /** Dismantle's choice of counter type for the destroyed artifact's counters. */
     record DismantleCounterTypeChoice(int counterCount, String sourceCardName) implements ChoiceContext {
 

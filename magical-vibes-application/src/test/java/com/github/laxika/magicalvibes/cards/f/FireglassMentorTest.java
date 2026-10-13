@@ -79,6 +79,7 @@ class FireglassMentorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Island(), new Shock()));
         gd.lifeLostThisTurn.put(player2.getId(), 1);
 
+        harness.inMutationScope(() -> gd.mainPhasesBegunThisTurn = 0);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.passUntil(TurnStep.PRECOMBAT_MAIN);

@@ -190,6 +190,12 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         // Parked spell waits on the accept/decline; decline (or a finished accept path) resumes it.
+        // Set explicitly because an accepted repeat re-enters from its interaction handler, which
+        // does not go through the resolution loop's park step.
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (parked != null) {
+            gameData.pendingEffectResolutionIndex = parked.getResolvingEffectIndex() + 1;
+        }
         gameData.rerunCurrentEffectAfterInteraction = false;
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.ForbiddenRitualRepeatChoice(controllerId, sourceName));

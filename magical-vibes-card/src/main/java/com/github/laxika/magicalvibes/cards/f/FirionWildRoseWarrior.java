@@ -29,6 +29,6 @@ public class FirionWildRoseWarrior extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardIsTokenPredicate()),
                         CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(
-                                true, Map.of(EffectSlot.STATIC, List.of(new ReduceEquipCostEffect(2))))));
+                                true, Map.of(EffectSlot.STATIC, List.of(ReduceEquipCostEffect.ofThisEquipmentOnly(2))))));
     }
 }

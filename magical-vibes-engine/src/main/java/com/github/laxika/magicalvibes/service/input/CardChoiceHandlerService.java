@@ -1210,12 +1210,6 @@ public class CardChoiceHandlerService {
             }
         }
 
-        // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-            return;
-        }
-
         // Apply counters before drawing for combined filtered-discard follow-ups. This preserves
         // the written order of effects such as "put counters on this creature and draw".
         if (followUp.plusOnePlusOneCounterPermanentId() != null) {
@@ -1237,6 +1231,13 @@ public class CardChoiceHandlerService {
             }
             String drawPlayerName = gameData.playerIdToName.get(drawPlayerId);
             gameLogService.append(gameData, GameLog.text(drawPlayerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + "."));
+        }
+
+        // Self-discard triggers (e.g. Guerrilla Tactics) are processed after the counters and rummage
+        // draw above; a triggered ability is put on the stack only at the next priority point (CR 603.3).
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+            return;
         }
 
         // Untap permanent after "discard a card, then untap [source]" completes
@@ -2795,7 +2796,10 @@ public class CardChoiceHandlerService {
         // Flash: "sacrifice it unless you pay its mana cost reduced by {N}." Prompt a pay-or-sacrifice
         // may ability against the just-entered creature — accepting charges the reduced cost, declining
         // (or being unable to pay) sacrifices it via the ForcedCostOrElse SacrificeSelf penalty.
-        if (sacrificeUnlessPayGenericReduction != null) {
+        if (sacrificeUnlessPayGenericReduction != null && (card.getManaCost() == null || card.getManaCost().isEmpty())) {
+            // CR 118.6: a card with no mana cost has an unpayable cost, so it is sacrificed without a payment prompt.
+            permanentRemovalService.removePermanentToGraveyard(gameData, permanent);
+        } else if (sacrificeUnlessPayGenericReduction != null) {
             String reducedCost = reduceGenericCost(card.getManaCost(), sacrificeUnlessPayGenericReduction);
             ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
                     new PayManaCost(reducedCost), List.of(new SacrificeSelfEffect()), true);
@@ -2811,24 +2815,48 @@ public class CardChoiceHandlerService {
     /**
      * Returns a mana cost string with its generic portion reduced by {@code reduction} (floored at 0);
      * colored, hybrid, and other symbols are preserved. Yields {@code "{0}"} when nothing else remains.
+     * Reduction left over once the plain generic part is used up applies to monocolored hybrid symbols
+     * such as {@code {2/W}}, which are paid with generic mana for the reduced amount (Reaper King
+     * ruling, 2008-05-01: a generic reduction applies to a monocolored hybrid symbol only when it is
+     * paid with generic mana).
      */
     private static String reduceGenericCost(String manaCost, int reduction) {
         String cost = manaCost == null ? "" : manaCost;
         java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\{([^}]+)}").matcher(cost);
         int generic = 0;
+        List<Integer> monocoloredHybrids = new ArrayList<>();
+        List<String> monocoloredHybridSymbols = new ArrayList<>();
         StringBuilder others = new StringBuilder();
         while (matcher.find()) {
             String symbol = matcher.group(1);
             try {
                 generic += Integer.parseInt(symbol);
             } catch (NumberFormatException notGeneric) {
-                others.append('{').append(symbol).append('}');
+                if (symbol.matches("\\d+/[WUBRG]")) {
+                    monocoloredHybrids.add(Integer.parseInt(symbol.substring(0, symbol.indexOf('/'))));
+                    monocoloredHybridSymbols.add(symbol);
+                } else {
+                    others.append('{').append(symbol).append('}');
+                }
             }
         }
-        int newGeneric = Math.max(0, generic - reduction);
+        int remaining = reduction;
+        int genericReduction = Math.min(generic, remaining);
+        generic -= genericReduction;
+        remaining -= genericReduction;
+        for (int i = 0; i < monocoloredHybrids.size(); i++) {
+            int hybridGeneric = monocoloredHybrids.get(i);
+            if (remaining > 0 && hybridGeneric > 0) {
+                int taken = Math.min(remaining, hybridGeneric);
+                remaining -= taken;
+                generic += hybridGeneric - taken;
+            } else {
+                others.append('{').append(monocoloredHybridSymbols.get(i)).append('}');
+            }
+        }
         StringBuilder result = new StringBuilder();
-        if (newGeneric > 0 || others.length() == 0) {
-            result.append('{').append(newGeneric).append('}');
+        if (generic > 0 || others.length() == 0) {
+            result.append('{').append(generic).append('}');
         }
         result.append(others);
         return result.toString();

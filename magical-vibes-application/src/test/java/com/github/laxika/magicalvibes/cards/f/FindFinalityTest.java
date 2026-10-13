@@ -93,7 +93,7 @@ class FindFinalityTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(10);

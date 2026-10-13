@@ -167,6 +167,7 @@ class FlamesOfMoradinTest extends BaseCardTest {
     @Test
     void duplicateCanBeHeldForLaterTurnAndCastForNormalManaCost() {
         Permanent original = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new FlamesOfMoradin()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

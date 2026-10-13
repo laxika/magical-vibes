@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -25,10 +23,7 @@ public class FalkenrathPitFighter extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new SacrificePermanentCost(
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)
-                                )),
+                                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
                                 "Sacrifice a Vampire",
                                 false
                         ),

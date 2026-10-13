@@ -115,9 +115,11 @@ class ForgestokerDragonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, null, target.getId());
-        dragon.setAttacking(false);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.activateAbility(player1, 0, null, target.getId());
+            dragon.setAttacking(false);
+            harness.passBothPriorities();
+        });
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(target.isCantBlockThisCombat()).isTrue();
@@ -130,12 +132,14 @@ class ForgestokerDragonTest extends BaseCardTest {
         setUpAttacking(dragon);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.activateAbility(player1, 0, null, target.getId());
 
-        dragon.setMarkedDamage(4);
-        harness.runStateBasedActions();
-        harness.assertInGraveyard(player1, "Forgestoker Dragon");
-        harness.passBothPriorities();
+            dragon.setMarkedDamage(4);
+            harness.runStateBasedActions();
+            harness.assertInGraveyard(player1, "Forgestoker Dragon");
+            harness.passBothPriorities();
+        });
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(target.isCantBlockThisCombat()).isTrue();
@@ -170,8 +174,10 @@ class ForgestokerDragonTest extends BaseCardTest {
         setUpAttacking(dragon);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.activateAbility(player1, 0, null, target.getId());
+            harness.passBothPriorities();
+        });
         assertThat(target.isCantBlockThisCombat()).isTrue();
 
         harness.forceStep(TurnStep.END_OF_COMBAT);

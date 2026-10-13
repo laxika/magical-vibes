@@ -18,7 +18,7 @@ public class FblthpTheLost extends Card {
     public FblthpTheLost() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new EnteredFromZone(Zone.LIBRARY), new DrawCardEffect()));
+                new EnteredFromZone(Zone.LIBRARY, true), new DrawCardEffect()));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new ShuffleSelfIntoOwnerLibraryEffect());
     }
 }

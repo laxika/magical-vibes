@@ -66,11 +66,10 @@ class ForgehammerCenturionTest extends BaseCardTest {
         centurion.setCounterCount(CounterType.OIL, 2);
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         assertThat(centurion.getCounterCount(CounterType.OIL)).isZero();
-        harness.handlePermanentChosen(player1, target.getId());
-        assertThat(target.isCantBlockThisTurn()).isFalse();
         resolveAllTriggers();
 
         assertThat(centurion.getCounterCount(CounterType.OIL)).isZero();
@@ -85,6 +84,7 @@ class ForgehammerCenturionTest extends BaseCardTest {
         centurion.setCounterCount(CounterType.OIL, 1);
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -101,9 +101,9 @@ class ForgehammerCenturionTest extends BaseCardTest {
         centurion.setCounterCount(CounterType.OIL, 2);
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
         assertThat(target.isCantBlockThisTurn()).isTrue();
 
@@ -122,9 +122,11 @@ class ForgehammerCenturionTest extends BaseCardTest {
         centurion.setCounterCount(CounterType.OIL, 3);
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(centurion.getCounterCount(CounterType.OIL)).isEqualTo(3);
         assertThat(target.isCantBlockThisTurn()).isFalse();

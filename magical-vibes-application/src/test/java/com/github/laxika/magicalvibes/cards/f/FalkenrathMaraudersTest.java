@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,6 +21,12 @@ class FalkenrathMaraudersTest extends BaseCardTest {
 
     private Permanent addReadyMarauders() {
         return addCreatureReady(player1, new FalkenrathMarauders());
+    }
+
+    private void dealCombatDamageAndHoldTriggers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
     }
 
     @Test
@@ -82,7 +89,7 @@ class FalkenrathMaraudersTest extends BaseCardTest {
         Permanent marauders = addReadyMarauders();
         Permanent other = addReadyMarauders();
         marauders.setAttacking(true);
-        resolveCombat(player1);
+        dealCombatDamageAndHoldTriggers();
 
         assertThat(marauders.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -114,7 +121,7 @@ class FalkenrathMaraudersTest extends BaseCardTest {
     void pendingTriggerDoesNotAffectReturnedSource() {
         Permanent marauders = addReadyMarauders();
         marauders.setAttacking(true);
-        resolveCombat(player1);
+        dealCombatDamageAndHoldTriggers();
         assertThat(gd.stack).hasSize(1);
 
         gd.playerBattlefields.get(player1.getId()).remove(marauders);

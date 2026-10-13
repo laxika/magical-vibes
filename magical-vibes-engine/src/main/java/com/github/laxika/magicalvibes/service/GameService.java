@@ -305,6 +305,8 @@ public class GameService {
                     ax.playerId().equals(player.getId());
             case PendingInteraction.TurnFaceUpXValueChoice tfu ->
                     tfu.playerId().equals(player.getId());
+            case PendingInteraction.ColorChoice cc ->
+                    cc.playerId().equals(player.getId()) && cc.context() instanceof ChoiceContext.ForgottenLorePaymentChoice;
             case PendingInteraction.MultiPermanentChoice mc ->
                     mc.playerId().equals(player.getId())
                             && (mc.context() instanceof com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.FadeAwayKeep

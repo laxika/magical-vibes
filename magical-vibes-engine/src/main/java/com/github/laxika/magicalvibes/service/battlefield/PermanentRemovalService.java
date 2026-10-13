@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
@@ -62,6 +63,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.PhasingService;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -277,9 +279,12 @@ public class PermanentRemovalService {
             return false;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        boolean wasNoncreatureArtifact = gameQueryService.isArtifact(gameData, target)
-                && !gameQueryService.isCreature(gameData, target);
+        boolean wasArtifact = gameQueryService.isArtifact(gameData, target);
+        boolean wasNoncreatureArtifact = wasArtifact && !gameQueryService.isCreature(gameData, target);
         boolean removed = removePermanentToGraveyard(gameData, target, false, false, null, true);
+        if (removed && wasArtifact && controllerId != null) {
+            gameData.playersWhoSacrificedArtifactsThisTurn.add(controllerId);
+        }
         if (removed && wasNoncreatureArtifact && controllerId != null) {
             triggerCollectionService.checkAnyNoncreatureArtifactSacrificedOrDestroyedTriggers(
                     gameData, controllerId, target.getCard());
@@ -473,6 +478,9 @@ public class PermanentRemovalService {
                 continue;
             }
             for (Permanent source : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, source)) {
+                    continue;
+                }
                 for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof DyingCreatureReturnToHandReplacementEffect replacement)
                             || !replacement.appliesTo(source, target, dyingCreatureIsEnchanted,
@@ -1131,11 +1139,25 @@ public class PermanentRemovalService {
      *         {@code false} if it was not on any battlefield
      */
     public boolean removePermanentToLibraryShuffled(GameData gameData, Permanent target) {
+        return removePermanentToLibrary(gameData, target, true);
+    }
+
+    /**
+     * Puts the permanent into its owner's library without shuffling it, for an effect that shuffles
+     * several objects into libraries and shuffles each affected library once afterwards.
+     */
+    public boolean removePermanentToLibraryUnshuffled(GameData gameData, Permanent target) {
+        return removePermanentToLibrary(gameData, target, false);
+    }
+
+    private boolean removePermanentToLibrary(GameData gameData, Permanent target, boolean shuffle) {
         boolean dynamicToken = markDynamicToken(gameData, target);
         UUID libraryOwnerId = gameData.defaultControllerOf(target.getId());
         // Replacement effect: exile instead of going to library (CR 614.6)
         if (tryApplyExileReplacementEffect(gameData, target, false, "going to the library")) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, libraryOwnerId);
+            if (shuffle) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, libraryOwnerId);
+            }
             return true;
         }
 
@@ -1176,7 +1198,9 @@ public class PermanentRemovalService {
         }
         triggerCollectionService.checkCardsPutIntoLibraryTriggers(
                 gameData, ownerId, cardsPutIntoLibrary);
-        LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+        if (shuffle) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+        }
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         return true;
     }
@@ -1328,24 +1352,49 @@ public class PermanentRemovalService {
                                     || gameData.activePlayerId.equals(gameQueryService.findPermanentController(
                                             gameData, a.permanentId()))
                                 : a.controllerId() == null || a.controllerId().equals(gameData.activePlayerId)));
+        Map<List<Object>, List<DelayedPermanentAction>> batches = new LinkedHashMap<>();
         for (DelayedPermanentAction action : actions) {
             if (kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP) {
                 resolveDelayedPermanentAction(gameData, action);
                 continue;
             }
-            Permanent permanent = gameQueryService.findPermanentById(gameData, action.permanentId());
-            if (permanent == null) {
+            // One delayed trigger from one source covers every permanent it scheduled together
+            // ("sacrifice those tokens at the beginning of your next upkeep" is a single trigger).
+            List<Object> batchKey = kind == DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP
+                    && action.sourceCard() != null
+                    ? List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), "")
+                            , Objects.requireNonNullElse(action.sacrificingPlayerId(), ""))
+                    : List.of(action);
+            batches.computeIfAbsent(batchKey, ignored -> new ArrayList<>()).add(action);
+        }
+        for (List<DelayedPermanentAction> batch : batches.values()) {
+            List<CardEffect> effects = new ArrayList<>();
+            Permanent firstPermanent = null;
+            UUID controllerId = null;
+            Card sourceCard = null;
+            for (DelayedPermanentAction action : batch) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, action.permanentId());
+                if (permanent == null) {
+                    continue;
+                }
+                if (firstPermanent == null) {
+                    firstPermanent = permanent;
+                    controllerId = action.sacrificingPlayerId() != null ? action.sacrificingPlayerId()
+                            : action.controllerId() != null ? action.controllerId()
+                            : gameQueryService.findPermanentController(gameData, permanent.getId());
+                    sourceCard = action.sourceCard() != null ? action.sourceCard() : permanent.getCard();
+                }
+                effects.add(new com.github.laxika.magicalvibes.model.effect.ResolveDelayedPermanentActionEffect(action));
+            }
+            if (firstPermanent == null) {
                 continue;
             }
-            UUID controllerId = action.sacrificingPlayerId() != null ? action.sacrificingPlayerId()
-                    : action.controllerId() != null ? action.controllerId()
-                    : gameQueryService.findPermanentController(gameData, permanent.getId());
             StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                    permanent.getCard(), controllerId,
-                    permanent.getCard().getName() + "'s delayed ability",
-                    List.of(new com.github.laxika.magicalvibes.model.effect.ResolveDelayedPermanentActionEffect(action)),
-                    null, permanent.getId());
-            trigger.setSourcePermanentSnapshot(new Permanent(permanent));
+                    sourceCard, controllerId,
+                    sourceCard.getName() + "'s delayed ability",
+                    effects,
+                    null, firstPermanent.getId());
+            trigger.setSourcePermanentSnapshot(new Permanent(firstPermanent));
             gameData.stack.add(trigger);
         }
     }
@@ -2057,6 +2106,12 @@ public class PermanentRemovalService {
      */
     private boolean damagerExilesDyingCreature(GameData gameData, Permanent dying) {
         UUID cardId = dying.getCard().getId();
+        if (gameData.creatureCardsDamagedThisTurnBySourcePermanent
+                .getOrDefault(dying.getId(), Set.of()).contains(cardId)
+                && (hasExileDamagedCreaturesInsteadOfDying(dying)
+                || auraOnSourceExilesDamagedCreatures(gameData, dying.getId()))) {
+            return true;
+        }
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {
                 if (!gameData.creatureCardsDamagedThisTurnBySourcePermanent
@@ -2687,7 +2742,14 @@ public class PermanentRemovalService {
                 .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
                 .anyMatch(effect -> effect instanceof ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect same
                         && same.returnsOnSourceLeavesTrigger());
-        if (pendingReturns == null && !returnsOnSourceLeavesTrigger) {
+        // A leaves-the-battlefield ability triggers even when the enter-the-battlefield exile never happened
+        // (CR 603.6c); Fiend Hunter's return ability is such an ability.
+        boolean hasLeavesTriggerExile = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+                .stream()
+                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
+                .anyMatch(effect -> effect instanceof ExileTargetPermanentUntilSourceLeavesEffect exile
+                        && exile.returnsOnSourceLeavesTrigger());
+        if (pendingReturns == null && !returnsOnSourceLeavesTrigger && !hasLeavesTriggerExile) {
             triggerCollectionService.processDelayedExileReturnCounterTriggers(
                     gameData, removedPermanent.getId(), List.of(), List.of());
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
@@ -2701,6 +2763,9 @@ public class PermanentRemovalService {
                         EffectSlot.ON_ENTER_BATTLEFIELD, EffectSlot.ON_TURNED_FACE_UP)
                 .flatMap(slot -> removedPermanent.getCard().getEffects(slot).stream()).anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect exile
                         && exile.returnToHand()
+                        || (effect instanceof MayEffect may ? may.wrapped() : effect)
+                        instanceof ExileTargetPermanentUntilSourceLeavesEffect leaveTriggerExile
+                        && leaveTriggerExile.returnsOnSourceLeavesTrigger()
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect);
         returnsThroughLeavesTrigger |= returnsOnSourceLeavesTrigger;
         returnsThroughLeavesTrigger |= removedPermanent.getCard().getEffects(EffectSlot.SPELL).stream()

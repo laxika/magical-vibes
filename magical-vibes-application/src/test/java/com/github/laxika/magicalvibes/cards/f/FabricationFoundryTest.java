@@ -88,6 +88,7 @@ class FabricationFoundryTest extends BaseCardTest {
     void restrictedManaPaysForArtifactAbility() {
         harness.addToBattlefield(player1, new FabricationFoundry());
         harness.addToBattlefield(player1, new MindStone());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Ornithopter()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -113,7 +114,6 @@ class FabricationFoundryTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, 1, null, target.getId(), Zone.GRAVEYARD);
-        harness.handleMultiplePermanentsChosen(player1, List.of(material.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ornithopter");
@@ -148,6 +148,7 @@ class FabricationFoundryTest extends BaseCardTest {
     void cannotExileFoundryOrOpponentsArtifact() {
         Permanent foundry = harness.addToBattlefieldAndReturn(player1, new FabricationFoundry());
         Permanent material = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        harness.addToBattlefield(player1, new Ornithopter());
         Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
         Card target = new Ornithopter();
         harness.setGraveyard(player1, List.of(target));

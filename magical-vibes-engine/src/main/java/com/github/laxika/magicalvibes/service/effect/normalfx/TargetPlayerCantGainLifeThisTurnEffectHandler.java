@@ -35,8 +35,8 @@ public class TargetPlayerCantGainLifeThisTurnEffectHandler implements NormalEffe
                 : gameQueryService.findPermanentController(gameData, targetId);
         if (playerId == null) return;
 
-        gameData.playersWhoCantGainLifeThisTurn.add(playerId);
+        gameData.playersWhoGainNoLifeThisTurn.add(playerId);
         gameLogService.append(gameData, GameLog.text(
-                gameData.playerIdToName.get(playerId) + " can't gain life this turn."));
+                gameData.playerIdToName.get(playerId) + " gains no life this turn."));
     }
 }

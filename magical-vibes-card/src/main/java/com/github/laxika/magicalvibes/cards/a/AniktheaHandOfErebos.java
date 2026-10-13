@@ -55,7 +55,7 @@ public class AniktheaHandOfErebos extends Card {
                         3,
                         3,
                         Set.of(), false, false, null, false, false, false,
-                        Set.of(CardType.CREATURE), false, false, false);
+                        Set.of(CardType.CREATURE), false, false, false, true);
         graveyardTarget.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, copyEffect);
         graveyardTarget.addEffect(EffectSlot.ON_ATTACK, copyEffect);
     }

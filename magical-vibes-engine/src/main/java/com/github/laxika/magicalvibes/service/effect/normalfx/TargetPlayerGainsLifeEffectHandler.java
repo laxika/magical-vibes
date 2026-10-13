@@ -42,7 +42,8 @@ public class TargetPlayerGainsLifeEffectHandler implements NormalEffectHandlerBe
                 int amount = amountEvaluationService.evaluate(gameData, e.amount(),
                         amountContext.withControllerId(targetPlayerId)
                                 .withTargetPermanentId(targetPlayerId));
-                lifeSupport.applyGainLife(gameData, targetPlayerId, amount);
+                lifeSupport.applyGainLife(gameData, targetPlayerId, amount, null,
+                        entry.getCard(), entry.getEntryType());
             }
         }
     }

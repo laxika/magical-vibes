@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -27,16 +25,12 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Firebreathing extends Card {
 
     public Firebreathing() {
-        // Enchant creature
         target(TargetFilters.creature());
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                new ActivatedAbility(
-                        false,
-                        "{R}",
-                        List.of(new BoostSelfEffect(1, 0)),
-                        "{R}: This creature gets +1/+0 until end of turn."
-                ),
-                GrantScope.ENCHANTED_CREATURE
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                "{R}",
+                List.of(new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(1), new Fixed(0))),
+                "{R}: Enchanted creature gets +1/+0 until end of turn."
         ));
     }
 }

@@ -2628,6 +2628,7 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(trigger))
         );
         entry.setTargetId(sc.castingPlayerId());
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }
@@ -2931,6 +2932,20 @@ public class SpellCastTriggerCollectorService {
         return handleGenericSpellCastTrigger(match, trigger, spellCard, castingPlayerId, null);
     }
 
+    /**
+     * The spell as it exists on the stack: an {@code {X}} in its mana cost is the chosen X value (CR 202.3e),
+     * so a mana value filter sees the real total. Returns the card itself when there is no chosen X.
+     */
+    private static Card spellOnStackWithChosenX(Card spellCard, Integer chosenX) {
+        String manaCost = spellCard.getManaCost();
+        if (chosenX == null || manaCost == null || !manaCost.contains("{X}")) {
+            return spellCard;
+        }
+        Card onStack = spellCard.createRuntimeCopy();
+        onStack.setManaCost(manaCost.replace("{X}", "{" + chosenX + "}"));
+        return onStack;
+    }
+
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
                                                     Card spellCard, UUID castingPlayerId,
                                                     UUID exiledSourcePermanentId) {
@@ -2988,8 +3003,8 @@ public class SpellCastTriggerCollectorService {
 
         StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCard.getId());
         Integer spellXValue = triggeringSpell == null ? null : triggeringSpell.getXValue();
-        if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(),
-                sourceOriginalCardId,
+        if (!predicateEvaluationService.matchesCardPredicate(spellOnStackWithChosenX(spellCard, spellXValue),
+                trigger.spellFilter(), sourceOriginalCardId,
                 match.gameData(), castingPlayerId, null, null, spellXValue)) return false;
 
         if (trigger.requiresTwoOrMoreCardTypes()
@@ -3085,6 +3100,23 @@ public class SpellCastTriggerCollectorService {
                 ? spellManaValue(match.gameData(), spellCard) : 0;
 
         MayEffect optionalMay = optionalMayEffect(match.rawEffect());
+        // CR 603.5: a plain "you may" spell-cast trigger goes on the stack and the choice is made when it
+        // resolves, so it is wrapped in a MayEffect for the stack path instead of a cast-time prompt.
+        boolean plainOptionalTrigger = optionalMay != null
+                && trigger.manaCost() == null
+                && !needsSpellManaSpentX
+                && !needsTargeting
+                && !needsGraveyardTarget
+                && !needsSpellTarget
+                && resolved.stream().noneMatch(effect -> effect instanceof ChooseOneEffect
+                        || effect instanceof ChooseModeNotYetChosenEffect);
+        if (plainOptionalTrigger) {
+            resolved = List.of(new MayEffect(
+                    resolved.size() == 1 ? resolved.getFirst()
+                            : SequenceEffect.of(resolved.toArray(CardEffect[]::new)),
+                    optionalMay.prompt()));
+            optionalMay = null;
+        }
         if (optionalMay != null) {
             PendingMayAbility pendingMayAbility = PendingMayAbility.forSpellCastTrigger(
                     sourceCard,

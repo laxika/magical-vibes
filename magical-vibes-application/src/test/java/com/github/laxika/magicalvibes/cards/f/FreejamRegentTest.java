@@ -93,7 +93,7 @@ class FreejamRegentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FreejamRegent()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castCreatureTappingPermanents(player1, 0, List.of(artifact.getId()));
+        harness.castCreatureWithConvoke(player1, 0, List.of(artifact.getId()));
 
         assertThat(artifact.isTapped()).isTrue();
         harness.passBothPriorities();
@@ -108,7 +108,7 @@ class FreejamRegentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FreejamRegent()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(
+        assertThatThrownBy(() -> harness.castCreatureWithConvoke(
                 player1, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("is not an artifact");
@@ -148,7 +148,7 @@ class FreejamRegentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FreejamRegent()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castCreatureTappingPermanents(player1, 0,
+        harness.castCreatureWithConvoke(player1, 0,
                 artifacts.stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
 
@@ -164,7 +164,7 @@ class FreejamRegentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FreejamRegent()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(player1, 0,
+        assertThatThrownBy(() -> harness.castCreatureWithConvoke(player1, 0,
                 artifacts.stream().map(Permanent::getId).toList()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
@@ -177,7 +177,7 @@ class FreejamRegentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FreejamRegent()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(
+        assertThatThrownBy(() -> harness.castCreatureWithConvoke(
                 player1, 0, List.of(artifact.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
@@ -189,7 +189,7 @@ class FreejamRegentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FreejamRegent()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(
+        assertThatThrownBy(() -> harness.castCreatureWithConvoke(
                 player1, 0, List.of(artifact.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(artifact.isTapped()).isFalse();

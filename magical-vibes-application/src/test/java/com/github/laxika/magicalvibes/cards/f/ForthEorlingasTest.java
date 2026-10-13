@@ -89,8 +89,8 @@ class ForthEorlingasTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new ParadiseDruid()));
         addCreatureReady(player1, new ParadiseDruid());
         castForthEorlingas(0);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         declareAttackers(List.of(0));
         resolveCombat();

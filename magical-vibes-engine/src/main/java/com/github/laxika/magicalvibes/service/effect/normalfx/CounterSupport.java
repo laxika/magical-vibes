@@ -432,29 +432,64 @@ public class CounterSupport {
     }
 
     /**
-     * Resolves a counter-unless-pays "not paid" rider (Power Sink) against the countered spell's
+     * Resolves a counter-unless-pays "not paid" rider (Power Sink) as the countering spell's
      * controller. The rider effects (e.g. tap their lands, empty their mana pool) resolve with their
-     * target set to {@code notPayingPlayerId}.
+     * target set to {@code notPayingPlayerId}, who is also recorded as the countered spell's
+     * controller for riders that act on "that player" (Frightful Delusion's discard).
      */
-    public void resolveNotPaidRider(GameData gameData, Card sourceCard, UUID notPayingPlayerId,
-                                    List<CardEffect> onNotPaidEffects) {
-        resolveRider(gameData, sourceCard, notPayingPlayerId, notPayingPlayerId, onNotPaidEffects);
+    public void resolveNotPaidRider(GameData gameData, Card sourceCard, UUID sourceControllerId,
+                                    UUID notPayingPlayerId, List<CardEffect> onNotPaidEffects) {
+        resolveRider(gameData, sourceCard, sourceControllerId, notPayingPlayerId, notPayingPlayerId,
+                onNotPaidEffects);
     }
 
+    /**
+     * Resolves a counter-unless-pays "paid" rider as the countering spell's controller; the paying
+     * player is recorded as the countered spell's controller for riders that act on "that player".
+     */
     public void resolvePaidRider(GameData gameData, Card sourceCard, UUID sourceControllerId,
-                                 List<CardEffect> onPaidEffects) {
-        resolveRider(gameData, sourceCard, sourceControllerId, null, onPaidEffects);
+                                 UUID payingPlayerId, List<CardEffect> onPaidEffects) {
+        resolveRider(gameData, sourceCard, sourceControllerId, null, payingPlayerId, onPaidEffects);
     }
 
     private void resolveRider(GameData gameData, Card sourceCard, UUID controllerId, UUID targetId,
-                              List<CardEffect> riderEffects) {
+                              UUID counteredSpellControllerId, List<CardEffect> riderEffects) {
         if (controllerId == null || riderEffects == null || riderEffects.isEmpty()) {
             return;
         }
         StackEntry riderEntry = new StackEntry(StackEntryType.INSTANT_SPELL, sourceCard, controllerId,
                 sourceCard.getName(), new ArrayList<>(riderEffects), 0);
         riderEntry.setTargetId(targetId);
-        effectResolutionService.resolveEffects(gameData, riderEntry);
+        riderEntry.setCounteredSpellControllerId(counteredSpellControllerId);
+        resolveNestedInParkedResolution(gameData, riderEntry);
+    }
+
+    /**
+     * Resolves a rider inside the resolution of the counter-unless-pays spell that is parked in
+     * {@code pendingEffectResolutionEntry} while its pay-or-counter prompt is answered. The rider
+     * must neither dispose of the parked spell nor replace its resumption point, so the parked
+     * resolution is restored once the rider has drained (a rider that paused for input, such as a
+     * discard choice, has no further effects to resume).
+     */
+    private void resolveNestedInParkedResolution(GameData gameData, StackEntry riderEntry) {
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        int parkedIndex = gameData.pendingEffectResolutionIndex;
+        if (parked == null) {
+            effectResolutionService.resolveEffects(gameData, riderEntry);
+            return;
+        }
+        gameData.effectResolutionDepth++;
+        try {
+            effectResolutionService.resolveEffects(gameData, riderEntry);
+        } finally {
+            gameData.effectResolutionDepth--;
+        }
+        StackEntry pausedRider = gameData.pendingEffectResolutionEntry;
+        if (pausedRider == null || (pausedRider == riderEntry
+                && gameData.pendingEffectResolutionIndex >= riderEntry.getEffectsToResolve().size())) {
+            gameData.pendingEffectResolutionEntry = parked;
+            gameData.pendingEffectResolutionIndex = parkedIndex;
+        }
     }
 
     public void notifyCounteredSpell(GameData gameData, UUID counteringPlayerId, StackEntry target) {

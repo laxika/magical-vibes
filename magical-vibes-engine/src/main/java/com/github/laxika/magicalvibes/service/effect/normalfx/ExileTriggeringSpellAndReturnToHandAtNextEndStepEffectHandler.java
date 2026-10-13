@@ -36,7 +36,8 @@ public class ExileTriggeringSpellAndReturnToHandAtNextEndStepEffectHandler imple
                         || candidate.getCard().hasType(CardType.SORCERY))
                 .findFirst()
                 .orElse(null);
-        if (spell == null || !entry.getControllerId().equals(spell.getControllerId())) {
+        if (spell == null || !entry.getControllerId().equals(spell.getControllerId())
+                || !entry.getControllerId().equals(spell.getOwnerId())) {
             return;
         }
 
@@ -47,5 +48,6 @@ public class ExileTriggeringSpellAndReturnToHandAtNextEndStepEffectHandler imple
         }
 
         spell.setExileAndReturnToHandAtNextEndStep(true);
+        spell.setExileAndReturnSourceCard(entry.getCard());
     }
 }

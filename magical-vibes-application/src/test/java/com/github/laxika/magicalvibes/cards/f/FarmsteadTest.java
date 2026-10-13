@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -84,7 +85,7 @@ class FarmsteadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player2, ManaColor.WHITE, 3);
-        harness.handleMayAbilityChosen(player2, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player2, true));
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         harness.assertLife(player2, 21);
@@ -100,7 +101,7 @@ class FarmsteadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.handleMayAbilityChosen(player2, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player2, true));
 
         harness.assertLife(player2, 20);
         harness.assertLife(player1, 20);

@@ -116,7 +116,7 @@ class ForbiddenOrchardTest extends BaseCardTest {
 
     private void advanceToNextTurn() {
         harness.setHand(player2, List.of());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
     }
 }

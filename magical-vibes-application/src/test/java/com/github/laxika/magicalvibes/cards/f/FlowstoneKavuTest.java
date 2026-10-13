@@ -54,7 +54,7 @@ class FlowstoneKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         assertThat(kavu.getEffectivePower()).isEqualTo(2);
         assertThat(kavu.getEffectiveToughness()).isEqualTo(3);

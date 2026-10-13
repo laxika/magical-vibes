@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 
@@ -10,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibr
 public class FblthpLostOnTheRange extends Card {
 
     public FblthpLostOnTheRange() {
+        // Ward {2}.
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
         addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
         addEffect(EffectSlot.STATIC, new PlotNonlandCardsFromTopOfLibraryEffect());
     }

@@ -108,7 +108,7 @@ class FoeRazerRegentTest extends BaseCardTest {
         assertThat(regent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(regent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -183,7 +183,7 @@ class FoeRazerRegentTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
     }
 }

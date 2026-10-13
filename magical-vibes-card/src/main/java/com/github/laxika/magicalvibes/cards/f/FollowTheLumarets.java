@@ -24,7 +24,7 @@ public class FollowTheLumarets extends Card {
 
         addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                 new GainedLifeThisTurn(),
-                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(4, creatureOrLand),
-                LookAtTopCardsEffect.mayRevealUpToToHandRestOnBottom(4, creatureOrLand, 2)));
+                LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(4, creatureOrLand),
+                LookAtTopCardsEffect.mayRevealUpToToHandRestOnBottomRandom(4, creatureOrLand, 2)));
     }
 }

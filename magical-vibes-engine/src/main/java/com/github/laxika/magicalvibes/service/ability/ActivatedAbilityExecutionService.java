@@ -996,6 +996,12 @@ public class ActivatedAbilityExecutionService {
             gameData.pendingManaAbilityTriggers.clear();
         }
 
+        // A targeted trigger queued by this activation's sacrifice costs (e.g. Furnace Celebration) chooses its
+        // target now, when it goes on the stack, rather than waiting for the next priority pass.
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+            triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        }
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
@@ -2120,6 +2126,9 @@ public class ActivatedAbilityExecutionService {
                 effectivePermanentTargetIds
         );
         stackEntry.setActivePlayerId(gameData.activePlayerId);
+        if (permanent.getCard().isAura()) {
+            stackEntry.setSourcePermanentSnapshot(new Permanent(permanent));
+        }
         stackEntry.setTargetFilter(ability.getTargetFilter());
         if (!ability.getMultiTargetFilters().isEmpty()) {
             List<TargetFilter> targetFilters = new ArrayList<>(effectivePermanentTargetIds.size());
@@ -2168,8 +2177,8 @@ public class ActivatedAbilityExecutionService {
             Permanent sacrificed = permanent.getChosenSacrificedPermanentSnapshot();
             stackEntry.setSacrificedPermanentSnapshot(sacrificed);
             if (sacrificed != null) {
-                stackEntry.setSacrificedPower(sacrificed.getEffectivePower());
-                stackEntry.setSacrificedToughness(sacrificed.getEffectiveToughness());
+                stackEntry.setSacrificedPower(permanent.getChosenSacrificedPower());
+                stackEntry.setSacrificedToughness(permanent.getChosenSacrificedToughness());
             }
         }
         if (sacrificedSourceSnapshot != null) {

@@ -30,8 +30,8 @@ public class FallOfTheFirstCivilization extends Card {
                 "Target must be an opponent.");
         target(opponentFilter)
                 .addEffect(EffectSlot.SAGA_CHAPTER_I, SequenceEffect.of(
-                        new DrawCardForTargetPlayerEffect(2, false, true),
-                        new DrawCardEffect(2)));
+                        new DrawCardEffect(2),
+                        new DrawCardForTargetPlayerEffect(2, false, true)));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(opponentFilter));
 
         var opponentArtifact = new PermanentAllOfPredicate(List.of(
@@ -43,6 +43,7 @@ public class FallOfTheFirstCivilization extends Card {
         target(opponentArtifactFilter)
                 .addEffect(EffectSlot.SAGA_CHAPTER_II, new ExileTargetPermanentEffect(opponentArtifact));
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(opponentArtifactFilter));
+        setSagaChapterTargetRequired(EffectSlot.SAGA_CHAPTER_II);
 
         addEffect(EffectSlot.SAGA_CHAPTER_III,
                 new EachPlayerChoosesPermanentsThenDestroyRestEffect(

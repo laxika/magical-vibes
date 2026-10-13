@@ -16,7 +16,7 @@ public class FavorableWinds extends Card {
 
     public FavorableWinds() {
         // Creatures you control with flying get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }
 }

@@ -31,6 +31,17 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SetBasePowerToughnessToAmountEffect setPT = (SetBasePowerToughnessToAmountEffect) effect;
+        if (setPT.scope() == GrantScope.TARGET) {
+            // One-shot "target creature becomes X/Y until end of turn" with amounts read from the spell
+            // (Fractalize: base power and toughness each equal to X plus 1).
+            AmountContext spellContext = AmountContext.forStackEntry(entry, null);
+            int power = amountEvaluationService.evaluate(gameData, setPT.power(), spellContext);
+            int toughness = amountEvaluationService.evaluate(gameData, setPT.toughness(), spellContext);
+            setBasePowerToughnessEffectHandler.resolve(gameData, entry,
+                    new SetBasePowerToughnessEffect(power, toughness, GrantScope.TARGET,
+                            EffectDuration.UNTIL_END_OF_TURN));
+            return;
+        }
         if (setPT.scope() != GrantScope.SELF) {
             return;
         }

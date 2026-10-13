@@ -29,6 +29,6 @@ public class FacelessDevourer extends Card {
                 anotherShadowCreature,
                 "Target must be another creature with shadow"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExileTargetPermanentUntilSourceLeavesEffect(false, anotherShadowCreature));
+                new ExileTargetPermanentUntilSourceLeavesEffect(false, anotherShadowCreature, true, true));
     }
 }

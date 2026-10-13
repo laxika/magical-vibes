@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.model.condition;
 
 import com.github.laxika.magicalvibes.model.Zone;
 
-/** The source permanent entered the battlefield from the given zone. */
-public record EnteredFromZone(Zone sourceZone, boolean fromControllersGraveyard) implements Condition {
+/**
+ * The source permanent entered the battlefield from the given zone. {@code fromControllersZone}
+ * additionally requires that zone to be the ability controller's own graveyard or library.
+ */
+public record EnteredFromZone(Zone sourceZone, boolean fromControllersZone) implements Condition {
 
     public EnteredFromZone(Zone sourceZone) {
         this(sourceZone, false);

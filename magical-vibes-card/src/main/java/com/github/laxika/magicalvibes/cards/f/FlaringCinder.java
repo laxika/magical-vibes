@@ -14,7 +14,8 @@ import java.util.List;
 public class FlaringCinder extends Card {
 
     public FlaringCinder() {
-        // When this creature enters and whenever you cast a spell with mana value 4 or greater,
+        // When this creature enters and whenever you cast a spell with mana value 4 or greater (X counts
+        // toward the mana value of a spell on the stack, CR 202.3e),
         // you may discard a card. If you do, draw a card.
         MayEffect rummage = new MayEffect(
                 new DiscardAndDrawCardEffect(),
@@ -22,7 +23,7 @@ public class FlaringCinder extends Card {
         );
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, rummage);
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
-                new CardMinManaValuePredicate(4),
+                new CardMinManaValuePredicate(4, true),
                 List.of(rummage)
         ));
     }

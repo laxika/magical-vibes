@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +30,7 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
     private final CreateTokenEffectHandler createTokenEffectHandler;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final ValidTargetService validTargetService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -86,7 +88,9 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 for (Permanent permanent : battlefield) {
-                    if (targetPredicateEvaluationService.matchesPermanent(targetPredicate, permanent, filterContext)) {
+                    if (targetPredicateEvaluationService.matchesPermanent(targetPredicate, permanent, filterContext)
+                            && !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, permanent,
+                                    entry.getControllerId())) {
                         validPermanentTargets.add(permanent.getId());
                     }
                 }

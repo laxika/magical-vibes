@@ -89,9 +89,10 @@ class FableOfTheMirrorBreakerTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .containsExactly(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                .containsExactly(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, null, player1.getId()));
     }
 
     @Test
@@ -205,7 +206,7 @@ class FableOfTheMirrorBreakerTest extends BaseCardTest {
         Permanent token = findPermanents(player1, "Bearer of Memory").stream()
                 .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         harness.passBothPriorities();
 
@@ -234,7 +235,7 @@ class FableOfTheMirrorBreakerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);

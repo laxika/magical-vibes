@@ -113,7 +113,15 @@ public class RemoveCounterFromPermanentCostHandler implements PermanentChoiceCos
             throw new IllegalStateException("Not enough counters on the chosen permanent");
         }
 
-        removeCounters(gameData, chosen, toRemove);
+        CounterType pickedType = gameData.chosenCostCounterType;
+        if (toRemove == 1 && pickedType != null && cost.allows(pickedType) && chosen.getCounterCount(pickedType) > 0) {
+            chosen.setCounterCount(pickedType, chosen.getCounterCount(pickedType) - 1);
+            if (pickedType == CounterType.OIL) {
+                gameData.recordOilCounterRemoved(chosen, 1);
+            }
+        } else {
+            removeCounters(gameData, chosen, toRemove);
+        }
         lastRemoved = toRemove;
         String counterWord = toRemove == 1 ? "a counter" : toRemove + " counters";
         gameLogService.append(gameData, GameLog.textCardText(
@@ -150,6 +158,17 @@ public class RemoveCounterFromPermanentCostHandler implements PermanentChoiceCos
             return true;
         }
         return false;
+    }
+
+    /**
+     * The kinds of counter on {@code permanent} this cost could remove, in {@link CounterType}
+     * order. More than one means the controller must choose which kind to remove.
+     */
+    public List<CounterType> removableKinds(Permanent permanent) {
+        return java.util.Arrays.stream(CounterType.values())
+                .filter(type -> type != CounterType.ANY && type != CounterType.SILVER
+                        && cost.allows(type) && permanent.getCounterCount(type) > 0)
+                .toList();
     }
 
     private boolean hasCounter(Permanent permanent) {

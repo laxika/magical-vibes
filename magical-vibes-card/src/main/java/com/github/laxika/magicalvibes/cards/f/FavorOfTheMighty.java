@@ -19,7 +19,7 @@ public class FavorOfTheMighty extends Card {
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(
                 new ProtectionFromColorsEffect(Set.of(
                         CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN)),
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasGreatestManaValueAmongAllCreaturesPredicate()));
     }
 }

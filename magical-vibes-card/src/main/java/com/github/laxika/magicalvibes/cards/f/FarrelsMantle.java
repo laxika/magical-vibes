@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.Sum;
@@ -29,10 +30,12 @@ public class FarrelsMantle extends Card {
         addEffect(EffectSlot.ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED,
                 new MayEffect(SequenceEffect.of(
                         new DealDamageToTargetCreatureEffect(
-                                new Sum(new SourcePower(), new Fixed(2)),
+                                new Sum(new SourcePower(true), new Fixed(2)),
                                 false,
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())),
                         new AssignNoCombatDamageEffect()),
-                        "have it deal damage equal to its power plus 2 to another target creature?"));
+                        "have it deal damage equal to its power plus 2 to another target creature?",
+                        null,
+                        MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

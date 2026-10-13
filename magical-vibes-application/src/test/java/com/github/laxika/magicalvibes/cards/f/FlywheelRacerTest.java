@@ -89,11 +89,13 @@ class FlywheelRacerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        assertThat(racer.isAttacking()).isTrue();
-        assertThat(racer.isTapped()).isFalse();
-        harness.activateAbility(player1, 0, 0, null, null);
-        harness.handleListChoice(player1, "GREEN");
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            assertThat(racer.isAttacking()).isTrue();
+            assertThat(racer.isTapped()).isFalse();
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.handleListChoice(player1, "GREEN");
+        });
 
         assertThat(racer.isAttacking()).isTrue();
         assertThat(racer.isTapped()).isTrue();

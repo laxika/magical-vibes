@@ -24,8 +24,8 @@ public class FerocityOfTheWilds extends Card {
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))
         ));
         addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, attackingNonHumans));
+                new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES, attackingNonHumans));
         addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, attackingNonHumans));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, attackingNonHumans));
     }
 }

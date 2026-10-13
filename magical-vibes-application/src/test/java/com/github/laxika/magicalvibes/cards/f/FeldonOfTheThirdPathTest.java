@@ -46,7 +46,7 @@ class FeldonOfTheThirdPathTest extends BaseCardTest {
         assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -151,7 +151,7 @@ class FeldonOfTheThirdPathTest extends BaseCardTest {
         assertThat(clone.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(clone.hasKeyword(Keyword.HASTE)).isFalse();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(clone).doesNotContain(token);
@@ -167,7 +167,7 @@ class FeldonOfTheThirdPathTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
@@ -175,12 +175,12 @@ class FeldonOfTheThirdPathTest extends BaseCardTest {
 
     @Test
     void tokenCreatedDuringEndStepSurvivesUntilFollowingEndStep() {
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         Permanent token = createCopy(new GrizzlyBears());
 
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(null, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);

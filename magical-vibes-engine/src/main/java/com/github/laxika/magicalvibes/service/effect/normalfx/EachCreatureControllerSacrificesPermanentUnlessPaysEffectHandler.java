@@ -109,14 +109,13 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
             int requiredSacrifices, List<UUID> remainingPlayerIds, List<UUID> accumulatedKeepIds,
             List<UUID> accumulatedSacrificeIds, String manaCost, UUID sourceControllerId,
             String sourceName) {
-        Set<UUID> keepIds = new HashSet<>(accumulatedKeepIds);
+        // The sacrifice is "a permanent of their choice", so a creature whose payment was kept can be
+        // the one sacrificed for another creature's unpaid obligation.
         List<UUID> validIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (!keepIds.contains(permanent.getId())) {
-                    validIds.add(permanent.getId());
-                }
+                validIds.add(permanent.getId());
             }
         }
 

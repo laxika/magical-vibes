@@ -134,7 +134,7 @@ class FuelTankFeasterTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
 
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.stack).isEmpty();
         harness.addMana(player1, ManaColor.GREEN, 5);
@@ -165,14 +165,15 @@ class FuelTankFeasterTest extends BaseCardTest {
     @Test
     void reductionPersistsAndAccumulatesOnLaterTurns() {
         addCreatureReady(player1, new FuelTankFeaster());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new CrawWurm()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         advanceToPrecombatMain(player1);
         harness.passBothPriorities();
-        harness.passUntil(player1, TurnStep.END_STEP);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.GREEN, 4);
@@ -212,6 +213,6 @@ class FuelTankFeasterTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
-        harness.passUntil(activePlayer, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(activePlayer, TurnStep.PRECOMBAT_MAIN);
     }
 }

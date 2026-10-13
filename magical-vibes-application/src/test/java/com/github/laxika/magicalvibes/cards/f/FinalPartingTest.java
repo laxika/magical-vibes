@@ -267,7 +267,8 @@ class FinalPartingTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleCardChosen(player1, findCardIndex(gd, "Plains"));
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals())
                 .isFalse();
         harness.handleCardChosen(player1, findCardIndex(gd, "Baloth Gorger"));

@@ -110,7 +110,7 @@ class FoundingTheThirdPathTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -123,7 +123,7 @@ class FoundingTheThirdPathTest extends BaseCardTest {
         triggerNextChapter();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(pact);
     }
 
@@ -183,7 +183,7 @@ class FoundingTheThirdPathTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertNotOnBattlefield(player1, "Founding the Third Path");
     }
 
@@ -194,13 +194,13 @@ class FoundingTheThirdPathTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(spell));
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
         addSagaWithLore(2);
 
         triggerNextChapter();
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
         harness.handleXValueChosen(player1, 3);

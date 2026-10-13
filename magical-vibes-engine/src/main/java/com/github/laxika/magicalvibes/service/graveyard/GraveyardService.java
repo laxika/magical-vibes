@@ -1722,9 +1722,11 @@ public class GraveyardService {
     private void updateFromAnywhereThisTurnTracking(GameData gameData, UUID ownerId, Card card,
                                                     Zone sourceZone) {
         if (!isToken(gameData, card)) {
-            gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
+            if (!gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
                     .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
-                    .add(card.getId());
+                    .add(card.getId())) {
+                gameData.cardsPutIntoGraveyardAgainThisTurn.merge(ownerId, 1, Integer::sum);
+            }
             if (sourceZone == Zone.LIBRARY) {
                 gameData.cardsPutIntoGraveyardFromLibraryThisTurn
                         .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet())
@@ -2102,6 +2104,7 @@ public class GraveyardService {
 
     private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count, List<Card> cards) {
         cards.forEach(card -> gameData.graveyardCardCastPermissionsUntilEndOfTurn.remove(card.getId()));
+        cards.forEach(card -> gameData.cardsGrantedJumpStartUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.markGraveyardExit(card.getId()));
         // Record that one or more cards left this player's graveyard this turn (regardless of
         // batching), for "if one or more cards left your graveyard this turn" effects.

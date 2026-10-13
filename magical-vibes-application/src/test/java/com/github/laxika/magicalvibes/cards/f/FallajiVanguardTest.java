@@ -114,6 +114,7 @@ class FallajiVanguardTest extends BaseCardTest {
     void enteringAllyCanBeTargeted() {
         harness.addToBattlefield(player1, new FallajiVanguard());
         Permanent ally = harness.enterBattlefieldAndReturn(player1, new ArgothianSprite());
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, ally.getId());
         harness.passBothPriorities();
 

@@ -13,10 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 public class FoggySwampVisions extends Card {
 
     public FoggySwampVisions() {
-        addEffect(EffectSlot.SPELL, new ChooseXValueCost(0, 100));
+        addEffect(EffectSlot.SPELL, new ChooseXValueCost(0, Integer.MAX_VALUE));
         addEffect(EffectSlot.SPELL, WaterbendCost.x());
         addEffect(EffectSlot.SPELL, new ExileCreaturesFromGraveyardAndCreateTokensEffect(
                 false, true, null, null, null, null, GraveyardSearchScope.ALL_GRAVEYARDS));
-        addEffect(EffectSlot.SPELL, new SacrificeCreatedPermanentsAtEndStepEffect());
+        addEffect(EffectSlot.SPELL, new SacrificeCreatedPermanentsAtEndStepEffect(true));
     }
 }

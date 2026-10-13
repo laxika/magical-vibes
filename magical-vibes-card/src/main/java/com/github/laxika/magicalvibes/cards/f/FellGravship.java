@@ -37,6 +37,7 @@ public class FellGravship extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillControllerThenEffect(3,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
+                        .mandatory(true)
                         .filter(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardSubtypePredicate(CardSubtype.SPACECRAFT))))

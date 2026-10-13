@@ -112,12 +112,13 @@ class FromTheAshesTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Forest()));
 
+        int logStart = gd.gameLog.size();
         castFromTheAshes();
         harness.handleCardChosen(player1, -1);
         harness.handleCardChosen(player2, -1);
 
         assertThat(activeSearch()).isNull();
-        assertThat(gd.gameLog).extracting(GameLogEntry::plainText)
+        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size())).extracting(GameLogEntry::plainText)
                 .noneMatch(log -> log.endsWith("'s library is shuffled."));
     }
 
@@ -127,9 +128,10 @@ class FromTheAshesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SavageLands());
         harness.setLibrary(player1, List.of(new SavageLands(), new BalefulStrix()));
 
+        int logStart = gd.gameLog.size();
         castFromTheAshes();
 
-        assertThat(gd.gameLog).extracting(GameLogEntry::plainText)
+        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size())).extracting(GameLogEntry::plainText)
                 .noneMatch(log -> log.contains("searches their library")
                         || log.endsWith("'s library is shuffled."));
         assertThat(gd.interaction.activeInteraction()).isNotNull();

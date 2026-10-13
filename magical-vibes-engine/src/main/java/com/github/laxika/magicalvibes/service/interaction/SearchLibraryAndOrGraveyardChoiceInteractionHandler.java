@@ -159,6 +159,10 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             Permanent entered = graveyardReturnSupport.putCardOntoBattlefield(
                     gameData, playerId, chosen, null, null, false, false,
                     interaction.enterWithCounterType(), interaction.enterWithCounterCount(), false);
+            if (entered != null && fromLibrary) {
+                entered.setEnteredFromZone(Zone.LIBRARY);
+                entered.setEnteredFromGraveyardOwnerId(null);
+            }
             if (entered != null && gameData.pendingEffectResolutionEntry != null) {
                 gameData.pendingEffectResolutionEntry.setChosenPermanentId(entered.getId());
             }

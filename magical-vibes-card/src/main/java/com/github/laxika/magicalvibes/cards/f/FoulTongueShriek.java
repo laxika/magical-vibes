@@ -17,6 +17,6 @@ public class FoulTongueShriek extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.SPELL, new DrainLifePerControlledPermanentEffect(
-                new PermanentIsAttackingPredicate(), 1));
+                new PermanentIsAttackingPredicate(), 1, true));
     }
 }

@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedColorDiscardAlternativeCostEffect;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -1317,10 +1318,10 @@ public class CastingCostService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
         if (battlefield == null) return 0;
 
-        int reduction = 0;
-        boolean preventsReductionBelowOneMana = false;
+        int unrestrictedReduction = 0;
+        int restrictedReduction = 0;
         for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
                 ActivatedAbilityCostReducingEffect reducer = activeActivatedAbilityCostReducer(
                         gameData, effect, permanent, activatingPlayerId);
                 if (reducer != null
@@ -1334,9 +1335,13 @@ public class CastingCostService {
                                 .withSourceControllerId(activatingPlayerId)
                                 .withSourcePermanentSnapshot(permanent)
                                 .withSourcePermanentId(permanent.getId()))) {
-                    reduction += evaluateActivatedAbilityCostReduction(
+                    int amount = evaluateActivatedAbilityCostReduction(
                             gameData, reducer, permanent, activatingPlayerId);
-                    preventsReductionBelowOneMana |= reducer.preventsReductionBelowOneMana();
+                    if (reducer.preventsReductionBelowOneMana()) {
+                        restrictedReduction += amount;
+                    } else {
+                        unrestrictedReduction += amount;
+                    }
                 }
             }
         }
@@ -1349,15 +1354,18 @@ public class CastingCostService {
                         sourcePermanent, reducer.affectedPermanents(),
                         FilterContext.of(gameData).withSourceControllerId(floating.controllerId())
                                 .withSourcePermanentId(floating.sourcePermanentId()))) {
-                    reduction += evaluateActivatedAbilityCostReduction(
+                    int amount = evaluateActivatedAbilityCostReduction(
                             gameData, reducer, null, floating.controllerId());
-                    preventsReductionBelowOneMana |= reducer.preventsReductionBelowOneMana();
+                    if (reducer.preventsReductionBelowOneMana()) {
+                        restrictedReduction += amount;
+                    } else {
+                        unrestrictedReduction += amount;
+                    }
                 }
             }
         }
-        return preventsReductionBelowOneMana
-                ? Math.min(reduction, maximumReductionForMinimumOneMana)
-                : reduction;
+        // "can't reduce the mana in that cost to less than one mana" limits only the reducer that carries it.
+        return unrestrictedReduction + Math.min(restrictedReduction, maximumReductionForMinimumOneMana);
     }
 
     /** Whether the activating player can use a static effect that replaces this equip cost with zero. */
@@ -1417,6 +1425,7 @@ public class CastingCostService {
 
         int reduction = 0;
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CyclingCostReducingEffect reducer) {
                     reduction += reducer.genericCostReduction();
@@ -1483,8 +1492,8 @@ public class CastingCostService {
                                                           ActivatedAbility ability, UUID targetId,
                                                           List<UUID> targetIds,
                                                           int maximumReductionForMinimumOneMana) {
-        int reduction = 0;
-        boolean preventsReductionBelowOneMana = false;
+        int unrestrictedReduction = 0;
+        int restrictedReduction = 0;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
@@ -1504,16 +1513,19 @@ public class CastingCostService {
                                         .withSourceCardId(perm.getOriginalCard().getId())
                                         .withSourceControllerId(pid)
                                         .withSourcePermanentId(perm.getId()))) {
-                        reduction += evaluateActivatedAbilityCostReduction(
+                        int amount = evaluateActivatedAbilityCostReduction(
                                 gameData, reducingEffect, perm, pid);
-                        preventsReductionBelowOneMana |= reducingEffect.preventsReductionBelowOneMana();
+                        if (reducingEffect.preventsReductionBelowOneMana()) {
+                            restrictedReduction += amount;
+                        } else {
+                            unrestrictedReduction += amount;
+                        }
                     }
                 }
             }
         }
-        return preventsReductionBelowOneMana
-                ? Math.min(reduction, maximumReductionForMinimumOneMana)
-                : reduction;
+        // "can't reduce the mana in that cost to less than one mana" limits only the reducer that carries it.
+        return unrestrictedReduction + Math.min(restrictedReduction, maximumReductionForMinimumOneMana);
     }
 
     /** Records a successful activation for once-each-turn controller-scoped reducers. */
@@ -2344,8 +2356,7 @@ public class CastingCostService {
             long matchingCount = hand.stream()
                     .filter(c -> c != card)
                     .filter(c -> exileHandCost.get().predicate() == null
-                            || predicateEvaluationService.matchesCardPredicate(
-                                    c, exileHandCost.get().predicate(), c.getId()))
+                            || matchesExileFromHandCostCard(gameData, c, exileHandCost.get().predicate()))
                     .count();
             if (matchingCount < exileHandCost.get().count()) return false;
         }
@@ -2423,6 +2434,13 @@ public class CastingCostService {
         }
 
         return true;
+    }
+
+    private boolean matchesExileFromHandCostCard(GameData gameData, Card card, CardPredicate predicate) {
+        if (predicate instanceof CardColorPredicate colorPredicate) {
+            return gameQueryService.getEffectiveCardColors(gameData, card).contains(colorPredicate.color());
+        }
+        return predicateEvaluationService.matchesCardPredicate(card, predicate, card.getId());
     }
 
     private boolean canPayDiscardCosts(GameData gameData, UUID playerId, Card sourceCard,

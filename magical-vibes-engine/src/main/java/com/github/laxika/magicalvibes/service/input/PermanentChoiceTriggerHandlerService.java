@@ -171,6 +171,12 @@ public class PermanentChoiceTriggerHandlerService {
             entry.setTriggeringCardId(triggeringPermanent.getCard().getId());
         }
         entry.setSourcePermanentSnapshot(stt.sourcePermanentSnapshot());
+        if (stt.triggeringPermanentSnapshot() != null) {
+            entry.setAttachedPermanentSnapshot(stt.triggeringPermanentSnapshot());
+        }
+        if (stt.triggeringPermanentPowerAtTrigger() != null) {
+            entry.setTriggeringPermanentPowerAtTrigger(stt.triggeringPermanentPowerAtTrigger());
+        }
         entry.setSourcePlanarObject(stt.planarSource());
         entry.setEventValue(stt.triggeringSpellManaValue() != null
                 ? stt.triggeringSpellManaValue()
@@ -1056,6 +1062,18 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /** An attack trigger with no separate triggering creature is caused by its own source attacking. */
+    private void notifyAttackingSourceTriggered(GameData gameData, PermanentChoiceContext.AttackTriggerTarget att,
+                                                StackEntry entry) {
+        if (att.triggeringPermanentId() != null || att.sourcePermanentId() == null) {
+            return;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
+        if (source != null && source.isAttacking()) {
+            triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(gameData, source, entry);
+        }
+    }
+
     public void handleAttackTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.AttackTriggerTarget att) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isExiledCardTarget = target == null
@@ -1111,6 +1129,7 @@ public class PermanentChoiceTriggerHandlerService {
                             gameData, triggeringCreature, entry);
                 }
             }
+            notifyAttackingSourceTriggered(gameData, att, entry);
 
             String targetName = getTargetDisplayName(gameData, permanentId);
             
@@ -1194,6 +1213,7 @@ public class PermanentChoiceTriggerHandlerService {
                         gameData, triggeringCreature, entry);
             }
         }
+        notifyAttackingSourceTriggered(gameData, att, entry);
 
         gameLogService.append(gameData, GameLog.builder().card(att.sourceCard()).text("'s ability targets "
                 + targetIds.size() + " permanent" + (targetIds.size() == 1 ? "" : "s") + ".").build());
@@ -3050,5 +3070,6 @@ public class PermanentChoiceTriggerHandlerService {
     private void pushTriggeredEntry(GameData gameData, StackEntry entry) {
         gameData.stack.add(entry);
         triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
+        triggerCollectionService.checkCrimeTriggers(gameData, entry);
     }
 }

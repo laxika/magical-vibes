@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OHOP", collectorNumber = "9")
 @CardRegistration(set = "OPCA", collectorNumber = "23")
@@ -20,7 +21,7 @@ public class FeedingGrounds extends Card {
                 new CardColorPredicate(CardColor.RED), 1, CostModificationScope.ALL));
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
                 new CardColorPredicate(CardColor.GREEN), 1, CostModificationScope.ALL));
-        addEffect(EffectSlot.CHAOS_TRIGGERED,
+        target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetManaValue()));
     }
 }

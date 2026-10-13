@@ -109,7 +109,7 @@ class FlareTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Flare()));
         harness.addMana(player2, ManaColor.RED, 3);
 
-        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.castAndResolveInstant(player2, 0, player1.getId()));
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

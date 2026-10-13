@@ -30,7 +30,7 @@ public class NameCardMillTargetDrawEffectHandler implements NormalEffectHandlerB
         var choiceContext = new ChoiceContext.NameCardMillDrawChoice(
                 entry.getControllerId(), entry.getTargetId());
 
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, cardNames, "Choose a card name."));
 

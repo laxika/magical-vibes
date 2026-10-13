@@ -264,7 +264,7 @@ class FatestitcherTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
         gd.playerGraveyards.get(player1.getId()).remove(card);
-        gd.getPlayerExiledCards(player1.getId()).add(card);
+        harness.setExile(player1, List.of(card));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Fatestitcher");

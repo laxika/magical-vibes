@@ -49,7 +49,8 @@ class FangkeepersFamiliarTest extends BaseCardTest {
     void destroyEnchantmentMode() {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new SealOfStrength());
 
-        castFangkeepersFamiliar(1, enchantment.getId());
+        enterAndChooseMode("Destroy target enchantment");
+        harness.handlePermanentChosen(player1, enchantment.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(enchantment);

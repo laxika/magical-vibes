@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class FarsightAdept extends Card {
 
     public FarsightAdept() {
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DrawCardForTargetPlayerEffect(1, false, true));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
     }
 }

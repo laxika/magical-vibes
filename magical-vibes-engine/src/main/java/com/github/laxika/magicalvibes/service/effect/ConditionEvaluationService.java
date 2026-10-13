@@ -185,6 +185,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.ControllerRingLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerEndStep;
+import com.github.laxika.magicalvibes.model.condition.OpponentEndStep;
 import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
@@ -319,6 +320,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOppo
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalker;
 import com.github.laxika.magicalvibes.model.condition.PlaneswalkedToPlaneThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
+import com.github.laxika.magicalvibes.model.condition.OpponentsAttackWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastTwoOrMoreSpellsThisTurn;
@@ -411,6 +413,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMotivated;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
+import com.github.laxika.magicalvibes.model.condition.SourcePairedWithSoulboundCreature;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRingBearer;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
@@ -1132,8 +1135,10 @@ public class ConditionEvaluationService {
             case EnteredFromZone c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && c.sourceZone() == source.getEnteredFromZone()
-                        && (!c.fromControllersGraveyard() || java.util.Objects.equals(ctx.controllerId(),
-                        source.getEnteredFromGraveyardOwnerId()));
+                        && (!c.fromControllersZone() || (c.sourceZone() == Zone.LIBRARY
+                        ? isOwnedBy(gameData, source.getCard(), ctx.controllerId())
+                        : java.util.Objects.equals(ctx.controllerId(),
+                        source.getEnteredFromGraveyardOwnerId())));
             }
             case CastNotFromHand ignored ->
                     !ctx.copiedSpell() && ctx.sourceZone() != null && ctx.sourceZone() != Zone.HAND;
@@ -1234,6 +1239,8 @@ public class ConditionEvaluationService {
             case OpponentAttacksWithAtLeastCreatures c ->
                     countOpponentAttackersAtControllerOrPlaneswalkers(gameData, ctx, c.includePlaneswalkers())
                             >= c.minimum();
+            case OpponentsAttackWithAtLeastCreatures c ->
+                    countOpponentAttackingCreatures(gameData, ctx) >= c.minimum();
             case OpponentAttacksPlaneswalker ignored ->
                     opponentAttacksPlaneswalker(gameData, ctx);
             case OpponentAttacksAnotherOpponent ignored ->
@@ -1559,6 +1566,10 @@ public class ConditionEvaluationService {
                             && ctx.controllerId().equals(gameData.activePlayerId)
                             && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                             || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN);
+            case OpponentEndStep ignored ->
+                    ctx.controllerId() != null
+                            && !ctx.controllerId().equals(gameData.activePlayerId)
+                            && gameData.currentStep == TurnStep.END_STEP;
             case ControllerEndStep ignored ->
                     ctx.controllerId() != null
                             && ctx.controllerId().equals(gameData.activePlayerId)
@@ -1698,6 +1709,13 @@ public class ConditionEvaluationService {
             case SourceIsPaired ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getPairedWithId() != null;
+            }
+            case SourcePairedWithSoulboundCreature ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                Permanent partner = source == null || source.getPairedWithId() == null
+                        ? null
+                        : gameQueryService.findPermanentById(gameData, source.getPairedWithId());
+                yield partner != null && gameQueryService.hasKeyword(gameData, partner, Keyword.SOULBOND);
             }
             case SourceIsRingBearer ignored ->
                     ctx.controllerId() != null
@@ -2537,6 +2555,12 @@ public class ConditionEvaluationService {
      * Resolves the source permanent from the context, preferring the permanent handed in by
      * the call site and falling back to a battlefield lookup by id.
      */
+    private boolean isOwnedBy(GameData gameData, Card card, UUID playerId) {
+        if (playerId == null) return false;
+        if (card.getOwnerId() != null) return playerId.equals(card.getOwnerId());
+        return gameData.startingDeckCardIds.getOrDefault(playerId, java.util.Set.of()).contains(card.getId());
+    }
+
     private Permanent sourcePermanent(GameData gameData, ConditionContext ctx) {
         if (ctx.sourcePermanentId() != null) {
             Permanent live = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
@@ -2905,11 +2929,12 @@ public class ConditionEvaluationService {
         UUID controllerId = ctx.controllerId();
         if (controllerId == null) return false;
 
-        List<Card> commanders = gameData.playerCommanders.get(controllerId);
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (commanders == null || commanders.isEmpty() || battlefield == null) return false;
+        if (battlefield == null) return false;
 
-        return battlefield.stream().anyMatch(permanent -> commanders.stream()
+        // A commander counts whoever owns it: "if you control a commander" only looks at control
+        return battlefield.stream().anyMatch(permanent -> gameData.playerCommanders.values().stream()
+                .flatMap(List::stream)
                 .anyMatch(commander -> commander.getId().equals(permanent.getOriginalCard().getId())));
     }
 
@@ -3739,6 +3764,22 @@ public class ConditionEvaluationService {
                 .filter(p -> ctx.targetId() == null || !gameData.playerIds.contains(ctx.targetId())
                         || ctx.targetId().equals(p.getAttackTarget()))
                 .filter(p -> matchesPermanent(gameData, p, predicate, ctx))
+                .count();
+    }
+
+    private long countOpponentAttackingCreatures(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        UUID attackingPlayerId = ctx.targetId();
+        if (controllerId == null || attackingPlayerId == null || controllerId.equals(attackingPlayerId)) {
+            return 0;
+        }
+
+        List<Permanent> attackers = gameData.playerBattlefields.get(attackingPlayerId);
+        if (attackers == null) return 0;
+
+        return attackers.stream()
+                .filter(Permanent::isAttacking)
+                .filter(attacker -> gameQueryService.isCreature(gameData, attacker))
                 .count();
     }
 

@@ -20,6 +20,7 @@ import java.util.List;
 public class FlourishingStrike extends Card {
 
     public FlourishingStrike() {
+        setAllowSharedTargets(true);
         addEffect(EffectSlot.SPELL, new EntwineManaCost("{2}{G}"));
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

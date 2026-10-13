@@ -9,12 +9,23 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControlledModifiedCreatureAsCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+
+import java.util.List;
 
 @CardRegistration(set = "NEO", collectorNumber = "142")
 public class FlameDischarge extends Card {
 
     public FlameDischarge() {
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+        target(new PermanentPredicateTargetFilter(
+                new PermanentAnyOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentIsPlaneswalkerPredicate())),
+                "Targets must be creatures or planeswalkers"))
+                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                 new ControlledModifiedCreatureAsCast(),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()),
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(new Sum(new XValue(), new Fixed(2)))

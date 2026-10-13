@@ -36,9 +36,10 @@ class FalkenrathTorturerTest extends BaseCardTest {
     @DisplayName("Sacrificing a non-Human creature grants flying but no counter")
     void sacrificeNonHumanGivesFlyingNoCounter() {
         Permanent torturer = addCreatureReady(player1, new FalkenrathTorturer());
-        harness.addToBattlefield(player1, new HeadlessSkaab());
+        Permanent skaab = harness.addToBattlefieldAndReturn(player1, new HeadlessSkaab());
 
         harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, skaab.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Headless Skaab");
@@ -53,8 +54,11 @@ class FalkenrathTorturerTest extends BaseCardTest {
         addCreatureReady(player1, new FalkenrathTorturer());
         harness.addToBattlefield(player1, new ScornedVillager());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        // The Torturer itself is the only non-Human creature, so it is sacrificed instead of the Human.
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertOnBattlefield(player1, "Scorned Villager");
+        harness.assertInGraveyard(player1, "Falkenrath Torturer");
     }
 
     @Test
@@ -85,9 +89,10 @@ class FalkenrathTorturerTest extends BaseCardTest {
     @DisplayName("Granted flying is removed at end of turn")
     void flyingResetsAtEndOfTurn() {
         Permanent torturer = addCreatureReady(player1, new FalkenrathTorturer());
-        harness.addToBattlefield(player1, new HeadlessSkaab());
+        Permanent skaab = harness.addToBattlefieldAndReturn(player1, new HeadlessSkaab());
 
         harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, skaab.getId());
         harness.passBothPriorities();
         assertThat(torturer.getGrantedKeywords()).contains(Keyword.FLYING);
 

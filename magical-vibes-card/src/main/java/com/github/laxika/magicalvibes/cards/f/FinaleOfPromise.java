@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -36,7 +35,6 @@ public class FinaleOfPromise extends Card {
                 .addEffect(EffectSlot.SPELL, castWithCopies(CardType.INSTANT));
         target(new GraveyardCardPredicateTargetFilter(sorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1)
                 .addEffect(EffectSlot.SPELL, castWithCopies(CardType.SORCERY));
-        addEffect(EffectSlot.SPELL, new ExileSpellEffect());
     }
 
     private ConditionalReplacementEffect castWithCopies(CardType type) {

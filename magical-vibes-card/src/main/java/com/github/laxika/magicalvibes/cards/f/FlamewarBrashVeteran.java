@@ -40,7 +40,7 @@ public class FlamewarBrashVeteran extends Card {
                 "{1}",
                 List.of(
                         new DiscardHandCost(),
-                        new PutAllCardsExiledWithSourceIntoOwnersHandsEffect(true, true)
+                        new PutAllCardsExiledWithSourceIntoOwnersHandsEffect(true, true, true)
                 ),
                 "{1}, Discard your hand: Put all exiled cards you own with intel counters on them into your hand."
         ));

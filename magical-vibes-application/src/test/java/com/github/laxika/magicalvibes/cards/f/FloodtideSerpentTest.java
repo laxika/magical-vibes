@@ -135,6 +135,7 @@ class FloodtideSerpentTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to attack does not return any enchantment")
     void notAttackingDoesNotPayReturnCost() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new FloodtideSerpent());
         harness.addToBattlefield(player1, new NyxbornTriton());
 

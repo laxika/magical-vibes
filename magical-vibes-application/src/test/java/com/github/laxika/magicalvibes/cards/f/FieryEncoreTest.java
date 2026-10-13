@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GuardianAugmenter;
 import com.github.laxika.magicalvibes.cards.m.MyriadLandscape;
 import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -118,6 +119,7 @@ class FieryEncoreTest extends BaseCardTest {
     @DisplayName("The reflexive damage ability can destroy a planeswalker")
     void damagesPlaneswalkerAfterDiscard() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DarettiScrapSavant());
+        target.setCounterCount(CounterType.LOYALTY, 3);
         harness.setHand(player1, List.of(new FieryEncore(), new SolemnSimulacrum()));
         harness.setLibrary(player1, List.of(new MyriadLandscape()));
         harness.addMana(player1, ManaColor.RED, 5);

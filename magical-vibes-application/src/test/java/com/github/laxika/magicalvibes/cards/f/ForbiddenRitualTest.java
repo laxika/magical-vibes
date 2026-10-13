@@ -221,7 +221,7 @@ class ForbiddenRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Repeating after the opponent sacrifices offers a fresh penalty choice")
     void repeatAfterOpponentSacrifices() {
-        harness.setHand(player2, List.of(new Python()));
+        harness.setHand(player2, List.of(new Python(), new Python()));
         UUID first = harness.addToBattlefieldAndReturn(player1, new Python()).getId();
         harness.addToBattlefield(player1, new Python());
         UUID land = harness.addToBattlefieldAndReturn(player2, new GriffinCanyon()).getId();

@@ -46,6 +46,12 @@ public class DoublePlusOneCountersOnEnchantedCreatureEffectHandler implements No
     }
 
     private UUID attachedPermanentId(GameData gameData, StackEntry entry) {
+        // "it" is the creature the trigger was about, even if the Aura or Equipment moved in response.
+        Permanent triggerSnapshot = entry.getSourcePermanentSnapshot();
+        if (entry.getTriggeringPermanentId() != null && triggerSnapshot != null && triggerSnapshot.isAttached()
+                && triggerSnapshot.getAttachedTo().equals(entry.getTriggeringPermanentId())) {
+            return entry.getTriggeringPermanentId();
+        }
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

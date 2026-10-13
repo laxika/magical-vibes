@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class FavoredOfIroas extends Card {
 
     public FavoredOfIroas() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
         addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
     }

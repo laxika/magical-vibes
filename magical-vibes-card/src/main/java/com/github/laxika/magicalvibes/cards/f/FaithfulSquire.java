@@ -34,11 +34,12 @@ public class FaithfulSquire extends Card {
 
         // "At the beginning of the end step, if there are two or more ki counters on this creature,
         // you may flip it." - every end step, not just yours; the counter count is an intervening-if
-        // so it is checked both on trigger and on resolution.
+        // so it is checked both on trigger and on resolution. This is a flip card (rule 710), so the
+        // flip flag keeps it from counting as a transformation for "transforms" triggers.
         addEffect(EffectSlot.END_STEP_TRIGGERED,
                 new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.KI),
-                        new MayEffect(new TransformToBackFaceEffect(), "Flip Faithful Squire?")));
+                        new MayEffect(new TransformToBackFaceEffect(true), "Flip Faithful Squire?")));
     }
 
     @Override

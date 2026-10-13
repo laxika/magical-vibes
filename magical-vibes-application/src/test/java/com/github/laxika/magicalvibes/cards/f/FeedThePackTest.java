@@ -150,6 +150,7 @@ class FeedThePackTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Wolf"))).hasSize(4);
 
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);

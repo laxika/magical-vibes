@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
@@ -37,10 +38,15 @@ public class SacrificeCreatedPermanentsAtEndStepEffectHandler implements NormalE
                         .map(id -> (PermanentPredicate)
                                 new PermanentIsSpecificPermanentPredicate(id))
                         .toList());
-        gameData.queueDelayedAction(new DelayedEndStepTrigger(
-                entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null,
-                new SacrificePermanentsEffect(
-                        Integer.MAX_VALUE, filter, SacrificeRecipient.CONTROLLER).withSimultaneousChoices()));
+        CardEffect sacrifice = new SacrificePermanentsEffect(
+                Integer.MAX_VALUE, filter, SacrificeRecipient.CONTROLLER).withSimultaneousChoices();
+        if (((SacrificeCreatedPermanentsAtEndStepEffect) effect).controllerEndStepOnly()) {
+            gameData.queueDelayedAction(new DelayedControllerEndStepTrigger(
+                    entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), sacrifice));
+        } else {
+            gameData.queueDelayedAction(new DelayedEndStepTrigger(
+                    entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null, sacrifice));
+        }
         log.info("Game {} - {} permanent(s) scheduled for sacrifice at end step by {}",
                 gameData.id, entry.getCreatedPermanentIds().size(), entry.getCard().getName());
     }

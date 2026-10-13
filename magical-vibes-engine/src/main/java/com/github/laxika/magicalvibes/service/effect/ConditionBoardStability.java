@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 
 import java.util.List;
 
@@ -49,6 +50,8 @@ public final class ConditionBoardStability {
             case SourceCounterThreshold ignored -> true;
             // Persistent card intensity is included in the board fingerprint below.
             case SourceIntensityThreshold ignored -> true;
+            // Each permanent's tapped flag is part of the board fingerprint.
+            case SourceIsTapped ignored -> true;
             // Devotion reads the mana costs of battlefield permanents, whose identities and
             // current mana-cost strings are included in the board fingerprint.
             case DevotionToColorAtLeast ignored -> true;

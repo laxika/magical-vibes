@@ -257,6 +257,10 @@ public class Permanent {
     @Setter private Card chosenExiledCard;
     /** Last-known snapshot of a permanent sacrificed as payment for an ability that needs it at resolution. */
     @Setter private Permanent chosenSacrificedPermanentSnapshot;
+    /** Effective power of the permanent sacrificed to pay an ability cost, read while it was still on the battlefield. */
+    @Setter private int chosenSacrificedPower;
+    /** Effective toughness of the permanent sacrificed to pay an ability cost, read while it was still on the battlefield. */
+    @Setter private int chosenSacrificedToughness;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
     @Setter private boolean cantBlockThisCombat;
@@ -912,6 +916,8 @@ public class Permanent {
         this.chosenExiledCard = source.chosenExiledCard;
         this.chosenSacrificedPermanentSnapshot = source.chosenSacrificedPermanentSnapshot == null
                 ? null : new Permanent(source.chosenSacrificedPermanentSnapshot);
+        this.chosenSacrificedPower = source.chosenSacrificedPower;
+        this.chosenSacrificedToughness = source.chosenSacrificedToughness;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.cantBlockThisCombat = source.cantBlockThisCombat;
@@ -1266,7 +1272,7 @@ public class Permanent {
     }
 
     public void untap() {
-        // Stun counters (CR 122.1c / 701.x): if a tapped permanent would become untapped,
+        // Stun counters (CR 122.1d): if a tapped permanent would become untapped,
         // remove a stun counter from it instead. This is the single funnel point for all
         // untap sources (untap step, Seedborn Muse, "untap target", etc.).
         if (this.tapped && getCounterCount(CounterType.STUN) > 0) {

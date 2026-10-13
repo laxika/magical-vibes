@@ -23,6 +23,6 @@ public class FarWanderings extends Card {
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED)));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(threshold,
                 new SearchLibraryEffect(new Fixed(3), CardPredicateUtils.basicLand(),
-                        LibrarySearchDestination.BATTLEFIELD_TAPPED)));
+                        LibrarySearchDestination.BATTLEFIELD_TAPPED, 3)));
     }
 }

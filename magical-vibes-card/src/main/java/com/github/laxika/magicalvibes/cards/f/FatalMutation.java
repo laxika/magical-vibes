@@ -17,6 +17,6 @@ public class FatalMutation extends Card {
                 .addEffect(EffectSlot.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP,
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentIsHostOfSourceAuraPredicate(),
-                                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED, true)));
+                                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, true)));
     }
 }

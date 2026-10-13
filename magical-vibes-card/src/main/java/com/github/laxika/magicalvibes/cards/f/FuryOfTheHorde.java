@@ -23,6 +23,6 @@ public class FuryOfTheHorde extends Card {
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.RED), "red", 2))));
 
         addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES));
-        addEffect(EffectSlot.SPELL, new AdditionalCombatMainPhaseEffect(1));
+        addEffect(EffectSlot.SPELL, new AdditionalCombatMainPhaseEffect(1, null, true));
     }
 }

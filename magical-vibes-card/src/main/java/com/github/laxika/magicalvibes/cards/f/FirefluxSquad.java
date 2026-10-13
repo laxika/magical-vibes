@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetAttackingCreatureThenRevealUntilCreatureToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -27,9 +28,10 @@ public class FirefluxSquad extends Card {
 
         target(new PermanentPredicateTargetFilter(
                 anotherAttackingCreatureYouControl,
-                "Target must be another attacking creature you control"), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK,
+                "Target must be another attacking creature you control"))
+                .addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                         new ExileTargetAttackingCreatureThenRevealUntilCreatureToBattlefieldEffect(
-                                anotherAttackingCreatureYouControl));
+                                anotherAttackingCreatureYouControl),
+                        "Exile target attacking creature?"));
     }
 }

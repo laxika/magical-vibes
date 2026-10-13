@@ -563,6 +563,7 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
@@ -1416,6 +1417,12 @@ public class EnterTriggerCollectorService {
                 entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
             }
             entry.setNonTargeting(!isTargeting(mayPay));
+            if (enteringPermanentId != null && mayPay.wrapped() instanceof CreateTokenCopyOfTargetPermanentEffect) {
+                // "that creature" is not a target (Flameshadow Conjuring), so the copy still happens
+                // from last known information when the entering creature has already left.
+                entry.setNonTargeting(true);
+                entry.rememberLastKnownPermanentCard(enteringPermanentId, pe.enteringCard());
+            }
             if (match.permanent() != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             }
@@ -1794,8 +1801,10 @@ public class EnterTriggerCollectorService {
                     new ArrayList<>(List.of(effect)),
                     enteringPermanentId,
                     sourcePermanentId);
+            entry.setNonTargeting(true);
             entry.setSourcePlanarObject(match.sourcePlanarObject() == null
                     ? null : match.sourcePlanarObject().copy());
+            entry.rememberLastKnownPermanentCard(enteringPermanentId, pe.enteringCard());
             match.gameData().stack.add(entry);
         }
         logTriggered(match);
@@ -1861,8 +1870,10 @@ public class EnterTriggerCollectorService {
                     new ArrayList<>(List.of(effect)),
                     enteringPermanentId,
                     sourcePermanentId);
+            entry.setNonTargeting(true);
             entry.setSourcePlanarObject(match.sourcePlanarObject() == null
                     ? null : match.sourcePlanarObject().copy());
+            entry.rememberLastKnownPermanentCard(enteringPermanentId, pe.enteringCard());
             match.gameData().stack.add(entry);
         }
         logTriggered(match);
@@ -2588,6 +2599,7 @@ public class EnterTriggerCollectorService {
             }
             if (enteringPermanent != null) {
                 entry.setTriggeringPermanentId(enteringPermanentId);
+                entry.setTriggeringPermanentIds(List.of(enteringPermanentId));
                 entry.setTriggeringCardId(enteringPermanent.getCard().getId());
                 entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
                 entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(

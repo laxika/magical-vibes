@@ -22,7 +22,7 @@ public class FrontierExplorer extends Card {
                 List.of(new AllowPlayCardsFromOutsideGameThisTurnEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSupertypePredicate(CardSupertype.BASIC),
-                                new CardSubtypePredicate(CardSubtype.PLAINS))))),
+                                new CardSubtypePredicate(CardSubtype.PLAINS))), 1)),
                 "{3}, {T}: Until end of turn, you may play one basic Plains card from outside the game."
         ));
     }

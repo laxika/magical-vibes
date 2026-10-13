@@ -34,6 +34,14 @@ public class TriggeringObjectControllerGainsControlOfEnchantedPermanentEffectHan
         var e = (TriggeringObjectControllerGainsControlOfEnchantedPermanentEffect) effect;
         Permanent enchantedPermanent = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         UUID newControllerId = entry.getTriggeringPermanentControllerId();
+        StackEntry triggeringObject = gameData.stack.stream()
+                .filter(stackEntry -> !stackEntry.isCopy()
+                        && stackEntry.getCard() != null
+                        && stackEntry.getCard().getId().equals(entry.getTriggeringCardId()))
+                .findFirst().orElse(null);
+        if (triggeringObject != null) {
+            newControllerId = triggeringObject.getControllerId();
+        }
         if (enchantedPermanent == null || newControllerId == null) return;
 
         creatureControlService.applyControlEffect(gameData, newControllerId, enchantedPermanent,

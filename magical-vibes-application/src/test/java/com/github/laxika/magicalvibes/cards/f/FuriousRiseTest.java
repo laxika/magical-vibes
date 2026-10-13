@@ -169,6 +169,7 @@ class FuriousRiseTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
 
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castFromExile(player1, topCard.getId());
@@ -200,6 +201,7 @@ class FuriousRiseTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
 
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromExile(player1, topCard.getId());
 

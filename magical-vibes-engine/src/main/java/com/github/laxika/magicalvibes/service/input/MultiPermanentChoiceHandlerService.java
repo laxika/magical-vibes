@@ -517,6 +517,11 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("Exactly " + attackCost.requiredCount()
                     + " permanents must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.ReturnToHandAttackCost returnCost
+                && permanentIds.size() != returnCost.requiredCount()) {
+            throw new IllegalStateException("Exactly " + returnCost.requiredCount()
+                    + " permanents must be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands worms
                 && permanentIds.stream().anyMatch(id -> {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, id);
@@ -920,6 +925,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeAttackingCreature(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackCost) {
             handleSacrificeAttackCost(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.ReturnToHandAttackCost) {
+            handleReturnToHandAttackCost(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAttackingCreatures) {
             handleExileAttackingCreatures(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.PutAttackingCreaturesOnLibrary ctx) {
@@ -1737,6 +1744,22 @@ public class MultiPermanentChoiceHandlerService {
                         gameData, playerId, permanent.getCard());
                 gameLogService.append(gameData, GameLog.playerSacrifices(playerName, permanent.getCard()));
             }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleReturnToHandAttackCost(GameData gameData, UUID playerId, List<UUID> permanentIds) {
+        String playerName = gameData.playerIdToName.get(playerId);
+        for (UUID permanentId : permanentIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent == null
+                    || !playerId.equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+                throw new IllegalStateException("A selected permanent is no longer controlled by the attacker");
+            }
+            permanentRemovalService.removePermanentToHand(gameData, permanent);
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " returns ", permanent.getCard(),
+                    " to hand."));
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

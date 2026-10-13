@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
@@ -277,6 +278,12 @@ public class ExileFreeCastQueueSupport {
             if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
                     && (additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardCost() != null)
                     && additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, cardToCast)) {
+                castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
+                return;
+            }
+            if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
+                    && additionalCosts.sacrificeAllCreatures()
+                    && additionalSpellCostService.satisfiable(gameData, playerId, cardToCast)) {
                 castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
                 return;
             }
@@ -563,6 +570,11 @@ public class ExileFreeCastQueueSupport {
             }
             beginFreeCastSacrifice(gameData, entry, sacrificeCandidates, sacrificeOrDiscard.description());
             return true;
+        }
+        if (entry.getEffectsToResolve().stream().anyMatch(SacrificeAllCreaturesYouControlCost.class::isInstance)) {
+            spellCastingService.payAdditionalCostsForFreeCast(gameData, entry,
+                    AdditionalSpellCostService.CostSelection.none());
+            return false;
         }
         boolean needsSacrifice = entry.getEffectsToResolve().stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::isInstance);

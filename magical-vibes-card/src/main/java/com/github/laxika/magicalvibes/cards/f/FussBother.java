@@ -48,7 +48,7 @@ public class FussBother extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Bother — Create three 1/1 colorless Thopter artifact creature tokens with flying. Surveil 2",
                         List.of(bother, new SurveilEffect(2))
-                ).withManaCost("{4}{W/U}{W/U}")
+                ).withManaCost("{4}{W/U}{W/U}").withSpellType(CardType.SORCERY)
         )));
     }
 }

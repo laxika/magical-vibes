@@ -106,6 +106,7 @@ class ForgebornOreadsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ForgebornOreads());
 
         harness.enterBattlefieldAndReturn(player1, new FontOfFertility());
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

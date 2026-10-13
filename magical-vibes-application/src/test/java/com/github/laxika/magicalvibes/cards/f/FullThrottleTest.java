@@ -28,13 +28,13 @@ class FullThrottleTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.additionalCombatPhasesAfterMain).isEqualTo(2);
 
-        harness.passUntil(TurnStep.DECLARE_ATTACKERS);
+        harness.passUntilWithNoAttackers(null, TurnStep.DECLARE_ATTACKERS);
         assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
         assertThat(bear.isTapped()).isFalse();
 
         bear.tap();
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.passUntil(TurnStep.DECLARE_ATTACKERS);
+        harness.passUntilWithNoAttackers(null, TurnStep.DECLARE_ATTACKERS);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
@@ -50,21 +50,21 @@ class FullThrottleTest extends BaseCardTest {
         harness.castFromHand(player1, new FullThrottle(), "{4}{R}{R}");
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.DECLARE_ATTACKERS);
-        declareAttackers(List.of(0));
+        harness.passUntilWithNoAttackers(null, TurnStep.DECLARE_ATTACKERS);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         assertThat(attacker.isTapped()).isTrue();
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.DECLARE_ATTACKERS);
+        harness.passUntilWithNoAttackers(null, TurnStep.DECLARE_ATTACKERS);
         assertThat(attacker.isTapped()).isFalse();
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         assertThat(attacker.isTapped()).isTrue();
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.DECLARE_ATTACKERS);
+        harness.passUntilWithNoAttackers(null, TurnStep.DECLARE_ATTACKERS);
         assertThat(attacker.isTapped()).isFalse();
         assertThat(gd.combatPhasesThisTurn).isEqualTo(3);
 
@@ -101,7 +101,7 @@ class FullThrottleTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.DECLARE_ATTACKERS);
+        harness.passUntilWithNoAttackers(null, TurnStep.DECLARE_ATTACKERS);
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         gs.advanceStep(gd);

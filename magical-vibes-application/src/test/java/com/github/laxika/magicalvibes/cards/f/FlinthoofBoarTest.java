@@ -66,7 +66,7 @@ class FlinthoofBoarTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(boar.getGrantedKeywords()).contains(Keyword.HASTE);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(boar.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
     }

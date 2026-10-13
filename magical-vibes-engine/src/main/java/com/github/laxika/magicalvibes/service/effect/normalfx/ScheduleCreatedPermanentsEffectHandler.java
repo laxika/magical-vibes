@@ -17,13 +17,17 @@ public class ScheduleCreatedPermanentsEffectHandler implements NormalEffectHandl
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var schedule = (ScheduleCreatedPermanentsEffect) effect;
+        var scheduledController = schedule.controllerOnly() ? entry.getControllerId() : null;
         for (var permanentId : entry.getCreatedPermanentIds()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
                     permanentId,
                     schedule.action(),
                     false,
                     null,
-                    schedule.controllerOnly() ? entry.getControllerId() : null));
+                    scheduledController,
+                    scheduledController,
+                    false,
+                    entry.getCard()));
         }
     }
 }

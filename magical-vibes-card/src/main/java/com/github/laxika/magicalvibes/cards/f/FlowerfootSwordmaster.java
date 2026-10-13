@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class FlowerfootSwordmaster extends Card {
 
     public FlowerfootSwordmaster() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addEffect(EffectSlot.STATIC, new KickerEffect("{2}", false));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,

@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class FireNationsConquest extends Card {
 
     public FireNationsConquest() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES));
     }
 }

@@ -130,6 +130,8 @@ public class GameData {
     public UUID lastNormalTurnPlayerId;
     /** Whether the current turn's untap step was skipped by an extra-turn or similar effect. */
     public boolean turnUntapStepSkipped;
+    /** Whether the draw step most recently entered was skipped, so it offers no priority window (rule 500.11). */
+    public boolean drawStepSkippedThisStep;
     /** Whether Power-up abilities are prohibited during the current turn. */
     public boolean powerUpAbilitiesCantBeActivatedThisTurn;
     public Long currentExtraTurnSequence;
@@ -156,6 +158,8 @@ public class GameData {
     /** Players who met Knight of Lost Causes' "way behind" condition at any point this turn. */
     public final Set<UUID> playersWhoWereWayBehindThisTurn = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
+    /** The lands each player played this turn, in play order (their mana values are read by Coststorm). */
+    public final Map<UUID, List<Card>> landCardsPlayedThisTurn = new ConcurrentHashMap<>();
     /** Extra land plays granted this turn (e.g. Summer Bloom), on top of the normal one-per-turn. */
     public final Map<UUID, Integer> additionalLandsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
@@ -599,6 +603,8 @@ public class GameData {
     public int artifactsPutIntoGraveyardFromBattlefieldThisTurn;
     /** Tracks all non-token card IDs put into each player's graveyard from any zone this turn (e.g. Garna, the Bloodflame). */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
+    /** Per player, how many times a card already counted in {@link #cardsPutIntoGraveyardFromAnywhereThisTurn} entered a graveyard again this turn (each entry is a new object, CR 400.7). */
+    public final Map<UUID, Integer> cardsPutIntoGraveyardAgainThisTurn = new ConcurrentHashMap<>();
     /** Tracks non-token card IDs put into each player's graveyard from a library this turn. */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromLibraryThisTurn = new ConcurrentHashMap<>();
     /** Tracks card IDs put into each player's graveyard by surveil this turn. */
@@ -959,6 +965,17 @@ public class GameData {
     public UUID pendingDividedDamageTargetId;
     public PendingAbilityCounterCostActivation pendingAbilityCounterCostActivation;
     /**
+     * The counter kind the controller picked for a "remove a counter" activation cost, set only while
+     * the suspended activation is re-entered after that choice and cleared once the cost is paid.
+     */
+    public CounterType chosenCostCounterType;
+    /**
+     * Generic cost reduction left over after the cast spell's own mana cost was paid (its generic
+     * part cannot go below zero). The kicker or offspring payment made next applies it to its own
+     * generic cost, since reductions apply to the spell's total cost.
+     */
+    public int unusedSpellCostReduction;
+    /**
      * Resolution-time "choose a creature type" answer for a spell/ability that has no permanent
      * to hang the choice on (e.g. Coordinated Barrage). Set by the choice handler, read and
      * cleared by the effect handler that re-runs after the choice completes.
@@ -1043,10 +1060,6 @@ public class GameData {
     public final EachPlayerDiscardsOneThenDrawsForEachCardTypeState
             eachPlayerDiscardsOneThenDrawsForEachCardType =
             new EachPlayerDiscardsOneThenDrawsForEachCardTypeState();
-    /** Progress state for each player's discard followed by the controller's conditional draw. */
-    public final EachPlayerDiscardsOneThenControllerDrawsIfDiscardedState
-            eachPlayerDiscardsOneThenControllerDrawsIfDiscarded =
-            new EachPlayerDiscardsOneThenControllerDrawsIfDiscardedState();
     /** Progress state for Dispersal's opponent-by-opponent return-then-discard sequence. */
     public final DispersalState dispersal = new DispersalState();
     /** Progress state for an opponent-by-opponent discard-two-unless-nonland sequence. */
@@ -1586,6 +1599,7 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
+    public final List<DeferredSpellCopy> deferredGraveyardCastCopies = Collections.synchronizedList(new ArrayList<>());
     public PendingGraveyardReturnBatch pendingGraveyardReturnBatch;
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
@@ -1616,8 +1630,10 @@ public class GameData {
     public final Set<UUID> playersWhoCantGainLifeRestOfGame = ConcurrentHashMap.newKeySet();
     /** Players who play with their hand revealed for the rest of the game (e.g. Truth or Dare). */
     public final Set<UUID> playersWithHandRevealed = ConcurrentHashMap.newKeySet();
-    /** Players who can't gain life this turn (e.g. Flames of the Blood Hand). Cleared at turn cleanup. */
+    /** Players who can't gain life this turn (e.g. opponents can't gain life). Cleared at turn cleanup. */
     public final Set<UUID> playersWhoCantGainLifeThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players whose life gain this turn is replaced with 0 (e.g. Flames of the Blood Hand). Cleared at turn cleanup. */
+    public final Set<UUID> playersWhoGainNoLifeThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who can't lose life this turn (e.g. Courageous Resolve). Cleared at turn cleanup. */
     public final Set<UUID> playersWhoCantLoseLifeThisTurn = ConcurrentHashMap.newKeySet();
 
@@ -4618,6 +4634,11 @@ public class GameData {
         spellsCastFromOutsideHandThisTurn.clear();
     }
 
+    public void recordLandPlayedThisTurn(UUID playerId, Card land) {
+        landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
+        landCardsPlayedThisTurn.computeIfAbsent(playerId, ignored -> new ArrayList<>()).add(land);
+    }
+
     public void recordStackEntryForCrime(StackEntry entry) {
         if (entry == null || entry.getControllerId() == null || entry.isNonTargeting()
                 || !targetsOpponentOrOpponentObject(entry)) return;
@@ -6902,6 +6923,7 @@ public class GameData {
         copy.currentTurnIsExtraTurn = this.currentTurnIsExtraTurn;
         copy.lastNormalTurnPlayerId = this.lastNormalTurnPlayerId;
         copy.turnUntapStepSkipped = this.turnUntapStepSkipped;
+        copy.drawStepSkippedThisStep = this.drawStepSkippedThisStep;
         copy.powerUpAbilitiesCantBeActivatedThisTurn = this.powerUpAbilitiesCantBeActivatedThisTurn;
         copy.cardsExiledThisTurn = this.cardsExiledThisTurn;
         copy.pileGroupingOrGuessCountThisTurn = this.pileGroupingOrGuessCountThisTurn;
@@ -6975,6 +6997,8 @@ public class GameData {
         copy.chosenXValue = this.chosenXValue;
         copy.pendingDividedDamageTargetId = this.pendingDividedDamageTargetId;
         copy.pendingAbilityCounterCostActivation = this.pendingAbilityCounterCostActivation;
+        copy.chosenCostCounterType = this.chosenCostCounterType;
+        copy.unusedSpellCostReduction = this.unusedSpellCostReduction;
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.chosenSpellColor = this.chosenSpellColor;
         copy.chosenSpellParity = this.chosenSpellParity;
@@ -7086,18 +7110,6 @@ public class GameData {
                 this.eachPlayerDiscardsOneThenDrawsForEachCardType.remaining);
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.addAll(
                 this.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes);
-        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.active =
-                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.active;
-        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerId =
-                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerId;
-        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.currentPlayerId =
-                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.currentPlayerId;
-        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerDiscardCountBefore =
-                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerDiscardCountBefore;
-        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerDiscarded =
-                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.controllerDiscarded;
-        copy.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.remaining.addAll(
-                this.eachPlayerDiscardsOneThenControllerDrawsIfDiscarded.remaining);
         copy.dispersal.active = this.dispersal.active;
         copy.dispersal.remainingOpponentIds.addAll(this.dispersal.remainingOpponentIds);
         copy.dispersal.currentOpponentId = this.dispersal.currentOpponentId;
@@ -7258,6 +7270,7 @@ public class GameData {
         copy.combatDamageFirstStrikeAssignmentPhase = this.combatDamageFirstStrikeAssignmentPhase;
         copy.combatDamageFirstestStrikeAssignmentPhase = this.combatDamageFirstestStrikeAssignmentPhase;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
+        copy.deferredGraveyardCastCopies.addAll(this.deferredGraveyardCastCopies);
         copy.pendingGraveyardReturnBatch = this.pendingGraveyardReturnBatch;
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
@@ -7531,6 +7544,8 @@ public class GameData {
         copy.playerMulliganDecisionIds.putAll(this.playerMulliganDecisionIds);
         copy.playerBottomDecisionIds.putAll(this.playerBottomDecisionIds);
         copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);
+        this.landCardsPlayedThisTurn.forEach((playerId, lands) ->
+                copy.landCardsPlayedThisTurn.put(playerId, new ArrayList<>(lands)));
         copy.turnsTakenByPlayer.putAll(this.turnsTakenByPlayer);
         copy.additionalLandsThisTurn.putAll(this.additionalLandsThisTurn);
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
@@ -7952,6 +7967,7 @@ public class GameData {
         copy.descentsThisTurn.putAll(this.descentsThisTurn);
         this.cardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
+        copy.cardsPutIntoGraveyardAgainThisTurn.putAll(this.cardsPutIntoGraveyardAgainThisTurn);
         this.cardsPutIntoGraveyardFromLibraryThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromLibraryThisTurn.put(k, new HashSet<>(v)));
         this.cardsSurveilledThisTurn.forEach((k, v) ->
@@ -8364,6 +8380,7 @@ public class GameData {
         copy.playersWhoCantGainLifeRestOfGame.addAll(this.playersWhoCantGainLifeRestOfGame);
         copy.playersWithHandRevealed.addAll(this.playersWithHandRevealed);
         copy.playersWhoCantGainLifeThisTurn.addAll(this.playersWhoCantGainLifeThisTurn);
+        copy.playersWhoGainNoLifeThisTurn.addAll(this.playersWhoGainNoLifeThisTurn);
         copy.playersWhoCantLoseLifeThisTurn.addAll(this.playersWhoCantLoseLifeThisTurn);
 
         // --- Source-linked animations (Awakener Druid-style) ---

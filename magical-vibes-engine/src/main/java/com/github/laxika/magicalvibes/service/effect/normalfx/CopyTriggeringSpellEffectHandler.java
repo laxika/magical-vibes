@@ -82,7 +82,9 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
         if (!triggeringSpellEffect.retargetToSource() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
             psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), spell.getControllerId(),
                     copyEntry.getTargetableId(), 0);
-        } else if (!triggeringSpellEffect.retargetToSource() && copyEntry.getTargetId() != null) {
+        } else if (!triggeringSpellEffect.retargetToSource()
+                && (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()
+                || !copyEntry.getTargetCardIds().isEmpty())) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(),
                     spell.getControllerId(),

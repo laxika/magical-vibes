@@ -55,6 +55,9 @@ public class ForbiddenRitualRepeatChoiceInteractionHandler
         if (accepted) {
             StackEntry entry = gameData.pendingEffectResolutionEntry;
             if (entry != null) {
+                // The repeat prompt parked the resolution past the Forbidden Ritual effect; the
+                // penalty choices this repeat starts must resume at that effect so it re-enters.
+                gameData.pendingEffectResolutionIndex = entry.getResolvingEffectIndex();
                 int lifeLoss = gameData.forbiddenRitual.lifeLoss > 0
                         ? gameData.forbiddenRitual.lifeLoss
                         : 2;
@@ -63,6 +66,7 @@ public class ForbiddenRitualRepeatChoiceInteractionHandler
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
                 }
+                gameData.pendingEffectResolutionIndex = entry.getResolvingEffectIndex() + 1;
             }
             forbiddenRitualEffectHandler.finish(gameData, gameData.forbiddenRitual);
         } else {

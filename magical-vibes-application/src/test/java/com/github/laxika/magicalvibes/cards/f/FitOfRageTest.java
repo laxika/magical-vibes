@@ -137,9 +137,9 @@ class FitOfRageTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new FitOfRage(), new Unsummon()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castSorcery(player1, 0, target.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 

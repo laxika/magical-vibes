@@ -25,7 +25,7 @@ public class FootChopper extends Card {
                         List.of(CardSubtype.NINJA), Set.of(), Set.of())));
         addEffect(EffectSlot.STATIC,
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 new MayEffect(
                         new SacrificeEquippedCreatureThenDrawPowerEffect(),
                         "You may sacrifice the equipped creature to draw cards equal to its power?"));

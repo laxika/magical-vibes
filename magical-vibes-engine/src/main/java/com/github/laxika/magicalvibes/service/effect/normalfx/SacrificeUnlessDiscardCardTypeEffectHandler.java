@@ -41,12 +41,17 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
         Card sourceCard = entry.getCard();
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        // Find the source permanent on the battlefield
+        // Find the source permanent on the battlefield. A permanent that left and returned is a new object
+        // (CR 400.7), so the ability's own permanent id is matched when it is known, not just the card.
+        UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent sourcePermanent = null;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (p.getCard().getId().equals(sourceCard.getId())) {
+                boolean sameObject = sourcePermanentId != null
+                        ? p.getId().equals(sourcePermanentId)
+                        : p.getCard().getId().equals(sourceCard.getId());
+                if (sameObject) {
                     sourcePermanent = p;
                     break;
                 }

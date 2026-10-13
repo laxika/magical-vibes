@@ -24,6 +24,9 @@ import java.util.Set;
 public class FlayerOfLoyalties extends Card {
 
     public FlayerOfLoyalties() {
+        // Annihilator 2 (printed).
+        addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
+                2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
         // When you cast this spell, gain control of target creature until end of turn.
         // Untap it. Until end of turn, it has base power and toughness 10/10 and gains trample,
         // annihilator 2, and haste.

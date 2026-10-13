@@ -36,7 +36,8 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
         var e = (StormCopyEffect) effect;
         if (e.spellSnapshot() == null) return;
         int copies = e.resolutionCount() != null
-                ? e.resolutionCount().copyCount(gameData, e.castingPlayerId()) : e.copies();
+                ? e.resolutionCount().copyCount(gameData, e.castingPlayerId(), e.spellSnapshot().getCard())
+                : e.copies();
         if (copies <= 0) return;
 
         StackEntry spellSnapshot = e.spellSnapshot();

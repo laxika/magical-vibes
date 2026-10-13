@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -18,9 +20,12 @@ import java.util.List;
 public class FireNationCadets extends Card {
 
     public FireNationCadets() {
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        // Firebending 2 as long as there's a Lesson card in your graveyard. The condition gates only
+        // the granted attack trigger, so the mana is still produced if the Lesson leaves before it resolves.
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.LESSON)),
-                new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2)));
+                new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK,
+                        new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2), GrantScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new BoostSelfEffect(1, 0)),
                 "{2}: This creature gets +1/+0 until end of turn."));

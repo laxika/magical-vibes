@@ -631,6 +631,10 @@ public class LibrarySearchSupport {
         List<Card> matchingCards = deck.stream()
                 .filter(card -> card.hasAllCardNames() || filter == null || filter.test(card))
                 .toList();
+        int topLimit = opponentSearchTopCardsLimit(gameData, controllerId);
+        if (topLimit != Integer.MAX_VALUE) {
+            matchingCards = restrictToTopCards(gameData, controllerId, matchingCards, topLimit);
+        }
 
         if (matchingCards.isEmpty()) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);

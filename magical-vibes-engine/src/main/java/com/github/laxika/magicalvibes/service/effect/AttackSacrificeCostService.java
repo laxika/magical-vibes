@@ -110,6 +110,9 @@ public class AttackSacrificeCostService {
             return totals;
         }
         gameData.forEachPermanent((ownerId, permanent) -> {
+            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+                return;
+            }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (!(effect instanceof CreaturesCantAttackUnlessSacrificeEffect restriction)) {
                     continue;

@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.LethalDamageModifierEffect;
 import com.github.laxika.magicalvibes.model.effect.RequireFlagbearerTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeControlledByOtherPlayersEffect;
@@ -83,6 +84,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
+import com.github.laxika.magicalvibes.model.effect.StunCountersCantBeRemovedFromOpponentsPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
@@ -1658,6 +1660,9 @@ public class GameQueryService {
             return Optional.empty();
         }
         for (Permanent perm : bf) {
+            if (perm.isFaceDown() || hasLostPrintedAbilities(gameData, perm)) {
+                continue;
+            }
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof MadnessGrantingEffect g
                         && predicateEvaluationService.matchesCardPredicate(
@@ -2957,7 +2962,7 @@ public class GameQueryService {
                 }
             }
         }
-        return floor;
+        return currentLife < floor ? 0 : floor;
     }
 
     private int activeDamageLifeFloor(DamageLifeFloorEffect lifeFloor, boolean controlsCreature,
@@ -4036,7 +4041,31 @@ public class GameQueryService {
         }
         return hasAttachmentRestriction(gameData, permanent, CantBecomeUntappedEffect.class)
                 || computeStaticBonus(gameData, permanent).grantedEffects().stream()
-                .anyMatch(CantBecomeUntappedEffect.class::isInstance);
+                .anyMatch(CantBecomeUntappedEffect.class::isInstance)
+                || stunCountersLocked(gameData, permanent);
+    }
+
+    /**
+     * Returns {@code true} if the permanent has a stun counter that an opponent's
+     * {@link StunCountersCantBeRemovedFromOpponentsPermanentsEffect} keeps on it, so the stun
+     * replacement (CR 122.1d) can't remove it and the permanent stays tapped.
+     */
+    private boolean stunCountersLocked(GameData gameData, Permanent permanent) {
+        if (permanent.getCounterCount(CounterType.STUN) <= 0) {
+            return false;
+        }
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
+            if (entry.getKey().equals(controllerId)) continue;
+            for (Permanent source : entry.getValue()) {
+                if (!source.isFaceDown() && !hasLostPrintedAbilities(gameData, source)
+                        && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(StunCountersCantBeRemovedFromOpponentsPermanentsEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Returns whether the permanent cannot be sacrificed. */
@@ -7047,8 +7076,11 @@ public class GameQueryService {
         }
         Set<CardSubtype> protectedSubtypes = EnumSet.noneOf(CardSubtype.class);
         Set<CardSubtype> creatureOnlySubtypes = EnumSet.noneOf(CardSubtype.class);
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            collectProtectedSubtypes(effect, protectedSubtypes, creatureOnlySubtypes);
+        // CR 708.2: a face-down permanent has no abilities, so its printed protection does not apply.
+        if (!target.isFaceDown()) {
+            for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+                collectProtectedSubtypes(effect, protectedSubtypes, creatureOnlySubtypes);
+            }
         }
         // Subtype protection granted by another permanent's static effect (e.g. Riders of Gavony
         // via GrantProtectionFromChosenTypeToOwnCreaturesEffect).
@@ -7059,8 +7091,11 @@ public class GameQueryService {
             protectedSubtypes.addAll(creatureOnlySubtypes);
         }
         if (protectedSubtypes.isEmpty()) return false;
-        for (CardSubtype subtype : source.getCard().getSubtypes()) {
-            if (protectedSubtypes.contains(subtype)) return true;
+        // CR 708.2a: a face-down permanent has no printed subtypes, only those its face-down effect lists.
+        if (!source.isFaceDown()) {
+            for (CardSubtype subtype : source.getCard().getSubtypes()) {
+                if (protectedSubtypes.contains(subtype)) return true;
+            }
         }
         for (CardSubtype subtype : source.getTransientSubtypes()) {
             if (protectedSubtypes.contains(subtype)) return true;
@@ -7116,8 +7151,11 @@ public class GameQueryService {
         }
         Set<CardSubtype> protectedSubtypes = EnumSet.noneOf(CardSubtype.class);
         Set<CardSubtype> creatureOnlySubtypes = EnumSet.noneOf(CardSubtype.class);
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            collectProtectedSubtypes(effect, protectedSubtypes, creatureOnlySubtypes);
+        // CR 708.2: a face-down permanent has no abilities, so its printed protection does not apply.
+        if (!target.isFaceDown()) {
+            for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+                collectProtectedSubtypes(effect, protectedSubtypes, creatureOnlySubtypes);
+            }
         }
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
             collectProtectedSubtypes(effect, protectedSubtypes, creatureOnlySubtypes);
@@ -8881,6 +8919,7 @@ public class GameQueryService {
             return false;
         }
         return battlefield.stream()
+                .filter(perm -> !hasLostAllAbilities(gameData, perm))
                 .flatMap(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream())
                 .filter(ControllerCreatureSpellsCantBeCounteredEffect.class::isInstance)
                 .map(ControllerCreatureSpellsCantBeCounteredEffect.class::cast)
@@ -9456,7 +9495,11 @@ public class GameQueryService {
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
                 if (!attacker.getId().equals(floating.affectedPermanentId())) continue;
-                if (floating.effect() instanceof CanBeBlockedByAtMostNCreaturesEffect restriction) {
+                CardEffect floatingEffect = floating.effect() instanceof GrantEffectEffect grant
+                        ? grant.effect() : floating.effect();
+                if (floatingEffect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction
+                        && (!(floating.effect() instanceof GrantEffectEffect)
+                        || grantedAbilitySurvivesRemoval(gameData, attacker, floating.timestamp()))) {
                     maxBlockers = Math.min(maxBlockers, restriction.maxBlockers());
                 }
             }
@@ -10317,6 +10360,7 @@ public class GameQueryService {
             }
         }
         gameData.forEachPermanent((controllerId, p) -> {
+            if (hasLostAllAbilities(gameData, p)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof DoubleDamageToControllerAndSelfEffect
                         && ((recipientPermanentId == null && recipientPlayerId.equals(controllerId))
@@ -11166,7 +11210,7 @@ public class GameQueryService {
 
         boolean[] hasLifelink = {false};
         gameData.forEachPermanent((playerId, p) -> {
-            if (!playerId.equals(entry.getControllerId())) return;
+            if (!playerId.equals(entry.getControllerId()) || hasLostPrintedAbilities(gameData, p)) return;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GrantLifelinkToControllerSpellsByColorEffect glse
                         && (glse.color() == null || entry.getCard().getColors().contains(glse.color()))

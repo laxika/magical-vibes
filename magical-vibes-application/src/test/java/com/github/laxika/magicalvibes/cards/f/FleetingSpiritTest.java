@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FleetingSpirit.class, Forest.class})
+@CardUsed({FleetingSpirit.class, Forest.class, ControlMagic.class})
 class FleetingSpiritTest extends BaseCardTest {
 
     @Test
@@ -161,6 +162,7 @@ class FleetingSpiritTest extends BaseCardTest {
     void endStepActivationWaitsForNextEndStep() {
         addSpirit(player1);
         harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -168,9 +170,8 @@ class FleetingSpiritTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Fleeting Spirit");
-        harness.passUntil(player2, TurnStep.UPKEEP);
-        harness.assertNotOnBattlefield(player1, "Fleeting Spirit");
-        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.assertNotOnBattlefield(player1, "Fleeting Spirit");
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Fleeting Spirit");
@@ -181,12 +182,21 @@ class FleetingSpiritTest extends BaseCardTest {
     void stolenSpiritReturnsToOwnerAsANewPermanent() {
         Permanent spirit = addSpirit(player1);
         spirit.tap();
-        gd.playerBattlefields.get(player1.getId()).remove(spirit);
-        gd.playerBattlefields.get(player2.getId()).add(spirit);
-        gd.stolenCreatures.put(spirit.getId(), player1.getId());
-        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new ControlMagic(), new Forest()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castEnchantment(player2, 0, spirit.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Fleeting Spirit");
 
-        harness.activateAbility(player2, 0, 1, null, null);
+        List<Permanent> player2Battlefield = gd.playerBattlefields.get(player2.getId());
+        int spiritIndex = player2Battlefield.indexOf(player2Battlefield.stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Fleeting Spirit"))
+                .findFirst().orElseThrow());
+        harness.activateAbility(player2, spiritIndex, 1, null, null);
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
 

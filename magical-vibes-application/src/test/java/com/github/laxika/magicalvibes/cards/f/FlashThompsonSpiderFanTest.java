@@ -125,7 +125,7 @@ class FlashThompsonSpiderFanTest extends BaseCardTest {
         Permanent flash = gd.playerBattlefields.get(player1.getId()).getFirst();
         chooseMode(HECKLE);
         harness.handlePermanentChosen(player1, flash.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(flash.isTapped()).isTrue();
     }

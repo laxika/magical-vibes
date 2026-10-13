@@ -147,6 +147,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                           CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId, int copyCount) {
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
         if (targetPermanent == null) {
+            resolveForDepartedTarget(gameData, entry, effect, targetId, copyCount);
             return;
         }
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
@@ -161,6 +162,12 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         if (effect.chooseAttackTarget()) {
             int tokenCount = gameQueryService.getTokenCreationAmount(gameData, tokenControllerId, copyCount, tokenSubtypes(targetPermanent.getCard(), effect), true);
             if (tokenCount > 0) {
+                UUID soleDefenderId = soleDefenderId(gameData, tokenControllerId);
+                if (soleDefenderId != null) {
+                    tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(tokenCount, copySourceFor(targetPermanent)),
+                            sourcePermanent, tokenControllerId, effect, List.of(soleDefenderId));
+                    return;
+                }
                 beginAttackTargetChoice(gameData, new PermanentChoiceContext.CreateTokenCopiesAttacking(tokenControllerId, entry.getCard(), entry.getSourcePermanentId(), targetId, effect, tokenCount, List.of()));
             }
             return;
@@ -175,6 +182,24 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, copySource),
                 sourcePermanent, tokenControllerId, effect, attackTargetIds);
     }
+    /**
+     * Copies a target that left the battlefield before this resolution, using the card it had as it last
+     * existed on the battlefield (CR 608.2h). Choices that depend on a live target are skipped.
+     */
+    private void resolveForDepartedTarget(GameData gameData, StackEntry entry,
+                                          CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId, int copyCount) {
+        Card lastKnownCard = entry.lastKnownPermanentCard(targetId);
+        if (lastKnownCard == null || effect.chooseAttackTarget() || effect.createForTargetController()) {
+            return;
+        }
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID attackTargetId = effect.tappedAndAttacking() ? entry.getAttackedTargetId() : null;
+        List<UUID> attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
+        tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, lastKnownCard),
+                sourcePermanent, entry.getControllerId(), effect, attackTargetIds);
+    }
+
     private List<CardSubtype> tokenSubtypes(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
         List<CardSubtype> subtypes =
                 sourceCard.getSubtypes() == null
@@ -188,6 +213,20 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             }
         }
         return subtypes;
+    }
+
+    /**
+     * The one player the token could attack, when the controller's only opponent is that player and no
+     * opposing planeswalker exists; the choice of defender is then forced, so no prompt is needed.
+     */
+    private UUID soleDefenderId(GameData gameData, UUID controllerId) {
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId))
+                .toList();
+        boolean opposingPlaneswalker = opponentIds.stream()
+                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
+                .anyMatch(permanent -> gameQueryService.isPlaneswalker(gameData, permanent));
+        return opponentIds.size() == 1 && !opposingPlaneswalker ? opponentIds.getFirst() : null;
     }
 
     private void beginAttackTargetChoice(GameData gameData, PermanentChoiceContext.CreateTokenCopiesAttacking context) {

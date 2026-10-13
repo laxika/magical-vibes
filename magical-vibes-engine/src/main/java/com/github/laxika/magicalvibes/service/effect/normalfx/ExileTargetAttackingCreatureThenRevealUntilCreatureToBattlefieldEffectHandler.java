@@ -48,7 +48,7 @@ public class ExileTargetAttackingCreatureThenRevealUntilCreatureToBattlefieldEff
         if (target == null
                 || targetControllerId == null
                 || !entry.getControllerId().equals(targetControllerId)
-                || !target.getCard().hasType(CardType.CREATURE)
+                || !gameQueryService.isCreature(gameData, target)
                 || !target.isAttacking()
                 || targetId.equals(entry.getSourcePermanentId())
                 || !permanentRemovalService.removePermanentToExile(gameData, target)) {

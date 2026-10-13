@@ -26,7 +26,7 @@ public class FrenziedGeistblaster extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CardsInHandGraveyardAndLibraryMatchingAtLeast(20, INSTANT_OR_SORCERY),
                 new MayEffect(
-                        new DiscardCardThenEffect(
+                        DiscardCardThenEffect.continuing(
                                 null,
                                 new SeekCardsToHandEffect(new Fixed(1), INSTANT_OR_SORCERY),
                                 "a card"),

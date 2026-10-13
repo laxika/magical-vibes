@@ -7,9 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
@@ -24,9 +23,8 @@ public class FortifiedBeachhead extends Card {
 
         // As this land enters, you may reveal a Soldier card from your hand. This land enters tapped
         // unless you revealed a Soldier card this way or you control a Soldier.
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
-                new ControlsPermanentCountAtMost(0, soldier),
-                new RevealSubtypeOrEntersTappedEffect(CardSubtype.SOLDIER)));
+        addEffect(EffectSlot.STATIC, new RevealSubtypeOrEntersTappedEffect(
+                CardSubtype.SOLDIER, new ControlsPermanent(soldier)));
 
         // {T}: Add {W} or {U}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));

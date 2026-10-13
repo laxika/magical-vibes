@@ -50,7 +50,7 @@ class FirstSphereGargantuaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent gargantua = findPermanent(player1, "First-Sphere Gargantua");
-        assertThat(gargantua.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, gargantua, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

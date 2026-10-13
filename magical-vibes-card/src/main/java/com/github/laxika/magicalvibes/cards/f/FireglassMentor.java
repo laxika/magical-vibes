@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlay
 public class FireglassMentor extends Card {
 
     public FireglassMentor() {
-        addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.SECOND_MAIN_PHASE_TRIGGERED, new ConditionalEffect(
                 new OpponentLostLifeThisTurn(1),
                 new ExileTopCardsChooseOneMayPlayThisTurnEffect(2)));
     }

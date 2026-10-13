@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FlavorDisaster.class, GrizzlyBears.class, Naturalize.class})
 class FlavorDisasterTest extends BaseCardTest {
@@ -99,15 +100,16 @@ class FlavorDisasterTest extends BaseCardTest {
     }
 
     @Test
-    void faceUpFlavorDisasterCanBeDestroyedAsAnEnchantment() {
+    void faceUpFlavorDisasterIsNotAnArtifactOrEnchantmentForNaturalize() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new FlavorDisaster());
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.GREEN, 1);
 
-        harness.castAndResolveInstant(player2, 0, source.getId());
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, source.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an artifact or enchantment");
 
-        harness.assertNotOnBattlefield(player1, "Flavor Disaster");
-        harness.assertInGraveyard(player1, "Flavor Disaster");
+        harness.assertOnBattlefield(player1, "Flavor Disaster");
     }
 }

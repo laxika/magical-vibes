@@ -62,6 +62,13 @@ public class ReturnEnchantedCreatureToBattlefieldOnDeathEffectHandler implements
     private boolean returnCard(GameData gameData, StackEntry entry,
                                ReturnEnchantedCreatureToBattlefieldOnDeathEffect e,
                                UUID dyingCreatureCardId) {
+        Long recordedVersion = entry.getEventCardGraveyardEntryVersions().get(dyingCreatureCardId);
+        if (recordedVersion != null && gameData.graveyardEntryVersion(dyingCreatureCardId) != recordedVersion) {
+            log.info("Game {} - {} death trigger skips creature card {} (it has entered a graveyard again)",
+                    gameData.id, entry.getCard().getName(), dyingCreatureCardId);
+            return false;
+        }
+
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
         if (creatureCard == null) {
             log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",

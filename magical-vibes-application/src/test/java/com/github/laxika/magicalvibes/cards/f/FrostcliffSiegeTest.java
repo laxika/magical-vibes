@@ -77,8 +77,6 @@ class FrostcliffSiegeTest extends BaseCardTest {
         Permanent siege = castAndChoose("Jeskai");
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player2, List.of(new Naturalize()));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.addMana(player2, ManaColor.GREEN, 1);
         Permanent attacker = addAttacker();
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -86,6 +84,8 @@ class FrostcliffSiegeTest extends BaseCardTest {
             declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
             resolveCombat();
             assertThat(gd.stack).hasSize(1);
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.addMana(player2, ManaColor.GREEN, 1);
             harness.castInstant(player2, 0, siege.getId());
             harness.passBothPriorities();
             harness.assertNotOnBattlefield(player1, "Frostcliff Siege");

@@ -34,7 +34,7 @@ public class MillControllerAndDamageOpponentsByManaValueEffectHandler
         MillControllerAndDamageOpponentsByManaValueEffect millEffect =
                 (MillControllerAndDamageOpponentsByManaValueEffect) effect;
         int count = Math.max(0, millEffect.count());
-        List<Card> milled = graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), count);
+        List<Card> milled = graveyardService.resolveMillPlayerAndReturnAllMilledCards(gameData, entry.getControllerId(), count);
         int totalManaValue = milled.stream().mapToInt(Card::getManaValue).sum();
         if (totalManaValue <= 0) {
             return;

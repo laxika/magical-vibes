@@ -85,6 +85,7 @@ class FearsomeWhelpTest extends BaseCardTest {
                 .getCastCostModifier(gd, player1.getId(), dragon)).isEqualTo(-2);
         assertThat(harness.getCastingCostService()
                 .getCastCostModifier(gd, player2.getId(), opponentsDragon)).isZero();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
@@ -117,6 +118,7 @@ class FearsomeWhelpTest extends BaseCardTest {
                 .getCastCostModifier(gd, player1.getId(), addedToHand)).isEqualTo(-1);
         assertThat(harness.getCastingCostService()
                 .getCastCostModifier(gd, player1.getId(), removedFromHand)).isZero();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);
@@ -142,6 +144,7 @@ class FearsomeWhelpTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.setHand(player1, List.of(reducedDragon, newDragon));
         gd.playerBattlefields.get(player1.getId()).clear();
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);

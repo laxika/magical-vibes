@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,13 +55,16 @@ class ForcefieldTest extends BaseCardTest {
         harness.setLife(player1, 20);
         Permanent forcefield = addReadyPermanent(player1, new Forcefield());
         Permanent mammoth = addReadyPermanent(player2, new WarMammoth());
-        addReadyPermanent(player1, new ProdigalSorcerer());
+        Permanent sorcerer = addReadyPermanent(player1, new ProdigalSorcerer());
 
         activateAndChooseSource(forcefield, mammoth);
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
         resolveCombat(player2);
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(
+                sorcerer.getId(), 1,
+                player1.getId(), 2));
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }

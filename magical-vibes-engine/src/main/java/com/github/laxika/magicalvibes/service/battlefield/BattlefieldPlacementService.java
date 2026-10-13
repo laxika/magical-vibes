@@ -321,6 +321,13 @@ public class BattlefieldPlacementService {
             applyTurnScopedFilteredEnterTappedEffects(gameData, controllerId, permanent);
             enchantedPlayerCreaturesEnterTappedEffectHandler.apply(gameData, controllerId, permanent);
             applyUnchosenParityEnterTapped(gameData, permanent);
+            RevealSubtypeOrEntersTappedEffect unrevealedEntryTappedEffect = conditionalRevealEffect != null
+                    ? conditionalRevealEffect : findDirectRevealSubtypeOrEntersTappedEffect(permanent);
+            if (unrevealedEntryTappedEffect != null
+                    && !canRevealSubtypeOnEntry(gameData, controllerId, unrevealedEntryTappedEffect)
+                    && !entersUntappedWithoutReveal(gameData, controllerId, permanent, unrevealedEntryTappedEffect)) {
+                permanent.tap();
+            }
             boolean enteredTappedBeforeUntappedReplacement = permanent.isTapped();
             if (instructedToEnterTapped) permanent.tap();
             applyControlledPermanentsEnterUntapped(gameData, controllerId, permanent);
@@ -480,8 +487,10 @@ public class BattlefieldPlacementService {
             }
         }
         if (permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+            int plusOneCountersOnEntry = Math.max(1, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)
+                    - countersBeforeEntry.getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0));
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(
-                    gameData, permanent, controllerId, simultaneouslyEntered);
+                    gameData, permanent, controllerId, simultaneouslyEntered, plusOneCountersOnEntry);
         }
         // "Whenever a -1/-1 counter is put on a creature" (Flourishing Defenses) also sees a creature
         // that enters with -1/-1 counters (e.g. Leech Bonder, or persist) — CR ruling.
@@ -1017,12 +1026,7 @@ public class BattlefieldPlacementService {
         String subtypeDescription = activeEffect.subtypes().stream()
                 .map(CardSubtype::getDisplayName)
                 .collect(Collectors.joining(" or "));
-        List<Card> hand = gameData.playerHands.get(controllerId);
-        boolean canReveal = hand != null && hand.stream()
-                .anyMatch(card -> activeEffect.subtypes().stream().anyMatch(subtype ->
-                        gameQueryService.cardHasSubtype(card, subtype, gameData, controllerId)));
-        if (!canReveal) {
-            permanent.tap();
+        if (!canRevealSubtypeOnEntry(gameData, controllerId, activeEffect)) {
             log.info("Game {} - {} enters tapped (no {} card to reveal)",
                     gameData.id, permanent.getCard().getName(), subtypeDescription);
             return;
@@ -1037,6 +1041,31 @@ public class BattlefieldPlacementService {
                 null,
                 permanent.getId()));
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    private RevealSubtypeOrEntersTappedEffect findDirectRevealSubtypeOrEntersTappedEffect(Permanent permanent) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return null;
+        }
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(RevealSubtypeOrEntersTappedEffect.class::isInstance)
+                .map(RevealSubtypeOrEntersTappedEffect.class::cast)
+                .findFirst().orElse(null);
+    }
+
+    private boolean entersUntappedWithoutReveal(GameData gameData, UUID controllerId, Permanent permanent,
+                                                RevealSubtypeOrEntersTappedEffect effect) {
+        return effect.entersUntappedIf() != null
+                && conditionEvaluationService.isMet(gameData, effect.entersUntappedIf(),
+                ConditionContext.forPermanent(permanent, controllerId));
+    }
+
+    private boolean canRevealSubtypeOnEntry(GameData gameData, UUID controllerId,
+                                            RevealSubtypeOrEntersTappedEffect effect) {
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        return hand != null && hand.stream()
+                .anyMatch(card -> effect.subtypes().stream().anyMatch(subtype ->
+                        gameQueryService.cardHasSubtype(card, subtype, gameData, controllerId)));
     }
 
     private RevealSubtypeOrEntersWithCountersEffect findActiveConditionalRevealWithCountersEffect(

@@ -104,7 +104,7 @@ class FireRimFormTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isFalse();
 
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FIRST_STRIKE)).isTrue();
     }

@@ -729,6 +729,12 @@ public class GraveyardChoiceHandlerService {
             cardIds = List.of();
         }
 
+        // Separate "target X card and target Y card" instances of the word "target" may pick the
+        // same card (CR 115.3), so naming it twice is one selection.
+        if (!requiredCardTypes(gameData).isEmpty()) {
+            cardIds = cardIds.stream().distinct().toList();
+        }
+
         if (gameData.graveyardTargetOperation
                 .resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume) {
             Map<UUID, Integer> selectedPerOwner = new java.util.HashMap<>();
@@ -1519,6 +1525,17 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
+        Set<CardType> requiredCardTypes = requiredCardTypes(gameData);
+        if (!requiredCardTypes.isEmpty()) {
+            List<Card> selectedCards = cardIds.stream()
+                    .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            if (!coversEveryRequiredCardType(selectedCards, List.copyOf(requiredCardTypes), new IdentityHashMap<>(), 0)) {
+                throw new IllegalStateException("Choose a target card for each of: " + requiredCardTypes);
+            }
+        }
+
         // "... from a single graveyard" (Scarab Feast): all chosen targets must share one graveyard.
         if (gameData.graveyardTargetOperation.singleGraveyard && cardIds.size() > 1) {
             UUID firstOwner = gameQueryService.findGraveyardOwnerById(gameData, cardIds.get(0));
@@ -2051,6 +2068,46 @@ public class GraveyardChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private Set<CardType> requiredCardTypes(GameData gameData) {
+        CardEffect activeEffect = gameData.graveyardTargetOperation.activeSpellGraveyardChoiceEffect;
+        List<CardEffect> effects = activeEffect != null
+                ? List.of(activeEffect) : gameData.graveyardTargetOperation.effects;
+        if (effects == null) {
+            return Set.of();
+        }
+        return effects.stream()
+                .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                .map(ReturnTargetCardsFromGraveyardToHandEffect::requiredCardTypes)
+                .filter(types -> !types.isEmpty())
+                .findFirst()
+                .orElse(Set.of());
+    }
+
+    /**
+     * Whether each required card type can be given a selected card of that type so that every
+     * selected card is the target for at least one type.
+     */
+    private boolean coversEveryRequiredCardType(List<Card> selectedCards, List<CardType> requiredTypes,
+                                                Map<Card, Integer> usage, int typeIndex) {
+        if (typeIndex == requiredTypes.size()) {
+            return selectedCards.stream().allMatch(card -> usage.getOrDefault(card, 0) > 0);
+        }
+        CardType type = requiredTypes.get(typeIndex);
+        for (Card card : selectedCards) {
+            if (!card.hasType(type)) {
+                continue;
+            }
+            usage.merge(card, 1, Integer::sum);
+            boolean covered = coversEveryRequiredCardType(selectedCards, requiredTypes, usage, typeIndex + 1);
+            usage.merge(card, -1, Integer::sum);
+            if (covered) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateCardTypeAssignedSelection(GameData gameData, List<UUID> cardIds) {

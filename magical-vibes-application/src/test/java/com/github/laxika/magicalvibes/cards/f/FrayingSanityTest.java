@@ -152,8 +152,8 @@ class FrayingSanityTest extends BaseCardTest {
         harness.setHand(player1, List.of(riverwinder, new WanderInDeath()));
         harness.setLibrary(player1, List.of(new FrayingSanity(), new FrayingSanity(),
                 new FrayingSanity(), new FrayingSanity(), new FrayingSanity(), new FrayingSanity()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();

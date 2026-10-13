@@ -44,6 +44,7 @@ class FurgulQuagNurturerTest extends BaseCardTest {
     void sacrificesCreatureForItsPowerInGreenMana() {
         Permanent furgul = harness.addToBattlefieldAndReturn(player1, new FurgulQuagNurturer());
         Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        furgul.setSummoningSick(false);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(furgul), null, null);
         harness.handlePermanentChosen(player1, bear.getId());

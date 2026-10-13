@@ -58,7 +58,8 @@ public class SacrificeTargetPermanentAtEndStepEffectHandler implements NormalEff
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         target.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
                         false, null, null,
-                        e.onlyIfAbilityControllerControls() ? entry.getControllerId() : null));
+                        e.onlyIfAbilityControllerControls() ? entry.getControllerId() : null,
+                        false, entry.getCard()));
             }
 
             String timingText = e.flipBeforeSacrificing()

@@ -41,13 +41,14 @@ public class FishingPole extends Card {
         addEffect(EffectSlot.ON_ANY_PERMANENT_BECOMES_UNTAPPED,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsHostOfSourceAuraPredicate(),
-                        ConditionalEffect.unless(
+                        new ConditionalEffect(
                                 new SourceCounterThreshold(1, CounterType.BAIT),
                                 SequenceEffect.of(
                                         new RemoveCounterFromSourceEffect(CounterType.BAIT, 1),
                                         new CreateTokenEffect("Fish", 1, 1, CardColor.BLUE,
                                                 List.of(CardSubtype.FISH), Set.of(), Set.of())
-                                )
+                                ),
+                                false
                         )
                 ));
 

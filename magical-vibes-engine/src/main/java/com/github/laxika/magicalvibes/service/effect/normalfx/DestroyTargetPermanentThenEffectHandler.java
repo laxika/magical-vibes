@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
@@ -114,7 +115,8 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             return;
         }
 
-        resolveThenEffect(gameData, entry, e, statValue, targetControllerId, targetOwnerId);
+        resolveThenEffect(gameData, entry, e, statValue, targetControllerId, targetOwnerId,
+                target.getOriginalCard().getId());
     }
 
     /**
@@ -152,11 +154,12 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         }
         UUID departedControllerId = entry.getRemovedPermanentControllers().get(departedId);
         UUID departedOwnerId = lastKnownCard == null ? null : lastKnownCard.getOwnerId();
-        resolveThenEffect(gameData, entry, e, statValue, departedControllerId, departedOwnerId);
+        resolveThenEffect(gameData, entry, e, statValue, departedControllerId, departedOwnerId, null);
     }
 
     private void resolveThenEffect(GameData gameData, StackEntry entry, DestroyTargetPermanentThenEffect e,
-                                   int statValue, UUID targetControllerId, UUID targetOwnerId) {
+                                   int statValue, UUID targetControllerId, UUID targetOwnerId,
+                                   UUID targetCardId) {
         UUID thenControllerId = switch (e.recipient()) {
             case TARGET_CONTROLLER -> targetControllerId;
             case TARGET_OWNER -> targetOwnerId;
@@ -178,6 +181,9 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                 entry.getDescription(), List.of(thenEffect), thenTargetId, entry.getSourcePermanentId());
         thenEntry.setEventValue(statValue);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        if (thenEffect instanceof SacrificePermanentsEffect && targetCardId != null) {
+            thenEntry.setTargetCardIds(List.of(targetCardId));
+        }
 
         if (thenEffect instanceof ConditionalEffect conditional) {
             if (!conditionEvaluationService.isMet(

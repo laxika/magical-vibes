@@ -22,13 +22,11 @@ public class FeldonOfTheThirdPath extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{R}",
-                List.of(new ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
+                List.of(ExileTargetCardFromGraveyardAndCreateTokenCopyEffect.copyTargetCardKeepingItInGraveyard(
                         new CardTypePredicate(CardType.CREATURE),
                         true,
-                        List.of(),
-                        true,
-                        false,
                         Set.of(CardType.ARTIFACT),
+                        true,
                         true)),
                 "{2}{R}, {T}: Create a token that's a copy of target creature card in your graveyard, "
                         + "except it's an artifact in addition to its other types. It gains haste. "

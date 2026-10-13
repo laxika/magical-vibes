@@ -97,6 +97,7 @@ class FlameBlessedBoltTest extends BaseCardTest {
     @DisplayName("Exiles a planeswalker that dies later in the same turn")
     void exilesPlaneswalkerKilledLaterThisTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraBoldPyromancer());
+        target.setCounterCount(CounterType.LOYALTY, 5);
 
         castAt(target.getId());
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);

@@ -37,7 +37,7 @@ public class ExileUpToCombatDamageCardsFromGraveyardEffectHandler implements Nor
         UUID controllerId = entry.getControllerId();
         List<Card> exiledCards = new ArrayList<>();
         List<UUID> targetCardIds = entry.getTargetCardIds();
-        if (targetCardIds != null) {
+        if (targetCardIds != null && gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
             for (UUID cardId : targetCardIds) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 if (card != null && graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card)) {

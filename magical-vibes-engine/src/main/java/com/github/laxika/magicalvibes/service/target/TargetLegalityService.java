@@ -4143,10 +4143,12 @@ public class TargetLegalityService {
         }
 
         // An amount-assignment entry derives its flat target list from the assignment keys, not from
-        // the card's declared target groups. Those groups describe the separate primary target that
-        // rides alongside the assignments (Fiery Justice's "target opponent gains 5 life"), so they
-        // must not be applied to the assignment positions.
-        if (entry.isTargetIdsFromAssignments()) {
+        // the card's declared target groups. When a separate primary target rides alongside the
+        // assignments, those groups describe that primary target (Fiery Justice's "target opponent
+        // gains 5 life"), so they must not be applied to the assignment positions. Without a primary
+        // target, the assignment positions are the card's own target group (Fire at Will), and their
+        // filter still decides whether each target is legal on resolution.
+        if (entry.isTargetIdsFromAssignments() && entry.getTargetId() != null) {
             for (int i = 0; i < targetCount; i++) {
                 filters.add(null);
             }
@@ -5043,8 +5045,10 @@ public class TargetLegalityService {
             return cardTypeInPredicate.cardTypes().stream().anyMatch(stackEntry.getCard()::hasType);
         }
         if (predicate instanceof StackEntrySubtypeInPredicate subtypeInPredicate) {
-            return stackEntry.getCard().getSubtypes().stream()
-                    .anyMatch(subtypeInPredicate.subtypes()::contains);
+            Card stackCard = stackEntry.getCard();
+            return subtypeInPredicate.subtypes().stream()
+                    .anyMatch(subtype -> gameQueryService.cardHasSubtype(
+                            stackCard, subtype, gameData, stackCard.getOwnerId()));
         }
         if (predicate instanceof StackEntrySupertypeInPredicate supertypeInPredicate) {
             return stackEntry.getCard().getSupertypes().stream()

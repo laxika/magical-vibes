@@ -468,9 +468,11 @@ public final class EffectResolution {
     /**
      * True for a {@linkplain #isTargetlessPermanentSpell targetless permanent spell} that has an ETB
      * ability with targets, so any target named while casting it can only be meant for that ability.
+     * A bestow card's target is the Aura it becomes when cast bestowed (CR 702.103a), so it is never
+     * one of those.
      */
     public static boolean targetsOnlyWithEtbAbilities(Card card) {
-        if (!isTargetlessPermanentSpell(card)) {
+        if (!isTargetlessPermanentSpell(card) || card.getCastingOption(BestowCast.class).isPresent()) {
             return false;
         }
         List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);

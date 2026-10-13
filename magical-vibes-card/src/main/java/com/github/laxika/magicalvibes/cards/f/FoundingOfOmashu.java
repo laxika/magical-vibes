@@ -7,11 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -25,9 +22,7 @@ public class FoundingOfOmashu extends Card {
                         List.of(CardSubtype.ALLY), Set.of(), Set.of()));
 
         addEffect(EffectSlot.SAGA_CHAPTER_II, new MayEffect(
-                SequenceEffect.of(
-                        new DiscardEffect(1, DiscardRecipient.CONTROLLER),
-                        new DrawCardEffect(1)),
+                new DiscardAndDrawCardEffect(1, 1),
                 "Discard a card?"));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new BoostAllOwnCreaturesEffect(1, 0));

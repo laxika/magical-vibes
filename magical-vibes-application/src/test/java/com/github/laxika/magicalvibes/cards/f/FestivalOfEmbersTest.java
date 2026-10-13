@@ -132,10 +132,12 @@ class FestivalOfEmbersTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
 
-        harness.castFromGraveyardTargeting(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castFromGraveyardTargeting(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.castFromGraveyardTargeting(player1, 0, player2.getId());
+            harness.passBothPriorities();
+            harness.castFromGraveyardTargeting(player1, 0, player2.getId());
+            harness.passBothPriorities();
+        });
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 16);

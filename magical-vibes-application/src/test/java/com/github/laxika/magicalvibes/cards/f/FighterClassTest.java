@@ -232,6 +232,8 @@ class FighterClassTest extends BaseCardTest {
         declareAttackers(List.of(battlefieldIndex(attacker)));
         harness.handlePermanentChosen(player1, blocker.getId());
         resolveAllTriggers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                battlefieldIndex(blocker, player2), battlefieldIndex(attacker))));
 
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();

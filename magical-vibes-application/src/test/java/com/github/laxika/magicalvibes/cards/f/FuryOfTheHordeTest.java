@@ -142,7 +142,6 @@ class FuryOfTheHordeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.isTapped()).isFalse();
-        gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);

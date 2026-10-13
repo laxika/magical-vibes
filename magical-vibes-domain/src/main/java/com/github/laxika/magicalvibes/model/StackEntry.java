@@ -134,6 +134,8 @@ public class StackEntry {
     private final Map<UUID, Map<CounterType, Integer>> lastKnownPermanentCounters = new HashMap<>();
     /** Permanents returned by a previous effect in this resolution, for follow-up effects. */
     private final Set<UUID> returnedPermanentIds = new LinkedHashSet<>();
+    /** Owners whose library an earlier effect of this resolution left unshuffled for a later shuffle. */
+    private final Set<UUID> deferredLibraryShuffleOwnerIds = new LinkedHashSet<>();
     /** Effective colors of declared targets just before they left the battlefield. */
     private final Map<UUID, Set<CardColor>> lastKnownTargetColors = new HashMap<>();
     /** Controllers remembered before earlier effects in this resolution remove their permanents. */
@@ -186,6 +188,8 @@ public class StackEntry {
     @Setter private List<UUID> escapeExiledCardIds = List.of();
     /** Whether Feather's replacement effect should exile this spell and return it at the next end step. */
     @Setter private boolean exileAndReturnToHandAtNextEndStep;
+    /** Source of the delayed return ability: the Feather trigger that created it (CR 603.7e). */
+    @Setter private Card exileAndReturnSourceCard;
     /**
      * Whether a replacement effect applies to this spell: "if that spell would be put into a graveyard,
      * exile it instead" (The Dawning Archaic, Chancellor of the Spires). Unlike
@@ -425,6 +429,12 @@ public class StackEntry {
     @Setter private Integer chosenPermanentPowerAtLastKnown;
     /** Last-known effective toughness of a permanent chosen for stationing. */
     @Setter private Integer chosenPermanentToughnessAtLastKnown;
+    /** Graveyard card whose power and toughness were captured just before a graveyard return moved it. */
+    @Setter private UUID returnedGraveyardCardId;
+    /** Power of {@link #returnedGraveyardCardId} as it last existed in the graveyard. */
+    @Setter private Integer returnedGraveyardCardPowerAtLastKnown;
+    /** Toughness of {@link #returnedGraveyardCardId} as it last existed in the graveyard. */
+    @Setter private Integer returnedGraveyardCardToughnessAtLastKnown;
     /** Card chosen from exile for a creature-or-warped-card cost or a library-search follow-up. */
     @Setter private Card chosenObjectCard;
     /** Permanents placed onto the battlefield by the preceding library search. */
@@ -485,6 +495,11 @@ public class StackEntry {
      * Not a target: it is never validated or fizzled.
      */
     @Setter private UUID triggeringPermanentId;
+    /**
+     * Every permanent that entered together for a batched "one or more creatures enter" trigger, so
+     * a resolution-time choice can be limited to the group that caused the trigger. Not a target.
+     */
+    @Setter private List<UUID> triggeringPermanentIds = List.of();
     /** Player whose monarch status was captured when a monarch-triggered target was created. */
     @Setter private UUID triggeringPlayerId;
     /** Controller of the triggering permanent when its non-targeting reference was captured. */
@@ -879,6 +894,7 @@ public class StackEntry {
         this.escapeExiledCardIds = source.escapeExiledCardIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.escapeExiledCardIds);
         this.exileAndReturnToHandAtNextEndStep = source.exileAndReturnToHandAtNextEndStep;
+        this.exileAndReturnSourceCard = source.exileAndReturnSourceCard;
         this.exileInsteadOfGraveyard = source.exileInsteadOfGraveyard;
         this.exilePermanentIfLeavesBattlefield = source.exilePermanentIfLeavesBattlefield;
         this.exileWithSourcePermanentId = source.exileWithSourcePermanentId;
@@ -973,6 +989,9 @@ public class StackEntry {
         this.chosenPermanentId = source.chosenPermanentId;
         this.chosenPermanentPowerAtLastKnown = source.chosenPermanentPowerAtLastKnown;
         this.chosenPermanentToughnessAtLastKnown = source.chosenPermanentToughnessAtLastKnown;
+        this.returnedGraveyardCardId = source.returnedGraveyardCardId;
+        this.returnedGraveyardCardPowerAtLastKnown = source.returnedGraveyardCardPowerAtLastKnown;
+        this.returnedGraveyardCardToughnessAtLastKnown = source.returnedGraveyardCardToughnessAtLastKnown;
         this.chosenObjectCard = source.chosenObjectCard;
         this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.searchedPermanentIds);
@@ -1000,6 +1019,7 @@ public class StackEntry {
         this.exiledCostCardSnapshot = source.exiledCostCardSnapshot;
         this.activatedAbilityExiledCardIds = source.activatedAbilityExiledCardIds;
         this.triggeringPermanentId = source.triggeringPermanentId;
+        this.triggeringPermanentIds = source.triggeringPermanentIds;
         this.triggeringPlayerId = source.triggeringPlayerId;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;
@@ -1308,6 +1328,7 @@ public class StackEntry {
         this.putIntoLibraryPositionAfterResolving = null;
         this.spellMovedDuringResolution = false;
         this.exileAndReturnToHandAtNextEndStep = false;
+        this.exileAndReturnSourceCard = null;
         this.exileInsteadOfGraveyard = false;
         this.exilePermanentIfLeavesBattlefield = false;
         this.putOnBottomOfOwnersLibraryInsteadOfGraveyard = false;

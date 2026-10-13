@@ -84,7 +84,7 @@ class FugitiveCodebreakerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, codebreaker)).isEqualTo(3);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, codebreaker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, codebreaker)).isEqualTo(1);
     }

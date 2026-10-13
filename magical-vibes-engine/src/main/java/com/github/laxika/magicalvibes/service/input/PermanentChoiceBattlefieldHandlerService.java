@@ -112,6 +112,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentCreate
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlAndTrackWithSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlThenCreateTokenEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileControlledCreatureWithTakeoverCounterEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentThenExileMatchingPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTwoPermanentsThenSearchLibraryEffectHandler;
@@ -165,6 +166,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final AuraCopyService auraCopyService;
     private final AbilityActivationService abilityActivationService;
     private final PermanentRemovalService permanentRemovalService;
+    private final PermanentControlSupport permanentControlSupport;
     private final UpgradeSupport upgradeSupport;
     private final PlayerInputService playerInputService;
     private final GraveyardReturnSupport graveyardReturnSupport;
@@ -2836,7 +2838,14 @@ public class PermanentChoiceBattlefieldHandlerService {
                 List<UUID> validPlayerTargets = new ArrayList<>();
                 if (targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
                     TargetPredicate declared = targetSpec.targetPredicate();
+                    boolean opponentOnly = ctx.thenEffect()
+                            instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect damage
+                            && damage.playerRelation()
+                            == com.github.laxika.magicalvibes.model.filter.PlayerRelation.OPPONENT;
                     for (UUID playerId : gameData.orderedPlayerIds) {
+                        if (opponentOnly && playerId.equals(ctx.controllerId())) {
+                            continue;
+                        }
                         if (targetPredicateEvaluationService.matchesPlayer(
                                 declared, playerId, ctx.controllerId(), gameData)) {
                             validPlayerTargets.add(playerId);
@@ -3049,16 +3058,11 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 target.getCard().getName(), ctx.sourceCard().getName());
 
-        // Create X tokens, where X is the sacrificed creature's toughness
+        // Create X tokens, where X is the sacrificed creature's toughness; "if you do" is part of the
+        // same resolution, so the tokens are created without a priority window
         if (toughness > 0) {
-            CreateTokenEffect sized = ctx.tokenTemplate().withAmount(toughness);
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ctx.sourceCard(),
-                    ctx.controllerId(),
-                    ctx.sourceCard().getName() + "'s effect",
-                    new ArrayList<>(List.of(sized))
-            ));
+            permanentControlSupport.applyCreateToken(gameData, ctx.controllerId(), ctx.tokenTemplate(),
+                    toughness, ctx.sourceCard().getSetCode());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -3452,9 +3456,18 @@ public class PermanentChoiceBattlefieldHandlerService {
             boolean hasControlEffect = enchantTarget != null && auraCard.getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
             if (hasControlEffect) {
-                creatureControlService.applyControlEffect(gameData, auraControllerId, enchantTarget,
-                        new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
-                        auraPerm.getId(), auraCard.getName());
+                boolean monarchBound = auraCard.getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect control
+                                && control.controlledByMonarch());
+                if (!monarchBound) {
+                    creatureControlService.applyControlEffect(gameData, auraControllerId, enchantTarget,
+                            new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                            auraPerm.getId(), auraCard.getName());
+                } else if (gameData.monarchPlayerId != null) {
+                    creatureControlService.applyControlEffect(gameData, gameData.monarchPlayerId, enchantTarget,
+                            new ControlEnchantedCreatureEffect(true), EffectDuration.WHILE_ATTACHED,
+                            auraPerm.getId(), auraCard.getName());
+                }
             }
 
             String playerName = gameData.playerIdToName.get(auraControllerId);

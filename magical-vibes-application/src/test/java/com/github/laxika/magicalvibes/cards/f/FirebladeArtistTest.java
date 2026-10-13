@@ -113,6 +113,7 @@ class FirebladeArtistTest extends BaseCardTest {
     void canDamageOwnPlaneswalker() {
         Permanent artist = harness.addToBattlefieldAndReturn(player1, new FirebladeArtist());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new DovinGrandArbiter());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();

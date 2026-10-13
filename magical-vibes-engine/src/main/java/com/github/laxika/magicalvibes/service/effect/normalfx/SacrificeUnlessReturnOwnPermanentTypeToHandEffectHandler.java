@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
 
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,7 +55,7 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
         boolean hasValidPermanent = false;
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (p.getCard().hasType(e.permanentType())
+                if (gameQueryService.getEffectiveCardTypes(gameData, p).contains(e.permanentType())
                         && !(e.excludeSource() && p.getCard().getId().equals(sourceCard.getId()))) {
                     hasValidPermanent = true;
                     break;

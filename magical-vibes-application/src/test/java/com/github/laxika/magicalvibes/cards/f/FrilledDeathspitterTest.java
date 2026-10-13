@@ -68,6 +68,7 @@ class FrilledDeathspitterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FanaticalFirebrand());
         var planeswalkerController = ownPlaneswalker ? player2 : player1;
         Permanent angrath = harness.addToBattlefieldAndReturn(planeswalkerController, new AngrathTheFlameChained());
+        angrath.setCounterCount(CounterType.LOYALTY, 4);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 

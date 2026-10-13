@@ -137,7 +137,7 @@ class FeveredStrengthTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         int handBeforeUpkeep = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player2);

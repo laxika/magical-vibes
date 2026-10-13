@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUpToNCreaturesOpponentControlsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -14,8 +15,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Handler for {@link DestroyUpToNCreaturesOpponentControlsEffect}: gathers the creatures an opponent
- * of the resolving controller controls and prompts the controller to choose up to {@code maxCount}
- * of them to destroy (choosing none is legal). Completion runs in
+ * of the resolving controller controls that the controller can target (shroud and hexproof creatures
+ * are excluded, since the effect's creatures are targets) and prompts the controller to choose up to
+ * {@code maxCount} of them to destroy (choosing none is legal). Completion runs in
  * {@code MultiPermanentChoiceHandlerService} via
  * {@link MultiPermanentChoiceContext.DestroyCreaturesOpponentControls}.
  */
@@ -26,6 +28,7 @@ public class DestroyUpToNCreaturesOpponentControlsEffectHandler implements Norma
     private final GameQueryService gameQueryService;
     private final DestructionSupport destructionSupport;
     private final PlayerInputService playerInputService;
+    private final ValidTargetService validTargetService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +44,8 @@ public class DestroyUpToNCreaturesOpponentControlsEffectHandler implements Norma
             return;
         }
 
-        List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, opponentId, permanent -> true);
+        List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, opponentId,
+                permanent -> !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, permanent, controllerId));
         if (creatureIds.isEmpty()) {
             return;
         }

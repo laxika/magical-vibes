@@ -119,7 +119,7 @@ class FinaleOfDevastationTest extends BaseCardTest {
         assertThat(harness.getGameQueryService().getEffectivePower(gd, later)).isEqualTo(1);
         assertThat(harness.getGameQueryService().hasKeyword(gd, later, Keyword.HASTE)).isFalse();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, own)).isEqualTo(2);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, own)).isEqualTo(2);
         assertThat(harness.getGameQueryService().hasKeyword(gd, own, Keyword.HASTE)).isFalse();

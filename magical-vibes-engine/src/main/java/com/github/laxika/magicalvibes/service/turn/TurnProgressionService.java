@@ -253,7 +253,9 @@ public class TurnProgressionService {
         }
 
         if (next == TurnStep.DRAW
-                && stepTriggerService.controlsSkipDrawStep(gameData, gameData.activePlayerId)) {
+                && (stepTriggerService.controlsSkipDrawStep(gameData, gameData.activePlayerId)
+                || gameData.skippedStepOrPhasesThisTurn
+                        .getOrDefault(gameData.activePlayerId, Set.of()).contains(SkipStepOrPhaseKind.DRAW_STEP))) {
             if (gameData.additionalBeginningPhaseReturnStep != null) {
                 if (gameData.additionalBeginningPhasesAfterPostcombatMain > 0) {
                     next = TurnStep.UNTAP;
@@ -1057,6 +1059,7 @@ public class TurnProgressionService {
         gameData.resetPriorityToActivePlayer();
         gameData.playersWhoWereWayBehindThisTurn.clear();
         gameData.landsPlayedThisTurn.clear();
+        gameData.landCardsPlayedThisTurn.clear();
         gameData.playersWhoTappedLandForManaThisTurn.clear();
         gameData.additionalLandsThisTurn.clear();
         gameData.permanentsEnteredBattlefieldLastTurn.clear();
@@ -1136,6 +1139,7 @@ public class TurnProgressionService {
         gameData.cardsExiledFromGraveyardThisTurn.clear();
         gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn = 0;
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
+        gameData.cardsPutIntoGraveyardAgainThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromLibraryThisTurn.clear();
         gameData.cardsSurveilledThisTurn.clear();
         gameData.cardsPutIntoHandThisTurn.clear();

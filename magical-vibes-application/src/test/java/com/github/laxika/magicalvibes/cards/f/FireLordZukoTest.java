@@ -70,6 +70,7 @@ class FireLordZukoTest extends BaseCardTest {
         exileAtEndStep(true);
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -119,7 +120,7 @@ class FireLordZukoTest extends BaseCardTest {
                 () -> declareAttackers(List.of(0)));
         zuko.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> resolveAllTriggers());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(4);
     }

@@ -85,7 +85,7 @@ class FortifyTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(mine.getPowerModifier()).isEqualTo(2);
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities(); // advance through cleanup
 
         assertThat(mine.getPowerModifier()).isZero();
@@ -146,7 +146,7 @@ class FortifyTest extends BaseCardTest {
 
         harness.castModalInstant(player1, 0, 1, List.of());
         harness.passBothPriorities();
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(mine.getToughnessModifier()).isEqualTo(2);
 
         harness.passBothPriorities();

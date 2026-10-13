@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,7 @@ public class ManifestDreadEffectHandler implements NormalEffectHandlerBean {
 
     private final LibraryRevealSupport libraryRevealSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,6 +59,9 @@ public class ManifestDreadEffectHandler implements NormalEffectHandlerBean {
         LibraryRevealSupport.TopCardsResult result = libraryRevealSupport.takeTopCardsFromLibrary(
                 gameData, entry, libraryOwnerId, 2, true);
         if (result == null) {
+            // CR 701.62b: "whenever you manifest dread" abilities trigger even when the library
+            // had no cards to look at, so the process completes with nothing put into the graveyard.
+            triggerCollectionService.checkManifestDreadTriggers(gameData, libraryOwnerId, null);
             return;
         }
 

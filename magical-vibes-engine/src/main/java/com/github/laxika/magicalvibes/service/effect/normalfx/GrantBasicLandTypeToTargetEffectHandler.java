@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -56,7 +59,17 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
                 continue;
             }
 
-            applyBasicLandType(target, e.fixedSubtype(), e.duration(), e.replacing());
+            if (e.replacing() && e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
+                // A timestamped layer-4 floating effect, so a later "becomes" effect (Blood Moon)
+                // overrides it by timestamp rather than the transient override always winning.
+                gameData.addFloatingEffect(new FloatingContinuousEffect(
+                        UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                        entry.getControllerId(),
+                        new GrantSubtypeEffect(e.fixedSubtype(), GrantScope.TARGET, true),
+                        target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+            } else {
+                applyBasicLandType(target, e.fixedSubtype(), e.duration(), e.replacing());
+            }
             gameLogService.append(gameData, GameLog.text(describeBasicLandTypeChange(
                     target, e.fixedSubtype(), e.duration(), e.replacing())));
         }

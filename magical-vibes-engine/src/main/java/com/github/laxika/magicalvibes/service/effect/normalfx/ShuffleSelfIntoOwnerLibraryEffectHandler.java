@@ -11,11 +11,14 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -35,23 +38,23 @@ public class ShuffleSelfIntoOwnerLibraryEffectHandler implements NormalEffectHan
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getSourcePermanentId() == null) {
-            return;
-        }
-
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent self = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self == null) {
+            // CR 701.24c: the owner's library is shuffled even if the object is no longer where it was.
+            shuffleDeferredLibraries(gameData, entry, ownerOfLeftSource(entry));
             return;
         }
 
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, self.getId());
         UUID sourceOwnerId = gameData.defaultControllerOf(self.getId());
         String name = self.getCard().getName();
-        boolean removed = permanentRemovalService.removePermanentToLibraryShuffled(gameData, self);
+        boolean removed = permanentRemovalService.removePermanentToLibraryUnshuffled(gameData, self);
         if (removed) {
             gameLogService.append(gameData, GameLog.text(name + " is shuffled into its owner's library."));
             log.info("Game {} - {} shuffled into owner's library", gameData.id, name);
         }
+        shuffleDeferredLibraries(gameData, entry, sourceOwnerId);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
@@ -85,6 +88,25 @@ public class ShuffleSelfIntoOwnerLibraryEffectHandler implements NormalEffectHan
         } else {
             log.warn("Game {} - No handler for then-effect: {}", gameData.id,
                     shuffle.thenEffect().getClass().getSimpleName());
+        }
+    }
+
+    private UUID ownerOfLeftSource(StackEntry entry) {
+        if (entry.getOwnerId() != null) {
+            return entry.getOwnerId();
+        }
+        return entry.getCard() != null && entry.getCard().getOwnerId() != null
+                ? entry.getCard().getOwnerId() : entry.getControllerId();
+    }
+
+    private void shuffleDeferredLibraries(GameData gameData, StackEntry entry, UUID sourceOwnerId) {
+        Set<UUID> owners = new LinkedHashSet<>(entry.getDeferredLibraryShuffleOwnerIds());
+        entry.getDeferredLibraryShuffleOwnerIds().clear();
+        if (sourceOwnerId != null) {
+            owners.add(sourceOwnerId);
+        }
+        for (UUID ownerId : owners) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
         }
     }
 }

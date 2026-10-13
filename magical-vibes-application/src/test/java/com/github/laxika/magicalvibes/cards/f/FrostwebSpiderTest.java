@@ -24,6 +24,7 @@ class FrostwebSpiderTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BorealGriffin());
         attacker.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new FrostwebSpider());
+        spider.setToughnessModifier(1);
 
         declareBlock(spider, attacker);
         harness.passBothPriorities();
@@ -41,9 +42,11 @@ class FrostwebSpiderTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BorealCentaur());
         attacker.setAttacking(true);
         Permanent spider = addCreatureReady(player2, new FrostwebSpider());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        spider.setToughnessModifier(1);
 
         declareBlock(spider, attacker);
-        harness.passBothPriorities();
         leaveEndOfCombat();
 
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -79,9 +82,8 @@ class FrostwebSpiderTest extends BaseCardTest {
     }
 
     private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(null, TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
     }
 
 }

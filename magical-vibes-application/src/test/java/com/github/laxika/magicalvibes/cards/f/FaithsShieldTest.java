@@ -277,9 +277,9 @@ class FaithsShieldTest extends BaseCardTest {
         harness.setLife(player1, 5);
         harness.setHand(player1, List.of(new FiresOfUndeath(), new FaithsShield()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, player1.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleListChoice(player1, "RED");
         harness.passBothPriorities();

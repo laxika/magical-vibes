@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.action;
 
+import com.github.laxika.magicalvibes.model.Card;
+
 import java.util.UUID;
 
 /**
@@ -11,11 +13,21 @@ import java.util.UUID;
  * current controller determines that end step instead (Aethermage's Touch).
  * {@code cannotBeRegenerated} is honoured by the DESTROY kinds only
  * (e.g. "destroy it at end of combat, it can't be regenerated" triggers).
+ * A non-null {@code sourceCard} is the card whose ability created the delayed trigger (a spell
+ * that creates one is its source); when null the permanent's own card is used as the source.
  */
 public record DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                      boolean cannotBeRegenerated, UUID returnExiledCardId,
                                      UUID controllerId, UUID sacrificingPlayerId,
-                                     boolean followsPermanentController) implements DelayedAction {
+                                     boolean followsPermanentController, Card sourceCard) implements DelayedAction {
+
+    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
+                                  boolean cannotBeRegenerated, UUID returnExiledCardId,
+                                  UUID controllerId, UUID sacrificingPlayerId,
+                                  boolean followsPermanentController) {
+        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId,
+                controllerId, sacrificingPlayerId, followsPermanentController, null);
+    }
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                   boolean cannotBeRegenerated, UUID returnExiledCardId,

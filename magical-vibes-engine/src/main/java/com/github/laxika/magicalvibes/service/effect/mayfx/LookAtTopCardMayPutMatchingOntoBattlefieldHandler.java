@@ -28,6 +28,6 @@ public class LookAtTopCardMayPutMatchingOntoBattlefieldHandler implements MayEff
         LookAtTopCardMayPutMatchingOntoBattlefieldEffect effect =
                 (LookAtTopCardMayPutMatchingOntoBattlefieldEffect) ability.effects().getFirst();
         mayMiscHandlerService.handleLookAtTopCardPutLandOrCreatureChoice(
-                gameData, player, accepted, effect.enterTapped());
+                gameData, player, accepted, effect.enterTapped(), effect.otherwiseToHand());
     }
 }

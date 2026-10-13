@@ -163,8 +163,7 @@ class FathomFleetCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Pirate")).isZero();
     }
 

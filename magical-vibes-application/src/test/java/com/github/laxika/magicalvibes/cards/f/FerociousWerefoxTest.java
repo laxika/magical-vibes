@@ -153,7 +153,7 @@ class FerociousWerefoxTest extends BaseCardTest {
                 Map.of(blocker.getId(), 1, player2.getId(), 3));
 
         harness.assertLife(player2, 17);
-        harness.assertOnBattlefield(player1, "Ferocious Werefox");
+        harness.assertInGraveyard(player1, "Ferocious Werefox");
         harness.assertInGraveyard(player2, "Redtooth Vanguard");
     }
 }

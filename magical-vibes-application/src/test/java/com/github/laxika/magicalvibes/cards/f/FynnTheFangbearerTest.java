@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.a.AmbushViper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -105,7 +106,7 @@ class FynnTheFangbearerTest extends BaseCardTest {
         Permanent fynn = addCreatureReady(player1, new FynnTheFangbearer());
         fynn.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(fynn);
         gd.playerGraveyards.get(player1.getId()).add(fynn.getCard());

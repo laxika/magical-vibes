@@ -5,8 +5,13 @@ import com.github.laxika.magicalvibes.cards.d.DolmenGate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -111,8 +116,14 @@ class FamiliarsRuseTest extends BaseCardTest {
     void returnsStolenCreatureToOwnersHand() {
         AvianChangeling target = new AvianChangeling();
         harness.castFromHand(player1, target, "{2}{W}");
-        Permanent toReturn = harness.addToBattlefieldAndReturn(player2, new AvianChangeling());
+        AvianChangeling ownedByPlayer1 = new AvianChangeling();
+        ownedByPlayer1.setOwnerId(player1.getId());
+        Permanent toReturn = harness.addToBattlefieldAndReturn(player1, ownedByPlayer1);
         gd.stolenCreatures.put(toReturn.getId(), player1.getId());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player2.getId(), toReturn,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
         harness.setHand(player2, List.of(new FamiliarsRuse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.passPriority(player1);

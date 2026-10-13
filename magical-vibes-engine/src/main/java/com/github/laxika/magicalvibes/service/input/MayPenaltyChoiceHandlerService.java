@@ -225,12 +225,14 @@ public class MayPenaltyChoiceHandlerService {
                         player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), costText);
                 counterSupport.resolvePaidRider(gameData, ability.sourceCard(), ability.sourceControllerId(),
-                        onPaidEffects);
+                        player.getId(), onPaidEffects);
             } else {
-                counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, exileIfCountered, onNotPaidEffects);
+                counterSpell(gameData, player, ability.sourceCard(), ability.sourceControllerId(), targetEntry,
+                        costText, exileIfCountered, onNotPaidEffects);
             }
         } else {
-            counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, exileIfCountered, onNotPaidEffects);
+            counterSpell(gameData, player, ability.sourceCard(), ability.sourceControllerId(), targetEntry,
+                        costText, exileIfCountered, onNotPaidEffects);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -273,13 +275,15 @@ public class MayPenaltyChoiceHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
         } else {
-            counterSpell(gameData, player, ability.sourceCard(), targetEntry, costText, false, List.of());
+            counterSpell(gameData, player, ability.sourceCard(), ability.sourceControllerId(), targetEntry,
+                    costText, false, List.of());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void counterSpell(GameData gameData, Player player, Card sourceCard, StackEntry targetEntry,
+    private void counterSpell(GameData gameData, Player player, Card sourceCard, UUID sourceControllerId,
+                              StackEntry targetEntry,
                               String costText, boolean exileIfCountered, List<CardEffect> onNotPaidEffects) {
         UUID counteredControllerId = targetEntry.getControllerId();
         boolean counterable = !gameQueryService.isUncounterable(gameData, targetEntry.getCard())
@@ -290,7 +294,8 @@ public class MayPenaltyChoiceHandlerService {
                     player.getUsername() + " declines to pay " + costText + ". ", targetEntry.getCard(),
                     " cannot be countered."));
             log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
-            counterSupport.resolveNotPaidRider(gameData, sourceCard, counteredControllerId, onNotPaidEffects);
+            counterSupport.resolveNotPaidRider(gameData, sourceCard, sourceControllerId, counteredControllerId,
+                    onNotPaidEffects);
             return;
         }
 
@@ -317,7 +322,8 @@ public class MayPenaltyChoiceHandlerService {
         log.info("Game {} - {} — spell countered{}", gameData.id, player.getUsername(), exileIfCountered ? " and exiled" : "");
 
         // Not paid: resolve any rider against the countered spell's controller (Power Sink).
-        counterSupport.resolveNotPaidRider(gameData, sourceCard, counteredControllerId, onNotPaidEffects);
+        counterSupport.resolveNotPaidRider(gameData, sourceCard, sourceControllerId, counteredControllerId,
+                    onNotPaidEffects);
     }
 
     public void handleCounterUnlessDiscardsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -1744,7 +1750,7 @@ public class MayPenaltyChoiceHandlerService {
             List<UUID> validIds = new ArrayList<>();
             if (battlefield != null) {
                 for (Permanent p : battlefield) {
-                    if (p.getCard().hasType(effect.permanentType())
+                    if (gameQueryService.getEffectiveCardTypes(gameData, p).contains(effect.permanentType())
                             && !(effect.excludeSource() && p.getCard().getId().equals(sourceCard.getId()))) {
                         validIds.add(p.getId());
                     }

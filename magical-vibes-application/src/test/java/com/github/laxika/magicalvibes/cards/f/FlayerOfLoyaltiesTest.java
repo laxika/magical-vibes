@@ -80,7 +80,7 @@ class FlayerOfLoyaltiesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
@@ -153,7 +153,7 @@ class FlayerOfLoyaltiesTest extends BaseCardTest {
         }
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
 
         declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(target)));
         harness.passBothPriorities();
@@ -178,7 +178,7 @@ class FlayerOfLoyaltiesTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(12);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(12);
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.UPKEEP);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }

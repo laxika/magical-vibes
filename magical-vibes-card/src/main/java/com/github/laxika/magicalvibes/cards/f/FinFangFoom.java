@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -26,7 +26,7 @@ public class FinFangFoom extends Card {
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
                 List.of(
-                        new CopySpellEffect(),
+                        new CopyTriggeringSpellEffect(),
                         new PutCountersOnSourceEffect(1, 1, 2)),
                 new StackEntryTargetsPermanentPredicate(new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

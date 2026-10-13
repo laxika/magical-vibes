@@ -124,7 +124,7 @@ class ForebodingRuinsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ForebodingRuins(), swamp, mountain));
         playLand();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(mountain.getId()));
 
         assertThat(findLand().isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(swamp, mountain);

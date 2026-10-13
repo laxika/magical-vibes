@@ -135,7 +135,7 @@ class FinalShowdownTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, chosen, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, chosen, Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, chosen, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, chosen, Keyword.VIGILANCE)).isTrue();

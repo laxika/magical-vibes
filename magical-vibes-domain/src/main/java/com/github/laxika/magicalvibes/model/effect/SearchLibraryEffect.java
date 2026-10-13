@@ -222,6 +222,12 @@ public record SearchLibraryEffect(
                 LibrarySearchPlayer.CONTROLLER, false, false, true, null, null, 0);
     }
 
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               int castFromGraveyardCount) {
+        this(count, filter, destination, null, castFromGraveyardCount, false, false, false, false, null,
+                LibrarySearchPlayer.CONTROLLER, false, false, true, null, null, 0);
+    }
+
     /**
      * Tutor for {@code count} cards to hand normally, {@code castFromGraveyardCount} when cast from a
      * graveyard (flashback). A {@code null} filter is an unrestricted tutor (e.g. Increasing Ambition).

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import java.util.UUID;
@@ -43,7 +44,22 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
             default -> support.matchesCreatureScope(context, grant.scope(), grant.filter());
         };
         if (scopeMatch) {
-            accumulator.addGrantedEffect(grant);
+            accumulator.addGrantedEffect(withPerGrantOncePerTurnKey(grant, context.sourceId()));
         }
+    }
+
+    /**
+     * Gives a {@link OncePerTurnTriggerEffect#perGrant} ability a key unique to the granting
+     * permanent, so several granters' "triggers only once each turn" limits are tracked separately.
+     */
+    private static GrantTriggeredAbilityEffect withPerGrantOncePerTurnKey(GrantTriggeredAbilityEffect grant,
+                                                                         UUID grantingPermanentId) {
+        if (!(grant.grantedEffect() instanceof OncePerTurnTriggerEffect once) || !OncePerTurnTriggerEffect.PER_GRANT_KEY.equals(once.key())) {
+            return grant;
+        }
+        var keyed = new OncePerTurnTriggerEffect(once.wrapped(), once.markOnAcceptance(),
+                "granted-by:" + grantingPermanentId, once.firstTokenCreation(), once.firstLifeGain(),
+                once.firstLandGraveyardEvent());
+        return new GrantTriggeredAbilityEffect(grant.slot(), keyed, grant.scope(), grant.filter());
     }
 }

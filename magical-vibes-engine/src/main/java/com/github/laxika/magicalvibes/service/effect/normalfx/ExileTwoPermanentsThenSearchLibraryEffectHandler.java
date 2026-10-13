@@ -72,7 +72,9 @@ public class ExileTwoPermanentsThenSearchLibraryEffectHandler implements NormalE
                                           PermanentChoiceContext.ExileTwoPermanentsThenSearchLibrary context,
                                           StackEntry resolvingEntry) {
         List<UUID> secondIds = matchingIds(gameData, context.controllerId(), context.sourceCard(),
-                context.sourcePermanentId(), context.secondFilter());
+                context.sourcePermanentId(), context.secondFilter()).stream()
+                .filter(id -> !id.equals(firstPermanentId))
+                .toList();
         if (secondIds.isEmpty()) {
             return;
         }
@@ -109,10 +111,12 @@ public class ExileTwoPermanentsThenSearchLibraryEffectHandler implements NormalE
         SearchLibraryEffect search = new SearchLibraryEffect(
                 context.searchFilter(), LibrarySearchDestination.BATTLEFIELD);
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (pendingEntry != null) {
-            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(search));
-        } else if (resolvingEntry != null) {
+        if (resolvingEntry != null) {
+            // Resolving in place: the parked index may still point at this effect (a "you may" re-run),
+            // so inserting the search there would run it again before the next effect.
             searchLibraryEffectHandler.resolve(gameData, resolvingEntry, search);
+        } else if (pendingEntry != null) {
+            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(search));
         }
     }
 

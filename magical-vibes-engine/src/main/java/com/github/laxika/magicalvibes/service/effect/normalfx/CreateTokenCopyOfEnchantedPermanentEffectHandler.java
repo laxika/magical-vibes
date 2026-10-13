@@ -40,9 +40,6 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
             Permanent auraSnapshot = entry.getSourcePermanentSnapshot();
             if (auraSnapshot != null && auraSnapshot.getAttachedTo() != null) {
                 enchanted = gameQueryService.findPermanentById(gameData, auraSnapshot.getAttachedTo());
-                if (enchanted == null) {
-                    enchanted = entry.getAttachedPermanentSnapshot();
-                }
             }
         }
 

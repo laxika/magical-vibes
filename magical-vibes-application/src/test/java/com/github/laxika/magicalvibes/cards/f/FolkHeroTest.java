@@ -116,6 +116,8 @@ class FolkHeroTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FolkHero());
         Forest drawn = new Forest();
         harness.setLibrary(player2, List.of(drawn));
+        harness.setHand(player1, List.of());
+        harness.forceActivePlayer(player2);
 
         harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         resolveAllTriggers();

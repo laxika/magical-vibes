@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 public class ForecastingFortuneTeller extends Card {
 
     public ForecastingFortuneTeller() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofClueToken(1));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofClueToken(1).withInvestigate(false));
     }
 }

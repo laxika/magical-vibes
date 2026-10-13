@@ -54,7 +54,8 @@ public class FalkenrathTorturer extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))
                                 )),
-                                "Sacrifice a non-Human creature"
+                                "Sacrifice a non-Human creature",
+                                false
                         ),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)
                 ),

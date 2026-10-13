@@ -21,7 +21,7 @@ public class FloralEvoker extends Card {
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new PutCountersOnSourceEffect(1, 1, 1));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",
                 List.of(

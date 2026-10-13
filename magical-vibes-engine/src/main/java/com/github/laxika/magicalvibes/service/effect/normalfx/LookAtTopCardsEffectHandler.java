@@ -98,6 +98,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         // Nothing to look at (e.g. Shrine of Piercing Vision with no charge counters).
         if (lookCount <= 0) {
+            shuffleAfterEmptyLook(gameData, entry, e);
             return;
         }
 
@@ -139,6 +140,13 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         }
     }
 
+    // A "then shuffle" still happens when there were no cards to look at (X of 0 or an empty library).
+    private void shuffleAfterEmptyLook(GameData gameData, StackEntry entry, LookAtTopCardsEffect e) {
+        if (e.restDestination() == LookDestination.SHUFFLE_INTO_LIBRARY) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
+        }
+    }
+
     // you may put matching card(s) onto the battlefield, rest to the effect's destination
     // (Mayael the Anima / Mitotic Manipulation: one card via LibrarySearch;
     //  Nissa, Genesis Mage −10: any number via LibraryRevealChoice + random bottom)
@@ -148,7 +156,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             int chooseTotalManaValueAtMost) {
         LibraryRevealSupport.TopCardsResult result =
                 libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, !e.reveal());
-        if (result == null) return;
+        if (result == null) {
+            shuffleAfterEmptyLook(gameData, entry, e);
+            return;
+        }
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();

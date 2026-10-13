@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class SinnersJudgment extends Card {
 
     public SinnersJudgment() {
-        addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED, SequenceEffect.of(
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.JUDGMENT),
                 ConditionalEffect.unless(new SourceCounterThreshold(3, CounterType.JUDGMENT),
                         new EnchantedPlayerLosesGameEffect())));

@@ -40,10 +40,19 @@ public class ClashEffectHandler implements NormalEffectHandlerBean {
         boolean won = triggerCollectionService.performClash(gameData, entry.getControllerId());
         gameData.lastClashWonByController.put(entry.getControllerId(), won);
         java.util.List<CardEffect> followUps = new java.util.ArrayList<>();
-        followUps.add(new com.github.laxika.magicalvibes.model.effect.ScryEffect(
-                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.CONTROLLER, false));
-        followUps.add(new com.github.laxika.magicalvibes.model.effect.ScryEffect(
-                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.OPPONENT, false));
+        var controllerPlacement = new com.github.laxika.magicalvibes.model.effect.ScryEffect(
+                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.CONTROLLER, false);
+        var opponentPlacement = new com.github.laxika.magicalvibes.model.effect.ScryEffect(
+                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.OPPONENT, false);
+        // Clashing players place their revealed cards in APNAP order (CR 701.30c, 101.4): the active
+        // player decides first, so the controller places first only when it is the active player.
+        if (entry.getControllerId().equals(gameData.activePlayerId)) {
+            followUps.add(controllerPlacement);
+            followUps.add(opponentPlacement);
+        } else {
+            followUps.add(opponentPlacement);
+            followUps.add(controllerPlacement);
+        }
         if (won && e.onWin() != null) followUps.add(e.onWin());
         if (won && e.repeatWhileWinning()) followUps.add(e);
         int index = entry.getEffectsToResolve().indexOf(effect);

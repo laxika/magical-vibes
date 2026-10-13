@@ -7,8 +7,12 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToOtherCreaturesControlledByTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+import java.util.List;
 
 @CardRegistration(set = "RNA", collectorNumber = "101")
 public class FlamesOfTheRazeBoar extends Card {
@@ -17,7 +21,10 @@ public class FlamesOfTheRazeBoar extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4))
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                        new ControlsPermanent(new PermanentPowerAtLeastPredicate(4)),
+                        new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentPowerAtLeastPredicate(4)
+                        ))),
                         new DealDamageToOtherCreaturesControlledByTargetEffect(2)));
     }
 }

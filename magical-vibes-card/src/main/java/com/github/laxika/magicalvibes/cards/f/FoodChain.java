@@ -25,7 +25,7 @@ public class FoodChain extends Card {
                 false,
                 null,
                 List.of(
-                        new ExilePermanentCost(new PermanentIsCreaturePredicate(), "a creature", true, true),
+                        new ExilePermanentCost(new PermanentIsCreaturePredicate(), "a creature", false, true),
                         new AwardAnyColorManaEffect(
                                 new Sum(new Fixed(1), new XValue()),
                                 ManaSpendRestriction.CREATURE_SPELL_ONLY,

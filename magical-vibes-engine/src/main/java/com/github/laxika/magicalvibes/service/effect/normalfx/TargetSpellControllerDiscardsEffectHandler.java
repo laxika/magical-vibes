@@ -24,13 +24,13 @@ public class TargetSpellControllerDiscardsEffectHandler implements NormalEffectH
         var e = (TargetSpellControllerDiscardsEffect) effect;
 
         UUID targetCardId = entry.getTargetId();
-        if (targetCardId == null) return;
-
-        for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetCardId)) {
-                gameData.discardCausedByOpponent = !entry.getControllerId().equals(se.getControllerId());
-                playerInteractionSupport.resolveDiscardCards(gameData, se.getControllerId(), e.amount());
-                return;
+        if (targetCardId != null) {
+            for (StackEntry se : gameData.stack) {
+                if (se.getTargetableId().equals(targetCardId)) {
+                    gameData.discardCausedByOpponent = !entry.getControllerId().equals(se.getControllerId());
+                    playerInteractionSupport.resolveDiscardCards(gameData, se.getControllerId(), e.amount());
+                    return;
+                }
             }
         }
         UUID controllerId = entry.getCounteredSpellControllerId();

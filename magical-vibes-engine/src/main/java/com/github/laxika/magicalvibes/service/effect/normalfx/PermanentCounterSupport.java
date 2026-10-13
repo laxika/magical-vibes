@@ -1381,8 +1381,8 @@ public class PermanentCounterSupport {
         firePlusOnePlusOneCounterTriggers(gameData, target, placingPlayerId, excludedSources, 1);
     }
 
-    private void firePlusOnePlusOneCounterTriggers(GameData gameData, Permanent target,
-                                                    UUID placingPlayerId, List<Permanent> excludedSources, int count) {
+    public void firePlusOnePlusOneCounterTriggers(GameData gameData, Permanent target,
+                                                   UUID placingPlayerId, List<Permanent> excludedSources, int count) {
         firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target, placingPlayerId, count);
         firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
                 gameData, target, 1, null, excludedSources);

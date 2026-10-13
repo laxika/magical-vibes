@@ -102,6 +102,7 @@ class FastForwardTest extends BaseCardTest {
     @DisplayName("Goad lasts through the opponent's turn and expires at the caster's next turn")
     void goadExpiresAtNextTurn() {
         var creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         castAndResolveFastForward();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

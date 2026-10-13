@@ -2220,7 +2220,7 @@ public class AbilityActivationService {
                 gameData, playerId, card, ability, effectiveXValue, -cyclingReduction);
         if (abilityCost != null || activationCostModifier > 0) {
             payManaCostForSourceCard(gameData, playerId, card, abilityCost == null ? "{0}" : abilityCost, effectiveXValue,
-                    false, false, -cyclingReduction + activationCostModifier);
+                    false, false, activationCostModifier);
         }
 
         if (payLifeCost != null) {
@@ -2363,6 +2363,12 @@ public class AbilityActivationService {
             gameData.stack.add(insertionIndex, stackEntry);
         }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+        if (!ability.isManaAbility()) {
+            triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
+                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
+            triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
+                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
+        }
 
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " activates ", card, "'s ability from their hand."));
@@ -2446,6 +2452,12 @@ public class AbilityActivationService {
             gameData.stack.add(insertionIndex, stackEntry);
         }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
+        if (!ability.isManaAbility()) {
+            triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
+                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
+            triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
+                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
+        }
         if (discarded) {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
             if (ability.isCyclingAbility()) {
@@ -2933,6 +2945,9 @@ public class AbilityActivationService {
                 source,
                 null
         );
+        if (!gameData.interaction.isAwaitingInput()) {
+            triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
+        }
     }
 
     /**
@@ -4054,6 +4069,26 @@ public class AbilityActivationService {
             return;
         }
 
+        RemoveCounterFromSourceCost pendingSourceCounterKindCost = abilityEffects.stream()
+                .filter(RemoveCounterFromSourceCost.class::isInstance)
+                .map(RemoveCounterFromSourceCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (pendingSourceCounterKindCost != null && pendingSourceCounterKindCost.count() == 1
+                && pendingSourceCounterKindCost.counterType() == CounterType.ANY
+                && gameData.chosenCostCounterType == null) {
+            List<CounterType> counterKinds = presentCounterKinds(permanent);
+            if (counterKinds.size() > 1) {
+                ChoiceContext.SourceCounterCostTypeChoice kindChoice = new ChoiceContext.SourceCounterCostTypeChoice(
+                        permanent.getId(), abilityIndex, xValue, targetId, targetZone, targetIds,
+                        damageAssignments, counterKinds);
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, kindChoice, kindChoice.options(),
+                        permanent.getCard().getName() + " - Choose a kind of counter to remove."));
+                return;
+            }
+        }
+
         validatePreventDividedDamageAssignments(gameData, playerId, permanent, ability, activationEffects,
                 effectiveXValue, damageAssignments);
         boolean hasPaymentDerivedXValue = abilityEffects.stream()
@@ -4743,6 +4778,9 @@ public class AbilityActivationService {
         if (removeCounterCost.isPresent()) {
             int count = removeCounterCost.get().count();
             CounterType ct = removeCounterCost.get().counterType();
+            if (ct == CounterType.ANY && count == 1 && gameData.chosenCostCounterType != null) {
+                ct = gameData.chosenCostCounterType;
+            }
             int removedMinus = 0;
             int removedPlus = 0;
             switch (ct) {
@@ -5146,7 +5184,7 @@ public class AbilityActivationService {
                 if (autoPayIds.size() <= handler.requiredCount() && !autoPayIds.isEmpty()) {
                     Permanent autoTarget = gameQueryService.findPermanentById(gameData, autoPayIds.getFirst());
                     if (autoTarget != null) {
-                        effectiveXValue = autoTarget.getCard().getManaValue();
+                        effectiveXValue = autoTarget.isFaceDown() ? 0 : autoTarget.getCard().getManaValue();
                     }
                 }
             }
@@ -5481,6 +5519,8 @@ public class AbilityActivationService {
         if (costEffect instanceof CostEffect cost
                 && cost.recordsSacrificedPermanentSnapshot() && sacrificed != null) {
             source.setChosenSacrificedPermanentSnapshot(new Permanent(sacrificed));
+            source.setChosenSacrificedPower(gameQueryService.getEffectivePower(gameData, sacrificed));
+            source.setChosenSacrificedToughness(gameQueryService.getEffectiveToughness(gameData, sacrificed));
         }
         if (!(costEffect instanceof SacrificePermanentCost)
                 || sacrificed == null
@@ -5522,7 +5562,13 @@ public class AbilityActivationService {
         if (tapBatch) {
             triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
         }
-        if (handler.shouldAutoPayAll(gameData, playerId, required)) {
+        boolean counterKindChoice = handler instanceof RemoveCounterFromPermanentCostHandler counterHandler
+                && required == 1 && gameData.chosenCostCounterType == null
+                && handler.getValidChoiceIds(gameData, playerId).stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(Objects::nonNull)
+                .anyMatch(candidate -> counterHandler.removableKinds(candidate).size() > 1);
+        if (!counterKindChoice && handler.shouldAutoPayAll(gameData, playerId, required)) {
             try {
                 List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 for (UUID id : validIds) {
@@ -5557,14 +5603,31 @@ public class AbilityActivationService {
             return false;
         }
         List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
+        PermanentChoiceContext.ActivatedAbilityCostChoice costChoice = new PermanentChoiceContext.ActivatedAbilityCostChoice(
                 playerId, source.getId(), abilityIndex, xValue, targetId, targetZone,
                 targetIds, handler.costEffect(), required, List.of(), ability, new Permanent(source),
-                exiledSourceCard(gameData, source), damageAssignments));
+                exiledSourceCard(gameData, source), damageAssignments);
+        if (counterKindChoice && validIds.size() == 1
+                && handler instanceof RemoveCounterFromPermanentCostHandler counterHandler) {
+            beginControlledCounterKindChoice(gameData, playerId, costChoice, validIds.getFirst(),
+                    counterHandler.removableKinds(gameQueryService.findPermanentById(gameData, validIds.getFirst())));
+            return true;
+        }
+        gameData.interaction.setPermanentChoiceContext(costChoice);
         playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                 handler.getPromptMessage(required));
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         return true;
+    }
+
+    private void beginControlledCounterKindChoice(GameData gameData, UUID playerId,
+                                                  PermanentChoiceContext.ActivatedAbilityCostChoice costChoice,
+                                                  UUID chosenPermanentId, List<CounterType> kinds) {
+        ChoiceContext.ControlledCounterCostTypeChoice kindChoice =
+                new ChoiceContext.ControlledCounterCostTypeChoice(costChoice, chosenPermanentId, kinds);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, kindChoice, kindChoice.options(), "Choose a kind of counter to remove."));
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
     private Card exiledSourceCard(GameData gameData, Permanent source) {
@@ -5693,6 +5756,16 @@ public class AbilityActivationService {
             }
         }
 
+        if (handler instanceof RemoveCounterFromPermanentCostHandler counterHandler
+                && context.remaining() == 1 && gameData.chosenCostCounterType == null
+                && handler.getValidChoiceIds(gameData, playerId).contains(chosenPermanentId)) {
+            List<CounterType> kinds = counterHandler.removableKinds(chosen);
+            if (kinds.size() > 1) {
+                beginControlledCounterKindChoice(gameData, playerId, context, chosenPermanentId, kinds);
+                return;
+            }
+        }
+
         // Capture sacrificed creature's tracked values before sacrifice (e.g. Birthing Pod, Fling)
         Integer updatedXValue = null;
         if (context.costEffect() instanceof SacrificeCreatureCost sacCost) {
@@ -5725,7 +5798,7 @@ public class AbilityActivationService {
 
         if (context.costEffect() instanceof ExilePermanentCost exilePermCost
                 && exilePermCost.trackExiledManaValue()) {
-            updatedXValue = chosen.getCard().getManaValue();
+            updatedXValue = chosen.isFaceDown() ? 0 : chosen.getCard().getManaValue();
         }
 
         // Remember the tapped creature so ChosenPermanentPower reads its power at resolution (Impelled Giant).
@@ -7758,6 +7831,62 @@ public class AbilityActivationService {
         permanentRemovalService.removePermanentToHand(gameData, target);
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " returns " , target.getCard(), " to hand."));
         }
+
+    private static List<CounterType> presentCounterKinds(Permanent permanent) {
+        List<CounterType> kinds = new ArrayList<>();
+        for (CounterType type : CounterType.values()) {
+            if (type != CounterType.ANY && type != CounterType.SILVER && permanent.getCounterCount(type) > 0) {
+                kinds.add(type);
+            }
+        }
+        return kinds;
+    }
+
+    /**
+     * Resumes an activated ability suspended on the choice of which kind of counter to remove from
+     * its source as a cost, re-entering the activation with the chosen kind.
+     */
+    public void handleSourceCounterCostTypeChosen(GameData gameData, Player player,
+                                                  ChoiceContext.SourceCounterCostTypeChoice choice, String label) {
+        CounterType chosen = pickCounterKind(choice.counterTypes(), label);
+        Permanent source = gameQueryService.findPermanentById(gameData, choice.sourcePermanentId());
+        gameData.interaction.clearAwaitingInput();
+        if (source == null) {
+            throw new IllegalStateException("Source permanent is no longer on the battlefield");
+        }
+        gameData.chosenCostCounterType = chosen;
+        try {
+            activateAbilityInternal(gameData, player, -1, choice.abilityIndex(), choice.xValue(),
+                    choice.targetId(), choice.targetZone(), null, null, choice.targetIds(),
+                    choice.damageAssignments(), source, null);
+        } finally {
+            gameData.chosenCostCounterType = null;
+        }
+    }
+
+    /**
+     * Resumes a permanent-choice cost suspended on the choice of which kind of counter to remove from
+     * the permanent the controller picked.
+     */
+    public void handleControlledCounterCostTypeChosen(GameData gameData, Player player,
+                                                      ChoiceContext.ControlledCounterCostTypeChoice choice,
+                                                      String label) {
+        CounterType chosen = pickCounterKind(choice.counterTypes(), label);
+        gameData.interaction.clearAwaitingInput();
+        gameData.chosenCostCounterType = chosen;
+        try {
+            completeActivatedAbilityCostChoice(gameData, player, choice.costChoice(), choice.chosenPermanentId());
+        } finally {
+            gameData.chosenCostCounterType = null;
+        }
+    }
+
+    private static CounterType pickCounterKind(List<CounterType> kinds, String label) {
+        return kinds.stream()
+                .filter(kind -> ChoiceContext.AdjustChosenCounterTypeChoice.counterLabel(kind).equals(label))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid counter kind: " + label));
+    }
 
     private static int countPermanentCounters(Permanent permanent) {
         int total = 0;

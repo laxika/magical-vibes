@@ -54,7 +54,7 @@ class FeralLightningTest extends BaseCardTest {
         castFeralLightning();
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(3);
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(null, TurnStep.CLEANUP);
 
         assertThat(countPermanents(player1, "Elemental")).isZero();
     }
@@ -64,7 +64,7 @@ class FeralLightningTest extends BaseCardTest {
     void exilesAllTokensWithOneDelayedTrigger() {
         castFeralLightning();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(countPermanents(player1, "Elemental")).isEqualTo(3);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -82,7 +82,7 @@ class FeralLightningTest extends BaseCardTest {
     void tokensAttackImmediately() {
         castFeralLightning();
 
-        declareAttackersAndPrepareBlockers(List.of(0, 1, 2));
+        declareAttackers(List.of(0, 1, 2));
         resolveCombat();
 
         harness.assertLife(player2, 11);

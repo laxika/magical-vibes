@@ -274,6 +274,10 @@ public class LibraryChoiceHandlerService {
                 && followUp.basicLandSearchQueue().optionalSearch()
                 && accumulatedCards.isEmpty()) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+            if (com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.markSearchedOnPick(followUp.basicLandSearchQueue())) {
+                followUp = followUp.withBasicLandSearchQueue(
+                        followUp.basicLandSearchQueue().withSearchedPlayer(librarySearch.playerId()));
+            }
         }
 
         gameData.interaction.clearAwaitingInput();
@@ -2989,7 +2993,9 @@ public class LibraryChoiceHandlerService {
                 continue;
             }
 
-            List<Card> basicLands = deck.stream()
+            int topLimit = Math.min(librarySearchSupport.opponentSearchTopCardsLimit(gameData, nextPlayerId),
+                    deck.size());
+            List<Card> basicLands = deck.subList(0, topLimit).stream()
                     .filter(card -> card.hasType(CardType.LAND)
                             && gameQueryService.cardHasSupertype(
                             card, CardSupertype.BASIC, gameData, nextPlayerId))

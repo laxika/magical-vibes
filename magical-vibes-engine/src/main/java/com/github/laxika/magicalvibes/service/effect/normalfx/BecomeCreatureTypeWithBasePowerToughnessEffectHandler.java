@@ -44,8 +44,6 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
 
         if (e.replacesGrantedSubtypes()) {
             source.getGrantedSubtypes().clear();
-            source.setProtectionFromOpponentsPermanently(false);
-            source.getProtectionFromPlayerIdsPermanently().clear();
         }
 
         if (e.power() != null) {
@@ -69,10 +67,31 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
                 overriding = false;
             }
         } else {
+            if (e.replacesGrantedSubtypes()) {
+                gameData.floatingEffects.removeIf(floating ->
+                        floating.duration() == com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT
+                                && floating.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect
+                                && source.getId().equals(floating.affectedPermanentId()));
+            }
             if (!source.getGrantedSubtypes().contains(e.addedSubtype())) {
                 source.getGrantedSubtypes().add(e.addedSubtype());
             }
-            addSubtypeEffect(gameData, entry, source, e.addedSubtype(), false);
+            if (e.replacesGrantedSubtypes()) {
+                // "Becomes a [printed type] [added type]" sets the creature types outright, so it also
+                // overwrites creature types set by an earlier effect (Snakeform's Snake).
+                var subtypes = new java.util.LinkedHashSet<CardSubtype>();
+                source.getCard().getSubtypes().stream()
+                        .filter(gameQueryService::isCreatureSubtype)
+                        .forEach(subtypes::add);
+                subtypes.add(e.addedSubtype());
+                boolean overriding = true;
+                for (CardSubtype subtype : subtypes) {
+                    addSubtypeEffect(gameData, entry, source, subtype, overriding);
+                    overriding = false;
+                }
+            } else {
+                addSubtypeEffect(gameData, entry, source, e.addedSubtype(), false);
+            }
         }
 
         if (e.grantsProtectionFromOpponents()) {

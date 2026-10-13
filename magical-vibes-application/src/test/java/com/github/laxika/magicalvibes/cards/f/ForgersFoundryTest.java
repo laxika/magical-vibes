@@ -29,9 +29,9 @@ class ForgersFoundryTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getCardsExiledByPermanent(foundry.getId())).contains(highTide);
@@ -75,6 +75,7 @@ class ForgersFoundryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -140,8 +141,8 @@ class ForgersFoundryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player1, 0, 0, player2.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(gd.getCardsExiledByPermanent(foundry.getId())).contains(stroke);
@@ -170,8 +171,8 @@ class ForgersFoundryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, 0, player2.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).contains(zenith);

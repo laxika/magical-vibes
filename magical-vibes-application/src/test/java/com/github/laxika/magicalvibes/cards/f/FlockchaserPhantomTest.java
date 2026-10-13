@@ -147,6 +147,8 @@ class FlockchaserPhantomTest extends BaseCardTest {
         Permanent phantom = addCreatureReady(player1, new FlockchaserPhantom());
         harness.setLibrary(player1, List.of(new SolRing(), new SolRing()));
         harness.setLibrary(player2, List.of(new SolRing(), new SolRing()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         declareAttackers(List.of(0));
         resolveAllTriggers();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

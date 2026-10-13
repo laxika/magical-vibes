@@ -47,6 +47,13 @@ public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements N
             return;
         }
 
+        // CR 701.21a: a player can't sacrifice a permanent they don't control, so no damage either
+        boolean controlledByAbilityController = gameData.playerBattlefields.get(entry.getControllerId()).stream()
+                .anyMatch(p -> p.getId().equals(sourcePermanentId));
+        if (!controlledByAbilityController) {
+            return;
+        }
+
         // Sacrifice the source creature
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, source);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is sacrificed."));

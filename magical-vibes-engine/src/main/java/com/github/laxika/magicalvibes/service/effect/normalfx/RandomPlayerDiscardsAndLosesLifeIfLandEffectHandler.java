@@ -30,7 +30,8 @@ public class RandomPlayerDiscardsAndLosesLifeIfLandEffectHandler implements Norm
             true,
             null,
             null,
-            DiscardRecipient.TARGET_PLAYER);
+            DiscardRecipient.TARGET_PLAYER,
+            true);
 
     private final DiscardCardThenEffectHandler discardCardThenEffectHandler;
 
@@ -41,13 +42,13 @@ public class RandomPlayerDiscardsAndLosesLifeIfLandEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> players = new ArrayList<>(gameData.playerIds);
-        if (players.isEmpty()) {
-            return;
+        if (entry.getTargetId() == null) {
+            List<UUID> players = new ArrayList<>(gameData.playerIds);
+            if (players.isEmpty()) {
+                return;
+            }
+            entry.setTargetId(players.get(ThreadLocalRandom.current().nextInt(players.size())));
         }
-
-        UUID selectedPlayerId = players.get(ThreadLocalRandom.current().nextInt(players.size()));
-        entry.setTargetId(selectedPlayerId);
         discardCardThenEffectHandler.resolve(gameData, entry, DISCARD_EFFECT);
     }
 }

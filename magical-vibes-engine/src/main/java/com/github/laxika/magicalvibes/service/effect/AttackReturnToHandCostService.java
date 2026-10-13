@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -10,11 +11,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class AttackReturnToHandCostService {
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final PlayerInputService playerInputService;
 
     public void validateReturnToHandAttackCosts(GameData gameData, UUID playerId,
                                                 List<Integer> attackerIndices) {
@@ -49,17 +51,19 @@ public class AttackReturnToHandCostService {
             return;
         }
 
-        List<CantAttackUnlessReturnToHandEffect> costs = new ArrayList<>();
+        Map<PermanentPredicate, Integer> totals = new LinkedHashMap<>();
         for (Permanent attacker : attackers) {
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CantAttackUnlessReturnToHandEffect returnCost) {
-                    costs.add(returnCost);
+                    totals.merge(returnCost.filter(), returnCost.count(), Integer::sum);
                 }
             }
         }
 
-        for (CantAttackUnlessReturnToHandEffect cost : costs) {
-            returnMatching(gameData, playerId, cost.count(), cost.filter());
+        // Costs with the same filter are paid as one return so that every required permanent is chosen
+        // together; separate prompts would replace one another and drop the later costs.
+        for (Map.Entry<PermanentPredicate, Integer> total : totals.entrySet()) {
+            returnMatching(gameData, playerId, total.getValue(), total.getKey());
         }
     }
 
@@ -97,6 +101,19 @@ public class AttackReturnToHandCostService {
 
     private void returnMatching(GameData gameData, UUID playerId, int count,
                                 PermanentPredicate filter) {
+        List<Permanent> candidates = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, filter))
+                .toList();
+        if (candidates.size() > count) {
+            playerInputService.beginMultiPermanentChoice(gameData, playerId,
+                    candidates.stream().map(Permanent::getId).toList(), count,
+                    new MultiPermanentChoiceContext.ReturnToHandAttackCost(count),
+                    "Choose " + count + " permanent" + (count == 1 ? "" : "s")
+                            + " to return to hand as an attack cost.");
+            return;
+        }
+
         String playerName = gameData.playerIdToName.get(playerId);
         int returned = 0;
         while (returned < count) {

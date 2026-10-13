@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsAsEntersForCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -14,6 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class FamishedWorldsire extends Card {
 
     public FamishedWorldsire() {
+        // Ward {3}
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SacrificePermanentsAsEntersForCountersEffect(new PermanentIsLandPredicate(), 3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

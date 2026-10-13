@@ -148,7 +148,7 @@ class ForceSpikeTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, elves.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.tapPermanent(player1, 0);
+        gs.tapPermanent(gd, player1, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

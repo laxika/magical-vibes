@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
 
@@ -26,7 +28,9 @@ public class FalkenrathForebear extends Card {
                 "{B}",
                 List.of(
                         new SacrificeMultiplePermanentsCost(2,
-                                new PermanentHasSubtypePredicate(CardSubtype.BLOOD)),
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.BLOOD),
+                                        new PermanentIsTokenPredicate()))),
                         new ReturnSourceCardFromGraveyardToBattlefieldEffect(false)),
                 "{B}, Sacrifice two Blood tokens: Return this card from your graveyard to the battlefield."
         ));

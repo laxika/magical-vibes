@@ -157,6 +157,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsRenownedPredicate,
         PermanentIsSuspectedPredicate,
         PermanentIsSourceCardPredicate,
+        PermanentIsTargetCardPredicate,
         PermanentIsSourceOrPairedPredicate,
         PermanentIsSourcePermanentPredicate,
         PermanentIsTriggeringPermanentPredicate,

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -45,6 +46,7 @@ public class SeparateCreaturesIntoPilesAndChooseAttackersEffectHandler implement
                         .toList();
 
         if (creatureIds.isEmpty()) {
+            gameData.attackableCreaturesThisTurn.merge(activePlayerId, Set.of(), (existing, next) -> Set.of());
             String playerName = gameData.playerIdToName.get(activePlayerId);
             gameLogService.append(gameData, GameLog.text(playerName + " has no creatures to separate."));
             log.info("Game {} - {} has no creatures to separate", gameData.id, playerName);

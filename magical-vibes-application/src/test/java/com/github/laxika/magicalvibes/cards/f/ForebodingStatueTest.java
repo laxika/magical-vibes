@@ -110,8 +110,12 @@ class ForebodingStatueTest extends BaseCardTest {
         statue.setCounterCount(CounterType.OMEN, 4);
         statue.tap();
 
-        advanceToEndStep(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
         assertThat(statue.isTransformed()).isFalse();
         assertThat(statue.isTapped()).isTrue();

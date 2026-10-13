@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.ThroneOfBone;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,11 +50,11 @@ class FleshbagMarauderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // The opponent with two creatures must choose which one to sacrifice.
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).context())
+                .isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
     }
 
     @Test
@@ -66,8 +68,8 @@ class FleshbagMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player2, p2Bears.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player2, List.of(p2Bears.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.pendingEffectResolutionEntry)
@@ -95,8 +97,8 @@ class FleshbagMarauderTest extends BaseCardTest {
         harness.passBothPriorities(); // ETB resolves → sacrifice choices
 
         // The opponent chooses the Bears; both players must ultimately sacrifice a creature.
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player2, p2Bears.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player2, List.of(p2Bears.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.pendingEffectResolutionEntry)
@@ -120,7 +122,7 @@ class FleshbagMarauderTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Giant Spider");
 
-        harness.handlePermanentChosen(player2, bears.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
 
         harness.assertInGraveyard(player1, "Fleshbag Marauder");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -136,7 +138,7 @@ class FleshbagMarauderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Fleshbag Marauder");

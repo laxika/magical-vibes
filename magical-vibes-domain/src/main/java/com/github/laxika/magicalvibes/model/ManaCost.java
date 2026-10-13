@@ -1051,8 +1051,13 @@ public class ManaCost {
     }
 
     /** Converts up to {@code count} white mana in {@code pool} into {@code color}. */
+    /**
+     * Converts white mana into {@code color} only for the shortfall: mana of that color already in the pool
+     * pays its own requirement, so white mana is kept for the requirements that need white.
+     */
     private static void convertWhiteTo(ManaPool pool, ManaColor color, int count) {
-        for (int i = 0; i < count && pool.get(ManaColor.WHITE) > 0; i++) {
+        int shortfall = Math.max(0, count - pool.get(color));
+        for (int i = 0; i < shortfall && pool.get(ManaColor.WHITE) > 0; i++) {
             pool.remove(ManaColor.WHITE);
             pool.add(color);
         }

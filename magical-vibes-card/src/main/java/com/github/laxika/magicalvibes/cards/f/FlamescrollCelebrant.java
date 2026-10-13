@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.r.RevelInSilence;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -26,7 +27,9 @@ public class FlamescrollCelebrant extends Card {
                 "{1}{R}: This creature gets +2/+0 until end of turn."));
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Flamescroll Celebrant", List.of()),
-                new ChooseOneEffect.ChooseOneOption("Revel in Silence", backFace.getEffects(EffectSlot.SPELL)))));
+                new ChooseOneEffect.ChooseOneOption("Revel in Silence", backFace.getEffects(EffectSlot.SPELL))
+                        .withManaCost("{W}{W}")
+                        .withSpellType(CardType.INSTANT))));
     }
 
     @Override

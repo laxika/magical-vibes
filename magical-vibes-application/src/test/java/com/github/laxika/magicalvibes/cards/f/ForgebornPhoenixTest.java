@@ -133,7 +133,8 @@ class ForgebornPhoenixTest extends BaseCardTest {
         destroyPhoenix(returned);
 
         attacker.untap();
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> declareAttackers(
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
         resolveCombat();
 
         assertThat(gd.stack.stream()
@@ -152,9 +153,9 @@ class ForgebornPhoenixTest extends BaseCardTest {
         attachEquipment(secondAttacker);
         destroyPhoenix(phoenix);
 
-        declareAttackers(List.of(
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> declareAttackers(List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(firstAttacker),
-                gd.playerBattlefields.get(player1.getId()).indexOf(secondAttacker)));
+                gd.playerBattlefields.get(player1.getId()).indexOf(secondAttacker))));
         resolveCombat();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();

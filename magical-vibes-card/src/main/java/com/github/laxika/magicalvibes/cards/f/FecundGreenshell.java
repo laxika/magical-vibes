@@ -25,6 +25,6 @@ public class FecundGreenshell extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardToughnessGreaterThanPowerPredicate(),
                         new LookAtTopCardMayPutMatchingOntoBattlefieldEffect(
-                                new CardTypePredicate(CardType.LAND), true)));
+                                new CardTypePredicate(CardType.LAND), true, true)));
     }
 }

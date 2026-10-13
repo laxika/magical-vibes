@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
@@ -32,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffec
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -105,14 +103,14 @@ public class EtbEffectResolver {
             return selectedModeEffect(coe.options().getFirst());
         });
 
-        // Evoke sacrifice (CR 702.75e) — intervening-if (CR 603.4): resolve to a plain sacrifice
+        // Evoke sacrifice (CR 702.74a) — intervening-if (CR 603.4): resolve to a plain sacrifice
         // when the evoke cost was paid, otherwise drop the trigger entirely.
         register(SacrificeSelfIfEvokedEffect.class, (ctx, effect) ->
-                ctx.evoked() ? new SacrificeSelfEffect() : null);
+                ctx.evoked() ? new SacrificeSelfEffect(true) : null);
 
-        register(ReturnSelfToHandIfDashCostPaidEffect.class, (ctx, effect) ->
-                ctx.alternateCost() && ctx.card().getKeywords().contains(Keyword.DASH)
-                        ? new ReturnSelfToHandAtEndStepEffect() : null);
+        // Dash's return to hand is queued when the permanent enters from a dash cast, so it is not an
+        // enters-the-battlefield trigger and never goes on the stack.
+        register(ReturnSelfToHandIfDashCostPaidEffect.class, (ctx, effect) -> null);
 
         // "Gain life equal to that creature's toughness" — read toughness at trigger time.
         register(GainLifeEqualToToughnessEffect.class, (ctx, effect) ->

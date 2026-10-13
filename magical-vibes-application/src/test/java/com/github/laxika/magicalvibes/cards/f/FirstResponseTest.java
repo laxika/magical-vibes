@@ -71,6 +71,7 @@ class FirstResponseTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
         assertThat(countPermanents(player2, "Soldier")).isZero();
 
+        harness.setHand(player2, java.util.List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.UPKEEP);

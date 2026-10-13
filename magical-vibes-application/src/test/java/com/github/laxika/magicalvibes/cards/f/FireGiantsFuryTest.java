@@ -43,8 +43,8 @@ class FireGiantsFuryTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(5);
         assertThat(gd.exilePlayPermissions).hasSize(5)
                 .containsValue(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).hasSize(5)
-                .containsValue(gd.turnNumber + 2);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer).hasSize(5)
+                .containsValue(player1.getId());
     }
 
     @Test

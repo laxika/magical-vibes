@@ -31,8 +31,8 @@ public class FearOfRidicule extends Card {
                 Keyword.MENACE, GrantScope.ALL_OWN_CREATURES, enchantmentCreature));
 
         CreateTokenCopyOfTargetPermanentEffect tokenCopy = new CreateTokenCopyOfTargetPermanentEffect(
-                List.of(), Set.of(CardType.ENCHANTMENT), 1, 1, java.util.Map.of(),
-                false, false, false, false, false, false, null, Set.of());
+                List.of(), Set.of(CardType.ENCHANTMENT, CardType.CREATURE), 1, 1, java.util.Map.of(),
+                false, false, false, false, false, false, null, Set.of()).withReplacedCardTypes();
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         enchantmentCreature,

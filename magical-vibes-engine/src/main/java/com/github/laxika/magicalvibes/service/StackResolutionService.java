@@ -1626,7 +1626,9 @@ public class StackResolutionService {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameData.queueDelayedAction(new ReturnExiledCardToHandAtNextEndStep(
-                    physicalCard.getId(), ownerId, entry.getCard(), entry.getControllerId()));
+                    physicalCard.getId(), ownerId,
+                    entry.getExileAndReturnSourceCard() != null ? entry.getExileAndReturnSourceCard() : entry.getCard(),
+                    entry.getControllerId()));
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.isCastWithFlashback()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
@@ -1634,10 +1636,15 @@ public class StackResolutionService {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));
         } else if (entry.isCastWithOmen()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
-            gameData.playerDecks.get(ownerId).add(physicalCard);
-            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
-            LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
+            // The omen face's ShuffleIntoLibraryEffect may already have put the card into the library
+            // during effect resolution; only dispose of it here when it is still outside the library.
+            List<Card> deck = gameData.playerDecks.get(ownerId);
+            if (!deck.contains(physicalCard)) {
+                deck.add(physicalCard);
+                triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
+                LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));
+            }
         } else if (entry.isCastWithAdventure()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);

@@ -117,7 +117,7 @@ class FelotharTheSteadfastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice).isFalse();
         harness.assertInGraveyard(player1, "Wall of Vines");
     }
 

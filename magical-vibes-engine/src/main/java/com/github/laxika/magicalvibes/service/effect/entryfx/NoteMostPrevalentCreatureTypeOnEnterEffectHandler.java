@@ -53,7 +53,7 @@ public class NoteMostPrevalentCreatureTypeOnEnterEffectHandler implements EntryR
 
         EnumMap<CardSubtype, Integer> counts = new EnumMap<>(CardSubtype.class);
         for (Card card : library) {
-            if (!card.hasType(CardType.CREATURE)) {
+            if (!card.hasType(CardType.CREATURE) && !card.hasType(CardType.KINDRED)) {
                 continue;
             }
 

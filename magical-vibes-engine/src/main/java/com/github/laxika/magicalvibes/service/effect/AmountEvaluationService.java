@@ -815,7 +815,9 @@ public class AmountEvaluationService {
             case CardsPutIntoGraveyardByTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.cardsPutIntoGraveyardFromAnywhereThisTurn
-                                    .getOrDefault(ctx.targetPermanentId(), java.util.Set.of()).size();
+                                    .getOrDefault(ctx.targetPermanentId(), java.util.Set.of()).size()
+                                    + gameData.cardsPutIntoGraveyardAgainThisTurn
+                                    .getOrDefault(ctx.targetPermanentId(), 0);
             case CardsPutIntoGraveyardFromHandOrLibraryThisTurn ignored -> {
                 if (ctx.controllerId() == null) {
                     yield 0;

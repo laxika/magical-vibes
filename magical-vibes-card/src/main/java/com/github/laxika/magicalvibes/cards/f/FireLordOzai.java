@@ -29,8 +29,8 @@ public class FireLordOzai extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         )),
                         new AwardManaUntilEndOfCombatEffect(
-                                ManaColor.RED, new SacrificedPermanentPower()),
-                        "another creature"),
+                                ManaColor.RED, new SacrificedPermanentPower(), false),
+                        "another creature", false, false),
                 "Sacrifice another creature?"));
 
         addActivatedAbility(new ActivatedAbility(

@@ -96,6 +96,8 @@ public class MayMiscHandlerService {
     private GraveyardService graveyardService;
     @Autowired @Lazy
     private StepTriggerService stepTriggerService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.turn.UntapStepService untapStepService;
 
     /** Setter for manual (non-Spring) construction (tests, AI simulator). */
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -108,6 +110,10 @@ public class MayMiscHandlerService {
 
     public void setStepTriggerService(StepTriggerService stepTriggerService) {
         this.stepTriggerService = stepTriggerService;
+    }
+
+    public void setUntapStepService(com.github.laxika.magicalvibes.service.turn.UntapStepService untapStepService) {
+        this.untapStepService = untapStepService;
     }
 
     public void handleEquipmentAttachChoice(GameData gameData, Player player, boolean accepted,
@@ -169,7 +175,12 @@ public class MayMiscHandlerService {
             }
         }
 
-        if (accepted && sourcePermanent != null && !gameQueryService.cantBecomeUntapped(gameData, sourcePermanent)) {
+        boolean untapReplaced = accepted && sourcePermanent != null && sourcePermanent.isTapped()
+                && !gameQueryService.cantBecomeUntapped(gameData, sourcePermanent)
+                && untapStepService.replaceUntapIfApplicable(gameData, sourcePermanent, controllerId);
+        if (untapReplaced) {
+            // The untap was replaced (e.g. Freyalise's Winds); the replacement logged what happened.
+        } else if (accepted && sourcePermanent != null && !gameQueryService.cantBecomeUntapped(gameData, sourcePermanent)) {
             boolean wasTapped = sourcePermanent.isTapped();
             sourcePermanent.untap();
             if (wasTapped) {
@@ -269,6 +280,15 @@ public class MayMiscHandlerService {
         }
     }
 
+    private boolean hasPendingFastingDrawSkipOffer(GameData gameData) {
+        return gameData.pendingMayAbilities.stream().anyMatch(this::isFastingDrawSkipOffer);
+    }
+
+    private boolean isFastingDrawSkipOffer(PendingMayAbility pending) {
+        return pending.effects().stream().anyMatch(e -> e instanceof ReplaceSingleDrawEffect replace
+                && replace.kind() == DrawReplacementKind.FASTING);
+    }
+
     public void handleSingleDrawReplacementChoice(GameData gameData, Player player, boolean accepted,
                                                    PendingMayAbility ability,
                                                    ReplaceSingleDrawEffect effect) {
@@ -276,6 +296,11 @@ public class MayMiscHandlerService {
         String playerName = gameData.playerIdToName.get(drawingPlayerId);
 
         if (!accepted) {
+            if (effect.kind() == DrawReplacementKind.FASTING && hasPendingFastingDrawSkipOffer(gameData)) {
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to use " , ability.sourceCard(), "."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             if (effect.kind() == DrawReplacementKind.FASTING) {
                 drawService.resolveDrawCard(gameData, drawingPlayerId);
             } else {
@@ -292,6 +317,8 @@ public class MayMiscHandlerService {
         }
 
         if (effect.kind() == DrawReplacementKind.FASTING) {
+            gameData.pendingMayAbilities.removeIf(this::isFastingDrawSkipOffer);
+            gameData.drawStepSkippedThisStep = true;
             lifeSupport.applyGainLife(gameData, drawingPlayerId, 2, ability.sourceCard().getName());
             gameLogService.append(gameData, GameLog.textCardText(playerName + " skips their draw step with ",
                     ability.sourceCard(), " and gains 2 life."));
@@ -576,6 +603,11 @@ public class MayMiscHandlerService {
 
     public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted,
                                                             boolean enterTapped) {
+        handleLookAtTopCardPutLandOrCreatureChoice(gameData, player, accepted, enterTapped, false);
+    }
+
+    public void handleLookAtTopCardPutLandOrCreatureChoice(GameData gameData, Player player, boolean accepted,
+                                                            boolean enterTapped, boolean otherwiseToHand) {
         UUID controllerId = player.getId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
 
@@ -611,6 +643,11 @@ public class MayMiscHandlerService {
                     player.getUsername() + " puts ", topCard, " onto the battlefield."));
             log.info("Game {} - {} puts {} onto the battlefield from the top of their library",
                     gameData.id, player.getUsername(), topCard.getName());
+        } else if (otherwiseToHand && !deck.isEmpty()) {
+            Card topCard = deck.removeFirst();
+            gameData.playerHands.get(controllerId).add(topCard);
+            gameLogService.append(gameData, GameLog.text(
+                    player.getUsername() + " puts the top card of their library into their hand."));
         } else {
             gameLogService.append(gameData, GameLog.text(
                     player.getUsername() + " leaves the top card on their library."));

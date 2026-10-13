@@ -1246,8 +1246,8 @@ public class ValidTargetService {
     }
 
     /** As above, evaluating an X-dependent target filter at {@code xValue} ({@code null} means X = 0). */
-    private boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard,
-                                                  UUID castingPlayerId, Integer xValue) {
+    public boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard,
+                                                 UUID castingPlayerId, Integer xValue) {
         return canPermanentBeTargetedBySpell(gameData, perm, spellCard, castingPlayerId, xValue, null, false);
     }
 
@@ -2235,7 +2235,7 @@ public class ValidTargetService {
      * Checks shroud, hexproof, and granted hexproof (TargetingRestrictionEffect) on a permanent.
      * Returns true if the permanent is blocked from being targeted by the given controller.
      */
-    private boolean isBlockedByHexproofOrGrantedEffect(GameData gameData, Permanent perm, UUID controllerId) {
+    public boolean isBlockedByHexproofOrGrantedEffect(GameData gameData, Permanent perm, UUID controllerId) {
         if (gameQueryService.cantBeAffectedByOwnEffects(gameData, perm, controllerId)) {
             return true;
         }

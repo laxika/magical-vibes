@@ -49,14 +49,14 @@ public class FirjasRetribution extends Card {
                                 "Target must be a creature with power less than this creature's power"
                         )
                 ),
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 ANGEL,
                 EffectDuration.UNTIL_END_OF_TURN
         ));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantKeywordEffect(
                 Keyword.DOUBLE_STRIKE,
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 ANGEL
         ));
     }

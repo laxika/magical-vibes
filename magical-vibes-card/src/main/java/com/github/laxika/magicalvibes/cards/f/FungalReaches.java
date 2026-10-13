@@ -31,7 +31,7 @@ public class FungalReaches extends Card {
 
         // {1}, Remove X storage counters from this land: Add X mana in any combination of {R} and/or {G}.
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{1}",
                 List.of(new RemoveCountersForManaEffect(
                         List.of(ManaColor.RED, ManaColor.GREEN), CounterType.STORAGE)),

@@ -67,7 +67,7 @@ class FrilledSparkshooterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castCreature(player1, 0);
 
-        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss"));
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Frilled Sparkshooter")
@@ -80,8 +80,8 @@ class FrilledSparkshooterTest extends BaseCardTest {
     void lifeGainAfterLifeLossStillQualifies() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 2, "Test life loss");
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 5);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 2, "Test life loss"));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 5));
 
         castSparkshooter();
 
@@ -94,7 +94,7 @@ class FrilledSparkshooterTest extends BaseCardTest {
     void largerLifeLossStillGivesOneCounter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 5, "Test life loss");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 5, "Test life loss"));
 
         castSparkshooter();
 
@@ -110,7 +110,7 @@ class FrilledSparkshooterTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         castSparkshooter();
 
-        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss"));
 
         assertThat(findPermanent(player1, "Frilled Sparkshooter")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

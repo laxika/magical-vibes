@@ -54,10 +54,11 @@ class FalsePeaceTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new FalsePeace()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
@@ -69,12 +70,13 @@ class FalsePeaceTest extends BaseCardTest {
     void skipsExtraCombatPhaseCreatedAfterInitialCombatWasSkipped() {
         addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new FalsePeace()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
 
         harness.castFromHand(player2, new RelentlessAssault(), "{2}{R}{R}");
@@ -102,6 +104,7 @@ class FalsePeaceTest extends BaseCardTest {
     void selfTargetingAppliesOnlyToNextTurn() {
         addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new FalsePeace()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
@@ -125,6 +128,7 @@ class FalsePeaceTest extends BaseCardTest {
     void multipleCopiesApplyToSameNextTurn() {
         addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new FalsePeace(), new FalsePeace()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();

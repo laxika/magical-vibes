@@ -910,7 +910,7 @@ public class DamageSupport {
                                         boolean tapDamagedCreatures) {
         UUID damageSourceId = damageSourceKey(entry, null);
         Map<UUID, Integer> damageBefore = new HashMap<>();
-        if (exileInsteadOfDie) {
+        if (exileInsteadOfDie || cantRegenerate) {
             gameData.damageDealtToPermanentsBySourceThisTurn.forEach((permanentId, sources) ->
                     damageBefore.put(permanentId, sources.getOrDefault(damageSourceId, 0)));
         }
@@ -928,14 +928,19 @@ public class DamageSupport {
                 tapUntapSupport.tapPermanent(gameData, p);
             }
         }
-        if (exileInsteadOfDie) {
+        if (exileInsteadOfDie || cantRegenerate) {
             for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
                 for (Permanent permanent : battlefield) {
                     int sourceDamage = gameData.damageDealtToPermanentsBySourceThisTurn
                             .getOrDefault(permanent.getId(), Map.of()).getOrDefault(damageSourceId, 0);
                     if (sourceDamage > damageBefore.getOrDefault(permanent.getId(), 0)
                             && gameQueryService.isCreature(gameData, permanent)) {
-                        permanent.setExileInsteadOfDieThisTurn(true);
+                        if (exileInsteadOfDie) {
+                            permanent.setExileInsteadOfDieThisTurn(true);
+                        }
+                        if (cantRegenerate) {
+                            permanent.setCantRegenerateThisTurn(true);
+                        }
                     }
                 }
             }

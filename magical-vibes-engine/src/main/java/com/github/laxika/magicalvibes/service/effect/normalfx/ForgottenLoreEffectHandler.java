@@ -14,12 +14,15 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForgottenLoreEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -41,6 +44,9 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
+    @Autowired
+    @Lazy
+    private PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -88,7 +94,7 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
 
     /**
      * Asks the opponent to choose one of the controller's not-yet-chosen graveyard cards. With none
-     * left there is nothing to choose, so the loop ends. The spell itself is excluded — CR 608.2n
+     * left there is nothing to choose, so only the optional payment is offered. The spell itself is excluded — CR 608.2n
      * puts it into the graveyard only as the last step of its own resolution, so it was never there
      * to be chosen.
      */
@@ -111,11 +117,7 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         if (eligible.isEmpty()) {
-            if (state.lastChosenCardId == null) {
-                finish(gameData, controllerId, sourceName);
-            } else {
-                promptPayment(gameData, controllerId, sourceName, repeatManaCost);
-            }
+            promptPayment(gameData, controllerId, sourceName, repeatManaCost);
             return;
         }
 
@@ -134,7 +136,10 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
     private void promptPayment(GameData gameData, UUID controllerId, String sourceName,
             String repeatManaCost) {
         ManaPool pool = gameData.playerManaPools.get(controllerId);
-        if (pool == null || !new ManaCost(repeatManaCost).canPay(pool)) {
+        ManaCost repeatCost = new ManaCost(repeatManaCost);
+        boolean affordable = (pool != null && repeatCost.canPay(pool))
+                || repeatCost.canPay(potentialManaService.buildVirtualManaPool(gameData, controllerId));
+        if (!affordable) {
             finish(gameData, controllerId, sourceName);
             return;
         }

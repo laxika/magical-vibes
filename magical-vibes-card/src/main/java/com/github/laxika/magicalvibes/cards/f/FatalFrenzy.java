@@ -23,6 +23,6 @@ public class FatalFrenzy extends Card {
         ))
                 .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(new TargetPower(), new Fixed(0)))
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new SacrificeTargetPermanentAtEndStepEffect());
+                .addEffect(EffectSlot.SPELL, new SacrificeTargetPermanentAtEndStepEffect(false, true));
     }
 }

@@ -56,9 +56,10 @@ class FlameshadowConjuringTest extends BaseCardTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears") && p.getCard().isToken())
                 .findFirst().orElseThrow();
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                .anyMatch(action -> action.permanentId().equals(token.getId())
+                        && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
     }
 
     @Test
@@ -137,7 +138,7 @@ class FlameshadowConjuringTest extends BaseCardTest {
     @Test
     void exileUsesRespondableDelayedTrigger() {
         Permanent token = createBearsToken();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(gd.stack).hasSize(1);

@@ -141,6 +141,7 @@ class FatefulTempestTest extends BaseCardTest {
         cast();
         vote(ChoiceContext.FatefulTempestChoice.PRESENT, ChoiceContext.FatefulTempestChoice.PRESENT);
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
         harness.passUntil(player1, TurnStep.END_STEP);

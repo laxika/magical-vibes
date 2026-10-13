@@ -104,6 +104,16 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
         }
 
 
+    /**
+     * The copy is made by the source's own ability (e.g. offspring's separate "when this creature
+     * enters" trigger), so it still happens when a target of another effect sharing its stack
+     * entry has become illegal.
+     */
+    @Override
+    public boolean resolvesWhenTargetIllegal() {
+        return true;
+    }
+
     /** Source copies that enter with the specified number of +1/+1 counters. */
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount, int initialPlusOnePlusOneCounters) {
         this(removeLegendary, new Fixed(amount), null, null, false, null, null, false, false,

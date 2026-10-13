@@ -131,12 +131,14 @@ class ForagingWickermawTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "RED");
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.getEffectiveColors(gd, wickermaw)).isEmpty();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.passPriority(player2);
-        harness.activateAbility(player1, 0, 0, null, null);
-        harness.handleListChoice(player1, "BLACK");
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.passPriority(player2);
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.handleListChoice(player1, "BLACK");
+        });
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(gqs.getEffectiveColors(gd, wickermaw)).containsExactly(CardColor.BLACK);

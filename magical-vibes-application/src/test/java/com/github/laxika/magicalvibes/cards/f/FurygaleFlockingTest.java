@@ -145,7 +145,7 @@ class FurygaleFlockingTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player1, List.of(1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player1, List.of(1)));
 
         assertThat(tokens.get(0).isAttacking()).isFalse();
         assertThat(tokens.get(1).isAttacking()).isTrue();

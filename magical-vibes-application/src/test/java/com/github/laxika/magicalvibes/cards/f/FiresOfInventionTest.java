@@ -176,6 +176,7 @@ class FiresOfInventionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castAndResolveInstant(player1, 0, player2.getId());

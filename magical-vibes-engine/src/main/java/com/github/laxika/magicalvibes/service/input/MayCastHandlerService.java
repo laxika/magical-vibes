@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -798,19 +799,8 @@ public class MayCastHandlerService {
                         }
                         gameData.stack.add(freeCast);
 
-                        int adjustedCopyCount = copySupport.adjustedSpellCopyCount(gameData, copyCount);
-                        for (int i = 0; i < adjustedCopyCount; i++) {
-                            Card copyCard = copySupport.createCopyCard(cardToCast);
-                            StackEntry copyEntry = copySupport.createCopyStackEntry(
-                                    freeCast, copyCard, player.getId(), freeCast.getTargetId());
-                            copySupport.addCopyToStack(gameData, copyEntry, false);
-                            if (copyEntry.getTargetId() != null) {
-                                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                                        cardToCast, player.getId(), List.of(new CopySpellEffect()),
-                                        "Choose new targets for the copy of " + cardToCast.getName() + "?",
-                                        copyCard.getId()));
-                            }
-                        }
+                        copySupport.copyGraveyardCastSpell(gameData, freeCast, cardToCast, player.getId(),
+                                copyCount);
 
                         exileCastTargetSupport.queueAfterSuccessfulCast(gameData, cardToCast, player.getId(),
                                 ability.sourcePermanentId(), afterSuccessfulCastEffect);
@@ -832,6 +822,7 @@ public class MayCastHandlerService {
             log.info("Game {} - {} declines to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());
         }
 
+        copySupport.flushDeferredGraveyardCastCopies(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1147,6 +1138,17 @@ public class MayCastHandlerService {
                 && !gameQueryService.canCastSpellFromZone(gameData, cardToPlay, Zone.GRAVEYARD, player.getId())) {
             
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " can't be cast from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // A mandatory additional cast cost (sacrifice a permanent or discard a card) is part of the total
+        // cost even when the mana cost is not paid (CR 601.2f), and it must be paid (CR 601.2h). This path can't take that
+        // payment, so the card stays where it is rather than being cast with the cost skipped.
+        if (cardToPlay.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(SacrificePermanentOrDiscardCardCost.class::isInstance)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
+                    " can't be cast without paying its additional cost."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -1605,7 +1607,16 @@ public class MayCastHandlerService {
         ManaCost cost = new ManaCost(costStr);
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         if (cost.hasX()) {
-            beginAlternateCastXChoice(gameData, player, cardToCast, costStr, "madness");
+            if (cost.canPay(pool, 0)) {
+                beginAlternateCastXChoice(gameData, player, cardToCast, costStr, "madness");
+                return;
+            }
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " cannot pay " + costStr + " to cast ", cardToCast, " for its madness cost."));
+            log.info("Game {} - {} can't pay madness cost {} for {}", gameData.id, playerName, costStr, cardToCast.getName());
+            gameData.removeFromExile(cardToCast.getId());
+            graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
         if (cardToCast.hasType(CardType.LAND)

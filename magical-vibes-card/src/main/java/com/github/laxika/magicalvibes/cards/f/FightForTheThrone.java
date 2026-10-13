@@ -25,7 +25,7 @@ public class FightForTheThrone extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.SPELL, new ResolveEffectOnTargetDeathThisTurnEffect(
                         new ConditionalEffect(
-                                new ControlsPermanent(new PermanentIsCommanderPredicate()),
+                                new ControlsPermanent(new PermanentIsCommanderPredicate(true)),
                                 new BecomeMonarchEffect())))
                 .addEffect(EffectSlot.SPELL, new FightTargetsEffect());
     }

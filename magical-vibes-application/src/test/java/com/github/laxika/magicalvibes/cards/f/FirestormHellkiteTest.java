@@ -133,7 +133,6 @@ class FirestormHellkiteTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(hellkite);
         harness.assertInGraveyard(player1, "Firestorm Hellkite");
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gameLogContains("pays {U}{R}{U}{R}")).isFalse();
     }
 }

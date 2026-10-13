@@ -50,6 +50,10 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
             return;
         }
 
+        if (e.targetGraveyard()) {
+            graveyardReturnSupport.recordTargetPowerToughnessBeforeReturn(gameData, entry, effect);
+        }
+
         if (e.targetGraveyard() && e.targetGroup() >= 0) {
             UUID targetCardId = entry.getTargetCardIdsForEffect(effect).stream().findFirst().orElse(null);
             if (targetCardId == null) {

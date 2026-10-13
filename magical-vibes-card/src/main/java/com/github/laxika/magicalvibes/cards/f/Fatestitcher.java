@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -19,7 +20,7 @@ public class Fatestitcher extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new TapOrUntapTargetPermanentEffect()),
+                List.of(new MayEffect(new TapOrUntapTargetPermanentEffect(), "Tap or untap target permanent?")),
                 "{T}: You may tap or untap another target permanent.",
                 new PermanentPredicateTargetFilter(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),

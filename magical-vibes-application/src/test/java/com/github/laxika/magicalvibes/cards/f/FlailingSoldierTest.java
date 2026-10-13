@@ -55,7 +55,7 @@ class FlailingSoldierTest extends BaseCardTest {
         assertThat(soldier.getPowerModifier()).isZero();
         assertThat(soldier.getToughnessModifier()).isZero();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(soldier.getPowerModifier()).isZero();
         assertThat(soldier.getToughnessModifier()).isZero();
@@ -73,7 +73,7 @@ class FlailingSoldierTest extends BaseCardTest {
         assertThat(soldier.getPowerModifier()).isEqualTo(1);
         assertThat(soldier.getToughnessModifier()).isEqualTo(1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(soldier.getPowerModifier()).isZero();
         assertThat(soldier.getToughnessModifier()).isZero();
@@ -156,12 +156,12 @@ class FlailingSoldierTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(null, TurnStep.END_STEP);
 
         assertThat(soldier.getPowerModifier()).isEqualTo(-1);
         assertThat(soldier.getToughnessModifier()).isEqualTo(-1);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(soldier.getPowerModifier()).isZero();
         assertThat(soldier.getToughnessModifier()).isZero();

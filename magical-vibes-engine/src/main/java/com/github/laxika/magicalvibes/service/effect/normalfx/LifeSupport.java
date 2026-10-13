@@ -92,6 +92,11 @@ public class LifeSupport {
             gameLogService.append(gameData, GameLog.text(playerName + " can't gain life."));
             return;
         }
+        if (gameData.playersWhoGainNoLifeThisTurn.contains(controllerId)) {
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameLogService.append(gameData, GameLog.text(playerName + " gains no life."));
+            return;
+        }
         if (amount > 0 && hasNefariousLichLifeGainReplacement(gameData, controllerId)) {
             for (int i = 0; i < amount; i++) {
                 drawService.resolveDrawCard(gameData, controllerId);

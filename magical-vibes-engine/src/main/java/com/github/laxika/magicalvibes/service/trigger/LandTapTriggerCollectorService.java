@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.ArrayList;
@@ -92,7 +91,6 @@ public class LandTapTriggerCollectorService {
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final PermanentControlSupport permanentControlSupport;
     private final ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
     private final ObjectProvider<TriggerCollectionService> triggerCollectionServiceProvider;
 
@@ -902,12 +900,16 @@ public class LandTapTriggerCollectorService {
         UUID opponentId = gameQueryService.getOpponentId(match.gameData(), match.controllerId());
         if (opponentId == null) return false;
 
-        permanentControlSupport.applyCreateToken(match.gameData(), opponentId, trigger.tokenEffect(),
-                match.permanent().getCard().getSetCode());
-
-        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                " triggers — " + match.gameData().playerIdToName.get(opponentId)
-                        + " creates a " + trigger.tokenEffect().tokenName() + " token."));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                opponentId,
+                match.permanent().getId());
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 

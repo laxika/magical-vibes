@@ -104,6 +104,7 @@ class ForTheCommonGoodTest extends BaseCardTest {
         treasure.setToken(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, treasure);
         harness.setHand(player1, List.of(new ForTheCommonGood()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -117,10 +118,10 @@ class ForTheCommonGoodTest extends BaseCardTest {
         Permanent laterToken = addToken(player1, "Later Token");
         assertThat(gqs.hasKeyword(gd, laterToken, Keyword.INDESTRUCTIBLE)).isFalse();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(protectedTokens).allSatisfy(token ->
                 assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isTrue());
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(protectedTokens).allSatisfy(token ->
                 assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isFalse());
     }

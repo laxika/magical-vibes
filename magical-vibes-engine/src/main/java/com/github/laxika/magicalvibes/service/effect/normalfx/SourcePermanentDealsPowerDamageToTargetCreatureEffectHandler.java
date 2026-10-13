@@ -48,7 +48,12 @@ public class SourcePermanentDealsPowerDamageToTargetCreatureEffectHandler implem
             return;
         }
 
-        int power = gameQueryService.getPowerBasedDamage(gameData, source);
+        // CR 608.2h: a source that has already left the battlefield uses the power it had last (including
+        // static boosts), not the snapshot's base values.
+        boolean sourceGone = gameQueryService.findPermanentById(gameData, source.getId()) == null;
+        int power = sourceGone && source.getLastKnownPower() != null
+                ? Math.max(0, source.getLastKnownPower())
+                : gameQueryService.getPowerBasedDamage(gameData, source);
         int rawDamage = power;
         damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, source);
     }

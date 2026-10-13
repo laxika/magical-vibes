@@ -276,7 +276,8 @@ public class GameViewProjectionFactory {
                             com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance)) {
                         continue;
                     }
-                    boolean grantsImplicitLookPermission = java.util.Arrays.stream(EffectSlot.values())
+                    boolean grantsImplicitLookPermission = !data.exiledCardsWithIntelCounters.contains(entry.card().getId())
+                            && java.util.Arrays.stream(EffectSlot.values())
                             .flatMap(slot -> p.getCard().getEffects(slot).stream())
                             .filter(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::isInstance)
                             .map(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::cast)
@@ -554,7 +555,6 @@ public class GameViewProjectionFactory {
                         && castingPermissionService.canPlayLandsFromTopOfLibrary(data, pid)) {
                     revealedPlayerIds.add(pid);
                 }
-                if (revealedPlayerIds.contains(pid)) break;
             }
         }
 

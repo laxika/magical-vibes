@@ -18,6 +18,7 @@ public class FaithsReward extends Card {
                 .filter(new CardIsPermanentPredicate())
                 .returnAll(true)
                 .fromBattlefieldThisTurn(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

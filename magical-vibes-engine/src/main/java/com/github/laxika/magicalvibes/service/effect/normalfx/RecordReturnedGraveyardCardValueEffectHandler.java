@@ -50,13 +50,18 @@ public class RecordReturnedGraveyardCardValueEffectHandler implements NormalEffe
         }
 
         ReturnedGraveyardCardValue value = ((RecordReturnedGraveyardCardValueEffect) effect).value();
+        boolean lastKnownCaptured = returnedCardId.equals(entry.getReturnedGraveyardCardId());
         if (value == ReturnedGraveyardCardValue.POWER) {
-            entry.setEventValue(returnedCard.getPower() == null ? 0 : returnedCard.getPower());
+            Integer power = lastKnownCaptured ? entry.getReturnedGraveyardCardPowerAtLastKnown()
+                    : returnedCard.getPower();
+            entry.setEventValue(power == null ? 0 : power);
             return;
         }
 
         if (value == ReturnedGraveyardCardValue.TOUGHNESS) {
-            entry.setEventValue(returnedCard.getToughness() == null ? 0 : returnedCard.getToughness());
+            Integer toughness = lastKnownCaptured ? entry.getReturnedGraveyardCardToughnessAtLastKnown()
+                    : returnedCard.getToughness();
+            entry.setEventValue(toughness == null ? 0 : toughness);
             return;
         }
 

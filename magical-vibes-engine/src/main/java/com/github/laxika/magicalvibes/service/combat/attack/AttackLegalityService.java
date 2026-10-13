@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessSacr
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureAttackRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
@@ -365,6 +366,7 @@ public class AttackLegalityService {
                         effect = conditional.wrapped();
                     }
                     if (effect instanceof EnchantedCreatureAttackRestrictionEffect
+                            && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackControllerEffect))
                             && !source.isAuraEffectsIgnoredThisTurn()
                             && source.isAttached()
                             && attacker.getId().equals(source.getAttachedTo())) {

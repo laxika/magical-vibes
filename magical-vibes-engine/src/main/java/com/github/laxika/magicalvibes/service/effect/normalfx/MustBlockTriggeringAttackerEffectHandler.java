@@ -33,10 +33,10 @@ public class MustBlockTriggeringAttackerEffectHandler implements NormalEffectHan
             return;
         }
 
-        blocker.getMustBlockIds().add(attacker.getId());
+        blocker.getMustBlockIdsUntilEndOfCombat().add(attacker.getId());
         gameLogService.append(gameData, GameLog.cardTextCard(blocker.getCard(),
-                " must block ", attacker.getCard(), " this turn if able."));
-        log.info("Game {} - {} must block {} this turn if able", gameData.id,
+                " must block ", attacker.getCard(), " this combat if able."));
+        log.info("Game {} - {} must block {} this combat if able", gameData.id,
                 blocker.getCard().getName(), attacker.getCard().getName());
     }
 }

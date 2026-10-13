@@ -126,12 +126,11 @@ class FortitudeTest extends BaseCardTest {
     @DisplayName("Regeneration still resolves after Fortitude leaves the battlefield")
     void regenerationResolvesAfterAuraLeavesBattlefield() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new Fortitude());
         aura.setAttachedTo(creature.getId());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null);
-        harness.handlePermanentChosen(player1, forest.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
         harness.passBothPriorities();
         harness.passBothPriorities();

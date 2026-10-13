@@ -134,9 +134,10 @@ class FortuneLoyalSteedTest extends BaseCardTest {
     @Test
     void stolenSaddlerReturnsToItsOwner() {
         addCreatureReady(player1, new FortuneLoyalSteed());
-        Permanent helper = addCreatureReady(player1, new TrainedArynx());
+        TrainedArynx stolenHelper = new TrainedArynx();
+        stolenHelper.setOwnerId(player2.getId());
+        Permanent helper = addCreatureReady(player1, stolenHelper);
         gd.stolenCreatures.put(helper.getId(), player2.getId());
-        helper.getCard().setOwnerId(player2.getId());
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();

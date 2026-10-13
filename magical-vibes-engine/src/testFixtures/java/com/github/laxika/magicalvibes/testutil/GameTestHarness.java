@@ -532,6 +532,12 @@ public class GameTestHarness {
                 null, null, null, null, null, false, null, null, null, tapPermanentIds);
     }
 
+    /** Casts a creature spell, tapping the given permanents for convoke or improvise. */
+    public void castCreatureWithConvoke(Player player, int cardIndex, List<UUID> convokeIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), convokeIds);
+    }
+
     public void castKickedCreature(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, null, null, null, true);

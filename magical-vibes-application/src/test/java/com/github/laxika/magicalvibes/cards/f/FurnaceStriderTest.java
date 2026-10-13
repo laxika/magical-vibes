@@ -60,7 +60,7 @@ class FurnaceStriderTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }

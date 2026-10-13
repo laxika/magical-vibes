@@ -83,6 +83,8 @@ class FootMysticTest extends BaseCardTest {
     @Test
     @DisplayName("A departure in an earlier turn does not satisfy Disappear")
     void earlierTurnDepartureDoesNotCreateNinja() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, new FootMystic());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, permanent));
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
@@ -127,6 +129,8 @@ class FootMysticTest extends BaseCardTest {
     @Test
     @DisplayName("A token leaving also satisfies Disappear")
     void tokenDepartureCreatesNinja() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent previous = harness.addToBattlefieldAndReturn(player1, new FootMystic());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, previous));
         castFootMystic();

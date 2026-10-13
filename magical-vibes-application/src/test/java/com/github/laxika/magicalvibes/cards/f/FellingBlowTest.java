@@ -97,9 +97,9 @@ class FellingBlowTest extends BaseCardTest {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new FellingBlow(), new Unsummon()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castSorcery(player1, 0, List.of(bears.getId(), elemental.getId()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, elemental.getId());
         harness.passBothPriorities();
 
@@ -116,9 +116,9 @@ class FellingBlowTest extends BaseCardTest {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new FellingBlow(), new Unsummon()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castSorcery(player1, 0, List.of(bears.getId(), elemental.getId()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
@@ -136,9 +136,9 @@ class FellingBlowTest extends BaseCardTest {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new FellingBlow(), new Unsummon(), new Unsummon()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castSorcery(player1, 0, List.of(bears.getId(), elemental.getId()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.castAndResolveInstant(player1, 0, elemental.getId());
         harness.passBothPriorities();

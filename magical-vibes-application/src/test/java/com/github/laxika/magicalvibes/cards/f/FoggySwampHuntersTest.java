@@ -83,6 +83,7 @@ class FoggySwampHuntersTest extends BaseCardTest {
     @Test
     void losesKeywordsOnNextTurnAndCanRegainThemDuringOpponentsTurn() {
         Permanent hunters = addHunters();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new FoggySwampHunters(), new FoggySwampHunters(),
                 new FoggySwampHunters(), new FoggySwampHunters()));
         draw(player1);

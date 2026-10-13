@@ -137,8 +137,12 @@ class FragmentRealityTest extends BaseCardTest {
         Card creature = new LlanowarElves();
         harness.setLibrary(player2, List.of(creature));
         giveFragmentReality();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();

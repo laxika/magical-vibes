@@ -99,8 +99,8 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
 
         // First call: prompt for X. Cap includes untapped mana sources so an empty pool with
         // untapped lands still opens the Pay / Don't Pay UI (CR 605.3 — mana abilities before cost).
-        int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, controllerId));
-        if (maxX <= 0) {
+        // maxX is 0 both when X=0 is affordable and when the base cost is not, so test the base cost itself.
+        if (!cost.canPay(potentialManaService.buildVirtualManaPool(gameData, controllerId))) {
             gameLogService.append(gameData, GameLog.text(playerName + " can't pay for " + cardName + "'s ability."));
             log.info("Game {} - {} can't pay {} for {}", gameData.id, playerName, e.manaCost(), cardName);
             return;

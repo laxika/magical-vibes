@@ -612,6 +612,16 @@ public record LookAtTopCardsEffect(
     }
 
     /**
+     * You may reveal up to {@code maxReveal} matching cards and put them into your hand; the rest go on
+     * the bottom of the library in a random order (no player reorder).
+     */
+    public static LookAtTopCardsEffect mayRevealUpToToHandRestOnBottomRandom(
+            int lookCount, CardPredicate choosePredicate, int maxReveal) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(maxReveal), choosePredicate,
+                LookDestination.BOTTOM_OF_LIBRARY_RANDOM, false, LibrarySearchDestination.HAND, true);
+    }
+
+    /**
      * You may reveal one matching card and put it into your hand; the rest go on the bottom of the
      * library in a random order (no player reorder).
      */

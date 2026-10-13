@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.Max;
@@ -22,6 +23,7 @@ public class FreelanceMuscle extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 new BoostSelfEffect(greatestPowerOrToughness, greatestPowerOrToughness));
         addEffect(EffectSlot.ON_BLOCK,
-                new BoostSelfEffect(greatestPowerOrToughness, greatestPowerOrToughness));
+                new BoostSelfEffect(greatestPowerOrToughness, greatestPowerOrToughness),
+                TriggerMode.ONCE_PER_BLOCK);
     }
 }

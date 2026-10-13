@@ -53,7 +53,7 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
             return;
         }
 
-        List<Permanent> eligibleTargets = eligibleTargets(gameData, spellCard,
+        List<Permanent> eligibleTargets = eligibleTargets(gameData, spellSnapshot,
                 copyEffect.castingPlayerId(), copyEffect.originalTargetId());
         if (eligibleTargets.isEmpty()) {
             return;
@@ -89,7 +89,7 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
             return;
         }
 
-        List<Permanent> eligibleTargets = eligibleTargets(gameData, spellSnapshot.getCard(),
+        List<Permanent> eligibleTargets = eligibleTargets(gameData, spellSnapshot,
                 copyEffect.castingPlayerId(), copyEffect.originalTargetId());
         List<Permanent> chosenTargets = selectedIds.stream()
                 .map(id -> eligibleTargets.stream()
@@ -130,14 +130,16 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
         }
     }
 
-    private List<Permanent> eligibleTargets(GameData gameData, Card spellCard,
+    private List<Permanent> eligibleTargets(GameData gameData, StackEntry spellSnapshot,
                                              UUID castingPlayerId, UUID originalTargetId) {
+        Card spellCard = spellSnapshot.getCard();
+        int xValue = spellSnapshot.getXValue();
         List<Permanent> eligibleTargets = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (permanent.getId().equals(originalTargetId)
                     || !gameQueryService.isCreature(gameData, permanent)
                     || !validTargetService.canPermanentBeTargetedBySpell(
-                    gameData, permanent, spellCard, castingPlayerId)) {
+                    gameData, permanent, spellCard, castingPlayerId, xValue)) {
                 return;
             }
             eligibleTargets.add(permanent);

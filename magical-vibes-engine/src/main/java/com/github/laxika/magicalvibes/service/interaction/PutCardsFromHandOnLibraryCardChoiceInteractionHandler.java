@@ -90,7 +90,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
                         sourceCard.getName() + "'s effect",
                         List.of(interaction.thenEffect())
                 );
-                effectResolutionService.resolveEffects(gameData, followUp);
+                resolveFollowUp(gameData, followUp);
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
@@ -110,15 +110,40 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
         putOnLibrary(gameData, player, validated, interaction.placement() == HandToLibraryPlacement.TOP);
         if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
             Card sourceCard = interaction.thenEffectSourceCard();
-            gameData.stack.add(new StackEntry(
+            StackEntry followUp = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     player.getId(),
                     sourceCard.getName() + "'s effect",
                     List.of(interaction.thenEffect())
-            ));
+            );
+            resolveFollowUp(gameData, followUp);
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Resolves the "then" effect inside the resolution of the spell or ability that opened this
+     * prompt. That spell is parked in {@code pendingEffectResolutionEntry} until its remaining
+     * effects finish and it leaves the stack, so the follow-up must not end the parked resolution.
+     */
+    private void resolveFollowUp(GameData gameData, StackEntry followUp) {
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        int parkedIndex = gameData.pendingEffectResolutionIndex;
+        if (parked == null) {
+            effectResolutionService.resolveEffects(gameData, followUp);
+            return;
+        }
+        gameData.effectResolutionDepth++;
+        try {
+            effectResolutionService.resolveEffects(gameData, followUp);
+        } finally {
+            gameData.effectResolutionDepth--;
+        }
+        if (gameData.pendingEffectResolutionEntry == null) {
+            gameData.pendingEffectResolutionEntry = parked;
+            gameData.pendingEffectResolutionIndex = parkedIndex;
+        }
     }
 
     /**

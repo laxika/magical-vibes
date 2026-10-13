@@ -263,6 +263,14 @@ public class AutoPassService {
                 return;
             }
 
+            // A skipped step is proceeded past as though it didn't exist (CR 500.11), so a skipped draw step
+            // gives no priority window.
+            if (gameData.currentStep == TurnStep.DRAW && gameData.drawStepSkippedThisStep) {
+                advanceStep.accept(gameData);
+                checkAfterStepAdvance = true;
+                continue;
+            }
+
             UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
 
             // If no one holds priority (both already passed), advance the step

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -48,6 +49,47 @@ public class TargetGroupAssignmentService {
             if (position >= 0) ordered.add(targetIds.get(position));
         }
         return Optional.of(new Assignment(ordered, sizes));
+    }
+
+    /**
+     * Assigns each targeted graveyard card to a distinct optional graveyard target group whose
+     * filter it satisfies, so a lone sorcery chosen for a "up to one instant and/or up to one
+     * sorcery" spell lands in the sorcery group rather than the first group.
+     */
+    public Optional<Assignment> assignOptionalGraveyardGroups(GameData gameData, Card card,
+            UUID controllerId, List<UUID> targetIds, int xValue) {
+        List<SpellTarget> groups = card.getSpellTargets();
+        int[] groupToTarget = new int[groups.size()];
+        Arrays.fill(groupToTarget, -1);
+        if (!assignGraveyardTarget(gameData, card, controllerId, xValue, targetIds, groups, groupToTarget, 0)) {
+            return Optional.empty();
+        }
+        List<UUID> ordered = new ArrayList<>();
+        List<Integer> sizes = new ArrayList<>();
+        for (int position : groupToTarget) {
+            sizes.add(position < 0 ? 0 : 1);
+            if (position >= 0) ordered.add(targetIds.get(position));
+        }
+        return Optional.of(new Assignment(ordered, sizes));
+    }
+
+    private boolean assignGraveyardTarget(GameData gameData, Card card, UUID controllerId, int xValue,
+            List<UUID> targets, List<SpellTarget> groups, int[] groupToTarget, int targetIndex) {
+        if (targetIndex == targets.size()) return true;
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, targets.get(targetIndex));
+        UUID ownerId = graveyardCard == null ? null : gameQueryService.findGraveyardOwnerById(gameData, graveyardCard.getId());
+        if (graveyardCard == null || ownerId == null) return false;
+        for (int groupIndex = 0; groupIndex < groups.size(); groupIndex++) {
+            if (groupToTarget[groupIndex] >= 0) continue;
+            if (!(groups.get(groupIndex).getFilter() instanceof GraveyardCardPredicateTargetFilter filter)
+                    || filter.predicate() != null && !predicateEvaluationService.matchesCardPredicate(
+                    graveyardCard, filter.predicate(), card.getId(), gameData, ownerId, null, null, xValue)) continue;
+            groupToTarget[groupIndex] = targetIndex;
+            if (assignGraveyardTarget(gameData, card, controllerId, xValue, targets, groups, groupToTarget,
+                    targetIndex + 1)) return true;
+            groupToTarget[groupIndex] = -1;
+        }
+        return false;
     }
 
     private boolean assignPermanentTarget(GameData gameData, List<UUID> targets, List<SpellTarget> groups,

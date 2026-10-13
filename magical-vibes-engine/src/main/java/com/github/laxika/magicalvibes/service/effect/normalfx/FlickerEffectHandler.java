@@ -138,7 +138,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         permanentRemovalService.removeOrphanedAuras(gameData);
         Card primaryCard = creatureCards.getFirst();
         gameData.queueDelayedAction(PendingExileReturn.withCardsAttachedToPrimary(
-                primaryCard, ownerId, additionalCards, cardsToAttach));
+                primaryCard, ownerId, additionalCards, cardsToAttach)
+                .withTriggerSource(entry.getCard(), entry.getControllerId()));
 
         gameLogService.append(gameData, GameLog.cardThen(primaryCard,
                 " is exiled with its attached Auras. It will return at the beginning of the next "

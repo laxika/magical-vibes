@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -70,12 +73,16 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
             } else {
                 Permanent source = ability.sourcePermanentId() != null
                         ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
-                if (source != null) {
+                boolean staysUntapped = source != null && revealOrTapped.entersUntappedIf() != null
+                        && conditionEvaluationService.isMet(gameData, revealOrTapped.entersUntappedIf(),
+                        ConditionContext.forPermanent(source, ability.controllerId()));
+                if (source != null && !staysUntapped) {
                     source.tap();
                 }
-                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines — ", ability.sourceCard(), " enters tapped."));
-                log.info("Game {} - {} declines to reveal; {} enters tapped", gameData.id,
-                        player.getUsername(), ability.sourceCard().getName());
+                String outcome = staysUntapped ? " enters untapped." : " enters tapped.";
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines — ", ability.sourceCard(), outcome));
+                log.info("Game {} - {} declines to reveal; {}{}", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName(), outcome);
             }
             if (ability.sourceCard().hasType(CardType.LAND)) {
                 battlefieldEntryService.processLandETBEffects(gameData, ability.controllerId(), ability.sourceCard());

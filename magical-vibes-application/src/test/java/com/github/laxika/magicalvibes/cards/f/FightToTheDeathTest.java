@@ -101,11 +101,11 @@ class FightToTheDeathTest extends BaseCardTest {
         blocker.addBlockingTargetId(attacker.getId());
         harness.setHand(player1, List.of(new FightToTheDeath()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player1, 0);
 
         harness.assertOnBattlefield(player1, "Troll Ascetic");

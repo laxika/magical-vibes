@@ -3,15 +3,18 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersAndAttachToSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -23,6 +26,7 @@ public class CreateXTokenWithXCountersAndAttachToSourceEffectHandler implements 
     private final GameQueryService gameQueryService;
     private final EquipSupport equipSupport;
     private final GameLogService gameLogService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,8 +49,17 @@ public class CreateXTokenWithXCountersAndAttachToSourceEffectHandler implements 
             return;
         }
 
-        for (UUID createdId : entry.getCreatedPermanentIds().subList(
-                createdBefore, entry.getCreatedPermanentIds().size())) {
+        List<UUID> createdIds = List.copyOf(entry.getCreatedPermanentIds().subList(
+                createdBefore, entry.getCreatedPermanentIds().size()));
+        if (createdIds.size() > 1) {
+            // The controller chooses which of several created tokens the equipment attaches to.
+            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), createdIds,
+                    new PermanentChoiceContext.AttachEquipmentToCreature(equipment.getId(), entry.getControllerId()),
+                    "Choose a token to attach " + equipment.getCard().getName() + " to.");
+            return;
+        }
+
+        for (UUID createdId : createdIds) {
             Permanent token = gameQueryService.findPermanentById(gameData, createdId);
             if (token == null || !equipSupport.attachEquipment(gameData, equipment, token)) {
                 continue;

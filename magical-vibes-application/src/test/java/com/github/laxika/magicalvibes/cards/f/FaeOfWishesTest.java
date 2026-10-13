@@ -9,12 +9,17 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -143,6 +148,9 @@ class FaeOfWishesTest extends BaseCardTest {
         fae.setOwnerId(player2.getId());
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, fae);
         gd.stolenCreatures.put(permanent.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Control effect", null,
+                player1.getId(), new GainControlOfTargetEffect(ControlDuration.PERMANENT), permanent.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
         permanent.tap();
         permanent.setSummoningSick(true);
         Card first = new Island();

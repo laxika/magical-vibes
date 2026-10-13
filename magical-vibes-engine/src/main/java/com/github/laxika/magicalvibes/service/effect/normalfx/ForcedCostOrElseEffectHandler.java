@@ -47,6 +47,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -67,6 +68,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     private final LifeSupport lifeSupport;
     private final CoinFlipCostSupport coinFlipCostSupport;
     private AwardManaEffectHandler awardManaEffectHandler;
+    private com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
 
     @Autowired
     public ForcedCostOrElseEffectHandler(DestructionSupport destructionSupport,
@@ -112,6 +114,12 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         this.awardManaEffectHandler = awardManaEffectHandler;
     }
 
+    @Autowired
+    void setEffectResolutionService(
+            @Lazy com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService) {
+        this.effectResolutionService = effectResolutionService;
+    }
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return ForcedCostOrElseEffect.class;
@@ -120,13 +128,16 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     public void resolvePaidEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect,
             int xValue) {
         enqueuePaidEffects(gameData, entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId(),
-                entry.getSourcePermanentSnapshot(), effect.paidEffects(), xValue, effect.forcedCost());
+                entry.getSourcePermanentSnapshot(), effect.paidEffects(), xValue, effect.forcedCost(), false);
     }
 
     public void resolvePaidEffects(GameData gameData, PendingMayAbility ability, ForcedCostOrElseEffect effect,
             int xValue) {
+        boolean payerIsNotSourceController = ability.sourceControllerId() != null
+                && !ability.sourceControllerId().equals(ability.controllerId());
         enqueuePaidEffects(gameData, ability.sourceCard(), ability.controllerId(), ability.sourcePermanentId(),
-                ability.sourcePermanentSnapshot(), effect.paidEffects(), xValue, effect.forcedCost());
+                ability.sourcePermanentSnapshot(), effect.paidEffects(), xValue, effect.forcedCost(),
+                payerIsNotSourceController);
     }
 
     public void payFlipCoins(GameData gameData, UUID playerId, Card sourceCard, int count) {
@@ -137,7 +148,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
 
     private void enqueuePaidEffects(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, Permanent sourcePermanentSnapshot, List<CardEffect> paidEffects, int xValue,
-            CardEffect forcedCost) {
+            CardEffect forcedCost, boolean payerIsNotSourceController) {
         if (paidEffects.isEmpty()) {
             return;
         }
@@ -177,6 +188,17 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId,
                 sourceCard.getName() + "'s ability", new ArrayList<>(snapshottedPaidEffects), xValue, sourcePermanentId);
         entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+        if (payerIsNotSourceController && !cumulativeUpkeep && effectResolutionService != null) {
+            // "That player may pay {cost}. If they do, they ..." is one resolution of the original
+            // ability, not a new trigger; the paying player (not the source's controller) acts.
+            effectResolutionService.resolveEffectsFrom(gameData, entry, 0);
+            if (pendingEntry != null && gameData.pendingEffectResolutionEntry == null
+                    && !gameData.interaction.isAwaitingInput()) {
+                gameData.pendingEffectResolutionEntry = pendingEntry;
+                gameData.pendingEffectResolutionIndex = pendingIndex;
+            }
+            return;
+        }
         gameData.enqueueTrigger(entry);
     }
 

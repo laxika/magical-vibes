@@ -403,8 +403,11 @@ public class TokenCopySupport {
             tokenIndex++;
 
             if (effect.exileAtEndStep()) {
+                // CR 603.7e: the ability that created the delayed exile keeps controlling it, even if the
+                // token changes control before the end step.
                 gameData.queueDelayedAction(new DelayedPermanentAction(
-                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
+                        false, null, null, entry.getControllerId(), false, entry.getCard()));
             }
             if (effect.exileAtEndOfCombat()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
@@ -552,7 +555,14 @@ public class TokenCopySupport {
         }
         tokenCard.setSubtypes(subtypes);
 
-        if (effect.additionalTypes() != null && !effect.additionalTypes().isEmpty()) {
+        if (effect.replaceCardTypes() && effect.additionalTypes() != null && !effect.additionalTypes().isEmpty()) {
+            Set<CardType> replacement = EnumSet.noneOf(CardType.class);
+            replacement.addAll(effect.additionalTypes());
+            CardType primaryType = replacement.iterator().next();
+            replacement.remove(primaryType);
+            tokenCard.setType(primaryType);
+            tokenCard.setAdditionalTypes(replacement);
+        } else if (effect.additionalTypes() != null && !effect.additionalTypes().isEmpty()) {
             Set<CardType> merged = EnumSet.noneOf(CardType.class);
             merged.addAll(tokenCard.getAdditionalTypes());
             for (CardType additionalType : effect.additionalTypes()) {

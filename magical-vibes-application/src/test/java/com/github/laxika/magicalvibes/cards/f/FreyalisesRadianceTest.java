@@ -114,7 +114,6 @@ class FreyalisesRadianceTest extends BaseCardTest {
 
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);
-        advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
@@ -143,6 +142,6 @@ class FreyalisesRadianceTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         Player nextActivePlayer = currentActivePlayer.equals(player1) ? player2 : player1;
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(nextActivePlayer, TurnStep.UPKEEP);
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -86,12 +87,14 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
             return;
         }
 
-        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
-        if (graveyardOwnerId != null) {
-            if (e.trackWithSource() && entry.getSourcePermanentId() != null) {
-                exileService.exileCard(gameData, graveyardOwnerId, targetCard, entry.getSourcePermanentId());
-            } else {
-                exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+        if (e.exileTargetCard()) {
+            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCard.getId());
+            if (graveyardOwnerId != null) {
+                if (e.trackWithSource() && entry.getSourcePermanentId() != null) {
+                    exileService.exileCard(gameData, graveyardOwnerId, targetCard, entry.getSourcePermanentId());
+                } else {
+                    exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+                }
             }
         }
 
@@ -100,11 +103,20 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
 
         int createdPermanentCount = entry.getCreatedPermanentIds().size();
         graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
-                e.grantHaste(), e.exileAtEndStep(), e.colorOverride(),
+                false, e.exileAtEndStep(), e.colorOverride(),
                 e.powerOverride(), e.toughnessOverride(), e.replaceSubtypes(), false,
                 new ArrayList<>(), e.additionalKeywords(), false, e.removeLegendary(),
                 e.additionalTypes(), e.sacrificeAtEndStep(), e.tappedAndAttacking(),
                 e.exileAtEndOfCombat());
+        if (e.grantHaste()) {
+            for (UUID createdId : entry.getCreatedPermanentIds().subList(createdPermanentCount,
+                    entry.getCreatedPermanentIds().size())) {
+                Permanent token = gameQueryService.findPermanentById(gameData, createdId);
+                if (token != null) {
+                    token.getPersistentGrantedKeywords().add(Keyword.HASTE);
+                }
+            }
+        }
 
         if (e.exileOtherControlledTokensOfSubtype() != null) {
             Set<UUID> createdByThisEffect = new HashSet<>(entry.getCreatedPermanentIds()

@@ -61,6 +61,10 @@ public class EffectResolutionService {
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.CommanderZoneMoveService commanderZoneMoves;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport copySupport;
+
 
     private final ConditionEvaluationService conditionEvaluationService;
     private final EffectHandlerRegistry registry;
@@ -455,6 +459,7 @@ public class EffectResolutionService {
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
         entry.setResolvingEffectIndex(-1);
+        if (copySupport != null) copySupport.flushDeferredGraveyardCastCopies(gameData);
         entry.setResolvingEffectTargetGroup(null);
         // Cast-time mana snapshots (converge, colors spent) live until resolution truly finishes.
         // They must survive an async pause (e.g. a "you may" that re-runs a ColorSpentToCast

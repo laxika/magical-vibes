@@ -114,7 +114,7 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
             }
             gameData.interaction.clearAwaitingInput();
             gameLogService.append(gameData, GameLog.text(player.getUsername()
-                    + " orders the cards from the merged permanent in their "
+                    + " orders the cards in their "
                     + interaction.destinationZone().name().toLowerCase(java.util.Locale.ROOT) + "."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;

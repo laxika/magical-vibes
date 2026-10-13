@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,7 +42,16 @@ public class ShuffleTargetPermanentIntoLibraryEffectHandler implements NormalEff
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID targetOwnerId = gameData.defaultControllerOf(target.getId());
         String name = target.getCard().getName();
-        boolean removed = permanentRemovalService.removePermanentToLibraryShuffled(gameData, target);
+        // "Shuffle this and target ... into their owners' libraries": each library is shuffled once,
+        // by the sibling shuffle-self effect, after both objects have been put in.
+        boolean shuffleSelfFollows = entry.getEffectsToResolve().stream()
+                .anyMatch(ShuffleSelfIntoOwnerLibraryEffect.class::isInstance);
+        boolean removed = shuffleSelfFollows
+                ? permanentRemovalService.removePermanentToLibraryUnshuffled(gameData, target)
+                : permanentRemovalService.removePermanentToLibraryShuffled(gameData, target);
+        if (removed && shuffleSelfFollows) {
+            entry.getDeferredLibraryShuffleOwnerIds().add(targetOwnerId);
+        }
         if (removed) {
             gameLogService.append(gameData, GameLog.text(name + " is shuffled into its owner's library."));
             log.info("Game {} - {} shuffled into owner's library", gameData.id, name);

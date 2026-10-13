@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombat
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
@@ -810,10 +811,17 @@ public class CombatDamageService {
             int totalDamage = damageBySource.values().stream().mapToInt(Integer::intValue).sum();
             triggerCollectionService.checkControllerDealtDamageTriggers(
                     gameData, recipientId, null, totalDamage);
-            damageByController.forEach((controllerId, sources) ->
+            damageByController.forEach((controllerId, sources) -> {
+                if (controllerId.equals(recipientId)) {
                     triggerCollectionService.checkControllerDealtDamageTriggers(
                             gameData, recipientId, controllerId,
-                            sources.values().stream().mapToInt(Integer::intValue).sum(), false));
+                            sources.values().stream().mapToInt(Integer::intValue).sum(), false);
+                    return;
+                }
+                sources.values().forEach(amount ->
+                        triggerCollectionService.checkControllerDealtDamageTriggers(
+                                gameData, recipientId, controllerId, amount, false));
+            });
         });
         state.redirectedCombatDamageSourcesToPlayers.forEach((recipientId, sources) -> {
             Set<String> firedBatchedTriggerKeys = firedBatchedTriggerKeysByRecipient.computeIfAbsent(
@@ -2568,7 +2576,8 @@ public class CombatDamageService {
                     }
                     CardEffect firedEffect = trigger.effect();
                     if (firedEffect instanceof ConditionalEffect conditional
-                            && conditional.condition() instanceof SourceCounterThreshold) {
+                            && (conditional.condition() instanceof SourceCounterThreshold
+                            || conditional.condition() instanceof SourceHasChosenMode)) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forPermanent(perm, attackerId))) {
                             continue;
@@ -3386,6 +3395,8 @@ public class CombatDamageService {
                         attackerId,
                         card.getName() + "'s graveyard trigger",
                         List.of(trigger.effect()));
+                stackEntry.setTriggeringCardId(card.getId());
+                stackEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 stackEntry.setNonTargeting(true);
                 gameData.stack.add(stackEntry);
                 gameLogService.append(gameData, GameLog.cardThen(card,

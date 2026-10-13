@@ -58,6 +58,11 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
                 (MoveCounterFromTargetCreatureToTargetCreatureEffect) effect;
         boolean moveAll = moveEffect.moveAll();
 
+        if (gameQueryService.cantHaveCountersForController(gameData, destination, entry.getControllerId())) {
+            gameLogService.append(gameData, GameLog.cardThen(destination.getCard(), " can't have counters put on it."));
+            return;
+        }
+
         if (moveEffect.anyNumber()) {
             // "Move any number of [type] counters" (Bioshift) — the controller picks how many, so
             // pause for a number choice; ChoiceHandlerService performs the move on the answer.

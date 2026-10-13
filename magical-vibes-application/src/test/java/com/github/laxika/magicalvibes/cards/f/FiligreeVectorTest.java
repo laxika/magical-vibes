@@ -87,10 +87,9 @@ class FiligreeVectorTest extends BaseCardTest {
         harness.castFromHand(player1, new FiligreeVector(), "{3}{W}");
         harness.passBothPriorities();
         Permanent vector = gd.playerBattlefields.get(player1.getId()).getFirst();
+        // Each group closes by itself once Filigree Vector, its only legal target, has been chosen
         harness.handlePermanentChosen(player1, vector.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.handlePermanentChosen(player1, vector.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(vector.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();

@@ -2938,6 +2938,7 @@ public class StepTriggerService {
      */
     public void handleDrawStep(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
+        gameData.drawStepSkippedThisStep = false;
 
         // The starting player skips their entire draw step on turn 1 (rule 103.7a)
         if (gameData.turnNumber == 1 && activePlayerId.equals(gameData.startingPlayerId)
@@ -2945,6 +2946,7 @@ public class StepTriggerService {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips the draw (first turn).";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            gameData.drawStepSkippedThisStep = true;
             return;
         }
 
@@ -2954,6 +2956,7 @@ public class StepTriggerService {
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (chosen step or phase)", gameData.id,
                     gameData.playerIdToName.get(activePlayerId));
+            gameData.drawStepSkippedThisStep = true;
             return;
         }
         Integer currentTurnSkip = gameData.skipDrawStepThisTurn.remove(activePlayerId);
@@ -2969,6 +2972,7 @@ public class StepTriggerService {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (queued skip)", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            gameData.drawStepSkippedThisStep = true;
             return;
         }
 
@@ -2976,6 +2980,7 @@ public class StepTriggerService {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (current-turn effect)", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            gameData.drawStepSkippedThisStep = true;
             return;
         }
 
@@ -2984,21 +2989,24 @@ public class StepTriggerService {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (SkipDrawStepEffect)", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            gameData.drawStepSkippedThisStep = true;
             return;
         }
 
-        DrawStepReplacementSource replacement = findMaySkipDrawStepDrawSource(gameData, activePlayerId);
-        if (replacement != null) {
-            gameData.pendingMayAbilities.add(new PendingMayAbility(
-                    replacement.card(),
-                    activePlayerId,
-                    List.of(new ReplaceSingleDrawEffect(activePlayerId, replacement.kind())),
-                    replacement.kind() == DrawReplacementKind.FASTING
-                            ? "Skip your draw step and gain 2 life?"
-                            : "Skip your draw? Until your next turn you can only be attacked by creatures with flying and/or islandwalk."
-            ));
+        List<DrawStepReplacementSource> replacements = findMaySkipDrawStepDrawSources(gameData, activePlayerId);
+        if (!replacements.isEmpty()) {
+            for (DrawStepReplacementSource replacement : replacements) {
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                        replacement.card(),
+                        activePlayerId,
+                        List.of(new ReplaceSingleDrawEffect(activePlayerId, replacement.kind())),
+                        replacement.kind() == DrawReplacementKind.FASTING
+                                ? "Skip your draw step and gain 2 life?"
+                                : "Skip your draw? Until your next turn you can only be attacked by creatures with flying and/or islandwalk."
+                ));
+            }
 
-            if (replacement.kind() == DrawReplacementKind.ISLAND_SANCTUARY) {
+            if (replacements.getFirst().kind() == DrawReplacementKind.ISLAND_SANCTUARY) {
                 // Draw step triggered abilities (e.g. Howling Mine) still trigger at the beginning of the step.
                 handleDrawStepTriggers(gameData);
             }
@@ -3020,17 +3028,24 @@ public class StepTriggerService {
         }
     }
 
-    private DrawStepReplacementSource findMaySkipDrawStepDrawSource(GameData gameData, UUID playerId) {
+    /**
+     * Every permanent offering the same kind of draw-step skip, in battlefield order. Each one is a separate
+     * replacement effect the player may decline in turn (CR 616.1), so each gets its own offer.
+     */
+    private List<DrawStepReplacementSource> findMaySkipDrawStepDrawSources(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return null;
+        if (battlefield == null) return List.of();
+        List<DrawStepReplacementSource> sources = new ArrayList<>();
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW)) {
                 if (effect instanceof MaySkipDrawReplacementEffect replacement) {
-                    return new DrawStepReplacementSource(perm.getCard(), replacement.replacementKind());
+                    sources.add(new DrawStepReplacementSource(perm.getCard(), replacement.replacementKind()));
                 }
             }
         }
-        return null;
+        if (sources.isEmpty()) return List.of();
+        DrawReplacementKind kind = sources.getFirst().kind();
+        return sources.stream().filter(source -> source.kind() == kind).toList();
     }
 
     private record DrawStepReplacementSource(Card card, DrawReplacementKind kind) {
@@ -4099,8 +4114,47 @@ public class StepTriggerService {
         return validTargets;
     }
 
+    /**
+     * An Aura returning from exile without an attachment chosen by its effect is attached as its owner
+     * chooses (CR 303.4f). With no legal object or player to enchant, it remains in exile (CR 303.4g).
+     */
+    private void beginAuraReturnChoice(GameData gameData, Card auraCard, UUID ownerId) {
+        List<UUID> permanentTargets = new ArrayList<>();
+        gameData.forEachPermanent((ignored, candidate) -> {
+            if (auraAttachmentService.canEnchant(gameData, auraCard, ownerId, candidate)) {
+                permanentTargets.add(candidate.getId());
+            }
+        });
+        List<UUID> playerTargets = auraCard.isEnchantPlayer()
+                ? gameData.orderedPlayerIds.stream()
+                .filter(playerId -> auraAttachmentService.canEnchantPlayer(gameData, auraCard, ownerId, playerId))
+                .toList()
+                : List.of();
+        if (permanentTargets.isEmpty() && playerTargets.isEmpty()) {
+            log.info("Game {} - {} has no legal object to enchant and stays in exile", gameData.id,
+                    auraCard.getName());
+            return;
+        }
+        if (!gameData.removeFromExile(auraCard.getId())) {
+            return;
+        }
+        gameData.interaction.setPendingAuraCard(auraCard);
+        if (playerTargets.isEmpty()) {
+            playerInputService.beginPermanentChoice(gameData, ownerId, permanentTargets,
+                    "Choose a permanent for " + auraCard.getName() + " to enchant.");
+        } else {
+            playerInputService.beginAnyTargetChoice(gameData, ownerId, permanentTargets, playerTargets,
+                    "Choose a permanent or player for " + auraCard.getName() + " to enchant.");
+        }
+    }
+
     private void returnPendingExileCard(GameData gameData, PendingExileReturn pending, UUID attackTargetId) {
         UUID controllerId = pending.controllerId();
+        if (pending.card().isAura() && !pending.card().hasType(CardType.CREATURE)
+                && pending.cardsToAttachToPrimary().isEmpty() && pending.additionalCards().isEmpty()) {
+            beginAuraReturnChoice(gameData, pending.card(), controllerId);
+            return;
+        }
 
         List<Card> cards = new ArrayList<>();
         cards.add(pending.card());
@@ -4119,9 +4173,13 @@ public class StepTriggerService {
             }
             List<Card> returned = new ArrayList<>();
             returned.add(pending.card());
-            for (Card additional : pending.additionalCards()) {
-                if (gameData.removeFromExile(additional.getId())) {
-                    returned.add(additional);
+            // Auras attached to the primary card can only enter attached to a creature; when the
+            // primary card returns as a noncreature they stay in exile.
+            if (pending.card().hasType(CardType.CREATURE)) {
+                for (Card additional : pending.additionalCards()) {
+                    if (gameData.removeFromExile(additional.getId())) {
+                        returned.add(additional);
+                    }
                 }
             }
             returningCards = returned;
@@ -4430,6 +4488,16 @@ public class StepTriggerService {
                     new ArrayList<>(List.of(delayed.effect())),
                     null,
                     delayed.sourcePermanentId());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
+        // "At the beginning of your next end step" (Foggy Swamp Visions): only the controller's end step fires.
+        for (var delayed : gameData.drainDelayedActions(
+                com.github.laxika.magicalvibes.model.action.DelayedControllerEndStepTrigger.class,
+                pending -> pending.controllerId().equals(gameData.activePlayerId))) {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+                    delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(delayed.effect())), null, delayed.sourcePermanentId());
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
         }

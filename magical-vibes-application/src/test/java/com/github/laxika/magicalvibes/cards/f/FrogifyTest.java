@@ -97,7 +97,8 @@ class FrogifyTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, gingerbrute, Keyword.HASTE)).isFalse();
         assertThat(gqs.getEffectiveCardTypes(gd, gingerbrute)).containsExactly(CardType.CREATURE);
         assertThat(gqs.effectiveCreatureSubtypes(gd, gingerbrute)).containsExactly(CardSubtype.FROG);
-        assertThat(gqs.hasEffectiveSubtype(gd, gingerbrute, CardSubtype.FOOD)).isFalse();
+        // CR 205.1a: "is a Frog" replaces only creature types; Food is an artifact type (CR 205.3g), so it is kept.
+        assertThat(gqs.hasEffectiveSubtype(gd, gingerbrute, CardSubtype.FOOD)).isTrue();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))

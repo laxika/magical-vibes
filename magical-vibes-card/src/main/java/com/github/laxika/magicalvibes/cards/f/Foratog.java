@@ -22,7 +22,8 @@ public class Foratog extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),
-                                "Sacrifice a Forest"
+                                "Sacrifice a Forest",
+                                false
                         ),
                         new BoostSelfEffect(2, 2)
                 ),

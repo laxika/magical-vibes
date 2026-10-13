@@ -133,7 +133,7 @@ class FurorOfTheBittenTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
-        gs.declareAttackers(gd, player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         assertThat(bears.isAttacking()).isTrue();
     }
 
@@ -154,7 +154,7 @@ class FurorOfTheBittenTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThat(enchanted.isAttacking()).isTrue();
         assertThat(other.isAttacking()).isFalse();

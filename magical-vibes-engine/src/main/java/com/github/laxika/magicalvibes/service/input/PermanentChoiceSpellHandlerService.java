@@ -675,6 +675,7 @@ public class PermanentChoiceSpellHandlerService {
                     UUID ownerId = gct.ownerId() != null ? gct.ownerId() : gct.controllerId();
                     graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());
                     gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(), " can't be cast because its mana cost can't be paid."));
+                    copySupport.flushDeferredGraveyardCastCopies(gameData);
                     inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
@@ -702,19 +703,8 @@ public class PermanentChoiceSpellHandlerService {
             entry.setSourceZone(Zone.GRAVEYARD);
             gameData.stack.add(entry);
 
-            int copyCount = copySupport.adjustedSpellCopyCount(gameData, gct.copyCount());
-            for (int i = 0; i < copyCount; i++) {
-                Card copyCard = copySupport.createCopyCard(gct.cardToCast());
-                StackEntry copyEntry = copySupport.createCopyStackEntry(
-                        entry, copyCard, gct.controllerId(), entry.getTargetId());
-                copySupport.addCopyToStack(gameData, copyEntry, false);
-                if (copyEntry.getTargetId() != null) {
-                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                            gct.cardToCast(), gct.controllerId(), List.of(new CopySpellEffect()),
-                            "Choose new targets for the copy of " + gct.cardToCast().getName() + "?",
-                            copyCard.getId()));
-                }
-            }
+            copySupport.copyGraveyardCastSpell(gameData, entry, gct.cardToCast(), gct.controllerId(),
+                    gct.copyCount());
 
             exileCastTargetSupport.queueAfterSuccessfulCast(gameData, gct.cardToCast(), gct.controllerId(),
                     gct.sourcePermanentId(), gct.afterSuccessfulCastEffect());
@@ -747,6 +737,8 @@ public class PermanentChoiceSpellHandlerService {
                     "'s target is no longer valid. It remains in its owner's graveyard."));
             log.info("Game {} - {} cast-from-graveyard target no longer exists", gameData.id, gct.cardToCast().getName());
         }
+
+        copySupport.flushDeferredGraveyardCastCopies(gameData);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

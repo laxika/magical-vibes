@@ -47,7 +47,7 @@ public class SuspectChosenOtherCreatureEffectHandler implements NormalEffectHand
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.SuspectChosenOtherCreature());
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), eligibleIds,
-                    "Choose another creature to suspect.");
+                    "Choose one of the other creatures that entered to suspect.");
             return;
         }
 
@@ -65,32 +65,36 @@ public class SuspectChosenOtherCreatureEffectHandler implements NormalEffectHand
         if (source == null || !source.isSuspected()
                 || chosen == null
                 || !gameQueryService.isCreature(gameData, chosen)
-                || chosen.getId().equals(source.getId())
-                || !entry.getControllerId().equals(
-                gameQueryService.findPermanentController(gameData, chosenPermanentId))) {
-            throw new IllegalStateException("Choose another creature you control");
+                || !eligibleCreatureIds(gameData, entry).contains(chosenPermanentId)) {
+            throw new IllegalStateException("Choose a creature that entered");
         }
 
         apply(gameData, entry, chosenPermanentId);
     }
 
     private List<UUID> eligibleCreatureIds(GameData gameData, StackEntry entry) {
-        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of());
-        UUID sourcePermanentId = entry.getSourcePermanentId();
+        List<UUID> enteredIds = entry.getTriggeringPermanentIds().isEmpty()
+                ? (entry.getTriggeringPermanentId() == null ? List.of() : List.of(entry.getTriggeringPermanentId()))
+                : entry.getTriggeringPermanentIds();
         List<UUID> eligibleIds = new ArrayList<>();
-        for (Permanent permanent : battlefield) {
-            if (!permanent.getId().equals(sourcePermanentId)
-                    && gameQueryService.isCreature(gameData, permanent)) {
-                eligibleIds.add(permanent.getId());
+        for (UUID enteredId : enteredIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, enteredId);
+            if (permanent != null
+                    && !permanent.getId().equals(entry.getSourcePermanentId())
+                    && gameQueryService.isCreature(gameData, permanent)
+                    && entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, enteredId))) {
+                eligibleIds.add(enteredId);
             }
         }
         return eligibleIds;
     }
 
     private Permanent source(GameData gameData, StackEntry entry) {
-        return entry.getSourcePermanentId() == null
-                ? null
-                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (entry.getSourcePermanentId() == null) {
+            return null;
+        }
+        Permanent live = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        return live != null ? live : entry.getSourcePermanentSnapshot();
     }
 
     private void apply(GameData gameData, StackEntry entry, UUID chosenPermanentId) {
