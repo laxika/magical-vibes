@@ -460,6 +460,13 @@ class AiDecisionEngineTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Awakener Druid");
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+
+        // The ETB ability chooses its target as it is put on the stack.
+        harness.passBothPriorities();
+        ai.handleEvent(AiDecisionKind.INTERACTION);
+
+        assertThat(gd.stack).hasSize(1);
         // Target must be one of the AI's Forests
         UUID targetId = gd.stack.getFirst().getTargetId();
         assertThat(gd.playerBattlefields.get(aiPlayer.getId()).stream()
@@ -957,9 +964,14 @@ class AiDecisionEngineTest {
 
         ai.handleEvent(AiDecisionKind.GAME_STATE);
 
-        // AI should cast Aven Cloudchaser targeting the enchantment, not the creature
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Aven Cloudchaser");
+
+        // The ETB ability targets the enchantment, not the creature, as it is put on the stack.
+        harness.passBothPriorities();
+        ai.handleEvent(AiDecisionKind.INTERACTION);
+
+        assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(chorus.getId());
     }
 
@@ -980,6 +992,32 @@ class AiDecisionEngineTest {
 
         // AI should not cast A?€�t no valid enchantment targets
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("AI supports its own creature when Expedition Raptor's ETB is put on the stack")
+    void expeditionRaptorSupportsOwnCreature() {
+        giveAiPriority();
+        giveAiPlains(5);
+        Permanent ownBears = new Permanent(new GrizzlyBears());
+        ownBears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(ownBears);
+        Permanent opponentBears = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(human.getId()).add(opponentBears);
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.e.ExpeditionRaptor()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        for (int prompts = 0; prompts < 5 && gd.interaction.isAwaitingInput(); prompts++) {
+            ai.handleEvent(AiDecisionKind.INTERACTION);
+        }
+        harness.passBothPriorities();
+
+        assertThat(ownBears.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
+        assertThat(opponentBears.getCounterCount(
+                com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     // ===== Graveyard targeting =====

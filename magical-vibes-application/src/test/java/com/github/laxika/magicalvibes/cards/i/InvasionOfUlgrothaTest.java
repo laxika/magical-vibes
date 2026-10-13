@@ -27,7 +27,7 @@ class InvasionOfUlgrothaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         int lifeBefore = gd.getLife(player1.getId());
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castCreature(player1, 0, 0, bears.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -44,7 +44,7 @@ class InvasionOfUlgrothaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         int lifeBefore = gd.getLife(player1.getId());
 
-        gs.playCard(gd, player1, 0, 0, battle.getId(), null);
+        harness.castCreature(player1, 0, 0, battle.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -84,7 +84,7 @@ class InvasionOfUlgrothaTest extends BaseCardTest {
         int controllerLife = gd.getLife(player1.getId());
         int opponentLife = gd.getLife(player2.getId());
 
-        gs.playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.castCreature(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -101,7 +101,7 @@ class InvasionOfUlgrothaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         int lifeBefore = gd.getLife(player1.getId());
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castCreature(player1, 0, 0, bears.getId());
         harness.passBothPriorities();
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
@@ -152,7 +152,7 @@ class InvasionOfUlgrothaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         int lifeBefore = gd.getLife(player1.getId());
 
-        gs.playCard(gd, player1, 0, 0, player1.getId(), null);
+        harness.castCreature(player1, 0, 0, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

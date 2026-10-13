@@ -42,7 +42,7 @@ public class GainControlOfTargetSpellEffectHandler implements NormalEffectHandle
 
         UUID spellOwnerId = targetSpell.getOwnerId();
         targetSpell.setOwnerIdOverride(spellOwnerId);
-        targetSpell.setControllerId(entry.getControllerId());
+        targetSpell.gainControl(entry.getControllerId());
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())

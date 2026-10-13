@@ -92,7 +92,7 @@ class AssassinGauntletTest extends BaseCardTest {
         List<java.util.UUID> targetIds = creatureTarget == null
                 ? List.of()
                 : List.of(creatureTarget, opponentTarget);
-        gs.playCard(gd, player1, 0, 0, null, null, targetIds, List.of());
+        harness.castCreatureForX(player1, 0, 0, targetIds);
     }
 
     @Test

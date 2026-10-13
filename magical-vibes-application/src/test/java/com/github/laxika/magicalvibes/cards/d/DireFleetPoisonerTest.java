@@ -59,7 +59,7 @@ class DireFleetPoisonerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DireFleetPoisoner()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, pirate.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, pirate.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an attacking Pirate you control");
     }
@@ -72,7 +72,7 @@ class DireFleetPoisonerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DireFleetPoisoner()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, pirate.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, pirate.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an attacking Pirate you control");
     }
@@ -216,6 +216,6 @@ class DireFleetPoisonerTest extends BaseCardTest {
     private void castPoisoner(UUID targetId) {
         harness.setHand(player1, List.of(new DireFleetPoisoner()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 }

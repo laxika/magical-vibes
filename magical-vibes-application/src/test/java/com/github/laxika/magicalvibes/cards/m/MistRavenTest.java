@@ -123,6 +123,6 @@ class MistRavenTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(targetOwner, targetName);
         harness.setHand(player1, List.of(new MistRaven()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 }

@@ -54,7 +54,7 @@ class WhiptailMolochTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WhiptailMoloch()));
         addWhiptailMana();
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, opponentCreature, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, opponentCreature))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }
@@ -67,7 +67,7 @@ class WhiptailMolochTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WhiptailMoloch()));
         addWhiptailMana();
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, ownLand, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownLand))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }
@@ -130,7 +130,7 @@ class WhiptailMolochTest extends BaseCardTest {
     private void castWhiptailMoloch(UUID targetId) {
         harness.setHand(player1, List.of(new WhiptailMoloch()));
         addWhiptailMana();
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 
     private void addWhiptailMana() {

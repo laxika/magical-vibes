@@ -53,7 +53,7 @@ class InvasionOfRavnicaTest extends BaseCardTest {
         assertThat(targets.validPermanentIds()).contains(threeColors.getId())
                 .doesNotContain(exactlyTwoColors.getId());
 
-        gs.playCard(gd, player1, 0, 0, threeColors.getId(), null);
+        harness.castCreature(player1, 0, 0, threeColors.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -123,7 +123,7 @@ class InvasionOfRavnicaTest extends BaseCardTest {
         assertThat(targets.validPermanentIds()).contains(colorless.getId())
                 .doesNotContain(land.getId(), own.getId());
 
-        gs.playCard(gd, player1, 0, 0, colorless.getId(), null);
+        harness.castCreature(player1, 0, 0, colorless.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -236,7 +236,7 @@ class InvasionOfRavnicaTest extends BaseCardTest {
     private void castInvasion(UUID targetId) {
         harness.setHand(player1, List.of(new InvasionOfRavnica()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 
 }

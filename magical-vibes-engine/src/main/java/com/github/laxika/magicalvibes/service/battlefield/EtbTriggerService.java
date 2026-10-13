@@ -255,6 +255,15 @@ public class EtbTriggerService {
                                           List<UUID> convokeCreatureIds) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
+        if (wasCastFromHand || enteringPermanent != null && enteringPermanent.isCast()) {
+            // A resolved permanent spell's ETB abilities choose their targets as they are put on the
+            // stack (CR 603.3d), never while the spell was cast. Only an Aura's enchant target is a
+            // real spell target, so it is the one cast-time choice carried onto the battlefield.
+            targetIds = List.of();
+            if (!card.isAura()) {
+                targetId = null;
+            }
+        }
         ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
                 .map(ChooseIndependentModesOnEnterEffect.class::cast)
@@ -724,9 +733,10 @@ public class EtbTriggerService {
      * <p>Effects are partitioned by the kind of target selection they need at trigger time:
      * graveyard-exile (multi-target), graveyard-cast and grant-flashback (single graveyard target),
      * spell-targeting (choose a spell on the stack), and everything else ("other"), which either
-     * goes straight onto the stack (target already chosen at cast time) or, for token copies and
-     * permanents that entered from a graveyard, is queued to choose targets as the ability goes on
-     * the stack (CR 603.3d). Trigger-copy effects apply to every path via {@code extraTriggerCopies}.
+     * goes straight onto the stack (targets supplied by the entering event, such as an Aura's
+     * attachment or a reflexive put-onto-the-battlefield effect) or is queued to choose targets as
+     * the ability goes on the stack (CR 603.3d). Trigger-copy effects apply to every path via
+     * {@code extraTriggerCopies}.
      */
     private void queueMandatoryETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                           List<UUID> targetIds, List<CardEffect> mandatoryEffects,
@@ -861,35 +871,32 @@ public class EtbTriggerService {
             }
             boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
 
-            // A permanent that entered without a target chosen at cast time — a token copy,
-            // a creature put onto the battlefield from a graveyard via undying / reanimation,
-            // or a land (lands are played, never cast, so they never went through cast-time
-            // target selection; e.g. Sunscorched Desert's "deals 1 damage to target player or
-            // planeswalker") — must still choose targets for its mandatory ETB as the ability is
-            // put on the stack (CR 603.3d). Cast spells with "up to" targets that chose 0 targets
-            // are excluded; they passed through cast-time target selection.
+            // An ETB ability with no target supplied by the entering event chooses its targets as it
+            // is put on the stack (CR 603.3d). That covers every resolved permanent spell, token
+            // copies, reanimated permanents and lands alike, including "up to N" abilities, whose
+            // controller may still choose zero targets at that point.
             boolean hasDynamicTargetCount = card.hasDynamicTargetCount();
+            // An effect bound to one of the card's declared target groups targets through that group's
+            // filter even when its own spec names no target kind (an Aura's group 0 is its enchant
+            // target, never an ETB target).
             boolean etbNeedsTarget = otherEffects.stream()
                     .filter(e -> !(e instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                            || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
+                            || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
+                            || card.getEffectTargetIndex(e) > (card.isAura() ? 0 : -1));
 
             // A surviving gate-conditional ETB (Metalcraft, Morbid, Raid, … — the gate was met
-            // as the permanent entered) that targets never chose a target at cast time
-            // (CR 601.2c): it is excluded from cast-time targeting by EffectResolution, so the
-            // controller picks the target as the trigger goes on the stack (CR 603.3d), on the
-            // same deferred path token copies and reanimated permanents use. A stale targetId
-            // from the cast is deliberately ignored — the engine never asked for it.
+            // as the permanent entered) that targets picks the target as the trigger goes on the
+            // stack (CR 603.3d), even when the entering event supplied a target for another ETB.
             boolean gateConditionalNeedsTarget = otherEffects.stream()
                     .anyMatch(e -> e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()
                             && (!card.isAura() || card.getEffectTargetIndex(e) != 0)
                             && (ce.targetSpec().admits(TargetPredicate.Kind.PLAYER) || ce.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
-            // Non-reflexive MayPayManaEffect ETBs never take a cast-time target (see
-            // EffectResolution), so a targeting pay/else ability (Knight of the Mists) must choose
-            // as the trigger goes on the stack — including the just-entered permanent as a legal
-            // choice.
+            // Non-reflexive MayPayManaEffect ETBs never take a target from the entering event, so a
+            // targeting pay/else ability (Knight of the Mists) must choose as the trigger goes on the
+            // stack — including the just-entered permanent as a legal choice.
             boolean mayPayManaNeedsTarget = otherEffects.stream()
                     .anyMatch(e -> e instanceof MayPayManaEffect mayPay && !mayPay.targetAfterPayment()
                             && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -901,26 +908,14 @@ public class EtbTriggerService {
                     && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
-            // A cast permanent whose fixed-size "up to N" targets were declared as zero up front has
-            // nothing to ask for. Groups sized by X are still chosen as the trigger goes on the stack.
-            boolean castChoseZeroOptionalTargets = enteringPermanent != null && enteringPermanent.isCast()
-                    && !hasTarget && etbNeedsTarget && !hasDynamicTargetCount
-                    && otherEffects.stream()
-                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                            || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                            || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD))
-                    .allMatch(e -> allowsZeroCastTimeTargets(card, e));
-
             if ((hasDynamicTargetCount && etbNeedsTarget && !hasTarget)
                     || hasUnselectedDynamicEtbTargetGroup(card, otherEffects, targetId, targetIds)
                     || gateConditionalNeedsTarget
                     || mayPayManaNeedsTarget
                     || auraETBTargetNeedsSelection
-                    || (etbNeedsTarget && !hasTarget && !castChoseZeroOptionalTargets)) {
-                // CR 603.3: no target was chosen at cast time — the ETB target is gated behind
-                // an intervening-if, or the permanent wasn't cast (token copy, or returned from
-                // a graveyard via undying / reanimation). The controller must choose a target
-                // as the triggered ability is put on the stack.
+                    || (etbNeedsTarget && !hasTarget)) {
+                // CR 603.3d: the controller chooses the ETB targets as the triggered ability is put
+                // on the stack.
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
 
@@ -947,7 +942,7 @@ public class EtbTriggerService {
                     }
                     gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose targets."));
-                    log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
+                    log.info("Game {} - {} ETB multi-target trigger queued for target selection",
                             gameData.id, card.getName());
                 } else {
                     TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter
@@ -962,7 +957,7 @@ public class EtbTriggerService {
                     }
                     gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — choose a target."));
-                    log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
+                    log.info("Game {} - {} ETB trigger queued for target selection",
                             gameData.id, card.getName());
                 }
             } else if (extraTriggerCopies == 0 && dividedAssignments.isEmpty() && activeTargetIds.size() > 1
@@ -1353,17 +1348,6 @@ public class EtbTriggerService {
             consumed += size;
         }
         return List.copyOf(activeTargets);
-    }
-
-    private static boolean allowsZeroCastTimeTargets(Card card, CardEffect effect) {
-        int index = card.getEffectTargetIndex(effect);
-        if (index < 0 || index >= card.getSpellTargets().size()) {
-            return false;
-        }
-        // A mandatory target group elsewhere on the card means no targets at all was not a legal
-        // cast-time choice, so the absent targets are still to be chosen when the trigger is put on the stack.
-        return card.getSpellTargets().stream()
-                .allMatch(group -> group.getMinTargets() == 0 && group.getDynamicMinTargets() == null);
     }
 
     private boolean hasUnselectedDynamicEtbTargetGroup(Card card, List<CardEffect> effects,

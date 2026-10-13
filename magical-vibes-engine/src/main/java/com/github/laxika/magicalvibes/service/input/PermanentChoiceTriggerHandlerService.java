@@ -2258,15 +2258,28 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleETBTokenMultiTargetTrigger(GameData gameData, UUID chosenId,
                                                    PermanentChoiceContext.ETBTokenMultiTargetTrigger etbMtt) {
-        int groupIdx = etbMtt.currentGroupIndex();
         int chosenInGroup = etbMtt.chosenInCurrentGroup();
         int groupMin = etbTokenTargetService.effectiveMinTargets(gameData, etbMtt);
 
         // Once the group's minimum has been met, a response equal to the controller's own
-        // player ID means "stop adding targets in this group".
+        // player ID means "stop adding targets in this group" — unless the controller is itself a
+        // legal target for the group, in which case it targets them.
         boolean groupDone = chosenInGroup >= groupMin
                 && chosenId.equals(etbMtt.controllerId())
-                && gameData.playerIdToName.containsKey(chosenId);
+                && etbTokenTargetService.controllerChoiceStopsGroup(gameData, etbMtt);
+        advanceETBTokenMultiTargetTrigger(gameData, etbMtt, groupDone ? null : chosenId);
+    }
+
+    /**
+     * Adds {@code chosenId} to the current target group of a multi-target ETB trigger, or ends the
+     * group when it is {@code null}, then prompts for the next slot or puts the ability on the stack.
+     */
+    private void advanceETBTokenMultiTargetTrigger(GameData gameData,
+                                                   PermanentChoiceContext.ETBTokenMultiTargetTrigger etbMtt,
+                                                   UUID chosenId) {
+        int groupIdx = etbMtt.currentGroupIndex();
+        int chosenInGroup = etbMtt.chosenInCurrentGroup();
+        boolean groupDone = chosenId == null;
 
         List<UUID> updatedChosen;
         int nextGroupIdx;
@@ -2356,14 +2369,14 @@ public class PermanentChoiceTriggerHandlerService {
                 pending.resumePendingMayResolution(), pending.triggeringCardId(),
                 pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
                 .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex());
-        handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), completedGroup);
+        advanceETBTokenMultiTargetTrigger(gameData, completedGroup, null);
     }
 
     public void handleEtbGraveyardCardTargetGroup(GameData gameData, List<UUID> targets,
             MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup context) {
         var pending = context.pending();
         if (targets.isEmpty()) {
-            handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), pending);
+            advanceETBTokenMultiTargetTrigger(gameData, pending, null);
             return;
         }
         List<UUID> chosen = new ArrayList<>(pending.chosenTargetsSoFar());
@@ -2375,7 +2388,7 @@ public class PermanentChoiceTriggerHandlerService {
                 pending.resumePendingMayResolution(), pending.triggeringCardId(),
                 pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
                 .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex());
-        handleETBTokenMultiTargetTrigger(gameData, pending.controllerId(), completedGroup);
+        advanceETBTokenMultiTargetTrigger(gameData, completedGroup, null);
     }
 
     public void handleETBTokenTargetTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {
@@ -2387,9 +2400,8 @@ public class PermanentChoiceTriggerHandlerService {
         StackEntry selectedSpell = gameQueryService.findStackEntryByCardId(gameData, targetId);
         boolean spellTarget = selectedSpell != null && isSpell(selectedSpell);
         boolean declined = !spellTarget
-                && hasOptionalSingleTarget(etbTtt.sourceCard(), etbTtt.effects())
                 && etbTtt.controllerId().equals(targetId)
-                && gameData.playerIdToName.containsKey(targetId);
+                && etbTokenTargetService.controllerChoiceDeclines(gameData, etbTtt);
         if (spellTarget) {
             entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

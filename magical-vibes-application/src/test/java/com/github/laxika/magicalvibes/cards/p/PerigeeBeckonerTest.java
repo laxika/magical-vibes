@@ -46,7 +46,7 @@ class PerigeeBeckonerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PerigeeBeckoner()));
         addBeckonerMana();
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, bears.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be another creature you control");
     }

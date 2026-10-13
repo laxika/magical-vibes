@@ -74,14 +74,14 @@ class EyeblightAssassinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EyeblightAssassin()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, ownBearsId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownBearsId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     private void castAssassin(UUID targetId) {
         harness.setHand(player1, List.of(new EyeblightAssassin()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 
     @Test

@@ -33,7 +33,7 @@ class InvasionOfAzgolTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         int lifeBefore = gd.getLife(player2.getId());
 
-        gs.playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.castCreature(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -207,7 +207,7 @@ class InvasionOfAzgolTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InvasionOfAzgol()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        gs.playCard(gd, player1, 0, 0, targetPlayer.getId(), null);
+        harness.castCreature(player1, 0, 0, targetPlayer.getId());
         harness.passBothPriorities();
     }
 

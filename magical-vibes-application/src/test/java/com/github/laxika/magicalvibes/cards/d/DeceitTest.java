@@ -179,8 +179,13 @@ class DeceitTest extends BaseCardTest {
 
         harness.castCreatureWithEvoke(player1, 0, null);
         harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        // The targetless bounce ability still triggers alongside the evoke sacrifice, so their order
+        // is chosen.
+        var order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().stream()
+                .filter(option -> option.contains("sacrifice")).findFirst().orElseThrow());
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Deceit");
         harness.assertNotOnBattlefield(player1, "Deceit");

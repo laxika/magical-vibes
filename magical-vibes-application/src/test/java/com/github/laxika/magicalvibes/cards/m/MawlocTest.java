@@ -158,7 +158,7 @@ class MawlocTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        gs.playCard(gd, player1, 0, 5, null, null, List.of(target.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 5, List.of(target.getId()));
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Mawloc");
         target.setMarkedDamage(2);
@@ -176,7 +176,7 @@ class MawlocTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, x);
 
-        gs.playCard(gd, player1, 0, x, null, null, targetIds, List.of());
+        harness.castCreatureForX(player1, 0, x, targetIds);
         resolveAllTriggers();
     }
 }

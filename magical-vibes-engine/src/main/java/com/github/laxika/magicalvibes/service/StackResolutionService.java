@@ -418,7 +418,7 @@ public class StackResolutionService {
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
         // resolves into didn't enter as the result of a cast spell either.
         perm.setCast(!entry.isCopy() || entry.isCastCopy());
-        perm.setCastControllerId(entry.isCopy() && !entry.isCastCopy() ? null : entry.getControllerId());
+        perm.setCastControllerId(entry.isCopy() && !entry.isCastCopy() ? null : entry.getCasterId());
         perm.setManaSpentToCast(entry.getManaSpentToCast());
         perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
         perm.setWaterbendCostPaid(entry.isWaterbendCostPaid());

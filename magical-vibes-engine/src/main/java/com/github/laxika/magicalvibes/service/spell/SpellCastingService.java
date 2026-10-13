@@ -3796,6 +3796,7 @@ public class SpellCastingService {
                 filteredSpellEffects, kicked, overloaded, null, teamworkCostPaid);
         validateCastTimeCreatureTypeChoice(gameData, playerId, targetId, targetIds,
                 targetingSpellEffects, chosenCreatureType);
+        rejectEnterTheBattlefieldTargets(card, targetId, targetIds);
         boolean unwrappedNeedsSpellTarget = targetingSpellEffects.stream()
                 .anyMatch(EffectResolution::targetsSpellOnStack);
         if (unwrappedNeedsSpellTarget) {
@@ -6697,6 +6698,20 @@ public class SpellCastingService {
                     .ifPresent(stackEntry -> stackEntry.setGiftPromised(giftPromised));
             finishSpellCast(gameData, playerId, player, hand, card, true, castModalBackFace);
         }
+    }
+
+    /**
+     * Rejects targets supplied for a permanent spell whose only targets belong to its ETB abilities.
+     * Those abilities choose their targets as they are put on the stack (CR 603.3d), so a target named
+     * while casting would only be mistaken for a target of the spell (CR 601.2c).
+     */
+    private static void rejectEnterTheBattlefieldTargets(Card card, UUID targetId, List<UUID> targetIds) {
+        if (targetId == null && (targetIds == null || targetIds.isEmpty())
+                || !EffectResolution.targetsOnlyWithEtbAbilities(card)) {
+            return;
+        }
+        throw new IllegalStateException(card.getName() + " has no targets as it is cast; its enters-the-battlefield"
+                + " abilities choose their targets when they trigger");
     }
 
     private void validateCastTimeCreatureTypeChoice(GameData gameData, UUID playerId, UUID targetId,
@@ -10421,6 +10436,7 @@ public class SpellCastingService {
         // but they must still be cast as copies so they cease to exist after resolving rather than
         // going to a graveyard or becoming a permanent card.
         copy = copy || gameData.discordCopySourcePermanents.containsKey(exileCardId);
+        rejectEnterTheBattlefieldTargets(card, targetId, targetIds);
         if (card.isCastOnlyFromGraveyard()) {
             throw new IllegalStateException("Card cannot be cast from this zone");
         }
@@ -11372,6 +11388,7 @@ public class SpellCastingService {
         if (card.isCastOnlyFromGraveyard()) {
             throw new IllegalStateException("Card cannot be cast from library");
         }
+        rejectEnterTheBattlefieldTargets(card, targetId, List.of());
         boolean freeTopPlay = !castFaceDown && castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, card);
         if (card.hasType(CardType.LAND)) {
             Optional<UUID> oncePerTurnTopLibraryPermission = !freeTopPlay

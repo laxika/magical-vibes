@@ -111,7 +111,8 @@ class DiluvianPrimordialTest extends BaseCardTest {
 
         harness.castFromHand(player1, new DiluvianPrimordial(), "{5}{U}{U}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Diluvian Primordial");
         harness.assertInGraveyard(player2, "Mugging");

@@ -39,7 +39,7 @@ class InvasionOfKamigawaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InvasionOfKamigawa()));
         addBlueAndColorlessMana();
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, ownCreature.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -122,7 +122,7 @@ class InvasionOfKamigawaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InvasionOfKamigawa()));
         addBlueAndColorlessMana();
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, land.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -148,7 +148,7 @@ class InvasionOfKamigawaTest extends BaseCardTest {
     private void castInvasion(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new InvasionOfKamigawa()));
         addBlueAndColorlessMana();
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 
     private void addBlueAndColorlessMana() {

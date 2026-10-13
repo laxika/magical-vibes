@@ -1,0 +1,338 @@
+package com.github.laxika.magicalvibes.testutil;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Lets a test name a permanent spell's ETB targets in the cast call, as a shorthand for answering the
+ * ETB trigger's target prompt.
+ *
+ * <p>A permanent spell's ETB abilities choose their targets as they are put on the stack
+ * (CR 603.3d), so the engine never takes them while the spell is cast. The harness casts the spell
+ * without them, checks them against the card's ETB target declaration right away (so an illegal
+ * choice still fails at the cast call), and answers each of the card's ETB target prompts with them
+ * once those prompts open. A prompt that none of the declared targets fits is left to the test, so a
+ * card with several ETB abilities can declare targets for one of them and answer the others itself.</p>
+ */
+final class DeclaredEtbTargets {
+
+    /**
+     * The targets to hand to the engine's cast call, plus the ETB targets the harness answers later
+     * ({@code null} when the cast keeps its targets).
+     */
+    record CastTargets(UUID targetId, List<UUID> targetIds, List<UUID> etbTargets) {}
+
+    private static final int ANSWER_LIMIT = 1000;
+
+    private final GameData gameData;
+    private final GameService gameService;
+    private final TargetLegalityService targetLegalityService;
+    private final ETBTokenTargetService etbTokenTargetService;
+    private final List<Player> players;
+    private final List<Declaration> declarations = new ArrayList<>();
+
+    DeclaredEtbTargets(GameData gameData, GameService gameService, TargetLegalityService targetLegalityService,
+                       ETBTokenTargetService etbTokenTargetService, List<Player> players) {
+        this.gameData = gameData;
+        this.gameService = gameService;
+        this.targetLegalityService = targetLegalityService;
+        this.etbTokenTargetService = etbTokenTargetService;
+        this.players = players;
+    }
+
+    /**
+     * Splits a cast helper's targets: a permanent spell whose only targets belong to its ETB
+     * abilities is cast with none, and the targets are validated now for its ETB prompts. Any other
+     * spell keeps its targets. {@code targetIds} is {@code null} when the cast helper takes no target
+     * list; an explicit empty list declares that the ETB abilities choose no targets.
+     * {@code permanentFace} is false for helpers that may instead cast an instant or sorcery face of
+     * the card (an Omen or Adventure), whose targets are left alone.
+     */
+    CastTargets prepare(Player player, Card card, boolean permanentFace, UUID targetId, List<UUID> targetIds,
+                        int xValue, boolean kicked) {
+        List<UUID> listed = targetIds == null ? List.of() : targetIds;
+        if (card != null && targetId == null && listed.size() > 1 && auraWithEtbTargetGroup(card)) {
+            // An Aura's enchant target is its spell's own target; the rest belong to its ETB ability.
+            List<UUID> etbTargets = List.copyOf(listed.subList(1, listed.size()));
+            targetLegalityService.validateSpellTargetGroup(gameData, card, 1, etbTargets, player.getId(),
+                    xValue, kicked);
+            return new CastTargets(listed.getFirst(), List.of(), etbTargets);
+        }
+        if (card == null || targetId == null && targetIds == null
+                || !EffectResolution.targetsOnlyWithEtbAbilities(card)
+                || !permanentFace && hasSpellBackFace(card)) {
+            return new CastTargets(targetId, listed, null);
+        }
+        List<UUID> etbTargets = new ArrayList<>();
+        if (targetId != null) {
+            etbTargets.add(targetId);
+        }
+        etbTargets.addAll(listed);
+        if (etbTargets.isEmpty()) {
+            return new CastTargets(null, List.of(), List.of());
+        }
+        if (!listed.isEmpty() && card.getMaxTargets() > 0) {
+            targetLegalityService.validateMultiSpellTargets(gameData, card, etbTargets, player.getId(), xValue, kicked);
+        } else {
+            for (UUID etbTarget : etbTargets) {
+                targetLegalityService.validateSpellTargeting(gameData, card, etbTarget, null, player.getId(),
+                        true, xValue, kicked);
+            }
+        }
+        return new CastTargets(null, List.of(), List.copyOf(etbTargets));
+    }
+
+    /** Remembers the ETB targets {@link #prepare} took off a cast the engine then accepted. */
+    void declare(Card card, CastTargets prepared) {
+        if (card == null || prepared.etbTargets() == null) {
+            return;
+        }
+        declarations.removeIf(declaration -> declaration.cardId.equals(card.getId()));
+        declarations.add(new Declaration(card.getId(), prepared.etbTargets()));
+        answerOpenPrompts();
+    }
+
+    /** Answers every open ETB target prompt of a card whose targets were declared at cast. */
+    void answerOpenPrompts() {
+        for (int answered = 0; answered < ANSWER_LIMIT && !declarations.isEmpty(); answered++) {
+            declarations.removeIf(declaration -> !declaration.used && !isOnStackOrBattlefield(declaration.cardId));
+            if (!gameData.interaction.isAwaitingInput() || !answerActivePrompt()) {
+                return;
+            }
+        }
+    }
+
+    private boolean answerActivePrompt() {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        if (active instanceof PendingInteraction.PermanentChoice choice) {
+            if (choice.context() instanceof PermanentChoiceContext.ETBTokenTargetTrigger single) {
+                return answerSingleTarget(choice, single);
+            }
+            if (choice.context() instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger multi) {
+                return answerTargetSlot(choice, multi);
+            }
+            return false;
+        }
+        if (active instanceof PendingInteraction.MultiPermanentChoice choice
+                && etbTargetGroup(choice.context()) != null) {
+            return answerTargetGroup(choice, etbTargetGroup(choice.context()));
+        }
+        return false;
+    }
+
+    private boolean answerSingleTarget(PendingInteraction.PermanentChoice choice,
+                                       PermanentChoiceContext.ETBTokenTargetTrigger single) {
+        Declaration declaration = find(single.sourceCard(), single.sourcePermanentId());
+        if (declaration == null) {
+            return false;
+        }
+        if (declaration.targetIds.isEmpty()) {
+            if (!etbTokenTargetService.controllerChoiceDeclines(gameData, single)) {
+                throw new IllegalStateException(single.sourceCard().getName()
+                        + "'s ETB ability was declared with no targets, but its prompt cannot be declined");
+            }
+            answer(choice.playerId(), new InteractionAnswer.PermanentChosen(single.controllerId()), declaration,
+                    single.sourceCard());
+            return true;
+        }
+        UUID target = declaration.targetIds.stream().filter(choice.validIds()::contains).findFirst().orElse(null);
+        if (target == null) {
+            return false;
+        }
+        answer(choice.playerId(), new InteractionAnswer.PermanentChosen(target), declaration, single.sourceCard());
+        return true;
+    }
+
+    private boolean answerTargetSlot(PendingInteraction.PermanentChoice choice,
+                                     PermanentChoiceContext.ETBTokenMultiTargetTrigger multi) {
+        Declaration declaration = find(multi.sourceCard(), multi.sourcePermanentId());
+        if (declaration == null) {
+            return false;
+        }
+        UUID next = declaration.targetIds.stream()
+                .filter(id -> !chosenEarlier(multi, id))
+                .filter(choice.validIds()::contains)
+                .findFirst().orElse(null);
+        if (next != null) {
+            answer(choice.playerId(), new InteractionAnswer.PermanentChosen(next), declaration, multi.sourceCard());
+            return true;
+        }
+        // Choosing yourself stops adding targets to this group: done once the ability has taken its
+        // declared targets, when none were declared, or to reach a later group that the remaining
+        // declared targets belong to. A group sized by the game state (X, kicker payments) that took
+        // none of the declared targets is left to the test, as such groups always chose their
+        // targets as the trigger was put on the stack.
+        boolean stopOffered = choice.validPlayerIds().contains(multi.controllerId())
+                && etbTokenTargetService.controllerChoiceStopsGroup(gameData, multi);
+        boolean groupTookDeclaredTargets = currentGroupTargets(multi).stream()
+                .anyMatch(declaration.targetIds::contains);
+        boolean abilityTookDeclaredTargets = multi.chosenTargetsSoFar().stream()
+                .anyMatch(declaration.targetIds::contains);
+        boolean declaredTargetsRemain = declaration.targetIds.stream()
+                .anyMatch(id -> !multi.chosenTargetsSoFar().contains(id));
+        if (stopOffered && (groupTookDeclaredTargets || declaration.targetIds.isEmpty()
+                || abilityTookDeclaredTargets && !hasDynamicSize(multi)
+                || hasLaterTargetGroup(multi) && declaredTargetsRemain)) {
+            answer(choice.playerId(), new InteractionAnswer.PermanentChosen(multi.controllerId()), declaration,
+                    multi.sourceCard());
+            return true;
+        }
+        return false;
+    }
+
+    private boolean answerTargetGroup(PendingInteraction.MultiPermanentChoice choice,
+                                      PermanentChoiceContext.ETBTokenMultiTargetTrigger multi) {
+        Declaration declaration = find(multi.sourceCard(), multi.sourcePermanentId());
+        if (declaration == null) {
+            return false;
+        }
+        List<UUID> chosen = declaration.targetIds.stream()
+                .filter(id -> !chosenEarlier(multi, id))
+                .filter(id -> choice.validIds().contains(id) || choice.validPlayerIds().contains(id)
+                        || choice.validCardIds().contains(id))
+                .limit(choice.maxCount())
+                .toList();
+        if (chosen.isEmpty() && !declaration.targetIds.isEmpty()) {
+            return false;
+        }
+        answer(choice.playerId(), new InteractionAnswer.PermanentsChosen(chosen), declaration, multi.sourceCard());
+        return true;
+    }
+
+    /**
+     * True when this ability already chose {@code id}, in the current group or, unless the card lets
+     * groups share targets, in an earlier one.
+     */
+    private static boolean chosenEarlier(PermanentChoiceContext.ETBTokenMultiTargetTrigger multi, UUID id) {
+        return multi.sourceCard().isAllowSharedTargets()
+                ? currentGroupTargets(multi).contains(id)
+                : multi.chosenTargetsSoFar().contains(id);
+    }
+
+    private static List<UUID> currentGroupTargets(PermanentChoiceContext.ETBTokenMultiTargetTrigger multi) {
+        List<UUID> chosen = multi.chosenTargetsSoFar();
+        int currentGroupStart = Math.max(0, chosen.size() - multi.chosenInCurrentGroup());
+        return chosen.subList(currentGroupStart, chosen.size());
+    }
+
+    private static boolean hasDynamicSize(PermanentChoiceContext.ETBTokenMultiTargetTrigger multi) {
+        List<SpellTarget> groups = multi.sourceCard().getSpellTargets();
+        if (multi.currentGroupIndex() >= groups.size()) {
+            return false;
+        }
+        SpellTarget group = groups.get(multi.currentGroupIndex());
+        return group.getDynamicMaxTargets() != null || group.isXScaled();
+    }
+
+    private static boolean hasLaterTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger multi) {
+        Card card = multi.sourceCard();
+        return multi.effects().stream()
+                .anyMatch(effect -> card.getEffectTargetIndex(effect) > multi.currentGroupIndex());
+    }
+
+    private static PermanentChoiceContext.ETBTokenMultiTargetTrigger etbTargetGroup(
+            MultiPermanentChoiceContext context) {
+        if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup group) {
+            return group.pending();
+        }
+        if (context instanceof MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup group) {
+            return group.pending();
+        }
+        return null;
+    }
+
+    private void answer(UUID playerId, InteractionAnswer answer, Declaration declaration, Card card) {
+        declaration.used = true;
+        Player player = players.stream().filter(candidate -> candidate.getId().equals(playerId))
+                .findFirst().orElseThrow();
+        gameService.handleInteractionAnswer(gameData, player, answer);
+        if (!hasEtbPromptFor(card)) {
+            declarations.remove(declaration);
+        }
+    }
+
+    private boolean hasEtbPromptFor(Card card) {
+        if (gameData.interaction.isAwaitingInput() && promptsFor(gameData.interaction.activeInteraction(), card)) {
+            return true;
+        }
+        return gameData.pendingInteractions.stream().anyMatch(pending -> promptsFor(pending, card));
+    }
+
+    private static boolean promptsFor(Object interaction, Card card) {
+        Object context = interaction;
+        if (interaction instanceof PendingInteraction.PermanentChoice choice) {
+            context = choice.context();
+        } else if (interaction instanceof PendingInteraction.MultiPermanentChoice choice
+                && etbTargetGroup(choice.context()) != null) {
+            context = etbTargetGroup(choice.context());
+        }
+        if (context instanceof PermanentChoiceContext.ETBTokenTargetTrigger single) {
+            return single.sourceCard().getId().equals(card.getId());
+        }
+        return context instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger multi
+                && multi.sourceCard().getId().equals(card.getId());
+    }
+
+    private Declaration find(Card sourceCard, UUID sourcePermanentId) {
+        for (Declaration declaration : declarations) {
+            if (declaration.cardId.equals(sourceCard.getId())) {
+                return declaration;
+            }
+            if (sourcePermanentId != null) {
+                var permanent = gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                        .filter(candidate -> candidate.getId().equals(sourcePermanentId))
+                        .findFirst().orElse(null);
+                if (permanent != null && permanent.getOriginalCard().getId().equals(declaration.cardId)) {
+                    return declaration;
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean isOnStackOrBattlefield(UUID cardId) {
+        return gameData.stack.stream().anyMatch(entry -> entry.getCard() != null
+                && entry.getCard().getId().equals(cardId))
+                || gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                .anyMatch(permanent -> permanent.getCard().getId().equals(cardId)
+                        || permanent.getOriginalCard().getId().equals(cardId));
+    }
+
+    private static boolean auraWithEtbTargetGroup(Card card) {
+        return card.isAuraThatRequiresAttachment() && card.getSpellTargets().size() == 2
+                && card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(effect -> card.getEffectTargetIndex(effect) == 1);
+    }
+
+    private static boolean hasSpellBackFace(Card card) {
+        Card back = card.getBackFaceCard();
+        return back != null && (back.hasType(CardType.INSTANT) || back.hasType(CardType.SORCERY));
+    }
+
+    private static final class Declaration {
+        private final UUID cardId;
+        private final List<UUID> targetIds;
+        private boolean used;
+
+        private Declaration(UUID cardId, List<UUID> targetIds) {
+            this.cardId = cardId;
+            this.targetIds = targetIds;
+        }
+    }
+}

@@ -27,7 +27,7 @@ class SimianSimulacrumTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SimianSimulacrum()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castCreature(player1, 0, 0, bears.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -41,7 +41,7 @@ class SimianSimulacrumTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SimianSimulacrum()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, bears.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }

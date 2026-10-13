@@ -26,7 +26,7 @@ class ThickestInTheThicketTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ThickestInTheThicket()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castCreature(player1, 0, 0, bears.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -83,7 +83,7 @@ class ThickestInTheThicketTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ThickestInTheThicket()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, forest.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

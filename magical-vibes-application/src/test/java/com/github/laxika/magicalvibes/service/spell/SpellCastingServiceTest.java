@@ -887,38 +887,19 @@ class SpellCastingServiceTest {
         }
 
         @Test
-        @DisplayName("Creature with ETB targeting can be cast with a valid target")
-        void creatureWithEtbCanBeCastWithTarget() {
+        @DisplayName("Creature with ETB targeting rejects a target named while casting")
+        void creatureWithEtbRejectsCastTimeTarget() {
             Card creature = createCreature("Sparkmage", "{1}{R}");
             creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
             setHand(player1Id, List.of(creature));
             addMana(player1Id, ManaColor.RED, 2);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
-            svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
-        }
-
-        @Test
-        @DisplayName("Creature with ETB targeting does not validate hexproof at cast time")
-        void creatureWithEtbDoesNotValidateHexproofAtCastTime() {
-            Card creature = createCreature("Sparkmage", "{1}{R}");
-            creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
-            setHand(player1Id, List.of(creature));
-            addMana(player1Id, ManaColor.RED, 2);
-            when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
-
-            // Cast targeting opponent — should succeed even though hexproof is not checked
-            // (hexproof is checked at ETB resolution time instead)
-            svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null);
-
-            assertThat(gd.stack).hasSize(1);
-            // validateSpellTargeting is called with needsTarget=false (ETB-only),
-            // so hexproof won't be enforced at cast time
-            verify(targetLegalityService).validateSpellTargeting(
-                    eq(gd), eq(creature), anyList(), eq(player2Id), any(), eq(player1Id), eq(false), anyInt(), eq(false), eq(false), eq(false));
+            // The ETB ability chooses its target as it is put on the stack (CR 603.3d).
+            assertThatThrownBy(() -> svc.playCard(gd, player1, 0, null, player2Id, null, null, null, false, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("choose their targets when they trigger");
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

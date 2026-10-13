@@ -209,8 +209,9 @@ class NightscapeBattlemageTest extends BaseCardTest {
 
     private void castWithAdditionalCosts(List<String> payments, java.util.UUID targetId,
                                          List<java.util.UUID> targetIds, boolean kicked) {
-        gs.playCard(gd, player1, 0, 0, targetId, null, targetIds, List.of(), false,
-                null, null, null, null, null, kicked, null, null, null, null,
-                payments, false);
+        harness.castDeclaringEtbTargets(player1, 0, targetId, targetIds, kicked, (castTargetId, castTargetIds) ->
+                gs.playCard(gd, player1, 0, 0, castTargetId, null, castTargetIds, List.of(), false,
+                        null, null, null, null, null, kicked, null, null, null, null,
+                        payments, false));
     }
 }

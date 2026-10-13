@@ -29,7 +29,7 @@ class MoodmarkPainterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MoodmarkPainter()));
         addMana();
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -47,7 +47,7 @@ class MoodmarkPainterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MoodmarkPainter()));
         addMana();
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -62,7 +62,7 @@ class MoodmarkPainterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MoodmarkPainter()));
         addMana();
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -81,7 +81,7 @@ class MoodmarkPainterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MoodmarkPainter()));
         addMana();
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
 

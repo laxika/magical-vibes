@@ -220,7 +220,7 @@ class HuntersBowTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HuntersBow()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(targets), List.of());
+        harness.castCreatureForX(player1, 0, 0, List.of(targets));
     }
 
 }

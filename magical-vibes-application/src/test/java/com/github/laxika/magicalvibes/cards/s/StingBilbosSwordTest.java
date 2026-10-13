@@ -55,8 +55,7 @@ class StingBilbosSwordTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StingBilbosSword()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(player2.getId(), opponentCreature.getId()), List.of()))
+        assertThatThrownBy(() -> harness.castCreatureForX(player1, 0, 0, List.of(player2.getId(), opponentCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature you control");
     }
@@ -67,7 +66,7 @@ class StingBilbosSwordTest extends BaseCardTest {
         List<UUID> targetIds = creatureId == null
                 ? List.of(opponentId)
                 : List.of(opponentId, creatureId);
-        gs.playCard(gd, player1, 0, 0, null, null, targetIds, List.of());
+        harness.castCreatureForX(player1, 0, 0, targetIds);
         resolveAllTriggers();
     }
 
@@ -99,7 +98,7 @@ class StingBilbosSwordTest extends BaseCardTest {
         addCreatureReady(player2, new FearsomeGoblinPair());
         harness.setHand(player1, List.of(new StingBilbosSword()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(player2.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 0, List.of(player2.getId()));
         harness.passBothPriorities();
 
         addCreatureReady(player2, new FearsomeGoblinPair());
@@ -115,8 +114,7 @@ class StingBilbosSwordTest extends BaseCardTest {
         addCreatureReady(player2, new FearsomeGoblinPair());
         harness.setHand(player1, List.of(new StingBilbosSword()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(player2.getId(), host.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 0, List.of(player2.getId(), host.getId()));
         harness.passBothPriorities();
 
         gd.playerBattlefields.get(player1.getId()).remove(host);

@@ -497,19 +497,30 @@ keyword gate is applied at the call site in `AbilityActivationService.completeGr
 ## `ON_ENTER_BATTLEFIELD` targeted triggers
 
 A targeted ETB (the card has a `TargetFilter` and a mandatory `ON_ENTER_BATTLEFIELD` effect, e.g.
-Pierce Strider, Geralf's Messenger) normally has its target chosen **at cast time** and the trigger
-is pushed directly onto the stack with that target. When the permanent enters **without a cast** —
-a token copy, a creature put onto the battlefield from a graveyard via undying / reanimation /
-flicker, or **any land** (lands are played, never cast; e.g. Sunscorched Desert's "deals 1 damage
-to target player or planeswalker") — there is no cast-time target, so
-`BattlefieldEntryService.processCreatureETBEffects` routes the trigger through
-`ETBTokenTargetTrigger` (single target) or `ETBTokenMultiTargetTrigger` (multi-target), letting the
-controller choose the target as the ability is put on the stack (CR 603.3b / 603.6c). The
-`choosesTargetAtTriggerTime` gate is `card.isToken() || enteredFromGraveyard || enteredFromExile ||
-hasType(LAND)` (`enteredFromExile` covers a delayed return from exile — flicker, Obzedat, Ghost Council); the
-entering permanent's `getEnteredFromGraveyardOwnerId()` distinguishes a graveyard return from a
-cast; "up to N" cast spells that chose 0 targets are unaffected because they passed through
-cast-time selection. A land with a targeted ETB still declares its `target(...)` filter like any
+Pierce Strider, Geralf's Messenger) chooses its targets **as the trigger is put on the stack**
+(CR 603.3d), never while the permanent spell is cast. A permanent spell whose only targets belong to
+its ETB abilities (`EffectResolution.targetsOnlyWithEtbAbilities`) takes no targets as it is cast —
+`SpellCastingService` rejects any — and `EffectResolution.needsTarget(Card)` /
+`computeAllowedTargets(Card)` leave ETB effects out, so the client, the AI and the engine's own
+cast prompts never ask for them. `EtbTriggerService.processCreatureETBEffects` drops the targets of
+a resolved permanent spell (keeping only an Aura's enchant target) and routes every targeted ETB
+through `ETBTokenTargetTrigger` (single target) or `ETBTokenMultiTargetTrigger` (multi-target or
+"up to N"), the same path token copies, reanimated or flickered permanents and lands use. An effect
+bound to a declared `target(...)` group counts as targeted even when its own spec names no target
+kind. "Up to N" abilities prompt too; choosing zero still puts the ability on the stack, where it
+resolves doing nothing. Choosing yourself declines an optional single target, or stops a group once
+its minimum is met, only when you are not yourself a legal target for it
+(`ETBTokenTargetService.controllerChoiceDeclines` / `controllerChoiceStopsGroup`).
+
+The AI answers these prompts through `AiDecisionEngine.answerEtbTargetPrompt`, reusing
+`AiTargetSelector`'s spell-target judgement. In tests, a target passed to a harness cast helper for
+such a card is checked against the card's target groups at the cast call and then answers the
+trigger's prompt (`DeclaredEtbTargets`); an explicit empty list declares zero targets, while a helper
+called without targets leaves the prompt to the test, as it does any prompt none of the declared
+targets fits. A cast that only a raw `GameService` overload covers goes through
+`harness.castDeclaringEtbTargets(...)`, which hands the call the targets the engine should get.
+
+A land with a targeted ETB still declares its `target(...)` filter like any
 other card — for a "player or planeswalker" effect use a `PermanentPredicateTargetFilter(new
 PermanentIsPlaneswalkerPredicate(), …)` (the permanent side narrows to planeswalkers; players are
 always legal), the same idiom as Noggle Hedge-Mage. Sunscorched Desert is the reference land.

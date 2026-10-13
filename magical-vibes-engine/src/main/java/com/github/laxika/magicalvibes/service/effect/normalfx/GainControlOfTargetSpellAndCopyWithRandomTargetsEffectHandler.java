@@ -55,7 +55,7 @@ public class GainControlOfTargetSpellAndCopyWithRandomTargetsEffectHandler
         UUID controllerId = entry.getControllerId();
         UUID ownerId = targetSpell.getOwnerId();
         targetSpell.setOwnerIdOverride(ownerId);
-        targetSpell.setControllerId(controllerId);
+        targetSpell.gainControl(controllerId);
 
         Card copyCard = copySupport.createCopyCard(targetSpell.getCard());
         StackEntry copyEntry = copySupport.createCopyStackEntry(

@@ -205,6 +205,9 @@ class InvasionSubmersibleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
+        // Decline the "up to one other target" bounce as the ETB trigger is put on the stack.
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(original.getCard().getId()))
                 .findFirst().orElseThrow();

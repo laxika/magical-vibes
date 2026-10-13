@@ -36,7 +36,7 @@ class DefiantGreatmawTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DefiantGreatmaw()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        gs.playCard(gd, player1, 0, 0, elemental.getId(), null);
+        harness.castCreature(player1, 0, 0, elemental.getId());
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -53,7 +53,7 @@ class DefiantGreatmawTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DefiantGreatmaw()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, opponentCreature, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, opponentCreature))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }
@@ -69,7 +69,7 @@ class DefiantGreatmawTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Skinrender()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        gs.playCard(gd, player1, 0, 0, greatmaw.getId(), null);
+        harness.castCreature(player1, 0, 0, greatmaw.getId());
         harness.passBothPriorities(); // resolve Skinrender spell → its ETB on stack
         harness.passBothPriorities(); // resolve ETB → counters on Greatmaw → self-trigger asks for a target
 
@@ -93,7 +93,7 @@ class DefiantGreatmawTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 4);
         harness.forceActivePlayer(player2);
 
-        gs.playCard(gd, player2, 0, 0, greatmaw.getId(), null);
+        harness.castCreature(player2, 0, 0, greatmaw.getId());
         resolveStack();
 
         assertThat(greatmaw.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);

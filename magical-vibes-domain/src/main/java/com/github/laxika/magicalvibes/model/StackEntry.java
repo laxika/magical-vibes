@@ -63,6 +63,8 @@ public class StackEntry {
 
     private Card castCard;
     @Setter private UUID controllerId;
+    /** The player who cast this spell when another player has since gained control of it. */
+    private UUID casterId;
     /** The player whose upkeep caused this entry's each-upkeep trigger, when applicable. */
     @Setter private UUID activePlayerId;
     @Setter private String description;
@@ -613,6 +615,19 @@ public class StackEntry {
     }
 
     // Creature spell constructor
+    /** The player who cast this spell, which stays the caster when another player gains control of it. */
+    public UUID getCasterId() {
+        return casterId != null ? casterId : controllerId;
+    }
+
+    /** Gives control of this spell to {@code newControllerId} while remembering who cast it. */
+    public void gainControl(UUID newControllerId) {
+        if (casterId == null) {
+            casterId = controllerId;
+        }
+        controllerId = newControllerId;
+    }
+
     public StackEntry(Card card, UUID controllerId) {
         this.entryType = StackEntryType.CREATURE_SPELL;
         this.card = freezeCard(card);
@@ -805,6 +820,7 @@ public class StackEntry {
         this.card = source.card;
         this.castCard = source.castCard;
         this.controllerId = source.controllerId;
+        this.casterId = source.casterId;
         this.activePlayerId = source.activePlayerId;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);

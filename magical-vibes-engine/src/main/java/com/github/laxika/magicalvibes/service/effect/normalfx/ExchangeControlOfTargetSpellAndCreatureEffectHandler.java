@@ -93,7 +93,7 @@ public class ExchangeControlOfTargetSpellAndCreatureEffectHandler implements Nor
 
         UUID spellOwnerId = spellEntry.getOwnerId();
         spellEntry.setOwnerIdOverride(spellOwnerId);
-        spellEntry.setControllerId(creatureControllerId);
+        spellEntry.gainControl(creatureControllerId);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())

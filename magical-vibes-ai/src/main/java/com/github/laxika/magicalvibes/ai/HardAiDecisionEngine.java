@@ -1071,6 +1071,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return null;
         }
+        if (modalPlan == null && !targetSelector.hasWorthwhileEtbTargets(gameData, card, aiPlayer.getId())) {
+            return null;
+        }
 
         // 4. Targeting tax
         int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);

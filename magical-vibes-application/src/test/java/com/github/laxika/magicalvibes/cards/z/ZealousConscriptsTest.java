@@ -25,7 +25,7 @@ class ZealousConscriptsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ZealousConscripts()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 
     @Test

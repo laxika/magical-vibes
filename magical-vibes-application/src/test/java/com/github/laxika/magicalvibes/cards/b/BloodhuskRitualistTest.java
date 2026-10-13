@@ -42,9 +42,7 @@ class BloodhuskRitualistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        gs.playCard(gd, player1, 0, 0, player2.getId(), null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{B}", "{B}"), false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, player2.getId(), List.of("{B}", "{B}"));
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -67,9 +65,7 @@ class BloodhuskRitualistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        gs.playCard(gd, player1, 0, 0, player2.getId(), null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{B}"), false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, player2.getId(), List.of("{B}"));
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 1);
@@ -88,9 +84,7 @@ class BloodhuskRitualistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        gs.playCard(gd, player1, 0, 0, player2.getId(), null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{B}", "{B}"), false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, player2.getId(), List.of("{B}", "{B}"));
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
@@ -108,9 +102,7 @@ class BloodhuskRitualistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        gs.playCard(gd, player1, 0, 0, player2.getId(), null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{B}"), false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, player2.getId(), List.of("{B}"));
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -127,7 +119,7 @@ class BloodhuskRitualistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, player1.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
     }

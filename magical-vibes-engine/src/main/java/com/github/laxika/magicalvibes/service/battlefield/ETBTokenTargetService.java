@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -172,13 +174,7 @@ public class ETBTokenTargetService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
             PermanentChoiceContext.ETBTokenTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
 
-            TriggerTargetCollector.Result targets = triggerTargetCollector.collect(
-                    gameData, pending.effects(), pending.targetFilter(), pending.controllerId(),
-                    pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
-                    pending.sourcePermanentId() == null
-                            ? null
-                            : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()),
-                    null, pending.xValue());
+            TriggerTargetCollector.Result targets = collectTargets(gameData, pending);
             List<UUID> validSpellTargets = validMixedEtbSpellTargets(gameData, pending);
             List<UUID> validPlayerTargets = targets.validTargets().stream()
                     .filter(gameData.playerIds::contains)
@@ -194,15 +190,7 @@ public class ETBTokenTargetService {
             validSpellTargets.stream()
                     .filter(id -> !validTargetObjects.contains(id))
                     .forEach(validTargetObjects::add);
-            boolean optionalTarget = pending.effects().stream().anyMatch(effect -> effect instanceof OptionalTargetEffect
-                    || effect.hasOptionalTarget());
-            if (!optionalTarget && pending.sourceCard().getSpellTargets().size() == 1) {
-                var declaredTarget = pending.sourceCard().getSpellTargets().getFirst();
-                optionalTarget = declaredTarget.getMinTargets() == 0
-                        && declaredTarget.getMaxTargets() == 1
-                        && pending.effects().stream().anyMatch(effect ->
-                        pending.sourceCard().getEffectTargetIndex(effect) == declaredTarget.getIndex());
-            }
+            boolean optionalTarget = hasOptionalSingleTarget(pending);
             if (!validExiledCardTargets.isEmpty()
                     && validPlayerTargets.isEmpty()
                     && validSpellTargets.isEmpty()) {
@@ -236,11 +224,14 @@ public class ETBTokenTargetService {
             gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             List<UUID> validPlayerChoiceTargets = new ArrayList<>(validPlayerTargets);
-            if (optionalTarget && !validPlayerChoiceTargets.contains(pending.controllerId())) {
+            boolean controllerDeclines = optionalTarget && !validPlayerChoiceTargets.contains(pending.controllerId());
+            if (controllerDeclines) {
                 validPlayerChoiceTargets.add(pending.controllerId());
             }
-            String targetDescription = optionalTarget
+            String targetDescription = controllerDeclines
                     ? "Choose up to one target, or choose yourself to decline."
+                    : optionalTarget
+                    ? "Choose up to one target."
                     : validSpellTargets.isEmpty()
                             ? "Choose a target."
                             : "Choose a target creature or spell.";
@@ -252,6 +243,41 @@ public class ETBTokenTargetService {
                     gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    /**
+     * True when choosing the controller in this single-target ETB prompt declines its optional
+     * target, which is only the case when the controller is not itself a legal target.
+     */
+    public boolean controllerChoiceDeclines(GameData gameData, PermanentChoiceContext.ETBTokenTargetTrigger pending) {
+        return hasOptionalSingleTarget(pending)
+                && !collectTargets(gameData, pending).validTargets().contains(pending.controllerId());
+    }
+
+    private TriggerTargetCollector.Result collectTargets(GameData gameData,
+                                                         PermanentChoiceContext.ETBTokenTargetTrigger pending) {
+        return triggerTargetCollector.collect(
+                gameData, pending.effects(), pending.targetFilter(), pending.controllerId(),
+                pending.sourceCard(), TriggerTargetCollector.Options.ATTACK,
+                pending.sourcePermanentId() == null
+                        ? null
+                        : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()),
+                null, pending.xValue());
+    }
+
+    private static boolean hasOptionalSingleTarget(PermanentChoiceContext.ETBTokenTargetTrigger pending) {
+        if (pending.effects().stream().anyMatch(effect -> effect instanceof OptionalTargetEffect
+                || effect.hasOptionalTarget())) {
+            return true;
+        }
+        if (pending.sourceCard().getSpellTargets().size() != 1) {
+            return false;
+        }
+        var declaredTarget = pending.sourceCard().getSpellTargets().getFirst();
+        return declaredTarget.getMinTargets() == 0
+                && declaredTarget.getMaxTargets() == 1
+                && pending.effects().stream().anyMatch(effect ->
+                pending.sourceCard().getEffectTargetIndex(effect) == declaredTarget.getIndex());
     }
 
     private void putTargetlessETBTriggerOnStack(GameData gameData,
@@ -390,14 +416,7 @@ public class ETBTokenTargetService {
             }
 
             TargetFilter groupFilter = group.getFilter();
-            boolean filterRestrictsTargetKind = groupFilter instanceof PlayerPredicateTargetFilter
-                    || groupFilter instanceof PermanentPredicateTargetFilter
-                    || groupFilter instanceof ControlledPermanentPredicateTargetFilter
-                    || groupFilter instanceof OwnedPermanentPredicateTargetFilter
-                    || groupFilter instanceof GraveyardCardPredicateTargetFilter;
-            boolean canTargetPlayer = groupFilter instanceof PlayerPredicateTargetFilter
-                    || (!filterRestrictsTargetKind && groupEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)));
+            boolean filterRestrictsTargetKind = filterRestrictsTargetKind(groupFilter);
             boolean canTargetPermanent = groupEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                     || groupFilter instanceof PermanentPredicateTargetFilter
@@ -409,15 +428,7 @@ public class ETBTokenTargetService {
                     || (!filterRestrictsTargetKind && groupEffects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)));
 
-            List<UUID> validPlayerTargets = new ArrayList<>();
-            if (canTargetPlayer) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    if (targetAlreadyChosen(pending, pid)) continue;
-                    if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, group.getFilter())) {
-                        validPlayerTargets.add(pid);
-                    }
-                }
-            }
+            List<UUID> validPlayerTargets = playerTargets(gameData, pending, group, groupEffects);
 
             List<UUID> validPermanentTargets = new ArrayList<>();
             if (canTargetPermanent) {
@@ -476,7 +487,6 @@ public class ETBTokenTargetService {
                         .map(id -> targetControllerId(gameData, id))
                         .filter(java.util.Objects::nonNull)
                         .toList();
-                validPlayerTargets.removeIf(selectedControllers::contains);
                 validPermanentTargets.removeIf(id ->
                         selectedControllers.contains(gameQueryService.findPermanentController(gameData, id)));
                 validGraveyardCardTargets.removeIf(id ->
@@ -561,8 +571,9 @@ public class ETBTokenTargetService {
             }
             boolean mustChooseRemainingController =
                     card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
-            if (minMet && !mustChooseRemainingController
-                    && !validPlayerTargets.contains(pending.controllerId())) {
+            boolean controllerStops = minMet && !mustChooseRemainingController
+                    && !validPlayerTargets.contains(pending.controllerId());
+            if (controllerStops) {
                 validPlayerTargets.add(pending.controllerId());
             }
 
@@ -585,7 +596,7 @@ public class ETBTokenTargetService {
             gameData.interaction.setPermanentChoiceContext(pending);
             String slotLabel = "target " + (idx + 1)
                     + (group.getMaxTargets() > 1 ? "." + (chosenInGroup + 1) : "");
-            String prompt = minMet
+            String prompt = controllerStops
                     ? card.getName() + "'s ability — Choose " + slotLabel + " (or yourself to stop)."
                     : card.getName() + "'s ability — Choose " + slotLabel + ".";
             validPermanentTargets.addAll(validExiledCardTargets);
@@ -596,6 +607,57 @@ public class ETBTokenTargetService {
                     gameData.id, card.getName(), idx, chosenInGroup);
             return;
         }
+    }
+
+    /**
+     * True when choosing the controller in this multi-target ETB prompt stops adding targets to the
+     * current group rather than targeting the controller, which is only the case when the controller
+     * is not itself a legal target for that group.
+     */
+    public boolean controllerChoiceStopsGroup(GameData gameData,
+                                              PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
+        List<SpellTarget> groups = pending.sourceCard().getSpellTargets();
+        if (pending.currentGroupIndex() >= groups.size()) {
+            return true;
+        }
+        SpellTarget group = groups.get(pending.currentGroupIndex());
+        List<CardEffect> groupEffects = effectsForTargetGroup(pending.sourceCard(), pending.effects(), group.getIndex());
+        return !playerTargets(gameData, pending, group, groupEffects).contains(pending.controllerId());
+    }
+
+    private List<UUID> playerTargets(GameData gameData, PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
+                                     SpellTarget group, List<CardEffect> groupEffects) {
+        TargetFilter groupFilter = group.getFilter();
+        boolean canTargetPlayer = groupFilter instanceof PlayerPredicateTargetFilter
+                || (!filterRestrictsTargetKind(groupFilter) && groupEffects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)));
+        List<UUID> validPlayerTargets = new ArrayList<>();
+        if (!canTargetPlayer) {
+            return validPlayerTargets;
+        }
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (targetAlreadyChosen(pending, pid)) continue;
+            if (matchesPlayerTargetFilter(gameData, pending.controllerId(), pid, groupFilter)) {
+                validPlayerTargets.add(pid);
+            }
+        }
+        if (isOnePerControllerConstraint(pending.sourceCard().getMultiTargetConstraint())
+                && !pending.chosenTargetsSoFar().isEmpty()) {
+            List<UUID> selectedControllers = pending.chosenTargetsSoFar().stream()
+                    .map(id -> targetControllerId(gameData, id))
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            validPlayerTargets.removeIf(selectedControllers::contains);
+        }
+        return validPlayerTargets;
+    }
+
+    private static boolean filterRestrictsTargetKind(TargetFilter groupFilter) {
+        return groupFilter instanceof PlayerPredicateTargetFilter
+                || groupFilter instanceof PermanentPredicateTargetFilter
+                || groupFilter instanceof ControlledPermanentPredicateTargetFilter
+                || groupFilter instanceof OwnedPermanentPredicateTargetFilter
+                || groupFilter instanceof GraveyardCardPredicateTargetFilter;
     }
 
     private List<UUID> validGraveyardCardTargets(
@@ -865,6 +927,13 @@ public class ETBTokenTargetService {
             if (sourcePermanent != null) {
                 etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                 etbEntry.setAttackedTargetId(sourcePermanent.getAttackTarget());
+                // An evoked permanent's independent ETB abilities and its evoke sacrifice trigger
+                // together, so its controller may order them (CR 603.3b).
+                if (pending.triggeringCardId() == null && sourcePermanent.isEvoked()
+                        && card.getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(registration -> registration.triggerMode() == TriggerMode.INDEPENDENT)) {
+                    etbEntry.setTriggeringCardId(card.getId());
+                }
             }
         }
         if (!pending.repeatedAdditionalCosts().isEmpty()) {

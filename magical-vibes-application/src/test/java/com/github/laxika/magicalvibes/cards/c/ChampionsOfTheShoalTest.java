@@ -35,9 +35,10 @@ class ChampionsOfTheShoalTest extends BaseCardTest {
     }
 
     private void castWithBeholdAndTarget(Permanent beheldPermanent, Permanent target) {
-        gs.playCard(gd, player1, 0, 0, target.getId(), null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null, List.of(), false,
-                beheldPermanent.getId(), null);
+        harness.castDeclaringEtbTargets(player1, 0, target.getId(), null, (targetId, targetIds) ->
+                gs.playCard(gd, player1, 0, 0, targetId, null, targetIds, List.of(), false,
+                        null, null, null, null, null, false, null, null, null, null, List.of(), false,
+                        beheldPermanent.getId(), null));
     }
 
     @Test

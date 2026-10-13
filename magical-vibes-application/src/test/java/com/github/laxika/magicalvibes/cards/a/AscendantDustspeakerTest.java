@@ -53,7 +53,7 @@ class AscendantDustspeakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         UUID firstDustspeakerId = harness.getPermanentId(player1, "Ascendant Dustspeaker");
-        gs.playCard(gd, player1, 0, 0, firstDustspeakerId, null);
+        harness.castCreature(player1, 0, 0, firstDustspeakerId);
         harness.passBothPriorities(); // resolve creature
 
         assertThat(gd.stack).hasSize(1);

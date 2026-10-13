@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetPlayerGraveyardOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -315,5 +316,61 @@ class ETBTokenTargetServiceTest {
 
         verify(playerInputService).beginAnyTargetChoice(
                 eq(gd), eq(player1Id), eq(List.of(candidate.getId())), eq(List.of()), contains("target 2"));
+    }
+
+    @Test
+    @DisplayName("Choosing yourself targets you in an optional group that may target players")
+    void controllerChoiceTargetsTheControllerWhenTheyAreALegalTarget() {
+        Card card = optionalPlayerTargetCard();
+        var pending = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                card, player1Id, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null, List.of(), 0, 0);
+        when(targetLegalityService.matchesPlayerPredicate(eq(gd), eq(player1Id), eq(player1Id),
+                org.mockito.ArgumentMatchers.any())).thenReturn(true);
+
+        assertThat(service.controllerChoiceStopsGroup(gd, pending)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choosing yourself stops an optional group that cannot target players")
+    void controllerChoiceStopsAGroupThatCannotTargetPlayers() {
+        Card card = optionalCreatureTargetCard();
+        var pending = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                card, player1Id, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null, List.of(), 0, 0);
+
+        assertThat(service.controllerChoiceStopsGroup(gd, pending)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An optional single-target prompt declines on yourself only when you are not a legal target")
+    void controllerChoiceDeclinesOnlyWhenTheControllerIsNotALegalTarget() {
+        Card playerTargetCard = optionalPlayerTargetCard();
+        Card creatureTargetCard = optionalCreatureTargetCard();
+        var playerTrigger = new PermanentChoiceContext.ETBTokenTargetTrigger(playerTargetCard, player1Id,
+                playerTargetCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null,
+                playerTargetCard.getTargetFilter(), null);
+        var creatureTrigger = new PermanentChoiceContext.ETBTokenTargetTrigger(creatureTargetCard, player1Id,
+                creatureTargetCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null,
+                creatureTargetCard.getTargetFilter(), null);
+
+        assertThat(service.controllerChoiceDeclines(gd, playerTrigger)).isFalse();
+        assertThat(service.controllerChoiceDeclines(gd, creatureTrigger)).isTrue();
+    }
+
+    private static Card optionalPlayerTargetCard() {
+        Card card = new Card();
+        card.setName("Endurance");
+        card.target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY),
+                        "Target must be a player"), 0, 1)
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutTargetPlayerGraveyardOnBottomOfLibraryEffect());
+        return card;
+    }
+
+    private static Card optionalCreatureTargetCard() {
+        Card card = new Card();
+        card.setName("Ennis, Debate Moderator");
+        card.target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
+                        "Target must be a creature"), 0, 1)
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+        return card;
     }
 }

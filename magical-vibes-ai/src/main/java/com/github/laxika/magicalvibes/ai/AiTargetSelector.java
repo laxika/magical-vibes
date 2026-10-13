@@ -407,6 +407,29 @@ class AiTargetSelector {
      * hardest hit available.
      */
     boolean needsMultiTargetSelection(Card card) {
+        return !EffectResolution.isTargetlessPermanentSpell(card) && selectsTargetsGroupByGroup(card);
+    }
+
+    /**
+     * Whether a permanent spell whose only targets belong to its ETB abilities is worth casting now.
+     * Those abilities pick their targets as they trigger (CR 603.3d); this previews that pick, so the
+     * AI still holds back a creature whose targeted ETB would have nothing worth targeting.
+     */
+    boolean hasWorthwhileEtbTargets(GameData gameData, Card card, UUID aiPlayerId) {
+        if (!EffectResolution.targetsOnlyWithEtbAbilities(card)) {
+            return true;
+        }
+        if (selectsTargetsGroupByGroup(card)) {
+            return chooseMultiTargets(gameData, card, aiPlayerId) != null;
+        }
+        if (EffectResolution.needsTarget(card.getEffects(EffectSlot.SPELL),
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), false, false)) {
+            return chooseTarget(gameData, card, aiPlayerId) != null;
+        }
+        return true;
+    }
+
+    private boolean selectsTargetsGroupByGroup(Card card) {
         List<SpellTarget> groups = card.getSpellTargets();
         if (groups.size() > 1) {
             return true;
@@ -443,13 +466,15 @@ class AiTargetSelector {
      * must be recomputed after an X value is chosen because their filters may depend on X.
      */
     boolean hasOnlyGroupedGraveyardTargets(Card card) {
-        return !card.getSpellTargets().isEmpty()
+        return !EffectResolution.isTargetlessPermanentSpell(card)
+                && !card.getSpellTargets().isEmpty()
                 && card.getSpellTargets().stream()
                 .allMatch(group -> group.getFilter() instanceof GraveyardCardPredicateTargetFilter);
     }
 
     boolean needsXScaledTargetSelection(Card card) {
-        return card.hasXScaledTargets()
+        return !EffectResolution.isTargetlessPermanentSpell(card)
+                && card.hasXScaledTargets()
                 && card.getParsedManaCost() != null
                 && card.getParsedManaCost().hasX();
     }

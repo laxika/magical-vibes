@@ -48,8 +48,9 @@ class FuryTest extends BaseCardTest {
         gd.pendingETBDamageAssignments = Map.of(target.getId(), 4);
         harness.setHand(player1, List.of(new Fury(), redCard));
 
-        gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(target.getId()), List.of(), false, null, null, List.of(), null, List.of(), false, 1);
+        harness.castDeclaringEtbTargets(player1, 0, null, List.of(target.getId()), (targetId, targetIds) ->
+                gs.playCard(gd, player1, 0, 0, targetId, null, targetIds, List.of(), false, null, null, List.of(),
+                        null, List.of(), false, 1));
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();

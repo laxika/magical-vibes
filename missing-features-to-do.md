@@ -9,88 +9,7 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 1. Choosing the order of competing replacement effects
-
-**Status:** done (2026-10-12) · **Found:** 2026-10-10, while fixing D-card tests
-
-**Done.** CR 616.1 ordering runs through `ReplacementOrderService` for land mana (every land-type
-replacement on both tap paths, plus Mana Reflection-style multipliers) and for damage to a player or a
-permanent (every redirect, multiplier, bonus, prevention and final-stage replacement in one pool; a
-prompt in the middle of an effect resolves the effect again through `DamageJournal`). Combat damage is
-one event per recipient per damage step, with a portion per source. Damage multipliers and "+N"
-bonuses are pool options for noncombat and combat damage (dealing effects and combat assignment pass the
-unmodified amount; `DamageMultiplierRatchetTest` keeps it that way). The last fixed-chain damage paths
-are gone: Megrim's discard damage and Rubble Rouser's "when you do" mana-ability rider are now triggered
-abilities on the stack (CR 603.12, 605.5a), and Myr Battlesphere's attack damage goes through
-`DamageSupport` to the player or planeswalker it's attacking. Discard-triggered life loss (Liliana's
-Caress, Fell Specter, Raider's Wake, Midnight Oil) uses the stack too (CR 603.3), and triggers from a
-mana ability completed by a cost choice reach the stack when it completes (CR 117.3c). Damage a
-redirect shield takes over (Harm's Way) is the same damage continuing through the new recipient's
-pool (combat damage as an event of the same damage step), with source-side effects that already applied still spent (CR 614.5); a redirect whose destination
-has left or is no longer a battle, creature or planeswalker does nothing (CR 614.9). Guards and
-"dealt to this creature instead" absorbers (Kjeldoran Royal Guard, Palisade Giant, Pariah) are one
-redirect option per absorber instead of routing combat damage before the pool. The
-original failing tests (`DelayingShieldTest.controllerChoosesWhichShieldReplacesDamage`,
-`DeepWaterTest` "The mana recipient chooses the order of competing mana replacements") pass.
-Piracy taps, mana previews, the AI's mana planning, "the mana a land could produce" (CR 106.7), Pygmy
-Hippo's drain, False Dawn and Quarum Trench Gnomes all go through the land-mana pool, and the AI orders
-replacements by each option's preview (least damage, most mana).
-
----
-
-## 2. The caster keeps priority after casting
-
-**Status:** done (2026-10-12) · **Found:** 2026-10-12, while fixing E-card tests
-
-**Done.** `GameData.priorityHolderId` records who holds priority (unset means the active player), and
-`GameData.currentPriorityPlayerId()` walks turn order from it past players in `priorityPassedBy`.
-`GameService.requirePriority` anchors the holder on the acting player, so whoever casts a spell,
-activates an ability or takes a special action while holding priority receives it afterward
-(CR 117.3c). `resetPriorityToActivePlayer()` hands priority back to the active player when the top of
-the stack resolves (CR 117.3b) and on step and turn changes (CR 117.3a). `GameQueryService`, auto-pass,
-the AI (`AiDecisionEngine`, `GameSimulator`) and the test harness all read the same holder.
-`ExquisiteFirecraftTest`, `ElectrosiphonTest`, `ExtinguishTest` and `EnvelopTest` pass.
-
----
-
-## 3. Choosing ETB trigger targets when the trigger goes on the stack
-
-**Status:** open · **Found:** 2026-10-12, while fixing E-card tests
-
-**Failing tests:**
-- `EarthKingdomSoldierTest` (7 tests: "up to two" ETB targets after a cast with none chosen)
-- `EnduranceTest` (ETB target prompt, evoke)
-- `ExpeditionRaptorTest` (support targets after entering)
-
-**What the rules require.** A permanent spell's ETB triggered ability chooses its targets when the
-trigger is put on the stack (CR 603.3d), not while the permanent spell is cast. The engine lets the
-caster pick a cast permanent's ETB targets during casting (`target(...)` groups on the card) and carries
-them to the trigger. `EtbTriggerService` then skips an "up to N" ETB trigger entirely when zero
-targets were picked at cast (`castChoseZeroOptionalTargets`), so the controller never gets the
-trigger-time prompt the tests expect. Targets picked at cast can also be stale by the time the
-trigger exists (the spell can be responded to).
-
-**Why it's large.** Every creature, artifact and enchantment card with a targeted ETB and every test
-that passes ETB targets to `castCreature` relies on cast-time selection. Removing the shortcut in one
-place (tried during this fix run) broke `EnnisDebateModeratorTest` and was rolled back to an X-only
-exception. A correct fix moves ETB target selection for cast permanents to trigger time across the
-cast, harness and AI paths, and needs a full-suite run.
-
-**Prompt to start it:**
-
-```
-Move ETB triggered-ability target selection for cast permanents from cast time to when the trigger is
-put on the stack (CR 603.3d — verify with the rules MCP). Today cards declare ETB targets with target(...)
-groups that SpellCastingService fills during casting, and EtbTriggerService reuses them or skips "up to N"
-triggers with no cast-time targets (castChoseZeroOptionalTargets). Start with EarthKingdomSoldierTest,
-EnduranceTest and ExpeditionRaptorTest, keep EnnisDebateModeratorTest and ExtraordinaryJourneyTest green,
-update the harness/AI cast paths, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
-## 4. A resolving instant or sorcery can be targeted until it finishes resolving
+## 1. A resolving instant or sorcery can be targeted until it finishes resolving
 
 **Status:** open · **Found:** 2026-10-12, while fixing E-card tests
 
@@ -121,7 +40,7 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 5. Demonstrate is a triggered ability whose choice is made on resolution
+## 2. Demonstrate is a triggered ability whose choice is made on resolution
 
 **Status:** open · **Found:** 2026-10-12, while fixing E-card tests
 
@@ -152,7 +71,7 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 6. "Enter as a copy" for lands put onto the battlefield by effects
+## 3. "Enter as a copy" for lands put onto the battlefield by effects
 
 **Status:** open · **Found:** 2026-10-12, while fixing E-card tests
 
@@ -180,7 +99,7 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 7. Sacrificing several permanents as one cost happens simultaneously
+## 4. Sacrificing several permanents as one cost happens simultaneously
 
 **Status:** open · **Found:** 2026-10-12, while fixing E-card tests
 
@@ -209,7 +128,7 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 8. Power and toughness larger than a 32-bit int
+## 5. Power and toughness larger than a 32-bit int
 
 **Status:** open · **Found:** 2026-10-12, while fixing E-card tests
 

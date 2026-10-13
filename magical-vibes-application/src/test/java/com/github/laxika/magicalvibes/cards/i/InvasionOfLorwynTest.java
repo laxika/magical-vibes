@@ -157,6 +157,6 @@ class InvasionOfLorwynTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        gs.playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0, 0, target.getId());
     }
 }

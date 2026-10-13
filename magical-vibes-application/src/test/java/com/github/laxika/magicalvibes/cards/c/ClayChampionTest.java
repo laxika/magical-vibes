@@ -27,7 +27,7 @@ class ClayChampionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        gs.playCard(gd, player1, 0, 6, null, null, List.of(first.getId(), second.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 6, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -56,7 +56,7 @@ class ClayChampionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        gs.playCard(gd, player1, 0, 4, null, null, List.of(target.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 4, List.of(target.getId()));
         harness.passBothPriorities();
         assertThat(findPermanent(player1, "Clay Champion")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

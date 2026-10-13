@@ -31,7 +31,7 @@ class SoulstingerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Soulstinger()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, elemental.getId(), null);
+        harness.castCreature(player1, 0, 0, elemental.getId());
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -50,7 +50,7 @@ class SoulstingerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Soulstinger()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, opponentCreature, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, opponentCreature))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }

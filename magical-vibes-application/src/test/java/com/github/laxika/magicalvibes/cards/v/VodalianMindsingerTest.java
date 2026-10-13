@@ -62,7 +62,7 @@ class VodalianMindsingerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstantWithRepeatedCosts(player1, 0, target.getId(), List.of("{1}{G}"));
+        harness.castCreatureWithRepeatedCosts(player1, 0, target.getId(), List.of("{1}{G}"));
         resolveAllTriggers();
 
         Permanent mindsinger = findPermanent(player1, "Vodalian Mindsinger");

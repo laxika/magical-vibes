@@ -33,7 +33,7 @@ public class KingSolomonsFrogs extends Card {
                 targetFilter,
                 "Target must be a permanent an opponent controls with mana value 3 or greater"), 0, 99)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                        new WasCast(), new ExileTargetPermanentsAndControllersDrawEffect()));
+                        new WasCast(true), new ExileTargetPermanentsAndControllersDrawEffect()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

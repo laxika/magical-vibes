@@ -102,7 +102,7 @@ class InvasionOfInnistradTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.BLACK, 2);
             harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-            assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, ownId, null))
+            assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownId))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
@@ -344,6 +344,6 @@ class InvasionOfInnistradTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InvasionOfInnistrad()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 }

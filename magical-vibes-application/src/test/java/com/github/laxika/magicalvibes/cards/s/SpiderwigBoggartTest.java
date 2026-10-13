@@ -30,7 +30,7 @@ class SpiderwigBoggartTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         UUID targetId = bears.getId();
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature — ETB on stack
         harness.passBothPriorities(); // Resolve ETB
@@ -48,7 +48,7 @@ class SpiderwigBoggartTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         UUID targetId = bears.getId();
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB
@@ -68,7 +68,7 @@ class SpiderwigBoggartTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
 
         harness.passBothPriorities(); // Resolve creature — ETB on stack
 
@@ -88,7 +88,7 @@ class SpiderwigBoggartTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }

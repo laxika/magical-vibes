@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -431,24 +432,51 @@ public final class EffectResolution {
     // ===== Card convenience overloads (union semantics, no casting context) =====
 
     /**
-     * Computes the set of target types from a card's effects (union of all possible targets).
-     * Use this when no casting context (kicked, mode) is available.
+     * Computes the set of target types the card's spell chooses as it is cast (union of all possible
+     * targets). Use this when no casting context (kicked, mode) is available.
+     *
+     * <p>ETB abilities are left out: a permanent spell's ETB abilities choose their targets as they
+     * are put on the stack (CR 603.3d), never while the spell is cast.</p>
      */
     public static Set<TargetType> computeAllowedTargets(Card card) {
         return computeAllowedTargets(
-                card.getEffects(EffectSlot.SPELL),
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                card.getEffects(EffectSlot.SPELL), List.of(),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
     }
 
     /**
-     * Returns true if the card's effects require a non-spell target (union semantics).
+     * Returns true if the card's spell chooses a non-spell target as it is cast (union semantics).
+     * ETB abilities choose their targets when they trigger (CR 603.3d), so they never count.
      */
     public static boolean needsTarget(Card card) {
         return needsTarget(
-                card.getEffects(EffectSlot.SPELL),
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
+                card.getEffects(EffectSlot.SPELL), List.of(),
                 card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
+    }
+
+    /**
+     * True for a permanent card whose spell chooses no targets as it is cast (CR 601.2c): it is not
+     * an Aura, has no mutate and no targeting spell effects. Every target such a card names belongs
+     * to an ETB ability, which chooses it as the ability is put on the stack (CR 603.3d).
+     */
+    public static boolean isTargetlessPermanentSpell(Card card) {
+        return !card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY) && !card.hasType(CardType.LAND)
+                && !card.isAura() && !card.getKeywords().contains(Keyword.MUTATE)
+                && !needsSpellCastTarget(card) && !needsSpellTarget(card);
+    }
+
+    /**
+     * True for a {@linkplain #isTargetlessPermanentSpell targetless permanent spell} that has an ETB
+     * ability with targets, so any target named while casting it can only be meant for that ability.
+     */
+    public static boolean targetsOnlyWithEtbAbilities(Card card) {
+        if (!isTargetlessPermanentSpell(card)) {
+            return false;
+        }
+        List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
+        return !card.getSpellTargets().isEmpty()
+                || !computeAllowedTargets(List.of(), etbEffects, false, false).isEmpty()
+                || etbEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack);
     }
 
     /**

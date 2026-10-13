@@ -44,9 +44,7 @@ class FlametongueYearlingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{2}", "{2}"), false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, target.getId(), List.of("{2}", "{2}"));
         harness.passBothPriorities();
         harness.passBothPriorities();
 

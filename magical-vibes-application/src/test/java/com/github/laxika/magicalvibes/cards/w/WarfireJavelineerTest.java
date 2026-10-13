@@ -104,7 +104,7 @@ class WarfireJavelineerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WarfireJavelineer()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent controls");
     }

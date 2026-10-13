@@ -71,7 +71,7 @@ class ShredderUnrelentingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, opponentBears.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, opponentBears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be another creature you control");
     }
@@ -165,6 +165,6 @@ class ShredderUnrelentingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShredderUnrelenting()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 }

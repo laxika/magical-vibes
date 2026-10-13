@@ -46,8 +46,7 @@ class ManticoreOfTheGauntletTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ManticoreOfTheGauntlet()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(creature.getId(), player1.getId()), List.of()))
+        assertThatThrownBy(() -> harness.castCreatureForX(player1, 0, 0, List.of(creature.getId(), player1.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent or planeswalker");
     }
@@ -60,8 +59,7 @@ class ManticoreOfTheGauntletTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ManticoreOfTheGauntlet()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(opponentCreature, player2.getId()), List.of()))
+        assertThatThrownBy(() -> harness.castCreatureForX(player1, 0, 0, List.of(opponentCreature, player2.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }

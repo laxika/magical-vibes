@@ -94,7 +94,7 @@ class LyevSkyknightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, ownBearId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownBearId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -152,7 +152,7 @@ class LyevSkyknightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LyevSkyknight()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.BLUE, 2);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 
     /** Casts the Skyknight targeting the named player2 permanent and resolves both spell and trigger. */

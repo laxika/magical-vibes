@@ -58,7 +58,7 @@ public class ExchangeControlOfSourceAndTriggeringSpellEffectHandler implements N
 
         UUID spellOwnerId = spellEntry.getOwnerId();
         spellEntry.setOwnerIdOverride(spellOwnerId);
-        spellEntry.setControllerId(sourceControllerId);
+        spellEntry.gainControl(sourceControllerId);
 
         creatureControlService.applyControlEffect(
                 gameData,

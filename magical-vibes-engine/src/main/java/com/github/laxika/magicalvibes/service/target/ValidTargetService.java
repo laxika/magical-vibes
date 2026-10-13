@@ -217,7 +217,10 @@ public class ValidTargetService {
             allowedTargets = EffectResolution.computeAllowedTargets(
                     spellEffects, etbEffects, card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         } else {
-            allowedTargets = EffectResolution.computeAllowedTargets(card);
+            // Includes the ETB abilities' targets: an ETB target prompt and the AI's ETB target
+            // choice both draw on this card-wide view.
+            allowedTargets = EffectResolution.computeAllowedTargets(spellEffects, etbEffects,
+                    card.isAuraThatRequiresAttachment(), card.isEnchantPlayer());
         }
 
         List<UUID> validPermanentIds = new ArrayList<>();

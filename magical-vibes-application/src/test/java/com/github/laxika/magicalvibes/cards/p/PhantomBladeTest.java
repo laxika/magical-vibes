@@ -171,7 +171,7 @@ class PhantomBladeTest extends BaseCardTest {
     private void castCard(List<java.util.UUID> targets) {
         harness.setHand(player1, List.of(new PhantomBlade()));
         addManaForCast();
-        gs.playCard(gd, player1, 0, 0, null, null, targets, List.of());
+        harness.castCreatureForX(player1, 0, 0, targets);
     }
 
     private void addManaForCast() {

@@ -70,7 +70,8 @@ class EarthKingdomSoldierTest extends BaseCardTest {
         castUntilEntry();
         Permanent soldier = findPermanent(player1, "Earth Kingdom Soldier");
 
-        chooseTargets(List.of(soldier.getId()));
+        // With no other creature, nothing is left to choose after the soldier itself.
+        harness.handlePermanentChosen(player1, soldier.getId());
         resolveAllTriggers();
 
         assertThat(soldier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

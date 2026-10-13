@@ -42,8 +42,7 @@ class RampagingYaoGuaiTest extends BaseCardTest {
         Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
         prepareCast(4);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 4, null, null,
-                List.of(arena.getId(), anthem.getId()), List.of()))
+        assertThatThrownBy(() -> harness.castCreatureForX(player1, 0, 4, List.of(arena.getId(), anthem.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("total mana value");
     }
@@ -95,7 +94,7 @@ class RampagingYaoGuaiTest extends BaseCardTest {
     void entersWithCountersBeforeDestruction() {
         Permanent arena = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
         prepareCast(3);
-        gs.playCard(gd, player1, 0, 3, null, null, List.of(arena.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 3, List.of(arena.getId()));
 
         harness.passBothPriorities();
 
@@ -113,7 +112,7 @@ class RampagingYaoGuaiTest extends BaseCardTest {
     void canChooseNoTargets() {
         harness.addToBattlefield(player2, new FountainOfYouth());
         prepareCast(2);
-        gs.playCard(gd, player1, 0, 2, null, null, List.of(), List.of());
+        harness.castCreatureForX(player1, 0, 2, List.of());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
@@ -140,7 +139,7 @@ class RampagingYaoGuaiTest extends BaseCardTest {
     }
     private void castYaoGuai(int xValue, List<java.util.UUID> targetIds) {
         prepareCast(xValue);
-        gs.playCard(gd, player1, 0, xValue, null, null, targetIds, List.of());
+        harness.castCreatureForX(player1, 0, xValue, targetIds);
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

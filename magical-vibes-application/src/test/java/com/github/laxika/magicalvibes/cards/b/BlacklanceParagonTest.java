@@ -27,7 +27,7 @@ class BlacklanceParagonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gs.playCard(gd, player1, 0, 0, knight.getId(), null);
+        harness.castCreature(player1, 0, 0, knight.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -48,7 +48,7 @@ class BlacklanceParagonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, bears.getId(), null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Knight");
     }

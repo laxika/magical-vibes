@@ -57,6 +57,8 @@ class MarkovWarlordTest extends BaseCardTest {
     void etbCanChooseNoTargets() {
         castMarkovWarlord(List.of());
         harness.passBothPriorities();
+        // An "up to two" ability with no targets chosen still goes on the stack and resolves.
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Markov Warlord");

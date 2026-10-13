@@ -298,6 +298,6 @@ class InvasionOfGobakhanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InvasionOfGobakhan()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        gs.playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.castCreature(player1, 0, 0, player2.getId());
     }
 }

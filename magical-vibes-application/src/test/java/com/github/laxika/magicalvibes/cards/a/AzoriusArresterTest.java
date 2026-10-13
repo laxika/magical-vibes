@@ -141,7 +141,7 @@ class AzoriusArresterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AzoriusArrester()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, ownBearId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownBearId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -149,7 +149,7 @@ class AzoriusArresterTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, targetName);
         harness.setHand(player1, List.of(new AzoriusArrester()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 
     /** Casts the Arrester targeting the named player2 creature and resolves both spell and trigger. */

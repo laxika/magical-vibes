@@ -75,7 +75,7 @@ class IsperiasSkywatchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IsperiasSkywatch()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, ownBearId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, ownBearId))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -150,7 +150,7 @@ class IsperiasSkywatchTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, targetName);
         harness.setHand(player1, List.of(new IsperiasSkywatch()));
         harness.addMana(player1, ManaColor.BLUE, 6);
-        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, 0, targetId);
     }
 
     /** Casts the Skywatch targeting the named player2 creature and resolves both spell and trigger. */

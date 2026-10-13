@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.networking.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -94,5 +98,16 @@ class CardViewFactoryTest {
         assertThat(derived.subtypes()).contains(CardSubtype.WIZARD);
         assertThat(derived.prepareSpell()).isNotNull();
         assertThat(derived.prepareSpell().name()).isEqualTo("Heroic Stanza");
+    }
+
+    @Test
+    @DisplayName("A creature whose only targets belong to its ETB ability asks for no targets while casting")
+    void etbTargetsAreNotCastTimeTargets() {
+        Card creature = card("Nekrataal", CardType.CREATURE);
+        creature.target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
+                        "Target must be a creature"))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
+
+        assertThat(factory.create(creature).needsTarget()).isFalse();
     }
 }

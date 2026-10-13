@@ -194,6 +194,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 return false;
             }
         }
+        if (modalPlan == null && !targetSelector.hasWorthwhileEtbTargets(gameData, card, aiPlayer.getId())) {
+            return false;
+        }
 
         // Check targeting tax (e.g. Kopala, Warden of Waves)
         int targetingTax = computeTargetingTax(gameData, card, targetId, multiTargetIds);
@@ -465,6 +468,9 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 && !hasPermanentManaValueAtMostXTarget(card)) {
             targetId = targetSelector.chooseTarget(gameData, card, aiPlayer.getId());
             if (targetId == null) return false;
+        }
+        if (modalPlan == null && !targetSelector.hasWorthwhileEtbTargets(gameData, card, aiPlayer.getId())) {
+            return false;
         }
 
         // Check targeting tax (e.g. Kopala, Warden of Waves)

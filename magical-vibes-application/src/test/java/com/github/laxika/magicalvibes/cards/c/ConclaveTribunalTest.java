@@ -182,9 +182,9 @@ class ConclaveTribunalTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HealersHawk());
         UUID targetId = harness.getPermanentId(player2, "Healer's Hawk");
 
-        harness.ensurePriority(player1);
-        gs.playCard(gd, player1, 0, 0, targetId, null, List.of(),
-                List.of(first.getId(), second.getId(), third.getId(), fourth.getId()));
+        harness.castDeclaringEtbTargets(player1, 0, targetId, null, (castTargetId, castTargetIds) ->
+                gs.playCard(gd, player1, 0, 0, castTargetId, null, castTargetIds,
+                        List.of(first.getId(), second.getId(), third.getId(), fourth.getId())));
 
         assertThat(List.of(first, second, third, fourth)).allMatch(creature -> creature.isTapped());
         harness.passBothPriorities();

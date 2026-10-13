@@ -30,7 +30,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        gs.playCard(gd, player1, 0, 4, null, null, List.of(artifact.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 4, List.of(artifact.getId()));
         resolveAllTriggers();
 
         assertThat(findOoze(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
@@ -47,7 +47,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        gs.playCard(gd, player1, 0, 5, null, null, List.of(enchantment.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 5, List.of(enchantment.getId()));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
@@ -67,8 +67,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
-        gs.playCard(gd, player1, 0, 10, null, null,
-                List.of(artifact.getId(), first.getId(), second.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 10, List.of(artifact.getId(), first.getId(), second.getId()));
         resolveAllTriggers();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
@@ -83,8 +82,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 4, null, null,
-                List.of(creature.getId()), List.of()))
+        assertThatThrownBy(() -> harness.castCreatureForX(player1, 0, 4, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -96,7 +94,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gs.playCard(gd, player1, 0, 1, null, null, List.of(artifact.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 1, List.of(artifact.getId()));
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Sol Ring");
@@ -111,8 +109,8 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 1, null, null,
-                List.of(artifact.getId()), List.of())).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castCreatureForX(player1, 0, 1, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -125,7 +123,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 9);
 
-        gs.playCard(gd, player1, 0, 9, null, null, List.of(artifact.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 9, List.of(artifact.getId()));
         resolveAllTriggers();
 
         harness.assertInHand(player1, "Sol Ring");
@@ -141,7 +139,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        gs.playCard(gd, player1, 0, 5, null, null, List.of(artifact.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 5, List.of(artifact.getId()));
         harness.passBothPriorities();
         gd.playerBattlefields.get(player2.getId()).remove(artifact);
         resolveAllTriggers();
@@ -160,8 +158,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
-        gs.playCard(gd, player1, 0, 10, null, null,
-                List.of(artifact.getId(), creature.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 10, List.of(artifact.getId(), creature.getId()));
         harness.passBothPriorities();
         gd.playerBattlefields.get(player2.getId()).remove(artifact);
         resolveAllTriggers();
@@ -188,7 +185,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
-        gs.playCard(gd, player1, 0, 10, null, null, targets, List.of());
+        harness.castCreatureForX(player1, 0, 10, targets);
         resolveAllTriggers();
 
         assertThat(creatures).allSatisfy(creature ->

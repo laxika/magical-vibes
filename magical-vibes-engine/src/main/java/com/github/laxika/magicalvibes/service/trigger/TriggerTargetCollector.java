@@ -241,11 +241,15 @@ public class TriggerTargetCollector {
         boolean canTargetGraveyardCards = unwrappedEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
 
+        // A declared player filter also makes players targetable for an effect that relies on it
+        // instead of declaring a target kind of its own (Merfolk Observer's look at "target
+        // player's library").
         if (targetFilter instanceof PermanentPredicateTargetFilter
                 || targetFilter instanceof ControlledPermanentPredicateTargetFilter) {
             canTargetPlayers = false;
             canTargetGraveyardCards = false;
         } else if (targetFilter instanceof PlayerPredicateTargetFilter) {
+            canTargetPlayers = true;
             canTargetPermanents = false;
             canTargetGraveyardCards = false;
         }

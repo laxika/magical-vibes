@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
@@ -265,6 +266,7 @@ public abstract class AiDecisionEngine {
                 target = targetSelector.chooseTarget(gameData, card, playerId);
                 if (target == null) continue;
             }
+            if (!targetSelector.hasWorthwhileEtbTargets(gameData, card, playerId)) continue;
             int tax = gameData.commanderTaxByCardId.getOrDefault(card.getId(), 0);
             int targetingTax = computeTargetingTax(gameData, card, target, targets);
             int x = card.getManaCost() != null && card.getManaCost().contains("{X}")
@@ -507,8 +509,71 @@ public abstract class AiDecisionEngine {
                     handleTurnFaceUpXValueChoice(gameData);
             case PendingInteraction.Scry ignored -> handleScry(gameData);
             case null -> { }
-            default -> choiceHandler.handleActiveInteraction(gameData);
+            default -> {
+                if (!answerEtbTargetPrompt(gameData, gameData.interaction.activeInteraction())) {
+                    choiceHandler.handleActiveInteraction(gameData);
+                }
+            }
         }
+    }
+
+    /**
+     * Answers an ETB ability's target prompt with the same judgement the AI uses for a spell's
+     * targets, so a beneficial ability is aimed at its own side and a harmful one at the opponent's.
+     * ETB abilities choose their targets as they are put on the stack (CR 603.3d), so this is where
+     * a permanent spell's targets are picked. Returns {@code false} to leave the prompt to the
+     * generic permanent-choice strategy.
+     */
+    private boolean answerEtbTargetPrompt(GameData gameData, PendingInteraction active) {
+        UUID aiPlayerId = aiPlayer.getId();
+        if (active instanceof PendingInteraction.PermanentChoice choice && aiPlayerId.equals(choice.playerId())) {
+            if (choice.context() instanceof PermanentChoiceContext.ETBTokenTargetTrigger single) {
+                UUID target = targetSelector.chooseTarget(gameData, single.sourceCard(), aiPlayerId);
+                if (target == null || !choice.validIds().contains(target)) {
+                    return false;
+                }
+                send(() -> gameActions.answerInteraction(new InteractionAnswer.PermanentChosen(target)));
+                return true;
+            }
+            if (choice.context() instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger multi) {
+                List<UUID> plan = targetSelector.chooseMultiTargets(
+                        gameData, multi.sourceCard(), aiPlayerId, multi.xValue());
+                if (plan == null) {
+                    return false;
+                }
+                UUID next = plan.stream()
+                        .filter(id -> !multi.chosenTargetsSoFar().contains(id))
+                        .filter(choice.validIds()::contains)
+                        .findFirst()
+                        .orElse(null);
+                if (next == null && choice.validPlayerIds().contains(aiPlayerId) && !plan.contains(aiPlayerId)) {
+                    // Every planned target is chosen: choosing yourself stops adding targets.
+                    next = aiPlayerId;
+                }
+                if (next == null) {
+                    return false;
+                }
+                UUID answer = next;
+                send(() -> gameActions.answerInteraction(new InteractionAnswer.PermanentChosen(answer)));
+                return true;
+            }
+            return false;
+        }
+        if (active instanceof PendingInteraction.MultiPermanentChoice choice && aiPlayerId.equals(choice.playerId())
+                && choice.context() instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup group) {
+            List<UUID> plan = targetSelector.chooseMultiTargets(
+                    gameData, group.pending().sourceCard(), aiPlayerId, group.pending().xValue());
+            if (plan == null) {
+                return false;
+            }
+            List<UUID> chosen = plan.stream()
+                    .filter(id -> choice.validIds().contains(id) || choice.validPlayerIds().contains(id))
+                    .limit(choice.maxCount())
+                    .toList();
+            send(() -> gameActions.answerInteraction(new InteractionAnswer.PermanentsChosen(chosen)));
+            return true;
+        }
+        return false;
     }
 
     // ===== Mulligan =====

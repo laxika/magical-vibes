@@ -41,8 +41,9 @@ class CrimestopperSpriteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null,
-                List.of(), List.of(), false, null, null, null, null, List.of(0, 1, 2));
+        harness.castDeclaringEtbTargets(player1, 0, target.getId(), null, (targetId, targetIds) ->
+                gs.playCard(gd, player1, 0, 0, targetId, null, targetIds, List.of(), false, null, null, null, null,
+                        List.of(0, 1, 2)));
         resolveAllTriggers();
 
         assertThat(target.isTapped()).isTrue();
@@ -76,8 +77,9 @@ class CrimestopperSpriteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CrimestopperSprite()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null,
-                List.of(), List.of(), false, null, null, null, null, List.of(0, 1, 2));
+        harness.castDeclaringEtbTargets(player1, 0, target.getId(), null, (targetId, targetIds) ->
+                gs.playCard(gd, player1, 0, 0, targetId, null, targetIds, List.of(), false, null, null, null, null,
+                        List.of(0, 1, 2)));
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
@@ -97,8 +99,9 @@ class CrimestopperSpriteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CrimestopperSprite()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null,
-                List.of(), List.of(), false, null, null, null, null, List.of(0, 1, 2, 3));
+        harness.castDeclaringEtbTargets(player1, 0, target.getId(), null, (targetId, targetIds) ->
+                gs.playCard(gd, player1, 0, 0, targetId, null, targetIds, List.of(), false, null, null, null, null,
+                        List.of(0, 1, 2, 3)));
         resolveAllTriggers();
 
         assertThat(target.isTapped()).isTrue();
@@ -115,8 +118,9 @@ class CrimestopperSpriteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CrimestopperSprite()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, target.getId(), null,
-                List.of(), List.of(), false, null, null, null, null, List.of(0, 1)))
+        assertThatThrownBy(() -> harness.castDeclaringEtbTargets(player1, 0, target.getId(), null,
+                (targetId, targetIds) -> gs.playCard(gd, player1, 0, 0, targetId, null, targetIds, List.of(),
+                        false, null, null, null, null, List.of(0, 1))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("collect evidence 6");
 

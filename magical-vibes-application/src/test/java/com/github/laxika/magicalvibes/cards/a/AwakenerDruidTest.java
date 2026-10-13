@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AwakenerDruidTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Casting Awakener Druid puts it on the stack with Forest target")
+    @DisplayName("Casting Awakener Druid puts it on the stack without a target")
     void castingPutsOnStackWithTarget() {
         harness.addToBattlefield(player1, new Forest());
         harness.setHand(player1, List.of(new AwakenerDruid()));
@@ -37,7 +37,8 @@ class AwakenerDruidTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Awakener Druid");
-        assertThat(entry.getTargetId()).isEqualTo(forestId);
+        // The ETB ability chooses the Forest as it is put on the stack (CR 603.3d).
+        assertThat(entry.getTargetId()).isNull();
     }
 
     @Test

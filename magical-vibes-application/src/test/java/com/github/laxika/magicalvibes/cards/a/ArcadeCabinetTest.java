@@ -28,8 +28,7 @@ class ArcadeCabinetTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new ArcadeCabinet()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(first.getId(), second.getId(), third.getId(), fourth.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 0, List.of(first.getId(), second.getId(), third.getId(), fourth.getId()));
         resolveAllTriggers();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -96,8 +95,7 @@ class ArcadeCabinetTest extends BaseCardTest {
         Permanent unchosen = addCreatureReady(player2, new PrehistoricTurtlesaurus());
         harness.setHand(player1, List.of(new ArcadeCabinet()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(first.getId(), second.getId()), List.of());
+        harness.castCreatureForX(player1, 0, 0, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
         gd.playerBattlefields.get(player1.getId()).remove(first);
         resolveAllTriggers();

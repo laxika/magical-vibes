@@ -125,8 +125,6 @@ class DeathforgeShamanTest extends BaseCardTest {
     }
 
     private void castWithMultikickerPayments(List<String> payments, UUID targetId) {
-        gs.playCard(gd, player1, 0, 0, targetId, null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                payments, false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, targetId, payments);
     }
 }

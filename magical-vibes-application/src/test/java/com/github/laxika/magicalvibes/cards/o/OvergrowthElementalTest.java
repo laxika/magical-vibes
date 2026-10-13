@@ -48,7 +48,7 @@ class OvergrowthElementalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        gs.playCard(gd, player1, 0, 0, elemental.getId(), null);
+        harness.castCreature(player1, 0, 0, elemental.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -65,13 +65,13 @@ class OvergrowthElementalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, nonElementalId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, nonElementalId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("another Elemental creature you control");
 
         UUID opponentElementalId = harness.addToBattlefieldAndReturn(player2, new AirElemental()).getId();
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, opponentElementalId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, opponentElementalId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("another Elemental creature you control");
     }

@@ -141,8 +141,13 @@ public class CardViewFactory {
                 .toList();
 
         ChooseOneEffect modalEffect = findModalEffect(card);
+        // A modal ETB's mode is announced with the cast, but its targets are chosen as the trigger is
+        // put on the stack (CR 603.3d), so its options never ask for targets while casting.
+        boolean modalEtb = modalEffect != null && !card.getEffects(EffectSlot.SPELL).contains(modalEffect);
         List<ModalOptionView> modalOptions = modalEffect == null ? null
-                : modalEffect.options().stream().map(this::createModalOptionView).toList();
+                : modalEffect.options().stream()
+                .map(option -> modalEtb ? createUntargetedModalOptionView(option) : createModalOptionView(option))
+                .toList();
 
         ChooseXValueCost xValueCost = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(ChooseXValueCost.class::isInstance)
@@ -406,6 +411,10 @@ public class CardViewFactory {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         return null;
+    }
+
+    private static ModalOptionView createUntargetedModalOptionView(ChooseOneEffect.ChooseOneOption option) {
+        return new ModalOptionView(option.label(), false, false, 0, option.manaCost());
     }
 
     private ModalOptionView createModalOptionView(ChooseOneEffect.ChooseOneOption option) {
