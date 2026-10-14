@@ -66,36 +66,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 11. Modal triggered abilities choose their mode when put on the stack
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GravitonFundamentalForceTest` (all four "second card draw" mode tests, "Not awaiting ListChoiceMade input")
-- `GrenzoHavocRaiserTest` "Mode and goad target are chosen before opponents can respond to the trigger",
-  "Goad cannot be chosen when the damaged player controls no legal creature target"
-
-**What the rules require.** CR 603.3c / 700.2b: the controller of a modal triggered ability announces the
-mode as part of putting the ability on the stack, a mode with no legal targets can't be chosen, and if no
-mode can be chosen the ability is removed from the stack. The engine asks for the mode of these triggers
-on resolution (like a modal spell's effect), so opponents respond without knowing the mode and illegal
-modes are still offered.
-
-**Why it's large.** Trigger collection currently picks targets per effect slot; it needs a mode-choice
-interaction before targeting, mode-dependent target specs, and removal of the trigger when no mode is
-legal. Every modal triggered card shares the path.
-
-**Prompt to start it:**
-
-```
-Make modal triggered abilities choose their mode while being put on the stack (CR 603.3c, 700.2b): offer
-only modes with legal targets, choose that mode's targets right after, and remove the trigger if no mode
-can be chosen. Start with GravitonFundamentalForceTest and GrenzoHavocRaiserTest, then ask me to run the
-full suite. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 12. Untargeted "choose" during resolution (proliferate, "up to one creature")
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests
