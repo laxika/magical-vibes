@@ -33,7 +33,7 @@ class JunjiTheMidnightSkyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);

@@ -165,7 +165,7 @@ class BalanceTest extends BaseCardTest {
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player1.getId());
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -261,7 +261,7 @@ class BalanceTest extends BaseCardTest {
         assertThat(discardChoice.playerId()).isEqualTo(player2.getId());
         assertThat(discardChoice.remainingCount()).isEqualTo(2);
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         PendingInteraction.MultiPermanentChoice creatureChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);

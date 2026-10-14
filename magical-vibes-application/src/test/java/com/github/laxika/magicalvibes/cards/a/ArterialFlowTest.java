@@ -35,7 +35,7 @@ class ArterialFlowTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -83,7 +83,7 @@ class ArterialFlowTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.assertLife(player1, 15);
         harness.assertLife(player2, 20);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);

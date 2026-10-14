@@ -77,7 +77,7 @@ class CaligoSkinWitchTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
 
         harness.handleCardChosen(player2, 0); // discard first card
-        harness.handleCardChosen(player2, 0); // discard second card
+        harness.handleCardChosen(player2, 1); // discard second card
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -139,7 +139,7 @@ class CaligoSkinWitchTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);

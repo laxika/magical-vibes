@@ -51,7 +51,7 @@ class LetsPlayAGameTest extends BaseCardTest {
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -110,7 +110,7 @@ class LetsPlayAGameTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);

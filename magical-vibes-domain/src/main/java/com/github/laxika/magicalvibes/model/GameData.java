@@ -1034,6 +1034,14 @@ public class GameData {
     public int effectResolutionDepth;
     /** Progress state for Flux's "each player discards any number, then draws that many" flow. */
     public final EachPlayerRummageState eachPlayerRummage = new EachPlayerRummageState();
+    /**
+     * Cards chosen so far by an "each player discards" queue ({@code DiscardFollowUp} with an
+     * each-player controller). Every chooser picks in APNAP order and the chosen cards are discarded
+     * together once the queue drains (CR 101.4).
+     */
+    public final List<EachPlayerRummageState.SelectedDiscard> eachPlayerDiscardSelections = new ArrayList<>();
+    /** Progress state for placing the cards revealed by a clash (CR 701.30c). */
+    public final ClashPlacementState clashPlacement = new ClashPlacementState();
     /** Progress state for Sadistic Augermage's each-player hand-card-to-library-top trigger. */
     public final EachPlayerPutsCardFromHandOnTopOfLibraryState eachPlayerPutsCardFromHandOnTopOfLibrary =
             new EachPlayerPutsCardFromHandOnTopOfLibraryState();
@@ -7046,6 +7054,11 @@ public class GameData {
         copy.eachPlayerRummage.chosenAmounts.putAll(this.eachPlayerRummage.chosenAmounts);
         copy.eachPlayerRummage.deferDiscards = this.eachPlayerRummage.deferDiscards;
         copy.eachPlayerRummage.selectedDiscards.addAll(this.eachPlayerRummage.selectedDiscards);
+        copy.eachPlayerDiscardSelections.addAll(this.eachPlayerDiscardSelections);
+        copy.clashPlacement.active = this.clashPlacement.active;
+        copy.clashPlacement.currentPlayerId = this.clashPlacement.currentPlayerId;
+        copy.clashPlacement.remaining.addAll(this.clashPlacement.remaining);
+        copy.clashPlacement.placements.addAll(this.clashPlacement.placements);
         copy.eachPlayerPutsCardFromHandOnTopOfLibrary.active =
                 this.eachPlayerPutsCardFromHandOnTopOfLibrary.active;
         copy.eachPlayerPutsCardFromHandOnTopOfLibrary.remaining.addAll(

@@ -160,7 +160,7 @@ class MindRakeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
                 .isEqualTo(player2.getId());
@@ -168,7 +168,7 @@ class MindRakeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
@@ -177,6 +177,6 @@ class MindRakeTest extends BaseCardTest {
         Player chooser = ((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()
                 .equals(player1.getId()) ? player1 : player2;
         harness.handleCardChosen(chooser, 0);
-        harness.handleCardChosen(chooser, 0);
+        harness.handleCardChosen(chooser, 1);
     }
 }

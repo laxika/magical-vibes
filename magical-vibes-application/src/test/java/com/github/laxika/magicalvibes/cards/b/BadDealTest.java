@@ -30,7 +30,7 @@ class BadDealTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);

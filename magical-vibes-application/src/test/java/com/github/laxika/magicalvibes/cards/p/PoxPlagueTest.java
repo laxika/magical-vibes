@@ -34,7 +34,7 @@ class PoxPlagueTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();

@@ -32,7 +32,7 @@ class UnnerveTest extends BaseCardTest {
                 .isEqualTo(2);
 
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -82,7 +82,7 @@ class UnnerveTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleCardChosen(player2, 1);
-        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 2);
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedCard);
         assertThat(gd.playerGraveyards.get(player2.getId()))

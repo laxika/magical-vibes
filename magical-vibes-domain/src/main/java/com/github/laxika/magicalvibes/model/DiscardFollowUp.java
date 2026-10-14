@@ -369,6 +369,14 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 null, null, null, permanent, controllerId, null, 0, null, false, 0, false);
     }
 
+    /**
+     * Whether this follow-up belongs to an "each player discards" queue. Such choices are collected
+     * in APNAP order and discarded together once the queue drains (CR 101.4).
+     */
+    public boolean eachPlayerQueue() {
+        return eachPlayerControllerId != null;
+    }
+
     /** Completes an exile cast after its mandatory discard cost is paid. */
     public DiscardFollowUp withPendingSpellCast(StackEntry pendingCast) {
         return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect, thenEffectCondition, enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue, rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate, targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId, thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution, pendingCast);

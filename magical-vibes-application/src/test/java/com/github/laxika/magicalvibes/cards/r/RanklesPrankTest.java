@@ -28,9 +28,9 @@ class RanklesPrankTest extends BaseCardTest {
         castModes(0);
 
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -92,9 +92,9 @@ class RanklesPrankTest extends BaseCardTest {
         harness.setLife(player2, 20);
         castModes(0, 1, 2);
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         PendingInteraction.MultiPermanentChoice player1Choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -120,7 +120,7 @@ class RanklesPrankTest extends BaseCardTest {
         castModes(0);
 
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         PendingInteraction.DiscardChoice opponentChoice =
                 gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
@@ -130,7 +130,7 @@ class RanklesPrankTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
 
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);

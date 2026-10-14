@@ -33,14 +33,14 @@ class DeliriumSkeinsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 2);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 2);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -83,8 +83,8 @@ class DeliriumSkeinsTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 2);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
                 .isEqualTo(player2.getId());
@@ -93,8 +93,8 @@ class DeliriumSkeinsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
 
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 2);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

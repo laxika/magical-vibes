@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ClashPlacementState;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -120,6 +121,11 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             }
         }
 
+        if (gameData.clashPlacement.active && player.getId().equals(gameData.clashPlacement.currentPlayerId)) {
+            recordClashPlacement(gameData, player, scryCards, scrycastCardIndex, bottomCardOrder);
+            return;
+        }
+
         UUID libraryOwnerId = interaction.libraryOwnerId();
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         boolean ownLibrary = player.getId().equals(libraryOwnerId);
@@ -214,6 +220,23 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
         // Resumes the remaining effects on the same spell/ability (e.g. Foresee: "Scry 4, then draw
         // two cards.") before auto-passing. The hand-rolled version this replaced auto-passed even
         // when those resumed effects had opened a new prompt.
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * A clash placement only records the decision: the card stays on top of the library until every
+     * clashing player has decided, then {@code PlaceClashCardsEffectHandler} moves them together
+     * (CR 701.30c).
+     */
+    private void recordClashPlacement(GameData gameData, Player player, List<Card> cards,
+                                      Integer scrycastCardIndex, List<Integer> bottomCardOrder) {
+        if (scrycastCardIndex != null) {
+            throw new IllegalStateException("Scrycast is not available when placing a clashed card");
+        }
+        gameData.clashPlacement.placements.add(new ClashPlacementState.Placement(
+                player.getId(), cards.getFirst().getId(), !bottomCardOrder.isEmpty()));
+        gameData.clashPlacement.currentPlayerId = null;
+        gameData.interaction.clearAwaitingInput();
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

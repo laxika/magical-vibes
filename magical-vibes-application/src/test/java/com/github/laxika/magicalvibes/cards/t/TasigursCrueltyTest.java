@@ -25,7 +25,7 @@ class TasigursCrueltyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
                 .isEqualTo(2);
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);

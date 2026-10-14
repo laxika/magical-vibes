@@ -71,8 +71,8 @@ class MindBombTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, 3);
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 2);
 
         // Player 2 has no cards, so no choice is offered; it simply takes the full 3.
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -193,10 +193,10 @@ class MindBombTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleXValueChosen(player1, 2);
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
         harness.handleXValueChosen(player2, 2);
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
@@ -224,8 +224,8 @@ class MindBombTest extends BaseCardTest {
                 .isEqualTo(3);
         harness.handleXValueChosen(player1, 3);
         harness.handleCardChosen(player1, 1);
-        harness.handleCardChosen(player1, 1);
-        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 2);
+        harness.handleCardChosen(player1, 3);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);

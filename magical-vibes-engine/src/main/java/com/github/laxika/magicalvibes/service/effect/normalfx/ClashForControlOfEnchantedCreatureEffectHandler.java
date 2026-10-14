@@ -61,10 +61,8 @@ public class ClashForControlOfEnchantedCreatureEffectHandler implements NormalEf
 
         UUID newControllerId = won ? controllerId : opponentId;
         java.util.List<CardEffect> followUps = new java.util.ArrayList<>();
-        followUps.add(new com.github.laxika.magicalvibes.model.effect.ScryEffect(
-                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.CONTROLLER, false));
-        followUps.add(new com.github.laxika.magicalvibes.model.effect.ScryEffect(
-                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.OPPONENT, false));
+        followUps.add(new com.github.laxika.magicalvibes.model.effect.PlaceClashCardsEffect(
+                PlaceClashCardsEffectHandler.apnapOrder(gameData, controllerId, opponentId)));
         if (newControllerId != null && enchantedId != null) {
             followUps.add(new ClashForControlOfEnchantedCreatureEffect(enchantedId, newControllerId));
         }

@@ -38,8 +38,8 @@ class KozilekCompleatedTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 2);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.interaction.activeInteraction()).isNull();

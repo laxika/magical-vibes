@@ -31,7 +31,7 @@ class UrzasGuiltTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(6);
 
         for (int i = 0; i < 6; i++) {
-            harness.handleCardChosen(i < 3 ? player1 : player2, 0);
+            harness.handleCardChosen(i < 3 ? player1 : player2, i % 3);
         }
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
@@ -61,10 +61,10 @@ class UrzasGuiltTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
 
         for (int i = 0; i < 3; i++) {
-            harness.handleCardChosen(player1, 0);
+            harness.handleCardChosen(player1, i);
         }
         for (int i = 0; i < 2; i++) {
-            harness.handleCardChosen(player2, 0);
+            harness.handleCardChosen(player2, i);
         }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -91,7 +91,7 @@ class UrzasGuiltTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         int graveyardSizeBeforeChoices = gd.playerGraveyards.get(player1.getId()).size();
         for (int i = 0; i < 3; i++) {
-            harness.handleCardChosen(player1, 0);
+            harness.handleCardChosen(player1, i);
         }
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
@@ -101,7 +101,7 @@ class UrzasGuiltTest extends BaseCardTest {
         harness.assertLife(player2, 20);
 
         for (int i = 0; i < 3; i++) {
-            harness.handleCardChosen(player2, 0);
+            harness.handleCardChosen(player2, i);
         }
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -125,10 +125,10 @@ class UrzasGuiltTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
         for (int i = 0; i < 2; i++) {
-            harness.handleCardChosen(player1, 0);
+            harness.handleCardChosen(player1, i);
         }
         for (int i = 0; i < 2; i++) {
-            harness.handleCardChosen(player2, 0);
+            harness.handleCardChosen(player2, i);
         }
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

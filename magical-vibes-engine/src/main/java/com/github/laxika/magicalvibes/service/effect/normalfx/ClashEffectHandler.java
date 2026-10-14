@@ -4,17 +4,21 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
+import com.github.laxika.magicalvibes.model.effect.PlaceClashCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves a clash, then inserts both library-placement choices and any win reward into the
- * current stack entry. Each placement choice can pause for input before the sequence continues.
+ * Resolves a clash, then inserts the library placement of the revealed cards (decided in APNAP
+ * order and moved together, CR 701.30c) and any win reward into the current stack entry.
  * Winning with {@code repeatWhileWinning} inserts another clash after those choices.
  */
 @Slf4j
@@ -37,26 +41,20 @@ public class ClashEffectHandler implements NormalEffectHandlerBean {
         for (CardEffect beforeEffect : e.beforeClash()) {
             dispatch(gameData, entry, beforeEffect);
         }
-        boolean won = triggerCollectionService.performClash(gameData, entry.getControllerId());
-        gameData.lastClashWonByController.put(entry.getControllerId(), won);
-        java.util.List<CardEffect> followUps = new java.util.ArrayList<>();
-        var controllerPlacement = new com.github.laxika.magicalvibes.model.effect.ScryEffect(
-                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.CONTROLLER, false);
-        var opponentPlacement = new com.github.laxika.magicalvibes.model.effect.ScryEffect(
-                1, com.github.laxika.magicalvibes.model.effect.LibraryOwner.OPPONENT, false);
-        // Clashing players place their revealed cards in APNAP order (CR 701.30c, 101.4): the active
-        // player decides first, so the controller places first only when it is the active player.
-        if (entry.getControllerId().equals(gameData.activePlayerId)) {
-            followUps.add(controllerPlacement);
-            followUps.add(opponentPlacement);
-        } else {
-            followUps.add(opponentPlacement);
-            followUps.add(controllerPlacement);
-        }
+        UUID controllerId = entry.getControllerId();
+        boolean won = triggerCollectionService.performClash(gameData, controllerId);
+        gameData.lastClashWonByController.put(controllerId, won);
+        UUID opponentId = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(controllerId))
+                .findFirst().orElse(null);
+        List<CardEffect> followUps = new ArrayList<>();
+        followUps.add(new PlaceClashCardsEffect(
+                PlaceClashCardsEffectHandler.apnapOrder(gameData, controllerId, opponentId)));
         if (won && e.onWin() != null) followUps.add(e.onWin());
         if (won && e.repeatWhileWinning()) followUps.add(e);
-        int index = entry.getEffectsToResolve().indexOf(effect);
-        entry.insertEffectsToResolve(index + 1, followUps);
+        // A repeat re-inserts an equal ClashEffect record, so locate this one by the resolving index
+        // rather than indexOf (which would find the first, already-resolved copy).
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, followUps);
     }
 
     private void dispatch(GameData gameData, StackEntry entry, CardEffect effect) {

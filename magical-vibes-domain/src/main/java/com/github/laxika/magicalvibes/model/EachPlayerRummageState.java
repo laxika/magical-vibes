@@ -41,6 +41,15 @@ public class EachPlayerRummageState {
         selectedDiscards.clear();
     }
 
-    public record SelectedDiscard(UUID playerId, UUID cardId) {
+    /**
+     * A card chosen for a deferred discard. {@code applyDiscardToLibraryReplacement} records the
+     * owner's answer to an optional "put it on top of your library instead" replacement, taken when
+     * the card was chosen.
+     */
+    public record SelectedDiscard(UUID playerId, UUID cardId, boolean applyDiscardToLibraryReplacement) {
+
+        public SelectedDiscard(UUID playerId, UUID cardId) {
+            this(playerId, cardId, true);
+        }
     }
 }

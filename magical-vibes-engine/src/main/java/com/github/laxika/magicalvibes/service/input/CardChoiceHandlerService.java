@@ -870,6 +870,10 @@ public class CardChoiceHandlerService {
             handleDeferredEachPlayerDiscardCardChosen(gameData, player, cardIndex, discardChoice);
             return;
         }
+        if (discardChoice.followUp().eachPlayerQueue()) {
+            handleEachPlayerQueueDiscardCardChosen(gameData, player, cardIndex, discardChoice);
+            return;
+        }
 
         List<Integer> validIndices = discardChoice.validIndices();
         if (cardIndex == -1 && discardChoice.declinable()) {
@@ -1073,35 +1077,82 @@ public class CardChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Records one pick of a deferred {@code EachPlayerRummageState} discard without moving the card.
+     * Picks index the real hand, so already-chosen cards simply drop out of the valid indices.
+     */
     private void handleDeferredEachPlayerDiscardCardChosen(GameData gameData, Player player, int cardIndex,
             PendingInteraction.DiscardChoice discardChoice) {
         List<Card> hand = gameData.playerHands.getOrDefault(player.getId(), List.of());
-        Set<UUID> selectedIds = gameData.eachPlayerRummage.selectedDiscards.stream()
-                .filter(selection -> selection.playerId().equals(player.getId()))
-                .map(EachPlayerRummageState.SelectedDiscard::cardId)
-                .collect(java.util.stream.Collectors.toSet());
-        List<Card> remainingCards = hand.stream()
-                .filter(card -> !selectedIds.contains(card.getId()))
-                .toList();
-        if (!discardChoice.validIndices().contains(cardIndex)
-                || cardIndex < 0 || cardIndex >= remainingCards.size()) {
+        if (!discardChoice.validIndices().contains(cardIndex) || cardIndex < 0 || cardIndex >= hand.size()) {
             throw new IllegalStateException("Invalid discard card index: " + cardIndex);
         }
 
         gameData.interaction.clearAwaitingInput();
         gameData.eachPlayerRummage.selectedDiscards.add(new EachPlayerRummageState.SelectedDiscard(
-                player.getId(), remainingCards.get(cardIndex).getId()));
+                player.getId(), hand.get(cardIndex).getId()));
         int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
-        if (remainingDiscards > 0) {
-            List<Integer> remainingValidIndices = java.util.stream.IntStream.range(0, remainingCards.size() - 1)
-                    .boxed()
-                    .toList();
+        List<Integer> remainingValidIndices = discardChoice.validIndices().stream()
+                .filter(index -> index != cardIndex)
+                .toList();
+        if (remainingDiscards > 0 && !remainingValidIndices.isEmpty()) {
             playerInputService.beginDiscardChoice(gameData, player.getId(), remainingValidIndices,
                     discardChoice.prompt(), remainingDiscards, discardChoice.followUp(),
                     discardChoice.stopAfterDiscardingType(), false);
             return;
         }
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /**
+     * Records one pick of an "each player discards" queue without moving the card. Picks keep
+     * indexing the real hand (already-chosen cards drop out of the valid indices); once every
+     * chooser is done, {@link #finishDiscardChoice} discards all chosen cards together (CR 101.4).
+     * An optional discard-to-library replacement is answered when the card is chosen.
+     */
+    private void handleEachPlayerQueueDiscardCardChosen(GameData gameData, Player player, int cardIndex,
+            PendingInteraction.DiscardChoice discardChoice) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        if (!discardChoice.validIndices().contains(cardIndex) || cardIndex < 0 || cardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid discard card index: " + cardIndex);
+        }
+        Card card = hand.get(cardIndex);
+
+        Boolean discardToLibraryDecision = gameData.pendingDiscardToLibraryDecision;
+        if (discardToLibraryDecision == null && !card.isToken()) {
+            Card replacementSource = graveyardService.findDiscardToLibraryReplacementSource(gameData, playerId);
+            if (replacementSource != null) {
+                gameData.pendingDiscardToLibraryChoice = discardChoice;
+                gameData.pendingDiscardToLibraryCardIndex = cardIndex;
+                gameData.interaction.clearAwaitingInput();
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        replacementSource,
+                        playerId,
+                        List.of(new DiscardToTopOfLibraryInsteadEffect()),
+                        "Put " + card.getName() + " on top of your library instead of into your graveyard?"));
+                playerInputService.processNextMayAbility(gameData);
+                return;
+            }
+        }
+        gameData.pendingDiscardToLibraryDecision = null;
+        gameData.interaction.clearAwaitingInput();
+        gameData.eachPlayerDiscardSelections.add(new EachPlayerRummageState.SelectedDiscard(
+                playerId, card.getId(), discardToLibraryDecision == null || discardToLibraryDecision));
+        // Carries the pick to "then" riders that count the cards discarded this way.
+        DiscardFollowUp followUp = discardChoice.followUp().withDiscardedCard(card.getId());
+
+        int remainingDiscards = discardChoice.remainingCount() - 1;
+        List<Integer> remainingValidIndices = discardChoice.validIndices().stream()
+                .filter(index -> index != cardIndex)
+                .toList();
+        if (remainingDiscards > 0 && !remainingValidIndices.isEmpty()) {
+            inputCompletionService.publishStateAfterInput(gameData);
+            playerInputService.beginDiscardChoice(gameData, playerId, remainingValidIndices,
+                    discardChoice.prompt(), remainingDiscards, followUp);
+            return;
+        }
+        finishDiscardChoice(gameData, player, playerId, followUp, null);
     }
 
     private void discardCollectedPlaguecrafterCards(GameData gameData) {
@@ -1161,7 +1212,8 @@ public class CardChoiceHandlerService {
                         " — it enters the battlefield instead."));
                 replacedByBattlefield = true;
             } else {
-                graveyardService.discardCard(gameData, selection.playerId(), card);
+                graveyardService.discardCard(gameData, selection.playerId(), card,
+                        selection.applyDiscardToLibraryReplacement());
                 gameLogService.append(gameData, GameLog.playerDiscards(
                         gameData.playerIdToName.get(selection.playerId()), card));
             }
@@ -1208,6 +1260,12 @@ public class CardChoiceHandlerService {
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
+        }
+        if (followUp.eachPlayerQueue() && !gameData.eachPlayerDiscardSelections.isEmpty()) {
+            List<EachPlayerRummageState.SelectedDiscard> selected =
+                    List.copyOf(gameData.eachPlayerDiscardSelections);
+            gameData.eachPlayerDiscardSelections.clear();
+            discardCollectedCards(gameData, selected, followUp.eachPlayerControllerId());
         }
 
         // Apply counters before drawing for combined filtered-discard follow-ups. This preserves

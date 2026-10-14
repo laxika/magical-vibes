@@ -126,7 +126,7 @@ class BalancingActTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Forest");
         harness.assertInGraveyard(player1, "Dwarven Grunt");
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

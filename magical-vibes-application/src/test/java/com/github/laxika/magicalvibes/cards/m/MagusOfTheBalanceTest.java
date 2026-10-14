@@ -45,7 +45,7 @@ class MagusOfTheBalanceTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         PendingInteraction.MultiPermanentChoice creatureChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);

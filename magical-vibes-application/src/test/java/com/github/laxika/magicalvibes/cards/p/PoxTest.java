@@ -83,7 +83,8 @@ class PoxTest extends BaseCardTest {
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player1.getId());
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        // Chosen cards stay in hand until every player has chosen, so the next pick is another index.
+        harness.handleCardChosen(player1, 1);
 
         // Then player2 discards one.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);

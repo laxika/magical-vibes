@@ -36,36 +36,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 7. Choose in APNAP order, then move simultaneously (clash, each-player discards)
-
-**Status:** open · **Found:** 2026-10-13, while fixing F-card tests
-
-**Failing tests:**
-- `FireJugglerTest` "Both clash cards move only after both placement choices are made"
-- `FrayingOmnipotenceTest` "Discard choices remain hidden until every player has chosen"
-- `GiltLeafAmbushTest` (clash placements)
-
-**What the rules require.** CR 101.4: when several players make choices at the same time, they choose
-in APNAP order and then the actions happen simultaneously. CR 701.30c applies this to clash: placements
-are decided in APNAP order, then the cards move at the same time. The engine moves each clash card and
-discards each player's card as soon as that player answers.
-
-**Why it's large.** Clash runs as two separate scry interactions, and each-player discards go through
-the shared discard queue (also used by Pox-style effects). Both need a "collect every choice, then apply"
-stage across interactions without breaking the existing sequencing.
-
-**Prompt to start it:**
-
-```
-Make simultaneous multi-player choices follow CR 101.4: collect every player's choice in APNAP order,
-then apply them together. Do it for clash (CR 701.30c) and for "each player discards" effects. Start with
-FireJugglerTest and FrayingOmnipotenceTest, run the other clash and each-player-discard card tests, then
-ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 8. Face-up schemes in the command zone
 
 **Status:** open · **Found:** 2026-10-13, while fixing F-card tests

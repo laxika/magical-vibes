@@ -40,7 +40,7 @@ class FluxTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, 2);
         harness.handleCardChosen(player1, 0); // Grizzly Bears
-        harness.handleCardChosen(player1, 0); // Hill Giant
+        harness.handleCardChosen(player1, 1); // Hill Giant
 
         // Player 2 discards 1 and draws 1.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();

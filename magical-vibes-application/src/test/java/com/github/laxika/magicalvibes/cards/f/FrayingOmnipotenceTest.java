@@ -63,13 +63,15 @@ class FrayingOmnipotenceTest extends BaseCardTest {
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player1.getId());
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        // Chosen cards stay in hand until every player has chosen, so the next pick is another index.
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        // Chosen cards stay in hand until every player has chosen, so the next pick is another index.
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);

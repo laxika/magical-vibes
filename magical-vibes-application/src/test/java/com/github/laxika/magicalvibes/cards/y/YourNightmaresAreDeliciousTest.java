@@ -34,7 +34,7 @@ class YourNightmaresAreDeliciousTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class))
                 .isNotNull();
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(5);
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(drawn);
@@ -53,8 +53,8 @@ class YourNightmaresAreDeliciousTest extends BaseCardTest {
         resolveScheme();
 
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 2);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(5);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(libraryCard);

@@ -3164,6 +3164,7 @@ public class PlayerInputService {
                                     CardPredicate stopAfterDiscardingPredicate, boolean declinable) {
         if (remainingCount > 0 && !validIndices.isEmpty()
                 && !followUp.targetOpponentsDiscardThenDraw()
+                && !followUp.eachPlayerQueue()
                 && !gameData.creepingDread.active
                 && !(gameData.eachPlayerRummage.active && gameData.eachPlayerRummage.deferDiscards)) {
             if (gameData.discardEventPlayerId == null) {
