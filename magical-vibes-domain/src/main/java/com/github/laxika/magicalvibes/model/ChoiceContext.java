@@ -2648,7 +2648,7 @@ public sealed interface ChoiceContext {
     }
 
     /** Chooses which half of a split card a hand or graveyard free cast casts (CR 709.3). */
-    record SplitFreeCastHalfChoice(SplitCardFreeCast cast, ChooseOneEffect effect,
+    record SplitFreeCastHalfChoice(SplitCardCast cast, ChooseOneEffect effect,
                                    List<Integer> offeredModeIndices) implements ChoiceContext {
 
         public SplitFreeCastHalfChoice {
@@ -2657,7 +2657,7 @@ public sealed interface ChoiceContext {
     }
 
     /** Chooses whether a split half cast for free takes another of its optional targets. */
-    record SplitFreeCastMoreTargetsChoice(SplitCardFreeCast.Targeting targeting,
+    record SplitFreeCastMoreTargetsChoice(SplitCardCast.Targeting targeting,
                                           List<UUID> candidates) implements ChoiceContext {
 
         public SplitFreeCastMoreTargetsChoice {

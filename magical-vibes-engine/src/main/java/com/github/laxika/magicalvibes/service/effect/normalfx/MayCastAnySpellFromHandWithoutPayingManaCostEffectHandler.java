@@ -12,7 +12,10 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,9 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
     private final GameQueryService gameQueryService;
     private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private SplitCardCastSupport splitCardCastSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,22 +67,35 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                                 ? null
                                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())));
 
-        List<Card> eligible = hand.stream()
+        // "A spell with [characteristics]" considers only the half of a split card being cast
+        // (CR 709.3a), so a split card is offered as the halves that qualify.
+        java.util.function.Predicate<Card> qualifies = spell -> spell.getManaValue() <= maxManaValue
+                && predicateEvaluationService.matchesCardPredicate(spell, e.spellFilter(), null, gameData, controllerId);
+        Map<Card, List<Integer>> eligible = new LinkedHashMap<>();
+        hand.stream()
                 .filter(c -> !e.drawnCardsOnly() || entry.getDrawnCardIdsThisResolution().contains(c.getId()))
                 .filter(c -> !c.hasType(CardType.LAND))
                 .filter(c -> castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, c))
-                .filter(c -> c.getManaValue() <= maxManaValue)
-                .filter(c -> predicateEvaluationService.matchesCardPredicate(
-                        c, e.spellFilter(), null, gameData, controllerId))
-                .toList();
+                .forEach(c -> {
+                    if (SplitCardCastSupport.isSplitCard(c)) {
+                        List<Integer> modes = splitCardCastSupport.modesMatching(gameData, c, controllerId, qualifies);
+                        if (!modes.isEmpty()) {
+                            eligible.put(c, modes);
+                        }
+                    } else if (qualifies.test(c)) {
+                        eligible.put(c, null);
+                    }
+                });
 
         UUID choiceGroupId = UUID.randomUUID();
-        for (int i = eligible.size() - 1; i >= 0; i--) {
-            Card c = eligible.get(i);
+        List<Card> cards = new ArrayList<>(eligible.keySet());
+        for (int i = cards.size() - 1; i >= 0; i--) {
+            Card c = cards.get(i);
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     c, controllerId,
                     List.of(new MayCastFromHandWithoutPayingManaCostEffect(
-                            e.revealDrawnCards(), choiceGroupId, null, false, e.afterSuccessfulCastEffect())),
+                            e.revealDrawnCards(), choiceGroupId, null, false, e.afterSuccessfulCastEffect())
+                            .withCastableSplitModes(eligible.get(c))),
                     "Cast " + c.getName() + " without paying its mana cost?",
                     entry.getSourcePermanentId(), (Integer) null
             ));

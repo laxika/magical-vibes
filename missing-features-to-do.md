@@ -440,34 +440,49 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 24. Other split-card casts still choose the half on resolution
+## 24. Remaining split-card casts still choose the half on resolution
 
-**Status:** open · **Found:** 2026-10-14, while moving free hand and graveyard casts to a cast-time half
-choice
+**Status:** open · **Found:** 2026-10-14, while moving the remaining `MayCastHandlerService` split-card
+casts to a cast-time half choice
 
 **Failing tests:**
-- None yet. Add one where a split card is cast from the graveyard by paying its cost, or as a copy, and
-  assert that the half and its targets are chosen before the spell is put onto the stack.
+- None yet. Add one per path below: cast Wear // Tear through it and assert that the half and its targets
+  are chosen before the spell is put onto the stack, and that fuse is offered only from hand.
 
 **What the rules require.** CR 709.3: a player chooses which half of a split card they are casting before
-putting it onto the stack, and CR 709.3a: only that half is evaluated to see if it can be cast. Free casts
-from hand and graveyard now do this (`SplitCardFreeCastSupport`). Graveyard casts that pay a cost or cast
-copies, and the other `MayCastHandlerService` paths, still put the whole `ChooseOneEffect` on the stack and
-ask for the half on resolution. Per-card limits ("mana value N or less") still compare the whole card's
-combined mana value instead of the half being cast. `SplitCardFreeCastSupport` also fixes the division of
-divided damage only when it is forced (one target, or as many targets as damage); no split half needs a
-free choice today.
+putting it onto the stack, and CR 709.3a: only that half is evaluated to see if it can be cast. A
+permission to cast "a spell with [characteristics]" checks the half; one to cast "a card with
+[characteristics]" checks the whole card (CR 709.4). `SplitCardCastSupport` now handles split cards cast
+from hand, graveyard and library top through `MayCastHandlerService`. These paths still don't:
+- Whole `ChooseOneEffect` on the stack, half chosen on resolution: `castRevealedCardWithoutPaying` (ripple,
+  Talent of the Telepath, scrycast; the card is held outside every zone), Word of Command (casts mode 0),
+  outside-the-game casts, miracle, madness, suspend, command zone, Knowledge Pool, Paradigm, Wild
+  Evocation, Omen Machine.
+- Paid exile casts (`ExileReducedCastSupport`, `ExileNormalCostCopySupport`,
+  `ExileTargetCardFromGraveyardAndMayCastCopyHandler`) always cast the first half.
+- `ExileFreeCastSupport` asks for the half but doesn't limit it by mana value or legal targets, and
+  `castWithManaValueLimit` compares the whole card's mana value.
+- `LibraryChoiceHandlerService` (cascade, discover, Sunbird's Invocation and other library searches) may
+  offer fuse from the library and compares the whole card's mana value, though cascade checks "the
+  resulting spell's mana value" (CR 702.85a).
+- `OutsideGameNormalCostCastSupport` offers two halves together or fuse.
+- Other hand-offer handlers with spell-worded limits (Karlach, Kellan, Lady Octopus, mill-and-cast) still
+  compare the whole card; only Electrodominance, the "any spell from hand" offer and Baral and Kari Zev
+  were moved to per-half checks.
+- `SplitCardCastSupport` offers a half whose cost can't be paid on a paid cast (the cast then fails and
+  the card stays put), casts a paid half with {X} at X=0, and fixes divided damage only when the division
+  is forced.
 
-**Why it's large.** Every remaining cast path needs the cast-time half choice, and each "mana value N or
-less" permission has to check the half being cast rather than the card.
+**Why it's large.** Each path has its own zone handling, continuation and cost rules, so each needs its
+own move onto `SplitCardCastSupport` (or the exile queue's mode choice) and its own tests.
 
 **Prompt to start it:**
 
 ```
-Make the remaining split-card cast paths (paid and copied graveyard casts, other MayCastHandlerService
-paths) choose the half when the spell is cast (CR 709.3) through SplitCardFreeCastSupport, and check
-per-card mana value limits against the half being cast. Start with InvokeCalamityTest's split-card tests
-as the model, and ask me to run the full suite.
+Move the remaining split-card cast paths listed in missing-features-to-do.md entry 24 onto a cast-time half
+choice (CR 709.3) through SplitCardCastSupport or the exile queue's mode choice, starting with cascade and
+the paid exile casts that force the first half. Use ChandraAcolyteOfFlameTest and GalvanothTest's
+split-card tests as the model, and ask me to run the full suite.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

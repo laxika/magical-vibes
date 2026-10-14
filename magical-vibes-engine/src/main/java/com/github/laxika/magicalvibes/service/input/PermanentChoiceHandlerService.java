@@ -67,7 +67,7 @@ public class PermanentChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
-    private com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardFreeCastSupport splitCardFreeCastSupport;
+    private com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport splitCardCastSupport;
 
     private final PlayerInputService playerInputService;
 
@@ -645,7 +645,7 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.FreeCastBeholdCost beholdCost) {
             exileFreeCastQueueSupport.completeBeholdCost(gameData, permanentId, beholdCost);
         } else if (context instanceof PermanentChoiceContext.SplitFreeCastTarget splitTarget) {
-            splitCardFreeCastSupport.handleTarget(gameData, permanentId, splitTarget);
+            splitCardCastSupport.handleTarget(gameData, permanentId, splitTarget);
         } else if (context instanceof PermanentChoiceContext.ExileCastSpellTarget ect) {
             spellHandler.handleExileCastSpellTarget(gameData, permanentId, ect);
         } else if (context instanceof PermanentChoiceContext.ChandraTorchCastSpellTarget ctc) {

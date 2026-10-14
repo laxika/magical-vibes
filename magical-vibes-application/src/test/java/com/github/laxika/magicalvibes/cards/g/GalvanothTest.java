@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -293,5 +295,51 @@ class GalvanothTest extends BaseCardTest {
         harness.assertLife(player2, 17);
         harness.assertOnBattlefield(player1, "Galvanoth");
         harness.assertInGraveyard(player1, "Slagstorm");
+    }
+
+    @Test
+    @CardUsed({WearTear.class, AngelicChorus.class})
+    @DisplayName("A split card on top is cast as a half with a legal target, chosen before it is put on the stack")
+    void splitCardOnTopIsCastAsAHalfWithALegalTarget() {
+        harness.addToBattlefield(player1, new Galvanoth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
+        WearTear wearTear = new WearTear();
+        gd.playerDecks.get(player1.getId()).addFirst(wearTear);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Tear — Destroy target enchantment");
+        harness.handlePermanentChosen(player1, chorusId);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Tear");
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(chorusId);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(wearTear);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+    }
+
+    @Test
+    @CardUsed({WearTear.class})
+    @DisplayName("A split card on top with no castable half stays on top of the library")
+    void splitCardWithNoCastableHalfStaysOnTop() {
+        harness.addToBattlefield(player1, new Galvanoth());
+        WearTear wearTear = new WearTear();
+        gd.playerDecks.get(player1.getId()).addFirst(wearTear);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(wearTear);
     }
 }

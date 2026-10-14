@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BankruptInBlood;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.q.Quench;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -189,5 +192,23 @@ class ElectrodominanceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("Offers a split card whose half fits X and casts only a half that fits")
+    void offersSplitCardByTheHalfThatFits() {
+        WearTear wearTear = new WearTear();
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.setHand(player1, new ArrayList<>(List.of(new Electrodominance(), wearTear)));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Tear — Destroy target enchantment");
     }
 }

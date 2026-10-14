@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.SplitCardFreeCast;
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
@@ -43,7 +43,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardFreeCastSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -77,7 +77,7 @@ public class MayCastHandlerService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
-    private SplitCardFreeCastSupport splitCardFreeCastSupport;
+    private SplitCardCastSupport splitCardCastSupport;
     @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
@@ -212,6 +212,16 @@ public class MayCastHandlerService {
                     return;
                 }
                 deck.removeFirst();
+                if (SplitCardCastSupport.isSplitCard(cardToCast)) {
+                    if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToCast,
+                            Zone.LIBRARY, 0, player.getId(), false, Integer.MAX_VALUE, null, null))) {
+                        return;
+                    }
+                    gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                            " has no half that can be cast and stays on top of the library."));
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
 
                 StackEntryType spellType = mapCardTypeToSpellType(cardToCast);
                 boolean isPermanentSpell = cardToCast.hasType(CardType.CREATURE)
@@ -355,6 +365,16 @@ public class MayCastHandlerService {
                 triggerCollectionService.checkControllerPlaysLandTriggers(gameData, player.getId(), cardToPlay,
                         Zone.LIBRARY);
             }
+        } else if (SplitCardCastSupport.isSplitCard(cardToPlay)) {
+            deck.removeFirst();
+            if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToPlay,
+                    Zone.LIBRARY, 0, libraryOwnerId, false, Integer.MAX_VALUE, null, null))) {
+                return;
+            }
+            gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " has no half that can be cast."));
+            handlePlayFromLibraryOrExileChoice(gameData, player, false, ability,
+                    notPlayedDestination, publiclyRevealed);
+            return;
         } else {
             // Cast the spell without paying its mana cost
             deck.removeFirst();
@@ -758,15 +778,13 @@ public class MayCastHandlerService {
                     
                     gameLogService.append(gameData, GameLog.cardThen(cardToCast, " is no longer in a valid graveyard."));
                     log.info("Game {} - {} not in valid graveyard (scope={})", gameData.id, cardToCast.getName(), scope);
-                } else if (withoutPayingManaCost && copyCount == 0
-                        && SplitCardFreeCastSupport.isSplitCard(cardToCast)) {
-                    List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
-                    int graveyardIndex = graveyard.indexOf(graveyardCard);
-                    graveyard.remove(graveyardIndex);
-                    if (splitCardFreeCastSupport.begin(gameData, new SplitCardFreeCast(
-                            player.getId(), cardToCast, Zone.GRAVEYARD, graveyardIndex, graveyardOwnerId,
+                } else if (SplitCardCastSupport.isSplitCard(cardToCast)) {
+                    SplitCardCast splitCast = new SplitCardCast(player.getId(), cardToCast, Zone.GRAVEYARD,
+                            setAsideFromGraveyard(gameData, graveyardOwnerId, graveyardCard), graveyardOwnerId,
                             exileInsteadOfGraveyard, maxSpellManaValue, afterSuccessfulCastEffect,
-                            ability.sourcePermanentId()))) {
+                            ability.sourcePermanentId()).withCopies(copyCount);
+                    if (splitCardCastSupport.begin(gameData, withoutPayingManaCost
+                            ? splitCast : splitCast.payingManaCost(anyManaType))) {
                         return;
                     }
                     gameLogService.append(gameData, GameLog.cardThen(cardToCast,
@@ -913,6 +931,23 @@ public class MayCastHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (!castAsAdventure && SplitCardCastSupport.isSplitCard(cardToCast)) {
+            boolean exileSplitCard = predicateEvaluationService.matchesCardPredicate(
+                    cardToCast, castEffect.exileInsteadOfGraveyardFilter(), cardToCast.getId(), gameData,
+                    graveyardOwnerId, ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue());
+            SplitCardCast splitCast = new SplitCardCast(player.getId(), cardToCast, Zone.GRAVEYARD,
+                    setAsideFromGraveyard(gameData, graveyardOwnerId, graveyardCard), graveyardOwnerId,
+                    exileSplitCard, Integer.MAX_VALUE, castEffect.afterSuccessfulCastEffect(),
+                    ability.sourcePermanentId());
+            if (splitCardCastSupport.begin(gameData, castEffect.withoutPayingManaCost()
+                    ? splitCast : splitCast.payingManaCost(false))) {
+                return;
+            }
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " has no half that can be cast and remains in the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (chosenX == null && !castEffect.withoutPayingManaCost()
                 && spellCard.getParsedManaCost() != null && spellCard.getParsedManaCost().hasX()) {
             int tax = castingCostService.getCastCostModifier(
@@ -1008,6 +1043,18 @@ public class MayCastHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Sets a split card aside from its graveyard while its half and targets are chosen, and returns
+     * its position there. {@link SplitCardCastSupport} completes the move to the stack once the spell
+     * is cast, or puts the card back where it was.
+     */
+    private static int setAsideFromGraveyard(GameData gameData, UUID graveyardOwnerId, Card graveyardCard) {
+        List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+        int graveyardIndex = graveyard.indexOf(graveyardCard);
+        graveyard.remove(graveyardIndex);
+        return graveyardIndex;
+    }
+
     private Card castableAdventureFace(Card card) {
         if (card == null || card.hasType(CardType.LAND)
                 || card.getCastingOption(AdventureCast.class).isEmpty()) {
@@ -1051,6 +1098,19 @@ public class MayCastHandlerService {
         if (!validScope || !matchesFilter) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " is no longer a legal card to cast from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (SplitCardCastSupport.isSplitCard(cardToCast)) {
+            if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToCast,
+                    Zone.GRAVEYARD, setAsideFromGraveyard(gameData, graveyardOwnerId, graveyardCard),
+                    graveyardOwnerId, false, Integer.MAX_VALUE, null, null)
+                    .payingManaCost(false).restrictingAdditionalSpellsThisTurn())) {
+                return;
+            }
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " has no half that can be cast and remains in the graveyard."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -1192,6 +1252,18 @@ public class MayCastHandlerService {
                 || filter != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " is no longer a legal target in your graveyard."));
             log.info("Game {} - {} no longer a legal graveyard target for play-from-graveyard", gameData.id, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (SplitCardCastSupport.isSplitCard(cardToPlay)) {
+            if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToPlay,
+                    Zone.GRAVEYARD, setAsideFromGraveyard(gameData, graveyardOwnerId, graveyardCard),
+                    graveyardOwnerId, exileInsteadOfGraveyard, Integer.MAX_VALUE, null, null))) {
+                return;
+            }
+            gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
+                    " has no half that can be cast and remains in the graveyard."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -1891,9 +1963,16 @@ public class MayCastHandlerService {
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
+        List<Integer> castableSplitModes = ability.effects().stream()
+                .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
+                .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
+                .map(MayCastFromHandWithoutPayingManaCostEffect::castableSplitModes)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,
                 revealCardOnDecline, scryIfDeclined, exileInsteadOfGraveyard,
-                afterSuccessfulCastEffect, maxSpellManaValue);
+                afterSuccessfulCastEffect, maxSpellManaValue, castableSplitModes);
     }
 
     /** Handles The Face of Boe's offer to cast a suspended spell while paying its suspend cost. */
@@ -2049,7 +2128,8 @@ public class MayCastHandlerService {
                                                      boolean scryIfDeclined,
                                                      boolean exileInsteadOfGraveyard,
                                                      CardEffect afterSuccessfulCastEffect,
-                                                     int maxSpellManaValue) {
+                                                     int maxSpellManaValue,
+                                                     List<Integer> castableSplitModes) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
 
@@ -2119,7 +2199,7 @@ public class MayCastHandlerService {
             return;
         }
 
-        boolean splitCard = SplitCardFreeCastSupport.isSplitCard(cardToCast);
+        boolean splitCard = SplitCardCastSupport.isSplitCard(cardToCast);
         if (!splitCard && (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
                 && buildValidSpellTargets(gameData, cardToCast, cardToCast.getEffects(EffectSlot.SPELL),
                 player.getId(), 0, false).isEmpty()) {
@@ -2168,9 +2248,10 @@ public class MayCastHandlerService {
                     .findFirst()
                     .orElse(player.getId());
             hand.remove(cardIndex);
-            if (splitCardFreeCastSupport.begin(gameData, new SplitCardFreeCast(
+            if (splitCardCastSupport.begin(gameData, new SplitCardCast(
                     player.getId(), cardToCast, Zone.HAND, cardIndex, handOwnerId, exileInsteadOfGraveyard,
-                    maxSpellManaValue, afterSuccessfulCastEffect, ability.sourcePermanentId()))) {
+                    maxSpellManaValue, afterSuccessfulCastEffect, ability.sourcePermanentId())
+                    .limitedToModes(castableSplitModes))) {
                 return;
             }
             queueDeclineEffect(gameData, ability);

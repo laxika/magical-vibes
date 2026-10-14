@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -10,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.SplitCardFreeCast;
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -19,8 +20,10 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +35,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
- * Casts a split card from its owner's hand or graveyard without paying its mana cost. The player
- * chooses the half as the spell is cast (CR 709.3), then that half's targets (CR 601.2c), before
+ * Casts a split card from a hand, graveyard or library during resolution or through a "you may
+ * cast" permission. The player chooses the half as the spell is cast (CR 709.3), then that half's
+ * targets (CR 601.2c), then pays that half's mana cost when the cast isn't free (CR 601.2h), before
  * the spell is put onto the stack. Only the chosen half is evaluated to see if it can be cast
  * (CR 709.3a), so a half is offered only if it fits the cast's mana value limit and has a legal
  * set of targets. Both halves may be cast together only from the caster's own hand, and only by a
@@ -43,7 +48,7 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
-public class SplitCardFreeCastSupport {
+public class SplitCardCastSupport {
 
     static final String CHOOSE_TARGET = "Choose another target";
     static final String DONE = "Done";
@@ -57,16 +62,22 @@ public class SplitCardFreeCastSupport {
     private final InputCompletionService inputCompletionService;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final GameQueryService gameQueryService;
+    private final SpellCastingService spellCastingService;
+    private final CopySupport copySupport;
+    private final PermanentRemovalService permanentRemovalService;
 
-    public SplitCardFreeCastSupport(GameLogService gameLogService,
-                                    PlayerInputService playerInputService,
-                                    InteractionHandlerRegistry interactionHandlerRegistry,
-                                    TriggerCollectionService triggerCollectionService,
-                                    ExileCastTargetSupport exileCastTargetSupport,
-                                    DealDividedDamageSupport dealDividedDamageSupport,
-                                    @Lazy InputCompletionService inputCompletionService,
-                                    @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport,
-                                    @Lazy GameQueryService gameQueryService) {
+    public SplitCardCastSupport(GameLogService gameLogService,
+                                PlayerInputService playerInputService,
+                                InteractionHandlerRegistry interactionHandlerRegistry,
+                                TriggerCollectionService triggerCollectionService,
+                                ExileCastTargetSupport exileCastTargetSupport,
+                                DealDividedDamageSupport dealDividedDamageSupport,
+                                @Lazy InputCompletionService inputCompletionService,
+                                @Lazy ExileFreeCastQueueSupport exileFreeCastQueueSupport,
+                                @Lazy GameQueryService gameQueryService,
+                                @Lazy SpellCastingService spellCastingService,
+                                CopySupport copySupport,
+                                @Lazy PermanentRemovalService permanentRemovalService) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
@@ -76,18 +87,26 @@ public class SplitCardFreeCastSupport {
         this.inputCompletionService = inputCompletionService;
         this.exileFreeCastQueueSupport = exileFreeCastQueueSupport;
         this.gameQueryService = gameQueryService;
+        this.spellCastingService = spellCastingService;
+        this.copySupport = copySupport;
+        this.permanentRemovalService = permanentRemovalService;
     }
 
-    /** Whether {@code card} is a split card whose halves are the modes of its spell. */
+    /**
+     * Whether {@code card} is an instant or sorcery split card whose halves are the modes of its
+     * spell. Rooms are split cards too, but they are cast as permanent spells with a door to unlock,
+     * which this support doesn't cast.
+     */
     public static boolean isSplitCard(Card card) {
-        return card.getSplitHalves().size() >= 2 && splitModal(card) != null;
+        return card.getSplitHalves().size() >= 2 && splitModal(card) != null
+                && !card.getSubtypes().contains(CardSubtype.ROOM);
     }
 
     /**
      * Offers the halves of {@code cast}'s card that can be cast. Returns false, leaving the card where
      * it was taken from, when none can.
      */
-    public boolean begin(GameData gameData, SplitCardFreeCast cast) {
+    public boolean begin(GameData gameData, SplitCardCast cast) {
         Card card = cast.physicalCard();
         ChooseOneEffect modal = splitModal(card);
         List<Integer> offered = new ArrayList<>();
@@ -113,7 +132,7 @@ public class SplitCardFreeCastSupport {
     /** Applies the chosen half, then asks for its targets or puts it onto the stack. */
     public void handleHalfChoice(GameData gameData, Player player, String chosenLabel,
                                  ChoiceContext.SplitFreeCastHalfChoice context) {
-        SplitCardFreeCast cast = context.cast();
+        SplitCardCast cast = context.cast();
         if (!player.getId().equals(cast.controllerId())) {
             throw new IllegalStateException("Not your choice");
         }
@@ -126,7 +145,7 @@ public class SplitCardFreeCastSupport {
         ExileFreeCastQueueSupport.PreparedModalCast prepared = prepare(gameData, cast, context.effect(), modeIndex);
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " chooses \"" + chosenLabel + "\" for ", cast.physicalCard(), "."));
-        SplitCardFreeCast.Targeting targeting = new SplitCardFreeCast.Targeting(cast, prepared.card(),
+        SplitCardCast.Targeting targeting = new SplitCardCast.Targeting(cast, prepared.card(),
                 exileCastTargetSupport.mapCardTypeToSpellType(prepared.card()), prepared.effects(),
                 prepared.effectiveXValue(), modeEncoding(context.effect(), modeIndex), List.of());
         if (!needsTargets(prepared.card(), prepared.effects())) {
@@ -138,10 +157,10 @@ public class SplitCardFreeCastSupport {
 
     /** Records one chosen target, then asks for the next one or casts the spell. */
     public void handleTarget(GameData gameData, UUID targetId, PermanentChoiceContext.SplitFreeCastTarget context) {
-        SplitCardFreeCast.Targeting targeting = context.targeting();
+        SplitCardCast.Targeting targeting = context.targeting();
         List<UUID> chosen = new ArrayList<>(targeting.chosenTargets());
         chosen.add(targetId);
-        continueTargeting(gameData, new SplitCardFreeCast.Targeting(targeting.cast(), targeting.cardToCast(),
+        continueTargeting(gameData, new SplitCardCast.Targeting(targeting.cast(), targeting.cardToCast(),
                 targeting.spellType(), targeting.spellEffects(), targeting.xValue(), targeting.modeEncoding(),
                 chosen));
     }
@@ -149,7 +168,7 @@ public class SplitCardFreeCastSupport {
     /** Applies the choice between taking another optional target and casting the spell now. */
     public void handleMoreTargetsChoice(GameData gameData, Player player, String choice,
                                         ChoiceContext.SplitFreeCastMoreTargetsChoice context) {
-        SplitCardFreeCast.Targeting targeting = context.targeting();
+        SplitCardCast.Targeting targeting = context.targeting();
         if (!player.getId().equals(targeting.cast().controllerId())) {
             throw new IllegalStateException("Not your choice");
         }
@@ -163,8 +182,34 @@ public class SplitCardFreeCastSupport {
         }
     }
 
-    private boolean isCastableMode(GameData gameData, SplitCardFreeCast cast, ChooseOneEffect modal, int modeIndex) {
+    /**
+     * The modes of a split card's modal spell (its halves, then its fused spell) whose spell has the
+     * characteristics {@code test} asks for. A permission to cast a spell with certain
+     * characteristics considers only the half being cast (CR 709.3a); check while the card is still
+     * in its zone, so counts such as the cards in hand are those the permission sees.
+     */
+    public List<Integer> modesMatching(GameData gameData, Card card, UUID controllerId, Predicate<Card> test) {
+        ChooseOneEffect modal = splitModal(card);
+        List<Integer> matching = new ArrayList<>();
+        for (int modeIndex = 0; modeIndex < modal.options().size(); modeIndex++) {
+            try {
+                Card spell = exileFreeCastQueueSupport.prepareModalCast(
+                        gameData, card, controllerId, modal, List.of(modeIndex)).card();
+                if (test.test(spell)) {
+                    matching.add(modeIndex);
+                }
+            } catch (IllegalStateException | IllegalArgumentException ignored) {
+                // A mode that can't be prepared from here can't be cast from here either.
+            }
+        }
+        return matching;
+    }
+
+    private boolean isCastableMode(GameData gameData, SplitCardCast cast, ChooseOneEffect modal, int modeIndex) {
         Card card = cast.physicalCard();
+        if (cast.allowedModes() != null && !cast.allowedModes().contains(modeIndex)) {
+            return false;
+        }
         boolean fused = modeIndex >= card.getSplitHalves().size();
         boolean fromOwnHand = cast.sourceZone() == Zone.HAND && cast.ownerId().equals(cast.controllerId());
         if (fused && (!fromOwnHand || !card.hasKeyword(Keyword.FUSE))) {
@@ -182,7 +227,7 @@ public class SplitCardFreeCastSupport {
         }
     }
 
-    private ExileFreeCastQueueSupport.PreparedModalCast prepare(GameData gameData, SplitCardFreeCast cast,
+    private ExileFreeCastQueueSupport.PreparedModalCast prepare(GameData gameData, SplitCardCast cast,
                                                                 ChooseOneEffect modal, int modeIndex) {
         return exileFreeCastQueueSupport.prepareModalCast(
                 gameData, cast.physicalCard(), cast.controllerId(), modal, List.of(modeIndex));
@@ -204,7 +249,7 @@ public class SplitCardFreeCastSupport {
         return true;
     }
 
-    private void continueTargeting(GameData gameData, SplitCardFreeCast.Targeting targeting) {
+    private void continueTargeting(GameData gameData, SplitCardCast.Targeting targeting) {
         Card card = targeting.cardToCast();
         UUID controllerId = targeting.cast().controllerId();
         int chosenCount = targeting.chosenTargets().size();
@@ -261,14 +306,14 @@ public class SplitCardFreeCastSupport {
         return exileCastTargetSupport.nextSlotCandidates(gameData, card, controllerId, chosenTargets, modeEncoding);
     }
 
-    private void beginTargetChoice(GameData gameData, SplitCardFreeCast.Targeting targeting, List<UUID> candidates) {
+    private void beginTargetChoice(GameData gameData, SplitCardCast.Targeting targeting, List<UUID> candidates) {
         playerInputService.beginPermanentChoice(gameData, targeting.cast().controllerId(), candidates,
                 new PermanentChoiceContext.SplitFreeCastTarget(targeting),
                 "Choose a target for " + targeting.cardToCast().getName() + ".");
     }
 
-    private void putOnStack(GameData gameData, SplitCardFreeCast.Targeting targeting) {
-        SplitCardFreeCast cast = targeting.cast();
+    private void putOnStack(GameData gameData, SplitCardCast.Targeting targeting) {
+        SplitCardCast cast = targeting.cast();
         Card card = targeting.cardToCast();
         UUID controllerId = cast.controllerId();
         List<UUID> targets = targeting.chosenTargets();
@@ -298,18 +343,38 @@ public class SplitCardFreeCastSupport {
         if (cast.sourceZone() == Zone.GRAVEYARD) {
             entry.setOwnerIdOverride(cast.ownerId());
         }
+        if (cast.payManaCost()) {
+            try {
+                spellCastingService.paySpellManaCostFromNonHandZone(gameData, controllerId, card,
+                        targeting.xValue(), cast.sourceZone(), cast.anyManaType());
+            } catch (IllegalStateException | IllegalArgumentException unpaid) {
+                returnToSourceZone(gameData, cast);
+                gameLogService.append(gameData, GameLog.cardThen(cast.physicalCard(),
+                        " can't be cast because its mana cost can't be paid."));
+                copySupport.flushDeferredGraveyardCastCopies(gameData);
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+        }
+        leaveSourceZone(gameData, cast);
         if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) {
             return;
         }
         gameData.stack.add(entry);
+        if (cast.restrictAdditionalSpellsThisTurn()) {
+            gameData.preventAdditionalSpellCastsThisTurn(controllerId);
+        }
+        if (cast.sourceZone() == Zone.GRAVEYARD) {
+            copySupport.copyGraveyardCastSpell(gameData, entry, card, controllerId, cast.copyCount());
+        }
         gameData.recordSpellCast(controllerId, card);
         gameData.priorityPassedBy.clear();
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card,
-                " without paying its mana cost."));
-        log.info("Game {} - {} casts {} from {} without paying its mana cost", gameData.id, playerName,
-                card.getName(), cast.sourceZone());
+        String costPhrase = cast.payManaCost() ? "" : " without paying its mana cost";
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " casts ", card, costPhrase + "."));
+        log.info("Game {} - {} casts {} from {}{}", gameData.id, playerName, card.getName(),
+                cast.sourceZone(), costPhrase);
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, controllerId, cast.sourceZone());
         if (!targets.isEmpty()) {
@@ -325,7 +390,7 @@ public class SplitCardFreeCastSupport {
      * cast (CR 601.2d), or null when the half divides no damage. Each target must be dealt at least
      * 1 damage, so the division is fixed with one target or with as many targets as damage.
      */
-    private Map<UUID, Integer> dividedDamageAssignments(GameData gameData, SplitCardFreeCast.Targeting targeting) {
+    private Map<UUID, Integer> dividedDamageAssignments(GameData gameData, SplitCardCast.Targeting targeting) {
         boolean dividesDamage = targeting.spellEffects().stream()
                 .filter(DealDividedDamageEffect.class::isInstance)
                 .map(DealDividedDamageEffect.class::cast)
@@ -347,10 +412,25 @@ public class SplitCardFreeCastSupport {
         return assignments;
     }
 
-    private void returnToSourceZone(GameData gameData, SplitCardFreeCast cast) {
-        List<Card> zone = cast.sourceZone() == Zone.HAND
-                ? gameData.playerHands.computeIfAbsent(cast.ownerId(), ignored -> new ArrayList<>())
-                : gameData.playerGraveyards.computeIfAbsent(cast.ownerId(), ignored -> new ArrayList<>());
+    /**
+     * Completes the card's move to the stack. The card was set aside while the half and its targets
+     * were chosen, so a cast that fails leaves no trace; a card that leaves a graveyard is now
+     * removed the usual way, so the game sees it leave.
+     */
+    private void leaveSourceZone(GameData gameData, SplitCardCast cast) {
+        if (cast.sourceZone() == Zone.GRAVEYARD) {
+            returnToSourceZone(gameData, cast);
+            permanentRemovalService.removeCardFromGraveyardById(gameData, cast.physicalCard().getId());
+        }
+    }
+
+    private void returnToSourceZone(GameData gameData, SplitCardCast cast) {
+        List<Card> zone = switch (cast.sourceZone()) {
+            case HAND -> gameData.playerHands.computeIfAbsent(cast.ownerId(), ignored -> new ArrayList<>());
+            case GRAVEYARD -> gameData.playerGraveyards.computeIfAbsent(cast.ownerId(), ignored -> new ArrayList<>());
+            case LIBRARY -> gameData.playerDecks.computeIfAbsent(cast.ownerId(), ignored -> new ArrayList<>());
+            default -> throw new IllegalStateException("Can't cast a split card from " + cast.sourceZone());
+        };
         zone.add(Math.min(cast.sourceIndex(), zone.size()), cast.physicalCard());
     }
 

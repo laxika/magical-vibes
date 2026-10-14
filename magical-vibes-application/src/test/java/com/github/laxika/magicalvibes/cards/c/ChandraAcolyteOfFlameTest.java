@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BoneSplinters;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.d.Disentomb;
 import com.github.laxika.magicalvibes.cards.d.Disfigure;
 import com.github.laxika.magicalvibes.cards.f.Fireball;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.l.LavakinBrawler;
 import com.github.laxika.magicalvibes.cards.r.ReduceToAshes;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -24,6 +27,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -221,6 +225,60 @@ class ChandraAcolyteOfFlameTest extends BaseCardTest {
             assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
             assertThat(gd.stack).isEmpty();
         }
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("-2 casts one half of a split card for only that half's mana cost")
+    void minusTwoCastsOneSplitHalfForItsOwnCost() {
+        addReadyChandra(player1, 5);
+        WearTear wearTear = new WearTear();
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        harness.setGraveyard(player1, List.of(wearTear));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 2, null, wearTear.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Wear — Destroy target artifact");
+        harness.handlePermanentChosen(player1, fountainId);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Wear");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Angelic Chorus");
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class})
+    @DisplayName("-2 leaves a split card in the graveyard when its chosen half's cost can't be paid")
+    void unpayableSplitHalfStaysInGraveyard() {
+        addReadyChandra(player1, 5);
+        WearTear wearTear = new WearTear();
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        harness.setGraveyard(player1, List.of(wearTear));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 2, null, wearTear.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Wear — Destroy target artifact");
+        harness.handlePermanentChosen(player1, fountainId);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(wearTear);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
     }
 
     private Permanent addReadyChandra(Player player, int loyalty) {

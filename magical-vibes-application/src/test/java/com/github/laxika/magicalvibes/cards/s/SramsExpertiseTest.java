@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AegisAutomaton;
+import com.github.laxika.magicalvibes.cards.a.AssaultBattery;
 import com.github.laxika.magicalvibes.cards.d.Disallow;
 import com.github.laxika.magicalvibes.cards.i.IrontreadCrusher;
 import com.github.laxika.magicalvibes.cards.m.MobileGarrison;
@@ -201,6 +202,22 @@ class SramsExpertiseTest extends BaseCardTest {
             assertThat(servo.isTapped()).isFalse();
         });
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({AssaultBattery.class})
+    @DisplayName("Offers a split card whose half has mana value three or less and casts only that half")
+    void castsOnlyTheSplitHalfWithManaValueThreeOrLess() {
+        castExpertise(List.of(new SramsExpertise(), new AssaultBattery()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Assault — Deal 2 damage to any target");
+        harness.handleListChoice(player1, "Assault — Deal 2 damage to any target");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
     }
 
     private void castExpertise(List<Card> hand) {
