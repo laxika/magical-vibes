@@ -39,7 +39,7 @@ public class GimbalGremlinProdigy extends Card {
         CreateTokenEffect gremlinToken = new CreateTokenEffect(
                 CardType.CREATURE,
                 1,
-                "Gremlin",
+                "Gremlin Token",
                 0,
                 0,
                 CardColor.RED,

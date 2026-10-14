@@ -33,8 +33,8 @@ public class GlenElendraGuardian extends Card {
                 "{1}{U}",
                 List.of(
                         new RemoveCounterFromSourceCost(),
-                        new TargetSpellControllerDrawsCardEffect(),
-                        new CounterSpellEffect()
+                        new CounterSpellEffect(),
+                        new TargetSpellControllerDrawsCardEffect()
                 ),
                 "{1}{U}, Remove a counter from this creature: Counter target noncreature spell. Its controller draws a card.",
                 new StackEntryPredicateTargetFilter(

@@ -91,9 +91,16 @@ public class CombatTriggerService {
         UUID creatureControllerId = gameData.findControllerOf(creature);
         if (creatureControllerId == null) return;
         final UUID finalCreatureControllerId = creatureControllerId;
+        final boolean creatureLostAllAbilities = gameQueryService.hasLostAllAbilities(gameData, creature);
 
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
+                // An Aura's granted triggered ability is an ability of the enchanted creature, so losing
+                // all abilities (Turn to Frog) stops it from triggering. The Aura's own attack trigger is not.
+                if (creatureLostAllAbilities && perm.getCard().isAura()
+                        && !perm.getCard().isAttackTriggerOwnedByAura()) {
+                    return;
+                }
                 List<EffectRegistration> auraRegs = perm.getCard().getEffectRegistrations(slot);
                 // Skip per-blocker effects — they are handled by checkAttachedPerBlockerTriggers
                 boolean hasOncePerBlockRegistration = auraRegs.stream()
@@ -243,10 +250,12 @@ public class CombatTriggerService {
                                     // An attack trigger granted by an Aura is an ability of the enchanted creature,
                                     // so its source and controller are that creature (CR 113.7, CR 113.8). An
                                     // Aura's own "whenever enchanted creature attacks" ability is controlled by the
-                                    // Aura's controller and has the Aura as its source.
-                                    boolean auraOwnedAttackTrigger = slot == EffectSlot.ON_ATTACK
-                                            && perm.getCard().isAttackTriggerOwnedByAura();
-                                    UUID grantedAttackControllerId = auraOwnedAttackTrigger
+                                    // Aura's controller and has the Aura as its source. An Equipment's "whenever
+                                    // equipped creature attacks" ability is likewise the Equipment's own ability.
+                                    boolean permOwnedAttackTrigger = slot == EffectSlot.ON_ATTACK
+                                            && (perm.getCard().isAttackTriggerOwnedByAura()
+                                            || perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT));
+                                    UUID grantedAttackControllerId = permOwnedAttackTrigger
                                             ? auraOwnerId : finalCreatureControllerId;
                                     UUID targetChooserId = slot == EffectSlot.ON_ATTACK
                                             && perm.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
@@ -255,7 +264,7 @@ public class CombatTriggerService {
                                             slot == EffectSlot.ON_ATTACK
                                                     ? new PermanentChoiceContext.AttackTriggerTarget(
                                                             perm.getCard(), grantedAttackControllerId, effectsForStack,
-                                                            auraOwnedAttackTrigger ? perm.getId() : creature.getId(),
+                                                            permOwnedAttackTrigger ? perm.getId() : creature.getId(),
                                                             targetChooserId, attackedTargetId, creature.getId())
                                                     : new PermanentChoiceContext.AttackTriggerTarget(
                                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),

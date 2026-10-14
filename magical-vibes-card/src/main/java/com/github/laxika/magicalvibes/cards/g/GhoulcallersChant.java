@@ -19,11 +19,11 @@ public class GhoulcallersChant extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactly(
                                 new CardTypePredicate(CardType.CREATURE), 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return two target Zombie cards from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactly(
                                 new CardSubtypePredicate(CardSubtype.ZOMBIE), 2))
         )));
     }

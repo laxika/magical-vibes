@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -36,10 +37,12 @@ class GideonsBattleCryTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the optional search returns Gideon from the graveyard")
     void searchesGraveyardForGideon() {
-        harness.setGraveyard(player1, List.of(new GideonTheOathsworn()));
+        Card gideon = new GideonTheOathsworn();
+        harness.setGraveyard(player1, List.of(gideon));
 
         castBattleCry();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(gideon.getId()));
 
         harness.assertInHand(player1, "Gideon, the Oathsworn");
         harness.assertNotInGraveyard(player1, "Gideon, the Oathsworn");
@@ -48,13 +51,16 @@ class GideonsBattleCryTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the optional search offers Gideon from the library")
     void searchesLibraryForGideon() {
-        harness.setLibrary(player1, List.of(new GideonTheOathsworn()));
+        Card gideon = new GideonTheOathsworn();
+        harness.setLibrary(player1, List.of(gideon));
 
         castBattleCry();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, 0);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice.pool()).containsExactly(gideon);
+        harness.handleMultipleCardsChosen(player1, List.of(gideon.getId()));
 
         harness.assertInHand(player1, "Gideon, the Oathsworn");
     }

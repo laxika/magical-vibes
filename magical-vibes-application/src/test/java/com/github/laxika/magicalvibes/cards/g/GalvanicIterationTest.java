@@ -105,8 +105,9 @@ class GalvanicIterationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castAndResolveInstant(player1, 0);
 
-        harness.castModalSorcery(player1, 0, 2, List.of(player2.getId()));
+        harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{2}, List.of(player2.getId()), null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.passBothPriorities();
 

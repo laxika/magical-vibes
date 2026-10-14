@@ -49,7 +49,7 @@ public class BlightXCostHandler implements PermanentChoiceCostHandler {
         if (xValue < 0) {
             throw new IllegalStateException("X can't be negative");
         }
-        if (cost.maximumX() != null) {
+        if (cost.fixedAmount() == null && cost.maximumX() != null) {
             int maximumX = amountEvaluationService.evaluate(
                     gameData, cost.maximumX(), new AmountContext(playerId, null, null, xValue, 0));
             if (xValue > maximumX) {
@@ -74,8 +74,9 @@ public class BlightXCostHandler implements PermanentChoiceCostHandler {
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Must choose a creature to blight");
         }
+        int amount = cost.fixedAmount() != null ? cost.fixedAmount() : xValue;
         int count = gameQueryService.replaceCounters(
-                gameData, chosen, CounterType.MINUS_ONE_MINUS_ONE, xValue, player.getId());
+                gameData, chosen, CounterType.MINUS_ONE_MINUS_ONE, amount, player.getId());
         if (count <= 0) {
             return;
         }
@@ -90,6 +91,7 @@ public class BlightXCostHandler implements PermanentChoiceCostHandler {
 
     @Override
     public String getPromptMessage(int remaining) {
-        return "Choose a creature to blight " + xValue + ".";
+        int amount = cost.fixedAmount() != null ? cost.fixedAmount() : xValue;
+        return "Choose a creature to blight " + amount + ".";
     }
 }

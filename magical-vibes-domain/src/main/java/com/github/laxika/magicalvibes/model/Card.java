@@ -696,6 +696,7 @@ public class Card {
     public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
     public void setToken(boolean token) { assertMutable(); this.token = token; }
+    public void setCombinedManaValue(Integer combinedManaValue) { assertMutable(); this.combinedManaValue = combinedManaValue; }
     public void setBedtimeStory(boolean bedtimeStory) { assertMutable(); this.bedtimeStory = bedtimeStory; }
     public void setTokenCard(boolean tokenCard) { assertMutable(); this.tokenCard = tokenCard; }
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }

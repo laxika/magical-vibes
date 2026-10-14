@@ -2291,14 +2291,11 @@ public class MultiPermanentChoiceHandlerService {
 
     private void handleSacrificePermanentsDrawPerSacrificed(GameData gameData, UUID playerId,
                                                             List<UUID> permanentIds) {
-        int sacrificed = 0;
-        for (UUID permId : permanentIds) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null) {
-                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
-                sacrificed++;
-            }
-        }
+        int sacrificed = (int) permanentIds.stream()
+                .map(permId -> gameQueryService.findPermanentById(gameData, permId))
+                .filter(java.util.Objects::nonNull)
+                .count();
+        destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (sacrificed > 0) {

@@ -668,12 +668,21 @@ public class MayCopyHandlerService {
         } else if (EffectResolution.needsTarget(spellCard)) {
             Zone targetZone = targetSpellEntry.getTargetZone() != null ? targetSpellEntry.getTargetZone() : Zone.BATTLEFIELD;
 
-            List<UUID> candidateTargets = new ArrayList<>(gameData.orderedPlayerIds);
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    candidateTargets.add(p.getId());
+            List<UUID> candidateTargets = new ArrayList<>();
+            if (targetZone == Zone.GRAVEYARD) {
+                for (List<Card> graveyard : gameData.playerGraveyards.values()) {
+                    for (Card graveyardCard : graveyard) {
+                        candidateTargets.add(graveyardCard.getId());
+                    }
+                }
+            } else {
+                candidateTargets.addAll(gameData.orderedPlayerIds);
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        candidateTargets.add(p.getId());
+                    }
                 }
             }
 
@@ -684,7 +693,9 @@ public class MayCopyHandlerService {
                             spellCard,
                             candidate,
                             targetZone,
-                            targetSpellEntry.getControllerId()
+                            targetSpellEntry.getControllerId(),
+                            true,
+                            targetSpellEntry.getXValue()
                     );
                     validTargets.add(candidate);
                 } catch (IllegalStateException ignored) {

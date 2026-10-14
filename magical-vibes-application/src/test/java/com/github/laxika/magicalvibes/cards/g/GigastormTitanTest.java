@@ -108,6 +108,7 @@ class GigastormTitanTest extends BaseCardTest {
     @DisplayName("A spell cast on a previous turn does not enable the reduction")
     void reductionExpiresAfterTurn() {
         harness.setHand(player1, List.of(new GigastormTitan(), new GigastormTitan()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0);

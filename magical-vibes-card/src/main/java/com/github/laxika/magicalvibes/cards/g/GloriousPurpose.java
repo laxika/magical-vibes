@@ -21,7 +21,9 @@ public class GloriousPurpose extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new PutCountersOnSelfEffect(CounterType.PLAN)));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, new ConditionalEffect(
+        // "When the sixth plan counter is put on this enchantment" is qualified by the counter placement
+        // itself, so the threshold is checked only when the counter is put, not again on resolution.
+        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(6, CounterType.PLAN),
                 SacrificeSelfThenEffect.reflexive(
                         ExileTopCardsAndMayCastSpellsEffect.controllerWithRestToHand(4))));

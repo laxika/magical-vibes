@@ -228,6 +228,7 @@ class GiselaBladeOfGoldnightTest extends BaseCardTest {
     void preventsHalfDamageToControlledPlaneswalker() {
         harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
         var tamiyo = harness.addToBattlefieldAndReturn(player1, new TamiyoTheMoonSage());
+        tamiyo.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player1, List.of(new Blaze()));
         harness.addMana(player1, ManaColor.RED, 4);
 

@@ -162,6 +162,7 @@ class GabrielAngelfireTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, gabriel, Keyword.FIRST_STRIKE)).isFalse();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Trample");
+        resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, gabriel, Keyword.TRAMPLE)).isTrue();
 
         advanceToUpkeep(player2);
@@ -170,6 +171,7 @@ class GabrielAngelfireTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, gabriel, Keyword.TRAMPLE)).isFalse();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Flying");
+        resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, gabriel, Keyword.FLYING)).isTrue();
     }
 
@@ -181,6 +183,7 @@ class GabrielAngelfireTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, label);
+        resolveAllTriggers();
     }
 
     private void addReadyApes(Player player) {

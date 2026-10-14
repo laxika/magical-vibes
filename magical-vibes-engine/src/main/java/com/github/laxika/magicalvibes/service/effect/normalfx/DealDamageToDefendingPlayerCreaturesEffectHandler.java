@@ -44,7 +44,11 @@ public class DealDamageToDefendingPlayerCreaturesEffectHandler implements Normal
         if (attackedTargetId == null) {
             return;
         }
-        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+        // CR 508.5: the defending player stays the one the attacker attacked even if the attacked
+        // planeswalker has since left the battlefield, so prefer the player recorded at trigger time.
+        UUID defendingPlayerId = entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId()
+                : gameData.playerIds.contains(attackedTargetId)
                 ? attackedTargetId
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
         if (defendingPlayerId == null) {

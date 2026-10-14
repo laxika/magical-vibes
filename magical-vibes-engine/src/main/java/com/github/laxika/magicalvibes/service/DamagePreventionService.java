@@ -250,9 +250,8 @@ public class DamagePreventionService {
     public boolean applyPreventCombatDamageToSelfAndExile(GameData gameData, Permanent target, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData, true)) return false;
         if (damage <= 0) return false;
-        boolean hasEffect = target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof PreventCombatDamageToSelfAndExileFromLibraryEffect);
-        if (!hasEffect) return false;
+        if (!gameQueryService.hasActiveStaticEffect(gameData, target,
+                PreventCombatDamageToSelfAndExileFromLibraryEffect.class)) return false;
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         List<Card> deck = controllerId == null ? null : gameData.playerDecks.get(controllerId);
         if (deck != null) {
@@ -498,6 +497,13 @@ public class DamagePreventionService {
                 (gd, c, damage) -> damage > 0 && c.combatDamage()
                         && hasActiveCombatDamageToSelfAndAddPlusOneCounterEffect(gd, c.permanent(), c.damageSource()),
                 (gd, c, damage) -> applyCombatDamageToSelfAndAddPlusOneCounter(gd, c.permanent(), c.damageSource(), damage)));
+        steps.add(step("PlusOneCounterShieldUnpreventable", "Put +1/+1 counters on it equal to the damage (can't be prevented)", replacement, false,
+                (gd, c, damage) -> damage > 0 && !preventable(gd, c)
+                        && c.permanent().isAllDamageToPlusOnePlusOneCounterPreventionShield(),
+                (gd, c, damage) -> {
+                    putShieldPlusOneCounters(gd, c.permanent(), damage);
+                    return damage;
+                }));
         steps.add(step("ShieldCounter", "Remove a shield counter to prevent the damage", prevention, false,
                 (gd, c, damage) -> damage > 0 && c.permanent().getCounterCount(CounterType.SHIELD) > 0,
                 (gd, c, damage) -> {
@@ -673,15 +679,7 @@ public class DamagePreventionService {
         steps.add(step("PlusOneCounterShield", "Prevent the damage and put +1/+1 counters on it", prevention, false,
                 (gd, c, damage) -> preventable(gd, c) && c.permanent().isAllDamageToPlusOnePlusOneCounterPreventionShield(),
                 (gd, c, damage) -> {
-                    Permanent permanent = c.permanent();
-                    if (!gameQueryService.cantHaveCounters(gd, permanent)) {
-                        int counters = gameQueryService.doublePlusOnePlusOneCounters(gd, permanent, damage);
-                        if (counters > 0) {
-                            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
-                                    permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
-                            recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gd, permanent, counters);
-                        }
-                    }
+                    putShieldPlusOneCounters(gd, c.permanent(), damage);
                     return 0;
                 }));
         steps.add(step("Temper", "Prevent damage and put +1/+1 counters on it (Temper)", prevention, false,
@@ -769,6 +767,19 @@ public class DamagePreventionService {
             }
         }
         return damage - preventedDamage;
+    }
+
+    /** Puts the +1/+1 counters a shielded creature gets for damage dealt to it (Gatta and Luzzu). */
+    private void putShieldPlusOneCounters(GameData gameData, Permanent permanent, int damage) {
+        if (gameQueryService.cantHaveCounters(gameData, permanent)) {
+            return;
+        }
+        int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
+        if (counters > 0) {
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                    permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+            recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent, counters);
+        }
     }
 
     private void putPlusOneCountersFor(GameData gameData, Permanent permanent, int damage) {
@@ -1060,6 +1071,7 @@ public class DamagePreventionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(recipientId);
         if (battlefield == null) return damage;
         for (Permanent p : battlefield) {
+            if (gameQueryService.hasLostPrintedAbilities(gameData, p)) continue;
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PreventHalfDamageToControllerAndTheirPermanentsEffect) {
                     damage /= 2;
@@ -1149,8 +1161,9 @@ public class DamagePreventionService {
                         && (!prevention.creatureSourcesOnly() || gameQueryService.isCreature(gameData, damageSource))) {
                     int amount = amountEvaluationService.evaluate(gameData, prevention.amount(),
                             AmountContext.forStaticEffect(source, controllerId));
+                    UUID recipientId = protectedCreature == null ? controllerId : protectedCreature.getId();
                     reduction += sharedCombatPreventionAmount(gameData, damageSource.getId(), source.getId(),
-                            protectedCreature.getId(), amount, combatDamage);
+                            recipientId, amount, combatDamage);
                 }
             }
         }
@@ -2586,6 +2599,7 @@ public class DamagePreventionService {
 
         long totalReduction = 0;
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PreventDamageFromOpponentSourcesEffect e) {
                     totalReduction += e.amount();
@@ -3273,6 +3287,7 @@ public class DamagePreventionService {
     /** Whether Gisela-style effects halve damage to {@code recipientId}. */
     public boolean hasHalfDamagePrevention(GameData gameData, UUID recipientId) {
         return gameData.playerBattlefields.getOrDefault(recipientId, List.of()).stream()
+                .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
                 .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(PreventHalfDamageToControllerAndTheirPermanentsEffect.class::isInstance));
     }
@@ -3529,8 +3544,8 @@ public class DamagePreventionService {
     /** Whether Gloom Surgeon would prevent combat damage dealt to {@code target}. */
     public boolean hasPreventCombatDamageToSelfAndExile(GameData gameData, Permanent target) {
         return gameQueryService.isDamagePreventable(gameData, true)
-                && target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(PreventCombatDamageToSelfAndExileFromLibraryEffect.class::isInstance);
+                && gameQueryService.hasActiveStaticEffect(gameData, target,
+                PreventCombatDamageToSelfAndExileFromLibraryEffect.class);
     }
 
     /** Whether Sokrates' dialogue replaces combat damage {@code source} would deal to a player. */

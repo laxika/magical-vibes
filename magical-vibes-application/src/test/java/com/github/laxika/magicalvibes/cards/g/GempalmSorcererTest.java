@@ -100,11 +100,12 @@ class GempalmSorcererTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GempalmSorcerer(),
                 new FugitiveWizard(), new FugitiveWizard(), new FugitiveWizard(),
                 new FugitiveWizard(), new FugitiveWizard(), new FugitiveWizard(), new FugitiveWizard()));
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertInGraveyard(player1, "Gempalm Sorcerer");
         assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isFalse();

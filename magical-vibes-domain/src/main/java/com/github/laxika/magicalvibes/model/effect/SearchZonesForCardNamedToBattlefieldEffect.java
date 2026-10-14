@@ -4,7 +4,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * Searches the controller's graveyard, optionally hand, and/or library for a card with the given
  * name and puts it onto the battlefield under their control. Graveyard and hand matches (public /
  * hidden zones the controller already sees) are taken automatically; only the library search
- * presents an interactive pick and shuffles afterwards. Mirrors
+ * presents an interactive pick and shuffles afterwards. With {@code includeHand} and no
+ * {@code selectedZones}, matches in several of the searched zones first prompt the controller to
+ * choose the zone to search. Mirrors
  * {@link SearchLibraryAndOrGraveyardForNamedCardToHandEffect} but puts the card onto the
  * battlefield instead of into hand (Gate to the Afterlife's God-Pharaoh's Gift tutor).
  *

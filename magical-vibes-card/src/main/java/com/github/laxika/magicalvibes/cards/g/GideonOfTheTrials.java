@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -48,7 +50,9 @@ public class GideonOfTheTrials extends Card {
                 0,
                 List.of(new CreateEmblemEffect(
                         List.of(new ConditionalEffect(
-                                new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GIDEON)),
+                                new ControlsPermanent(new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSubtypePredicate(CardSubtype.GIDEON),
+                                        new PermanentIsPlaneswalkerPredicate()))),
                                 new CantLoseGameEffect())),
                         "As long as you control a Gideon planeswalker, you can't lose the game and "
                                 + "your opponents can't win the game.")),

@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +24,8 @@ import java.util.UUID;
 public class CastTopOfLibraryWithoutPayingManaCostEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final CardRevealService cardRevealService;
+    private final CastingCostService castingCostService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,8 +52,11 @@ public class CastTopOfLibraryWithoutPayingManaCostEffectHandler implements Norma
         String logEntry = playerName + " looks at the top card of their library (" + sourceName + ").";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} looks at top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
+        cardRevealService.revealToPlayer(gameData, controllerId, GameEventFact.RevealZone.LIBRARY,
+                List.of(topCard), controllerId);
 
-        boolean matches = e.matches(topCard);
+        boolean matches = e.matches(topCard)
+                && castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, topCard);
         if (!matches) {
             String noMatch = "The top card is not a castable type.";
             gameLogService.append(gameData, GameLog.text(noMatch));

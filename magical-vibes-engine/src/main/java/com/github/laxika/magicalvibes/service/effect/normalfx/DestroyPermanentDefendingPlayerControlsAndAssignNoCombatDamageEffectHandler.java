@@ -51,11 +51,12 @@ public class DestroyPermanentDefendingPlayerControlsAndAssignNoCombatDamageEffec
             return;
         }
 
-        if (!permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
-            return;
+        // The no-combat-damage instruction is a separate step after the destroy instruction (CR 608.2c),
+        // so regeneration or indestructibility of the artifact does not restore combat damage.
+        if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
+            gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
-        gameLogService.append(gameData, GameLog.isDestroyed(target.getCard()));
-        permanentRemovalService.removeOrphanedAuras(gameData);
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source != null) {

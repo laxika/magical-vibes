@@ -78,6 +78,7 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castAndResolveSorcery(player1, 0, List.of(targetId));
+        harness.handleMultipleCardsChosen(player1, List.of(jace.getId()));
 
         // Creature bounced
         harness.assertNotOnBattlefield(player2, "Jace's Sentinel");
@@ -113,7 +114,7 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castAndResolveSorcery(player1, 0, List.of());
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(jace.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(jace);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -129,7 +130,7 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castAndResolveSorcery(player1, 0, List.of());
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(jace);
@@ -187,7 +188,7 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(first, second));
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(jace.getId()));
 
         harness.assertNotOnBattlefield(player1, "Jace's Sentinel");
         harness.assertInHand(player1, "Jace's Sentinel");

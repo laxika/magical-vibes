@@ -106,13 +106,18 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             case DEFENDING_PLAYER -> {
                 // Non-targeting ON_ATTACK edict: the attacked player, or the controller of the
                 // attacked planeswalker, sacrifices (reads the trigger's attackedTargetId).
-                UUID attackedTargetId = entry.getAttackedTargetId();
-                if (attackedTargetId == null) {
-                    return;
+                // The defending player is captured when the attack is declared, so it still
+                // applies after the attacked planeswalker has left the battlefield.
+                UUID defendingPlayerId = entry.getDefendingPlayerId();
+                if (defendingPlayerId == null) {
+                    UUID attackedTargetId = entry.getAttackedTargetId();
+                    if (attackedTargetId == null) {
+                        return;
+                    }
+                    defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+                            ? attackedTargetId
+                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
                 }
-                UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
-                        ? attackedTargetId
-                        : gameQueryService.findPermanentController(gameData, attackedTargetId);
                 if (defendingPlayerId == null || !gameData.playerIds.contains(defendingPlayerId)) {
                     return;
                 }
@@ -253,6 +258,12 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         }
         if (e.recordSacrificedPower()) {
             entry.setEventValue(0);
+        }
+        // A lone affected player has no simultaneity to preserve, so a creature-only sacrifice uses the
+        // single-select creature primitive, as it does for every other single-player sacrifice.
+        if (creatureSingleSac && playerIds.size() == 1) {
+            resolveSinglePlayer(gameData, entry, e, playerIds.getFirst(), true);
+            return;
         }
 
         // Per CR 101.4 and the Destructive Force ruling (2010-08-15): active player chooses first,

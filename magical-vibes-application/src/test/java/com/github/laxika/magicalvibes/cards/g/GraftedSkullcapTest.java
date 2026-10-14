@@ -147,9 +147,8 @@ class GraftedSkullcapTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Inspiration()));
         harness.setLibrary(player1, List.of(new CoralMerfolk(), new CoralMerfolk()));
         harness.setGraveyard(player1, List.of());
-        harness.addMana(player1, ManaColor.BLUE, 4);
-
         advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castAndResolveInstant(player1, 0, player1.getId());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         resolveAllTriggers();

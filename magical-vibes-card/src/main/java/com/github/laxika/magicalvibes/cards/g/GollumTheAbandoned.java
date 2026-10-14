@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -20,12 +21,14 @@ import java.util.List;
 public class GollumTheAbandoned extends Card {
 
     public GollumTheAbandoned() {
+        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT));
 
-        addActivatedAbility(new ActivatedAbility(
+        addGraveyardActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
                 List.of(

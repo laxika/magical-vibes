@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -62,6 +63,11 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 insertElseEffect(entry, e);
                 return;
             }
+        }
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.BlightEffect
+                && !controlsBlightableCreature(gameData, entry.getControllerId())) {
+            insertElseEffect(entry, e);
+            return;
         }
         if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect tap
                 && tap.scope() == com.github.laxika.magicalvibes.model.effect.TapUntapScope.TRIGGERING) {
@@ -230,6 +236,17 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         if (may.elseEffect() != null) {
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(may.elseEffect()));
         }
+    }
+
+    private boolean controlsBlightableCreature(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .anyMatch(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent)
+                        && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent));
     }
 
     private boolean canSacrificeEnchantedPermanent(GameData gameData, StackEntry entry, UUID choicePlayerId) {

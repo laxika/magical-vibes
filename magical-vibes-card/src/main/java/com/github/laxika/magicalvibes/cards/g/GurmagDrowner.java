@@ -17,6 +17,6 @@ public class GurmagDrowner extends Card {
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
         addEffect(EffectSlot.ON_EXPLOIT,
                 new LookAtTopCardsEffect(new Fixed(4), new Fixed(1), null,
-                        LookDestination.GRAVEYARD, false));
+                        LookDestination.GRAVEYARD, false).withExactChooseCount());
     }
 }

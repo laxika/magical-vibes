@@ -108,9 +108,9 @@ class GauFeralYouthTest extends BaseCardTest {
         addReadyGau();
         harness.addToBattlefield(player1, new ScavengerGrounds());
         harness.setGraveyard(player1, List.of(new GauFeralYouth()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         advanceToEndStep();
         assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 1, 1, null, null);
         harness.passBothPriorities();

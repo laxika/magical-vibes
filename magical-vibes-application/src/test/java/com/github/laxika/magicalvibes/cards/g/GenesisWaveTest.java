@@ -65,7 +65,6 @@ class GenesisWaveTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 3);
         harness.handleMultipleCardsChosen(player1, List.of(arrest.getId(), forest.getId()));
-        harness.handlePermanentChosen(player1, creature.getId());
 
         harness.assertOnBattlefield(player1, "Arrest");
         assertThat(findPermanent(player1, "Arrest").getAttachedTo()).isEqualTo(creature.getId());
@@ -82,7 +81,6 @@ class GenesisWaveTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 2);
         harness.handleMultipleCardsChosen(player1, List.of(clasp.getId()));
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Contagion Clasp");
@@ -103,7 +101,6 @@ class GenesisWaveTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 4);
         harness.handleMultipleCardsChosen(player1,
                 List.of(drake.getId(), shield1.getId(), shield2.getId(), shield3.getId()));
-        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Lumengrid Drake");

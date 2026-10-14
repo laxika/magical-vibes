@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -59,7 +58,6 @@ class GiantbaitingTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         assertThat(getTokens()).hasSize(1);
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isNotEmpty();
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

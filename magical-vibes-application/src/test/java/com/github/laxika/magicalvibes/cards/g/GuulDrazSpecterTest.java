@@ -134,7 +134,7 @@ class GuulDrazSpecterTest extends BaseCardTest {
         addAttackingSpecter();
 
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

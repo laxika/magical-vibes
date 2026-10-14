@@ -27,12 +27,12 @@ public class GallifreyFallsNoMore extends Card {
                 ).withManaCost("{4}{R}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "No More — Any number of target creatures you control phase out",
-                        List.of(noMore), TargetFilters.creatureYouControl(), null, 0, 99, false, null
+                        List.of(noMore), TargetFilters.creatureYouControl(), null, 0, Integer.MAX_VALUE, false, null
                 ).withManaCost("{2}{W}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Fuse — Gallifrey Falls and then No More",
                         List.of(gallifreyFalls, noMore), TargetFilters.creatureYouControl(), null,
-                        0, 99, false, null
+                        0, Integer.MAX_VALUE, false, null
                 ).withManaCost("{2}{W}{4}{R}{R}")
         )));
     }

@@ -20,7 +20,8 @@ import java.util.List;
 public class GenghisFrog extends Card {
 
     public GenghisFrog() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, mutagenToken());
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.MUTANT),
                         mutagenToken()));
@@ -30,7 +31,7 @@ public class GenghisFrog extends Card {
         return CreateTokenEffect.ofArtifactToken(
                 1,
                 "Mutagen",
-                List.of(),
+                List.of(CardSubtype.MUTAGEN),
                 List.of(new ActivatedAbility(
                         true,
                         "{1}",

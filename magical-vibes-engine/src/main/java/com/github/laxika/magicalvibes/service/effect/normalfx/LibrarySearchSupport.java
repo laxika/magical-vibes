@@ -622,6 +622,9 @@ public class LibrarySearchSupport {
             // Searching an empty library is still a search, so opponent-search triggers fire here too
             // (the interaction-starting path fires them in sendLibrarySearchToPlayer).
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
             String logMsg = playerName + " searches their library but it is empty."
                     + (shuffleAfterSelection ? " Library is shuffled." : "");
             gameLogService.append(gameData, GameLog.text(logMsg));

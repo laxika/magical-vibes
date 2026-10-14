@@ -88,10 +88,7 @@ public class SeekLibraryAndPerpetuallyModifySoughtCardEffectHandler
                 existing.forEach((existingSlot, effects) ->
                         updated.put(existingSlot, new ArrayList<>(effects)));
             }
-            List<CardEffect> effects = updated.computeIfAbsent(slot, ignoredSlot -> new ArrayList<>());
-            if (!effects.contains(ability)) {
-                effects.add(ability);
-            }
+            updated.computeIfAbsent(slot, ignoredSlot -> new ArrayList<>()).add(ability);
             updated.replaceAll((existingSlot, slotEffects) -> List.copyOf(slotEffects));
             return Map.copyOf(updated);
         });

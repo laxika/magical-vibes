@@ -3,20 +3,23 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
 import com.github.laxika.magicalvibes.cards.c.CaligoSkinWitch;
+import com.github.laxika.magicalvibes.cards.s.StealArtifact;
 import com.github.laxika.magicalvibes.cards.t.TheFlameOfKeld;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GuardiansOfKoilos.class, GildedLotus.class, ArvadTheCursed.class,
-        TheFlameOfKeld.class, CaligoSkinWitch.class})
+        TheFlameOfKeld.class, CaligoSkinWitch.class, StealArtifact.class})
 class GuardiansOfKoilosTest extends BaseCardTest {
 
     private void castGuardians() {
@@ -52,8 +55,15 @@ class GuardiansOfKoilosTest extends BaseCardTest {
 
     @Test
     void borrowedHistoricPermanentReturnsToOwner() {
-        var lotus = harness.addToBattlefieldAndReturn(player1, new GildedLotus());
-        gd.stolenCreatures.put(lotus.getId(), player2.getId());
+        var lotus = harness.addToBattlefieldAndReturn(player2, new GildedLotus());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new StealArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, lotus.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(lotus);
         castGuardians();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, lotus.getId());

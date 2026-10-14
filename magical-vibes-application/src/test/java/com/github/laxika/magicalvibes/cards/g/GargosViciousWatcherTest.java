@@ -125,7 +125,7 @@ class GargosViciousWatcherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, gargos.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
@@ -140,7 +140,7 @@ class GargosViciousWatcherTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TurnToFrog(), new GiantGrowth()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, gargos.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.GREEN, 1);

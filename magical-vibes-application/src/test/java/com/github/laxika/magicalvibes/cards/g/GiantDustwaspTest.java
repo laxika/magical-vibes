@@ -37,7 +37,7 @@ class GiantDustwaspTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -54,10 +54,12 @@ class GiantDustwaspTest extends BaseCardTest {
     void decliningSuspendCastLeavesCardExiled() {
         GiantDustwasp card = suspendCard();
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 

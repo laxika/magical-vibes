@@ -144,7 +144,7 @@ class Mh1GiverOfRunesTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
         assertThat(target.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLUE);
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.BLUE);
     }
@@ -229,7 +229,7 @@ class Mh1GiverOfRunesTest extends BaseCardTest {
         harness.handleListChoice(player1, "COLORLESS");
         assertThat(gqs.hasProtectionFrom(gd, target, null)).isTrue();
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasProtectionFrom(gd, target, null)).isFalse();
     }

@@ -173,7 +173,7 @@ class GiantsAmuletTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        return findPermanent(player1, "Giant's Amulet");
+        return findPermanents(player1, "Giant's Amulet").getLast();
     }
 
     private Permanent addAmuletReady(com.github.laxika.magicalvibes.model.Player player) {

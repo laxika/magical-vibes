@@ -63,8 +63,11 @@ public class LookAtTopCardMayRevealMatchingToHandEffectHandler
         cardRevealService.revealToPlayer(gameData, controllerId,
                 com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.LIBRARY,
                 List.of(topCard), controllerId);
+        // The source may have left the battlefield while its ability was on the stack; the entry's
+        // snapshot keeps the chosen characteristic (Gathering Stone's chosen type) for the match.
         boolean matches = predicateEvaluationService.matchesCardPredicate(
-                topCard, e.predicate(), entry.getCard().getId(), gameData, controllerId);
+                topCard, e.predicate(), entry.getCard().getId(), gameData, controllerId,
+                entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot());
 
         if (matches) {
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

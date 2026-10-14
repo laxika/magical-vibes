@@ -17,6 +17,6 @@ public class SweetOblivion extends Card {
         addEffect(EffectSlot.SPELL, new MillEffect(4, MillRecipient.TARGET_PLAYER));
         addCastingOption(new GraveyardCast(null, "{3}{U}",
                 List.of(new ExileNCardsFromGraveyardCastingCost(null, "other cards", 4)),
-                null, false, true));
+                null, false, false, true));
     }
 }

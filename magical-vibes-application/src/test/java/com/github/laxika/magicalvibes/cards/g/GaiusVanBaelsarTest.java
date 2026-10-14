@@ -27,7 +27,7 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         harness.addToBattlefield(player1, player1Token);
         harness.addToBattlefield(player2, player2Token);
 
-        castGaius(0);
+        castGaius("Each player sacrifices a creature token");
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Player 1 Soldier Token")).isEmpty();
@@ -42,7 +42,7 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         Permanent player2FirstBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent player2SecondBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        castGaius(1);
+        castGaius("Each player sacrifices a nontoken creature");
         resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(player1Bears.getId()));
@@ -60,7 +60,7 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.addToBattlefield(player2, new FountainOfYouth());
 
-        castGaius(2);
+        castGaius("Each player sacrifices an enchantment");
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Ground Seal")).isEmpty();
@@ -69,10 +69,12 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Fountain of Youth");
     }
 
-    private void castGaius(int mode) {
+    private void castGaius(String mode) {
         harness.setHand(player1, List.of(new GaiusVanBaelsar()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
     }
 
     @Test
@@ -99,7 +101,7 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         harness.addToBattlefield(player1, creatureToken("Friendly Soldier"));
         harness.addToBattlefield(player2, creatureToken("Opposing Soldier"));
 
-        castGaius(1);
+        castGaius("Each player sacrifices a nontoken creature");
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Gaius van Baelsar");
@@ -118,7 +120,7 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         harness.addToBattlefield(player1, treasure);
         harness.addToBattlefield(player2, creatureToken("Opposing Soldier"));
 
-        castGaius(0);
+        castGaius("Each player sacrifices a creature token");
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Treasure");

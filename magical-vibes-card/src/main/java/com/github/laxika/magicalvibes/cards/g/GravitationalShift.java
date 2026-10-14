@@ -14,9 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class GravitationalShift extends Card {
 
     public GravitationalShift() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-2, 0, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-2, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
     }
 }

@@ -55,7 +55,10 @@ public class PutCounterOnCombatOpponentAtEndOfCombatEffectHandler implements Nor
                     .getOrDefault(entry.getSourcePermanentId(), Set.of());
             for (UUID combatOpponentId : combatOpponentIds) {
                 Permanent combatOpponent = gameQueryService.findPermanentById(gameData, combatOpponentId);
-                if (combatOpponent != null && gameQueryService.isCreature(gameData, combatOpponent)) {
+                // A creature removed from combat since the block (e.g. by regeneration) is no longer
+                // blocking or blocked, so it does not receive the counter.
+                if (combatOpponent != null && gameQueryService.isCreature(gameData, combatOpponent)
+                        && (combatOpponent.isBlocking() || combatOpponent.isAttacking())) {
                     permanentCounterSupport.placeCounterOnPermanent(gameData, entry, combatOpponent,
                             counterEffect.counterType(), counterEffect.amount());
                     if (counterEffect.alsoTap()) {

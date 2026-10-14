@@ -163,13 +163,14 @@ class GideonOfTheTrialsTest extends BaseCardTest {
     @Test
     void preventionExpiresWhenAbilityControllersNextTurnBegins() {
         addReadyGideon(player1);
+        harness.setHand(player2, List.of());
         Permanent attacker = addCreatureReady(player2, new DuneBeetle());
         harness.activateAbility(player1, 0, 0, null, attacker.getId());
         harness.passBothPriorities();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.isPreventedFromDealingDamage(attacker.getId())).isTrue();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.isPreventedFromDealingDamage(attacker.getId())).isFalse();
     }
 
@@ -192,7 +193,7 @@ class GideonOfTheTrialsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.isCreature(gd, gideon)).isFalse();
         assertThat(gqs.hasKeyword(gd, gideon, Keyword.INDESTRUCTIBLE)).isFalse();
         harness.setHand(player2, List.of(new Shock()));

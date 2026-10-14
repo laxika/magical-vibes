@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePre
 public class GatheringStone extends Card {
 
     public GatheringStone() {
-        CardHasSourceChosenSubtypePredicate chosenType = new CardHasSourceChosenSubtypePredicate();
+        CardHasSourceChosenSubtypePredicate chosenType = new CardHasSourceChosenSubtypePredicate(false);
 
         // As this artifact enters, choose a creature type.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());

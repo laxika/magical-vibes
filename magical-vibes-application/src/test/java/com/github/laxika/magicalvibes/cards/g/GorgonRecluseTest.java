@@ -33,6 +33,7 @@ class GorgonRecluseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
 
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Penumbra Spider");
     }
@@ -50,6 +51,7 @@ class GorgonRecluseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
 
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Penumbra Spider");
     }
@@ -76,6 +78,7 @@ class GorgonRecluseTest extends BaseCardTest {
         ));
 
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .contains(firstBlocker.getCard(), secondBlocker.getCard());

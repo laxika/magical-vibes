@@ -120,6 +120,7 @@ class GlorifyingVerseTest extends BaseCardTest {
     void reparteeDoesNotTriggerForOpponentsSpell() {
         harness.addToBattlefield(player1, new GlorifyingVerse());
         harness.addToBattlefield(player1, new HillGiant());
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.ensurePriority(player2);

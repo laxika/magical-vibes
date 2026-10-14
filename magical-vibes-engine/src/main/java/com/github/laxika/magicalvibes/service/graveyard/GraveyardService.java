@@ -520,6 +520,7 @@ public class GraveyardService {
         // "If [this creature] would die, put it on top or bottom of its owner's library instead"
         // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
         DyingCreatureLibraryReplacementEffect libraryReplacement = sourceZone == Zone.BATTLEFIELD
+                && (battlefieldSnapshot == null || !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())
                 ? getDyingCreatureLibraryReplacementEffect(card)
                 : null;
         if (libraryReplacement != null) {
@@ -1900,6 +1901,9 @@ public class GraveyardService {
                                                     UUID dyingControllerId, Permanent sourcePermanent,
                                                     UUID controllerId, UUID sourcePermanentId,
                                                     Permanent dyingPermanent) {
+        if (gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
+            return;
+        }
         Card sourceCard = sourcePermanent.getCard();
         List<CardEffect> cardEffects = sourceCard.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES);
         List<CardEffect> effects = new ArrayList<>(cardEffects == null ? List.of() : cardEffects);

@@ -73,6 +73,7 @@ class GuardianOfFaithTest extends BaseCardTest {
     @DisplayName("Phased-out creatures phase in during their controller's next untap")
     void phasesBackInDuringNextUntap() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new GuardianOfFaith()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -92,6 +93,7 @@ class GuardianOfFaithTest extends BaseCardTest {
     @Test
     void canFlashInDuringOpponentsTurnAndProtectAnotherGuardian() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GuardianOfFaith());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new GuardianOfFaith()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -134,6 +136,7 @@ class GuardianOfFaithTest extends BaseCardTest {
         creature.tap();
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new GuardianOfFaith()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0, List.of(creature.getId()));
@@ -145,6 +148,7 @@ class GuardianOfFaithTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
 
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature, equipment);

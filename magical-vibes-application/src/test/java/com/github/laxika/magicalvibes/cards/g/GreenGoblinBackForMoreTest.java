@@ -73,7 +73,7 @@ class GreenGoblinBackForMoreTest extends BaseCardTest {
     void mayhemCastsAfterDiscarding() {
         GreenGoblinBackForMore card = new GreenGoblinBackForMore();
         harness.setGraveyard(player1, List.of(card));
-        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), java.util.Set.of(card.getId()));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new java.util.HashSet<>(java.util.Set.of(card.getId())));
         prepareMainPhase();
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -158,7 +158,7 @@ class GreenGoblinBackForMoreTest extends BaseCardTest {
     void mayhemCannotBeCastDuringCombat() {
         GreenGoblinBackForMore card = new GreenGoblinBackForMore();
         harness.setGraveyard(player1, List.of(card));
-        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), java.util.Set.of(card.getId()));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new java.util.HashSet<>(java.util.Set.of(card.getId())));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();

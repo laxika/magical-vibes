@@ -39,6 +39,14 @@ public class PutSourceCardFromExileIntoLibraryNFromTopEffectHandler implements N
             return;
         }
 
+        long expectedVersion = entry.getTriggeringCardExileEntryVersion();
+        if (expectedVersion >= 0
+                && expectedVersion != gameData.exileEntryVersions.getOrDefault(cardId, 0L)) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(entry.getCard(), "'s ability fizzles (card left exile and was exiled again)."));
+            return;
+        }
+
         Card sourceCard = exiled.card();
         UUID ownerId = exiled.ownerId();
         if (!gameData.removeFromExile(cardId)) {

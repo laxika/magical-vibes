@@ -76,6 +76,7 @@ class GerminatingWurmTest extends BaseCardTest {
         GerminatingWurm wurm = new GerminatingWurm();
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(wurm));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreatureWithAlternateCost(player1, 0, List.of());

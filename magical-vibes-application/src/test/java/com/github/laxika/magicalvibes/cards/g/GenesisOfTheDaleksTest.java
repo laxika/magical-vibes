@@ -132,8 +132,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new Cybermat());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new Cybermat());
-        Permanent opposingSaga = harness.enterBattlefieldAndReturn(player2, new GenesisOfTheDaleks());
-        harness.passBothPriorities();
+        Permanent opposingSaga = castOpposingSagaWithChapterOne();
         saga.setCounterCount(CounterType.LORE, 3);
 
         advanceToNextChapter();
@@ -153,8 +152,7 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
         Permanent saga = addSagaWithLore(0);
         advanceToNextChapter();
         harness.passBothPriorities();
-        Permanent opposingSaga = harness.enterBattlefieldAndReturn(player2, new GenesisOfTheDaleks());
-        harness.passBothPriorities();
+        Permanent opposingSaga = castOpposingSagaWithChapterOne();
         saga.setCounterCount(CounterType.LORE, 3);
 
         advanceToNextChapter();
@@ -182,6 +180,18 @@ class GenesisOfTheDaleksTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         harness.assertLife(player2, 20);
         harness.assertInGraveyard(player1, "Genesis of the Daleks");
+    }
+
+    private Permanent castOpposingSagaWithChapterOne() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new GenesisOfTheDaleks(), "{4}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        return gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Genesis of the Daleks"))
+                .findFirst().orElseThrow();
     }
 
     private Permanent addSagaWithLore(int lore) {

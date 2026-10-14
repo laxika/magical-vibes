@@ -18,7 +18,7 @@ public class Gigapede extends Card {
                 new ConditionalEffect(
                         new SourceCardInGraveyard(),
                         new MayEffect(
-                                new DiscardCardThenEffect(
+                                DiscardCardThenEffect.continuing(
                                         null,
                                         new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
                                         "a card"),

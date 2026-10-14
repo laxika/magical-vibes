@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Applies {@link ReduceGraveyardSpellCastCostEffect} only while the spell is being cast from a
- * graveyard.
+ * graveyard by the source's controller ("Spells you cast from your graveyard cost {1} less").
  */
 @Component
 public class ReduceGraveyardSpellCastCostEffectHandler implements CostModificationHandlerBean {
@@ -21,7 +21,7 @@ public class ReduceGraveyardSpellCastCostEffectHandler implements CostModificati
 
     @Override
     public int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source) {
-        if (!context.fromGraveyard()) {
+        if (!context.fromGraveyard() || !source.controlledBy(context.castingPlayerId())) {
             return 0;
         }
         return -((ReduceGraveyardSpellCastCostEffect) effect).amount();

@@ -79,7 +79,7 @@ class GoblinShortcutterTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(target.isCantBlockThisTurn()).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(target.isCantBlockThisTurn()).isFalse();
     }

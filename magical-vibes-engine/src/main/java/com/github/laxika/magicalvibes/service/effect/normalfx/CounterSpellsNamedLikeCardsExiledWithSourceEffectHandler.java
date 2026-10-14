@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -29,7 +30,7 @@ public class CounterSpellsNamedLikeCardsExiledWithSourceEffectHandler implements
     private static final Set<StackEntryType> SPELL_TYPES = Set.of(
             StackEntryType.CREATURE_SPELL, StackEntryType.ENCHANTMENT_SPELL,
             StackEntryType.SORCERY_SPELL, StackEntryType.INSTANT_SPELL,
-            StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL);
+            StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL, StackEntryType.BATTLE_SPELL);
 
     private final CounterSupport counterSupport;
 
@@ -42,6 +43,15 @@ public class CounterSpellsNamedLikeCardsExiledWithSourceEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId == null) return;
+
+        for (int i = 0; i < gameData.exiledCards.size(); i++) {
+            ExiledCardEntry exiled = gameData.exiledCards.get(i);
+            if (sourcePermanentId.equals(exiled.sourcePermanentId()) && exiled.faceDown()) {
+                gameData.exiledCards.set(i, new ExiledCardEntry(exiled.card(), exiled.ownerId(),
+                        exiled.sourcePermanentId(), false, exiled.exilerId(), exiled.exiledTurnNumber(),
+                        exiled.controllerTurnsTakenAtExile(), exiled.abilityLink()));
+            }
+        }
 
         Set<String> exiledNames = new HashSet<>();
         for (Card card : gameData.getCardsExiledByPermanent(sourcePermanentId)) {

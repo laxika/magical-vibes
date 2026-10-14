@@ -31,7 +31,7 @@ public class GutTrueSoulZealot extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
 
-        addEffect(EffectSlot.ON_ATTACK, new MayEffect(
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new MayEffect(
                 new SacrificePermanentThenEffect(
                         anotherCreatureOrArtifact,
                         new CreateTokenEffect(1, "Skeleton", 4, 1, CardColor.BLACK,

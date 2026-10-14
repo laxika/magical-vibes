@@ -77,6 +77,7 @@ class GeistOfSaintTraftTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertLife(player2, 14);
         harness.assertOnBattlefield(player1, "Geist of Saint Traft");
@@ -141,7 +142,10 @@ class GeistOfSaintTraftTest extends BaseCardTest {
         Permanent angel = battlefield.stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Angel"))
                 .findFirst().orElseThrow();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).contains(new DelayedPermanentAction(angel.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).anySatisfy(action -> {
+            assertThat(action.permanentId()).isEqualTo(angel.getId());
+            assertThat(action.kind()).isEqualTo(DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
+        });
     }
 
     @Test
@@ -151,6 +155,7 @@ class GeistOfSaintTraftTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         // Let auto-pass take care of everything through end of combat
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         // By now auto-pass has advanced through the whole combat phase

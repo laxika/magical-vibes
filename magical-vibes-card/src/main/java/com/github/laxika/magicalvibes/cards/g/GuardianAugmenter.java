@@ -17,6 +17,8 @@ public class GuardianAugmenter extends Card {
         var commanderFilter = new PermanentIsCommanderPredicate();
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES, commanderFilter));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.HEXPROOF, GrantScope.ALL_OWN_CREATURES, commanderFilter));
+                Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS, commanderFilter));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                Keyword.HEXPROOF, GrantScope.SELF, commanderFilter));
     }
 }

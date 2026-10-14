@@ -108,7 +108,7 @@ class GaeasWillTest extends BaseCardTest {
 
         for (int i = 0; i < 4; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
         harness.handleMayAbilityChosen(player1, false);
 
@@ -232,7 +232,7 @@ class GaeasWillTest extends BaseCardTest {
     private void resolveSuspendedCard() {
         for (int i = 0; i < 4; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

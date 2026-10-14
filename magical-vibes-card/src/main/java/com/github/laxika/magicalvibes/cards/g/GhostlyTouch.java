@@ -12,12 +12,13 @@ public class GhostlyTouch extends Card {
 
     public GhostlyTouch() {
         // Enchant creature
-        target(TargetFilters.creature())
-                // Enchanted creature has "Whenever this creature attacks, you may tap or untap
-                // target permanent." The aura's ON_ATTACK slot is scanned for the attacking
-                // creature by CombatTriggerService.checkAuraTriggersForCreature.
-                .addEffect(EffectSlot.ON_ATTACK,
-                        new MayEffect(new TapOrUntapTargetPermanentEffect(),
-                                "tap or untap the target permanent?"));
+        target(TargetFilters.creature());
+        // Enchanted creature has "Whenever this creature attacks, you may tap or untap
+        // target permanent." The aura's ON_ATTACK slot is scanned for the attacking
+        // creature by CombatTriggerService.checkAuraTriggersForCreature. Added outside the
+        // enchant target slot so the granted trigger is not bound to the creature target filter.
+        addEffect(EffectSlot.ON_ATTACK,
+                new MayEffect(new TapOrUntapTargetPermanentEffect(),
+                        "tap or untap the target permanent?"));
     }
 }

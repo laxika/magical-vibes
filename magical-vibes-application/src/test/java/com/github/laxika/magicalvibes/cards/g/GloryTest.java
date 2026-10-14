@@ -73,7 +73,7 @@ class GloryTest extends BaseCardTest {
 
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isFalse();
     }

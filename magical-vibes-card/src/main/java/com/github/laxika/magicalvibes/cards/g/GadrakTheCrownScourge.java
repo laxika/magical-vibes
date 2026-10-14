@@ -23,6 +23,6 @@ public class GadrakTheCrownScourge extends Card {
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 CreateTokenEffect.ofTreasureToken(
-                        new NontokenCreatureDeathsThisTurn(CountScope.CONTROLLER)));
+                        new NontokenCreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
     }
 }

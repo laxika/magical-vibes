@@ -70,7 +70,7 @@ class GrovetenderDruidsTest extends BaseCardTest {
     @Test
     void opponentsAllyEntryDoesNotTrigger() {
         harness.addToBattlefield(player1, new GrovetenderDruids());
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new RecklessCohort(), "{1}{R}");
         harness.passBothPriorities();
 

@@ -111,6 +111,7 @@ class GloryheathLynxTest extends BaseCardTest {
     void mayFailToFind() {
         Permanent lynx = addCreatureReady(player1, new GloryheathLynx());
         lynx.setSaddled(true);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Plains(), new Forest()));
 
         declareAttackers(player1, List.of(0));

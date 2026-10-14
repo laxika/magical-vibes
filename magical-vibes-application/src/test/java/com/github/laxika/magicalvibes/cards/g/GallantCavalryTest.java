@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -85,6 +86,8 @@ class GallantCavalryTest extends BaseCardTest {
         token.setSummoningSick(false);
         int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
         declareAttackersAndPrepareBlockers(List.of(tokenIndex));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
 
         assertThat(token.isAttacking()).isTrue();
         assertThat(token.isTapped()).isFalse();

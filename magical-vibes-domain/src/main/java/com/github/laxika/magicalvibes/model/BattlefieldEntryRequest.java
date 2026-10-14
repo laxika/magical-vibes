@@ -64,6 +64,13 @@ public record BattlefieldEntryRequest(UUID controllerId,
                 enterWithCounters, landPlayZone, sourceStackEntry, unleashChoice, riotCounters, riotHaste);
     }
 
+    /** Same entry with the controller it will enter under, after control-changing replacements. */
+    public BattlefieldEntryRequest withControllerId(UUID enteringControllerId) {
+        return new BattlefieldEntryRequest(enteringControllerId, permanent, enterTappedTypes, simultaneouslyEntered,
+                xValue, kicked, repeatedAdditionalCosts, convokeCreatureCount, discardReplacement,
+                enterWithCounters, landPlayZone, sourceStackEntry, unleashChoice, riotCounters, riotHaste);
+    }
+
     /** Resumes entry after the controller answers the unleash replacement choice. */
     public BattlefieldEntryRequest withUnleashChoice(boolean accepted) {
         return new BattlefieldEntryRequest(controllerId, permanent, enterTappedTypes, simultaneouslyEntered,

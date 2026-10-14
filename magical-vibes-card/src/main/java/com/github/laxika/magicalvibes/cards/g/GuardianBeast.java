@@ -33,7 +33,7 @@ public class GuardianBeast extends Card {
                         noncreatureArtifact)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceUntapped(),
-                new GrantEffectEffect(new CantBeEnchantedByOtherAurasEffect(),
+                new GrantEffectEffect(CantBeEnchantedByOtherAurasEffect.keepingExistingAuras(),
                         GrantScope.OWN_PERMANENTS, noncreatureArtifact)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceUntapped(),

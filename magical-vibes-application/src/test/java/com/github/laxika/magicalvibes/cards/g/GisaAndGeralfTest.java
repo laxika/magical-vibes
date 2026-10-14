@@ -204,6 +204,7 @@ class GisaAndGeralfTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GisaAndGeralf());
         harness.setGraveyard(player1, List.of(new ButcherGhoul(), new ButcherGhoul()));
         harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

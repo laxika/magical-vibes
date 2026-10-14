@@ -249,7 +249,8 @@ public class BattlefieldPlacementService {
     }
 
     public void place(GameData gameData, BattlefieldEntryRequest request) {
-        if (cloneService != null && cloneService.beginEntryCopyChoice(gameData, request)) return;
+        if (cloneService != null && cloneService.beginEntryCopyChoice(gameData, request.withControllerId(
+                resolveEnteringController(gameData, request.controllerId(), request.permanent())))) return;
         if (beginAmplifyChoice(gameData, request)) return;
         if (beginUnleashChoice(gameData, request)) return;
         if (beginRiotChoices(gameData, request)) return;

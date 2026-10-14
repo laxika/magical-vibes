@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GuidedPassageChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.GuidedPassageChoice> {
+
+    private static final List<Predicate<Card>> CATEGORY_MATCHERS = List.of(
+            card -> card.hasType(CardType.CREATURE),
+            card -> card.hasType(CardType.LAND),
+            GuidedPassageChoiceInteractionHandler::isNoncreatureNonland);
 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
@@ -72,10 +78,7 @@ public class GuidedPassageChoiceInteractionHandler
                 .filter(card -> chosenIds.contains(card.getId()))
                 .toList();
 
-        requireOnePerAvailableCategory(interaction.pool(), selected, CardType.CREATURE,
-                "creature");
-        requireOnePerAvailableCategory(interaction.pool(), selected, CardType.LAND, "land");
-        requireOneNoncreatureNonlandPerAvailableCategory(interaction.pool(), selected);
+        requireDistinctCardPerAvailableCategory(interaction.pool(), selected);
 
         gameData.interaction.clearAwaitingInput();
         String controllerName = gameData.playerIdToName.get(interaction.controllerId());
@@ -99,6 +102,52 @@ public class GuidedPassageChoiceInteractionHandler
         }
         gameLogService.append(gameData, GameLog.text(controllerName + " shuffles their library."));
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private static void requireDistinctCardPerAvailableCategory(List<Card> pool, List<Card> selected) {
+        int available = maxDistinctCategoryMatches(pool, 0, new HashSet<>());
+        if (selected.size() == available && canFillDistinctCategories(selected, 0, new HashSet<>())) {
+            return;
+        }
+        requireOnePerAvailableCategory(pool, selected, CardType.CREATURE, "creature");
+        requireOnePerAvailableCategory(pool, selected, CardType.LAND, "land");
+        requireOneNoncreatureNonlandPerAvailableCategory(pool, selected);
+        throw new IllegalStateException("Chosen cards must fill each available category with a distinct card");
+    }
+
+    private static int maxDistinctCategoryMatches(List<Card> cards, int categoryIndex, Set<UUID> used) {
+        if (categoryIndex == CATEGORY_MATCHERS.size()) {
+            return 0;
+        }
+        int best = maxDistinctCategoryMatches(cards, categoryIndex + 1, used);
+        for (Card card : cards) {
+            if (used.contains(card.getId()) || !CATEGORY_MATCHERS.get(categoryIndex).test(card)) {
+                continue;
+            }
+            used.add(card.getId());
+            best = Math.max(best, 1 + maxDistinctCategoryMatches(cards, categoryIndex + 1, used));
+            used.remove(card.getId());
+        }
+        return best;
+    }
+
+    private static boolean canFillDistinctCategories(List<Card> cards, int cardIndex, Set<Integer> usedCategories) {
+        if (cardIndex == cards.size()) {
+            return true;
+        }
+        Card card = cards.get(cardIndex);
+        for (int category = 0; category < CATEGORY_MATCHERS.size(); category++) {
+            if (usedCategories.contains(category) || !CATEGORY_MATCHERS.get(category).test(card)) {
+                continue;
+            }
+            usedCategories.add(category);
+            boolean filled = canFillDistinctCategories(cards, cardIndex + 1, usedCategories);
+            usedCategories.remove(category);
+            if (filled) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void requireOnePerAvailableCategory(List<Card> pool, List<Card> selected,

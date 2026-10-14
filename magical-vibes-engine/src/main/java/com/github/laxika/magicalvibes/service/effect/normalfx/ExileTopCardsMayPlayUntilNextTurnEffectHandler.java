@@ -73,7 +73,11 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
         for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
-            exileSupport.grantPlayUntilOwnersNextTurn(gameData, topCard.getId(), controllerId);
+            if (exileEffect.duringOwnersNextTurnOnly()) {
+                exileSupport.grantPlayDuringOwnersNextTurn(gameData, topCard.getId(), controllerId);
+            } else {
+                exileSupport.grantPlayUntilOwnersNextTurn(gameData, topCard.getId(), controllerId);
+            }
             if (exileEffect.freeCastIfCastFromGraveyard()
                     && entry.getSourceZone() == Zone.GRAVEYARD) {
                 gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());

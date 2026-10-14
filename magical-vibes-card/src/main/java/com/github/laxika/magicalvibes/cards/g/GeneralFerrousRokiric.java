@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromMonocoloredEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 
 import java.util.List;
@@ -19,7 +20,8 @@ import java.util.Set;
 public class GeneralFerrousRokiric extends Card {
 
     public GeneralFerrousRokiric() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromMonocoloredEffect());
+        removeKeyword(Keyword.HEXPROOF);
+        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.hexproofFromMonocolored());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardIsMulticoloredPredicate(), List.of(
                         new CreateTokenEffect(

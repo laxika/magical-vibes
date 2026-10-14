@@ -124,7 +124,7 @@ class GhostformTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new WanderingWolf());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new WanderingWolf());
         harness.setHand(player1, List.of(new Ghostform(), new Cloudshift()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
@@ -143,7 +143,7 @@ class GhostformTest extends BaseCardTest {
     void doesNotAffectReturnedCreatureWhenAllTargetsIllegal() {
         Permanent wolf = harness.addToBattlefieldAndReturn(player1, new WanderingWolf());
         harness.setHand(player1, List.of(new Ghostform(), new Cloudshift()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castSorcery(player1, 0, List.of(wolf.getId()));

@@ -160,7 +160,8 @@ class GodPharaohsGiftTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
         assertThat(token.hasKeyword(Keyword.HASTE)).isFalse();
@@ -216,7 +217,7 @@ class GodPharaohsGiftTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passBothPriorities();
 
         assertThat(token.isTransformed()).isTrue();

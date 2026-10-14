@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TargetLegalityService targetLegalityService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -121,6 +123,8 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         // CR 701.12a: an exchange either happens entirely or not at all, so a permanent that can't change
         // control to the other player (e.g. under Guardian Beast) stops both halves.
         boolean stillLegal = controllersDiffer
+                && (!exchange.triggeringPermanentIsFirstTarget()
+                || targetLegalityService.isPrimaryTargetLegalOnResolution(gameData, entry, opponentTargetId))
                 && !gameQueryService.cantBeControlledByOtherPlayers(gameData, ownTarget)
                 && !gameQueryService.cantBeControlledByOtherPlayers(gameData, opponentTarget)
                 && ownershipSplitOk

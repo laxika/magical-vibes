@@ -48,22 +48,17 @@ public class PutSlimeCounterAndCreateOozeTokenEffectHandler implements NormalEff
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
         if (source == null) {
-            log.info("Game {} - Gutter Grime no longer on battlefield, effect fizzles", gameData.id);
-            return;
+            log.info("Game {} - Gutter Grime no longer on battlefield, no slime counter is placed", gameData.id);
+        } else if (!gameQueryService.cantHaveCounters(gameData, source)) {
+            // Put a slime counter on the source
+            source.setCounterCount(CounterType.SLIME, source.getCounterCount(CounterType.SLIME) + 1);
+            permanentCounterSupport.notifyCountersPlaced(
+                    gameData, entry, source, 1, CounterType.SLIME);
+            int slimeCount = source.getCounterCount(CounterType.SLIME);
+
+            gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets a slime counter (" + slimeCount + " total).").build());
+            log.info("Game {} - {} gets a slime counter ({} total)", gameData.id, source.getCard().getName(), slimeCount);
         }
-
-        if (gameQueryService.cantHaveCounters(gameData, source)) {
-            return;
-        }
-
-        // Put a slime counter on the source
-        source.setCounterCount(CounterType.SLIME, source.getCounterCount(CounterType.SLIME) + 1);
-        permanentCounterSupport.notifyCountersPlaced(
-                gameData, entry, source, 1, CounterType.SLIME);
-        int slimeCount = source.getCounterCount(CounterType.SLIME);
-
-        gameLogService.append(gameData, GameLog.builder().card(source.getCard()).text(" gets a slime counter (" + slimeCount + " total).").build());
-        log.info("Game {} - {} gets a slime counter ({} total)", gameData.id, source.getCard().getName(), slimeCount);
 
         // Create a 0/0 green Ooze token with a CDA linking to this Gutter Grime
         CountersOnLinkedPermanent slimeOnGrime = new CountersOnLinkedPermanent(CounterType.SLIME, sourcePermId);

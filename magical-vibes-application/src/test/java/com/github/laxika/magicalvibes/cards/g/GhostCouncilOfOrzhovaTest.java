@@ -122,7 +122,6 @@ class GhostCouncilOfOrzhovaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, ghostCouncil.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Ghost Council of Orzhova");

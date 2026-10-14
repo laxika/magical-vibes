@@ -40,8 +40,8 @@ public class GrantSupertypeUntilEndOfTurnEffectHandler implements NormalEffectHa
         } else if (grant.scope() == GrantScope.ENCHANTED_PERMANENT) {
             Permanent aura = entry.getSourcePermanentId() == null ? null
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            targetIds = aura != null && aura.isAttached()
-                    ? List.of(aura.getAttachedTo()) : List.of();
+            targetIds = entry.getTargetId() != null ? List.of(entry.getTargetId())
+                    : aura != null && aura.isAttached() ? List.of(aura.getAttachedTo()) : List.of();
         } else if (grant.scope() == GrantScope.TARGET) {
             targetIds = entry.targetsForEffect(effect);
             if (targetIds.isEmpty() && entry.getTargetId() != null) {

@@ -22,10 +22,11 @@ import org.springframework.stereotype.Component;
  * Resolves {@link ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffect} (Gauntlets of Chaos).
  * Reads the two targets from {@code targetIds}: {@code [0]} the artifact/creature/land the ability's
  * controller controls, {@code [1]} the opponent's permanent sharing one of those types. Re-checks
- * legality at resolution (CR 701.10): the first must still be controlled by the ability's controller,
- * the second by an opponent, and the two must still share an artifact/creature/land type. If both are
- * legal it swaps their controllers permanently (two layer-2 control effects) and then destroys every
- * Aura attached to either permanent.
+ * legality at resolution (CR 701.12a): the first must still be controlled by the ability's controller,
+ * the second by an opponent, the two must still share an artifact/creature/land type, and both must
+ * still be able to change control. If any of that fails, no part of the exchange occurs. If all hold it
+ * swaps their controllers permanently (two layer-2 control effects) and then destroys every Aura
+ * attached to either permanent.
  */
 @Component
 @RequiredArgsConstructor
@@ -64,12 +65,15 @@ public class ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffectHandler impl
             return;
         }
 
-        // Re-check legality (CR 701.10): the first target must still be controlled by the ability's
-        // controller, the second by an opponent, and the two must still share an artifact/creature/land
-        // type. If any condition no longer holds, the exchange doesn't happen (and no Auras are destroyed).
+        // Re-check legality (CR 701.12a): the first target must still be controlled by the ability's
+        // controller, the second by an opponent, the two must still share an artifact/creature/land
+        // type, and both must still be able to change control. If any condition no longer holds, the
+        // whole exchange doesn't happen (and no Auras are destroyed).
         boolean stillLegal = ownController.equals(controllerId)
                 && !opponentController.equals(controllerId)
-                && gameQueryService.sharesArtifactCreatureOrLandType(gameData, ownTarget, opponentTarget);
+                && gameQueryService.sharesArtifactCreatureOrLandType(gameData, ownTarget, opponentTarget)
+                && !gameQueryService.cantBeControlledByOtherPlayers(gameData, ownTarget)
+                && !gameQueryService.cantBeControlledByOtherPlayers(gameData, opponentTarget);
         if (!stillLegal) {
             logFizzle(gameData, entry);
             return;

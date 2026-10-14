@@ -68,6 +68,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                         return;
                     }
                     if (!auraAttachmentService.canEnchant(gameData, aura.getCard(), casterId, p)) return;
+                    if (gameQueryService.cantBeEnchantedByOtherAuras(gameData, p)) return;
                     validTargetIds.add(p.getId());
                 });
 

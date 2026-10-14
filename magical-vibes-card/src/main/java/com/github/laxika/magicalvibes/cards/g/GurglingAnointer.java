@@ -26,7 +26,7 @@ public class GurglingAnointer extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardNotPredicate(new CardIsSelfPredicate()))))
                 .targetGraveyard(true)
-                .dynamicMaxManaValue(new SourcePower())
+                .dynamicMaxManaValue(new SourcePower(true))
                 .build());
     }
 }

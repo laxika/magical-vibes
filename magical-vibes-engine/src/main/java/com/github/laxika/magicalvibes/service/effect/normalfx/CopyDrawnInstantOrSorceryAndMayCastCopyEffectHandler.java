@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -41,7 +42,11 @@ public class CopyDrawnInstantOrSorceryAndMayCastCopyEffectHandler implements Nor
                 .card(entry.getCard())
                 .text(".")
                 .build());
-        Card copy = copySupport.createCopyCard(copyEffect.drawnCard());
+        Card drawnCard = copyEffect.drawnCard();
+        if (!drawnCard.hasType(CardType.INSTANT) && !drawnCard.hasType(CardType.SORCERY)) {
+            return;
+        }
+        Card copy = copySupport.createCopyCard(drawnCard);
         copy.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new Fixed(2)));
 
         exileService.exileCard(gameData, entry.getControllerId(), copy);

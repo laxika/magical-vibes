@@ -121,7 +121,7 @@ class GatewaySneakTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(drawnCard));
 
         resolveCombat(player2);
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

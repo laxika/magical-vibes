@@ -36,6 +36,8 @@ public class GrantUnearthToGraveyardCardsEffectHandler implements NormalEffectHa
             for (Card card : graveyard) {
                 if (predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                     gameData.cardsGrantedUnearthUntilEndOfTurn.put(card.getId(), grant.unearthCost());
+                    gameData.cardsGrantedUnearthGraveyardVersions.put(card.getId(),
+                            gameData.graveyardEntryVersion(card.getId()));
                     count++;
                 }
             }

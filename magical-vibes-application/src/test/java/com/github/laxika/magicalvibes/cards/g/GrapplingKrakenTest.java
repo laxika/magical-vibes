@@ -92,7 +92,7 @@ class GrapplingKrakenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrapplingKraken());
 
         for (int i = 0; i < 2; i++) {
-            harness.enterBattlefieldAndReturn(player1, new Forest());
+            harness.enterLandBattlefieldAndReturn(player1, new Forest());
             harness.handlePermanentChosen(player1, bear.getId());
             harness.passBothPriorities();
         }

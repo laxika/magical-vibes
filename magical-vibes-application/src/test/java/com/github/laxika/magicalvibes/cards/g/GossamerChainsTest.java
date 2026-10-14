@@ -189,6 +189,7 @@ class GossamerChainsTest extends BaseCardTest {
     void preventionExpiresAfterTurn() {
         harness.addToBattlefield(player2, new GossamerChains());
         Permanent attacker = addUnblockedAttacker(player1, player2);
+        harness.setHand(player2, List.of());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

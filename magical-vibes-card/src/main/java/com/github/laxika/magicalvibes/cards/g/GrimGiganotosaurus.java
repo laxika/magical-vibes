@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
@@ -26,7 +24,6 @@ import java.util.List;
 public class GrimGiganotosaurus extends Card {
 
     public GrimGiganotosaurus() {
-        SourceIsMonstrous monstrous = new SourceIsMonstrous();
         PermanentCount highPowerOpposingCreatures = new PermanentCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -38,7 +35,7 @@ public class GrimGiganotosaurus extends Card {
                 "{10}{B}{G}",
                 List.of(new ReduceActivationCostEffect(highPowerOpposingCreatures), new MonstrosityEffect(10)),
                 "{10}{B}{G}: Monstrosity 10. This ability costs {1} less to activate for each creature with power 4 or greater your opponents control."
-        ).withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+        ));
 
         addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, new DestroyAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(

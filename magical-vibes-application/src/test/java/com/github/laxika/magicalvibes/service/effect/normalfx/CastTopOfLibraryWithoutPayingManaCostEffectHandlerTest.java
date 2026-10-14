@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -47,6 +49,10 @@ class CastTopOfLibraryWithoutPayingManaCostEffectHandlerTest {
     private BattlefieldEntryService battlefieldEntryService;
     @Mock
     private ExileService exileService;
+    @Mock
+    private CardRevealService cardRevealService;
+    @Mock
+    private CastingCostService castingCostService;
     private LibraryRevealSupport libraryRevealSupport;
     private GameData gd;
     private UUID player1Id;
@@ -77,7 +83,8 @@ class CastTopOfLibraryWithoutPayingManaCostEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
-        castTopOfLibraryWithoutPayingManaCostEffectHandler = new CastTopOfLibraryWithoutPayingManaCostEffectHandler(gameLogService);
+        castTopOfLibraryWithoutPayingManaCostEffectHandler = new CastTopOfLibraryWithoutPayingManaCostEffectHandler(
+                gameLogService, cardRevealService, castingCostService);
 
     }
 
@@ -142,7 +149,9 @@ class CastTopOfLibraryWithoutPayingManaCostEffectHandlerTest {
             @Test
             @DisplayName("Matching type queues may ability to cast")
             void matchingTypeQueuesMayAbility() {
-                gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
+                Card bolt = createCard("Lightning Bolt", CardType.INSTANT);
+                gd.playerDecks.get(player1Id).add(bolt);
+                when(castingCostService.canPayAdditionalSpellCosts(gd, player1Id, bolt)).thenReturn(true);
 
                 CastTopOfLibraryWithoutPayingManaCostEffect effect =
                         new CastTopOfLibraryWithoutPayingManaCostEffect(Set.of(CardType.INSTANT, CardType.SORCERY));

@@ -24,6 +24,7 @@ class GhostlyPilfererTest extends BaseCardTest {
     @DisplayName("Paying {2} after it untaps draws a card")
     void payingAfterUntappingDrawsCard() {
         Permanent pilferer = addTappedPilferer(player1);
+        gd.skipNextDrawStepCount.put(player1.getId(), 1);
         runUntapStep(player1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         int deckBefore = gd.playerDecks.get(player1.getId()).size();

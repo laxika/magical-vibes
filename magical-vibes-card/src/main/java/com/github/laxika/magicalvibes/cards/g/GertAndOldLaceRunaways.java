@@ -13,7 +13,7 @@ public class GertAndOldLaceRunaways extends Card {
 
     public GertAndOldLaceRunaways() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new DiscardCardThenEffect(
+                DiscardCardThenEffect.continuing(
                         null,
                         new SearchLibraryEffect(CardPredicateUtils.basicLand()),
                         "a card"),

@@ -15,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,6 +62,7 @@ class GiantAdephageTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 7));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -81,6 +83,7 @@ class GiantAdephageTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 5));
 
         harness.assertLife(player2, 15);
         harness.assertInGraveyard(player1, "Giant Adephage");
@@ -145,9 +148,9 @@ class GiantAdephageTest extends BaseCardTest {
         Permanent wurm = addCreatureReady(player1, new RuinationWurm());
         adephage.setAttacking(true);
         harness.setHand(player1, List.of(new Mirrorweave()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
 
         resolveCombat();
+        harness.addMana(player1, ManaColor.WHITE, 4);
         harness.castAndResolveInstant(player1, 0, wurm.getId());
         assertThat(adephage.getCard().getName()).isEqualTo("Ruination Wurm");
         if (sourceLeavesBattlefield) {

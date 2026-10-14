@@ -33,7 +33,10 @@ public class CreateTokenAttachedToUpToOneTargetEffectHandler implements NormalEf
                 && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         }
-        if (targetIds.isEmpty()) {
+        // Declining the optional target (choosing yourself) leaves only a player id behind. That is
+        // zero targets, so the token is still created, just not attached.
+        boolean declined = targetIds.stream().allMatch(gameData.orderedPlayerIds::contains);
+        if (targetIds.isEmpty() || declined) {
             createTokenEffectHandler.resolve(gameData, entry, optionalEffect.token());
             return;
         }

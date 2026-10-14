@@ -155,7 +155,9 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         UUID attackedTargetId = entry.getAttackedTargetId();
         if (attackedTargetId == null) return;
 
-        UUID defendingPlayerId = gameData.playerIds.contains(attackedTargetId)
+        UUID defendingPlayerId = entry.getDefendingPlayerId() != null
+                ? entry.getDefendingPlayerId()
+                : gameData.playerIds.contains(attackedTargetId)
                 ? attackedTargetId
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
         if (defendingPlayerId == null || !gameData.playerIds.contains(defendingPlayerId)

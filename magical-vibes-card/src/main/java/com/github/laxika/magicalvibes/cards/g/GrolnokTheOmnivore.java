@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWi
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "VOW", collectorNumber = "238")
@@ -17,8 +17,8 @@ public class GrolnokTheOmnivore extends Card {
 
     public GrolnokTheOmnivore() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.FROG),
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentHasSubtypePredicate(CardSubtype.FROG),
                         new MillEffect(3, MillRecipient.CONTROLLER)));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
                 new ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect());

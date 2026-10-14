@@ -66,6 +66,7 @@ class GenerousPatronTest extends BaseCardTest {
     void drawsOnceForEachOfTwoOpposingCreatures() {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GenerousPatron());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GenerousPatron());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new GenerousPatron()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         addPatronMana();
@@ -96,6 +97,7 @@ class GenerousPatronTest extends BaseCardTest {
     void eachControlledPatronDrawsForTheSameCounterPlacement() {
         harness.addToBattlefield(player1, new GenerousPatron());
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GenerousPatron());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new GenerousPatron()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         addPatronMana();
@@ -111,6 +113,7 @@ class GenerousPatronTest extends BaseCardTest {
     @Test
     void doesNotDrawForCountersPlacedByOpponent() {
         Permanent patron = harness.addToBattlefieldAndReturn(player1, new GenerousPatron());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Forest()));
         harness.forceActivePlayer(player2);

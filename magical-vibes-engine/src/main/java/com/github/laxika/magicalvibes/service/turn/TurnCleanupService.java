@@ -492,6 +492,7 @@ public class TurnCleanupService {
         gameData.cardsGrantedJumpStartUntilEndOfTurn.clear();
         gameData.cardsGrantedEmbalmUntilEndOfTurn.clear();
         gameData.cardsGrantedUnearthUntilEndOfTurn.clear();
+        gameData.cardsGrantedUnearthGraveyardVersions.clear();
         gameData.playersWithFlashUntilEndOfTurn.clear();
         gameData.playersWithFreeHandCastUntilEndOfTurn.clear();
         gameData.playersWhoMayLookAtFaceDownCreaturesThisTurn.clear();
@@ -549,7 +550,6 @@ public class TurnCleanupService {
         }
         gameData.temporaryChosenSubtypePermanentIds.clear();
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
-        gameData.creatureSpellCastDrawsThisTurn.clear();
         gameData.creatureEntersDrawSourcesThisTurn.clear();
         gameData.untapAttackedCreaturesEachCombatThisTurnSources.clear();
         gameData.conspiredSpellIds.clear();
@@ -833,6 +833,9 @@ public class TurnCleanupService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf != null) {
             for (Permanent perm : bf) {
+                if (gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+                    continue;
+                }
                 if (perm.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                     return true;

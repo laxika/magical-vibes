@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -56,12 +56,12 @@ public class GourmandsTalent extends Card {
                 "Gain the next level as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
-                new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
+                new NotCondition(new SourceClassLevelAtLeast(2)),
                 "this Class is level 1"));
 
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new ConditionalEffect(
-                new SourceCounterThreshold(1, CounterType.LEVEL),
-                new OncePerTurnTriggerEffect(new CreateTokenEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new OncePerTurnTriggerEffect(new ConditionalEffect(
+                new SourceClassLevelAtLeast(2),
+                new CreateTokenEffect(
                         1,
                         "Raccoon",
                         3,
@@ -69,7 +69,7 @@ public class GourmandsTalent extends Card {
                         CardColor.GREEN,
                         List.of(CardSubtype.RACCOON),
                         Set.of(),
-                        Set.of()))));
+                        Set.of())), false, "level-two-raccoon", false, true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -79,15 +79,15 @@ public class GourmandsTalent extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ).withActivationCondition(
                 new AllOf(List.of(
-                        new SourceCounterThreshold(1, CounterType.LEVEL),
-                        new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
+                        new SourceClassLevelAtLeast(2),
+                        new NotCondition(new SourceClassLevelAtLeast(3)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new ConditionalEffect(
-                new SourceCounterThreshold(2, CounterType.LEVEL),
-                new OncePerTurnTriggerEffect(new PutCounterOnEachControlledPermanentEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new OncePerTurnTriggerEffect(new ConditionalEffect(
+                new SourceClassLevelAtLeast(3),
+                new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,
-                        new PermanentIsCreaturePredicate()))));
+                        new PermanentIsCreaturePredicate())), false, "level-three-counters", false, true));
     }
 }

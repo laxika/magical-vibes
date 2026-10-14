@@ -138,7 +138,7 @@ class GraverobberSpiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(spider.getEffectivePower()).isEqualTo(2);
         assertThat(spider.getEffectiveToughness()).isEqualTo(4);
         harness.addMana(player1, ManaColor.BLACK, 4);

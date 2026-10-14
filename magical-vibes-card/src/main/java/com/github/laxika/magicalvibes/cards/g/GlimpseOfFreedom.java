@@ -16,6 +16,6 @@ public class GlimpseOfFreedom extends Card {
         addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
         addCastingOption(new GraveyardCast(null, "{2}{U}",
                 List.of(new ExileNCardsFromGraveyardCastingCost(null, "other cards", 5)),
-                null, false, true));
+                null, false, false, true));
     }
 }

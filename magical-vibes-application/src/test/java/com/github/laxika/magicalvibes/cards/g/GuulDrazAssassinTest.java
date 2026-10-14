@@ -138,7 +138,7 @@ class GuulDrazAssassinTest extends BaseCardTest {
         harness.passBothPriorities();
         assertStats(target, 4, 4);
         assertStats(assassin, 4, 4);
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         assertStats(target, 8, 8);
         assertStats(assassin, 4, 4);
     }

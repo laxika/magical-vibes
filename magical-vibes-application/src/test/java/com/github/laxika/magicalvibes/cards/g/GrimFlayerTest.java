@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -141,7 +142,7 @@ class GrimFlayerTest extends BaseCardTest {
     @Test
     void combatDamageOnlyToBlockerDoesNotTriggerSurveil() {
         addCreatureReady(player1, new GrimFlayer());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Card top = new Plains();
         harness.setLibrary(player1, List.of(top));
         harness.setGraveyard(player1, List.of());
@@ -149,6 +150,7 @@ class GrimFlayerTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2));
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();

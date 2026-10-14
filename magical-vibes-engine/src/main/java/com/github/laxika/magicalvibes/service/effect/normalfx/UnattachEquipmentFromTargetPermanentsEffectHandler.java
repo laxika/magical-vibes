@@ -1,20 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +22,6 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
     private final UnattachTriggerSupport unattachTriggerSupport;
 
     @Override
@@ -45,9 +39,6 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
             return;
         }
 
-        // Track creatures that need to be sacrificed due to SacrificeOnUnattachEffect
-        Set<UUID> sacrificeTargetIds = new LinkedHashSet<>();
-
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
@@ -64,25 +55,8 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
                     gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" unattaches ").card(p.getCard()).text(" from ").card(target.getCard()).text(".").build());
                     log.info("Game {} - {} unattaches {} from {}", gameData.id, entry.getCard().getName(),
                             p.getCard().getName(), target.getCard().getName());
-
-                    boolean hasSacrificeOnUnattach = p.getCard().getEffects(EffectSlot.STATIC).stream()
-                            .anyMatch(e -> e instanceof SacrificeOnUnattachEffect);
-                    if (hasSacrificeOnUnattach) {
-                        sacrificeTargetIds.add(targetId);
-                    }
                 }
             });
-        }
-
-        // Sacrifice creatures that were unattached from equipment with SacrificeOnUnattachEffect
-        for (UUID creatureId : sacrificeTargetIds) {
-            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
-            if (creature != null) {
-                gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), " is sacrificed (equipment with sacrifice-on-unattach became unattached)."));
-                log.info("Game {} - {} sacrificed due to equipment unattach", gameData.id, creature.getCard().getName());
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, creature);
-                permanentRemovalService.removeOrphanedAuras(gameData);
-            }
         }
     }
 }

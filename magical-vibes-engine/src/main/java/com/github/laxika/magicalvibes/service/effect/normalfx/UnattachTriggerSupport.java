@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +22,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Materializes triggered abilities for Equipment that becomes unattached.
+ * Materializes triggered abilities for Equipment that becomes unattached: the destroy-on-unattach
+ * ability and the sacrifice-on-unattach ability (Grafted Wargear, Stitcher's Graft). Both go on the
+ * stack as triggers that name the previously-attached permanent, so the permanent stays on the
+ * battlefield until the trigger resolves.
  */
 @Slf4j
 @Component
@@ -37,20 +42,28 @@ public class UnattachTriggerSupport {
 
     public void triggerDestroyOnUnattachIfNeeded(GameData gameData, Permanent equipment,
                                                  UUID oldAttachedTo, UUID controllerId) {
-        if (oldAttachedTo == null || !hasDestroyOnUnattach(equipment)) {
+        if (oldAttachedTo == null || controllerId == null) {
             return;
         }
 
-        if (controllerId == null) {
-            return;
+        if (hasStaticEffect(equipment, DestroyOnUnattachEffect.class)) {
+            enqueueUnattachTrigger(gameData, equipment, oldAttachedTo, controllerId,
+                    new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
         }
+        if (hasStaticEffect(equipment, SacrificeOnUnattachEffect.class)) {
+            enqueueUnattachTrigger(gameData, equipment, oldAttachedTo, controllerId,
+                    new SacrificeTriggeringPermanentEffect());
+        }
+    }
 
+    private void enqueueUnattachTrigger(GameData gameData, Permanent equipment, UUID oldAttachedTo,
+                                        UUID controllerId, CardEffect effect) {
         StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 equipment.getCard(),
                 controllerId,
                 equipment.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING))),
+                new ArrayList<>(List.of(effect)),
                 null,
                 equipment.getId()
         );
@@ -61,9 +74,9 @@ public class UnattachTriggerSupport {
         log.info("Game {} - {} triggers on becoming unattached", gameData.id, equipment.getCard().getName());
     }
 
-    private boolean hasDestroyOnUnattach(Permanent equipment) {
+    private boolean hasStaticEffect(Permanent equipment, Class<? extends CardEffect> effectType) {
         for (CardEffect effect : equipment.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof DestroyOnUnattachEffect) {
+            if (effectType.isInstance(effect)) {
                 return true;
             }
         }

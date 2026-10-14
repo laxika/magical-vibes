@@ -125,7 +125,7 @@ class GruulSpellbreakerTest extends BaseCardTest {
     void riotHastePersistsAcrossTurnBoundary() {
         Permanent spellbreaker = castSpellbreaker(false);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, spellbreaker, Keyword.HASTE)).isTrue();
         assertThat(spellbreaker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

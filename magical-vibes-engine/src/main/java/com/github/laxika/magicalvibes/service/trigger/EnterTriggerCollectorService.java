@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -49,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardIfEnteringCreatureHasUniqueNameEffect;
 import com.github.laxika.magicalvibes.model.effect.EndureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreaturePowerBranchEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureSourcePowerBranchEffect;
@@ -620,6 +622,49 @@ public class EnterTriggerCollectorService {
                 findEnteringPermanentId(match, pe.enteringCard()));
         logTriggered(match);
         return true;
+    }
+
+    /**
+     * "Whenever a nontoken creature you control enters, if it doesn't have the same name as another
+     * creature you control or a creature card in your graveyard, draw a card." The intervening "if" is
+     * checked here when the trigger fires (CR 603.4), and the entering card's name is captured on the
+     * effect so the resolution-time recheck still has it after the creature has left the battlefield.
+     */
+    @CollectsTrigger(value = DrawCardIfEnteringCreatureHasUniqueNameEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleUniqueNameDrawOnEntering(TriggerMatchContext match,
+            DrawCardIfEnteringCreatureHasUniqueNameEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Card enteringCard = pe.enteringCard();
+        UUID enteringPermanentId = findEnteringPermanentId(match, enteringCard);
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        String enteringName = enteringPermanent == null
+                ? enteringCard.getName()
+                : gameQueryService.getEffectiveName(match.gameData(), enteringPermanent);
+        if (hasSameNameCreatureAtTrigger(match, enteringPermanentId, enteringName)) {
+            return false;
+        }
+
+        enqueue(match, new DrawCardIfEnteringCreatureHasUniqueNameEffect(enteringName, enteringCard.getId()),
+                pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(), enteringPermanentId);
+        logTriggered(match);
+        return true;
+    }
+
+    private boolean hasSameNameCreatureAtTrigger(TriggerMatchContext match, UUID enteringPermanentId,
+                                                 String enteringName) {
+        GameData gameData = match.gameData();
+        UUID controllerId = match.controllerId();
+        boolean onBattlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(permanent -> !permanent.getId().equals(enteringPermanentId))
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .anyMatch(permanent -> enteringName.equals(gameQueryService.getEffectiveName(gameData, permanent)));
+        if (onBattlefield) {
+            return true;
+        }
+        return gameData.playerGraveyards.getOrDefault(controllerId, List.of()).stream()
+                .anyMatch(card -> card.hasType(CardType.CREATURE) && enteringName.equals(card.getName()));
     }
 
     @CollectsTrigger(value = PerpetuallyGainKeywordsOfTriggeringCreatureEffect.class,
@@ -2115,6 +2160,8 @@ public class EnterTriggerCollectorService {
      */
     @CollectsTrigger(value = TransformEnteringCreatureEffect.class,
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = TransformEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyTransformEntering(TriggerMatchContext match,
             TransformEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2129,17 +2176,20 @@ public class EnterTriggerCollectorService {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
                         enteringPermanentId, match.permanent().getId());
+                match.gameData().stack.getLast().setNonTargeting(true);
             }
         } else {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-                match.gameData().stack.add(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         sourceCard,
                         match.controllerId(),
                         sourceCard.getName() + "'s ability",
                         new ArrayList<>(List.of(transform)),
                         enteringPermanentId,
-                        match.permanent().getId()));
+                        match.permanent().getId());
+                entry.setNonTargeting(true);
+                match.gameData().stack.add(entry);
             }
         }
         logTriggered(match);

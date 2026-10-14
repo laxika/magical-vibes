@@ -99,7 +99,12 @@ public class ReturnDelayedGraveyardCardUnderControlEffectHandler implements Norm
         // "with an additional +1/+1 counter on it" / "is a black Zombie in addition to its
         // other colors and types" (Grave Betrayal) — applied before the permanent enters.
         if (pending.counterType() != null && pending.counterAmount() > 0) {
-            permanent.setCounterCount(pending.counterType(), pending.counterAmount());
+            UUID counterControllerId = pending.returnUnderOwnersControl() ? ownerId : pending.controllerId();
+            int placedCounters = gameQueryService.replaceCounters(gameData, permanent, counterControllerId,
+                    pending.counterType(), pending.counterAmount());
+            if (placedCounters > 0) {
+                permanent.setCounterCount(pending.counterType(), placedCounters);
+            }
         }
         if (pending.grantColor() != null) {
             permanent.getGrantedColors().add(pending.grantColor());

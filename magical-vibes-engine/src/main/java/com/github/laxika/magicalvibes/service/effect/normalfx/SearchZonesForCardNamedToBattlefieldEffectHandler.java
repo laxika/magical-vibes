@@ -89,8 +89,35 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
             return;
         }
 
+        // Hand-including wording ("graveyard, hand, and/or library") lets the controller pick the zone when
+        // matches sit in several of them. Each option searches one zone, which covers every outcome.
+        if (!effect.attachToTarget() && effect.includeHand() && effect.selectedZones().isEmpty()) {
+            List<ChooseOneEffect.ChooseOneOption> options = new java.util.ArrayList<>();
+            if (gameData.playerGraveyards.get(controllerId).stream().anyMatch(card -> cardName.equals(card.getName()))) {
+                options.add(new ChooseOneEffect.ChooseOneOption("Search your graveyard",
+                        new SearchZonesForCardNamedToBattlefieldEffect(cardName, true, false,
+                                List.of(), Set.of(Zone.GRAVEYARD))));
+            }
+            if (gameData.playerHands.get(controllerId).stream().anyMatch(card -> cardName.equals(card.getName()))) {
+                options.add(new ChooseOneEffect.ChooseOneOption("Search your hand",
+                        new SearchZonesForCardNamedToBattlefieldEffect(cardName, true, false,
+                                List.of(), Set.of(Zone.HAND))));
+            }
+            if (gameData.playerDecks.get(controllerId).stream().anyMatch(card -> cardName.equals(card.getName()))) {
+                options.add(new ChooseOneEffect.ChooseOneOption("Search your library",
+                        new SearchZonesForCardNamedToBattlefieldEffect(cardName, true, false,
+                                List.of(), Set.of(Zone.LIBRARY))));
+            }
+            if (options.size() > 1) {
+                chooseOneEffectHandler.resolve(gameData, entry, new ChooseOneEffect(options));
+                return;
+            }
+        }
+
         boolean searchGraveyard = effect.selectedZones().isEmpty() || effect.selectedZones().contains(Zone.GRAVEYARD);
         boolean searchLibrary = effect.selectedZones().isEmpty() || effect.selectedZones().contains(Zone.LIBRARY);
+        boolean searchHand = effect.includeHand()
+                && (effect.selectedZones().isEmpty() || effect.selectedZones().contains(Zone.HAND));
         if (effect.attachToTarget() && searchGraveyard && searchLibrary) {
             List<Card> matches = new java.util.ArrayList<>(gameData.playerGraveyards.get(controllerId).stream()
                     .filter(card -> cardName.equals(card.getName())).toList());
@@ -138,7 +165,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
         }
 
         // Hand (a hidden zone the controller already sees). A match is also taken automatically.
-        List<Card> hand = effect.includeHand() ? gameData.playerHands.get(controllerId) : null;
+        List<Card> hand = searchHand ? gameData.playerHands.get(controllerId) : null;
         if (hand != null) {
             Optional<Card> handMatch = hand.stream()
                     .filter(card -> cardName.equals(card.getName()))

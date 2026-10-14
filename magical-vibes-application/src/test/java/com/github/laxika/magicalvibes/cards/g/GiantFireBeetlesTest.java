@@ -62,6 +62,8 @@ class GiantFireBeetlesTest extends BaseCardTest {
     @Test
     @DisplayName("The original and duplicate do not double team on later attacks")
     void originalAndDuplicateDoNotConjureAgain() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent original = addCreatureReady(player1, new GiantFireBeetles());
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -80,6 +82,8 @@ class GiantFireBeetlesTest extends BaseCardTest {
     @Test
     @DisplayName("Double team remains lost when the original leaves and returns")
     void originalDoesNotRegainDoubleTeamAfterReturning() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent original = addCreatureReady(player1, new GiantFireBeetles());
         declareAttackers(List.of(0));
         resolveAllTriggers();

@@ -27,7 +27,6 @@ class GilaCourserTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, helper.getId());
         resolveAllTriggers();
 
         assertThat(helper.isTapped()).isTrue();

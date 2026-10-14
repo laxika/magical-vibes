@@ -28,7 +28,7 @@ public class GargantuanGorilla extends Card {
         // creature deals damage equal to its power to this creature. (fight mechanic)
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new SourceFightsTargetCreatureEffect()),
+                List.of(new SourceFightsTargetCreatureEffect(false)),
                 "{T}: This creature deals damage equal to its power to another target creature. "
                         + "That creature deals damage equal to its power to this creature.",
                 new PermanentPredicateTargetFilter(

@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GadrakTheCrownScourge.class, AlpineWatchdog.class, MazemindTome.class, Shock.class, Card.class})
+@CardUsed({GadrakTheCrownScourge.class, AlpineWatchdog.class, MazemindTome.class, Shock.class})
 class GadrakTheCrownScourgeTest extends BaseCardTest {
 
     @Test
@@ -137,11 +137,11 @@ class GadrakTheCrownScourgeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GadrakTheCrownScourge());
         Permanent creature = addCreatureReady(player1, new AlpineWatchdog());
         harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, creature.getId());
         resolveAllTriggers();

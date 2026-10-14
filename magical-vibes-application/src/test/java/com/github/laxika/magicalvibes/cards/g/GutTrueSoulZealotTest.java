@@ -184,7 +184,7 @@ class GutTrueSoulZealotTest extends BaseCardTest {
                     assertThat(permanent.getCard().getSubtypes()).contains(CardSubtype.SKELETON);
                     assertThat(permanent.getCard().getKeywords()).contains(Keyword.MENACE);
                     assertThat(permanent.isTapped()).isTrue();
-                    assertThat(permanent.isAttackedThisTurn()).isTrue();
+                    assertThat(permanent.isAttacking()).isTrue();
                 });
         assertThat(gut).isIn(gd.playerBattlefields.get(player1.getId()));
     }

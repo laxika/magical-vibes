@@ -33,6 +33,7 @@ public sealed interface Condition permits
         AnOpponentHasMoreLifeThanController,
         TargetPlayerOrControllerHasMoreLifeThanController,
         AnOpponentLifeAtMost,
+        AnOpponentLifeAtOrBelowHalfStartingLife,
         AnyGraveyardAtLeast,
         AnyLibraryAtMost,
         AnyPlayerHandAtMost,

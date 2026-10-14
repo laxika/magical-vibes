@@ -42,6 +42,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
+                .withSourcePermanentId(entry.getSourcePermanentId())
                 .withXValue(entry.getXValue());
 
         gameData.forEachBattlefield((playerId, battlefield) -> {

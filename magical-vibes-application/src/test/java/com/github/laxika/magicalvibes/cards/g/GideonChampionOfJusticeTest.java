@@ -115,7 +115,7 @@ class GideonChampionOfJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isPlaneswalker(gd, gideon)).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, gideon)).isFalse();
         assertThat(gqs.hasKeyword(gd, gideon, Keyword.INDESTRUCTIBLE)).isFalse();

@@ -59,8 +59,12 @@ public class FightSupport {
         if (first == null || second == null) {
             return;
         }
-        dealMutualDamage(gameData, entry, first, second, false);
-        dealMutualDamage(gameData, entry, second, first, false);
+        // Both amounts are read before either deals damage, so an infect source's -1/-1 counters
+        // on one creature do not shrink the damage the other creature deals (simultaneous damage).
+        int firstDamage = Math.max(0, gameQueryService.getEffectiveToughness(gameData, first));
+        int secondDamage = Math.max(0, gameQueryService.getEffectiveToughness(gameData, second));
+        dealMutualDamage(gameData, entry, first, second, firstDamage);
+        dealMutualDamage(gameData, entry, second, first, secondDamage);
     }
 
     private void dealMutualDamage(GameData gameData, StackEntry entry, Permanent source,

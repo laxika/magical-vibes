@@ -96,10 +96,10 @@ class GatstafArsonistsTest extends BaseCardTest {
         Permanent arsonists = addArsonists();
         gd.spellsCastLastTurn.clear();
         harness.setHand(player1, List.of(new RushOfAdrenaline()));
-        harness.addMana(player1, ManaColor.RED, 1);
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.withAutoStop(TurnStep.UPKEEP, () -> {
             harness.castInstant(player1, 0, arsonists.getId());
             resolveAllTriggers();

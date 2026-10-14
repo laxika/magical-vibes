@@ -46,15 +46,12 @@ public class GuidelightMatrix extends Card {
                 List.of(new AnimatePermanentsEffect(
                         null, null, List.of(), Set.of(), null, Set.of(),
                         GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN, null)),
-                "{2}, {T}: Target Vehicle you control becomes an artifact creature until end of turn. Activate only as a sorcery.",
+                "{2}, {T}: Target Vehicle you control becomes an artifact creature until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
-                        "Target must be a Vehicle you control"),
-                null,
-                null,
-                ActivationTimingRestriction.SORCERY_SPEED
+                        "Target must be a Vehicle you control")
         ));
     }
 }

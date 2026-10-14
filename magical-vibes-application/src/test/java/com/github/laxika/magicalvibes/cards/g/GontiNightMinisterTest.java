@@ -128,7 +128,8 @@ class GontiNightMinisterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GontiNightMinister());
         addAttackingCreature(player1, new GrizzlyBears());
         Island land = new Island();
-        harness.setLibrary(player2, List.of(land));
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.setLibrary(player2, List.of(land, new Island()));
         resolveCombatAndTrigger();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

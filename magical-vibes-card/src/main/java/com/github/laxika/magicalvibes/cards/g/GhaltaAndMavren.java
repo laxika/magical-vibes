@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -71,8 +72,8 @@ public class GhaltaAndMavren extends Card {
                 Set.of(Keyword.LIFELINK),
                 Set.of());
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(DINOSAUR_MODE, dinosaur),
-                new ChooseOneEffect.ChooseOneOption(VAMPIRE_MODE, vampire))));
+                new ChooseOneEffect.ChooseOneOption(VAMPIRE_MODE, vampire)))));
     }
 }

@@ -47,7 +47,7 @@ public class GarrukTheVeilCursed extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -3,
                 List.of(
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES),
                         new BoostAllOwnCreaturesEffect(
                                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER))

@@ -136,6 +136,7 @@ class GiantCaterpillarTest extends BaseCardTest {
         setupCaterpillar();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
             harness.activateAbility(player1, 0, null, null);

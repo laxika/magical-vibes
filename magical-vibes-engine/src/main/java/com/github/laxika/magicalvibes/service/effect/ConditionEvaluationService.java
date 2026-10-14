@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreCardsInHa
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHasMoreLifeThanController;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtOrBelowHalfStartingLife;
 import com.github.laxika.magicalvibes.model.condition.AnotherCreatureDiedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredLastTurn;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
@@ -1003,6 +1004,11 @@ public class ConditionEvaluationService {
                             .filter(pid -> !pid.equals(ctx.controllerId()))
                             .anyMatch(pid -> gameData.getLife(pid) <= (c.belowHalfStartingLife()
                                     ? (gameData.startingLife() - 1) / 2 : c.threshold()));
+            case AnOpponentLifeAtOrBelowHalfStartingLife ignored ->
+                    ctx.controllerId() != null
+                            && gameData.orderedPlayerIds.stream()
+                            .filter(pid -> !pid.equals(ctx.controllerId()))
+                            .anyMatch(pid -> gameData.getLife(pid) <= gameData.startingLife() / 2);
             case EachPlayerLifeAtMost c ->
                     gameData.orderedPlayerIds.stream()
                             .allMatch(pid -> gameData.playerLifeTotals.getOrDefault(pid, 20) <= c.threshold());

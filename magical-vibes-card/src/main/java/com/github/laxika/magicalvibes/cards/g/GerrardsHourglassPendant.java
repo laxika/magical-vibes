@@ -34,6 +34,7 @@ public class GerrardsHourglassPendant extends Card {
                                         new CardTypePredicate(CardType.ENCHANTMENT),
                                         new CardTypePredicate(CardType.LAND))))
                                 .returnAll(true)
+                                .chooseAuraAttachment(true)
                                 .fromBattlefieldThisTurn(true)
                                 .enterTapped(true)
                                 .build()),

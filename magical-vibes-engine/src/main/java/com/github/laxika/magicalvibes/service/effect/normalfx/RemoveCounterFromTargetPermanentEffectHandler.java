@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPerman
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,7 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final BattleDefeatSupport battleDefeatSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +35,16 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveCounterFromTargetPermanentEffect) effect;
+        if (e.upTo() && gameData.chosenXValue != null) {
+            int chosen = Math.max(0, gameData.chosenXValue);
+            gameData.chosenXValue = null;
+            Permanent chosenTarget = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (chosenTarget != null) {
+                removeUpTo(gameData, chosenTarget, e.counterType(), chosen);
+            }
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
@@ -40,6 +53,18 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
         // Specific counter type ("remove a -1/-1 counter", "remove up to four charge counters"):
         // remove as many of exactly that type as are there, up to the effect's amount.
         if (e.counterType() != null) {
+            if (e.upTo()) {
+                int maxRemovable = Math.min(e.amount(), target.getCounterCount(e.counterType()));
+                if (maxRemovable > 0) {
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
+                            entry.getControllerId(), 0, maxRemovable,
+                            "Remove up to " + maxRemovable + " "
+                                    + permanentCounterSupport.counterTypeName(e.counterType())
+                                    + " counters from " + target.getCard().getName() + ".",
+                            entry.getCard().getName()));
+                }
+                return;
+            }
             removeUpTo(gameData, target, e.counterType(), e.amount());
             return;
         }

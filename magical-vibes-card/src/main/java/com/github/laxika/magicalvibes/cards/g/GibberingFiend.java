@@ -16,6 +16,6 @@ public class GibberingFiend extends Card {
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new Delirium(),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER)));
+                        new DealDamageToPlayersEffect(1, DamageRecipient.ACTIVE_PLAYER)));
     }
 }

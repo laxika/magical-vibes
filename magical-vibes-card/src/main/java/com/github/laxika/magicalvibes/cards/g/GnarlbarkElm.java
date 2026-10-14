@@ -25,7 +25,7 @@ public class GnarlbarkElm extends Card {
                 false,
                 "{2}{B}",
                 List.of(
-                        new RemoveCounterFromSourceCost(2, CounterType.MINUS_ONE_MINUS_ONE),
+                        new RemoveCounterFromSourceCost(2),
                         new BoostTargetCreatureEffect(-2, -2)
                 ),
                 "{2}{B}, Remove two counters from this creature: Target creature gets -2/-2 until end of turn. "

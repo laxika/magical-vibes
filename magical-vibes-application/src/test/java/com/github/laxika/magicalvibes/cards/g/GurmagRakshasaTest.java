@@ -150,6 +150,7 @@ class GurmagRakshasaTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, List.of(opposingCreature.getId(), ownCreature.getId()));
         harness.passBothPriorities();
+        resolveAllTriggers();
         harness.castAndResolveInstant(player1, 0,
                 bounceOpponent ? opposingCreature.getId() : ownCreature.getId());
         harness.passBothPriorities();

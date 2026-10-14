@@ -73,11 +73,13 @@ class GhorClanWreckerTest extends BaseCardTest {
     @Test
     void additionalRiotCanGiveTwoCounters() {
         harness.addToBattlefield(player1, new RhythmOfTheWild());
-        Permanent wrecker = castWrecker(true);
+        castWreckerAwaitingRiot();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
 
+        Permanent wrecker = findPermanent(player1, "Ghor-Clan Wrecker");
         assertThat(wrecker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, wrecker, Keyword.HASTE)).isFalse();
     }
@@ -85,16 +87,25 @@ class GhorClanWreckerTest extends BaseCardTest {
     @Test
     void additionalRiotCanGiveCounterAndHaste() {
         harness.addToBattlefield(player1, new RhythmOfTheWild());
-        Permanent wrecker = castWrecker(true);
+        castWreckerAwaitingRiot();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, false);
 
+        Permanent wrecker = findPermanent(player1, "Ghor-Clan Wrecker");
         assertThat(wrecker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, wrecker, Keyword.HASTE)).isTrue();
     }
 
     private Permanent castWrecker(boolean chooseCounter) {
+        castWreckerAwaitingRiot();
+        harness.handleMayAbilityChosen(player1, chooseCounter);
+
+        return findPermanent(player1, "Ghor-Clan Wrecker");
+    }
+
+    private void castWreckerAwaitingRiot() {
         harness.setHand(player1, List.of(new GhorClanWrecker()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -105,8 +116,5 @@ class GhorClanWreckerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, chooseCounter);
-
-        return findPermanent(player1, "Ghor-Clan Wrecker");
     }
 }

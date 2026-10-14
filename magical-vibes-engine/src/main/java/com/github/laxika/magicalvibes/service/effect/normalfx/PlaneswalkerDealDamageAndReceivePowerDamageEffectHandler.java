@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -41,6 +43,7 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
         if (target == null) return;
 
         String cardName = entry.getCard().getName();
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
 
         // Step 1: Planeswalker deals fixed damage to target creature
         int rawDamage = e.damage();
@@ -65,6 +68,11 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
             int newLoyalty = Math.max(0, sourcePlaneswalker.getCounterCount(CounterType.LOYALTY) - targetPower);
             sourcePlaneswalker.setCounterCount(CounterType.LOYALTY, newLoyalty);
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetPower + " damage to " + cardName + ". (" + cardName + " now has " + newLoyalty + " loyalty.)").build());
+            // The target creature is the damage source here, so its lifelink applies to this damage.
+            StackEntry targetDamageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, target.getCard(),
+                    targetControllerId, target.getCard().getName() + "'s ability", List.of(), null, target.getId());
+            targetDamageEntry.setSourcePermanentSnapshot(target);
+            damageSupport.checkSpellLifelink(gameData, targetDamageEntry, targetPower);
             log.info("Game {} - {} takes {} damage from {}, loyalty now {}",
                     gameData.id, cardName, targetPower, target.getCard().getName(), newLoyalty);
         }

@@ -118,7 +118,7 @@ class GideonBlackbladeTest extends BaseCardTest {
             assertThat(gqs.hasKeyword(gd, bear, candidate)).isEqualTo(candidate == keyword);
         }
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, bear, keyword)).isFalse();
     }
 

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GiantTurtle.class, RubiniaSoulsinger.class})
@@ -111,6 +113,8 @@ class GiantTurtleTest extends BaseCardTest {
     @Test
     @DisplayName("Taking a Turtle after an opponent's attack does not restrict its new controller's next turn")
     void canAttackAfterGainingControlDuringOpponentsTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent turtle = addCreatureReady(player1, new GiantTurtle());
         addCreatureReady(player2, new RubiniaSoulsinger());
         harness.forceActivePlayer(player1);

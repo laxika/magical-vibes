@@ -13,10 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
@@ -38,10 +36,6 @@ public class GoblinTown extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                 new PermanentHasSubtypePredicate(CardSubtype.ORC)
         ));
-        PermanentPredicate targetFilter = new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                goblinOrOrc
-        ));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
@@ -52,7 +46,7 @@ public class GoblinTown extends Card {
                 ),
                 "{2}{B}{R}, {T}, Sacrifice this land: Put two +1/+1 counters on target Goblin or Orc you control. "
                         + "Activate only as a sorcery.",
-                new ControlledPermanentPredicateTargetFilter(targetFilter,
+                new ControlledPermanentPredicateTargetFilter(goblinOrOrc,
                         "Target must be a Goblin or Orc you control"),
                 null,
                 null,

@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GloriousEndTest extends BaseCardTest {
 
     private void castGloriousEnd() {
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new GloriousEnd()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.forceActivePlayer(player1);

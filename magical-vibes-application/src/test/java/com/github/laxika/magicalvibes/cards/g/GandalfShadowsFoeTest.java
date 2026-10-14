@@ -68,6 +68,7 @@ class GandalfShadowsFoeTest extends BaseCardTest {
     @Test
     void landfallOnlyTriggersForControllersLands() {
         Permanent gandalf = harness.addToBattlefieldAndReturn(player1, new GandalfShadowsFoe());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         harness.enterBattlefieldAndReturn(player2, new Forest());
@@ -87,6 +88,7 @@ class GandalfShadowsFoeTest extends BaseCardTest {
     @Test
     void landfallStillDrawsAfterGandalfLeaves() {
         Permanent gandalf = harness.addToBattlefieldAndReturn(player1, new GandalfShadowsFoe());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.enterBattlefieldAndReturn(player1, new Forest());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()

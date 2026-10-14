@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class SeekFromTopOfLibraryEffectHandler implements NormalEffectHandlerBea
 
     private final LibraryRevealSupport libraryRevealSupport;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,6 +54,8 @@ public class SeekFromTopOfLibraryEffectHandler implements NormalEffectHandlerBea
         for (Card chosenCard : chosenCards) {
             cardsToReturn.remove(chosenCard);
             gameData.playerHands.get(controllerId).add(chosenCard);
+            triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
+                    gameData, controllerId, chosenCard);
         }
 
         gameData.playerDecks.get(controllerId).addAll(cardsToReturn);

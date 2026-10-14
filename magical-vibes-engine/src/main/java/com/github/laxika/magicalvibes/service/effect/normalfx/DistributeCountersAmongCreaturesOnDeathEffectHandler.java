@@ -65,7 +65,7 @@ public class DistributeCountersAmongCreaturesOnDeathEffectHandler implements Nor
             if (!gameQueryService.isCreature(gameData, target)) {
                 continue;
             }
-            if (e.anyCreature() && targetLegalityService.checkTriggeredPermanentTargetableReason(
+            if ((e.anyCreature() || e.targeted()) && targetLegalityService.checkTriggeredPermanentTargetableReason(
                     gameData, target, entry.getCard(), entry.getControllerId()).isPresent()) {
                 continue;
             }

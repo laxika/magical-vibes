@@ -1284,6 +1284,7 @@ public class TriggeredAbilityQueueService {
         entry.setTriggeringPermanentId(triggeringPermanentId);
         if (attackedTargetId != null) {
             entry.setAttackedTargetId(attackedTargetId);
+            entry.setDefendingPlayerId(defendingPlayerId(gameData, attackedTargetId));
         }
         gameData.stack.add(entry);
     }
@@ -1950,7 +1951,8 @@ public class TriggeredAbilityQueueService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(p, ANY_TARGET_PERMANENTS, filterContext)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(p, ANY_TARGET_PERMANENTS, filterContext)
+                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, p, controllerId)) {
                     validTargets.add(p.getId());
                 }
             }

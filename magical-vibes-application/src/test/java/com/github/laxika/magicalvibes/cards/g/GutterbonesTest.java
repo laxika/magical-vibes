@@ -174,6 +174,7 @@ class GutterbonesTest extends BaseCardTest {
                 harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "test"));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of());
 
         harness.activateGraveyardAbility(player1, 0);
         harness.activateGraveyardAbility(player1, 0);

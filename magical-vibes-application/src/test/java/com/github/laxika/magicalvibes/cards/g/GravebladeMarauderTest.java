@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.f.FieryImpulse;
 import com.github.laxika.magicalvibes.cards.t.TimberpackWolf;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -90,7 +91,7 @@ class GravebladeMarauderTest extends BaseCardTest {
         Permanent marauder = addCreatureReady(player1, new GravebladeMarauder());
         marauder.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         harness.assertLife(player2, 19);
         assertThat(gd.stack).hasSize(1);
@@ -108,7 +109,7 @@ class GravebladeMarauderTest extends BaseCardTest {
         Permanent marauder = addCreatureReady(player1, new GravebladeMarauder());
         marauder.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         harness.assertLife(player2, 19);
         assertThat(gd.stack).hasSize(1);

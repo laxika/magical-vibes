@@ -4908,17 +4908,11 @@ public class PredicateEvaluationService {
                     entry.getCard().getParsedManaCost() != null && entry.getCard().getParsedManaCost().hasX();
             case StackEntryIsNthSpellCastThisTurnPredicate ignored -> false;
             case StackEntryManaValuePredicate manaValue ->
-                    entry.getSpellManaValue()
-                            * (entry.getCard().getParsedManaCost() == null ? 0
-                            : entry.getCard().getParsedManaCost().getXSymbolCount()) == manaValue.manaValue();
+                    entry.getSpellManaValue() == manaValue.manaValue();
             case StackEntryMaxManaValuePredicate maxManaValue ->
-                    (entry.isCastFaceDown() ? 0 : entry.getSpellManaValue()
-                            * (entry.getCard().getParsedManaCost() == null ? 0
-                            : entry.getCard().getParsedManaCost().getXSymbolCount())) <= maxManaValue.maxManaValue();
+                    (entry.isCastFaceDown() ? 0 : entry.getSpellManaValue()) <= maxManaValue.maxManaValue();
             case StackEntryManaSpentLessThanManaValuePredicate ignored ->
-                    !entry.isCastFaceDown() && entry.getManaSpentToCast() < entry.getSpellManaValue()
-                            * (entry.getCard().getParsedManaCost() == null ? 0
-                            : entry.getCard().getParsedManaCost().getXSymbolCount());
+                    !entry.isCastFaceDown() && entry.getManaSpentToCast() < entry.getSpellManaValue();
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryManaValueEqualsSourceChosenNumberPredicate ignored -> false;

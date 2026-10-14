@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffect;
@@ -29,6 +30,7 @@ public class SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffectHa
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler returnHandler;
+    private final GraveyardReturnSupport graveyardReturnSupport;
     private final TriggerCollectionService triggerCollectionService;
 
     @Override
@@ -58,6 +60,8 @@ public class SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffectHa
             return;
         }
 
+        boolean returnBlocked = graveyardReturnSupport.isCardBlockedFromEnteringFromZone(
+                gameData, targetCard, Zone.GRAVEYARD);
         if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, targetPermanent)) {
             return;
         }
@@ -66,6 +70,9 @@ public class SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffectHa
         gameLogService.append(gameData, GameLog.cardThen(targetPermanent.getCard(), " is sacrificed."));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
+        if (returnBlocked) {
+            return;
+        }
         returnHandler.resolveForController(gameData, entry,
                 new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                         new CardTypePredicate(CardType.ARTIFACT),

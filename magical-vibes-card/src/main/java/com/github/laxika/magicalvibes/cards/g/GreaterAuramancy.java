@@ -21,8 +21,9 @@ public class GreaterAuramancy extends Card {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS,
                 new PermanentIsEnchantmentPredicate()));
 
-        // Enchanted creatures you control have shroud.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_CREATURES,
+        // Enchanted creatures you control have shroud. The oracle has no "other", so this includes the
+        // source when it is an enchanted creature.
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsEnchantedPredicate()));
     }
 }

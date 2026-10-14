@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -37,6 +39,7 @@ public class GlassworksShatteredYard extends Card {
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
+                new ConditionalEffect(new SourceRoomDoorUnlocked(1),
+                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
     }
 }

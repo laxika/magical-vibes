@@ -39,6 +39,7 @@ public class RegisterDelayedSelfReturnTransformedEffectHandler implements Normal
                         new ReturnSourceTransformedFromGraveyardEffect(),
                         entry.getControllerId(),
                         source.getOriginalCard(),
+                        source.getId(),
                         source.getId()));
     }
 }

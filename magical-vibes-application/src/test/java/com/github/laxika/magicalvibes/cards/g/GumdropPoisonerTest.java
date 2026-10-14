@@ -107,9 +107,9 @@ class GumdropPoisonerTest extends BaseCardTest {
     @Test
     void cumulativeLifeGainedCountsWithoutSubtractingLifeLost() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "test setup");
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "test setup"));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2));
         harness.setHand(player1, List.of(new GumdropPoisoner()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -125,7 +125,7 @@ class GumdropPoisonerTest extends BaseCardTest {
     @Test
     void opponentsLifeGainDoesNotIncreaseTheReduction() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GumdropPoisoner());
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
         harness.setHand(player1, List.of(new GumdropPoisoner()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

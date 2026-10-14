@@ -41,11 +41,7 @@ public class GoNinjaGo extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Go Ninja Go deals damage equal to the greatest power among creatures you control to target creature an opponent controls",
                         damage,
-                        creatureOpponentControls),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Exile target creature you control, then return it to the battlefield under its owner's control; Go Ninja Go deals damage equal to the greatest power among creatures you control to target creature an opponent controls",
-                        List.of(flicker, damage),
-                        List.of(creatureYouControl, creatureOpponentControls))
+                        creatureOpponentControls)
         )));
     }
 }

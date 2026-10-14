@@ -24,7 +24,7 @@ public class GeminiEngine extends Card {
                 CardType.CREATURE,
                 new Fixed(1),
                 "Twin",
-                new SourcePower(),
+                new SourcePower(true),
                 new SourceToughness(),
                 null,
                 null,

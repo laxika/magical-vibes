@@ -80,11 +80,11 @@ public class GutFanaticalPriestess extends Card {
 
     private static CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect(CardColor color) {
         return switch (color) {
-            case WHITE -> tokenCopyEffect(2, 2, 2, Set.of());
-            case BLUE -> tokenCopyEffect(1, 3, 3, Set.of(Keyword.FLYING));
-            case BLACK -> tokenCopyEffect(1, 4, 4, Set.of(Keyword.MENACE));
-            case RED -> tokenCopyEffect(1, null, null, Set.of(Keyword.DOUBLE_STRIKE));
-            case GREEN -> tokenCopyEffect(1, 5, 5, Set.of(Keyword.TRAMPLE));
+            case WHITE -> tokenCopyEffect(2, 2, 2, Set.of(Keyword.HASTE));
+            case BLUE -> tokenCopyEffect(1, 3, 3, Set.of(Keyword.FLYING, Keyword.HASTE));
+            case BLACK -> tokenCopyEffect(1, 4, 4, Set.of(Keyword.MENACE, Keyword.HASTE));
+            case RED -> tokenCopyEffect(1, null, null, Set.of(Keyword.DOUBLE_STRIKE, Keyword.HASTE));
+            case GREEN -> tokenCopyEffect(1, 5, 5, Set.of(Keyword.TRAMPLE, Keyword.HASTE));
         };
     }
 

@@ -180,7 +180,7 @@ class GuiltyConscienceTest extends BaseCardTest {
         castGuiltyConscience(creature);
         harness.setLife(player2, 20);
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
         resolveCombat();
         assertThat(gd.stack).hasSize(1);
         resolveAllTriggers();

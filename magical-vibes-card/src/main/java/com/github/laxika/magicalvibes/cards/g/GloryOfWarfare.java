@@ -16,10 +16,10 @@ public class GloryOfWarfare extends Card {
     public GloryOfWarfare() {
         // During your turn, creatures you control get +2/+0.
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
-                new StaticBoostEffect(2, 0, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES)));
 
         // During turns other than yours, creatures you control get +0/+2.
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new NotControllerTurn(),
-                new StaticBoostEffect(0, 2, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(0, 2, GrantScope.ALL_OWN_CREATURES)));
     }
 }

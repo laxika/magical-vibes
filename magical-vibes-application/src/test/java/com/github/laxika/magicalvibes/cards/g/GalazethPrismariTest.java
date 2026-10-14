@@ -119,7 +119,7 @@ class GalazethPrismariTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Invalid ability index");
+                .hasMessage("Permanent has no activated ability");
         assertThat(guide.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
@@ -148,7 +148,7 @@ class GalazethPrismariTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Invalid ability index");
+                .hasMessage("Permanent has no activated ability");
         assertThat(guide.isTapped()).isFalse();
     }
 

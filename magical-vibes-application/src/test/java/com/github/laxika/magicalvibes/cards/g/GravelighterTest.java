@@ -80,7 +80,7 @@ class GravelighterTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Jukai Trainee");
         harness.assertNotInGraveyard(player2, "Jukai Trainee");
 
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Jukai Trainee"));
+        harness.handleMultiplePermanentsChosen(player1, List.of(harness.getPermanentId(player1, "Jukai Trainee")));
         harness.assertInGraveyard(player1, "Jukai Trainee");
         harness.assertInGraveyard(player2, "Jukai Trainee");
         harness.assertOnBattlefield(player1, "Gravelighter");

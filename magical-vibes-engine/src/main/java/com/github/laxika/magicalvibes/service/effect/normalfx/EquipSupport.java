@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -103,24 +100,15 @@ public class EquipSupport {
         return true;
     }
 
+    /**
+     * Enqueues the unattach triggers (destroy-on-unattach and sacrifice-on-unattach) when equipment
+     * moves off {@code oldAttachedTo}. The previously-attached permanent is only affected when those
+     * triggers resolve.
+     */
     public void applySacrificeOnUnattachIfNeeded(GameData gameData, Permanent equipment,
                                                 UUID oldAttachedTo, UUID newAttachedTo) {
         if (oldAttachedTo != null && !oldAttachedTo.equals(newAttachedTo)) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, equipment, oldAttachedTo);
-        }
-
-        boolean hasSacrificeOnUnattach = equipment.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof SacrificeOnUnattachEffect);
-
-        if (hasSacrificeOnUnattach && oldAttachedTo != null && !oldAttachedTo.equals(newAttachedTo)) {
-            Permanent oldCreature = gameQueryService.findPermanentById(gameData, oldAttachedTo);
-            if (oldCreature != null) {
-                
-                gameLogService.append(gameData, GameLog.cardTextCard(oldCreature.getCard(), " is sacrificed (", equipment.getCard(), " became unattached)."));
-                log.info("Game {} - {} sacrificed due to {} unattach", gameData.id, oldCreature.getCard().getName(), equipment.getCard().getName());
-                permanentRemovalService.sacrificePermanentToGraveyard(gameData, oldCreature);
-                permanentRemovalService.removeOrphanedAuras(gameData);
-            }
         }
     }
 }

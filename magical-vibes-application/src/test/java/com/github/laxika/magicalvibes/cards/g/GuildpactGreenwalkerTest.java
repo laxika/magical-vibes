@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.a.AzoriusArrester;
+import com.github.laxika.magicalvibes.cards.r.RakdosShredFreak;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GuildpactGreenwalker.class, GrizzlyBears.class, AzoriusArrester.class, Shock.class})
+@CardUsed({GuildpactGreenwalker.class, GrizzlyBears.class, RakdosShredFreak.class, Shock.class})
 class GuildpactGreenwalkerTest extends BaseCardTest {
 
     @Test
@@ -41,20 +41,20 @@ class GuildpactGreenwalkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent chosen = findPermanent(player1, "Grizzly Bears");
-        assertThat(chosen.getEffectivePower()).isEqualTo(6);
-        assertThat(chosen.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, chosen)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, chosen)).isEqualTo(6);
     }
 
     @Test
     void multicoloredCreaturesYouControlHaveWardTwo() {
         harness.addToBattlefield(player1, new GuildpactGreenwalker());
-        Permanent arrester = addReadyCreature(player1, new AzoriusArrester());
+        Permanent shredFreak = addReadyCreature(player1, new RakdosShredFreak());
 
-        castShockAt(player2, arrester);
+        castShockAt(player2, shredFreak);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arrester);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shredFreak);
     }
 
     @Test

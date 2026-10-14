@@ -61,6 +61,7 @@ class GyreEngineerTest extends BaseCardTest {
     void secondPlayersEngineerProducesManaForSecondPlayer() {
         Permanent perm = harness.addToBattlefieldAndReturn(player2, new GyreEngineer());
         perm.setSummoningSick(false);
+        harness.passPriority(player1);
 
         gs.tapPermanent(gd, player2, 0);
 

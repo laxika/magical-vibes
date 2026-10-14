@@ -47,12 +47,15 @@ public class ReselectTargetAtRandomEffectHandler implements NormalEffectHandlerB
             return;
         }
 
+        UUID currentTarget = targetEntry.getTargetId() != null
+                ? targetEntry.getTargetId()
+                : targetEntry.getTargetIds().getFirst();
         UUID selectedTarget = legalTargets.get(ThreadLocalRandom.current().nextInt(legalTargets.size()));
-        if (selectedTarget.equals(targetEntry.getTargetId())) {
+        if (selectedTarget.equals(currentTarget)) {
             return;
         }
 
-        targetEntry.setTargetId(selectedTarget);
+        targetEntry.replaceTargetReferences(currentTarget, selectedTarget);
         gameLogService.append(gameData,
                 GameLog.cardTextCard(entry.getCard(), " reselects the target of ", targetEntry.getCard(), " at random."));
 

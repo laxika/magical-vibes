@@ -117,6 +117,7 @@ class GoblinLookoutTest extends BaseCardTest {
     @DisplayName("Cannot sacrifice an opponent's Goblin to pay the cost")
     void cannotSacrificeOpponentsGoblin() {
         Permanent lookout = addCreatureReady(player1, new GoblinLookout());
+        addCreatureReady(player1, new GoblinTurncoat());
         Permanent opponentGoblin = addCreatureReady(player2, new GoblinTurncoat());
 
         harness.activateAbility(player1, 0, null, null);

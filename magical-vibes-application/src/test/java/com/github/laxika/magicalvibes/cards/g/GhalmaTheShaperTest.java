@@ -51,6 +51,7 @@ class GhalmaTheShaperTest extends BaseCardTest {
 
     @Test
     void attackAbilityBenefitsItsControllerAndCreatesAnUntappedNonattackingMyr() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player2, new GhalmaTheShaper());
 
         declareAttackers(player2, List.of(0));

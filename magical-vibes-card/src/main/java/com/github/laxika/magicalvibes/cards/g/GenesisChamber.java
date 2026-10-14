@@ -31,7 +31,7 @@ public class GenesisChamber extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                         new ConditionalEffect(new SourceUntapped(),
-                                new CreateTokenForTriggeringPlayerEffect(myrToken)),
+                                new CreateTokenForTriggeringPlayerEffect(myrToken, false, true)),
                         true));
     }
 }

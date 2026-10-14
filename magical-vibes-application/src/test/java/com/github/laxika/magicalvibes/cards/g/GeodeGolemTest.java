@@ -125,7 +125,7 @@ class GeodeGolemTest extends BaseCardTest {
     void commanderMayEnterCommandZoneAfterCombatDamage() {
         addAttackingGeodeGolem();
         resolveCombat();
-        assertThat(gd.stack).isNotEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         Card commander = putCommanderInCommandZone();
 
         harness.passBothPriorities();

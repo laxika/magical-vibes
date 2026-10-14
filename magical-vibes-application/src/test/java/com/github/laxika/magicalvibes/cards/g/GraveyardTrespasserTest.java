@@ -231,9 +231,8 @@ class GraveyardTrespasserTest extends BaseCardTest {
         castTrespasser();
         resolveAllTriggers();
         gd.previousTurnActivePlayerId = player1.getId();
-        gd.spellsCastLastTurn.put(player1.getId(), 1);
-        gd.previousTurnActivePlayerId = player1.getId();
-        gd.spellsCastLastTurn.put(player1.getId(), 2);
+        gd.spellsCastLastTurn.clear();
+        gd.spellsCastLastTurn.put(player2.getId(), 2);
         harness.performUntapStep(player2);
         harness.forceStep(TurnStep.UNTAP);
 

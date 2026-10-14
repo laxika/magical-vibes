@@ -3271,9 +3271,6 @@ public class LibraryChoiceHandlerService {
             battlefieldEntryBatchSupport.begin(gameData, List.of(
                     new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
                             controllerId, controllerId, aura, Zone.LIBRARY, null)));
-            if (!gameData.interaction.isAwaitingInput() && library.remove(aura)) {
-                remainingCards.add(aura);
-            }
         } else if (selectedCards.size() == 1 && selectedCards.getFirst().isAura()
                 && !libraryRevealChoice.selectedToBattlefieldCloaked()
                 && !libraryRevealChoice.selectedToBattlefieldTapped()
@@ -3458,15 +3455,14 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        performStateBasedActionsIfResolutionComplete(gameData);
-
-        // Guild Feud: this was one of the two sequential reveals — hand back to the flow, which
-        // either begins the second reveal or resolves the closing fight.
+        // Guild Feud: this was one of the two sequential reveals — hand back to the flow before state-based
+        // actions, so a legend rule check waits until both reveals and the fight have resolved.
         if (gameData.hasPendingInteraction(PendingGuildFeud.class)
                 && guildFeudSupport.onRevealAnswered(gameData, selectedCards)) {
             return;
         }
 
+        performStateBasedActionsIfResolutionComplete(gameData);
         finishSearchAndResume(gameData);
     }
 

@@ -16,8 +16,8 @@ public class GiltLeafsEmbrace extends Card {
 
     public GiltLeafsEmbrace() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), GrantScope.TARGET))
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.ENCHANTED_CREATURE));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), GrantScope.ENCHANTED_CREATURE));
     }
 }

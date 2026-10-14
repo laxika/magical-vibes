@@ -2149,10 +2149,10 @@ public class TargetLegalityService {
                     return group.isXScaled() ? Math.min(xValue, min) : min;
                 })
                 .sum();
-        int maxTargets = targetGroups.stream()
-                .mapToInt(group -> effectiveGroupMaxTargets(
+        int maxTargets = (int) Math.min(Integer.MAX_VALUE, targetGroups.stream()
+                .mapToLong(group -> effectiveGroupMaxTargets(
                         gameData, controllerId, null, group, xValue, kicked, giftPromised))
-                .sum();
+                .sum());
         maxTargets = applyGiftTargetLimit(card, maxTargets, giftPromised);
         if (targetGroupSizes != null && !targetGroupSizes.isEmpty()) {
             int expectedTargetCount = 0;
@@ -2314,13 +2314,16 @@ public class TargetLegalityService {
             Set<UUID> targetedControllers = targetIds.stream()
                     .map(id -> gameQueryService.findPermanentController(gameData, id))
                     .collect(java.util.stream.Collectors.toSet());
-            for (UUID opponentId : gameData.playerIds) {
-                if (opponentId.equals(controllerId) || targetedControllers.contains(opponentId)) continue;
-                boolean hasLegalTarget = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+            boolean includesController = card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
+            for (UUID playerId : gameData.playerIds) {
+                if ((!includesController && playerId.equals(controllerId)) || targetedControllers.contains(playerId)) continue;
+                boolean hasLegalTarget = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                         .anyMatch(permanent -> checkSpellTargeting(
                                 gameData, card, permanent.getId(), null, controllerId).isEmpty());
                 if (hasLegalTarget || card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_OPPONENT) {
-                    throw new IllegalStateException("Must target a permanent controlled by each opponent if able");
+                    throw new IllegalStateException(includesController
+                            ? "Must target a permanent controlled by each player if able"
+                            : "Must target a permanent controlled by each opponent if able");
                 }
             }
         }
@@ -4233,7 +4236,8 @@ public class TargetLegalityService {
                 || (entry.getCard().hasType(CardType.INSTANT)
                 && gameQueryService.hasHexproofFromCardType(gameData, targetPerm, CardType.INSTANT,
                 entry.getControllerId()))
-                || gameQueryService.cantBeTargetedByAnySpell(gameData, targetPerm);
+                || gameQueryService.cantBeTargetedByAnySpell(gameData, targetPerm)
+                || (entry.getCard().isAura() && gameQueryService.cantBeTargetedByAuraSpells(gameData, targetPerm));
     }
 
     private Set<CardColor> effectiveSpellColors(GameData gameData, StackEntry entry) {

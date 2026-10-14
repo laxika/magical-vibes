@@ -40,6 +40,12 @@ public class ExileAnyNumberOfPermanentsUntilSourceLeavesEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var exile = (ExileAnyNumberOfPermanentsUntilSourceLeavesEffect) effect;
+        // CR 610.3b: if the source already left the battlefield before this triggered ability
+        // resolved, the "until" one-shot effect has already happened and nothing is exiled.
+        if (entry.getSourcePermanentId() != null
+                && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null) {
+            return;
+        }
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())

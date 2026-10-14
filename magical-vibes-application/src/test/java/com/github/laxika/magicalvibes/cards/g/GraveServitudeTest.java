@@ -63,7 +63,7 @@ class GraveServitudeTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, scouts.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
     }
@@ -82,7 +82,7 @@ class GraveServitudeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
         assertThat(gd.stack).hasSize(1);
@@ -105,7 +105,7 @@ class GraveServitudeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
         assertThat(gd.stack).hasSize(1);
@@ -130,7 +130,7 @@ class GraveServitudeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
     }
@@ -152,7 +152,7 @@ class GraveServitudeTest extends BaseCardTest {
         assertThat(gqs.hasColor(gd, scouts, CardColor.BLACK)).isTrue();
         assertThat(gqs.hasColor(gd, scouts, CardColor.WHITE)).isFalse();
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
         assertThat(gd.stack).hasSize(1);

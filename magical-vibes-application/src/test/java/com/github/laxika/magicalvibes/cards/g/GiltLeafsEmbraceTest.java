@@ -121,8 +121,8 @@ class GiltLeafsEmbraceTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new GiltLeafsEmbrace());
         aura.setAttachedTo(bears.getId());
-        harness.getBattlefieldEntryService().processCreatureETBEffects(
-                gd, player1.getId(), aura.getCard(), null, false);
+        harness.inMutationScope(() -> harness.getBattlefieldEntryService().processCreatureETBEffects(
+                gd, player1.getId(), aura.getCard(), null, false));
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         resolveAllTriggers();

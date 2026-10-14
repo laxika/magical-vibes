@@ -135,6 +135,6 @@ class GiftOfCompleationTest extends BaseCardTest {
         assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(incubator.getEffectivePower()).isEqualTo(3);
         assertThat(incubator.getEffectiveToughness()).isEqualTo(3);
-        harness.assertOnBattlefield(player1, "Phyrexian");
+        harness.assertOnBattlefield(player1, "Phyrexian Token");
     }
 }

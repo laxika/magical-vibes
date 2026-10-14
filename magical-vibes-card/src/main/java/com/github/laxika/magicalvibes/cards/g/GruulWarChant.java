@@ -16,8 +16,8 @@ public class GruulWarChant extends Card {
     public GruulWarChant() {
         // Attacking creatures you control get +1/+0 and have menace.
         addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, new PermanentIsAttackingPredicate()));
+                new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES, new PermanentIsAttackingPredicate()));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.MENACE, GrantScope.OWN_CREATURES, new PermanentIsAttackingPredicate()));
+                Keyword.MENACE, GrantScope.ALL_OWN_CREATURES, new PermanentIsAttackingPredicate()));
     }
 }

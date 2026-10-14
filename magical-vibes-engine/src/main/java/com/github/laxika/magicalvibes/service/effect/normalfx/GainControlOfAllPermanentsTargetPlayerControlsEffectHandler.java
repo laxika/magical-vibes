@@ -43,7 +43,6 @@ public class GainControlOfAllPermanentsTargetPlayerControlsEffectHandler impleme
 
         UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) return;
-        if (targetPlayerId.equals(entry.getControllerId())) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield == null) return;

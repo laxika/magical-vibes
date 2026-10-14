@@ -200,6 +200,7 @@ class GoblinLyreTest extends BaseCardTest {
         addCreatureReady(player1, new BalduvianBears());
         addCreatureReady(player2, new BalduvianBears());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player1, List.of(new Pyroblast()));
         harness.addMana(player1, ManaColor.RED, 1);
         int ownLifeBefore = gd.playerLifeTotals.get(player1.getId());

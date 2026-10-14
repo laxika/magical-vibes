@@ -36,7 +36,7 @@ public class RegisterLoseLifeAtNextDrawStepUnlessPaysEffectHandler implements No
         if (playerId == null) return;
 
         gameData.queueDelayedAction(new LoseLifeAtNextDrawStepUnlessPays(
-                playerId, e.lifeLoss(), e.payAmount(), entry.getCard()));
+                playerId, e.lifeLoss(), e.payAmount(), entry.getCard(), entry.getControllerId()));
 
         String playerName = gameData.playerIdToName.get(playerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " must pay {" + e.payAmount() + "} before their next draw step or lose " + e.lifeLoss() + " life. (", entry.getCard(), ")"));

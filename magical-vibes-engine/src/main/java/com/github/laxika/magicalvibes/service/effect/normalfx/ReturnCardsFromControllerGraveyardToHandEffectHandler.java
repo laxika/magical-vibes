@@ -49,7 +49,8 @@ public class ReturnCardsFromControllerGraveyardToHandEffectHandler implements No
 
         List<Card> matching = new ArrayList<>();
         for (Card card : graveyard) {
-            if (predicateEvaluationService.matchesCardPredicate(card, returnEffect.filter(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(card, returnEffect.filter(), null,
+                    gameData, controllerId)) {
                 matching.add(card);
             }
         }

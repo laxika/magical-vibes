@@ -116,6 +116,7 @@ class GyomeMasterChefTest extends BaseCardTest {
 
     @Test
     void alreadyTappedCreatureGainsIndestructibleOnlyUntilEndOfTurn() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new GyomeMasterChef());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         target.tap();

@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public class GemcutterBuccaneer extends Card {
 
     public GemcutterBuccaneer() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.PIRATE),
                         CreateTokenEffect.ofTappedTreasureToken(1)));

@@ -31,7 +31,7 @@ public class GoldbugScrappyScout extends Card {
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect(
                 new CardSubtypePredicate(CardSubtype.HUMAN)));
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, ConditionalEffect.atTriggerTime(
                 new AllOf(List.of(
                         new SourceIsAttacking(),
                         new MinimumMatchingAttackers(1,

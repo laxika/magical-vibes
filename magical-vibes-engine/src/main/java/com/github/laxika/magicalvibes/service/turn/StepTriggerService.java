@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPerman
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardAttachedToPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
@@ -264,6 +265,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefield
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -839,11 +841,20 @@ public class StepTriggerService {
                     // The card was played (or otherwise left exile) — nothing to clean up.
                     continue;
                 }
-                gameData.removeFromExile(action.cardId());
-                graveyardService.addCardToGraveyard(gameData, action.ownerId(), exiled.card());
                 String sourceName = action.sourceCard() != null ? action.sourceCard().getName() : "an effect";
-                gameLogService.append(gameData, GameLog.text("The card exiled with " + sourceName + " is put into its owner's graveyard."));
-                log.info("Game {} - unplayed card exiled with {} put into owner's graveyard",
+                StackEntry cleanup = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard() != null ? action.sourceCard() : exiled.card(),
+                        action.controllerId(),
+                        sourceName + "'s delayed ability — put the unplayed card into its owner's graveyard",
+                        new ArrayList<>(List.of(new PutTargetCardFromExileIntoOwnersGraveyardEffect())),
+                        null,
+                        (Zone) null
+                );
+                cleanup.setTargetId(action.cardId());
+                cleanup.setTargetZone(Zone.EXILE);
+                gameData.stack.add(cleanup);
+                log.info("Game {} - delayed cleanup for unplayed card exiled with {} pushed onto stack",
                         gameData.id, sourceName);
             }
         }
@@ -890,9 +901,6 @@ public class StepTriggerService {
                     GrantChosenLandwalkAtNextUpkeep.class,
                     action -> action.controllerId().equals(gameData.activePlayerId));
             for (GrantChosenLandwalkAtNextUpkeep action : pending) {
-                if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
-                    continue;
-                }
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         action.sourceCard(),
@@ -1628,13 +1636,24 @@ public class StepTriggerService {
                     } else if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(card, activePlayerId, may);
                     } else {
-                        gameData.stack.add(new StackEntry(
+                        // Bind the source-in-graveyard check to this graveyard stay so an old trigger
+                        // cannot act after the card has left and re-entered the graveyard (CR 603.4).
+                        long sourceEntryVersion = gameData.graveyardEntryVersion(card.getId());
+                        CardEffect boundEffect = effect;
+                        if (effect instanceof ConditionalEffect conditional
+                                && conditional.condition() instanceof SourceCardInGraveyard) {
+                            boundEffect = new ConditionalEffect(new SourceCardInGraveyard(sourceEntryVersion),
+                                    conditional.wrapped(), conditional.interveningIf(), conditional.triggerTimeOnly());
+                        }
+                        StackEntry upkeepEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 card,
                                 activePlayerId,
                                 card.getName() + "'s upkeep ability",
-                                new ArrayList<>(List.of(effect))
-                        ));
+                                new ArrayList<>(List.of(boundEffect))
+                        );
+                        upkeepEntry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
+                        gameData.stack.add(upkeepEntry);
 
                         gameLogService.append(gameData, GameLog.cardThen(card, "'s upkeep ability triggers."));
                         log.info("Game {} - {} graveyard upkeep trigger pushed onto stack", gameData.id, card.getName());
@@ -1748,7 +1767,6 @@ public class StepTriggerService {
                     }
                     if (effect instanceof ConditionalEffect conditional
                             && conditional.interveningIf()
-                            && conditional.targetSpec() != TargetSpec.NONE
                             && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                             ConditionContext.forPermanent(perm, playerId))) {
                         continue;
@@ -4048,8 +4066,10 @@ public class StepTriggerService {
                     new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect(pending))));
             entry.setNonTargeting(true);
             entry.setTriggeringCardId(pending.card().getId());
-            entry.setTriggeringCardExileEntryVersion(
-                    gameData.exileEntryVersions.getOrDefault(pending.card().getId(), -1L));
+            Long exileVersionWhenQueued = gameData.pendingExileReturnExileVersions.remove(pending);
+            entry.setTriggeringCardExileEntryVersion(exileVersionWhenQueued != null
+                    ? exileVersionWhenQueued
+                    : gameData.exileEntryVersions.getOrDefault(pending.card().getId(), -1L));
             gameData.stack.add(entry);
         }
     }
@@ -5436,28 +5456,18 @@ public class StepTriggerService {
             List<DelayedReturnAuraAttachedToPermanent> pendingReturns =
                     gameData.drainDelayedActions(DelayedReturnAuraAttachedToPermanent.class);
             for (DelayedReturnAuraAttachedToPermanent pending : pendingReturns) {
-                Permanent enchantedPermanent = gameQueryService.findPermanentById(
-                        gameData, pending.enchantedPermanentId());
-                if (enchantedPermanent == null || !gameQueryService.isCreature(gameData, enchantedPermanent)) {
-                    continue;
-                }
-
                 Card auraCard = gameQueryService.findCardInGraveyardById(gameData, pending.auraCardId());
                 if (auraCard == null) {
                     continue;
                 }
 
-                permanentRemovalService.removeCardFromGraveyardById(gameData, pending.auraCardId());
-                Permanent auraPermanent = new Permanent(auraCard);
-                auraPermanent.setAttachedTo(enchantedPermanent.getId());
-                battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, pending.auraOwnerId(), auraPermanent);
-                gameLogService.append(gameData, GameLog.builder()
-                        .card(auraCard)
-                        .text(" returns to the battlefield attached to ")
-                        .card(enchantedPermanent.getCard())
-                        .text(" (delayed trigger).")
-                        .build());
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        auraCard, pending.auraOwnerId(), auraCard.getName() + "'s delayed return ability",
+                        new ArrayList<>(List.of(new ReturnAuraFromGraveyardAttachedToPermanentEffect(
+                                pending.auraCardId(), pending.auraOwnerId(), pending.enchantedPermanentId()))));
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.cardThen(auraCard, "'s delayed return ability triggers."));
             }
         }
 

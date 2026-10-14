@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -29,20 +29,19 @@ import java.util.Set;
 public class GloomwidowsFeast extends Card {
 
     public GloomwidowsFeast() {
-        // The "was blue or black" check reads the target's colour, so it runs while the creature is
-        // still on the battlefield — before the destroy. Colour doesn't change when it's destroyed,
-        // so this matches the printed "was blue or black" wording.
+        // The colour check is a last-known-information gate on the destroyed creature, and the token
+        // is created only after the destroy has happened, as the printed instructions are ordered.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 "Target must be a creature with flying."
         ))
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                        new TargetPermanentMatches(
-                                new PermanentColorInPredicate(Set.of(CardColor.BLUE, CardColor.BLACK))),
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                        EventStat.NONE,
                         new CreateTokenEffect("Spider", 1, 2, CardColor.GREEN,
-                                List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.<CardType>of())))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                                List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.<CardType>of()),
+                        ThenEffectRecipient.CONTROLLER,
+                        new PermanentColorInPredicate(Set.of(CardColor.BLUE, CardColor.BLACK))));
     }
 }

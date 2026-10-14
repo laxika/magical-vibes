@@ -27,7 +27,8 @@ import java.util.UUID;
  * <p>The pick rides the shared {@code LibraryRevealChoice} flow; leaving {@code remainingToGraveyard},
  * {@code randomRemainingToBottom} and {@code selectedToHand} all false selects the shuffle-the-rest
  * branch in {@code LibraryChoiceHandlerService}. When nothing is eligible the reveal still happens
- * and the cards are shuffled back without a prompt.
+ * and the cards are shuffled back without a prompt. With nothing to reveal (X is 0 or the library is
+ * empty) the library is still shuffled.
  */
 @Slf4j
 @Component
@@ -57,6 +58,7 @@ public class RevealTopXCardsMayPutPermanentToBattlefieldShuffleRestEffectHandler
         if (count <= 0) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     ": " + playerName + " reveals no cards."));
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 

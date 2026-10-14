@@ -1028,15 +1028,13 @@ public class CombatAttackService {
             // "Whenever this creature attacks, it deals 1 damage to any target").
             List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                     gameData, attacker, EffectSlot.ON_ATTACK);
-            boolean decayedTrigger = gameQueryService.hasKeyword(gameData, attacker, Keyword.DECAYED)
-                    && nativeAttackEffects.isEmpty();
+            // Decayed's "sacrifice it at end of combat" is its own triggered ability (CR 702.147a),
+            // so it goes on the stack as a separate object from any printed attack ability.
+            boolean decayedTrigger = gameQueryService.hasKeyword(gameData, attacker, Keyword.DECAYED);
             if (!nativeAttackEffects.isEmpty() || !temporaryAttackEffects.isEmpty()
-                    || !grantedAttackEffects.isEmpty() || decayedTrigger) {
+                    || !grantedAttackEffects.isEmpty()) {
                 List<CardEffect> allEffects = new ArrayList<>(nativeAttackEffects);
                 allEffects.addAll(grantedAttackEffects);
-                if (decayedTrigger) {
-                    allEffects.add(new SacrificeAtEndOfCombatEffect());
-                }
                 // Temporarily granted ON_ATTACK abilities (e.g. Tower Above's "target creature blocks
                 // it this turn if able"). MustBlockSourceEffect's source is snapshotted to the attacker.
                 for (CardEffect temp : temporaryAttackEffects) {
@@ -1060,9 +1058,12 @@ public class CombatAttackService {
                 // Warleader): drop the wrapped effects entirely once this permanent has already
                 // attacked this turn, otherwise consume the first-attack marker before any
                 // intervening-if or trigger-subject filters can remove the wrapped effect.
-                // The gate is per permanent, so an extra combat phase it grants can't loop.
+                // The gate is per permanent, so an extra combat phase it grants can't loop. Attacks
+                // made while the creature had lost its abilities still count as its attacks this turn,
+                // so the attack count is checked as well as the marker.
                 if (allEffects.stream().anyMatch(e -> e instanceof OncePerTurnTriggerEffect)) {
-                    if (gameData.onceEachTurnAttackTriggersFiredThisTurn.contains(attacker.getId())) {
+                    if (attacker.getAttacksThisTurn() > 1
+                            || gameData.onceEachTurnAttackTriggersFiredThisTurn.contains(attacker.getId())) {
                         allEffects.removeIf(e -> e instanceof OncePerTurnTriggerEffect);
                     } else {
                         gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
@@ -1462,6 +1463,19 @@ public class CombatAttackService {
                         log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                     }
                 }
+            }
+            if (decayedTrigger) {
+                StackEntry decayedSacrifice = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        playerId,
+                        attacker.getCard().getName() + "'s decayed trigger",
+                        List.of(new SacrificeAtEndOfCombatEffect()),
+                        attackerIndices.size(),
+                        attacker.getId()
+                );
+                decayedSacrifice.setSourcePermanentSnapshot(new Permanent(attacker));
+                gameData.stack.add(decayedSacrifice);
             }
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);

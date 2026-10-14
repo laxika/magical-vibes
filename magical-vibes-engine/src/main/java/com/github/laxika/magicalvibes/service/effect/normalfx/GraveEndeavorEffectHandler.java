@@ -80,6 +80,7 @@ public class GraveEndeavorEffectHandler implements NormalEffectHandlerBean {
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
+                        .mandatory(true)
                         .plusOneCounterCount(chosenRoll)
                         .build(),
                 new LoseLifeEffect(otherRoll, LoseLifeRecipient.EACH_OPPONENT),

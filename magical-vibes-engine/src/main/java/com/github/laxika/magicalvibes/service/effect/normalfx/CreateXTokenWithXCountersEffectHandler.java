@@ -37,15 +37,13 @@ public class CreateXTokenWithXCountersEffectHandler implements NormalEffectHandl
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        int counterAmount = amountEvaluationService.evaluate(
-                gameData, e.counterAmount(), AmountContext.forStackEntry(entry, source));
-        if (counterAmount < 0) {
-            return;
-        }
-
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.tokenTemplate(), entry.getCard().getSetCode());
         entry.getCreatedPermanentIds().addAll(createdIds);
+        // The token is created before X is counted, so a count of the controller's permanents
+        // includes the new token (e.g. Gimbal, Gremlin Prodigy counts itself).
+        int counterAmount = Math.max(0, amountEvaluationService.evaluate(
+                gameData, e.counterAmount(), AmountContext.forStackEntry(entry, source)));
         if (counterAmount == 0 || createdIds.isEmpty()) {
             return;
         }

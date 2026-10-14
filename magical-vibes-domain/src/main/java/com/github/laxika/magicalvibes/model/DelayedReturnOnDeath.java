@@ -10,7 +10,8 @@ import java.util.UUID;
  * @param returnUnderController whether the permanent returns under {@code controllerId}'s control
  * @param requireControllerGraveyard whether the trigger only fires if the card enters the ability
  *                                    controller's graveyard
+ * @param sourceCard the card whose ability created the delayed trigger, used as the trigger's source
  */
 public record DelayedReturnOnDeath(UUID controllerId, boolean enterTapped, boolean returnUnderController,
-                                   boolean requireControllerGraveyard) {
+                                   boolean requireControllerGraveyard, Card sourceCard) {
 }

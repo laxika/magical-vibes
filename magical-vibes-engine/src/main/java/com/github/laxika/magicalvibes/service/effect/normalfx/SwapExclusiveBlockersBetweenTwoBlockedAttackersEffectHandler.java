@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -109,6 +110,14 @@ public class SwapExclusiveBlockersBetweenTwoBlockedAttackersEffectHandler implem
             GameData gameData,
             Permanent attackerA, List<Permanent> blockersOfA,
             Permanent attackerB, List<Permanent> blockersOfB) {
+        // The creatures blocking one attacker must, as a group, be able to block the other (menace
+        // needs two or more blockers), not just each creature on its own.
+        // An attacker blocked without blockers has no creatures to hand over, so the requirement
+        // that its (empty) group can block the other attacker holds vacuously.
+        if ((!blockersOfB.isEmpty() && blockersOfB.size() < minimumBlockers(gameData, attackerA))
+                || (!blockersOfA.isEmpty() && blockersOfA.size() < minimumBlockers(gameData, attackerB))) {
+            return false;
+        }
         // Check each blocker against the other attacker using that blocker's controller battlefield.
         for (Permanent blocker : blockersOfB) {
             if (!canBlock(gameData, blocker, attackerA)) {
@@ -121,6 +130,10 @@ public class SwapExclusiveBlockersBetweenTwoBlockedAttackersEffectHandler implem
             }
         }
         return true;
+    }
+
+    private int minimumBlockers(GameData gameData, Permanent attacker) {
+        return gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) ? 2 : 1;
     }
 
     private boolean canBlock(GameData gameData, Permanent blocker, Permanent attacker) {

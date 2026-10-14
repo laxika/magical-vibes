@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -32,10 +33,12 @@ public class GenestealerPatriarch extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new PutCounterOnTargetPermanentEffect(CounterType.INFECTION));
 
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        CardEffect childrenOfTheCult = new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.INFECTION),
                 new CreateTokenCopyOfDyingCreatureEffect(
                         new CreateTokenCopyOfTargetPermanentEffect(
-                                List.of(CardSubtype.TYRANID), Set.of(), null, null, Map.of()))));
+                                List.of(CardSubtype.TYRANID), Set.of(), null, null, Map.of())));
+        addEffect(EffectSlot.ON_DEATH, childrenOfTheCult);
+        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, childrenOfTheCult);
     }
 }

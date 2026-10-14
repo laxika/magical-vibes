@@ -44,7 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -369,9 +368,6 @@ public class PermanentRemovalService {
             return false;
         }
 
-        // Capture unattach-sacrifice info before removal
-        UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
-
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         boolean modifiedAtDeath = wasCreature && gameQueryService.isModified(gameData, target);
         boolean wasLand = gameQueryService.isLand(gameData, target);
@@ -424,7 +420,6 @@ public class PermanentRemovalService {
                 destroyedBySpellOrAbility, grantedDeathEffects, dyingPowerAtDeath,
                 dyingToughnessAtDeath, selfGraveyardTriggerSuppressed, creatureDeathTriggersSuppressed,
                 wasSacrificed, removed.get().hadPrintedAbilities());
-        handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         return true;
     }
@@ -553,7 +548,6 @@ public class PermanentRemovalService {
         }
 
         unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), controllerId);
-        UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         boolean modifiedAtDeath = wasCreature && gameQueryService.isModified(gameData, target, controllerId);
@@ -595,7 +589,6 @@ public class PermanentRemovalService {
                 wasLand, creatureSubtypesAtDeath, undyingInstances, persistInstances, info.controllerId(), info.ownerId(), false,
                 grantedDeathEffects, dyingPowerAtDeath, dyingToughnessAtDeath, selfGraveyardTriggerSuppressed,
                 creatureDeathTriggersSuppressed, false, info.hadPrintedAbilities());
-        handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target, info.controllerId(), info.hadPrintedAbilities());
     }
 
@@ -721,7 +714,6 @@ public class PermanentRemovalService {
 
     private boolean removePermanentWithoutDestination(GameData gameData, Permanent target, Zone destination) {
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
-        UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
             return false;
@@ -741,7 +733,6 @@ public class PermanentRemovalService {
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
         forgetDepartedPermanentState(gameData, target);
-        handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         target.setAttachedTo(null);
         return true;
@@ -798,8 +789,6 @@ public class PermanentRemovalService {
                 gameData, target, gameData.currentlyResolvingControllerId)) {
             return false;
         }
-        // Capture unattach-sacrifice info before removal
-        UUID sacrificeOnUnattachCreatureId = getSacrificeOnUnattachCreatureId(target);
         List<Card> leavingCards = new ArrayList<>(target.cardsLeavingBattlefield());
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
@@ -870,7 +859,6 @@ public class PermanentRemovalService {
         triggerCollectionService.checkControllerSpellOrAbilityExilesPermanentTriggers(
                 gameData, target, controllerId, exilingControllerId(gameData));
         forgetDepartedPermanentState(gameData, target);
-        handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         return true;
     }
@@ -1506,6 +1494,9 @@ public class PermanentRemovalService {
                     allTracked.remove(cardId);
                 }
                 gameData.graveyardAdventureCastPermissions.remove(cardId);
+                // Leaving the graveyard makes the card a new object (CR 400.7), so a later return to
+                // the graveyard is not a discard made this turn.
+                gameData.cardsDiscardedOrCycledThisTurn.values().forEach(discardedIds -> discardedIds.remove(cardId));
                 graveyardService.notifyCardLeftGraveyard(gameData, playerId, leaving);
                 return;
             }
@@ -1577,7 +1568,7 @@ public class PermanentRemovalService {
                 && checkExileInsteadOfDie
                 && target.getOriginalCard() != null
                 && gameData.perpetualExileInsteadOfDyingCardIds.contains(target.getOriginalCard().getId());
-        if (!target.isExileIfLeavesBattlefield()
+        if (!(target.isExileIfLeavesBattlefield() && !gameQueryService.hasLostAllAbilities(gameData, target))
                 && !(target.isExileIfLeavesBattlefieldUntilEndOfTurn()
                         && gameQueryService.grantedAbilitySurvivesRemoval(
                                 gameData, target, target.getExileIfLeavesBattlefieldUntilEndOfTurnTimestamp()))
@@ -2220,7 +2211,8 @@ public class PermanentRemovalService {
                 && ownSubtypeExileReplacement(gameData, target, controllerId, creatureSubtypesAtDeath);
         boolean controlledPermanentExileReplacement = gameData.playersExilingControlledPermanentsInsteadOfDyingThisTurn
                 .contains(controllerId);
-        boolean exileInstead = GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard())
+        boolean exileInstead = (!gameQueryService.hasLostPrintedAbilities(gameData, target)
+                        && GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard()))
                 || opponentExileReplacement != null
                 || bloodCounterReplacement != null
                 || ownSubtypeExileReplacement
@@ -2630,37 +2622,6 @@ public class PermanentRemovalService {
             gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.cardThen(dyingCard, "'s persist ability triggers."));
         }
-    }
-
-    /**
-     * Returns the ID of the creature that should be sacrificed if the given permanent is an equipment
-     * with SacrificeOnUnattachEffect that is currently attached to a creature. Returns null otherwise.
-     */
-    private UUID getSacrificeOnUnattachCreatureId(Permanent equipment) {
-        if (!equipment.isAttached()) return null;
-        if (!equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) return null;
-        boolean hasEffect = equipment.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof SacrificeOnUnattachEffect);
-        return hasEffect ? equipment.getAttachedTo() : null;
-    }
-
-    /**
-     * After an equipment with SacrificeOnUnattachEffect is removed from the battlefield,
-     * sacrifice the creature it was attached to (if it still exists).
-     */
-    private void handleSacrificeOnUnattach(GameData gameData, Permanent removedEquipment, UUID creatureId) {
-        if (creatureId == null) return;
-        Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
-        if (creature == null) return;
-        gameLogService.append(gameData, GameLog.builder()
-                .card(creature.getCard())
-                .text(" is sacrificed (")
-                .card(removedEquipment.getCard())
-                .text(" became unattached).")
-                .build());
-        log.info("Game {} - {} sacrificed due to {} leaving battlefield", gameData.id, creature.getCard().getName(), removedEquipment.getCard().getName());
-        sacrificePermanentToGraveyard(gameData, creature);
-        removeOrphanedAuras(gameData);
     }
 
     /**

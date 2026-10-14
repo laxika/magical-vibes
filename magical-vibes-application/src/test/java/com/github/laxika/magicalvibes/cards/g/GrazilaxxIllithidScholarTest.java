@@ -135,7 +135,7 @@ class GrazilaxxIllithidScholarTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 1)));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         harness.assertNotInHand(player1, "Dire Wolf Prowler");
     }
 }

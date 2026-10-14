@@ -27,8 +27,11 @@ public class RemoveKeywordSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var remove = (RemoveKeywordEffect) effect;
-        if ((remove.scope() == GrantScope.SELF || remove.scope() == GrantScope.SELF_AND_PAIRED)
-                && support.matchesStaticFilter(context, context.target(), remove.filter())) {
+        boolean inScope = remove.scope() == GrantScope.SELF
+                || remove.scope() == GrantScope.SELF_AND_PAIRED
+                || (remove.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF
+                && support.matchesCreatureScope(context, remove.scope(), remove.filter()));
+        if (inScope && support.matchesStaticFilter(context, context.target(), remove.filter())) {
             accumulator.removeKeyword(remove.keyword());
         }
     }

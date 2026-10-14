@@ -18,7 +18,7 @@ public class Goldmeadow extends Card {
     public Goldmeadow() {
         CreateTokenEffect goats = new CreateTokenEffect(
                 3, "Goat", 0, 1, CardColor.WHITE, List.of(CardSubtype.GOAT), Set.of(), Set.of());
-        CreateTokenForTriggeringPlayerEffect landfall = new CreateTokenForTriggeringPlayerEffect(goats);
+        CreateTokenForTriggeringPlayerEffect landfall = new CreateTokenForTriggeringPlayerEffect(goats, false, true);
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, landfall);
         addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD, landfall);
 

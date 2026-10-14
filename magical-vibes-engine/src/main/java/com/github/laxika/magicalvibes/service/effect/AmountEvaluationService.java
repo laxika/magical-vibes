@@ -729,7 +729,7 @@ public class AmountEvaluationService {
             case AttachmentsOnSource a ->
                     countAttachmentsOnSource(gameData, a, ctx);
             case CreaturesBlockedBySource ignored ->
-                    countCreaturesBlockedBySource(ctx);
+                    countCreaturesBlockedBySource(gameData, ctx);
             case CreaturesBlockingSource count ->
                     countCreaturesBlockingSource(gameData, ctx, count.useTarget());
             case OpponentPoisonCounters ignored ->
@@ -2777,9 +2777,13 @@ public class AmountEvaluationService {
         return count[0];
     }
 
-    private int countCreaturesBlockedBySource(AmountContext ctx) {
+    private int countCreaturesBlockedBySource(GameData gameData, AmountContext ctx) {
         Permanent source = ctx.sourcePermanent();
-        return source == null ? 0 : source.getBlockingTargets().size();
+        if (source == null) return 0;
+        return (int) source.getBlockingTargetIds().stream()
+                .map(attackerId -> gameQueryService.findPermanentById(gameData, attackerId))
+                .filter(attacker -> attacker != null && attacker.isAttacking())
+                .count();
     }
 
     private int countCreatureDeathsThisTurn(GameData gameData, CreatureDeathsThisTurn count, AmountContext ctx) {
@@ -2797,7 +2801,8 @@ public class AmountEvaluationService {
         int total = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
-            total += gameData.creaturesAttackedCountThisTurn.getOrDefault(playerId, 0);
+            // Counts distinct creatures: one that attacked twice this turn is still one creature attacked with.
+            total += gameData.creaturesAttackedWithThisTurn.getOrDefault(playerId, Set.of()).size();
         }
         return total;
     }

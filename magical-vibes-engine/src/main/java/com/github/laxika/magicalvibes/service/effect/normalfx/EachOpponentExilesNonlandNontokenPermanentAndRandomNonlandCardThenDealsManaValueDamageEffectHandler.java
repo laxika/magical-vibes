@@ -101,7 +101,8 @@ public class EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenD
         if (chosenPermanent != null
                 && opponentId.equals(gameQueryService.findPermanentController(gameData, chosenPermanent.getId()))
                 && matches(gameData, chosenPermanent, permanentFilter, entry)) {
-            totalManaValue += chosenPermanent.getCard().getManaValue();
+            // The exiled card is the card that was on the battlefield, not the copy it was impersonating.
+            totalManaValue += chosenPermanent.getOriginalCard().getManaValue();
             exileSupport.exilePermanentAndLog(gameData, chosenPermanent, entry.getCard().getName());
         }
 

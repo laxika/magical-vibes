@@ -978,6 +978,9 @@ public class AbilityActivationService {
                 player.getUsername() + " pays {1} for Guardian Angel prevention."));
         log.info("Game {} - {} pays {1} for Guardian Angel prevention to target {}",
                 gameData.id, player.getUsername(), targetId);
+        // CR 117.4: the opponent's earlier pass does not carry over past this action, so the
+        // stack resolves only after all players pass again in succession.
+        gameData.priorityPassedBy.clear();
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
@@ -2145,6 +2148,10 @@ public class AbilityActivationService {
         if (targetIds != null) {
             targetLegalityService.validateMultiTargetAbility(
                     gameData, playerId, ability, targetIds, card, effectiveXValue, abilityEffects);
+        } else if (ability.isExactXTargets()) {
+            List<UUID> exactTargets = targetId != null ? List.of(targetId) : List.of();
+            targetLegalityService.validateMultiTargetAbility(
+                    gameData, playerId, ability, exactTargets, card, effectiveXValue, abilityEffects);
         } else {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetId, null, card, effectiveXValue);
@@ -2206,11 +2213,17 @@ public class AbilityActivationService {
         UUID firstCardCycledFreeSourceId = abilityCost != null
                 ? findFirstCardCycledFreeSource(gameData, playerId, ability)
                 : null;
+        boolean cyclingCostReplaced = false;
         if (firstCardCycledFreeSourceId != null) {
             abilityCost = null;
+            cyclingCostReplaced = true;
         }
         if (abilityCost != null && cyclingCostReplacedWithZero(gameData, playerId, ability, hand.size())) {
             abilityCost = null;
+            cyclingCostReplaced = true;
+        }
+        if (cyclingCostReplaced && effectiveXValue > 0) {
+            throw new IllegalStateException("A cycling cost replaced with {0} can't be paid with X");
         }
         int cyclingReduction = abilityCost != null && ability.isCyclingAbility()
                     ? Math.min(castingCostService.getCyclingAbilityCostReduction(gameData, playerId),
@@ -2238,8 +2251,7 @@ public class AbilityActivationService {
         }
 
         if (ability.isSourceStaysInHand() && ability.isRevealsSourceFromHand()) {
-            cardRevealService.revealToAllPlayers(gameData, playerId,
-                    com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(card));
+            revealSourceFromHand(gameData, playerId, card);
         }
 
         if (ability.isSourceStaysInHand()) {
@@ -2388,6 +2400,18 @@ public class AbilityActivationService {
                 targetId, stackSizeBeforeCosts, null);
     }
 
+    /**
+     * Reveals a hand ability's source card to all players. A reveal made during upkeep (Forecast)
+     * stays visible to the opponents until that upkeep ends.
+     */
+    private void revealSourceFromHand(GameData gameData, UUID playerId, Card card) {
+        cardRevealService.revealToAllPlayers(gameData, playerId,
+                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(card));
+        if (gameData.currentStep == TurnStep.UPKEEP) {
+            gameData.cardsRevealedInHandUntilUpkeepEnd.put(card.getId(), playerId);
+        }
+    }
+
     private void completeHandAbilityActivationAfterCosts(GameData gameData, Player player, Card card,
                                                          ActivatedAbility ability, int abilityIndex, int xValue,
                                                          UUID targetId, int stackSizeBeforeCosts,
@@ -2395,8 +2419,7 @@ public class AbilityActivationService {
         UUID playerId = player.getId();
         boolean discarded = false;
         if (ability.isRevealsSourceFromHand()) {
-            cardRevealService.revealToAllPlayers(gameData, playerId,
-                    com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(card));
+            revealSourceFromHand(gameData, playerId, card);
         } else {
             List<Card> hand = gameData.playerHands.get(playerId);
             int handCardIndex = -1;
@@ -2646,7 +2669,7 @@ public class AbilityActivationService {
 
     /** Returns the unused source permanent granting Gavi-style first-card-free cycling, if any. */
     private UUID findFirstCardCycledFreeSource(GameData gameData, UUID playerId, ActivatedAbility ability) {
-        if (!ability.isCyclingAbility()) {
+        if (!ability.isCyclingAbility() || gameData.cardsCycledThisTurn.getOrDefault(playerId, 0) > 0) {
             return null;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -2655,7 +2678,8 @@ public class AbilityActivationService {
         }
         for (Permanent permanent : battlefield) {
             if (gameData.firstCardCycledFreeUsesThisTurn
-                    .getOrDefault(permanent.getId(), Set.of()).contains(playerId)) {
+                    .getOrDefault(permanent.getId(), Set.of()).contains(playerId)
+                    || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 continue;
             }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
@@ -2683,6 +2707,9 @@ public class AbilityActivationService {
             return false;
         }
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+                continue;
+            }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof FreeCyclingEffect freeCycling && handSize >= freeCycling.minCardsInHand()) {
                     return true;
@@ -2756,8 +2783,7 @@ public class AbilityActivationService {
 
         // Pay the intrinsic source-card cost. Forecast reveals the source instead of discarding it.
         if (ability.isRevealsSourceFromHand()) {
-            cardRevealService.revealToAllPlayers(gameData, playerId,
-                    com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(card));
+            revealSourceFromHand(gameData, playerId, card);
         } else {
             hand.remove(handCardIndex);
             UUID previousCyclingCard = gameData.cardEnteringGraveyardByCycling;
@@ -3078,6 +3104,9 @@ public class AbilityActivationService {
 
         if (gameData.pendingAbilityActivation == null) {
             throw new IllegalStateException("No pending ability activation");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid graveyard card index");
         }
 
         UUID playerId = player.getId();

@@ -31,8 +31,10 @@ class GhostLitWarderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.tapPermanent(player2, 0);
-        harness.tapPermanent(player2, 1);
+        harness.inMutationScope(() -> {
+            harness.getGameService().tapPermanent(gd, player2, 0);
+            harness.getGameService().tapPermanent(gd, player2, 1);
+        });
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -59,9 +61,11 @@ class GhostLitWarderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        for (int i = 0; i < 4; i++) {
-            harness.tapPermanent(player2, i);
-        }
+        harness.inMutationScope(() -> {
+            for (int i = 0; i < 4; i++) {
+                harness.getGameService().tapPermanent(gd, player2, i);
+            }
+        });
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 

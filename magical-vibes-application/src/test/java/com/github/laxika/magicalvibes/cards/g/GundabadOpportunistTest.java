@@ -31,6 +31,7 @@ class GundabadOpportunistTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
@@ -114,6 +115,7 @@ class GundabadOpportunistTest extends BaseCardTest {
         Card spell = new Shock();
         harness.setLibrary(player1, List.of(spell, new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.castFromHand(player1, new GundabadOpportunist(), "{3}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();

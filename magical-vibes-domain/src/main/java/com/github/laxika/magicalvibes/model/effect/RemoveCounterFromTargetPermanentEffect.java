@@ -19,10 +19,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * the target carries fewer. {@code targetPredicate} narrows which permanents are legal targets
  * ({@code null} = any permanent); e.g. Defiant Greatmaw restricts to "another creature you
  * control".</p>
+ *
+ * <p>When {@code upTo} is set, the controller chooses how many counters to remove, from zero up to
+ * the bound ({@code amount} capped by the counters present). Used by Gremlin Mine. Without it the
+ * bound is removed in full, as with "remove three defense counters".</p>
  */
 public record RemoveCounterFromTargetPermanentEffect(CounterType counterType,
                                                      PermanentPredicate targetPredicate,
-                                                     int amount) implements CardEffect {
+                                                     int amount,
+                                                     boolean upTo) implements CardEffect {
 
     /** "Remove a counter from target permanent" — any kind, any permanent (Medicine Runner). */
     public RemoveCounterFromTargetPermanentEffect() {
@@ -32,6 +37,12 @@ public record RemoveCounterFromTargetPermanentEffect(CounterType counterType,
     /** "Remove a {counterType} counter from target permanent" — a single counter of one type. */
     public RemoveCounterFromTargetPermanentEffect(CounterType counterType, PermanentPredicate targetPredicate) {
         this(counterType, targetPredicate, 1);
+    }
+
+    /** Removes exactly {@code amount} counters (capped by those present). */
+    public RemoveCounterFromTargetPermanentEffect(CounterType counterType, PermanentPredicate targetPredicate,
+                                                  int amount) {
+        this(counterType, targetPredicate, amount, false);
     }
 
     @Override

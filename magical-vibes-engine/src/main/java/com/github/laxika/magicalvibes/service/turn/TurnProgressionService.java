@@ -387,6 +387,7 @@ public class TurnProgressionService {
 
         if (gameData.currentStep == TurnStep.UPKEEP) {
             gameData.expireFloatingEffectsAtUpkeepEnd(gameData.activePlayerId);
+            gameData.cardsRevealedInHandUntilUpkeepEnd.clear();
         }
 
         if (next != null) {

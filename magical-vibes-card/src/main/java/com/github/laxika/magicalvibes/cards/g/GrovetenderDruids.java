@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -18,7 +20,8 @@ public class GrovetenderDruids extends Card {
 
     public GrovetenderDruids() {
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
+                new TriggeringCardConditionalEffect(new CardAnyOfPredicate(List.of(
+                        new CardIsSelfPredicate(), new CardSubtypePredicate(CardSubtype.ALLY))),
                         new MayPayManaEffect("{1}", new CreateTokenEffect(
                                 "Plant", 1, 1, CardColor.GREEN, List.of(CardSubtype.PLANT),
                                 Set.of(), Set.of()),

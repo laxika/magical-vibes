@@ -178,6 +178,7 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
         Permanent forest = addEnchantedForest(player1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, forest));
+        harness.runStateBasedActions();
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();

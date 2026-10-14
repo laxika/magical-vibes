@@ -25,7 +25,7 @@ class GlimmerpointStagTest extends BaseCardTest {
 
 
     @Test
-    @DisplayName("Casting with target puts creature spell on stack")
+    @DisplayName("Casting puts creature spell on stack without a target; the ETB ability chooses its target later")
     void castingPutsCreatureOnStack() {
         harness.addToBattlefield(player2, new MoriokReaver());
         harness.setHand(player1, List.of(new GlimmerpointStag()));
@@ -37,7 +37,7 @@ class GlimmerpointStagTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isNull();
     }
 
     @Test

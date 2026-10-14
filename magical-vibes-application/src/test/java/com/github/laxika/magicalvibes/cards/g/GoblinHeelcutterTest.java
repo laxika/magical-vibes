@@ -43,7 +43,7 @@ class GoblinHeelcutterTest extends BaseCardTest {
         Permanent heelcutter = findPermanent(player1, "Goblin Heelcutter");
         assertThat(heelcutter.hasKeyword(Keyword.HASTE)).isFalse();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(findPermanent(player1, "Goblin Heelcutter")).isSameAs(heelcutter);
     }
@@ -62,7 +62,7 @@ class GoblinHeelcutterTest extends BaseCardTest {
         Permanent heelcutter = findPermanent(player1, "Goblin Heelcutter");
         assertThat(heelcutter.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertInHand(player1, "Goblin Heelcutter");
@@ -92,7 +92,7 @@ class GoblinHeelcutterTest extends BaseCardTest {
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
         resolveAllTriggers();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Goblin Heelcutter");
         harness.assertNotInHand(player1, "Goblin Heelcutter");

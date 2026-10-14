@@ -95,8 +95,8 @@ class GiantsIreTest extends BaseCardTest {
     @Test
     @DisplayName("Deals damage to a planeswalker and still draws with a Giant")
     void damagesPlaneswalkerAndDraws() {
-        harness.addToBattlefield(player2, new ChandraNalaar());
-        var chandra = findPermanent(player2, "Chandra Nalaar");
+        var chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
         int loyaltyBefore = chandra.getCounterCount(CounterType.LOYALTY);
         harness.addToBattlefield(player1, new BlindSpotGiant());
         harness.setLibrary(player1, List.of(new GiantsIre()));

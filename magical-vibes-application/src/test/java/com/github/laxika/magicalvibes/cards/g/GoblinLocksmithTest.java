@@ -91,7 +91,7 @@ class GoblinLocksmithTest extends BaseCardTest {
         Permanent wall = addCreatureReady(player2, new WallOfMist());
 
         declareAttackersAndPrepareBlockers(player1, List.of(1));
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         assertThat(wall.isBlocking()).isTrue();
     }

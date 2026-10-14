@@ -138,6 +138,7 @@ class GuildSummitTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new SelesnyaGuildgate()));
 
         harness.playLand(player2, 0);

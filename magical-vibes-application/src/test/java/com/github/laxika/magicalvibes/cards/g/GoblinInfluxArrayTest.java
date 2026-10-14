@@ -71,7 +71,7 @@ class GoblinInfluxArrayTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
         assertThat(gd.stack).isEmpty();
         harness.assertInHand(player1, "Greenwood Sentinel");
     }
@@ -87,7 +87,7 @@ class GoblinInfluxArrayTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("Card is not playable");
         assertThat(gd.stack).isEmpty();
     }
 

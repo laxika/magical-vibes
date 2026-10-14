@@ -79,8 +79,8 @@ class GoldmawChampionTest extends BaseCardTest {
     void boastAfterDeclaringAttack() {
         Permanent champion = addCreatureReady(player1, new GoldmawChampion());
         Permanent target = addCreatureReady(player2, new BeskirShieldmate());
-        addBoastMana();
         declareAttackers(List.of(0));
+        addBoastMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

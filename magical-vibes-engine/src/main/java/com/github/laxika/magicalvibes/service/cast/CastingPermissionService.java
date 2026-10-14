@@ -583,7 +583,7 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (!(effect instanceof NoncreatureSpellsCantBeCastEffect restriction)
                             || (!restriction.appliesToAllPlayers() && !pid.equals(playerId))) continue;
@@ -2254,7 +2254,8 @@ public class CastingPermissionService {
 
     /**
      * Returns whether the owner may privately look at their own top card via a static ability of a
-     * permanent they control. A card in the library has no abilities that function there, so the
+     * permanent they control, including one granted to it by another permanent (such as an equipment
+     * granting the equipped creature the ability). A card in the library has no abilities that function there, so the
      * card on top of the library does not grant this permission to itself.
      */
     public boolean mayLookAtOwnLibraryTop(GameData gameData, UUID playerId) {
@@ -2265,7 +2266,9 @@ public class CastingPermissionService {
         return battlefield.stream()
                 .filter(permanent -> !permanent.isFaceDown())
                 .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
-                .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent).stream())
+                .flatMap(permanent -> Stream.concat(
+                        gameQueryService.getActiveStaticEffects(gameData, permanent).stream(),
+                        gameQueryService.getGrantedEffects(gameData, permanent).stream()))
                 .anyMatch(effect -> effect instanceof LookAtTopCardOfOwnLibraryEffect
                         || effect instanceof ConditionalEffect conditional
                         && conditional.wrapped() instanceof LookAtTopCardOfOwnLibraryEffect
@@ -2751,6 +2754,8 @@ public class CastingPermissionService {
             return true;
         }
         if (!playerId.equals(gameData.exilePlayPermissions.get(cardId))) return false;
+        if (gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.containsKey(cardId)
+                && gameData.exilePlayPermissionsDuringOwnersNextTurnOnly.contains(cardId)) return false;
         if (!gameData.hasExilePlayPermissionRemaining(cardId)) return false;
         Condition condition = gameData.exilePlayPermissionConditions.get(cardId);
         return condition == null || conditionEvaluationService.isMet(

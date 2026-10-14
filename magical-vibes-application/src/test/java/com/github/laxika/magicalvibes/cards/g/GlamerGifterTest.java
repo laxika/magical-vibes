@@ -102,7 +102,6 @@ class GlamerGifterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

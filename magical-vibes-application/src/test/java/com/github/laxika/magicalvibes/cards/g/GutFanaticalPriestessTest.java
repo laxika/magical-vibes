@@ -95,7 +95,7 @@ class GutFanaticalPriestessTest extends BaseCardTest {
         List<Permanent> tokens = specializeGut(new Forest(), 4);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsAll(tokens);
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContainAnyElementsOf(tokens);
@@ -105,7 +105,7 @@ class GutFanaticalPriestessTest extends BaseCardTest {
     void whiteCopiesHaveOneSharedDelayedSacrificeTrigger() {
         List<Permanent> tokens = specializeGut(new Plains(), 0);
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsAll(tokens);
         assertThat(gd.stack).hasSize(1);

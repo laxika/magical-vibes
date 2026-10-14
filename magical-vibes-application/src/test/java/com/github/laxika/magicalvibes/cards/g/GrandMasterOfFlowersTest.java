@@ -161,6 +161,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
         addReadyGrandMaster(player1, 5);
         Permanent target = addCreatureReady(player2, new DwarfholdChampion());
         harness.setLibrary(player2, List.of(new DwarfholdChampion(), new MonkOfTheOpenHand()));
+        harness.setHand(player2, List.of());
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 

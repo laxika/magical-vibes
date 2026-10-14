@@ -101,6 +101,7 @@ class GnollHuntingPartyTest extends BaseCardTest {
     @Test
     @DisplayName("Reduction cannot remove the red mana requirement")
     void reductionPreservesColoredCost() {
+        harness.setLife(player2, 100);
         for (int i = 0; i < 6; i++) {
             addCreatureReady(player1, new GnollHuntingParty());
         }

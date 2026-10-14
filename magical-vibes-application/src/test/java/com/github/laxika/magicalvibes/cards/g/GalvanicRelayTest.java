@@ -83,6 +83,7 @@ class GalvanicRelayTest extends BaseCardTest {
         harness.castFromHand(player1, new GalvanicRelay(), "{2}{R}");
         resolveAllTriggers();
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -102,6 +103,7 @@ class GalvanicRelayTest extends BaseCardTest {
         harness.castFromHand(player1, new GalvanicRelay(), "{2}{R}");
         resolveAllTriggers();
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

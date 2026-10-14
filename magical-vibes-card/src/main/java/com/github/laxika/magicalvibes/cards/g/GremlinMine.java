@@ -38,7 +38,7 @@ public class GremlinMine extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new SacrificeSelfCost(), new RemoveCounterFromTargetPermanentEffect(CounterType.CHARGE, null, 4)),
+                List.of(new SacrificeSelfCost(), new RemoveCounterFromTargetPermanentEffect(CounterType.CHARGE, null, 4, true)),
                 "{1}, {T}, Sacrifice Gremlin Mine: Remove up to four charge counters from target noncreature artifact.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

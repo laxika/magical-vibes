@@ -191,6 +191,7 @@ class GaladrielLightOfValinorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         triggerWithCreature(MANA);
 
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new GrizzlyBears()));

@@ -118,7 +118,7 @@ class GiftOfImmortalityTest extends BaseCardTest {
         GiftOfImmortality giftCard = new GiftOfImmortality();
 
         castGift(creature, giftCard);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         killCreatureAtCurrentStep(creature.getId());
 
         Permanent returnedCreature = findPermanent(player1, creatureCard.getId());

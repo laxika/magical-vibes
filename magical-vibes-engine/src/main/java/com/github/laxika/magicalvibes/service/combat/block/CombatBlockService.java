@@ -511,7 +511,8 @@ public class CombatBlockService {
                         + " can't be blocked by more than " + maxBlockers
                         + " creature" + (maxBlockers == 1 ? "" : "s"));
             }
-            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.hasLostAllAbilities(gameData, attacker)
+                    ? List.<CardEffect>of() : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
                         && blockerCount < restriction.minBlockers()) {
                     throw new IllegalStateException(attacker.getCard().getName()
@@ -1121,6 +1122,8 @@ public class CombatBlockService {
                     if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, conditional.predicate())) {
                         filteredEffects.add(conditional.wrapped());
                     }
+                } else if (effect instanceof BoostSelfWhenCombatOpponentMatchesEffect conditional) {
+                    addResolvedCombatOpponentBoost(gameData, filteredEffects, conditional, List.of(blocker));
                 } else if (effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
                     if (predicateEvaluationService.matchesPermanentPredicate(
                             gameData, blocker, destroyEffect.filter())) {
@@ -3006,7 +3009,8 @@ public class CombatBlockService {
         }
 
         int minimumBlockers = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) ? 2 : 1;
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : gameQueryService.hasLostAllAbilities(gameData, attacker)
+                ? List.<CardEffect>of() : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction) {
                 minimumBlockers = Math.max(minimumBlockers, restriction.minBlockers());
             }

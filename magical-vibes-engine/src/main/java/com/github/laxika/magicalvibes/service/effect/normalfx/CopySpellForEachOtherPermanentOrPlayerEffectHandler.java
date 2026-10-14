@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -68,8 +69,11 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
 
         for (TargetCopy target : targets) {
             Card copyCard = spellCard == null ? null : copySupport.createCopyCard(spellCard);
-            StackEntry copyEntry = copySupport.createCopyStackEntry(
-                    targetEntry, copyCard, copyControllerId, target.id(), target.zone());
+            StackEntry copyEntry = targetEntry.getDamageAssignments().isEmpty()
+                    ? copySupport.createCopyStackEntry(
+                            targetEntry, copyCard, copyControllerId, target.id(), target.zone())
+                    : copySupport.createCopyStackEntry(targetEntry, copyCard, copyControllerId, target.id(),
+                            Map.of(target.id(), totalDamage(targetEntry)), List.of(target.id()));
             if (isAbility(targetEntry)) {
                 copyEntry.setTargetFilter(targetEntry.getTargetFilter());
                 copyEntry.setTargetFilters(targetEntry.getTargetFilters());
@@ -122,6 +126,9 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
     }
 
     private boolean isSingleTarget(StackEntry stackEntry) {
+        if (!stackEntry.getDamageAssignments().isEmpty()) {
+            return stackEntry.getTargetId() == null && stackEntry.getDamageAssignments().size() == 1;
+        }
         if (stackEntry.getTargetId() != null && stackEntry.getTargetIds().isEmpty()) {
             return stackEntry.getTargetCardIds().isEmpty()
                     || stackEntry.getTargetCardIds().size() == 1;
@@ -129,6 +136,10 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
         return stackEntry.getTargetId() == null
                 && stackEntry.getTargetIds().isEmpty()
                 && stackEntry.getTargetCardIds().size() == 1;
+    }
+
+    private static int totalDamage(StackEntry stackEntry) {
+        return stackEntry.getDamageAssignments().values().stream().mapToInt(Integer::intValue).sum();
     }
 
     private record TargetCopy(UUID id, Zone zone) {

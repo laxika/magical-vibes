@@ -20,15 +20,21 @@ public class GlenElendraPranksters extends Card {
         // Flying (auto-loaded from Scryfall).
         // Whenever you cast a spell during an opponent's turn, you may return target creature you
         // control to its owner's hand.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate()
-                )),
-                "Target must be a creature you control"
-        )).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(null, List.of(ReturnToHandEffect.target()), true),
-                "Return target creature you control to its owner's hand?"
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
+                null,
+                List.of(new MayEffect(ReturnToHandEffect.target(),
+                        "Return target creature you control to its owner's hand?")),
+                null,
+                new PermanentPredicateTargetFilter(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentControlledBySourceControllerPredicate()
+                        )),
+                        "Target must be a creature you control"
+                ),
+                null,
+                true,
+                false
         ));
     }
 }

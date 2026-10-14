@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class GlimpseTheFuture extends Card {
 
     public GlimpseTheFuture() {
-        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1));
+        addEffect(EffectSlot.SPELL, LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1));
     }
 }

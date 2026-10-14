@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -184,6 +185,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.resolveCombatDamage();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker1.getId(), 7));
         resolveAllTriggers();
 
         GameData gd = harness.getGameData();
@@ -268,6 +270,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.resolveCombatDamage();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 6, player2.getId(), 1));
         resolveAllTriggers();
 
         harness.assertLife(player2, 19);

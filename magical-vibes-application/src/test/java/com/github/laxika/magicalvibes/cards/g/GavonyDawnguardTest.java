@@ -155,7 +155,10 @@ class GavonyDawnguardTest extends BaseCardTest {
         gd.previousTurnActivePlayerId = player2.getId();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
-        advanceToUpkeep(player1);
+        harness.performUntapStep(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         resolveAllTriggers();
         harness.handleCardChosen(player1, 0);
 

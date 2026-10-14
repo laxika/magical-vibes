@@ -27,7 +27,7 @@ public class GeralfVisionaryStitcher extends Card {
 
     public GeralfVisionaryStitcher() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING),
-                GrantScope.OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
+                GrantScope.ALL_OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -10,14 +10,21 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "20")
 public class GriffinRider extends Card {
 
     public GriffinRider() {
         // As long as you control a Griffin creature, this creature gets +3/+3 and has flying.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GRIFFIN)), new StaticBoostEffect(3, 3, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GRIFFIN)), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+        var griffinCreature = new PermanentAllOfPredicate(List.of(
+                new PermanentHasSubtypePredicate(CardSubtype.GRIFFIN),
+                new PermanentIsCreaturePredicate()));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControlsPermanent(griffinCreature), new StaticBoostEffect(3, 3, GrantScope.SELF)));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControlsPermanent(griffinCreature), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }
 }

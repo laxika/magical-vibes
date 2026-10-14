@@ -122,6 +122,7 @@ class GoblinMaskmakerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BasilicaStalker()));
         harness.setLibrary(player1, List.of(new BasilicaStalker()));
         harness.setLibrary(player2, List.of(new BasilicaStalker()));
+        harness.setHand(player2, List.of());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();

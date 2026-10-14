@@ -26,6 +26,7 @@ public class GerrardWeatherlightHero extends Card {
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardTypePredicate(CardType.CREATURE))))
                         .returnAll(true)
+                        .chooseAuraAttachment(true)
                         .fromBattlefieldThisTurn(true)
                         .build()));
     }

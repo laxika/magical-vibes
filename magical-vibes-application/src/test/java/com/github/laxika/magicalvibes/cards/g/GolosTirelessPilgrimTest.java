@@ -173,6 +173,7 @@ class GolosTirelessPilgrimTest extends BaseCardTest {
         addActivationMana();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);

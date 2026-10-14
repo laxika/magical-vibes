@@ -120,7 +120,7 @@ class GalvanicGiantTest extends BaseCardTest {
     @Test
     void opponentsAdventureDoesNotTrigger() {
         harness.addToBattlefield(player1, new GalvanicGiant());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GalvanicGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player2, List.of(new GalvanicGiant()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.addMana(player2, ManaColor.BLUE, 2);

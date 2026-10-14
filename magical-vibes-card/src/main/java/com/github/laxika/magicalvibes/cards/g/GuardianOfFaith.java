@@ -26,7 +26,7 @@ public class GuardianOfFaith extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature you control"
-        ), 0, 99).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+        ), 0, Integer.MAX_VALUE).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PhaseOutEffect(PhaseOutSubject.TARGET));
     }
 }

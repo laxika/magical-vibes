@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
@@ -336,6 +337,7 @@ public class TriggerTargetCollector {
             // trigger reaches planeswalkers, not creatures).
             boolean explicitPermanentFilter = targetFilter instanceof PermanentPredicateTargetFilter
                     || targetFilter instanceof ControlledPermanentPredicateTargetFilter
+                    || targetFilter instanceof OwnedPermanentPredicateTargetFilter
                     || targetFilter instanceof AnyTargetPredicateTargetFilter;
             boolean creaturesOnly = options.creaturesOnly() && !explicitPermanentFilter;
             if (effectPredicate != null) {
@@ -395,6 +397,8 @@ public class TriggerTargetCollector {
                     if (options.supportControlledFilter()
                             && targetFilter instanceof ControlledPermanentPredicateTargetFilter cpf) {
                         if (!predicateEvaluationService.matchesFilters(p, Set.of(cpf), filterCtx)) continue;
+                    } else if (targetFilter instanceof OwnedPermanentPredicateTargetFilter opf) {
+                        if (!predicateEvaluationService.matchesFilters(p, Set.of(opf), filterCtx)) continue;
                     } else if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
                         if (!predicateEvaluationService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) continue;
                     } else if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {

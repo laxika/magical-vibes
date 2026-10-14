@@ -18,7 +18,7 @@ public class GreatGoblinFoulHearted extends Card {
         addEffect(EffectSlot.ON_ATTACK, new AmassGoblinsEffect(3));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.TRAMPLE,
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ARMY)));
     }
 }

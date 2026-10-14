@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -16,7 +17,7 @@ public class GrimReaperLethalLegionnaire extends Card {
     public GrimReaperLethalLegionnaire() {
         addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
                 "{3}{B}",
-                ReturnCardFromGraveyardEffect.builder()
+                new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
@@ -24,7 +25,7 @@ public class GrimReaperLethalLegionnaire extends Card {
                         .enterAttacking(true)
                         .enterWithCounter(CounterType.FINALITY)
                         .enterWithCounterCount(1)
-                        .build(),
+                        .build()),
                 "Pay {3}{B} to return target creature card from your graveyard to the battlefield tapped and attacking with a finality counter on it?"));
     }
 }

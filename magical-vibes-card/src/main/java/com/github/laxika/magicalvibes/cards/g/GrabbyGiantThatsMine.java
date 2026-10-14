@@ -20,7 +20,7 @@ public class GrabbyGiantThatsMine extends Card {
         setBackFaceCard(new ThatsMine());
         addCastingOption(new AdventureCast("{1}{R}"));
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{2}{R}",
                 List.of(
                         new SacrificePermanentCost(

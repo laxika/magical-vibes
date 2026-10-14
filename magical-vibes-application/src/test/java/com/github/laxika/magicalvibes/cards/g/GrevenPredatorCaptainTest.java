@@ -74,6 +74,7 @@ class GrevenPredatorCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         harness.assertLife(player1, 17);

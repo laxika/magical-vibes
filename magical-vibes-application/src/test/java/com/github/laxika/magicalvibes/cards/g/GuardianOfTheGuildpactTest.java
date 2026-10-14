@@ -119,6 +119,8 @@ class GuardianOfTheGuildpactTest extends BaseCardTest {
     @DisplayName("A multicolored creature can block Guardian and deal combat damage to it")
     void multicoloredCreatureCanBlockAndDealDamage() {
         Permanent guardian = addCreatureReady(player1, new GuardianOfTheGuildpact());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addCreatureReady(player2, new AzoriusFirstWing());
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));

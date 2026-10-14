@@ -39,7 +39,7 @@ class GoblinTraprunnerTest extends BaseCardTest {
         assertThat(tokens).hasSize(heads);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
         });
     }
 

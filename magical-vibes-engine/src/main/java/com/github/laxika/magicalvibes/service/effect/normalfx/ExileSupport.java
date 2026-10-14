@@ -177,12 +177,22 @@ public class ExileSupport {
         grantPlayUntilNextTurnOfPlayer(gameData, cardId, ownerId, ownerId);
     }
 
+    /**
+     * Grants {@code ownerId} permission to play the exiled card only during their next turn ("during
+     * your next turn" wording), so the permission is unusable on the current turn and the turns between.
+     */
+    public void grantPlayDuringOwnersNextTurn(GameData gameData, UUID cardId, UUID ownerId) {
+        grantPlayUntilNextTurnOfPlayer(gameData, cardId, ownerId, ownerId);
+        gameData.exilePlayPermissionsDuringOwnersNextTurnOnly.add(cardId);
+    }
+
     /** Grants {@code permissionPlayerId} permission until the end of {@code expiryPlayerId}'s next turn. */
     public void grantPlayUntilNextTurnOfPlayer(GameData gameData, UUID cardId,
                                                 UUID permissionPlayerId, UUID expiryPlayerId) {
         gameData.clearExilePlayPermissionGroup(cardId);
         gameData.exilePlayPermissionSpellFilters.remove(cardId);
         gameData.exilePlayPermissionsExpireAtTurnBeginning.remove(cardId);
+        gameData.exilePlayPermissionsDuringOwnersNextTurnOnly.remove(cardId);
         gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
         gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, Integer.MAX_VALUE);
         gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.put(cardId, expiryPlayerId);

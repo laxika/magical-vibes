@@ -26,7 +26,7 @@ public class MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var multiplication = (MultiplyControllerDamageToOpponentsAndTheirPermanentsThisTurnEffect) effect;
         gameData.queueDelayedAction(new DelayedControllerDamageMultiplication(
-                entry.getControllerId(), multiplication.multiplier()));
+                entry.getControllerId(), multiplication.multiplier(), true));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": damage dealt to opponents and their permanents by sources you control is multiplied by "
                         + multiplication.multiplier() + " this turn."));

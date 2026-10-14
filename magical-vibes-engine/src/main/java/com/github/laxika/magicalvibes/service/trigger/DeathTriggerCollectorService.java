@@ -190,6 +190,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -691,7 +693,7 @@ public class DeathTriggerCollectorService {
         // may" and the division (pendingETBDamageAssignments) both happen when the trigger resolves.
         CardEffect baked = new DistributeCountersAmongCreaturesOnDeathEffect(
                 effect.counterType(), counters, effect.countFromSourceCounters(), effect.anyCreature(),
-                false, effect.optional());
+                false, effect.optional(), effect.targeted());
         CardEffect queued = effect.optional()
                 ? new MayEffect(baked, "distribute " + counters + " counter(s) among "
                         + (effect.anyCreature() ? "any number of creatures?" : "creatures you control?"))
@@ -939,6 +941,24 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    /**
+     * Attachment predicates read the dying creature's attachments as they were at death (CR 603.10a),
+     * which still holds when the Auras or Equipment were destroyed in the same event.
+     */
+    private static boolean wasAttachedAtDeath(PermanentPredicate predicate,
+                                              DyingCreatureAttachmentSnapshot attachmentSnapshot) {
+        if (attachmentSnapshot == null) {
+            return false;
+        }
+        if (predicate instanceof PermanentIsEnchantedPredicate) {
+            return !attachmentSnapshot.auraCardIds().isEmpty();
+        }
+        if (predicate instanceof PermanentIsEquippedPredicate) {
+            return !attachmentSnapshot.equipmentPermanentIds().isEmpty();
+        }
+        return false;
+    }
+
     @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class, slot = EffectSlot.ON_DEATH)
     boolean handleSelfDeathPermanentConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
@@ -948,10 +968,11 @@ public class DeathTriggerCollectorService {
                 ? null
                 : DyingCreatureAttachmentSnapshot.capture(match.gameData(), dyingPermanent.getId());
         if (dyingPermanent == null
-                || !predicateEvaluationService.matchesPermanentPredicate(
+                || !(predicateEvaluationService.matchesPermanentPredicate(
                         dyingPermanent, effect.predicate(), FilterContext.of(match.gameData())
                                 .withSourceControllerId(sd.controllerId())
-                                .withSourcePermanentId(match.permanent().getId()))) {
+                                .withSourcePermanentId(match.permanent().getId()))
+                        || wasAttachedAtDeath(effect.predicate(), attachmentSnapshot))) {
             return false;
         }
 
@@ -3082,7 +3103,8 @@ public class DeathTriggerCollectorService {
             return false;
         }
 
-        int power = Math.max(0, dyingPermanent.getEffectivePower());
+        int power = Math.max(0, dyingPermanent.getLastKnownPower() != null
+                ? dyingPermanent.getLastKnownPower() : dyingPermanent.getEffectivePower());
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                 sd.dyingCard(), sd.controllerId(),
                 new ArrayList<>(List.of(new PutCountersOnTargetForEachDyingSourcePowerEffect(power)))
@@ -3937,6 +3959,12 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    private static boolean isCreatureAtDeath(Permanent dying) {
+        return dying.getCard().hasType(CardType.CREATURE)
+                || dying.getGrantedCardTypes().contains(CardType.CREATURE)
+                || dying.getPersistentGrantedCardTypes().contains(CardType.CREATURE);
+    }
+
     @CollectsTrigger(value = GainLifeEqualToDyingCreatureToughnessEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     @CollectsTrigger(value = GainLifeEqualToDyingCreatureToughnessEffect.class,
             slot = EffectSlot.ON_PERMANENT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
@@ -3949,7 +3977,7 @@ public class DeathTriggerCollectorService {
             toughness = Math.max(0, cd.dyingCreatureToughness());
         } else {
             TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
-            if (apg.dyingPermanent() == null || !apg.dyingPermanent().getCard().hasType(CardType.CREATURE)) {
+            if (apg.dyingPermanent() == null || !isCreatureAtDeath(apg.dyingPermanent())) {
                 return false;
             }
             toughness = Math.max(0, apg.dyingToughness());
@@ -4094,7 +4122,18 @@ public class DeathTriggerCollectorService {
                         match.gameData(), conditional, match.permanent(), sl.controllerId())) {
             return false;
         }
-        return handleSelfLeavesDefault(match, effect.wrapped(), ctx);
+        if (!handleSelfLeavesDefault(match, effect.wrapped(), ctx)) {
+            return false;
+        }
+        List<StackEntry> stack = match.gameData().stack;
+        if (!stack.isEmpty()) {
+            StackEntry queued = stack.get(stack.size() - 1);
+            if (match.permanent().getId().equals(queued.getSourcePermanentId())) {
+                queued.setTriggeringCardExileEntryVersion(match.gameData().exileEntryVersions
+                        .getOrDefault(match.permanent().getCard().getId(), -1L));
+            }
+        }
+        return true;
     }
 
     @CollectsTrigger(value = SelfExiledWhileActivatingCraftAbilityEffect.class,

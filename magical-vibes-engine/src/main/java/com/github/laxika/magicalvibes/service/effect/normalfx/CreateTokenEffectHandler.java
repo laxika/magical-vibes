@@ -190,7 +190,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                         gameData, controllerId, amount, e.subtypes(), e.primaryType() == com.github.laxika.magicalvibes.model.CardType.CREATURE);
                 gameData.interaction.setPermanentChoiceContext(
                         new com.github.laxika.magicalvibes.model.PermanentChoiceContext.CreateTokensAttacking(
-                                controllerId, entry.getCard(), e, amount, tokenCount, false, List.of()));
+                                controllerId, entry.getCard(), e.withPowerToughness(power, toughness),
+                                amount, tokenCount, false, List.of()));
                 playerInputService.beginAnyTargetChoice(gameData, controllerId, attackTargets,
                         List.of(attackingOpponentId), "Choose what the next " + e.tokenName() + " token attacks.");
                 return;
@@ -207,6 +208,18 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
             }
         }
         entry.getCreatedPermanentIds().addAll(createdIds);
+        List<com.github.laxika.magicalvibes.model.action.DelayedPermanentAction> endOfCombatExiles =
+                gameData.drainDelayedActions(
+                        com.github.laxika.magicalvibes.model.action.DelayedPermanentAction.class,
+                        action -> createdIds.contains(action.permanentId())
+                                && action.kind() == com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
+                                && action.sourceCard() == null);
+        for (com.github.laxika.magicalvibes.model.action.DelayedPermanentAction action : endOfCombatExiles) {
+            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedPermanentAction(
+                    action.permanentId(), action.kind(), action.cannotBeRegenerated(), action.returnExiledCardId(),
+                    action.controllerId(), action.sacrificingPlayerId(), action.followsPermanentController(),
+                    entry.getCard()));
+        }
         List<com.github.laxika.magicalvibes.model.action.DelayedPermanentAction> exileActions =
                 gameData.drainDelayedActions(
                         com.github.laxika.magicalvibes.model.action.DelayedPermanentAction.class,

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControlle
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,8 +37,14 @@ public class ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControlle
         ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect exileEffect =
                 (ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect) effect;
         UUID damagedPlayerId = entry.getTargetId();
-        UUID creatureControllerId = entry.getTriggeringPermanentControllerId() != null
-                ? entry.getTriggeringPermanentControllerId() : entry.getControllerId();
+        // "its controller" refers to the creature's current controller when the ability resolves (CR 608.2h);
+        // a creature that has left the battlefield falls back to the controller it had when it triggered.
+        UUID creatureControllerId = entry.getTriggeringPermanentId() != null
+                ? gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId()) : null;
+        if (creatureControllerId == null) {
+            creatureControllerId = entry.getTriggeringPermanentControllerId() != null
+                    ? entry.getTriggeringPermanentControllerId() : entry.getControllerId();
+        }
         if (damagedPlayerId == null || creatureControllerId == null) {
             return;
         }

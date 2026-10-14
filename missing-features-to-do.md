@@ -70,6 +70,7 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 **Failing tests:**
 - `FireJugglerTest` "Both clash cards move only after both placement choices are made"
 - `FrayingOmnipotenceTest` "Discard choices remain hidden until every player has chosen"
+- `GiltLeafAmbushTest` (clash placements)
 
 **What the rules require.** CR 101.4: when several players make choices at the same time, they choose
 in APNAP order and then the actions happen simultaneously. CR 701.30c applies this to clash: placements
@@ -114,6 +115,69 @@ layer system and every trigger collector, plus a scheme deck to abandon to.
 Let face-up ongoing schemes in the command zone apply their static abilities and trigger their
 triggered abilities (CR 314.4), and implement abandoning to the bottom of the scheme deck (CR 701.33b).
 Start with FearMyAuthorityTest, then ask me to run the full suite.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 9. Reflexive "when you do" triggers that choose targets after the action
+
+**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
+
+**Failing tests:**
+- `GlorifierOfSufferingTest` (5 tests: may, then sacrifice, then up to two targets)
+- `GoShintaiOfAncientWarsTest`, `GoShintaiOfBoundlessVigorTest`, `GoShintaiOfHiddenCrueltyTest` ("you may pay {1}. When you do, ... target ...")
+
+**What the rules require.** CR 603.12: a resolving ability that says "when you do" creates a reflexive
+triggered ability. It triggers after the action is taken, goes on the stack as its own ability, and
+chooses its targets then. The engine either chooses the targets with the original trigger (card-level
+`target(...)` before the "may") or, for `MayPayManaEffect.reflexiveTarget`, resolves the wrapped effect
+inline on payment with no separate stack object.
+
+**Why it's large.** About 11 cards share the `MayPayManaEffect.reflexiveTarget` path, and multi-target
+reflexive triggers (Glorifier's "up to two") have no way to declare targets for a reflexive ability.
+Target selection, stack entries and the may/payment prompts all have to be re-sequenced.
+
+**Prompt to start it:**
+
+```
+Implement reflexive triggered abilities per CR 603.12: after the "you may [pay/sacrifice]" action, put a
+separate triggered ability on the stack and choose its targets then (including multi-target "up to two").
+Migrate MayPayManaEffect.reflexiveTarget users and Glorifier of Suffering. Start with
+GlorifierOfSufferingTest and the three Go-Shintai tests, then ask me to run the full suite.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 10. Batched simultaneous entry for "any number" puts and multi-card returns
+
+**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
+
+**Failing tests:**
+- `GhaltaStampedeTyrantTest` "Creatures entering together see each other's entry regardless of selection order"
+- `GishathSunsAvatarTest.selectedDinosaursEnterSimultaneously()`
+- `GenesisWaveTest` / `GenesisUltimatumTest` (Aura chosen together with other permanents gets no host choice)
+- `GruesomeMenagerieTest` (three creatures chosen first, then returned together)
+- `GraveSifterTest` (cards returned to hand one at a time, one trigger per card)
+
+**What the rules require.** CR 603.6a: when one event puts several permanents onto the battlefield, all
+of them (including the newcomers) are checked for enters triggers, so each sees the others enter. An Aura
+entering this way still has its controller choose what it enchants (CR 303.4f). The engine's "any number"
+put (`PutCardToBattlefieldEffect.anyNumber`, `CardChoiceHandlerService` repeat loop) and several
+reveal/return flows place cards one at a time as they are picked.
+
+**Why it's large.** Each flow is a separate interaction chain. They need a "collect all picks, then place
+together" stage like `BattlefieldEntryBatchSupport` / `WorldsWithinWorldsSupport.finish()`, including Aura
+host selection inside a batch and a hand-return batch for "one or more cards leave" triggers.
+
+**Prompt to start it:**
+
+```
+Make "put any number of cards onto the battlefield" and multi-card reveal/return effects place all chosen
+cards in one simultaneous event (CR 603.6a), with Aura host choices inside the batch (CR 303.4f). Start
+with GhaltaStampedeTyrantTest, GishathSunsAvatarTest, GenesisWaveTest, GenesisUltimatumTest,
+GruesomeMenagerieTest and GraveSifterTest, then ask me to run the full suite.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

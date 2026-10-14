@@ -53,6 +53,7 @@ class GixianRecyclerTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(cardsNamedInGraveyard("Gixian Recycler")).hasSize(2);
     }
@@ -79,7 +80,7 @@ class GixianRecyclerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Gixian Recycler");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

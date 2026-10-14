@@ -52,7 +52,7 @@ class GlacierGodmawTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.VIGILANCE)).isFalse();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, godmaw)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, godmaw)).isEqualTo(6);

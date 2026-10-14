@@ -54,7 +54,7 @@ class GrixisSlavedriverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Grixis Slavedriver");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(perm.hasKeyword(Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Grixis Slavedriver");
     }
 
@@ -67,7 +67,7 @@ class GrixisSlavedriverTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities(); // exile trigger resolves → leaves-battlefield trigger onto stack
         harness.passBothPriorities(); // leaves-battlefield trigger resolves → token created
 

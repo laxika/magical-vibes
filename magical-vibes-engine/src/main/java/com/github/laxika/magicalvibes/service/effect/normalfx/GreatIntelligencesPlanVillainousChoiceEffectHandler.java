@@ -79,15 +79,6 @@ public class GreatIntelligencesPlanVillainousChoiceEffectHandler implements Norm
             finish(gameData);
             return;
         }
-        if (!canDiscard) {
-            offerFreeCast(gameData, entry);
-            return;
-        }
-        if (!canCast) {
-            discard(gameData, entry);
-            return;
-        }
-
         gameData.rerunCurrentEffectAfterInteraction = true;
         villainousChoiceSupport.beginChoice(gameData, targetPlayerId, entry.getCard().getName(),
                 GreatIntelligencesPlanVillainousChoiceEffect.CAST_OPTION,
@@ -132,7 +123,7 @@ public class GreatIntelligencesPlanVillainousChoiceEffectHandler implements Norm
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     card,
                     entry.getControllerId(),
-                    List.of(new MayCastFromHandWithoutPayingManaCostEffect()),
+                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
                     "Cast " + card.getName() + " without paying its mana cost?"));
         }
     }

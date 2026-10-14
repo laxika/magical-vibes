@@ -22,6 +22,7 @@ public class EachPlayerMayExileGraveyardCardsThenLoseLifeEffectHandler
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
+    private final EachPlayerMayExileGraveyardCardsSupport eachPlayerMayExileGraveyardCardsSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -64,6 +65,7 @@ public class EachPlayerMayExileGraveyardCardsThenLoseLifeEffectHandler
             return;
         }
 
+        eachPlayerMayExileGraveyardCardsSupport.exileChosenCardsSimultaneously(gameData);
         applyLifeLossForRemainingCards(gameData, entry);
         state.reset();
         gameData.rerunCurrentEffectAfterInteraction = false;

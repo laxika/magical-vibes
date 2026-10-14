@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -95,6 +97,7 @@ class GhostTownTest extends BaseCardTest {
         GhostTown source = new GhostTown();
         harness.addToBattlefield(player1, source);
         Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new GhostTown());
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
 
         harness.activateAbility(player1, 0, 1, null, null);

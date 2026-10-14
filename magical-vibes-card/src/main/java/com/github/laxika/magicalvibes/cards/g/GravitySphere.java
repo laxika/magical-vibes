@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 public class GravitySphere extends Card {
 
     public GravitySphere() {
-        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ALL_CREATURES));
+        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ALL_CREATURES_INCLUDING_SELF));
     }
 }

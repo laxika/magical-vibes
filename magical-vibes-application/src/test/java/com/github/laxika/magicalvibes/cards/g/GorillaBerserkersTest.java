@@ -107,7 +107,6 @@ class GorillaBerserkersTest extends BaseCardTest {
         Permanent berserkers = addAttackingBerserkers();
         Permanent gargoyle = addCreatureReady(player2, new IvoryGargoyle());
         addBlockers(2);
-        harness.addMana(player2, ManaColor.WHITE, 5);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -116,6 +115,7 @@ class GorillaBerserkersTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.WHITE, 5);
         harness.activateAbility(player2, 0, null, null);
         resolveAllTriggers();
 

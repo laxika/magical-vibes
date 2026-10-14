@@ -47,6 +47,7 @@ public class GoShintaiOfLifesOrigin extends Card {
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.ENCHANTMENT))
                         .targetGraveyard(true)
+                        .chooseAuraAttachment(true)
                         .build()),
                 "{W}{U}{B}{R}{G}, {T}: Return target enchantment card from your graveyard to the battlefield."
         ));

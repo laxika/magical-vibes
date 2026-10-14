@@ -23,6 +23,7 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
     private final DrawService drawService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,18 +59,8 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
             drawService.resolveDrawCard(gameData, controllerId);
         }
 
-        if (!gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
-            
-            gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " (").card(entry.getCard()).text("). " + playerName + "'s life total can't change.").build());
-        } else {
-            int lifeLoss = count * gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
-            int currentLife = gameData.getLife(controllerId);
-            gameData.playerLifeTotals.put(controllerId, currentLife - lifeLoss);
-
-            
-            gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " and loses " + lifeLoss + " life (").card(entry.getCard()).text(").").build());
-            log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, lifeLoss, entry.getCard().getName());
-        }
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " (").card(entry.getCard()).text(").").build());
+        lifeSupport.applyLifeLoss(gameData, controllerId, count, entry.getCard().getName());
     
     }
 }

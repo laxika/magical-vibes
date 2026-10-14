@@ -23,6 +23,7 @@ class GoliathTruckTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         declareAttackers(player1, List.of(0, 2));
@@ -46,6 +47,7 @@ class GoliathTruckTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         declareAttackers(player1, List.of(0, 2));
 
@@ -63,6 +65,7 @@ class GoliathTruckTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         declareAttackers(List.of(0));
@@ -81,6 +84,7 @@ class GoliathTruckTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         declareAttackers(List.of(0, 2));
         harness.handlePermanentChosen(player1, attacker.getId());
@@ -99,6 +103,7 @@ class GoliathTruckTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         declareAttackers(List.of(0, 2));
         harness.handlePermanentChosen(player1, attacker.getId());
@@ -118,6 +123,7 @@ class GoliathTruckTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(crew.isTapped()).isTrue();

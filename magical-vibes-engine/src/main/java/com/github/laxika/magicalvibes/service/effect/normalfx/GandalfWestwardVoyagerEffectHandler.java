@@ -41,10 +41,16 @@ public class GandalfWestwardVoyagerEffectHandler implements NormalEffectHandlerB
         StackEntry triggeringSpell = gameQueryService.findStackEntryByCardId(
                 gameData, entry.getTriggeringCardId());
         if (triggeringSpell == null || triggeringSpell.getCard() == null) {
-            return;
+            // The spell was countered or otherwise left the stack; the copy is still made from the
+            // spell as it was when the ability triggered.
+            triggeringSpell = ((GandalfWestwardVoyagerEffect) effect).spellSnapshot();
+            if (triggeringSpell == null || triggeringSpell.getCard() == null) {
+                return;
+            }
         }
 
         Card spellCard = triggeringSpell.getCard();
+        UUID spellControllerId = triggeringSpell.getControllerId();
         boolean sharesCardType = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (entry.getControllerId().equals(playerId)) {
@@ -63,8 +69,7 @@ public class GandalfWestwardVoyagerEffectHandler implements NormalEffectHandlerB
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " reveals ", topCard,
                     " from the top of their library (Gandalf, Westward Voyager)."));
-            sharesCardType |= sharesCardType(gameData, spellCard, topCard,
-                    triggeringSpell.getControllerId(), playerId);
+            sharesCardType |= sharesCardType(gameData, spellCard, topCard, spellControllerId, playerId);
         }
 
         if (!sharesCardType) {
@@ -74,7 +79,7 @@ public class GandalfWestwardVoyagerEffectHandler implements NormalEffectHandlerB
 
         copyControllerCastSpellEffectHandler.resolve(gameData, entry,
                 new CopyControllerCastSpellEffect(
-                        new StackEntry(triggeringSpell), triggeringSpell.getControllerId(),
+                        new StackEntry(triggeringSpell), spellControllerId,
                         Set.of(), Set.of(), isPermanentSpell(triggeringSpell.getEntryType()), true));
         eachOpponentDrawsCardEffectHandler.resolve(gameData, entry, new EachOpponentDrawsCardEffect(1));
     }

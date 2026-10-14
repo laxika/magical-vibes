@@ -101,10 +101,10 @@ class GarruksUprisingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SkysovereignConsulFlagship());
         harness.setHand(player1, List.of(new GarruksUprising(), new Unsummon()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
         resolveAllTriggers();
@@ -118,10 +118,10 @@ class GarruksUprisingTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new AirElemental());
         harness.setHand(player1, List.of(new GarruksUprising(), new Unsummon()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
         resolveAllTriggers();

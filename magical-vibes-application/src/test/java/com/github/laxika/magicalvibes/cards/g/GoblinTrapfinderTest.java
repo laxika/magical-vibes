@@ -43,7 +43,7 @@ class GoblinTrapfinderTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
@@ -98,7 +98,7 @@ class GoblinTrapfinderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();

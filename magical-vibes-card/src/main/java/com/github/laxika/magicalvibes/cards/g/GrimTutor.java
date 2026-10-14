@@ -18,8 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 public class GrimTutor extends Card {
 
     public GrimTutor() {
-        // Resolve the unconditional life loss before the asynchronous library search.
-        addEffect(EffectSlot.SPELL, new LoseLifeEffect(3));
         addEffect(EffectSlot.SPELL, new SearchLibraryEffect());
+        addEffect(EffectSlot.SPELL, new LoseLifeEffect(3));
     }
 }

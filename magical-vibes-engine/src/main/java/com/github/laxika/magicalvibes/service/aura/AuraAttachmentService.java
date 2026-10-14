@@ -430,7 +430,7 @@ public class AuraAttachmentService {
 
         // The card's declared target filter is its enchant restriction (e.g. "Enchant creature");
         // player-shaped filters never apply to a permanent host.
-        if (gameQueryService.cantBeEnchantedByOtherAuras(gameData, host)
+        if (gameQueryService.cantBeEnchantedByOtherAurasRemovingExisting(gameData, host)
                 && attachment.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(effect ->
                 effect instanceof GrantEffectEffect grant
                         && grant.effect() instanceof com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect)) {

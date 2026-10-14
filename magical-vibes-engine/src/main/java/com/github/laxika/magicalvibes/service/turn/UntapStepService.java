@@ -711,13 +711,16 @@ public class UntapStepService {
      * depletion lands).
      */
     private boolean counterLockPreventsUntap(GameData gameData, Permanent permanent) {
-        return hasActiveCounterLock(permanent, permanent,
-                permanent.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.SELF)
+        // A creature that has lost all abilities (Darksteel Mutation) loses its own printed and granted
+        // "doesn't untap" locks too; an aura-granted lock comes from the aura, which is unaffected.
+        boolean ownLockApplies = !gameQueryService.hasLostAllAbilities(gameData, permanent)
+                && (hasActiveCounterLock(permanent, permanent,
+                        permanent.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.SELF)
                 // Granted, not printed: Mindbender Spores gives the creature it blocks
                 // "doesn't untap during your untap step if it has a fungus counter on it".
                 || hasActiveCounterLock(permanent, permanent,
-                        permanent.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.SELF)
-                || gameData.anyPermanentMatches(source -> source.isAttached()
+                        permanent.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.SELF));
+        return ownLockApplies || gameData.anyPermanentMatches(source -> source.isAttached()
                         && source.getAttachedTo().equals(permanent.getId())
                         && (hasActiveCounterLock(source, permanent,
                                 source.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)

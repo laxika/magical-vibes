@@ -41,7 +41,7 @@ public class CreateTokenThenMillControllerAndRepeatIfMilledEffectHandler impleme
             entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
                     gameData, controllerId, e.tokenEffect(), entry.getCard().getSetCode()));
 
-            List<Card> milled = graveyardService.resolveMillPlayer(gameData, controllerId, 1);
+            List<Card> milled = graveyardService.resolveMillPlayerAndReturnAllMilledCards(gameData, controllerId, 1);
             boolean repeat = milled.stream().anyMatch(card -> predicateEvaluationService.matchesCardPredicate(
                     card, e.repeatPredicate(), entry.getCard().getId(), gameData, controllerId));
             if (!repeat) {

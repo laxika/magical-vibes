@@ -9,8 +9,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Used by Gauntlets of Chaos' {@code {5}, Sacrifice this artifact} ability. The cross-target
  * "shares one of those types" restriction is enforced at announcement via
  * {@code MultiTargetConstraint.SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE}; at resolution the handler
- * re-checks legality (CR 701.10) and only swaps controllers — then destroys the Auras — if both
- * targets are still legal.
+ * re-checks legality (CR 701.12a) and only swaps controllers — then destroys the Auras — if both
+ * targets are still legal and can change control.
  */
 public record ExchangeControlOfSharedTypeTargetsAndDestroyAurasEffect() implements CardEffect {
 }

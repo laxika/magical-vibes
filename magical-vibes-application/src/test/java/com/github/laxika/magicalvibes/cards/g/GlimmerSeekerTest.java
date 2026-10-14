@@ -74,6 +74,7 @@ class GlimmerSeekerTest extends BaseCardTest {
     void doesNothingIfUntappedBeforeResolution() {
         Permanent seeker = harness.addToBattlefieldAndReturn(player1, new GlimmerSeeker());
         seeker.tap();
+        harness.setHand(player1, List.of());
         advanceToPostcombatMain();
         assertThat(gd.stack).hasSize(1);
 

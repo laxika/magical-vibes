@@ -5,14 +5,12 @@ import com.github.laxika.magicalvibes.cards.d.Dust;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 /**
  * Grind // Dust — front half (Grind).
- * Sorcery — Put a -1/-1 counter on target creature. That creature can't block this turn.
+ * Sorcery — Put a -1/-1 counter on each of up to two target creatures.
  * Back half (Dust) is cast only from the graveyard via Aftermath (FlashbackCast on the back face).
  */
 @CardRegistration(set = "HOU", collectorNumber = "155")
@@ -22,11 +20,10 @@ public class GrindDust extends Card {
     public GrindDust() {
         setBackFaceCard(new Dust());
 
-        // Put a -1/-1 counter on target creature. That creature can't block this turn.
-        target(TargetFilters.creature())
+        // Put a -1/-1 counter on each of up to two target creatures.
+        target(TargetFilters.creature(), 0, 2)
                 .addEffect(EffectSlot.SPELL,
-                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1))
-                .addEffect(EffectSlot.SPELL, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                        new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
     }
 
     @Override

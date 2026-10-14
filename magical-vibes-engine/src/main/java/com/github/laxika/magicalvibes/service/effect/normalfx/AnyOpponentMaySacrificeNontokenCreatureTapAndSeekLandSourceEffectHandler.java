@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapSourceThenEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,8 @@ public class AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffectHa
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final GameLogService gameLogService;
+    private final SeekCardToBattlefieldEffectHandler seekCardToBattlefieldEffectHandler;
     private final AnyOpponentMaySacrificeCreatureSupport anyOpponentMaySacrificeCreatureSupport;
 
     @Override
@@ -95,15 +98,29 @@ public class AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffectHa
         }
 
         if (anyAccepted) {
-            StackEntry followUp = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    effect.abilityControllerId(),
-                    sourceCard.getName() + "'s ability",
-                    List.of(new TapSourceThenEffect(effect.landSearch())),
-                    null,
-                    effect.sourcePermanentId());
-            gameData.stack.add(followUp);
+            tapThenSeek(gameData, sourceCard, effect);
         }
+    }
+
+    /**
+     * Taps the source and seeks the land within the same resolution: "tap Gitrog, then seek" is a
+     * sequence of instructions, not a reflexive trigger, so no priority window opens in between.
+     */
+    private void tapThenSeek(GameData gameData, Card sourceCard,
+                             AnyOpponentMaySacrificeNontokenCreatureTapAndSeekLandSourceEffect effect) {
+        Permanent source = gameQueryService.findPermanentById(gameData, effect.sourcePermanentId());
+        if (source != null && !source.isTapped()) {
+            source.tap();
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " taps itself."));
+        }
+        StackEntry seekEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                effect.abilityControllerId(),
+                sourceCard.getName() + "'s ability",
+                List.of(effect.landSearch()),
+                null,
+                effect.sourcePermanentId());
+        seekCardToBattlefieldEffectHandler.resolve(gameData, seekEntry, effect.landSearch());
     }
 }

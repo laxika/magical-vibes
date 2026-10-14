@@ -32,7 +32,7 @@ public final class OncePerTurnTriggerSupport {
         }
     }
 
-    private static boolean isFired(GameData gameData, Permanent source, OncePerTurnTriggerEffect effect) {
+    public static boolean isFired(GameData gameData, Permanent source, OncePerTurnTriggerEffect effect) {
         if (effect.key() == null) {
             return gameData.oncePerTurnTriggersFiredThisTurn.contains(source.getId());
         }

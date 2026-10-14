@@ -240,6 +240,11 @@ public class DamageSupport {
             Permanent reflectionSource = damageSource != null
                     ? damageSource
                     : (sourcePermId != null ? gameQueryService.findPermanentById(gameData, sourcePermId) : null);
+            // A source that left the battlefield before this damage still dealt it (CR 608.2h last-known
+            // information), so reflection watchers see the activation-time snapshot.
+            if (reflectionSource == null) {
+                reflectionSource = entry.getSourcePermanentSnapshot();
+            }
 
             if (gameQueryService.isPlaneswalker(gameData, target)) {
                 triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
@@ -1417,6 +1422,7 @@ public class DamageSupport {
             for (SourceDamageRedirectShield redirect : toProcess) {
                 DamageEvent redirected = redirectedEvent(gameData, origin, redirect);
                 if (redirected == null || redirected.amount() <= 0) continue;
+                if (isRedirectedToProtectedCreature(gameData, redirected)) continue;
                 if (isReplacementDecisionOutstanding(gameData)) {
                     gameData.pendingReplacementEvents.add(redirected);
                 } else {
@@ -1424,6 +1430,24 @@ public class DamageSupport {
                 }
             }
         }
+    }
+
+    /**
+     * Protection (CR 702.16e) applies to damage a redirect deals to a creature just as it does to
+     * damage dealt directly: damage from a source the creature has protection from is prevented.
+     */
+    private boolean isRedirectedToProtectedCreature(GameData gameData, DamageEvent redirected) {
+        if (!redirected.toPermanent() || !gameQueryService.isDamagePreventable(gameData)) return false;
+        Permanent target = gameQueryService.findPermanentById(gameData, redirected.recipientPermanentId());
+        if (target == null) return false;
+        StackEntry entry = redirected.entry();
+        if (!gameQueryService.hasProtectionFromDamageSource(gameData, target,
+                entry.getEffectiveDamageSourceCard(), entry.getControllerId())) {
+            return false;
+        }
+        gameLogService.append(gameData, GameLog.cardThen(entry.getEffectiveDamageSourceCard(),
+                "'s damage is prevented."));
+        return true;
     }
 
     private DamageEvent redirectedEvent(GameData gameData, DamageEvent origin, SourceDamageRedirectShield redirect) {

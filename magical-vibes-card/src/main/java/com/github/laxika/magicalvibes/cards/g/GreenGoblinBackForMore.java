@@ -19,7 +19,7 @@ public class GreenGoblinBackForMore extends Card {
         addCastingOption(new GraveyardCast(null, "{3}{B}{B}", List.of(), new CardDiscardedThisTurn()));
 
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
-                new DiscardCardThenEffect(null,
+                DiscardCardThenEffect.continuing(null,
                         new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT), "a card"),
                 "Discard a card?"));
     }

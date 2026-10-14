@@ -37,7 +37,6 @@ class GirderGoonsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, goons.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Girder Goons");
@@ -98,9 +97,8 @@ class GirderGoonsTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        Permanent goons = findPermanent(player1, "Girder Goons");
+        assertThat(findPermanent(player1, "Girder Goons")).isNotNull();
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, goons.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Girder Goons");

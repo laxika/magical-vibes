@@ -82,8 +82,10 @@ public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHa
         }
 
         Card sacrificedCard = creature.getCard();
+        // CR 708.2: a face-down permanent has no characteristics, so its mana value is 0 regardless of its front face.
+        int sacrificedManaValue = creature.isFaceDown() ? 0 : sacrificedCard.getManaValue();
         boolean qualifiesForDuplicate = effect.maxManaValue() < 0
-                || sacrificedCard.getManaValue() <= effect.maxManaValue();
+                || sacrificedManaValue <= effect.maxManaValue();
         destructionSupport.sacrificeAndLog(gameData, creature, sacrificingPlayerId);
 
         if (!qualifiesForDuplicate) {

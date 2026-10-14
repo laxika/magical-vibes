@@ -35,6 +35,7 @@ class GiltLeafArchdruidTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -54,6 +55,7 @@ class GiltLeafArchdruidTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotInHand(player1, "Island");

@@ -46,7 +46,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -180,7 +180,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

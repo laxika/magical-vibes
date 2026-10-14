@@ -102,6 +102,7 @@ class GuardianZendikonTest extends BaseCardTest {
     @DisplayName("An opponent's land can be enchanted and returns to its owner after dying")
     void opponentsLandReturnsToItsOwnerAfterTriggerResolves() {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new GuardianZendikon()));
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castEnchantment(player1, 0, plains.getId());

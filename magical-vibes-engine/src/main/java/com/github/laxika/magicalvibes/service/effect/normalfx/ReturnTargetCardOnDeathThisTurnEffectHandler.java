@@ -39,7 +39,7 @@ public class ReturnTargetCardOnDeathThisTurnEffectHandler implements NormalEffec
                 .computeIfAbsent(target.getCard().getId(), k -> Collections.synchronizedList(new ArrayList<>()))
                 .add(new DelayedReturnOnDeath(entry.getControllerId(), enterTapped,
                         ((ReturnTargetCardOnDeathThisTurnEffect) effect).returnUnderController(),
-                        ((ReturnTargetCardOnDeathThisTurnEffect) effect).requireControllerGraveyard()));
+                        ((ReturnTargetCardOnDeathThisTurnEffect) effect).requireControllerGraveyard(), entry.getCard()));
 
         log.info("Game {} - Delayed trigger registered: if {} dies this turn, return it to the battlefield",
                 gameData.id, target.getCard().getName());

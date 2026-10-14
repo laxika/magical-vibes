@@ -298,6 +298,16 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ForcedCostOrElseEffect) effect;
 
+        UUID sourceCardId = entry.getCard().getId();
+        boolean versionBelongsToSource = entry.getTriggeringCardId() == null
+                || entry.getTriggeringCardId().equals(sourceCardId);
+        if (versionBelongsToSource
+                && entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameQueryService.findCardInGraveyardById(gameData, sourceCardId) != null
+                && gameData.graveyardEntryVersion(sourceCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
+
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost cost) {
             List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
             List<Card> candidates = graveyard == null ? List.of() : graveyard.stream()

@@ -16,7 +16,7 @@ public class GhituEmbercoiler extends Card {
         // card with greater mana value and exile it. Until the end of your next turn, you may play
         // the exiled card.
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new MayEffect(
-                new DiscardCardThenEffect(
+                DiscardCardThenEffect.continuing(
                         null,
                         new SeekFromLibraryWithGreaterManaValueEffect(new LastDiscardedCardManaValue()),
                         "a card"),

@@ -51,14 +51,7 @@ class GraveExpectationsTest extends BaseCardTest {
         prepareSpell();
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
-        harness.castModalInstant(player1, 0, 1, List.of());
-
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId(), third.getId());
-
-        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.castModalInstant(player1, 0, 1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 3);

@@ -471,7 +471,6 @@ public class MayPenaltyChoiceHandlerService {
                 .orElse(null);
 
         if (targetEntry == null
-                || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
                 || gameQueryService.isProtectedFromCounterBySourceCard(
                         gameData, targetEntry.getControllerId(), ability.sourceCard())) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -494,7 +493,9 @@ public class MayPenaltyChoiceHandlerService {
                     player.getUsername() + " exiles all cards from their graveyard. ",
                     targetEntry.getCard(), " is not countered."));
         } else {
-            counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+            if (!gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+                counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

@@ -29,15 +29,24 @@ import com.github.laxika.magicalvibes.model.CounterType;
  *                                effective power rather than its counter count.
  * @param optional                when {@code true}, the collector wraps the distribution in a
  *                                "you may" choice.
+ * @param targeted                when {@code true}, the recipients are declared as targets, so
+ *                                shroud, hexproof and protection stop them from receiving counters
+ *                                (Grand Ossuary).
  */
 public record DistributeCountersAmongCreaturesOnDeathEffect(
         CounterType counterType, int count, boolean countFromSourceCounters, boolean anyCreature,
-        boolean countFromSourcePower, boolean optional)
+        boolean countFromSourcePower, boolean optional, boolean targeted)
         implements CardEffect {
 
     public DistributeCountersAmongCreaturesOnDeathEffect(
+            CounterType counterType, int count, boolean countFromSourceCounters, boolean anyCreature,
+            boolean countFromSourcePower, boolean optional) {
+        this(counterType, count, countFromSourceCounters, anyCreature, countFromSourcePower, optional, false);
+    }
+
+    public DistributeCountersAmongCreaturesOnDeathEffect(
             CounterType counterType, int count, boolean countFromSourceCounters, boolean anyCreature) {
-        this(counterType, count, countFromSourceCounters, anyCreature, false, true);
+        this(counterType, count, countFromSourceCounters, anyCreature, false, true, false);
     }
 
     /**
@@ -47,17 +56,17 @@ public record DistributeCountersAmongCreaturesOnDeathEffect(
      */
     public static DistributeCountersAmongCreaturesOnDeathEffect fromDyingSourceCountersAmongControlledCreatures(
             CounterType counterType) {
-        return new DistributeCountersAmongCreaturesOnDeathEffect(counterType, 0, true, false);
+        return new DistributeCountersAmongCreaturesOnDeathEffect(counterType, 0, true, false, false, true, false);
     }
 
     /**
-     * "Whenever this dies, its controller distributes a number of +1/+1 counters equal to its
-     * power among any number of creatures they control" (Grand Ossuary).
+     * "Whenever a creature dies, its controller distributes a number of +1/+1 counters equal to its
+     * power among any number of target creatures they control" (Grand Ossuary).
      */
     public static DistributeCountersAmongCreaturesOnDeathEffect fromDyingSourcePowerAmongControlledCreatures(
             CounterType counterType) {
         return new DistributeCountersAmongCreaturesOnDeathEffect(
-                counterType, 0, false, false, true, false);
+                counterType, 0, false, false, true, false, true);
     }
 
     /**

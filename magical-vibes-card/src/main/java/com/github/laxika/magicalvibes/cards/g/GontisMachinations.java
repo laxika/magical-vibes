@@ -19,7 +19,7 @@ public class GontisMachinations extends Card {
 
     public GontisMachinations() {
         addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE,
-                new OncePerTurnTriggerEffect(new EnergyCountersEffect(1)));
+                OncePerTurnTriggerEffect.firstLifeLoss(new EnergyCountersEffect(1)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

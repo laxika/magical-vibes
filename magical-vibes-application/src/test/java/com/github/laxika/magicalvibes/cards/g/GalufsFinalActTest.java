@@ -118,7 +118,7 @@ class GalufsFinalActTest extends BaseCardTest {
         Permanent recipient = addCreatureReady(player1, new GrizzlyBears());
 
         castOn(target);
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         target.tap();
         destroyWithAssassinate(target.getId());

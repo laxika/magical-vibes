@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class ManifestService {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
 
     public Permanent manifestTopCard(GameData gameData, UUID playerId, Card sourceCard) {
@@ -28,6 +31,12 @@ public class ManifestService {
         if (library == null || library.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                     " cannot manifest because its controller's library is empty."));
+            return null;
+        }
+
+        if (gameQueryService.isManifestBlockedFromZone(gameData, library.getFirst(), Zone.LIBRARY)) {
+            gameLogService.append(gameData, GameLog.cardThen(sourceCard,
+                    " cannot manifest the top card of its controller's library."));
             return null;
         }
 

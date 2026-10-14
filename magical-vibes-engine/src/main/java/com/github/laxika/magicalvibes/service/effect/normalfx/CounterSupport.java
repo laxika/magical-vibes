@@ -422,6 +422,9 @@ public class CounterSupport {
             return false;
         }
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                continue;
+            }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ReplaceControlledCounterWithExileAndPlayEffect) {
                     return true;

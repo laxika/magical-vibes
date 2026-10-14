@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
@@ -11,11 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 public class Groffskithur extends Card {
 
     public Groffskithur() {
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, ReturnCardFromGraveyardEffect.builder()
+        addEffect(EffectSlot.ON_BECOMES_BLOCKED, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardNamedPredicate("Groffskithur"))
                 .targetGraveyard(true)
-                .upTo(true)
-                .build());
+                .build(), "Return the targeted Groffskithur card to your hand?"));
     }
 }

@@ -125,7 +125,7 @@ class GhirapurTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IchorElixir());
         harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, artifact)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, artifact, CardSubtype.VEHICLE)).isFalse();

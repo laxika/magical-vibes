@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalDamageToPlayersFrom
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSpellCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AllCardsAreColorlessEffect;
+import com.github.laxika.magicalvibes.model.effect.AllPermanentsGainChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraBoastActivationEffect;
@@ -280,6 +281,7 @@ import com.github.laxika.magicalvibes.model.effect.SelfAllZoneSubtypeGrantingEff
 import com.github.laxika.magicalvibes.model.effect.SelfBecomesCreatureOutsideBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfOutsideBattlefieldCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCreatureOutsideBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedColorDamagePreventionEffect;
@@ -302,6 +304,7 @@ import com.github.laxika.magicalvibes.model.effect.TwistBasicLandManaColorsEffec
 import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -1539,7 +1542,8 @@ public class GameQueryService {
             result.add(Card.embalmAbility(card.getManaCost()));
         }
         if (card != null) {
-            String unearthCost = gameData.cardsGrantedUnearthUntilEndOfTurn.get(card.getId());
+            String unearthCost = unearthGrantStillApplies(gameData, card)
+                    ? gameData.cardsGrantedUnearthUntilEndOfTurn.get(card.getId()) : null;
             if (unearthCost != null && !unearthCost.isBlank()) {
                 result.add(Card.unearthAbility(unearthCost));
             }
@@ -1552,6 +1556,16 @@ public class GameQueryService {
         return result;
     }
 
+    /** An unearth grant covers only the graveyard stay it was made for; a card that left and returned is a new object. */
+    private boolean unearthGrantStillApplies(GameData gameData, Card card) {
+        if (gameData == null || card == null
+                || !gameData.cardsGrantedUnearthUntilEndOfTurn.containsKey(card.getId())) {
+            return false;
+        }
+        Long grantedVersion = gameData.cardsGrantedUnearthGraveyardVersions.get(card.getId());
+        return grantedVersion == null || grantedVersion == gameData.graveyardEntryVersion(card.getId());
+    }
+
     /** Whether the card currently has native or granted unearth. */
     public boolean cardHasUnearthAbility(GameData gameData, UUID ownerId, Card card) {
         if (card == null) return false;
@@ -1562,7 +1576,7 @@ public class GameQueryService {
                 && card.getManaCost() != null && !card.getManaCost().isBlank()) {
             return true;
         }
-        if (gameData != null && gameData.cardsGrantedUnearthUntilEndOfTurn.containsKey(card.getId())) {
+        if (unearthGrantStillApplies(gameData, card)) {
             return true;
         }
         return cardHasUnearthAbilityBeforePerpetualGrant(gameData, ownerId, card);
@@ -2419,10 +2433,30 @@ public class GameQueryService {
      */
     public boolean isCardBlockedFromEnteringFromZone(GameData gameData, Card card, Zone zone) {
         return gameData.anyPermanentMatches(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                !p.isFaceDown() && !hasLostAllAbilities(gameData, p)
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(CardsCantEnterBattlefieldFromZonesEffect.class::isInstance)
                         .map(CardsCantEnterBattlefieldFromZonesEffect.class::cast)
                         .anyMatch(e -> e.zones().contains(zone) && predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)));
+    }
+
+    /**
+     * Returns {@code true} if the given card cannot be manifested from {@code zone}. A manifested card
+     * enters face down as a 2/2 creature, so a {@link CardsCantEnterBattlefieldFromZonesEffect} whose
+     * filter is creature-typed bars manifesting any card from that zone, noncreature cards included
+     * (Grafdigger's Cage).
+     */
+    public boolean isManifestBlockedFromZone(GameData gameData, Card card, Zone zone) {
+        if (isCardBlockedFromEnteringFromZone(gameData, card, zone)) {
+            return true;
+        }
+        CardTypePredicate creatureFilter = new CardTypePredicate(CardType.CREATURE);
+        return gameData.anyPermanentMatches(p ->
+                !p.isFaceDown() && !hasLostAllAbilities(gameData, p)
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(CardsCantEnterBattlefieldFromZonesEffect.class::isInstance)
+                        .map(CardsCantEnterBattlefieldFromZonesEffect.class::cast)
+                        .anyMatch(e -> e.zones().contains(zone) && creatureFilter.equals(e.filter())));
     }
 
     /**
@@ -3803,8 +3837,7 @@ public class GameQueryService {
                     .map(StackEntry::getControllerId)
                     .findFirst()
                     .orElseGet(() -> findNonBattlefieldCardOwner(gameData, card));
-            Set<CardColor> latestColors = null;
-            long latestTimestamp = Long.MIN_VALUE;
+            List<CardColorLayerEffect> colorLayerEffects = new ArrayList<>();
             for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
                 for (Permanent permanent : battlefield.getValue()) {
                     if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
@@ -3818,18 +3851,46 @@ public class GameQueryService {
                                 && battlefield.getKey().equals(affectedPlayerId) && !card.hasType(CardType.LAND)) {
                             colors = Set.of(colorEffect.color());
                         }
-                        if (colors != null && permanent.getTimestamp() >= latestTimestamp) {
-                            latestColors = colors;
-                            latestTimestamp = permanent.getTimestamp();
+                        if (effect instanceof AllPermanentsGainChosenColorEffect && permanent.getChosenColor() != null) {
+                            colorLayerEffects.add(new CardColorLayerEffect(
+                                    permanent.getTimestamp(), Set.of(permanent.getChosenColor()), true));
+                        } else if (colors != null) {
+                            colorLayerEffects.add(new CardColorLayerEffect(permanent.getTimestamp(), colors, false));
                         }
                     }
                 }
             }
-            if (latestColors != null) {
-                return addGraveyardAnimationColors(gameData, card, latestColors);
+            if (!colorLayerEffects.isEmpty()) {
+                return addGraveyardAnimationColors(gameData, card,
+                        applyCardColorLayerEffects(gameData, card, colorLayerEffects));
             }
         }
 
+        return addGraveyardAnimationColors(gameData, card, intrinsicCardColors(gameData, card));
+    }
+
+    /**
+     * Applies the color-changing static effects that affect a non-battlefield card in timestamp
+     * order: setting effects replace the running color set, additive effects union into it.
+     */
+    private Set<CardColor> applyCardColorLayerEffects(GameData gameData, Card card,
+                                                      List<CardColorLayerEffect> effects) {
+        Set<CardColor> current = null;
+        for (CardColorLayerEffect effect : effects.stream()
+                .sorted(Comparator.comparingLong(CardColorLayerEffect::timestamp)).toList()) {
+            if (effect.additive()) {
+                EnumSet<CardColor> merged = EnumSet.noneOf(CardColor.class);
+                merged.addAll(current != null ? current : intrinsicCardColors(gameData, card));
+                merged.addAll(effect.colors());
+                current = Set.copyOf(merged);
+            } else {
+                current = effect.colors();
+            }
+        }
+        return current;
+    }
+
+    private Set<CardColor> intrinsicCardColors(GameData gameData, Card card) {
         Set<CardColor> intrinsic = EnumSet.noneOf(CardColor.class);
         if (card.getColors() != null) {
             intrinsic.addAll(card.getColors());
@@ -3847,7 +3908,10 @@ public class GameQueryService {
                 }
             }
         }
-        return addGraveyardAnimationColors(gameData, card, Set.copyOf(intrinsic));
+        return Set.copyOf(intrinsic);
+    }
+
+    private record CardColorLayerEffect(long timestamp, Set<CardColor> colors, boolean additive) {
     }
 
     private Set<CardColor> addGraveyardAnimationColors(GameData gameData, Card card, Set<CardColor> colors) {
@@ -3922,6 +3986,10 @@ public class GameQueryService {
                         value = amountEvaluationService.evaluate(gameData,
                                 power ? characteristic.power() : characteristic.toughness(),
                                 AmountContext.forStaticEffect(new Permanent(card), ownerId));
+                        break;
+                    }
+                    if (effect instanceof BecomeCreatureOutsideBattlefieldEffect creature) {
+                        value = power ? creature.power() : creature.toughness();
                         break;
                     }
                 }
@@ -4311,7 +4379,8 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (!hasLostPrintedAbilities(gameData, permanent)
+                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(IgnoreOpponentCreatureHexproofEffect.class::isInstance)) {
                     return true;
                 }
@@ -5202,16 +5271,14 @@ public class GameQueryService {
         int powerBonus = 0;
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CrewAndSaddlePowerModifierEffect modifier) {
-                if (effect instanceof com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect boost
-                        && boost.crewOnly() && !crewing) continue;
+                if (modifier.crewOnly() && !crewing) continue;
                 usesToughnessInsteadOfPower |= modifier.usesToughnessInsteadOfPower();
                 powerBonus += modifier.powerBonus();
             }
         }
         for (CardEffect effect : bonus.grantedEffects()) {
             if (effect instanceof CrewAndSaddlePowerModifierEffect modifier) {
-                if (effect instanceof com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect boost
-                        && boost.crewOnly() && !crewing) continue;
+                if (modifier.crewOnly() && !crewing) continue;
                 usesToughnessInsteadOfPower |= modifier.usesToughnessInsteadOfPower();
                 powerBonus += modifier.powerBonus();
             }
@@ -6689,7 +6756,10 @@ public class GameQueryService {
             return false;
         }
         Set<CardColor> targetColors = getEffectiveColors(gameData, target);
-        Set<CardColor> sourceColors = getEffectiveColors(gameData, source);
+        // Ghostly Flame: a colour it covers is not a shared colour for damage purposes.
+        Set<CardColor> sourceColors = getEffectiveColors(gameData, source).stream()
+                .filter(color -> getDamageSourceColor(gameData, color) != null)
+                .collect(java.util.stream.Collectors.toSet());
         if (targetColors.isEmpty() || sourceColors.stream().noneMatch(targetColors::contains)) return false;
         return gameData.anyPermanentMatches(permanent ->
                 !permanent.isFaceDown()
@@ -7077,7 +7147,7 @@ public class GameQueryService {
         Set<CardSubtype> protectedSubtypes = EnumSet.noneOf(CardSubtype.class);
         Set<CardSubtype> creatureOnlySubtypes = EnumSet.noneOf(CardSubtype.class);
         // CR 708.2: a face-down permanent has no abilities, so its printed protection does not apply.
-        if (!target.isFaceDown()) {
+        if (!target.isFaceDown() && !hasLostPrintedAbilities(gameData, target)) {
             for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
                 collectProtectedSubtypes(effect, protectedSubtypes, creatureOnlySubtypes);
             }
@@ -7093,7 +7163,7 @@ public class GameQueryService {
         if (protectedSubtypes.isEmpty()) return false;
         // CR 708.2a: a face-down permanent has no printed subtypes, only those its face-down effect lists.
         if (!source.isFaceDown()) {
-            for (CardSubtype subtype : source.getCard().getSubtypes()) {
+            for (CardSubtype subtype : getEffectiveSubtypes(gameData, source)) {
                 if (protectedSubtypes.contains(subtype)) return true;
             }
         }
@@ -7152,7 +7222,7 @@ public class GameQueryService {
         Set<CardSubtype> protectedSubtypes = EnumSet.noneOf(CardSubtype.class);
         Set<CardSubtype> creatureOnlySubtypes = EnumSet.noneOf(CardSubtype.class);
         // CR 708.2: a face-down permanent has no abilities, so its printed protection does not apply.
-        if (!target.isFaceDown()) {
+        if (!target.isFaceDown() && !hasLostPrintedAbilities(gameData, target)) {
             for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
                 collectProtectedSubtypes(effect, protectedSubtypes, creatureOnlySubtypes);
             }
@@ -7453,7 +7523,14 @@ public class GameQueryService {
                 || hasProtectionFromSourceSubtypes(gameData, target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
                 || hasProtectionFromSourceManaValue(gameData, target, sourceCard)
+                || hasProtectionFromSourceCardPermanentWithCounters(gameData, target, sourceCard)
                 || hasProtectionFromMatchingPermanent(gameData, target, findPermanentByCardId(gameData, sourceCard.getId()));
+    }
+
+    private boolean hasProtectionFromSourceCardPermanentWithCounters(GameData gameData, Permanent target,
+                                                                     Card sourceCard) {
+        Permanent sourcePermanent = findPermanentByCardId(gameData, sourceCard.getId());
+        return sourcePermanent != null && hasProtectionFromPermanentsWithCounters(gameData, target, sourcePermanent);
     }
 
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard) {
@@ -7484,6 +7561,7 @@ public class GameQueryService {
                 || hasProtectionFromSourceSubtypes(gameData, target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
                 || hasProtectionFromSourceManaValue(gameData, target, sourceCard)
+                || hasProtectionFromSourceCardPermanentWithCounters(gameData, target, sourceCard)
                 || hasProtectionFromMatchingPermanent(gameData, target, findPermanentByCardId(gameData, sourceCard.getId()));
     }
 
@@ -7503,7 +7581,8 @@ public class GameQueryService {
      * that the target has protection from as a colored spell. Its damage is prevented per CR 702.16e.
      */
     public boolean hasProtectionFromResolvingColoredSpell(GameData gameData, Permanent target, Card spellCard) {
-        if (target == null || spellCard == null || getEffectiveCardColors(gameData, spellCard).isEmpty()) {
+        if (target == null || spellCard == null || getEffectiveCardColors(gameData, spellCard).stream()
+                .noneMatch(color -> getDamageSourceColor(gameData, color) != null)) {
             return false;
         }
         return hasProtectionFromColoredSpells(gameData, target);
@@ -8022,6 +8101,18 @@ public class GameQueryService {
         return hasAuraAttachmentRestriction(gameData, target, true);
     }
 
+    /**
+     * Returns {@code true} if an attachment restriction on the permanent puts Auras already attached
+     * to it into their owner's graveyard. Restrictions marked to keep existing Auras attached (Guardian
+     * Beast) only stop new attachment and are excluded.
+     */
+    public boolean cantBeEnchantedByOtherAurasRemovingExisting(GameData gameData, Permanent target) {
+        List<CardEffect> effects = new ArrayList<>(getActiveStaticEffects(gameData, target));
+        effects.addAll(getGrantedEffects(gameData, target));
+        return effects.stream().anyMatch(effect -> effect instanceof CantBeEnchantedByOtherAurasEffect restriction
+                && !restriction.keepsExistingAuras());
+    }
+
     private boolean hasAuraAttachmentRestriction(GameData gameData, Permanent target, boolean auraSpell) {
         List<CardEffect> effects = new ArrayList<>(getActiveStaticEffects(gameData, target));
         effects.addAll(getGrantedEffects(gameData, target));
@@ -8041,9 +8132,11 @@ public class GameQueryService {
      * static effects or from effects granted by other permanents.
      */
     public boolean cantBeEquipped(GameData gameData, Permanent target) {
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantBeEquippedEffect) {
-                return true;
+        if (!hasLostAllAbilities(gameData, target)) {
+            for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CantBeEquippedEffect) {
+                    return true;
+                }
             }
         }
         return hasGrantedEffect(gameData, target, CantBeEquippedEffect.class);
@@ -8190,7 +8283,7 @@ public class GameQueryService {
 
     private boolean cantBeTargetedByNonColorSources(GameData gameData, Permanent target, Card sourceCard,
                                                     UUID sourceControllerId, boolean enforceOpponentOnly) {
-        if (sourceCard == null) {
+        if (sourceCard == null || hasLostAllAbilities(gameData, target)) {
             return false;
         }
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
@@ -8217,7 +8310,7 @@ public class GameQueryService {
                                                 boolean enforceOpponentOnly) {
         if (!(effect instanceof TargetingRestrictionEffect r)
                 || r.mode() != TargetColorMode.ALLOWED_COLORS_ONLY
-                || r.colors().stream().anyMatch(color -> sourceHasColor(sourceCard, color))) {
+                || r.colors().stream().anyMatch(color -> sourceHasColor(gameData, sourceCard, color))) {
             return false;
         }
         if (!enforceOpponentOnly || !r.opponentOnly()) {
@@ -8229,11 +8322,11 @@ public class GameQueryService {
                 || !targetControllerId.equals(sourceControllerId);
     }
 
-    private boolean sourceHasColor(Card card, CardColor color) {
+    private boolean sourceHasColor(GameData gameData, Card card, CardColor color) {
         if (card.getColor() == color) {
             return true;
         }
-        return card.getColors().contains(color);
+        return getEffectiveCardColors(gameData, card).contains(color);
     }
 
     /**
@@ -8500,6 +8593,7 @@ public class GameQueryService {
         }
         for (Permanent perm : bf) {
             if (sourceName.equals(perm.getChosenName())
+                    && !hasLostAllAbilities(gameData, perm)
                     && perm.getCard().getEffects(EffectSlot.STATIC).stream()
                             .anyMatch(PreventDamageFromChosenNameEffect.class::isInstance)) {
                 return true;
@@ -10354,7 +10448,8 @@ public class GameQueryService {
         if (sourceControllerId != null && !recipientPlayerId.equals(sourceControllerId)) {
             for (DelayedControllerDamageMultiplication multiplication
                     : gameData.getDelayedActions(DelayedControllerDamageMultiplication.class)) {
-                if (sourceControllerId.equals(multiplication.controllerId())) {
+                if (sourceControllerId.equals(multiplication.controllerId())
+                        && (multiplication.opponentPermanents() || recipientPermanentId == null)) {
                     multiplier[0] *= multiplication.multiplier();
                 }
             }
@@ -11161,6 +11256,9 @@ public class GameQueryService {
                         .anyMatch(multiplyingEffect -> !multiplyingEffect.requiresSourceControllerMatch());
                 if (!hasCrossControllerSourceMultiplier) return;
             }
+            if (effectSource.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(SourceDamageMultiplyingEffect.class::isInstance)
+                    && hasLostAllAbilities(gameData, effectSource)) return;
             FilterContext context = FilterContext.of(gameData)
                     .withSourceCardId(effectSource.getCard().getId())
                     .withSourceControllerId(playerId)
@@ -11624,7 +11722,7 @@ public class GameQueryService {
             return false;
         }
         UUID controllerId = findPermanentController(gameData, source.getId());
-        if (controllerId == null) return false;
+        if (controllerId == null || hasLostAllAbilities(gameData, source)) return false;
         return source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
                 .filter(DamagePreventionBySelfEffect.class::isInstance)

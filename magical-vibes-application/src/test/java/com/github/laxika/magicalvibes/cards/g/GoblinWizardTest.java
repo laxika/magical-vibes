@@ -95,7 +95,7 @@ class GoblinWizardTest extends BaseCardTest {
 
         assertThat(goblin.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(goblin.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.WHITE);
     }

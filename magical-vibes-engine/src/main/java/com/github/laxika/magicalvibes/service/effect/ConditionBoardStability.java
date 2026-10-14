@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
@@ -59,6 +60,8 @@ public final class ConditionBoardStability {
             // Graveyard contents and the card identities/types they carry are hashed by the board
             // fingerprint, so creature-card thresholds can safely participate in layer 4.
             case GraveyardCardThreshold ignored -> true;
+            // Each player's cards that entered this turn are hashed by the board fingerprint.
+            case PermanentEnteredThisTurn ignored -> true;
             case NotControllerTurn ignored -> true;
             case ControllerTurn ignored -> true;
             case NotCondition c -> readsOnlyFingerprintedState(c.inner());

@@ -134,7 +134,7 @@ class GlissaSunseekerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.activateAbility(player1, 1, null, null);
+        harness.tapPermanent(player1, 1);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Iron Myr");

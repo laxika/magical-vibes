@@ -54,7 +54,7 @@ public class SeekEffectHandler implements NormalEffectHandlerBean {
             entry.setChosenObjectCard(selected);
         }
         triggerCollectionService.checkSeekTriggers(gameData, controllerId, List.of(selected));
-        gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(controllerId) + " seeks ", selected, " into their hand."));
+        gameLogService.append(gameData, GameLog.text(
+                gameData.playerIdToName.get(controllerId) + " seeks a card into their hand."));
     }
 }

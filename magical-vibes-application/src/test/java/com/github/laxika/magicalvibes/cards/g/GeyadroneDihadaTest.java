@@ -183,7 +183,7 @@ class GeyadroneDihadaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);

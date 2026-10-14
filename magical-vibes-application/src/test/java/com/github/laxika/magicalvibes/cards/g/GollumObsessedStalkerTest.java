@@ -89,7 +89,7 @@ class GollumObsessedStalkerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         addCreatureReady(player1, new GollumObsessedStalker());
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
 
         advanceToEndStepAndResolve(player1);
 
@@ -105,7 +105,7 @@ class GollumObsessedStalkerTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(original);
         gd.playerGraveyards.get(player1.getId()).add(original.getCard());
         addCreatureReady(player1, new GollumObsessedStalker());
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 4);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 4));
 
         advanceToEndStepAndResolve(player1);
 
@@ -119,9 +119,9 @@ class GollumObsessedStalkerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         resolveCombat();
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "Test");
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "Test"));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2));
 
         advanceToEndStepAndResolve(player1);
 
@@ -139,7 +139,7 @@ class GollumObsessedStalkerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(gollum);
         gd.playerGraveyards.get(player1.getId()).add(gollum.getCard());
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 4);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 4));
 
         resolveAllTriggers();
 
@@ -152,7 +152,7 @@ class GollumObsessedStalkerTest extends BaseCardTest {
         gollum.setAttacking(true);
         harness.setLife(player2, 20);
         resolveCombat();
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 4);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 4));
 
         advanceToEndStepAndResolve(player2);
 
@@ -165,7 +165,7 @@ class GollumObsessedStalkerTest extends BaseCardTest {
         gollum.setAttacking(true);
         harness.setLife(player2, 20);
         resolveCombat();
-        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 4);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 4));
 
         advanceToEndStepAndResolve(player1);
 

@@ -340,6 +340,8 @@ public class GraveyardReturnSupport {
                 && effect.plusOneCountersIfExiledCostCardHasSubtype() == null
                 && !(effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
                 || effect.sacrificeAtEndStep());
+        boolean entersWithEffectCounters = !entersWithPlusOneCounters
+                && effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
             if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
                     || effect.sacrificeAtEndStep()) {
@@ -350,9 +352,11 @@ public class GraveyardReturnSupport {
             } else {
                 returnedPermanent = putCardOntoBattlefield(gameData, destinationPlayerId, targetCard,
                         effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
-                        entersWithPlusOneCounters ? CounterType.PLUS_ONE_PLUS_ONE : null,
+                        entersWithEffectCounters ? effect.enterWithCounter()
+                                : entersWithPlusOneCounters ? CounterType.PLUS_ONE_PLUS_ONE : null,
                         effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect),
-                        entersWithPlusOneCounters ? effect.plusOneCounterCount() : 0,
+                        entersWithEffectCounters ? effect.enterWithCounterCount()
+                                : entersWithPlusOneCounters ? effect.plusOneCounterCount() : 0,
                         permanent -> {
                             permanent.setEnteredFromGraveyardOwnerId(targetOwnerId);
                             if (effect.battlefieldEffectGrants() != null) {
@@ -394,7 +398,8 @@ public class GraveyardReturnSupport {
                 returnedPermanent.setAttackTarget(attackTargetId);
             }
             applyBattlefieldReturnRiders(gameData, destinationPlayerId, targetCard, effect, entry, targetOwnerId,
-                    entersWithPlusOneCounters && returnedPermanent != null);
+                    entersWithPlusOneCounters && returnedPermanent != null,
+                    entersWithEffectCounters && returnedPermanent != null);
             trackAndLinkReanimatedPermanent(gameData, entry, effect, destinationPlayerId, targetCard, targetOwnerId);
             if (returnedPermanent != null
                     && effect.createTokensIfSubtype() != null
@@ -571,6 +576,14 @@ public class GraveyardReturnSupport {
     private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
                                               ReturnCardFromGraveyardEffect effect, StackEntry entry,
                                               UUID cardOwnerId, boolean plusOneCountersAlreadyPlaced) {
+        applyBattlefieldReturnRiders(gameData, controllerId, card, effect, entry, cardOwnerId,
+                plusOneCountersAlreadyPlaced, false);
+    }
+
+    private void applyBattlefieldReturnRiders(GameData gameData, UUID controllerId, Card card,
+                                              ReturnCardFromGraveyardEffect effect, StackEntry entry,
+                                              UUID cardOwnerId, boolean plusOneCountersAlreadyPlaced,
+                                              boolean enterWithCounterAlreadyPlaced) {
         boolean exiledCostSubtypeMatches = effect.plusOneCountersIfExiledCostCardHasSubtype() != null
                 && entry != null
                 && entry.getExiledCostCardSnapshot() != null
@@ -591,7 +604,8 @@ public class GraveyardReturnSupport {
         boolean exiledCostCounter = exiledCostSubtypeMatches
                 && effect.counterIfExiledCostCardHasSubtype() != null
                 && effect.counterCountIfExiledCostCardHasSubtype() > 0;
-        boolean enterWithCounter = effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
+        boolean enterWithCounter = !enterWithCounterAlreadyPlaced
+                && effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
         boolean enterWithCounters = effect.enterWithCounters() != null && !effect.enterWithCounters().isEmpty();
         if (!effect.enterWithMannequinCounter()
                 && !enterWithCounter
@@ -780,7 +794,8 @@ public class GraveyardReturnSupport {
                                 ? card.getOwnerId() == null ? graveyard.getKey() : card.getOwnerId()
                                 : controllerId;
                         cards.add(new BattlefieldEntryCard(
-                                recipientId, graveyard.getKey(), card, Zone.GRAVEYARD, null));
+                                recipientId, graveyard.getKey(), card, Zone.GRAVEYARD, null)
+                                .withTapped(effect.enterTapped()));
                     }
                 }
             }
@@ -2039,7 +2054,8 @@ public class GraveyardReturnSupport {
 
         for (Card card : graveyardCards) {
             if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
-                gameData.playerGraveyards.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).add(card);
+                UUID graveyardOwnerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
+                gameData.playerGraveyards.computeIfAbsent(graveyardOwnerId, ignored -> new ArrayList<>()).add(card);
                 continue;
             }
             Permanent permanent = new Permanent(card);
@@ -2645,6 +2661,10 @@ public class GraveyardReturnSupport {
             Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
             if (sourceCard.getKeywords() != null) {
                 keywords.addAll(sourceCard.getKeywords());
+            }
+            if (replaceSubtypes) {
+                // CR 707.9d: the copy's specific creature types replace the changeling CDA's types.
+                keywords.remove(Keyword.CHANGELING);
             }
             if (grantHaste && !grantHasteUntilEndOfTurn) {
                 keywords.add(Keyword.HASTE);

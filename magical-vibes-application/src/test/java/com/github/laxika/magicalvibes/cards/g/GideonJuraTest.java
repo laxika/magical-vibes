@@ -142,7 +142,7 @@ class GideonJuraTest extends BaseCardTest {
     @Test
     void plusTwoRequiresAttackingGideonDuringOpponentsNextTurn() {
         Permanent gideon = addReadyGideon(player1);
-        harness.addToBattlefield(player2, new RuneclawBear());
+        addCreatureReady(player2, new RuneclawBear());
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
@@ -181,7 +181,7 @@ class GideonJuraTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.isPlaneswalker(gd, gideon)).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.isCreature(gd, gideon)).isFalse();
         assertThat(gqs.isPlaneswalker(gd, gideon)).isTrue();
         harness.setHand(player2, List.of(new Shock()));

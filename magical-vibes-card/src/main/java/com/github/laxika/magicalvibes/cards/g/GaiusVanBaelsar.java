@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -19,7 +20,7 @@ import java.util.List;
 public class GaiusVanBaelsar extends Card {
 
     public GaiusVanBaelsar() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player sacrifices a creature token",
                         new SacrificePermanentsEffect(1, new PermanentAllOfPredicate(List.of(
@@ -36,6 +37,6 @@ public class GaiusVanBaelsar extends Card {
                         "Each player sacrifices an enchantment",
                         new SacrificePermanentsEffect(
                                 1, new PermanentIsEnchantmentPredicate(), SacrificeRecipient.EACH_PLAYER))
-        )));
+        ))));
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.DelayedStillExiledCardsEndStepTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -41,6 +42,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -583,6 +585,13 @@ public class GameData {
     /** Latest graveyard-entry identity for each card, used by effects that require continuous graveyard presence. */
     public final Map<UUID, Long> graveyardEntryVersions = new ConcurrentHashMap<>();
     public final Map<UUID, Long> exileEntryVersions = new ConcurrentHashMap<>();
+    /**
+     * Exile-entry version of the card at the moment a {@link PendingExileReturn} was queued, keyed by the
+     * queued instance. A delayed return applies only to the exile object it was scheduled for (CR 400.7),
+     * so a later re-exile of the same card id must not satisfy it.
+     */
+    public final Map<PendingExileReturn, Long> pendingExileReturnExileVersions =
+            Collections.synchronizedMap(new IdentityHashMap<>());
     /** Affected permanent mapped to the player whose next turn ends the attack restriction. */
     public final Map<UUID, Set<UUID>> permanentsCantAttackUntilNextTurn = new ConcurrentHashMap<>();
     private long graveyardEntryVersion;
@@ -1757,6 +1766,9 @@ public class GameData {
     /** Cards revealed in their owner's hand until that owner's next turn. */
     public final Map<UUID, UUID> cardsRevealedInHandUntilOwnerNextTurn = new ConcurrentHashMap<>();
 
+    /** Cards revealed in their owner's hand (e.g. Forecast) until the end of the current upkeep. */
+    public final Map<UUID, UUID> cardsRevealedInHandUntilUpkeepEnd = new ConcurrentHashMap<>();
+
     /** Cards that can't be played from their owner's hand until that owner's next turn. */
     public final Map<UUID, UUID> cardsCantBePlayedInHandUntilOwnerNextTurn = new ConcurrentHashMap<>();
 
@@ -1854,6 +1866,8 @@ public class GameData {
 
     /** Card IDs and costs that have been granted unearth until end of turn. Cleared at end of turn. */
     public final Map<UUID, String> cardsGrantedUnearthUntilEndOfTurn = new ConcurrentHashMap<>();
+    /** Graveyard-entry identity each unearth grant in {@link #cardsGrantedUnearthUntilEndOfTurn} was made for. */
+    public final Map<UUID, Long> cardsGrantedUnearthGraveyardVersions = new ConcurrentHashMap<>();
 
     /** Player IDs that may cast spells as though they had flash until end of turn (Alchemist's
      *  Refuge, Vedalken Orrery-style one-shot grants). Cleared at end of turn. */
@@ -2169,10 +2183,6 @@ public class GameData {
     /** Pending one-shot non-mana exhaust-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextExhaustAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
 
-    /** "Whenever you cast a creature spell this turn, draw a card" delayed triggers (Glimpse of
-     *  Nature). The value is how many cards that player draws per creature spell cast; cleared at
-     *  end of turn. */
-    public final Map<UUID, Integer> creatureSpellCastDrawsThisTurn = new ConcurrentHashMap<>();
 
     /** "Whenever a creature enters this turn, you may draw a card" delayed triggers (Beck). */
     public final Map<UUID, List<Card>> creatureEntersDrawSourcesThisTurn = new ConcurrentHashMap<>();
@@ -2307,6 +2317,8 @@ public class GameData {
     public final Set<UUID> exilePlayPermissionsExpireAtEndStep = ConcurrentHashMap.newKeySet();
     /** Permissions waiting for the named player's next actual turn before their expiry is fixed. */
     public final Map<UUID, UUID> exilePlayPermissionsAwaitNextTurnOfPlayer = new ConcurrentHashMap<>();
+    /** Permissions from "during your next turn" wording, unusable until the owner's next turn begins. */
+    public final Set<UUID> exilePlayPermissionsDuringOwnersNextTurnOnly = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnBeginning = new ConcurrentHashMap<>();
     /** Exiled card UUIDs that may be cast spending mana of any type (e.g. Nita, Forum Conciliator's
      *  activated ability). Complements the battlefield-permanent any-mana grant used by Hostage Taker.
@@ -4159,16 +4171,24 @@ public class GameData {
     }
 
     private void recordCurrentStackSourceCount() {
-        Set<UUID> sourceIds = new HashSet<>();
+        Set<UUID> spellSourceIds = new HashSet<>();
+        Set<UUID> abilitySourceIds = new HashSet<>();
         synchronized (stack) {
             for (StackEntry entry : stack) {
-                UUID sourceId = entry.getTargetableId();
-                if (sourceId != null) {
-                    sourceIds.add(sourceId);
+                UUID targetableId = entry.getTargetableId();
+                boolean ability = entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                        || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+                if (ability) {
+                    // Abilities from one source are one source; a spell is a separate source from them.
+                    boolean cardSourced = entry.getCard() != null && entry.getSourcePlanarObject() == null;
+                    abilitySourceIds.add(cardSourced ? entry.getCard().getId() : targetableId);
+                } else if (targetableId != null) {
+                    spellSourceIds.add(targetableId);
                 }
             }
         }
-        greatestStackSourceCountThisTurn = Math.max(greatestStackSourceCountThisTurn, sourceIds.size());
+        greatestStackSourceCountThisTurn = Math.max(greatestStackSourceCountThisTurn,
+                spellSourceIds.size() + abilitySourceIds.size());
     }
 
     /**
@@ -4243,6 +4263,10 @@ public class GameData {
      * Appends a scheduled {@link DelayedAction} to the tail of the unified delayed-action queue.
      */
     public void queueDelayedAction(DelayedAction action) {
+        if (action instanceof PendingExileReturn pending && findExiledCard(pending.card().getId()) != null) {
+            pendingExileReturnExileVersions.put(pending,
+                    exileEntryVersions.getOrDefault(pending.card().getId(), -1L));
+        }
         delayedActions.add(action);
     }
 
@@ -5682,6 +5706,7 @@ public class GameData {
         card = restoreBombardmentCardForZoneChange(card);
         if (deferCommanderZoneMove(card, Zone.HAND, -1)) return;
         cardsRevealedInHandUntilOwnerNextTurn.remove(card.getId());
+        cardsRevealedInHandUntilUpkeepEnd.remove(card.getId());
         cardsCantBePlayedInHandUntilOwnerNextTurn.remove(card.getId());
         countersPreservedAcrossZoneChanges.remove(card.getId());
         playerHands.get(playerId).add(card);
@@ -6280,6 +6305,8 @@ public class GameData {
             // A card that leaves exile is a new object (CR 400.7): delay-counter tracking from its
             // earlier exile no longer applies, even if it is exiled again later.
             delayedSpellExiles.removeIf(pending -> pending.cardId().equals(cardId));
+            delayedActions.replaceAll(action -> action instanceof DelayedStillExiledCardsEndStepTrigger still
+                    && still.cardIds().contains(cardId) ? still.withoutCard(cardId) : action);
             exiledVoyageCounters.remove(cardId);
             exiledVoyageControllerIds.remove(cardId);
             hauntingCardToPermanentId.remove(cardId);
@@ -7262,6 +7289,7 @@ public class GameData {
         copy.graveyardEntryVersion = this.graveyardEntryVersion;
         copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
         copy.exileEntryVersions.putAll(this.exileEntryVersions);
+        copy.pendingExileReturnExileVersions.putAll(this.pendingExileReturnExileVersions);
         this.permanentsCantAttackUntilNextTurn.forEach((permanentId, controllers) ->
                 copy.permanentsCantAttackUntilNextTurn.put(permanentId, new java.util.HashSet<>(controllers)));
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
@@ -8439,6 +8467,7 @@ public class GameData {
         this.playersCantCastSpellTypesUntilEndOfControllerNextTurn.forEach((k, v) ->
                 copy.playersCantCastSpellTypesUntilEndOfControllerNextTurn.put(k, new HashMap<>(v)));
         copy.cardsRevealedInHandUntilOwnerNextTurn.putAll(this.cardsRevealedInHandUntilOwnerNextTurn);
+        copy.cardsRevealedInHandUntilUpkeepEnd.putAll(this.cardsRevealedInHandUntilUpkeepEnd);
         copy.cardsCantBePlayedInHandUntilOwnerNextTurn.putAll(this.cardsCantBePlayedInHandUntilOwnerNextTurn);
         this.extraManaOnLandSubtypeTapThisTurn.forEach((subtype, bonuses) ->
                 copy.extraManaOnLandSubtypeTapThisTurn.put(subtype, new ArrayList<>(bonuses)));
@@ -8484,7 +8513,6 @@ public class GameData {
                 .putAll(this.pendingNextXActivatedAbilityCopyThisTurnCount);
         copy.temporaryChosenSubtypePermanentIds.addAll(this.temporaryChosenSubtypePermanentIds);
         copy.pendingNextExhaustAbilityCopyThisTurnCount.putAll(this.pendingNextExhaustAbilityCopyThisTurnCount);
-        copy.creatureSpellCastDrawsThisTurn.putAll(this.creatureSpellCastDrawsThisTurn);
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
         this.creatureEntersDrawSources.forEach((playerId, cards) ->
@@ -8518,6 +8546,7 @@ public class GameData {
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
         copy.exilePlayPermissionsExpireAtEndStep.addAll(this.exilePlayPermissionsExpireAtEndStep);
         copy.exilePlayPermissionsAwaitNextTurnOfPlayer.putAll(this.exilePlayPermissionsAwaitNextTurnOfPlayer);
+        copy.exilePlayPermissionsDuringOwnersNextTurnOnly.addAll(this.exilePlayPermissionsDuringOwnersNextTurnOnly);
         copy.exilePlayPermissionsExpireAtTurnBeginning.putAll(this.exilePlayPermissionsExpireAtTurnBeginning);
         copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
         copy.exilePlayAnyManaTypeWhileExiled.addAll(this.exilePlayAnyManaTypeWhileExiled);
@@ -8697,6 +8726,7 @@ public class GameData {
         copy.cardsGrantedJumpStartUntilEndOfTurn.addAll(this.cardsGrantedJumpStartUntilEndOfTurn);
         copy.cardsGrantedEmbalmUntilEndOfTurn.addAll(this.cardsGrantedEmbalmUntilEndOfTurn);
         copy.cardsGrantedUnearthUntilEndOfTurn.putAll(this.cardsGrantedUnearthUntilEndOfTurn);
+        copy.cardsGrantedUnearthGraveyardVersions.putAll(this.cardsGrantedUnearthGraveyardVersions);
         copy.playersWithFlashUntilEndOfTurn.addAll(this.playersWithFlashUntilEndOfTurn);
         copy.playersWithFreeHandCastUntilEndOfTurn.addAll(this.playersWithFreeHandCastUntilEndOfTurn);
         copy.playersWhoMayLookAtFaceDownCreaturesThisTurn

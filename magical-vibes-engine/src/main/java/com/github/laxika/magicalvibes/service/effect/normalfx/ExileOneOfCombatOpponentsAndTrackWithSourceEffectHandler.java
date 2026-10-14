@@ -73,7 +73,12 @@ public class ExileOneOfCombatOpponentsAndTrackWithSourceEffectHandler implements
         List<UUID> legalIds = new ArrayList<>();
         for (UUID candidateId : candidateIds) {
             Permanent candidate = gameQueryService.findPermanentById(gameData, candidateId);
-            if (candidate != null && gameQueryService.isCreature(gameData, candidate)) {
+            if (candidate == null) {
+                continue;
+            }
+            boolean stillInCombat = candidate.getBlockingTargetIds().contains(triggeringPermanentId)
+                    || (sourceCreature != null && sourceCreature.getBlockingTargetIds().contains(candidateId));
+            if (gameQueryService.isCreature(gameData, candidate) || stillInCombat) {
                 legalIds.add(candidateId);
             }
         }

@@ -300,8 +300,9 @@ public class LandTapTriggerCollectorService {
         if (mana instanceof AwardAnyColorManaEffect anyColor) {
             int amount = amountEvaluationService.evaluate(gameData, anyColor.amount(),
                     new AmountContext(tappingPlayerId, match.permanent(), null, 0, 0));
+            boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, match.permanent(), CardSupertype.SNOW);
             if (!AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
-                    tappingPlayerId, anyColor, amount, false, null)) {
+                    tappingPlayerId, anyColor, amount, false, null, null, null, null, snowSource)) {
                 return false;
             }
 

@@ -30,6 +30,7 @@ class GlimpseOfFreedomTest extends BaseCardTest {
     void escapeExilesFiveOtherCardsAndReturnsGlimpseToGraveyard() {
         GlimpseOfFreedom glimpse = new GlimpseOfFreedom();
         NyxbornCourser drawnCard = new NyxbornCourser();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));
         List<NyxbornCourser> otherCards = List.of(
                 new NyxbornCourser(), new NyxbornCourser(), new NyxbornCourser(),
@@ -68,6 +69,7 @@ class GlimpseOfFreedomTest extends BaseCardTest {
         GlimpseOfFreedom glimpse = new GlimpseOfFreedom();
         NyxbornCourser firstDraw = new NyxbornCourser();
         NyxbornCourser secondDraw = new NyxbornCourser();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(firstDraw, secondDraw));
         harness.setGraveyard(player1, List.of(glimpse,
                 new NyxbornCourser(), new NyxbornCourser(), new NyxbornCourser(),

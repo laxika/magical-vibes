@@ -33,9 +33,9 @@ class GhaltaAndMavrenTest extends BaseCardTest {
         addCreatureReady(player1, creature("Small attacker", 2, 2));
 
         declareAttackers(List.of(0, 1, 2));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Create a tapped and attacking X/X green Dinosaur creature token with trample.");
+        harness.passBothPriorities();
 
         Permanent dinosaur = findPermanent(player1, "Dinosaur");
         assertThat(dinosaur.getCard().getPower()).isEqualTo(5);
@@ -70,9 +70,9 @@ class GhaltaAndMavrenTest extends BaseCardTest {
         addCreatureReady(player1, new PortentTracker());
 
         declareAttackers(List.of(0, 1, 2));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Create X 1/1 white Vampire creature tokens with lifelink.");
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Vampire")).hasSize(2).allSatisfy(vampire -> {
             assertThat(vampire.isTapped()).isFalse();
@@ -85,9 +85,9 @@ class GhaltaAndMavrenTest extends BaseCardTest {
         addCreatureReady(player1, new GhaltaAndMavren());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Create X 1/1 white Vampire creature tokens with lifelink.");
+        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Vampire")).isZero();
     }
@@ -97,9 +97,9 @@ class GhaltaAndMavrenTest extends BaseCardTest {
         addCreatureReady(player1, new GhaltaAndMavren());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Create a tapped and attacking X/X green Dinosaur creature token with trample.");
+        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Dinosaur")).isZero();
         assertThat(gameLogContains("Dinosaur")).isTrue();
@@ -114,9 +114,9 @@ class GhaltaAndMavrenTest extends BaseCardTest {
 
         declareAttackers(List.of(1));
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Create a tapped and attacking X/X green Dinosaur creature token with trample.");
+        harness.passBothPriorities();
 
         Permanent dinosaur = findPermanent(player1, "Dinosaur");
         assertThat(dinosaur.getCard().getPower()).isEqualTo(3);
@@ -132,9 +132,9 @@ class GhaltaAndMavrenTest extends BaseCardTest {
 
         declareAttackers(List.of(1, 2));
         attacker.setAttacking(false);
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Create X 1/1 white Vampire creature tokens with lifelink.");
+        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Vampire")).isEqualTo(1);
     }
@@ -148,9 +148,9 @@ class GhaltaAndMavrenTest extends BaseCardTest {
         battle.setCounterCount(CounterType.DEFENSE, 3);
 
         declareAttackers(List.of(1));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Create a tapped and attacking X/X green Dinosaur creature token with trample.");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handlePermanentChosen(player1, battle.getId());
@@ -165,9 +165,9 @@ class GhaltaAndMavrenTest extends BaseCardTest {
         planeswalker.setCounterCount(CounterType.LOYALTY, 4);
 
         declareAttackers(List.of(1));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Create a tapped and attacking X/X green Dinosaur creature token with trample.");
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, planeswalker.getId());
 
         Permanent dinosaur = findPermanent(player1, "Dinosaur");
@@ -187,9 +187,9 @@ class GhaltaAndMavrenTest extends BaseCardTest {
         addCreatureReady(player1, creature("Attacker three", 1, 1));
 
         declareAttackers(List.of(1, 2, 3));
-        harness.passBothPriorities();
         harness.handleListChoice(player1,
                 "Create X 1/1 white Vampire creature tokens with lifelink.");
+        harness.passBothPriorities();
 
         List<Permanent> vampires = findPermanents(player1, "Vampire");
         assertThat(vampires).hasSize(3);

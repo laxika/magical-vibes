@@ -162,6 +162,7 @@ class GisaGloriousResurrectorTest extends BaseCardTest {
 
         declareAttackers(List.of(1));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();

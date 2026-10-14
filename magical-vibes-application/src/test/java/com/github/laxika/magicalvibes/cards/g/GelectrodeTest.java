@@ -51,6 +51,7 @@ class GelectrodeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -63,6 +64,7 @@ class GelectrodeTest extends BaseCardTest {
         Permanent gelectrode = addTappedGelectrode();
         harness.setLibrary(player1, List.of(new Gelectrode()));
         harness.castFromHand(player1, new TrainOfThought(), "{1}{U}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -78,6 +80,7 @@ class GelectrodeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -161,6 +164,7 @@ class GelectrodeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -181,7 +185,6 @@ class GelectrodeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
@@ -189,6 +192,7 @@ class GelectrodeTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gelectrode.isTapped()).isFalse();
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);

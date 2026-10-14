@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -25,6 +25,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
 
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
+    private final GraveyardService graveyardService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
@@ -80,19 +81,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
 
         if (e.requireManaValueEqualsX() && xValue > 0) {
-            List<Card> opponentDeck = gameData.playerDecks.get(result.originalOwnerId());
-            List<Card> opponentGraveyard = gameData.playerGraveyards.get(result.originalOwnerId());
-            int cardsToMill = Math.min(xValue, opponentDeck.size());
-            List<String> milledNames = new ArrayList<>();
-            for (int i = 0; i < cardsToMill; i++) {
-                Card milled = opponentDeck.removeFirst();
-                opponentGraveyard.add(milled);
-                milledNames.add(milled.getName());
-            }
-            if (cardsToMill > 0) {
-                String opponentName = gameData.playerIdToName.get(result.originalOwnerId());
-                gameLogService.append(gameData, GameLog.text(opponentName + " mills " + cardsToMill + " cards (" + String.join(", ", milledNames) + ")."));
-            }
+            graveyardService.resolveMillPlayer(gameData, result.originalOwnerId(), xValue);
         }
     }
 }

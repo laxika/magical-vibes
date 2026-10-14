@@ -308,7 +308,9 @@ class GiantOysterTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        // passUntil only stops at UNTAP when the untap step is waiting on a prompt. Only the Oyster's
+        // controller gets one (for its tapped Oyster), so the opponent's untap is passed through to UPKEEP.
+        harness.passUntil(newActivePlayer, newActivePlayer == player1 ? TurnStep.UNTAP : TurnStep.UPKEEP);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {

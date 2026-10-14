@@ -165,7 +165,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             }
 
             UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-            UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
+            UUID ownerId = e.returnUnderController()
+                    ? entry.getControllerId()
+                    : gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
             entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
             List<Card> cards = target.cardsLeavingBattlefield();
             permanentRemovalService.removePermanentToExile(gameData, target);

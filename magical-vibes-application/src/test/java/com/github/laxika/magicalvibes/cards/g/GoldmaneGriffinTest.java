@@ -28,10 +28,12 @@ class GoldmaneGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may ability returns Ajani, Inspiring Leader from the graveyard")
     void acceptingMayFindsAjaniInGraveyard() {
-        harness.setGraveyard(player1, List.of(new AjaniInspiringLeader()));
+        AjaniInspiringLeader ajani = new AjaniInspiringLeader();
+        harness.setGraveyard(player1, List.of(ajani));
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMultipleCardsChosen(player1, List.of(ajani.getId()));
 
         harness.assertInHand(player1, "Ajani, Inspiring Leader");
         harness.assertNotInGraveyard(player1, "Ajani, Inspiring Leader");
@@ -40,16 +42,16 @@ class GoldmaneGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may ability searches the library when Ajani is not in the graveyard")
     void acceptingMaySearchesLibrary() {
-        harness.setLibrary(player1, List.of(new AjaniInspiringLeader()));
+        AjaniInspiringLeader ajani = new AjaniInspiringLeader();
+        harness.setLibrary(player1, List.of(ajani));
         setupAndCast();
 
         resolveMay(true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().cards()).hasSize(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                .params().cards().getFirst().getName()).isEqualTo("Ajani, Inspiring Leader");
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ajani.getId());
     }
 
     @Test
@@ -82,7 +84,7 @@ class GoldmaneGriffinTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(ajani.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(ajani);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(ajani);
@@ -97,7 +99,7 @@ class GoldmaneGriffinTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertNotInHand(player1, "Ajani, Inspiring Leader");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ajani);

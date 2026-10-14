@@ -88,7 +88,10 @@ class GrimdancerTest extends BaseCardTest {
 
     @Test
     void entersWithChosenCountersWithoutBeingCast() {
-        Permanent grimdancer = harness.enterBattlefieldAndReturn(player1, new Grimdancer());
+        Grimdancer card = new Grimdancer();
+        Permanent grimdancer = harness.addToBattlefieldAndReturn(player1, card);
+        harness.inMutationScope(() -> harness.getBattlefieldEntryService()
+                .handleCreatureEnteredBattlefield(gd, player1.getId(), card, null, false));
 
         chooseCounter("deathtouch");
         chooseCounter("lifelink");

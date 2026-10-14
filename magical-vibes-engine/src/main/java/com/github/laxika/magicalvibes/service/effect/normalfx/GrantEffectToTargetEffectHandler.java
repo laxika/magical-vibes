@@ -40,8 +40,10 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         if (e.scope() == GrantScope.ENCHANTED_PERMANENT) {
             Permanent aura = entry.getSourcePermanentId() == null ? null
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            Permanent enchanted = aura == null || aura.getAttachedTo() == null ? null
-                    : gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+            UUID enchantedId = entry.getTargetId() != null ? entry.getTargetId()
+                    : aura == null ? null : aura.getAttachedTo();
+            Permanent enchanted = enchantedId == null ? null
+                    : gameQueryService.findPermanentById(gameData, enchantedId);
             if (enchanted != null) {
                 grantTo(gameData, entry, e, enchanted);
             }

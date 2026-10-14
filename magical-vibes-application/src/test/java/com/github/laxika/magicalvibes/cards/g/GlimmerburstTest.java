@@ -54,7 +54,7 @@ class GlimmerburstTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Glimmerburst()));
 
         harness.castFromHand(player1, new Glimmerburst(), "{3}{U}");
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.CLEANUP);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);

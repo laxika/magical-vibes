@@ -2183,7 +2183,8 @@ public class SpellCastingService {
             throw new IllegalStateException("Card is not playable");
         }
         List<CardEffect> effects = adventureCard.getEffects(EffectSlot.SPELL);
-        if (targetId == null && declaredTargetIds.isEmpty() && adventureCard.getMinTargets() > 0) {
+        if (targetId == null && declaredTargetIds.isEmpty()
+                && (adventureCard.getMinTargets() > 0 || EffectResolution.needsTarget(adventureCard))) {
             throw new IllegalStateException("Spell requires a target");
         }
 
@@ -4944,7 +4945,7 @@ public class SpellCastingService {
             }
         }
         ReturnTargetCardsFromGraveyardToHandEffect exactToHandEffect =
-                card.getEffects(EffectSlot.SPELL).stream()
+                filteredSpellEffects.stream()
                         .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
                         .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
                         .filter(ReturnTargetCardsFromGraveyardToHandEffect::exactTargets)
@@ -10250,6 +10251,7 @@ public class SpellCastingService {
         if (!landFace.hasType(CardType.LAND)) {
             throw new IllegalStateException("Only lands can be played from graveyard");
         }
+        payLandPlayCost(gameData, playerId, landFace);
         Card permissionFace = graveyardCard.createRuntimeCopyWithFace(landFace);
         permissionFace.setOwnerId(graveyardCard.getOwnerId());
         boolean entersTapped = gameData.graveyardCardsEnterTapped.remove(graveyardCard.getId());
@@ -10761,6 +10763,9 @@ public class SpellCastingService {
         }
 
         if (card.hasType(CardType.LAND)) {
+            if (!hasPermission) {
+                throw new IllegalStateException("Card can't be played from exile");
+            }
             if (!castingPermissionService.canPlayLandNow(gameData, playerId, card)) {
                 throw new IllegalStateException("Cannot play a land from exile now");
             }
@@ -11480,6 +11485,9 @@ public class SpellCastingService {
         rejectEnterTheBattlefieldTargets(card, targetId, List.of());
         boolean freeTopPlay = !castFaceDown && castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, card);
         if (card.hasType(CardType.LAND)) {
+            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
+                throw new IllegalStateException("Card is not playable: it cannot enter the battlefield from a library");
+            }
             Optional<UUID> oncePerTurnTopLibraryPermission = !freeTopPlay
                     ? castingPermissionService.findOncePerTurnTopLibraryPermissionSource(
                     gameData, playerId, card)

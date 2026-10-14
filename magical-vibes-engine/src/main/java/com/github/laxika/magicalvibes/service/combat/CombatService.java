@@ -398,6 +398,15 @@ public class CombatService {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
+    private static Set<UUID> unionOfCombatOpponents(Set<UUID> captured, Set<UUID> live) {
+        if (captured == null) {
+            return live;
+        }
+        Set<UUID> union = new java.util.HashSet<>(captured);
+        union.addAll(live);
+        return union;
+    }
+
     /**
      * Destroys creatures scheduled for directional or bidirectional combat-opponent destruction.
      * The opponent set was captured when the delayed effect was created. Respects indestructible and regeneration via
@@ -410,7 +419,8 @@ public class CombatService {
             Set<UUID> opponentIds = action.onlyCreaturesBlockedByTarget()
                     ? gameData.combatOpponentIdsBlockedByThisTurn.getOrDefault(
                             action.creatureId(), action.combatOpponentIds())
-                    : action.combatOpponentIds();
+                    : unionOfCombatOpponents(action.combatOpponentIds(),
+                            gameData.combatBlockOpponentIdsThisCombat.getOrDefault(action.creatureId(), Set.of()));
             if (opponentIds == null) {
                 continue;
             }

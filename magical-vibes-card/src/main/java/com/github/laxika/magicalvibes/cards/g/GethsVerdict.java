@@ -19,8 +19,8 @@ public class GethsVerdict extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addEffect(EffectSlot.SPELL, new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))
-          .addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
-                  1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER));
+        )).addEffect(EffectSlot.SPELL, new SacrificePermanentsEffect(
+                  1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER))
+          .addEffect(EffectSlot.SPELL, new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
     }
 }

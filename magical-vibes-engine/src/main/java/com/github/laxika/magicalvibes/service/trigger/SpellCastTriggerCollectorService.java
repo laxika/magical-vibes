@@ -242,6 +242,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
+import com.github.laxika.magicalvibes.model.effect.GandalfWestwardVoyagerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromTriggeringSpellColorsEffect;
 
 /**
@@ -3409,6 +3410,9 @@ public class SpellCastTriggerCollectorService {
                 && copy.spellSnapshot() == null) {
             return new CopyTriggeringSpellEffect(
                     copy.tokenCopy(), copy.retargetToSource(), new StackEntry(spellSnapshot));
+        }
+        if (effect instanceof GandalfWestwardVoyagerEffect gandalf && gandalf.spellSnapshot() == null) {
+            return new GandalfWestwardVoyagerEffect(new StackEntry(spellSnapshot));
         }
         if (effect instanceof GrantProtectionFromTriggeringSpellColorsEffect) {
             return new GrantProtectionFromTriggeringSpellColorsEffect(

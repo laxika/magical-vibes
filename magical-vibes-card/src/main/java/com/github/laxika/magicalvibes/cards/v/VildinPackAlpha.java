@@ -20,7 +20,7 @@ public class VildinPackAlpha extends Card {
 
     public VildinPackAlpha() {
         // Whenever a Werewolf you control enters, you may transform it.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.WEREWOLF),
                         new TransformEnteringCreatureEffect()));

@@ -834,6 +834,11 @@ public class PlayerInteractionSupport {
             cardRevealService.lookAtHand(gameData, casterId, targetPlayerId);
         }
 
+        if (discardMode && gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, targetPlayerId)) {
+            insertDeclineEffect(entry, currentEffect, declineEffect);
+            return;
+        }
+
         // Build valid indices based on included or excluded types, then the optional predicate filter
         UUID sourceCardId = entry.getCard() != null ? entry.getCard().getId() : null;
         List<Integer> validIndices = new ArrayList<>();

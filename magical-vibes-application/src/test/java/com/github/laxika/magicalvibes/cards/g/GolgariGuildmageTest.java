@@ -163,7 +163,7 @@ class GolgariGuildmageTest extends BaseCardTest {
 
         harness.assertNotInHand(player1, "Golgari Thug");
         harness.assertInGraveyard(player1, "Boros Recruit");
-        assertThat(gd.findExiledCard(returned.getId())).isSameAs(returned);
+        assertThat(gd.findExiledCard(returned.getId()).card()).isSameAs(returned);
         assertThat(gd.stack).isEmpty();
     }
 

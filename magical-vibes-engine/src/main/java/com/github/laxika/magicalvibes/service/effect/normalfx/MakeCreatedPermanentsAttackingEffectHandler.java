@@ -40,8 +40,9 @@ public class MakeCreatedPermanentsAttackingEffectHandler implements NormalEffect
             var attackTarget = source == null ? null : source.getAttackTarget();
             for (var createdId : entry.getCreatedPermanentIds()) {
                 Permanent created = gameQueryService.findPermanentById(gameData, createdId);
-                if (created != null && gameQueryService.isCreature(gameData, created)) {
-                    created.tap();
+                if (created == null) continue;
+                created.tap();
+                if (gameQueryService.isCreature(gameData, created)) {
                     created.setAttacking(true);
                     created.setAttackedOrBlockedSinceLastUpkeep(true);
                     created.setAttackTarget(attackTarget);

@@ -130,15 +130,11 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot()))) {
             return false;
         }
-        if (gameQueryService.cantHaveCounters(gameData, target)) {
-            return false;
-        }
-        if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE
-                && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
-            return false;
-        }
+        boolean counterBlocked = gameQueryService.cantHaveCounters(gameData, target)
+                || (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE
+                && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target));
 
-        if (!replacementsApplied && count > 0) {
+        if (!counterBlocked && !replacementsApplied && count > 0) {
             var modifiers = gameQueryService.counterReplacementsFor(gameData, target, e.counterType(),
                     entry.getControllerId(), false);
             if (orderChangesResult(gameData, e.counterType(), count, modifiers)) {
@@ -147,11 +143,15 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
                 return true;
             }
         }
-        if (replacementsApplied) {
-            permanentCounterSupport.placeCounterOnPermanentAfterReplacements(
-                    gameData, entry, target, e.counterType(), count);
-        } else {
-            permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, e.counterType(), count);
+        // A prevented placement does not stop later instructions (CR 608.2c), so a "then"
+        // regeneration clause is still checked against the target's toughness.
+        if (!counterBlocked) {
+            if (replacementsApplied) {
+                permanentCounterSupport.placeCounterOnPermanentAfterReplacements(
+                        gameData, entry, target, e.counterType(), count);
+            } else {
+                permanentCounterSupport.placeCounterOnPermanent(gameData, entry, target, e.counterType(), count);
+            }
         }
 
         if (e.regenerateIfSurvives()) {

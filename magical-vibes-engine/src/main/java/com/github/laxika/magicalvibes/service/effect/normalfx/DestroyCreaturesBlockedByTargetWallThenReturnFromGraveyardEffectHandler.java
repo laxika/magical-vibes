@@ -64,8 +64,13 @@ public class DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffectHan
             historicalControllerByCreatureId.put(creatureId, historicalControllerId);
         }
 
+        // A creature whose death was replaced by exile (e.g. Leyline of the Void) did not die, so it
+        // does not count for the return. Tokens never reach exile and still count.
         List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
-                gameData, toDestroy, entry.getCard().getName(), true);
+                gameData, toDestroy, entry.getCard().getName(), true).stream()
+                .filter(creature -> creature.getCard().isToken()
+                        || gameData.findExiledCard(creature.getCard().getId()) == null)
+                .toList();
         if (destroyed.isEmpty()) {
             return;
         }

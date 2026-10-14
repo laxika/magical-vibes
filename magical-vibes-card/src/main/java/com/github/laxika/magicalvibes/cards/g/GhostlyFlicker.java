@@ -28,6 +28,6 @@ public class GhostlyFlicker extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsLandPredicate())),
                         "Target must be an artifact, creature, or land you control"), 2, 2)
-                .addEffect(EffectSlot.SPELL, FlickerEffect.flickerTarget());
+                .addEffect(EffectSlot.SPELL, FlickerEffect.flickerTargetUnderYourControl());
     }
 }

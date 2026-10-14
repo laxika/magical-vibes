@@ -147,4 +147,14 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
             default -> TargetSpec.NONE;
         };
     }
+
+    /**
+     * The ENCHANTED_PERMANENT scope animates the Aura's attached permanent, so an activation whose
+     * source is that Aura captures the attached permanent at activation time (before the Aura can
+     * leave the battlefield in response).
+     */
+    @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return scope == GrantScope.ENCHANTED_PERMANENT;
+    }
 }

@@ -177,10 +177,10 @@ class GaeasRevengeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Snakeform(), new LightningBolt()));
         harness.setLibrary(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, gaeas.getId());
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, gaeas.getId());
         harness.passBothPriorities();
 

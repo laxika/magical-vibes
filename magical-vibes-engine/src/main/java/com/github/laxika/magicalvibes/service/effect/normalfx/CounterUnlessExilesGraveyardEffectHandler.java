@@ -27,7 +27,7 @@ public class CounterUnlessExilesGraveyardEffectHandler implements NormalEffectHa
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
-        StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+        StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

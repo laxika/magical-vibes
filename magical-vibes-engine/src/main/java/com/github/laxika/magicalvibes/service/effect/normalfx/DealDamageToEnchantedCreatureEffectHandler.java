@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedCreature
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +38,9 @@ public class DealDamageToEnchantedCreatureEffectHandler implements NormalEffectH
             return;
         }
 
-        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        UUID damagedCreatureId = entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : aura.getAttachedTo();
+        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, damagedCreatureId);
         if (enchantedCreature == null || !gameQueryService.isCreature(gameData, enchantedCreature)) {
             return;
         }

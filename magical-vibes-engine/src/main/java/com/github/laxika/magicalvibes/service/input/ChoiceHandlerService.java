@@ -4540,6 +4540,12 @@ public class ChoiceHandlerService {
         // only thing that would resume the entry parked in pendingEffectResolutionEntry.
         boolean artifactsChosen = "ARTIFACT".equals(chosenValue);
         boolean colorlessChosen = "COLORLESS".equals(chosenValue);
+        if (artifactsChosen && !ctx.includeArtifacts()) {
+            throw new IllegalArgumentException("Artifacts are not an option for this protection choice");
+        }
+        if (colorlessChosen && !ctx.includeColorless()) {
+            throw new IllegalArgumentException("Colorless is not an option for this protection choice");
+        }
         CardColor chosenColor = artifactsChosen || colorlessChosen ? null : CardColor.valueOf(chosenValue);
 
         gameData.interaction.clearAwaitingInput();
@@ -6190,9 +6196,9 @@ public class ChoiceHandlerService {
         Permanent from = gameQueryService.findPermanentById(gameData,
                 ctx.fromPermanentIds().get(ctx.index()));
         Permanent to = gameQueryService.findPermanentById(gameData, ctx.toPermanentId());
+        boolean canPlace = to != null && !cantHaveCounter(gameData, to, ctx.counterType());
         int countersRemoved = ctx.countersRemoved();
-        if (from != null && to != null && chosen > 0
-                && !cantHaveCounter(gameData, to, ctx.counterType())) {
+        if (from != null && chosen > 0) {
             int moved = Math.min(chosen, from.getCounterCount(ctx.counterType()));
             if (moved > 0) {
                 from.setCounterCount(ctx.counterType(), from.getCounterCount(ctx.counterType()) - moved);
@@ -6200,7 +6206,11 @@ public class ChoiceHandlerService {
                     gameData.recordOilCounterRemoved(from, moved);
                 }
                 countersRemoved += moved;
-                if (ctx.countersPerMovedCounter() == 1) {
+                if (!canPlace) {
+                    gameLogService.append(gameData, GameLog.builder()
+                            .text(player.getUsername() + " removes " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
+                            .card(from.getCard()).text(".").build());
+                } else if (ctx.countersPerMovedCounter() == 1) {
                     gameLogService.append(gameData, GameLog.builder()
                             .text(player.getUsername() + " removes " + moved + " counter" + (moved == 1 ? "" : "s") + " from ")
                             .card(from.getCard()).text(" and puts ").text(Integer.toString(moved))
@@ -6217,7 +6227,7 @@ public class ChoiceHandlerService {
         int nextIndex = ctx.index() + 1;
         while (nextIndex < ctx.fromPermanentIds().size()) {
             Permanent next = gameQueryService.findPermanentById(gameData, ctx.fromPermanentIds().get(nextIndex));
-            if (next != null && next.getCounterCount(ctx.counterType()) > 0 && to != null) {
+            if (next != null && next.getCounterCount(ctx.counterType()) > 0) {
                 playerInputService.beginMoveCountersFromControlledPermanentsAmountChoice(
                         gameData, player.getId(), ctx.fromPermanentIds(), nextIndex, ctx.toPermanentId(),
                         ctx.counterType(), ctx.sourceCardName(), next.getCard().getName(),
@@ -6227,8 +6237,7 @@ public class ChoiceHandlerService {
             nextIndex++;
         }
 
-        if (countersRemoved > 0 && to != null
-                && !cantHaveCounter(gameData, to, ctx.counterType())) {
+        if (countersRemoved > 0 && canPlace) {
             int countersToPlace = countersRemoved * ctx.countersPerMovedCounter();
             StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
             if (sourceEntry != null) {

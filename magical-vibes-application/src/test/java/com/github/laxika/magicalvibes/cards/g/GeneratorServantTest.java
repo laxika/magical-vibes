@@ -113,7 +113,7 @@ class GeneratorServantTest extends BaseCardTest {
         Permanent creature = findPermanent(player1, "Runeclaw Bear");
         assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(creature.hasKeyword(Keyword.HASTE)).isFalse();
     }

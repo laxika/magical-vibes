@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
@@ -23,10 +21,8 @@ public class GuyInTheChair extends Card {
         addActivatedAbility(ManaAbilities.tapForAnyColor());
 
         PermanentPredicateTargetFilter spiderTarget = new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.SPIDER))),
-                "Target must be a Spider creature");
+                new PermanentHasSubtypePredicate(CardSubtype.SPIDER),
+                "Target must be a Spider");
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{G}",

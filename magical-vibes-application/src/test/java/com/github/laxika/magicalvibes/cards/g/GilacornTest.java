@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,6 +42,7 @@ class GilacornTest extends BaseCardTest {
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(gilacorn.getId(), 1, player2.getId(), 5));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(gilacorn);

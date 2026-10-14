@@ -13,4 +13,9 @@ public interface CrewAndSaddlePowerModifierEffect extends CardEffect {
     default boolean usesToughnessInsteadOfPower() {
         return false;
     }
+
+    /** Whether this modifier applies only while the source pays a crew cost, not a saddle cost. */
+    default boolean crewOnly() {
+        return false;
+    }
 }

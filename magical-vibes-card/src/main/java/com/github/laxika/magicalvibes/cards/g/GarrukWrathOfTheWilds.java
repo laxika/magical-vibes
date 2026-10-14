@@ -55,7 +55,7 @@ public class GarrukWrathOfTheWilds extends Card {
                 -6,
                 List.of(
                         new BoostAllOwnCreaturesEffect(3, 3),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)),
                 "−6: Until end of turn, creatures you control get +3/+3 and gain trample."));
     }
 }

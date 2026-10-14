@@ -39,6 +39,10 @@ public class ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffectHandle
         if (triggeringCardId == null) {
             return;
         }
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(triggeringCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
 
         Card triggeringCard = gameQueryService.findCardInGraveyardById(gameData, triggeringCardId);
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, triggeringCardId);

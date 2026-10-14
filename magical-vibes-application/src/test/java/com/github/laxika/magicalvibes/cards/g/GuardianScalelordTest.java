@@ -111,10 +111,11 @@ class GuardianScalelordTest extends BaseCardTest {
     @Test
     void backupAbilitiesExpireButCounterRemains() {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of());
         castGuardianTargeting(target);
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

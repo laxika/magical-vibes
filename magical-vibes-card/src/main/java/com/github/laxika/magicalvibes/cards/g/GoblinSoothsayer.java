@@ -7,10 +7,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -24,10 +22,7 @@ public class GoblinSoothsayer extends Card {
                 true,
                 "{R}",
                 List.of(new SacrificePermanentCost(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)
-                        )),
+                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                         "Sacrifice a Goblin",
                         false
                 ), new BoostAllCreaturesEffect(1, 1, new PermanentColorInPredicate(Set.of(CardColor.RED)))),

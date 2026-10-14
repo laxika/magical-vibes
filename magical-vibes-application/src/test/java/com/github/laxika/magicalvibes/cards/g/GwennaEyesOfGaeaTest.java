@@ -23,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GwennaEyesOfGaea.class, Card.class, ArgothianSprite.class,
+@CardUsed({GwennaEyesOfGaea.class, ArgothianSprite.class,
         BoulderbranchGolem.class, EnergyRefractor.class})
 class GwennaEyesOfGaeaTest extends BaseCardTest {
 

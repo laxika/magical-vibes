@@ -175,7 +175,8 @@ class GalliaOfTheEndlessDanceTest extends BaseCardTest {
         Card handCard = new SatyrsCunning();
         harness.setHand(player1, List.of(handCard));
 
-        declareAttackers(player2, List.of(0, 1, 2));
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1, 2));
+        gs.declareBlockers(gd, player1, List.of());
         resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();

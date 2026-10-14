@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
@@ -28,7 +31,8 @@ public class GriffinCanyon extends Card {
                 null,
                 List.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET, griffin),
-                        new BoostTargetCreatureEffect(1, 1)
+                        new ConditionalEffect(new TargetPermanentMatches(new PermanentIsCreaturePredicate()),
+                                new BoostTargetPermanentEffect(1, 1, griffin))
                 ),
                 "{T}: Untap target Griffin. If it's a creature, it gets +1/+1 until end of turn.",
                 new PermanentPredicateTargetFilter(griffin, "Target must be a Griffin")

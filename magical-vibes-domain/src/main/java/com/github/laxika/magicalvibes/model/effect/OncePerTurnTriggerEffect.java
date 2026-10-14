@@ -8,11 +8,26 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
                                       boolean firstTokenCreation, boolean firstLifeGain,
-                                      boolean firstLandGraveyardEvent) implements CardEffect {
+                                      boolean firstLandGraveyardEvent, boolean firstLifeLoss) implements CardEffect {
+
+    public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
+                                   boolean firstTokenCreation, boolean firstLifeGain,
+                                   boolean firstLandGraveyardEvent) {
+        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, firstLandGraveyardEvent, false);
+    }
 
     public OncePerTurnTriggerEffect(CardEffect wrapped, boolean markOnAcceptance, String key,
                                    boolean firstTokenCreation, boolean firstLifeGain) {
-        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, false);
+        this(wrapped, markOnAcceptance, key, firstTokenCreation, firstLifeGain, false, false);
+    }
+
+    /**
+     * Triggers only for the controller's first life loss event each turn, counting events before the
+     * source entered. The limit belongs to the controller rather than the source, so every copy
+     * present for that first event triggers and no copy triggers on later events (Gonti's Machinations).
+     */
+    public static OncePerTurnTriggerEffect firstLifeLoss(CardEffect wrapped) {
+        return new OncePerTurnTriggerEffect(wrapped, false, null, false, false, false, true);
     }
 
     /** Includes land-graveyard events that occurred before the source entered. */

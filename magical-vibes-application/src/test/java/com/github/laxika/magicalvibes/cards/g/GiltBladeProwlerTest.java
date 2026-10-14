@@ -103,7 +103,7 @@ class GiltBladeProwlerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castSorceryWithDiscard(player1, 0, 1);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player1, 20);
 

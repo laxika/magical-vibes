@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Gridlock extends Card {
 
     public Gridlock() {
-        targetX(TargetFilters.nonlandPermanent(), 100)
+        targetExactlyX(TargetFilters.nonlandPermanent(), 100)
                 .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

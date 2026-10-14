@@ -40,9 +40,12 @@ public class ShuffleSelfIntoOwnerLibraryEffectHandler implements NormalEffectHan
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent self = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        ShuffleSelfIntoOwnerLibraryEffect shuffle = (ShuffleSelfIntoOwnerLibraryEffect) effect;
         if (self == null) {
             // CR 701.24c: the owner's library is shuffled even if the object is no longer where it was.
-            shuffleDeferredLibraries(gameData, entry, ownerOfLeftSource(entry));
+            UUID ownerId = ownerOfLeftSource(entry);
+            shuffleDeferredLibraries(gameData, entry, ownerId);
+            resolveThenEffect(gameData, entry, shuffle, null, ownerId);
             return;
         }
 
@@ -58,8 +61,19 @@ public class ShuffleSelfIntoOwnerLibraryEffectHandler implements NormalEffectHan
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        ShuffleSelfIntoOwnerLibraryEffect shuffle = (ShuffleSelfIntoOwnerLibraryEffect) effect;
-        if (!removed || shuffle.thenEffect() == null) {
+        if (!removed) {
+            return;
+        }
+        resolveThenEffect(gameData, entry, shuffle, sourceControllerId, sourceOwnerId);
+    }
+
+    /**
+     * Resolves the then-effect, if any. It is a separate instruction, so it still resolves when the object
+     * has already left the battlefield; recipients tied to the object's controller are skipped when unknown.
+     */
+    private void resolveThenEffect(GameData gameData, StackEntry entry, ShuffleSelfIntoOwnerLibraryEffect shuffle,
+                                   UUID sourceControllerId, UUID sourceOwnerId) {
+        if (shuffle.thenEffect() == null) {
             return;
         }
 

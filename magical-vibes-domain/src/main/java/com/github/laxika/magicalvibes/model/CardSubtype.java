@@ -188,6 +188,7 @@ public enum CardSubtype {
     GNOME("Gnome"),
     GARGOYLE("Gargoyle"),
     GORGON("Gorgon"),
+    GORILLA("Gorilla"),
     MERCENARY("Mercenary"),
     ZOMBIE("Zombie"),
     ARMY("Army"),

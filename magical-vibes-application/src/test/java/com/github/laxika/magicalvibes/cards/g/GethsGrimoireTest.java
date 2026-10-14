@@ -130,6 +130,7 @@ class GethsGrimoireTest extends BaseCardTest {
     @DisplayName("An opponent's voluntary discard draws for the Grimoire's controller")
     void opponentControlledGrimoireDrawsFromVoluntaryDiscard() {
         harness.addToBattlefield(player2, new GethsGrimoire());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Swamp()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new Sift()));

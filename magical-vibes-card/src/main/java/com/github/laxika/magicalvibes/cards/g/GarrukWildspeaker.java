@@ -57,7 +57,7 @@ public class GarrukWildspeaker extends Card {
                 -4,
                 List.of(
                         new BoostAllOwnCreaturesEffect(3, 3),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)
                 ),
                 "\u22124: Creatures you control get +3/+3 and gain trample until end of turn."
         ));

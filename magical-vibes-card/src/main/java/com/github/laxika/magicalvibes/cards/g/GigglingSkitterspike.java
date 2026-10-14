@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
@@ -21,7 +20,8 @@ public class GigglingSkitterspike extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.ON_BLOCK,
-                new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT));
+                new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT),
+                TriggerMode.ONCE_PER_BLOCK);
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL,
                 new DealDamageToPlayersEffect(new SourcePower(), DamageRecipient.EACH_OPPONENT));
 
@@ -30,7 +30,6 @@ public class GigglingSkitterspike extends Card {
                 "{5}",
                 List.of(new MonstrosityEffect(5)),
                 "{5}: Monstrosity 5."
-        ).withActivationCondition(new NotCondition(new SourceIsMonstrous()),
-                "This creature is already monstrous"));
+        ));
     }
 }

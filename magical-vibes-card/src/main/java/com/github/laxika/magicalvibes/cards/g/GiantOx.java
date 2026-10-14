@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.UseToughnessForCrewAndSaddleE
 public class GiantOx extends Card {
 
     public GiantOx() {
-        addEffect(EffectSlot.STATIC, new UseToughnessForCrewAndSaddleEffect());
+        addEffect(EffectSlot.STATIC, new UseToughnessForCrewAndSaddleEffect(true));
     }
 }

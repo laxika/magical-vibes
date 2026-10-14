@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -18,13 +20,14 @@ public class GhastlyRemains extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmplifyEffect(
                 1, new CardSubtypePredicate(CardSubtype.ZOMBIE)));
         addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
-                new MayPayManaEffect(
-                        "{B}{B}{B}",
-                        ReturnCardFromGraveyardEffect.builder()
-                                .destination(GraveyardChoiceDestination.HAND)
-                                .filter(new CardIsSelfPredicate())
-                                .returnAll(true)
-                                .build(),
-                        "Pay {B}{B}{B} to return Ghastly Remains to your hand?"));
+                new ConditionalEffect(new SourceCardInGraveyard(),
+                        new MayPayManaEffect(
+                                "{B}{B}{B}",
+                                ReturnCardFromGraveyardEffect.builder()
+                                        .destination(GraveyardChoiceDestination.HAND)
+                                        .filter(new CardIsSelfPredicate())
+                                        .returnAll(true)
+                                        .build(),
+                                "Pay {B}{B}{B} to return Ghastly Remains to your hand?")));
     }
 }

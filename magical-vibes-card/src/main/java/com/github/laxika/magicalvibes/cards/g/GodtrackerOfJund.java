@@ -12,7 +12,7 @@ public class GodtrackerOfJund extends Card {
 
     public GodtrackerOfJund() {
         // Whenever a creature you control with power 5 or greater enters, you may put a +1/+1 counter on this creature.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(5,
                         new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
                                 "Put a +1/+1 counter on this creature?")));

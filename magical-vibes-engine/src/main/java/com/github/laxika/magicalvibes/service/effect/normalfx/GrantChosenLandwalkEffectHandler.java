@@ -31,11 +31,16 @@ public class GrantChosenLandwalkEffectHandler implements NormalEffectHandlerBean
         UUID recipientId = e.scope() == GrantScope.SELF
                 ? entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId()
                 : entry.getTargetId();
-        Permanent recipient = gameQueryService.findPermanentById(gameData, recipientId);
-        if (recipient == null) {
-            return;
+        // A self-grant still makes its choice when the creature has left (the ability resolves; the
+        // grant then has nothing to affect). A targeted grant whose target is gone does not resolve.
+        if (e.scope() != GrantScope.SELF) {
+            Permanent recipient = gameQueryService.findPermanentById(gameData, recipientId);
+            if (recipient == null) {
+                return;
+            }
+            recipientId = recipient.getId();
         }
 
-        playerInputService.beginBasicLandwalkTypeChoice(gameData, entry.getControllerId(), recipient.getId());
+        playerInputService.beginBasicLandwalkTypeChoice(gameData, entry.getControllerId(), recipientId);
     }
 }

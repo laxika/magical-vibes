@@ -90,6 +90,15 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
+        // CR 701.42b/701.42c: tokens can't be melded. The exile still happens, a token ceases to
+        // exist in exile, and the card that is not a token stays exiled.
+        if (source.getCard().isToken() || partner.getCard().isToken()) {
+            permanentRemovalService.removePermanentToExile(gameData, source);
+            permanentRemovalService.removePermanentToExile(gameData, partner);
+            log.info("Game {} - meld skipped: a token can't be melded", gameData.id);
+            return;
+        }
+
         Card meldResultTemplate = source.getOriginalCard().getBackFaceCard();
         if (meldResultTemplate == null) {
             log.warn("Game {} - {} has no meld result (back face)", gameData.id, source.getCard().getName());
@@ -107,6 +116,8 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
         gameData.removeFromExile(partnerCard.getId());
 
         Card meldResult = instantiateMeldResult(meldResultTemplate, sourceCard.getSetCode());
+        // CR 202.3c: a melded permanent's mana value is the combined mana cost of its front faces.
+        meldResult.setCombinedManaValue(sourceCard.getManaValue() + partnerCard.getManaValue());
         Permanent melded = new Permanent(meldResult);
         melded.setEnteredFromExile(true);
         melded.getMeldComponentCards().add(sourceCard);

@@ -28,7 +28,7 @@ public class GaleaKindlerOfHope extends Card {
         addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(auraOrEquipment));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
-                        auraOrEquipment,
+                        new CardSubtypePredicate(CardSubtype.EQUIPMENT),
                         List.of(new GrantTriggeredAbilityToCastSpellEffect(
                                 EffectSlot.ON_ENTER_BATTLEFIELD,
                                 AttachSourceEquipmentToTargetCreatureEffect.forCreatureYouControl())),

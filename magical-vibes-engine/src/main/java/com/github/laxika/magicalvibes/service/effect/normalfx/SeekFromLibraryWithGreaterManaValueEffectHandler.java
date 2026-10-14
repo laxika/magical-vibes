@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -62,6 +61,5 @@ public class SeekFromLibraryWithGreaterManaValueEffectHandler implements NormalE
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " seeks and exiles ", chosenCard,
                     "; it may be played until the end of the next turn."));
         }
-        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -189,7 +190,8 @@ class GolbezCrystalCollectorTest extends BaseCardTest {
     }
 
     @Test
-    void returnedCreaturesCharacteristicDefiningPowerIsEvaluatedInHand() {
+    @DisplayName("Life loss uses the returned creature's power as it last existed in the graveyard")
+    void returnedCreaturesPowerUsesLastKnownGraveyardValue() {
         harness.addToBattlefield(player1, new GolbezCrystalCollector());
         addArtifacts(8);
         Maro maro = new Maro();
@@ -201,7 +203,7 @@ class GolbezCrystalCollectorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Maro");
-        harness.assertLife(player2, 17);
+        harness.assertLife(player2, 18);
     }
 
     @Test

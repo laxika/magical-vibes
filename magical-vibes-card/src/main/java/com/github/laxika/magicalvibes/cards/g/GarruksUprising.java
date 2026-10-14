@@ -10,7 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "220")
 @CardRegistration(set = "M21", collectorNumber = "186")
@@ -27,10 +31,12 @@ public class GarruksUprising extends Card {
 
     public GarruksUprising() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new ControlsPermanentCount(1, new PermanentPowerAtLeastPredicate(4)),
+                new ControlsPermanentCount(1, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentPowerAtLeastPredicate(4)))),
                 new DrawCardEffect(1)));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(4, new DrawCardEffect(1)));

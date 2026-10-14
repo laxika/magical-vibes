@@ -59,7 +59,7 @@ class GarenbrigSquireTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(squire.getEffectivePower()).isEqualTo(2);
         assertThat(squire.getEffectiveToughness()).isEqualTo(2);

@@ -89,7 +89,7 @@ class GruesomeEncoreTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -236,7 +236,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(encore.getId());
@@ -261,7 +261,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());

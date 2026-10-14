@@ -65,6 +65,7 @@ class GeistwaveTest extends BaseCardTest {
         witch.setOwnerId(player2.getId());
         var target = harness.addToBattlefieldAndReturn(player1, witch);
         harness.setLibrary(player1, List.of(new Island()));
+        harness.setHand(player2, List.of());
 
         castAt(target.getId());
 

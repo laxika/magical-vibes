@@ -21,7 +21,7 @@ public class CounterOpponentsSpellsAndAbilitiesEffectHandler implements NormalEf
     private static final Set<StackEntryType> SPELL_TYPES = Set.of(
             StackEntryType.CREATURE_SPELL, StackEntryType.ENCHANTMENT_SPELL,
             StackEntryType.SORCERY_SPELL, StackEntryType.INSTANT_SPELL,
-            StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL);
+            StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL, StackEntryType.BATTLE_SPELL);
 
     private static final Set<StackEntryType> ABILITY_TYPES = Set.of(
             StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY);
@@ -52,7 +52,7 @@ public class CounterOpponentsSpellsAndAbilitiesEffectHandler implements NormalEf
             }
 
             StackEntry target = counterSupport.findCounterTarget(
-                    gameData, candidate.getCard().getId(), entry);
+                    gameData, candidate.getTargetableId(), entry);
             if (target != null && counterSupport.counterSpell(gameData, entry, target)) {
                 counteredCount++;
             }

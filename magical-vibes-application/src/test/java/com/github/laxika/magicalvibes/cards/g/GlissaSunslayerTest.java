@@ -31,7 +31,6 @@ class GlissaSunslayerTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, DRAW_AND_LOSE);
         harness.passBothPriorities();
 
@@ -46,7 +45,6 @@ class GlissaSunslayerTest extends BaseCardTest {
         Permanent arena = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
 
         resolveCombat();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, DESTROY_ENCHANTMENT);
         harness.handlePermanentChosen(player1, arena.getId());
         harness.passBothPriorities();
@@ -62,7 +60,6 @@ class GlissaSunslayerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new PhyrexianArena());
 
         resolveCombat();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, DESTROY_ENCHANTMENT);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
@@ -78,7 +75,6 @@ class GlissaSunslayerTest extends BaseCardTest {
         target.setCounterCount(CounterType.CHARGE, 2);
 
         resolveCombat();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, REMOVE_COUNTERS);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -101,7 +97,6 @@ class GlissaSunslayerTest extends BaseCardTest {
         target.setCounterCount(CounterType.CHARGE, 2);
 
         resolveCombat();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, REMOVE_COUNTERS);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -139,7 +134,6 @@ class GlissaSunslayerTest extends BaseCardTest {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
 
         resolveCombat();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, REMOVE_COUNTERS);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -155,7 +149,6 @@ class GlissaSunslayerTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
 
         resolveCombat();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, REMOVE_COUNTERS);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();

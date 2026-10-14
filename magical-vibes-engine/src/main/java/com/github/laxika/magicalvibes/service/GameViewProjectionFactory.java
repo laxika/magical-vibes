@@ -468,7 +468,8 @@ public class GameViewProjectionFactory {
                         || gameData.playersWithHandRevealed.contains(opponentId);
                 return opponentHand.stream()
                         .filter(card -> revealEntireOpponentHand
-                                || opponentId.equals(gameData.cardsRevealedInHandUntilOwnerNextTurn.get(card.getId())))
+                                || opponentId.equals(gameData.cardsRevealedInHandUntilOwnerNextTurn.get(card.getId()))
+                                || opponentId.equals(gameData.cardsRevealedInHandUntilUpkeepEnd.get(card.getId())))
                         .map(c -> cardViewFactory.create(c, granted, List.of(),
                                 gameQueryService.computeGrantedHandAbilitiesForOwnedCard(gameData, opponentId, c)))
                         .toList();

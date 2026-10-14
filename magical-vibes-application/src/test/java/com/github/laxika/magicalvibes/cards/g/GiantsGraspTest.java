@@ -45,7 +45,7 @@ class GiantsGraspTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("nonland");
+                .hasMessageContaining("Invalid permanent");
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -81,7 +81,6 @@ class GiantsGraspTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Disperse()));
         harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, grasp.getId());
         harness.passBothPriorities();
 

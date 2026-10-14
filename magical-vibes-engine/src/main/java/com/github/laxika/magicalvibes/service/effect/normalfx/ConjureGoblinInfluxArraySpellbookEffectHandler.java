@@ -130,8 +130,6 @@ public class ConjureGoblinInfluxArraySpellbookEffectHandler implements NormalEff
         card.setToughness(toughness);
         card.setKeywords(keywords);
         card.setOwnerId(ownerId);
-        card.setToken(true);
-        card.setTokenCard(true);
         card.freeze();
         return card;
     }

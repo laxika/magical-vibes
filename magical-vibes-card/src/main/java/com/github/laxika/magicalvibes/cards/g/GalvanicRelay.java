@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class GalvanicRelay extends Card {
 
     public GalvanicRelay() {
-        addEffect(EffectSlot.SPELL, new ExileTopCardsMayPlayUntilNextTurnEffect(1));
+        addEffect(EffectSlot.SPELL, ExileTopCardsMayPlayUntilNextTurnEffect.duringOwnersNextTurn(1));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());
     }
 }

@@ -45,10 +45,10 @@ public class GaleConduitOfTheArcane extends Card {
 
     public GaleConduitOfTheArcane() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
-                ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(
+                ReturnTargetCardsFromGraveyardToHandEffect.exactlyOneForTriggeredAbility(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))), 1)));
+                                new CardTypePredicate(CardType.SORCERY))))));
 
         addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
         addSpecializeAbility(CardColor.BLUE, CardSubtype.ISLAND);

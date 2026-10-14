@@ -33,4 +33,13 @@ public record GrantActivatedAbilityEffect(
     public TargetSpec targetSpec() {
         return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
+
+    /**
+     * The ENCHANTED_PERMANENT scope grants the ability to the Aura's attached permanent, so an
+     * activation whose source is that Aura captures the attached permanent at activation time.
+     */
+    @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return scope == GrantScope.ENCHANTED_PERMANENT;
+    }
 }

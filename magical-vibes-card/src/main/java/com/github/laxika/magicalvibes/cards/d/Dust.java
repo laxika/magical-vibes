@@ -29,7 +29,7 @@ public class Dust extends Card {
                         new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE)
                 )),
                 "Target must be a creature that has a -1/-1 counter on it"
-        ), 0, 99)
+        ), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
 
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.

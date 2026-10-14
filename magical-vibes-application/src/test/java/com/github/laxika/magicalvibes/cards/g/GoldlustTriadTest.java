@@ -97,8 +97,7 @@ class GoldlustTriadTest extends BaseCardTest {
         });
 
         assertThat(findPermanents(player1, "Goldlust Triad")).hasSize(1);
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test

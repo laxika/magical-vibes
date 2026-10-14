@@ -97,6 +97,7 @@ class GreaterGargadonTest extends BaseCardTest {
 
         harness.activateExiledAbility(player1, card.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -182,6 +183,7 @@ class GreaterGargadonTest extends BaseCardTest {
         gd.exiledCardTimeCounters.put(card.getId(), 1);
         harness.activateExiledAbility(player1, card.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
@@ -203,6 +205,7 @@ class GreaterGargadonTest extends BaseCardTest {
         addCreatureReady(player1, new AshcoatBear());
         gd.exiledCardTimeCounters.put(card.getId(), 1);
         harness.activateExiledAbility(player1, card.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

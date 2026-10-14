@@ -19,7 +19,7 @@ public class GoldenArgosy extends Card {
 
     public GoldenArgosy() {
         addEffect(EffectSlot.ON_ATTACK, new FlickerEffect(
-                FlickerScope.CONTROLLERS_PERMANENTS,
+                FlickerScope.ALL_PLAYERS_PERMANENTS,
                 new PermanentCrewedBySourceThisTurnPredicate(),
                 ReturnTiming.AT_STEP,
                 TurnStep.END_STEP,

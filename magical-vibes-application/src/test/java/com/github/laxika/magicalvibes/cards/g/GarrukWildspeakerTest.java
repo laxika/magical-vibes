@@ -125,6 +125,7 @@ class GarrukWildspeakerTest extends BaseCardTest {
     void minusOneCreatesMultipleTokensOverTurns() {
         Permanent garruk = addReadyGarruk(player1);
         garruk.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player2, List.of());
 
         // First activation
         harness.activateAbility(player1, 0, 1, null, null);
@@ -298,7 +299,7 @@ class GarrukWildspeakerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, later, Keyword.TRAMPLE)).isFalse();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);

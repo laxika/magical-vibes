@@ -137,14 +137,17 @@ public class AnimationSupport {
      * animation uses {@code entry.getSourcePermanentId()} even when the entry carries separate
      * trigger context.
      *
-     * <p>ENCHANTED_PERMANENT scope animates the permanent the source Aura is attached to, re-derived
-     * at resolution and ignoring any target on the entry (the Genju cycle's "enchanted Plains becomes
-     * a 2/5 white Spirit creature until end of turn"); it does nothing if the Aura is gone or unattached.
+     * <p>ENCHANTED_PERMANENT scope animates the permanent the source Aura was attached to when the
+     * ability was activated, captured on the entry as its target (the Genju cycle's "enchanted Plains
+     * becomes a 2/5 white Spirit creature until end of turn"), so it still resolves if the Aura leaves
+     * in response. Without a captured target it re-derives the attachment at resolution and does
+     * nothing if the Aura is gone or unattached.
      */
     public void animateSingle(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         List<UUID> targetIds;
         if (effect.scope() == GrantScope.ENCHANTED_PERMANENT) {
-            UUID enchantedId = enchantedPermanentIdOf(gameData, entry);
+            UUID enchantedId = entry.getTargetId() != null
+                    ? entry.getTargetId() : enchantedPermanentIdOf(gameData, entry);
             if (enchantedId == null) {
                 return;
             }

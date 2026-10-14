@@ -128,7 +128,7 @@ class GrixisTest extends BaseCardTest {
         harness.passBothPriorities();
         gd.planechase.faceUp.clear();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Goblin Piker");

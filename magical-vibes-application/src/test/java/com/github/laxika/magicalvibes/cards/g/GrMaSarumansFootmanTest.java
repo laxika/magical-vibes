@@ -74,8 +74,8 @@ class GrMaSarumansFootmanTest extends BaseCardTest {
 
         attackWithGrima();
 
-        assertThat(gd.findExiledCard(skipped.getId())).isSameAs(skipped);
-        assertThat(gd.findExiledCard(spell.getId())).isSameAs(spell);
+        assertThat(gd.findExiledCard(skipped.getId()).card()).isSameAs(skipped);
+        assertThat(gd.findExiledCard(spell.getId()).card()).isSameAs(spell);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 

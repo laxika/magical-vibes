@@ -156,7 +156,7 @@ class GravelSlingerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.turnFaceUp(player1, 0);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.turnFaceUp(player1, 0));
         assertThat(slinger.isFaceDown()).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.activateAbility(player1, 0, null, attacker.getId());

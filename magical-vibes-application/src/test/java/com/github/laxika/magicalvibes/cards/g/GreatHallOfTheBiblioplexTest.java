@@ -56,7 +56,7 @@ class GreatHallOfTheBiblioplexTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, hall)).isTrue();
         assertThat(gqs.getEffectivePower(gd, hall)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, hall)).isEqualTo(4);
-        assertThat(hall.getTransientSubtypes()).containsExactly(CardSubtype.WIZARD);
+        assertThat(gqs.getEffectiveSubtypes(gd, hall)).containsExactly(CardSubtype.WIZARD);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -95,7 +95,7 @@ class GreatHallOfTheBiblioplexTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, hall)).isTrue();
         assertThat(gqs.getEffectivePower(gd, hall)).isEqualTo(2);
@@ -109,7 +109,7 @@ class GreatHallOfTheBiblioplexTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
