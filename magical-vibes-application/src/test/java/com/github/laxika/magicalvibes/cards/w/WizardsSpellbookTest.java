@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,10 +14,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -83,6 +87,39 @@ class WizardsSpellbookTest extends BaseCardTest {
                 .hasSize(2);
         assertThat(gd.getCardsExiledByPermanent(findPermanent(player1, "Wizard's Spellbook").getId()))
                 .containsExactly(divination);
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("A split card's copy is cast as the chosen half for {1} rather than that half's mana cost")
+    void splitCardCopyIsCastAsTheChosenHalfForOneGeneric() {
+        setRoll(10);
+        WearTear wearTear = new WearTear();
+        harness.addToBattlefield(player1, new WizardsSpellbook());
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
+        harness.setGraveyard(player1, List.of(wearTear));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, wearTear.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Tear — Destroy target enchantment");
+        assertThat(gd.stack).isEmpty();
+        harness.handlePermanentChosen(player1, chorusId);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Tear");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        assertThat(gd.getCardsExiledByPermanent(findPermanent(player1, "Wizard's Spellbook").getId()))
+                .containsExactly(wearTear);
     }
 
     @Test

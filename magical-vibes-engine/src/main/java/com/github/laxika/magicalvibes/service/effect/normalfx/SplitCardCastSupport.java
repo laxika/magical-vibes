@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -21,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
@@ -38,7 +41,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
- * Casts a split card from a hand, graveyard or library during resolution or through a "you may
+ * Casts a split card from a hand, graveyard, library or exile during resolution or through a "you may
  * cast" permission. The player chooses the half as the spell is cast (CR 709.3), then that half's
  * targets (CR 601.2c), then pays that half's mana cost when the cast isn't free (CR 601.2h), before
  * the spell is put onto the stack. Only the chosen half is evaluated to see if it can be cast
@@ -65,6 +68,8 @@ public class SplitCardCastSupport {
     private final SpellCastingService spellCastingService;
     private final CopySupport copySupport;
     private final PermanentRemovalService permanentRemovalService;
+    private final LifeSupport lifeSupport;
+    private final CastingPermissionService castingPermissionService;
 
     public SplitCardCastSupport(GameLogService gameLogService,
                                 PlayerInputService playerInputService,
@@ -77,7 +82,9 @@ public class SplitCardCastSupport {
                                 @Lazy GameQueryService gameQueryService,
                                 @Lazy SpellCastingService spellCastingService,
                                 CopySupport copySupport,
-                                @Lazy PermanentRemovalService permanentRemovalService) {
+                                @Lazy PermanentRemovalService permanentRemovalService,
+                                LifeSupport lifeSupport,
+                                @Lazy CastingPermissionService castingPermissionService) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
@@ -90,6 +97,8 @@ public class SplitCardCastSupport {
         this.spellCastingService = spellCastingService;
         this.copySupport = copySupport;
         this.permanentRemovalService = permanentRemovalService;
+        this.lifeSupport = lifeSupport;
+        this.castingPermissionService = castingPermissionService;
     }
 
     /**
@@ -100,6 +109,14 @@ public class SplitCardCastSupport {
     public static boolean isSplitCard(Card card) {
         return card.getSplitHalves().size() >= 2 && splitModal(card) != null
                 && !card.getSubtypes().contains(CardSubtype.ROOM);
+    }
+
+    /**
+     * Whether {@code modeIndex} of a split card's modal spell casts both halves together, which
+     * only a card with fuse cast from its owner's hand may do (CR 702.102a).
+     */
+    public static boolean isFusedMode(Card card, int modeIndex) {
+        return isSplitCard(card) && modeIndex >= card.getSplitHalves().size();
     }
 
     /**
@@ -127,6 +144,37 @@ public class SplitCardCastSupport {
                 new ChoiceContext.SplitFreeCastHalfChoice(cast, modal, offered),
                 labels, card.getName() + " — Choose which half to cast."));
         return true;
+    }
+
+    /**
+     * Casts the exiled split card {@code card} during resolution, paying the chosen half's mana cost
+     * unless {@code payManaCost} is false. The card stays in exile until the spell is cast; the
+     * exile permissions on it decide whether mana of any type or life equal to the half's mana
+     * value pays that cost and where the spell goes once it resolves. Returns false, without
+     * casting, when the card can't be cast or no half can; a copy then ceases to exist.
+     */
+    public boolean beginFromExile(GameData gameData, UUID controllerId, Card card, boolean payManaCost,
+                                  boolean copy, boolean putOnLibraryBottomInsteadOfGraveyard, int lifeLossOnCast,
+                                  CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId) {
+        UUID cardId = card.getId();
+        ExiledCardEntry exiledEntry = gameData.findExiledCard(cardId);
+        SplitCardCast.ExileCast exileCast = new SplitCardCast.ExileCast(copy,
+                putOnLibraryBottomInsteadOfGraveyard
+                        || castingPermissionService.putsExileCastOnBottomOfOwnersLibrary(gameData, controllerId, cardId),
+                payManaCost && castingPermissionService.hasExilePlayForLifeEqualToManaValuePermission(
+                        gameData, controllerId, cardId),
+                lifeLossOnCast);
+        SplitCardCast cast = new SplitCardCast(controllerId, card, Zone.EXILE, 0,
+                exiledEntry == null ? controllerId : exiledEntry.ownerId(),
+                gameData.exileInsteadOfGraveyard.contains(cardId), Integer.MAX_VALUE,
+                afterSuccessfulCastEffect, sourcePermanentId, payManaCost,
+                castingPermissionService.hasAnyManaTypePermission(gameData, controllerId, cardId),
+                0, false, null, exileCast);
+        if (exiledEntry == null || !castingPermissionService.isSpellCastingAllowed(gameData, controllerId, card)) {
+            returnToSourceZone(gameData, cast);
+            return false;
+        }
+        return begin(gameData, cast);
     }
 
     /** Applies the chosen half, then asks for its targets or puts it onto the stack. */
@@ -210,7 +258,7 @@ public class SplitCardCastSupport {
         if (cast.allowedModes() != null && !cast.allowedModes().contains(modeIndex)) {
             return false;
         }
-        boolean fused = modeIndex >= card.getSplitHalves().size();
+        boolean fused = isFusedMode(card, modeIndex);
         boolean fromOwnHand = cast.sourceZone() == Zone.HAND && cast.ownerId().equals(cast.controllerId());
         if (fused && (!fromOwnHand || !card.hasKeyword(Keyword.FUSE))) {
             return false;
@@ -318,6 +366,17 @@ public class SplitCardCastSupport {
         UUID controllerId = cast.controllerId();
         List<UUID> targets = targeting.chosenTargets();
         List<CardEffect> effects = new ArrayList<>(targeting.spellEffects());
+        SplitCardCast.ExileCast exileCast = cast.exileCast();
+        ExiledCardEntry exiledEntry = null;
+        if (cast.sourceZone() == Zone.EXILE) {
+            exiledEntry = gameData.findExiledCard(cast.physicalCard().getId());
+            if (exiledEntry == null) {
+                gameLogService.append(gameData, GameLog.cardThen(cast.physicalCard(),
+                        " is no longer in exile and can't be cast."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+        }
 
         StackEntry entry;
         Map<UUID, Integer> damageAssignments = dividedDamageAssignments(gameData, targeting);
@@ -340,13 +399,25 @@ public class SplitCardCastSupport {
         }
         entry.setExileInsteadOfGraveyard(cast.exileInsteadOfGraveyard());
         entry.setSourceZone(cast.sourceZone());
-        if (cast.sourceZone() == Zone.GRAVEYARD) {
+        if (cast.sourceZone() == Zone.GRAVEYARD
+                || (cast.sourceZone() == Zone.EXILE && !cast.ownerId().equals(controllerId))) {
             entry.setOwnerIdOverride(cast.ownerId());
+        }
+        if (exileCast != null) {
+            entry.setCopy(exileCast.copy());
+            entry.setCastCopy(exileCast.copy());
+            entry.setPutOnBottomOfOwnersLibraryInsteadOfGraveyard(exileCast.putOnLibraryBottomInsteadOfGraveyard());
         }
         if (cast.payManaCost()) {
             try {
-                spellCastingService.paySpellManaCostFromNonHandZone(gameData, controllerId, card,
-                        targeting.xValue(), cast.sourceZone(), cast.anyManaType());
+                if (cast.sourceZone() == Zone.EXILE) {
+                    spellCastingService.payResolutionExileCastCost(gameData, controllerId, card,
+                            targeting.xValue(), cast.anyManaType(),
+                            exileCast != null && exileCast.payLifeEqualToManaValue());
+                } else {
+                    spellCastingService.paySpellManaCostFromNonHandZone(gameData, controllerId, card,
+                            targeting.xValue(), cast.sourceZone(), cast.anyManaType());
+                }
             } catch (IllegalStateException | IllegalArgumentException unpaid) {
                 returnToSourceZone(gameData, cast);
                 gameLogService.append(gameData, GameLog.cardThen(cast.physicalCard(),
@@ -376,12 +447,18 @@ public class SplitCardCastSupport {
         log.info("Game {} - {} casts {} from {}{}", gameData.id, playerName, card.getName(),
                 cast.sourceZone(), costPhrase);
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, card, controllerId, cast.sourceZone());
+        UUID exiledSourcePermanentId = exiledEntry == null || exileCast == null || exileCast.copy()
+                ? null : exiledEntry.sourcePermanentId();
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, controllerId, cast.sourceZone(),
+                exiledSourcePermanentId);
         if (!targets.isEmpty()) {
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         }
         exileCastTargetSupport.queueAfterSuccessfulCast(gameData, card, controllerId,
                 cast.sourcePermanentId(), cast.afterSuccessfulCastEffect());
+        if (exileCast != null && exileCast.lifeLossOnCast() > 0) {
+            lifeSupport.applyLifeLoss(gameData, controllerId, exileCast.lifeLossOnCast(), card.getName());
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -415,16 +492,38 @@ public class SplitCardCastSupport {
     /**
      * Completes the card's move to the stack. The card was set aside while the half and its targets
      * were chosen, so a cast that fails leaves no trace; a card that leaves a graveyard is now
-     * removed the usual way, so the game sees it leave.
+     * removed the usual way, so the game sees it leave. A card cast from exile stayed there and
+     * leaves it now.
      */
     private void leaveSourceZone(GameData gameData, SplitCardCast cast) {
+        UUID cardId = cast.physicalCard().getId();
         if (cast.sourceZone() == Zone.GRAVEYARD) {
             returnToSourceZone(gameData, cast);
-            permanentRemovalService.removeCardFromGraveyardById(gameData, cast.physicalCard().getId());
+            permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
+        } else if (cast.sourceZone() == Zone.EXILE) {
+            gameData.clearDelayedActions(ReturnExiledCardToHandAtNextEndStep.class,
+                    action -> action.cardId().equals(cardId));
+            clearExileCastCostChanges(gameData, cardId);
+            if (gameData.removeFromExile(cardId) && (cast.exileCast() == null || !cast.exileCast().copy())) {
+                gameData.recordCardPlayedFromExile(cast.controllerId());
+            }
         }
     }
 
+    /**
+     * Puts the card back where it was taken from. A card cast from exile never left it, but a copy
+     * that isn't cast ceases to exist (CR 707.10a).
+     */
     private void returnToSourceZone(GameData gameData, SplitCardCast cast) {
+        if (cast.sourceZone() == Zone.EXILE) {
+            UUID cardId = cast.physicalCard().getId();
+            gameData.exilePlayCostModifiers.remove(cardId);
+            if (cast.exileCast() != null && cast.exileCast().copy()) {
+                clearExileCastCostChanges(gameData, cardId);
+                gameData.removeFromExile(cardId);
+            }
+            return;
+        }
         List<Card> zone = switch (cast.sourceZone()) {
             case HAND -> gameData.playerHands.computeIfAbsent(cast.ownerId(), ignored -> new ArrayList<>());
             case GRAVEYARD -> gameData.playerGraveyards.computeIfAbsent(cast.ownerId(), ignored -> new ArrayList<>());
@@ -432,6 +531,12 @@ public class SplitCardCastSupport {
             default -> throw new IllegalStateException("Can't cast a split card from " + cast.sourceZone());
         };
         zone.add(Math.min(cast.sourceIndex(), zone.size()), cast.physicalCard());
+    }
+
+    /** Drops the cost changes installed for an exiled card once it leaves exile. */
+    private static void clearExileCastCostChanges(GameData gameData, UUID cardId) {
+        gameData.exilePlayCostModifiers.remove(cardId);
+        gameData.exilePlayWithoutPayingManaCost.remove(cardId);
     }
 
     private static int modeEncoding(ChooseOneEffect modal, int modeIndex) {

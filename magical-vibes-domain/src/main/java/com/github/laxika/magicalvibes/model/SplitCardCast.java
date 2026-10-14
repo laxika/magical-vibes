@@ -10,7 +10,8 @@ import java.util.UUID;
  * chosen as it is cast, before the spell is put onto the stack (CR 709.3), and only that half is
  * evaluated to see whether it can be cast (CR 709.3a).
  *
- * @param physicalCard              the split card, already removed from {@code sourceZone}
+ * @param physicalCard              the split card, already removed from {@code sourceZone}; a card
+ *                                  cast from exile stays there until the spell is cast
  * @param sourceIndex               the card's position in its zone, so it can return there when
  *                                  the spell can't be cast
  * @param ownerId                   the owner of the zone the card is cast from
@@ -24,12 +25,14 @@ import java.util.UUID;
  *                                         this one is cast
  * @param allowedModes              the modes of the card's modal spell (its halves, or its fused
  *                                  spell) it may be cast as, or null for any
+ * @param exileCast                 how a card cast from exile is cast, or null for other zones
  */
 public record SplitCardCast(UUID controllerId, Card physicalCard, Zone sourceZone, int sourceIndex,
                             UUID ownerId, boolean exileInsteadOfGraveyard, int maxManaValue,
                             CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId,
                             boolean payManaCost, boolean anyManaType, int copyCount,
-                            boolean restrictAdditionalSpellsThisTurn, List<Integer> allowedModes) {
+                            boolean restrictAdditionalSpellsThisTurn, List<Integer> allowedModes,
+                            ExileCast exileCast) {
 
     public SplitCardCast {
         allowedModes = allowedModes == null ? null : List.copyOf(allowedModes);
@@ -40,35 +43,50 @@ public record SplitCardCast(UUID controllerId, Card physicalCard, Zone sourceZon
                          UUID ownerId, boolean exileInsteadOfGraveyard, int maxManaValue,
                          CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId) {
         this(controllerId, physicalCard, sourceZone, sourceIndex, ownerId, exileInsteadOfGraveyard,
-                maxManaValue, afterSuccessfulCastEffect, sourcePermanentId, false, false, 0, false, null);
+                maxManaValue, afterSuccessfulCastEffect, sourcePermanentId, false, false, 0, false, null, null);
     }
 
     /** This cast paying the chosen half's mana cost, with mana of any type when {@code anyManaType}. */
     public SplitCardCast payingManaCost(boolean anyManaType) {
         return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
                 exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
-                true, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes);
+                true, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes, exileCast);
     }
 
     /** This cast followed by {@code copyCount} copies of the spell. */
     public SplitCardCast withCopies(int copyCount) {
         return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
                 exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
-                payManaCost, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes);
+                payManaCost, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes, exileCast);
     }
 
     /** This cast stopping its caster from casting other spells this turn. */
     public SplitCardCast restrictingAdditionalSpellsThisTurn() {
         return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
                 exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
-                payManaCost, anyManaType, copyCount, true, allowedModes);
+                payManaCost, anyManaType, copyCount, true, allowedModes, exileCast);
     }
 
     /** This cast limited to the given modes of the card's modal spell, or to any when null. */
     public SplitCardCast limitedToModes(List<Integer> modes) {
         return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
                 exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
-                payManaCost, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, modes);
+                payManaCost, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, modes, exileCast);
+    }
+
+    /**
+     * How a split card is cast from exile.
+     *
+     * @param copy                         whether the card is a copy, which ceases to exist if it
+     *                                     isn't cast (CR 707.10a)
+     * @param putOnLibraryBottomInsteadOfGraveyard whether the spell goes to the bottom of its owner's
+     *                                     library instead of a graveyard
+     * @param payLifeEqualToManaValue      whether life equal to the chosen half's mana value is paid
+     *                                     instead of its mana cost
+     * @param lifeLossOnCast               life the caster loses once the spell is cast
+     */
+    public record ExileCast(boolean copy, boolean putOnLibraryBottomInsteadOfGraveyard,
+                            boolean payLifeEqualToManaValue, int lifeLossOnCast) {
     }
 
     /**

@@ -18,10 +18,13 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileNormalCostCopySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -39,6 +42,9 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
     private final PlayerInputService playerInputService;
     private final SpellCastingService spellCastingService;
     private final ExileNormalCostCopySupport exileNormalCostCopySupport;
+    @Autowired
+    @Lazy
+    private SplitCardCastSupport splitCardCastSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -66,6 +72,16 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
         if (exiledEntry == null || copy.hasType(CardType.LAND)) {
             gameData.removeFromExile(copy.getId());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (SplitCardCastSupport.isSplitCard(copy)) {
+            if (!splitCardCastSupport.beginFromExile(gameData, player.getId(), copy,
+                    !effect.withoutPayingManaCost(), true, false, effect.lifeLossOnCast(),
+                    effect.afterSuccessfulCastEffect(), ability.sourcePermanentId())) {
+                gameLogService.append(gameData, GameLog.cardThen(copy,
+                        " has no half that can be cast and the copy ceases to exist."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
         if (effect.withoutPayingManaCost()) {

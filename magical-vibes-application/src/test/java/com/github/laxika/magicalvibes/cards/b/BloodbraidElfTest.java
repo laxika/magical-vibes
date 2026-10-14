@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.ProsperTomeBound;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -18,6 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -147,6 +151,34 @@ class BloodbraidElfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Treasure");
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("A split card hit is cast as one half, chosen with its target before it is put on the stack")
+    void splitCardHitIsCastAsOneHalfWithoutFuse() {
+        setupCasterTurn();
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
+        harness.setLibrary(player1, List.of(new WearTear()));
+
+        castBloodbraidElf();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        // Fuse applies only while the card is in a hand (CR 702.102a), so cascade offers only the halves.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Tear — Destroy target enchantment");
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Tear"));
+        harness.handlePermanentChosen(player1, chorusId);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Tear");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
     }
 
     private void setupCasterTurn() {

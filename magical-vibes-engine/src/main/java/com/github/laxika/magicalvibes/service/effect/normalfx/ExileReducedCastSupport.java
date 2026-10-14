@@ -22,7 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Supports a may-cast-from-exile offer that pays the reduced mana cost. */
+/**
+ * Supports a may-cast-from-exile offer that pays the reduced mana cost. A split card is cast through
+ * {@link SplitCardCastSupport}, so its half is chosen as it is cast and only that half's cost is paid.
+ */
 @Slf4j
 @Component
 public class ExileReducedCastSupport {
@@ -32,17 +35,20 @@ public class ExileReducedCastSupport {
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final SpellCastingService spellCastingService;
+    private final SplitCardCastSupport splitCardCastSupport;
 
     public ExileReducedCastSupport(GameLogService gameLogService,
                                    @Lazy PlayerInputService playerInputService,
                                    @Lazy InputCompletionService inputCompletionService,
                                    ExileCastTargetSupport exileCastTargetSupport,
-                                   @Lazy SpellCastingService spellCastingService) {
+                                   @Lazy SpellCastingService spellCastingService,
+                                   @Lazy SplitCardCastSupport splitCardCastSupport) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.inputCompletionService = inputCompletionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.spellCastingService = spellCastingService;
+        this.splitCardCastSupport = splitCardCastSupport;
     }
 
     public void castFromExileWithCostReduction(GameData gameData, Player player, UUID exileCardId,
@@ -67,6 +73,15 @@ public class ExileReducedCastSupport {
         Card card = exiledEntry.card();
         UUID playerId = player.getId();
         installCostReduction(gameData, exileCardId, playerId, genericCostReduction);
+        if (SplitCardCastSupport.isSplitCard(card)) {
+            if (!splitCardCastSupport.beginFromExile(gameData, playerId, card, true, false,
+                    putOnBottomOfOwnersLibraryInsteadOfGraveyard, 0, null, null)) {
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " has no half that can be cast and stays exiled."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
         if (EffectResolution.needsTarget(card)) {
             List<UUID> candidates = exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId);
             boolean legalTargets = card.getMaxTargets() > 1

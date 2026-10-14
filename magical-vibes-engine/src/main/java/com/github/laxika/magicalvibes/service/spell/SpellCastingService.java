@@ -11216,6 +11216,45 @@ public class SpellCastingService {
         }
     }
 
+    /**
+     * Pays the cost of {@code spell}, cast from exile during resolution, the way a resolution cast
+     * from exile pays it: mana that can be spent only on spells cast from exile, or only on this
+     * card, is available, and {@code anyManaType} lets mana of any type pay for any color. When
+     * {@code payLifeEqualToManaValue}, life equal to the spell's mana value is paid instead. Throws
+     * {@link IllegalStateException}, paying nothing, when the cost can't be paid.
+     */
+    public void payResolutionExileCastCost(GameData gameData, UUID playerId, Card spell, int xValue,
+                                           boolean anyManaType, boolean payLifeEqualToManaValue) {
+        if (payLifeEqualToManaValue) {
+            int amount = spell.getManaValue();
+            if (gameData.getLife(playerId) < amount || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                    || !gameQueryService.canPayLifeForCosts(gameData)) {
+                throw new IllegalStateException("Not enough life to cast the exiled card");
+            }
+            if (amount > 0) {
+                lifeSupport.applyLifePayment(gameData, playerId, amount, spell.getName() + " from exile");
+            }
+            return;
+        }
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        Map<ManaColor, Integer> exileSpellOnly = pool.promoteExiledSpellOnlyMana();
+        Map<ManaColor, Integer> exactExileOnly = pool.promoteExiledCardOnlyMana(spell.getId());
+        EnumMap<ManaColor, Integer> promotedPool = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            promotedPool.put(color, pool.get(color));
+        }
+        boolean existingAnyColorPermission = pool.isAllManaSpendableAsAnyColor();
+        try {
+            if (anyManaType) {
+                pool.setAllManaSpendableAsAnyColor(true);
+            }
+            paySpellManaCostFromNonHandZone(gameData, playerId, spell, xValue, Zone.EXILE);
+        } finally {
+            pool.setAllManaSpendableAsAnyColor(existingAnyColorPermission);
+            restoreExileRestrictedMana(pool, spell.getId(), exactExileOnly, exileSpellOnly, promotedPool);
+        }
+    }
+
     private void payLifeForExileAlternative(GameData gameData, Player player, Card card) {
         int amount = card.getManaValue();
         if (amount > 0) {

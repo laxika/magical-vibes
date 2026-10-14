@@ -702,6 +702,7 @@ public class Card {
     public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
     public void setToken(boolean token) { assertMutable(); this.token = token; }
     public void setCombinedManaValue(Integer combinedManaValue) { assertMutable(); this.combinedManaValue = combinedManaValue; }
+    public void setSplitHalves(List<OracleData> splitHalves) { assertMutable(); this.splitHalves = List.copyOf(splitHalves); }
     public void setBedtimeStory(boolean bedtimeStory) { assertMutable(); this.bedtimeStory = bedtimeStory; }
     public void setTokenCard(boolean tokenCard) { assertMutable(); this.tokenCard = tokenCard; }
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }

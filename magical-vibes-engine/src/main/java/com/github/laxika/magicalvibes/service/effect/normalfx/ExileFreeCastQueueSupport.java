@@ -405,6 +405,10 @@ public class ExileFreeCastQueueSupport {
             if (!modal.modesMayRepeat() && chosenModeIndices.contains(modeIndex)) {
                 continue;
             }
+            // Queued spells are cast from exile, never from a hand, so a split card can't be fused.
+            if (SplitCardCastSupport.isFusedMode(card, modeIndex)) {
+                continue;
+            }
             List<Integer> trial = new ArrayList<>(chosenModeIndices);
             trial.add(modeIndex);
             if (trial.size() < modal.choicesRequired()

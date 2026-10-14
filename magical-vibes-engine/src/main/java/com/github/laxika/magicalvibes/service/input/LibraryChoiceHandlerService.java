@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
@@ -4804,6 +4805,10 @@ public class LibraryChoiceHandlerService {
         List<ChooseOneEffect.ChooseOneOption> legalOptions = new ArrayList<>();
         List<Integer> modeIndices = new ArrayList<>();
         for (int modeIndex = 0; modeIndex < modal.options().size(); modeIndex++) {
+            // These cards are cast from a library or exile, never a hand, so a split card can't be fused.
+            if (SplitCardCastSupport.isFusedMode(card, modeIndex)) {
+                continue;
+            }
             ChooseOneEffect.ChooseOneOption option = modal.options().get(modeIndex);
             Card evaluationCard = card.createRuntimeCopy();
             List<CardEffect> effects = new ArrayList<>(evaluationCard.getEffects(EffectSlot.SPELL));

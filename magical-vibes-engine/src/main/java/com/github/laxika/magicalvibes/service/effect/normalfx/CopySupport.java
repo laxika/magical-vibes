@@ -267,6 +267,8 @@ public class CopySupport {
         copy.setName(original.getName());
         copy.setType(original.getType());
         copy.setManaCost(original.getManaCost());
+        copy.setCombinedManaValue(original.getCombinedManaValue());
+        copy.setSplitHalves(original.getSplitHalves());
         copy.setColor(original.getColor());
         copy.setColors(original.getColors());
         copy.setAdditionalTypes(original.getAdditionalTypes());

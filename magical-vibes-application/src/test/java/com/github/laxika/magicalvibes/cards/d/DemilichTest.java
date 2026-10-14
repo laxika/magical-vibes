@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindSpring;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -232,5 +236,63 @@ class DemilichTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(counsel);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("A split card's copy is cast as the chosen half, paying only that half's mana cost")
+    void splitCardCopyIsCastAsTheChosenHalf() {
+        WearTear wearTear = new WearTear();
+        harness.setGraveyard(player1, List.of(wearTear));
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        addCreatureReady(player1, new Demilich());
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(wearTear.getId()));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Wear — Destroy target artifact");
+        assertThat(gd.stack).isEmpty();
+        harness.handlePermanentChosen(player1, fountainId);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Wear");
+        assertThat(gd.stack.getLast().isCopy()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Angelic Chorus");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(wearTear);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class})
+    @DisplayName("A split card's copy ceases to exist when its chosen half's cost can't be paid")
+    void unpayableSplitCardCopyCeasesToExist() {
+        WearTear wearTear = new WearTear();
+        harness.setGraveyard(player1, List.of(wearTear));
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        addCreatureReady(player1, new Demilich());
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(wearTear.getId()));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "Wear — Destroy target artifact");
+        harness.handlePermanentChosen(player1, fountainId);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(wearTear);
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
     }
 }

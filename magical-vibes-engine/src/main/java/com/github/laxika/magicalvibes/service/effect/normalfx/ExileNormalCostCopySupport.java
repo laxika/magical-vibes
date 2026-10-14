@@ -28,7 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Starts a cast of a copy that is currently in exile, optionally using a specified mana cost. */
+/**
+ * Starts a cast of a copy that is currently in exile, optionally using a specified mana cost. A
+ * split card's copy is cast through {@link SplitCardCastSupport}, so its half is chosen as it is cast.
+ */
 @Slf4j
 @Component
 public class ExileNormalCostCopySupport {
@@ -41,6 +44,7 @@ public class ExileNormalCostCopySupport {
     private final CastingCostService castingCostService;
     private final PotentialManaService potentialManaService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final SplitCardCastSupport splitCardCastSupport;
 
     public ExileNormalCostCopySupport(GameLogService gameLogService,
                                       @Lazy PlayerInputService playerInputService,
@@ -49,7 +53,9 @@ public class ExileNormalCostCopySupport {
                                       @Lazy SpellCastingService spellCastingService,
                                       @Lazy CastingCostService castingCostService,
                                       @Lazy PotentialManaService potentialManaService,
-                                      @Lazy InteractionHandlerRegistry interactionHandlerRegistry) {
+                                      @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
+                                      @Lazy SplitCardCastSupport splitCardCastSupport) {
+        this.splitCardCastSupport = splitCardCastSupport;
         this.castingCostService = castingCostService;
         this.potentialManaService = potentialManaService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
@@ -83,6 +89,16 @@ public class ExileNormalCostCopySupport {
         if (manaCostOverride != null) {
             gameData.exilePlayCostModifiers.put(copy.getId(),
                     new ExilePlayCostModifier(player.getId(), null, 0, manaCostOverride));
+        }
+
+        if (SplitCardCastSupport.isSplitCard(copy)) {
+            if (!splitCardCastSupport.beginFromExile(gameData, player.getId(), copy, true, true, false, 0,
+                    null, null)) {
+                gameLogService.append(gameData, GameLog.cardThen(copy,
+                        " has no half that can be cast and the copy ceases to exist."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
         }
 
         if (ability != null && beginXValueChoice(gameData, player, copy, manaCostOverride, ability)) {
