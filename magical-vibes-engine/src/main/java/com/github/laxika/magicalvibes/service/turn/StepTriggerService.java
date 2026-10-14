@@ -298,6 +298,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -1666,8 +1667,8 @@ public class StepTriggerService {
             }
         }
 
-        // Check all battlefields for EACH_UPKEEP_TRIGGERED effects
-        gameData.forEachPermanent((playerId, perm) -> {
+        // Check all battlefields and face-up schemes (CR 314.4) for EACH_UPKEEP_TRIGGERED effects
+        BiConsumer<UUID, Permanent> eachUpkeep = (playerId, perm) -> {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
             List<CardEffect> eachUpkeepEffects = new ArrayList<>(
                     perm.getCard().getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED));
@@ -1736,11 +1737,13 @@ public class StepTriggerService {
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
                 log.info("Game {} - {} each-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
-        });
+        };
+        gameData.forEachPermanent(eachUpkeep);
+        gameData.forEachFaceUpSchemeSource(eachUpkeep);
 
         // Check all battlefields for OPPONENT_UPKEEP_TRIGGERED effects (only opponents of the active player)
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
-            for (Permanent perm : playerBattlefield) {
+            for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
                 List<CardEffect> opponentUpkeepEffects = perm.getCard().getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED);
                 if (opponentUpkeepEffects == null || opponentUpkeepEffects.isEmpty()) continue;
 
@@ -5597,10 +5600,7 @@ public class StepTriggerService {
         }
 
         for (UUID playerId : triggerOrder) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-
-            for (Permanent perm : battlefield) {
+            for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
                 if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                 List<CardEffect> endStepEffects = perm.getCard().getEffects(EffectSlot.END_STEP_TRIGGERED);
                 if (endStepEffects == null || endStepEffects.isEmpty()) continue;
@@ -6114,8 +6114,8 @@ public class StepTriggerService {
             gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
         }
 
-        // CONTROLLER_END_STEP_TRIGGERED: only fires for the active player's permanents
-        List<Permanent> activeBattlefield = gameData.playerBattlefields.get(activePlayerId);
+        // CONTROLLER_END_STEP_TRIGGERED: only fires for the active player's permanents and face-up schemes
+        List<Permanent> activeBattlefield = gameData.permanentsAndFaceUpSchemes(activePlayerId);
         if (activeBattlefield != null) {
             for (Permanent perm : activeBattlefield) {
                 List<CardEffect> controllerEndStepEffects = new ArrayList<>();
@@ -6512,7 +6512,7 @@ public class StepTriggerService {
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
             if (playerId.equals(activePlayerId)) return; // the controller's own end step is not an opponent's
 
-            for (Permanent perm : playerBattlefield) {
+            for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
                 List<CardEffect> opponentEndStepEffects = perm.getCard().getEffects(EffectSlot.OPPONENT_END_STEP_TRIGGERED);
                 if (opponentEndStepEffects == null || opponentEndStepEffects.isEmpty()) continue;
 
@@ -6838,7 +6838,7 @@ public class StepTriggerService {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.BEGINNING_OF_COMBAT);
 
         UUID activePlayerId = gameData.activePlayerId;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        List<Permanent> battlefield = gameData.permanentsAndFaceUpSchemes(activePlayerId);
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
                 List<CardEffect> combatEffects = new ArrayList<>(
@@ -6854,6 +6854,9 @@ public class StepTriggerService {
         List<Card> commandZone = gameData.playerCommandZones.get(activePlayerId);
         if (commandZone != null) {
             for (Card card : new ArrayList<>(commandZone)) {
+                if (card.hasType(CardType.SCHEME) || gameData.faceDownCommandZoneCards.contains(card.getId())) {
+                    continue;
+                }
                 List<CardEffect> combatEffects = new ArrayList<>(
                         card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED));
                 if (!combatEffects.isEmpty()) {
@@ -6872,15 +6875,17 @@ public class StepTriggerService {
             }
         }
 
-        gameData.forEachPermanent((playerId, perm) -> {
+        BiConsumer<UUID, Permanent> eachCombat = (playerId, perm) -> {
             List<CardEffect> combatEffects = new ArrayList<>(
                     perm.getCard().getEffects(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED));
             combatEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                     gameData, perm, EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED));
             queueBeginningOfCombatTriggers(gameData, playerId, perm, combatEffects);
-        });
+        };
+        gameData.forEachPermanent(eachCombat);
+        gameData.forEachFaceUpSchemeSource(eachCombat);
 
-        gameData.forEachPermanent((playerId, perm) -> {
+        BiConsumer<UUID, Permanent> opponentCombat = (playerId, perm) -> {
             if (!playerId.equals(activePlayerId)) {
                 List<CardEffect> combatEffects = new ArrayList<>(
                         perm.getCard().getEffects(EffectSlot.OPPONENT_BEGINNING_OF_COMBAT_TRIGGERED));
@@ -6889,7 +6894,9 @@ public class StepTriggerService {
                 queueBeginningOfCombatTriggers(gameData, playerId, perm,
                         combatEffects);
             }
-        });
+        };
+        gameData.forEachPermanent(opponentCombat);
+        gameData.forEachFaceUpSchemeSource(opponentCombat);
 
         triggerCollectionService.checkUntapAttackedCreaturesEachCombatThisTurnTriggers(gameData);
 

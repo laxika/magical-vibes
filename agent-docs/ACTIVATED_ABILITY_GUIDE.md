@@ -1026,6 +1026,15 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 
 ## EffectSlot quick reference
 
+**Ongoing schemes use the ordinary slots.** A face-up scheme in the command zone (CR 314.4) triggers
+from the same slots as a permanent: trigger collectors read `GameData.permanentsAndFaceUpSchemes(playerId)`
+or `GameData.forEachFaceUpSchemeSource` (a stable `Permanent` view of each face-up scheme, not on any
+battlefield) next to the battlefield scan. Wired today: spell cast (any/controller/opponent), scheme set
+in motion, another/ally permanent leaves the battlefield, creature/permanent deals damage to you, upkeep
+(own/each/opponent), end step (each/controller/opponent), beginning of combat (own/each/opponent). A
+new slot an ongoing scheme needs must add the same scan. `SacrificeSelfEffect` and
+`SacrificePermanentThenEffect(PermanentIsSourcePermanentPredicate, ...)` abandon the scheme instead.
+
 | Slot | Fires when |
 |------|------------|
 | `SPELL` | Instant/sorcery resolves |
@@ -1232,7 +1241,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_CONTROLLER_LOSES_LIFE` | Controller loses life |
 | `ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER` | Any creature deals damage to the planeswalker receiving this granted ability. Fires once per source and planeswalker damage event; the damaging creature ID is baked into the non-targeting trigger entry as the effect target — Liliana's Talent |
 | `ON_SELF_LEAVES_BATTLEFIELD` | This permanent leaves the battlefield (any means) |
-| `ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD` | Another permanent (any type, any player's) leaves the battlefield by any means. Global watcher fired from every leave path in `PermanentRemovalService`; effects that need the departed permanent's identity implement `LeavingPermanentIdAwareEffect` |
+| `ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD` | Another permanent (any type, any player's) leaves the battlefield by any means. Global watcher fired from every leave path in `PermanentRemovalService`; effects that need the departed permanent's identity implement `LeavingPermanentIdAwareEffect`; wrap in `TriggeringPermanentConditionalEffect` to filter the leaving permanent from the source's point of view (My Champion Stands Supreme: `PermanentIsCommanderPredicate(true)`, your commander under any control) |
 | `ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` | Another permanent (any type) you control leaves the battlefield by any means. Controller-scoped watcher fired from every leave path in `PermanentRemovalService`; conditional effects are evaluated against the leaving permanent before the trigger is queued |
 | `ON_ANOTHER_CREATURE_LEAVES_BATTLEFIELD` | Another creature (any player's) leaves the battlefield by any means (destroy, exile, bounce, sacrifice, tuck) — broader than "dies". Global watcher fired from every leave path in `PermanentRemovalService` via `TriggerCollectionService.checkAnotherCreatureLeavesBattlefieldTriggers`; fires on every permanent with the slot except the leaving creature itself. Non-targeting: a "you may have target player mill two cards" is a `MayEffect(MillEffect(2, TARGET_PLAYER), …)` whose "may" and player target are resolved on the stack (Extractor Demon) |
 | `ON_ANOTHER_ARTIFACT_LEAVES_BATTLEFIELD` | Another artifact **you control** leaves the battlefield by any means (destroy, exile, bounce, sacrifice, tuck). Controller-scoped watcher fired from every leave path in `PermanentRemovalService` via `TriggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers`; fires only on the leaving artifact's controller's battlefield, except the leaving artifact itself. Pair with `ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD` (same effect on both slots) for "whenever another artifact you control enters or leaves the battlefield". Non-targeting: player target + "you may pay {1}" resolve on the stack via `MayPayManaEffect(SequenceEffect.of(LoseLifeEffect(TARGET_PLAYER), GainLifeEffect))` (Sludge Strider) |

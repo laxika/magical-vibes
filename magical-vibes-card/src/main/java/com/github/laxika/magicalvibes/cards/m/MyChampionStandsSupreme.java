@@ -15,20 +15,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 public class MyChampionStandsSupreme extends Card {
 
     public MyChampionStandsSupreme() {
-        PermanentIsCommanderPredicate commander = new PermanentIsCommanderPredicate();
+        PermanentIsCommanderPredicate commander = new PermanentIsCommanderPredicate(true);
 
         // Your commander has ward {2}.
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                new CounterUnlessPaysEffect(2), GrantScope.OWN_PERMANENTS, commander));
+                new CounterUnlessPaysEffect(2), GrantScope.ALL_PERMANENTS, commander));
 
         // Whenever your commander attacks, put two +1/+1 counters on it.
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
-                new PutCountersOnSourceEffect(1, 1, 2), GrantScope.ALL_OWN_CREATURES, commander));
+                new PutCountersOnSourceEffect(1, 1, 2), GrantScope.ALL_CREATURES, commander));
 
         // When your commander leaves the battlefield, abandon this scheme.
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(commander, new SacrificeSelfEffect()));
     }
 }

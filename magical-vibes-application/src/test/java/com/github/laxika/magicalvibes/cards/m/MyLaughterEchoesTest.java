@@ -96,6 +96,31 @@ class MyLaughterEchoesTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void faceUpSchemeInCommandZoneMayAbandonAndRepeatNonOngoingScheme() {
+        MyLaughterEchoes echoes = new MyLaughterEchoes();
+        gd.playerCommandZones.get(player1.getId()).add(echoes);
+        setSchemeInMotion(new ICallForSlaughter());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.faceDownCommandZoneCards).contains(echoes.getId());
+        assertThat(countPermanents(player1, "Devil")).isEqualTo(6);
+    }
+
+    private void setSchemeInMotion(ICallForSlaughter scheme) {
+        StackEntry schemeEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                scheme,
+                player1.getId(),
+                scheme.getName(),
+                scheme.getEffects(EffectSlot.SPELL));
+        gd.stack.add(schemeEntry);
+        harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry);
+    }
+
     private PermanentSetup setUpEchoesAndScheme() {
         var echoes = harness.addToBattlefieldAndReturn(player1, new MyLaughterEchoes());
         ICallForSlaughter scheme = new ICallForSlaughter();

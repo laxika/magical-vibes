@@ -105,6 +105,21 @@ class IAmDuskmournTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    void faceUpSchemeInCommandZoneOffersFreeSpellThenIsAbandoned() {
+        IAmDuskmourn scheme = new IAmDuskmourn();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        harness.setHand(player1, List.of(new SolRing()));
+
+        resolveControllerEndStep();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Sol Ring");
+        assertThat(gd.playerCommandZones.get(player1.getId())).contains(scheme);
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+    }
+
     private Permanent addScheme() {
         return harness.addToBattlefieldAndReturn(player1, new IAmDuskmourn());
     }

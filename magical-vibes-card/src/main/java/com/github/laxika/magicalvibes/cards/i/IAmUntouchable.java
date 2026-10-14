@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.BatchedCombatDamageToYouTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -26,9 +27,10 @@ public class IAmUntouchable extends Card {
 
         // When combat damage is dealt to you, create a 4/4 colorless Scarecrow artifact creature
         // token with vigilance, then abandon this scheme.
-        addEffect(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU, SequenceEffect.of(
-                new CreateTokenEffect("Scarecrow", 4, 4, null,
-                        List.of(CardSubtype.SCARECROW), Set.of(Keyword.VIGILANCE), Set.of(CardType.ARTIFACT)),
-                new SacrificeSelfEffect()));
+        addEffect(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU,
+                new BatchedCombatDamageToYouTriggerEffect(SequenceEffect.of(
+                        new CreateTokenEffect("Scarecrow", 4, 4, null,
+                                List.of(CardSubtype.SCARECROW), Set.of(Keyword.VIGILANCE), Set.of(CardType.ARTIFACT)),
+                        new SacrificeSelfEffect())));
     }
 }

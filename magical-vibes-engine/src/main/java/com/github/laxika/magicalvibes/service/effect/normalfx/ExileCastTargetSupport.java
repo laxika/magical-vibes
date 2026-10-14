@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,6 +43,7 @@ public class ExileCastTargetSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
+    private final SchemeAbandonSupport schemeAbandonSupport;
 
     public StackEntryType mapCardTypeToSpellType(Card card) {
         return switch (card.getType()) {
@@ -61,6 +64,14 @@ public class ExileCastTargetSupport {
             return;
         }
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        Card scheme = sourcePermanent == null
+                ? gameData.findFaceUpSchemeBySourceId(sourcePermanentId) : sourcePermanent.getCard();
+        if (scheme != null && scheme.hasType(CardType.SCHEME) && afterCastEffect instanceof SacrificeSelfEffect) {
+            // "If you do, abandon this scheme" happens as the ability resolves, before anyone can
+            // respond to the spell (CR 701.33b).
+            schemeAbandonSupport.abandon(gameData, scheme, sourcePermanentId);
+            return;
+        }
         Card sourceCard = sourcePermanent == null ? fallbackSourceCard : sourcePermanent.getCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

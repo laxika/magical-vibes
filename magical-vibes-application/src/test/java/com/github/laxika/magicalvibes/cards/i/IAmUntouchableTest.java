@@ -109,4 +109,21 @@ class IAmUntouchableTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Scarecrow")).isEmpty();
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
     }
+
+    @Test
+    void faceUpSchemeInCommandZoneCreatesOneScarecrowAndIsAbandonedOnCombatDamage() {
+        IAmUntouchable scheme = new IAmUntouchable();
+        gd.playerCommandZones.get(player2.getId()).add(scheme);
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        firstAttacker.setAttacking(true);
+        secondAttacker.setAttacking(true);
+
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Scarecrow")).hasSize(1);
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+        assertThat(gqs.playerHasHexproof(gd, player2.getId())).isFalse();
+    }
 }

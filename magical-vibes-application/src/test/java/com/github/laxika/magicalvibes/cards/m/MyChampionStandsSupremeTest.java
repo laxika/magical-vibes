@@ -75,6 +75,34 @@ class MyChampionStandsSupremeTest extends BaseCardTest {
     }
 
     @Test
+    void abandonsWhenYourCommanderLeavesUnderAnOpponentsControl() {
+        Card commanderCard = new ArcanisTheOmnipotent();
+        gd.makeCommander(player1.getId(), commanderCard);
+        Card scheme = addFaceUpScheme();
+        Permanent commander = harness.addToBattlefieldAndReturn(player2, commanderCard);
+        commander.setCommander(true);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, commander));
+        resolveAllTriggers();
+
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+    }
+
+    @Test
+    void staysWhenANoncommanderCreatureLeavesTheBattlefield() {
+        Card scheme = addFaceUpScheme();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArcanisTheOmnipotent());
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
+    }
+
+    @Test
     void faceUpSchemeInCommandZoneAddsCountersWhenCommanderAttacks() {
         Card commanderCard = new ArcanisTheOmnipotent();
         gd.makeCommander(player1.getId(), commanderCard);

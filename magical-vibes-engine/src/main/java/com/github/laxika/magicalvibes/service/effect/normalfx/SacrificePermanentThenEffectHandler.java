@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -28,6 +29,7 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final SchemeAbandonSupport schemeAbandonSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,6 +39,14 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SacrificePermanentThenEffect) effect;
+        if (e.filter() instanceof PermanentIsSourcePermanentPredicate
+                && gameData.isFaceUpScheme(entry.getCard())) {
+            // A face-up scheme in the command zone is abandoned, never sacrificed (CR 701.33b).
+            if (schemeAbandonSupport.abandon(gameData, entry.getCard(), null) && e.thenEffect() != null) {
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(e.thenEffect()));
+            }
+            return;
+        }
 
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);

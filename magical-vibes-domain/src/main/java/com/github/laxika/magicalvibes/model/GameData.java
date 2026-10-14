@@ -604,6 +604,11 @@ public class GameData {
      * and are face down, because a scheme deck is part of the command zone (CR 904.4).
      */
     public final Map<UUID, List<Card>> playerSchemeDecks = new ConcurrentHashMap<>();
+    /**
+     * The permanent view each face-up scheme triggers from, by card id, so the scheme keeps one
+     * source id while it stays face up. Rebuilt lazily, so copies start empty.
+     */
+    private final Map<UUID, Permanent> faceUpSchemeSourceViews = new ConcurrentHashMap<>();
     /** Cards currently designated as each player's commander, including commanders on the battlefield. */
     public final Map<UUID, List<Card>> playerCommanders = new ConcurrentHashMap<>();
     /** Commander tax by card identity. */
@@ -5056,6 +5061,54 @@ public class GameData {
         return schemes;
     }
 
+    /**
+     * Calls {@code action} with each face-up scheme's owner and a permanent view of the scheme, in
+     * player order, so trigger collectors that scan permanents also see the triggered abilities of
+     * face-up schemes in the command zone (CR 314.4). The view is not on any battlefield.
+     */
+    public void forEachFaceUpSchemeSource(BiConsumer<UUID, Permanent> action) {
+        for (UUID playerId : orderedPlayerIds) {
+            for (Card scheme : faceUpSchemes(playerId)) {
+                action.accept(playerId, faceUpSchemeSource(scheme));
+            }
+        }
+    }
+
+    /**
+     * The player's battlefield followed by permanent views of their face-up schemes, whose triggered
+     * abilities trigger from the command zone (CR 314.4). Returns the battlefield list itself when
+     * the player has no face-up scheme.
+     */
+    public List<Permanent> permanentsAndFaceUpSchemes(UUID playerId) {
+        List<Permanent> battlefield = playerBattlefields.get(playerId);
+        List<Card> schemes = faceUpSchemes(playerId);
+        if (schemes.isEmpty()) {
+            return battlefield == null ? List.of() : battlefield;
+        }
+        List<Permanent> sources = battlefield == null ? new ArrayList<>() : new ArrayList<>(battlefield);
+        for (Card scheme : schemes) {
+            sources.add(faceUpSchemeSource(scheme));
+        }
+        return sources;
+    }
+
+    /** The face-up scheme whose trigger-source view has this id, or {@code null}. */
+    public Card findFaceUpSchemeBySourceId(UUID sourceId) {
+        if (sourceId == null) {
+            return null;
+        }
+        for (Permanent view : faceUpSchemeSourceViews.values()) {
+            if (view.getId().equals(sourceId) && isFaceUpScheme(view.getCard())) {
+                return view.getCard();
+            }
+        }
+        return null;
+    }
+
+    private Permanent faceUpSchemeSource(Card scheme) {
+        return faceUpSchemeSourceViews.computeIfAbsent(scheme.getId(), ignored -> new Permanent(scheme));
+    }
+
     /** Whether the card is a scheme face up in its owner's command zone (CR 314.4). */
     public boolean isFaceUpScheme(Card card) {
         if (card == null || !card.hasType(CardType.SCHEME) || faceDownCommandZoneCards.contains(card.getId())) {
@@ -5079,6 +5132,7 @@ public class GameData {
                 continue;
             }
             faceDownCommandZoneCards.add(scheme.getId());
+            faceUpSchemeSourceViews.remove(scheme.getId());
             List<Card> schemeDeck = playerSchemeDecks.computeIfAbsent(
                     commandZone.getKey(), ignored -> new ArrayList<>());
             schemeDeck.remove(scheme);

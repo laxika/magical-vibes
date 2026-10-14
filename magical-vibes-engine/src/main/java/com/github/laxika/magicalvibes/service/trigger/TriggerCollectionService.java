@@ -277,6 +277,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -664,10 +666,7 @@ public class TriggerCollectionService {
             schemesSet = 3;
         }
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(settingPlayerId);
-        if (battlefield == null) {
-            return;
-        }
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(settingPlayerId, List.of());
 
         for (int schemeIndex = 0; schemeIndex < schemesSet; schemeIndex++) {
             TriggerContext context = new TriggerContext.SchemeSetInMotion(schemeEntry, settingPlayerId);
@@ -675,6 +674,8 @@ public class TriggerCollectionService {
                 dispatchSlot(gameData, permanent, settingPlayerId,
                         EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context);
             }
+            dispatchFaceUpSchemes(gameData, EffectSlot.ON_CONTROLLER_SETS_SCHEME_IN_MOTION, context,
+                    settingPlayerId::equals);
         }
     }
 
@@ -879,6 +880,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((playerId, perm) -> {
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, ctx);
         });
+        dispatchFaceUpSchemes(gameData, EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, ctx, ownerId -> true);
 
         collectTemporaryGlobalSpellCastTriggers(gameData, castingPlayerId, castZone,
                 exiledSourcePermanentId);
@@ -899,6 +901,7 @@ public class TriggerCollectionService {
             if (!playerId.equals(castingPlayerId)) return;
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx);
         });
+        dispatchFaceUpSchemes(gameData, EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx, castingPlayerId::equals);
 
         if (gameData.planechase != null && castingPlayerId.equals(gameData.planechase.controllerId)) {
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
@@ -920,6 +923,8 @@ public class TriggerCollectionService {
             if (playerId.equals(castingPlayerId)) return;
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_CASTS_SPELL, ctx);
         });
+        dispatchFaceUpSchemes(gameData, EffectSlot.ON_OPPONENT_CASTS_SPELL, ctx,
+                ownerId -> !ownerId.equals(castingPlayerId));
 
         dispatchSuspendedExiledCardSpellCastTriggers(gameData, castingPlayerId, ctx);
 
@@ -3391,7 +3396,7 @@ public class TriggerCollectionService {
 
         boolean hasTrigger = false;
         if (damagedPlayerBattlefield != null) {
-            for (Permanent perm : damagedPlayerBattlefield) {
+            for (Permanent perm : gameData.permanentsAndFaceUpSchemes(damagedPlayerId)) {
                 if (!perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).isEmpty()
                         || (isCombatDamage
                                 && !perm.getCard().getEffects(EffectSlot.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU).isEmpty())) {
@@ -3419,7 +3424,7 @@ public class TriggerCollectionService {
 
         var ctx = new TriggerContext.DamageToController(damagedPlayerId, sourcePermanentId, isCombatDamage);
 
-        for (Permanent perm : new ArrayList<>(damagedPlayerBattlefield)) {
+        for (Permanent perm : new ArrayList<>(gameData.permanentsAndFaceUpSchemes(damagedPlayerId))) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)) {
                 var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
                 boolean triggered = dispatch(match, EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
@@ -3434,7 +3439,7 @@ public class TriggerCollectionService {
 
     /**
      * Puts every {@link EffectSlot#ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU} ability on the damaged
-     * player's battlefield onto the stack when a creature dealt them combat damage. The whole slot
+     * player's battlefield and face-up schemes (CR 314.4) onto the stack when a creature dealt them combat damage. The whole slot
      * becomes one triggered ability per watching permanent whose {@code targetId} is the damaging
      * creature, so "destroy that creature" is expressed with {@code DestroyTargetPermanentEffect}
      * while the ability itself does not target (CR 115.10a).
@@ -3444,7 +3449,7 @@ public class TriggerCollectionService {
                                                         Set<String> firedBatchedTriggerKeys) {
         if (!gameQueryService.isCreature(gameData, sourceCreature)) return;
 
-        for (Permanent perm : new ArrayList<>(gameData.playerBattlefields.get(damagedPlayerId))) {
+        for (Permanent perm : new ArrayList<>(gameData.permanentsAndFaceUpSchemes(damagedPlayerId))) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
             List<CardEffect> effects = new ArrayList<>();
             List<CardEffect> authoredEffects = perm.getCard()
@@ -12719,13 +12724,16 @@ public class TriggerCollectionService {
     public void checkAnotherPermanentLeavesBattlefieldTriggers(GameData gameData, Permanent leavingPermanent) {
         UUID leavingId = leavingPermanent.getId();
 
-        gameData.forEachPermanent((ownerId, perm) -> {
+        BiConsumer<UUID, Permanent> collect = (ownerId, perm) -> {
             if (perm.getId().equals(leavingId)) return;
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD)) {
-                CardEffect resolved = effect instanceof LeavingPermanentIdAwareEffect aware
-                        ? aware.boundToLeavingPermanentId(leavingId)
-                        : effect;
+                CardEffect resolved = resolveTriggeringPermanentConditional(
+                        gameData, perm, ownerId, leavingPermanent, effect);
+                if (resolved == null) continue;
+                if (resolved instanceof LeavingPermanentIdAwareEffect aware) {
+                    resolved = aware.boundToLeavingPermanentId(leavingId);
+                }
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -12739,7 +12747,10 @@ public class TriggerCollectionService {
                 log.info("Game {} - {} triggers on another permanent leaving the battlefield ({})",
                         gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
             }
-        });
+        };
+        gameData.forEachPermanent(collect);
+        // CR 314.4: a face-up scheme's triggered abilities trigger from the command zone.
+        gameData.forEachFaceUpSchemeSource(collect);
     }
 
     /**
@@ -12756,6 +12767,10 @@ public class TriggerCollectionService {
             if (controllerId.equals(gameData.simultaneousDyingPermanentControllers.get(id))) {
                 sourcesById.putIfAbsent(id, source);
             }
+        });
+        // CR 314.4: a face-up scheme's triggered abilities trigger from the command zone.
+        gameData.forEachFaceUpSchemeSource((ownerId, scheme) -> {
+            if (controllerId.equals(ownerId)) sourcesById.put(scheme.getId(), scheme);
         });
 
         for (Permanent perm : sourcesById.values()) {
@@ -16870,6 +16885,19 @@ public class TriggerCollectionService {
     }
 
     // ── Internal dispatch ──────────────────────────────────────────────
+
+    /**
+     * Dispatches {@code slot} for each face-up scheme in the command zone whose owner passes
+     * {@code ownerFilter}; a face-up scheme's triggered abilities trigger there (CR 314.4).
+     */
+    private void dispatchFaceUpSchemes(GameData gameData, EffectSlot slot, TriggerContext ctx,
+                                       Predicate<UUID> ownerFilter) {
+        gameData.forEachFaceUpSchemeSource((ownerId, scheme) -> {
+            if (ownerFilter.test(ownerId)) {
+                dispatchSlot(gameData, scheme, ownerId, slot, ctx);
+            }
+        });
+    }
 
     private boolean dispatchSlot(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot, TriggerContext ctx) {
         return dispatchSlot(gameData, perm, controllerId, slot, ctx, null);

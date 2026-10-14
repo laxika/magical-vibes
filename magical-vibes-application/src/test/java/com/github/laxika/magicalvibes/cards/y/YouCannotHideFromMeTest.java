@@ -88,6 +88,43 @@ class YouCannotHideFromMeTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard() instanceof YouCannotHideFromMe);
     }
 
+    @Test
+    void faceUpSchemeInCommandZoneBoostsTargetAtCombat() {
+        gd.playerCommandZones.get(player1.getId()).add(new YouCannotHideFromMe());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void faceDownSchemeInCommandZoneDoesNotTriggerAtCombat() {
+        YouCannotHideFromMe scheme = new YouCannotHideFromMe();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        gd.faceDownCommandZoneCards.add(scheme.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    void faceUpSchemeInCommandZoneIsAbandonedAtOpponentEndStepBelowHalfStartingLife() {
+        YouCannotHideFromMe scheme = new YouCannotHideFromMe();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        gd.playerLifeTotals.put(player2.getId(), 9);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

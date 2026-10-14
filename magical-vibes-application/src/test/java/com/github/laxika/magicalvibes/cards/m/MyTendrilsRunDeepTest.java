@@ -105,6 +105,36 @@ class MyTendrilsRunDeepTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(scheme);
     }
 
+    @Test
+    void faceUpSchemeInCommandZoneDrawsTwoAndIsAbandonedWithSixLands() {
+        MyTendrilsRunDeep scheme = new MyTendrilsRunDeep();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        addLands(player1, 6);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+
+        resolveControllerEndStep();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+    }
+
+    @Test
+    void faceUpSchemeInCommandZoneDoesNotTriggerDuringOpponentsEndStep() {
+        MyTendrilsRunDeep scheme = new MyTendrilsRunDeep();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        addLands(player1, 6);
+        harness.setHand(player1, List.of());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
+    }
+
     private void addLands(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player, new Forest());

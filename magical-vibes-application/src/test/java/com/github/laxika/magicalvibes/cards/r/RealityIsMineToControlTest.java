@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,38 @@ class RealityIsMineToControlTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().getName().equals(spell.getName()))
                 .hasSize(2)
                 .anyMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void faceUpSchemeInCommandZoneIsAbandonedToCopySpell() {
+        RealityIsMineToControl scheme = new RealityIsMineToControl();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(6);
+    }
+
+    @Test
+    void faceUpSchemeInCommandZoneDoesNotTriggerForOpponentsSpell() {
+        RealityIsMineToControl scheme = new RealityIsMineToControl();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DarkRitual()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
     }
 
     private Permanent addScheme() {
