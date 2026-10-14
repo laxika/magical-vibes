@@ -1065,7 +1065,7 @@ public class SpellCastingService {
                 // Split cards with fuse are modes with their own total cost (CR 709.3, CR 702.102c):
                 // the chosen half's cost replaces the card's printed cost on the runtime copy, so
                 // every downstream cost modifier / payment step sees the cost actually being paid.
-                applyModeManaCost(card, chosenModes);
+                applyModeManaCost(card, chosenModeIndices, chosenModes);
 
                 if (card.getSelectedRoomDoor() == null) {
                     card.clearRuntimeSpellTargets();
@@ -1268,9 +1268,27 @@ public class SpellCastingService {
      * Applies a chosen mode's own total mana cost to the card being cast, when it declares one.
      * Only single-mode selections carry a cost (split halves and the fuse mode are mutually
      * exclusive choices of one {@code ChooseOneEffect}); ordinary modals leave the cost untouched.
+     * A split card's half takes all its characteristics from its oracle half, because only the half
+     * being cast exists on the stack (CR 709.3b). The fuse mode keeps the whole card's combined
+     * types (CR 702.102b) and pays the mode's total cost.
      */
-    private static void applyModeManaCost(Card card, List<ChooseOneEffect.ChooseOneOption> chosenModes) {
+    private static void applyModeManaCost(Card card, List<Integer> chosenModeIndices,
+                                          List<ChooseOneEffect.ChooseOneOption> chosenModes) {
         if (chosenModes.size() != 1) {
+            return;
+        }
+        com.github.laxika.magicalvibes.model.OracleData half =
+                splitHalf(card, chosenModeIndices.getFirst(), chosenModes.getFirst());
+        if (half != null) {
+            card.setName(half.name());
+            card.setType(half.type());
+            card.setAdditionalTypes(half.additionalTypes());
+            card.setSupertypes(half.supertypes());
+            card.setSubtypes(half.subtypes());
+            card.setManaCost(half.manaCost());
+            card.setColors(half.colors());
+            card.setColor(half.color());
+            card.setCardText(half.cardText());
             return;
         }
         if (chosenModes.getFirst().spellType() != null) {
@@ -1291,7 +1309,24 @@ public class SpellCastingService {
         }
     }
 
-    /** Returns the selected split half's spell name and mana characteristics for casting checks. */
+    /**
+     * The oracle half of a split card that a mode casts, or null when the mode is not one half — an
+     * ordinary modal, a Room door, or the fuse mode, which follows the halves (CR 709.3).
+     */
+    private static com.github.laxika.magicalvibes.model.OracleData splitHalf(
+            Card card, int modeIndex, ChooseOneEffect.ChooseOneOption option) {
+        if (card == null || option.manaCost() == null || card.getSubtypes().contains(CardSubtype.ROOM)) {
+            return null;
+        }
+        List<com.github.laxika.magicalvibes.model.OracleData> halves = card.getSplitHalves();
+        return halves.size() >= 2 && modeIndex < halves.size() ? halves.get(modeIndex) : null;
+    }
+
+    /**
+     * Returns the selected split half's characteristics for casting checks: only the chosen half is
+     * evaluated to see if it can be cast (CR 709.3a). Without oracle halves, falls back to the
+     * half's name and the mode's own cost.
+     */
     private static Card selectedSplitModeCharacteristics(Card card, int modeEncoding) {
         if (card == null || card.getName() == null || !card.getName().contains(" // ")
                 || card.getSubtypes().contains(CardSubtype.ROOM)) return card;
@@ -1306,7 +1341,7 @@ public class SpellCastingService {
         if (option.manaCost() == null) return card;
         Card characteristics = card.createRuntimeCopy();
         characteristics.setName(halfNames[modes.getFirst()]);
-        applyModeManaCost(characteristics, List.of(option));
+        applyModeManaCost(characteristics, modes, List.of(option));
         return characteristics;
     }
 
@@ -1335,18 +1370,21 @@ public class SpellCastingService {
             return card;
         }
         Card characteristics = card.createRuntimeCopy();
-        applyModeManaCost(characteristics, List.of(option));
+        applyModeManaCost(characteristics, modes, List.of(option));
         return characteristics;
     }
 
-    private static String selectedModalManaCost(List<CardEffect> effects, int modeEncoding) {
+    private static String selectedModalManaCost(Card card, List<CardEffect> effects, int modeEncoding) {
         for (CardEffect effect : effects) {
             if (effect instanceof ChooseOneEffect modal) {
                 List<Integer> selectedModes = modal.decodeModeIndices(modeEncoding);
                 if (selectedModes.size() != 1) {
                     return null;
                 }
-                return modal.options().get(selectedModes.getFirst()).manaCost();
+                ChooseOneEffect.ChooseOneOption option = modal.options().get(selectedModes.getFirst());
+                com.github.laxika.magicalvibes.model.OracleData half =
+                        splitHalf(card, selectedModes.getFirst(), option);
+                return half != null ? half.manaCost() : option.manaCost();
             }
         }
         return null;
@@ -3739,12 +3777,16 @@ public class SpellCastingService {
                      card, additionalCosts.entwineManaCost(), entwineModal.choicesRequired(),
                      entwineModal.options().size(), modalModeCount);
          }
-         String selectedModeManaCost = selectedModalManaCost(filteredSpellEffects, modeEncoding);
+         String selectedModeManaCost = selectedModalManaCost(card, filteredSpellEffects, modeEncoding);
+        // A split half keeps its own cost on the stack (CR 709.3b), so only other cost-bearing modes
+        // restore the printed cost.
         boolean preservePrintedModeManaCost = filteredSpellEffects.stream()
                 .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
                 .anyMatch(modal -> modal.decodeModeIndices(modeEncoding).size() == 1
                         && modal.options().get(modal.decodeModeIndices(modeEncoding).getFirst()).manaCost() != null
-                        && modal.options().get(modal.decodeModeIndices(modeEncoding).getFirst()).spellType() == null);
+                        && modal.options().get(modal.decodeModeIndices(modeEncoding).getFirst()).spellType() == null
+                        && splitHalf(card, modal.decodeModeIndices(modeEncoding).getFirst(),
+                        modal.options().get(modal.decodeModeIndices(modeEncoding).getFirst())) == null);
         AdditionalSpellCostService.ExtractedCosts modalSelectionCosts = additionalCosts;
         filteredSpellEffects.stream()
                 .filter(ChooseOneEffect.class::isInstance)

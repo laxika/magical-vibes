@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.carddata;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import org.junit.jupiter.api.Test;
@@ -210,6 +211,50 @@ class FaceOracleMapperTest {
         assertThat(data.toughness()).isZero();
     }
 
+    /** CR 709.3b: a half on the stack has only its own characteristics. */
+    @Test
+    void eachSplitHalfKeepsItsOwnNameCostTypeAndColors() {
+        OracleData data = flotsamJetsam();
+
+        assertThat(data.splitHalves()).hasSize(2);
+        OracleData jetsam = data.splitHalves().get(1);
+        assertThat(jetsam.name()).isEqualTo("Jetsam");
+        assertThat(jetsam.manaCost()).isEqualTo("{4}{U/B}{U/B}");
+        assertThat(jetsam.type()).isEqualTo(CardType.SORCERY);
+        assertThat(jetsam.additionalTypes()).isEmpty();
+        // CR 202.2: the half's colours come from its own hybrid symbols, not the provider's array.
+        assertThat(jetsam.colors()).containsExactly(CardColor.BLACK, CardColor.BLUE);
+        assertThat(data.splitHalves().get(0).type()).isEqualTo(CardType.INSTANT);
+    }
+
+    /** CR 709.4b/c: outside the stack the whole card has both halves' types and colours. */
+    @Test
+    void aWholeSplitCardCombinesItsHalvesTypesAndColors() {
+        OracleData data = flotsamJetsam();
+
+        assertThat(data.name()).isEqualTo("Flotsam // Jetsam");
+        assertThat(data.type()).isEqualTo(CardType.INSTANT);
+        assertThat(data.additionalTypes()).containsExactly(CardType.SORCERY);
+        assertThat(data.colors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN, CardColor.BLUE);
+        assertThat(data.combinedManaValue()).isEqualTo(8);
+    }
+
+    @Test
+    void aNonSplitCardHasNoHalves() {
+        assertThat(map(face(), FRONT).splitHalves()).isEmpty();
+    }
+
+    /** MTGJSON-shaped: the front entry reports only the first half's colours. */
+    private static OracleData flotsamJetsam() {
+        RawFace front = face().name("Flotsam // Jetsam").manaCost("{1}{G/U}").typeLine("Instant")
+                .colors(List.of("G", "U")).layout("split").manaValue("8.0").build();
+        RawFace flotsam = face().name("Flotsam").manaCost("{1}{G/U}").typeLine("Instant")
+                .layout("split").build();
+        RawFace jetsam = face().name("Jetsam").manaCost("{4}{U/B}{U/B}").typeLine("Sorcery")
+                .colors(List.of("U")).layout("split").build();
+        return FaceOracleMapper.toSplitCardOracleData(front, List.of(flotsam, jetsam));
+    }
+
     private static OracleData map(Builder face, boolean isBackFace) {
         return FaceOracleMapper.toOracleData(face.build(), isBackFace);
     }
@@ -237,6 +282,8 @@ class FaceOracleMapperTest {
         private String defense;
         private List<String> keywords = List.of();
         private String watermark;
+        private String layout;
+        private String manaValue;
 
         Builder name(String value) { this.name = value; return this; }
         Builder manaCost(String value) { this.manaCost = value; return this; }
@@ -251,10 +298,12 @@ class FaceOracleMapperTest {
         Builder defense(String value) { this.defense = value; return this; }
         Builder keywords(List<String> value) { this.keywords = value; return this; }
         Builder watermark(String value) { this.watermark = value; return this; }
+        Builder layout(String value) { this.layout = value; return this; }
+        Builder manaValue(String value) { this.manaValue = value; return this; }
 
         RawFace build() {
             return new RawFace(name, manaCost, typeLine, text, colors, colorIndicator, colorIdentity,
-                    power, toughness, loyalty, defense, keywords, watermark);
+                    power, toughness, loyalty, defense, keywords, watermark, layout, manaValue);
         }
     }
 }

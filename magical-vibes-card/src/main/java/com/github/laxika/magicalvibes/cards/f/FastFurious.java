@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -27,12 +26,12 @@ public class FastFurious extends Card {
                         SequenceEffect.of(
                                 new DiscardEffect(1, DiscardRecipient.CONTROLLER),
                                 new DrawCardEffect(2))
-                ).withManaCost("{2}{R}").withSpellType(CardType.INSTANT),
+                ).withManaCost("{2}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Furious - Deals 3 damage to each creature without flying",
                         new MassDamageEffect(3, false, false,
                                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))
-                ).withManaCost("{3}{R}{R}").withSpellType(CardType.SORCERY)
+                ).withManaCost("{3}{R}{R}")
         )));
     }
 }

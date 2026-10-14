@@ -65,6 +65,100 @@ public final class FaceOracleMapper {
                         ? new java.math.BigDecimal(face.manaValue()).intValueExact() : null);
     }
 
+    /** True for a layout whose card is printed as halves cast separately (CR 709). */
+    public static boolean isSplitLayout(String layout) {
+        return "split".equals(layout) || "aftermath".equals(layout);
+    }
+
+    /**
+     * A split card: the whole card from its front face, plus each half on its own.
+     *
+     * <p>Every zone but the stack sees the halves combined — the whole card has each half's card
+     * types (CR 709.4c) and the colours of their combined mana cost (CR 709.4b). Providers disagree
+     * on the whole card's colours (Scryfall reports both halves', MTGJSON only the front's), so the
+     * union is taken here from the halves themselves. A spell cast from one half has only that
+     * half's characteristics (CR 709.3b), which is what {@link OracleData#splitHalves()} carries.
+     */
+    public static OracleData toSplitCardOracleData(RawFace card, List<RawFace> halves) {
+        OracleData whole = toOracleData(card, false);
+        List<OracleData> mappedHalves = halves.stream().map(FaceOracleMapper::toSplitHalfOracleData).toList();
+        if (mappedHalves.size() < 2) {
+            return whole;
+        }
+
+        Set<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
+        additionalTypes.addAll(whole.additionalTypes());
+        for (OracleData half : mappedHalves) {
+            if (half.type() != null) additionalTypes.add(half.type());
+            additionalTypes.addAll(half.additionalTypes());
+        }
+        additionalTypes.remove(whole.type());
+
+        Set<CardColor> colorSet = EnumSet.noneOf(CardColor.class);
+        colorSet.addAll(whole.colors());
+        mappedHalves.forEach(half -> colorSet.addAll(half.colors()));
+        List<CardColor> colors = mapColors(colorSet.stream()
+                .map(FaceOracleMapper::symbolOf).sorted().toList());
+
+        return new OracleData(whole.name(), whole.type(), Set.copyOf(additionalTypes), whole.manaCost(),
+                colors.isEmpty() ? null : colors.get(0), colors, whole.colorIdentity(),
+                whole.supertypes(), whole.subtypes(), whole.cardText(), whole.power(),
+                whole.toughness(), whole.keywords(), whole.loyalty(), whole.defense(),
+                whole.watermark(), whole.combinedManaValue(), mappedHalves);
+    }
+
+    /**
+     * One half of a split card with only its own characteristics (CR 709.3b). Its colours come from
+     * its own mana cost (CR 202.2) rather than from the provider, since neither provider reliably
+     * reports a single half's colours.
+     */
+    static OracleData toSplitHalfOracleData(RawFace half) {
+        TypeLineParser.ParsedTypeLine parsed = TypeLineParser.parse(half.typeLine() == null ? "" : half.typeLine());
+        List<CardColor> colors = mapColors(manaCostColorSymbols(half.manaCost()));
+        String cardText = cardTextOf(half);
+        return new OracleData(
+                half.name(),
+                parsed.type(),
+                parsed.additionalTypes(),
+                blankToNull(half.manaCost()),
+                colors.isEmpty() ? null : colors.get(0),
+                colors,
+                mapColors(half.colorIdentity()),
+                parsed.supertypes(),
+                parsed.subtypes(),
+                cardText,
+                null,
+                null,
+                keywordsOf(half, cardText),
+                null,
+                null,
+                null);
+    }
+
+    /** The colour symbols in a mana cost, sorted the way Scryfall orders colour arrays. */
+    private static List<String> manaCostColorSymbols(String manaCost) {
+        if (manaCost == null) {
+            return List.of();
+        }
+        java.util.TreeSet<String> symbols = new java.util.TreeSet<>();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\{([^}]*)}").matcher(manaCost);
+        while (matcher.find()) {
+            for (String part : matcher.group(1).split("/")) {
+                if (CardDataSupport.COLOR_MAP.containsKey(part)) {
+                    symbols.add(part);
+                }
+            }
+        }
+        return List.copyOf(symbols);
+    }
+
+    private static String symbolOf(CardColor color) {
+        return CardDataSupport.COLOR_MAP.entrySet().stream()
+                .filter(entry -> entry.getValue() == color)
+                .map(java.util.Map.Entry::getKey)
+                .findFirst().orElseThrow();
+    }
+
     private static boolean isPlaneswalker(TypeLineParser.ParsedTypeLine parsed) {
         return parsed.type() == CardType.PLANESWALKER || parsed.additionalTypes().contains(CardType.PLANESWALKER);
     }

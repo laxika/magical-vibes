@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -21,11 +20,10 @@ public class DiscoveryDispersal extends Card {
 
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
-                        "Discovery — Surveil 2, then draw a card", discovery).withManaCost("{1}{U/B}")
-                        .withSpellType(CardType.SORCERY),
+                        "Discovery — Surveil 2, then draw a card", discovery).withManaCost("{1}{U/B}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Dispersal — Each opponent returns a nonland permanent they control with the greatest mana value among permanents they control to its owner's hand, then discards a card",
-                        dispersal).withManaCost("{3}{U}{B}").withSpellType(CardType.INSTANT)
+                        dispersal).withManaCost("{3}{U}{B}")
         )));
     }
 }

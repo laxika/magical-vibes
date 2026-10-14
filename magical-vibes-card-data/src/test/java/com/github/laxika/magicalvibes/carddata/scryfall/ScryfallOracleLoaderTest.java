@@ -189,6 +189,33 @@ class ScryfallOracleLoaderTest {
         assertThat(data.keywords()).contains(Keyword.CONVERGE);
     }
 
+    @Test
+    void readsEachSplitHalfFromItsCardFace() {
+        OracleData data = ScryfallOracleLoader.parseOracleData(MAPPER.readTree("""
+                {
+                  "name": "Flotsam // Jetsam",
+                  "layout": "split",
+                  "mana_cost": "{1}{G/U} // {4}{U/B}{U/B}",
+                  "cmc": 8.0,
+                  "type_line": "Instant // Sorcery",
+                  "colors": ["B", "G", "U"],
+                  "keywords": ["Investigate", "Mill"],
+                  "card_faces": [
+                    { "name": "Flotsam", "mana_cost": "{1}{G/U}", "type_line": "Instant",
+                      "oracle_text": "Mill three cards. Investigate." },
+                    { "name": "Jetsam", "mana_cost": "{4}{U/B}{U/B}", "type_line": "Sorcery",
+                      "oracle_text": "Each opponent mills three cards." }
+                  ]
+                }
+                """));
+
+        assertThat(data.splitHalves()).extracting(OracleData::name).containsExactly("Flotsam", "Jetsam");
+        assertThat(data.splitHalves()).extracting(OracleData::manaCost)
+                .containsExactly("{1}{G/U}", "{4}{U/B}{U/B}");
+        assertThat(data.splitHalves()).extracting(OracleData::type)
+                .containsExactly(CardType.INSTANT, CardType.SORCERY);
+    }
+
     /** A keyword mentioned inside rules text is not part of a keyword list and stays lowercase. */
     @Test
     void leavesKeywordsMentionedInRulesTextAlone() {

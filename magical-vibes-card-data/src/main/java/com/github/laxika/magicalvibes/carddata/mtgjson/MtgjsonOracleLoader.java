@@ -131,7 +131,11 @@ public class MtgjsonOracleLoader implements OracleLoader {
                 if (front == null) {
                     continue;
                 }
-                frontFaces.put(collectorNumber, parseOracleData(front, false));
+                List<JsonNode> halves = faces.splitHalves().get(collectorNumber);
+                frontFaces.put(collectorNumber, halves == null
+                        ? parseOracleData(front, false)
+                        : FaceOracleMapper.toSplitCardOracleData(toRawFace(front),
+                        halves.stream().map(MtgjsonOracleLoader::toRawSplitHalf).toList()));
 
                 JsonNode back = backFaceNodes.get(collectorNumber);
                 if (back != null) {
@@ -162,9 +166,14 @@ public class MtgjsonOracleLoader implements OracleLoader {
         }
     }
 
-    /** The set's card entries keyed by collector number, one map per side. */
+    /**
+     * The set's card entries keyed by collector number, one map per side.
+     *
+     * @param splitHalves every half of a split card, in side order, keyed by collector number
+     */
     record FaceIndex(Map<String, JsonNode> frontFaces, Map<String, JsonNode> backFaces,
-                     Map<String, List<String>> faceNamesByCollectorNumber) {
+                     Map<String, List<String>> faceNamesByCollectorNumber,
+                     Map<String, List<JsonNode>> splitHalves) {
     }
 
     /**
@@ -179,6 +188,7 @@ public class MtgjsonOracleLoader implements OracleLoader {
         Map<String, JsonNode> frontFaces = new HashMap<>();
         Map<String, JsonNode> backFaces = new HashMap<>();
         Map<String, List<String>> faceNames = new HashMap<>();
+        Map<String, List<JsonNode>> splitHalves = new HashMap<>();
         if (cards != null) {
             for (JsonNode cardNode : cards) {
                 String number = cardNode.get("number").asText();
@@ -189,6 +199,9 @@ public class MtgjsonOracleLoader implements OracleLoader {
                 if (faceName != null) {
                     faceNames.computeIfAbsent(number, ignored -> new ArrayList<>()).add(faceName);
                 }
+                if (FaceOracleMapper.isSplitLayout(CardDataSupport.text(cardNode, "layout"))) {
+                    splitHalves.computeIfAbsent(number, ignored -> new ArrayList<>()).add(cardNode);
+                }
                 if ("b".equals(side)) {
                     backFaces.put(number, cardNode);
                 } else if (!"c".equals(side)) {
@@ -196,8 +209,10 @@ public class MtgjsonOracleLoader implements OracleLoader {
                 }
             }
             backFaces.forEach(frontFaces::putIfAbsent);
+            splitHalves.values().forEach(halves -> halves.sort(java.util.Comparator.comparing(
+                    half -> CardDataSupport.text(half, "side") == null ? "" : CardDataSupport.text(half, "side"))));
         }
-        return new FaceIndex(frontFaces, backFaces, faceNames);
+        return new FaceIndex(frontFaces, backFaces, faceNames, splitHalves);
     }
 
     /** Adds token faces only when a token class is explicitly registered for the set. */
@@ -305,6 +320,15 @@ public class MtgjsonOracleLoader implements OracleLoader {
                 watermark,
                 CardDataSupport.text(face, "layout"),
                 CardDataSupport.text(face, "manaValue"));
+    }
+
+    /** One side entry of a split card as a half, named by its own face name. */
+    private static RawFace toRawSplitHalf(JsonNode half) {
+        RawFace face = toRawFace(half);
+        return new RawFace(
+                CardDataSupport.text(half, "faceName"), face.manaCost(), face.typeLine(), face.text(),
+                face.colors(), face.colorIndicator(), face.colorIdentity(), null, null, null, null,
+                face.keywords(), null, face.layout(), null);
     }
 
     /**

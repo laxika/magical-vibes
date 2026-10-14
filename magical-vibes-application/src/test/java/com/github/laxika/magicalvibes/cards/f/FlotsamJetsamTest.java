@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.Deduce;
 import com.github.laxika.magicalvibes.cards.d.DemandAnswers;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -85,6 +86,20 @@ class FlotsamJetsamTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Jetsam on the stack has only its own name, type and mana value")
+    void jetsamOnTheStackHasOnlyItsOwnCharacteristics() {
+        harness.setHand(player1, List.of(new FlotsamJetsam()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castModalSorcery(player1, 0, 1, List.of());
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Jetsam");
+        assertThat(gd.stack.getLast().getCard().hasType(CardType.SORCERY)).isTrue();
+        assertThat(gd.stack.getLast().getCard().hasType(CardType.INSTANT)).isFalse();
+        assertThat(gd.stack.getLast().getSpellManaValue()).isEqualTo(6);
     }
 
     @Test

@@ -216,6 +216,25 @@ class MtgjsonOracleLoaderTest {
     }
 
     @Test
+    void collectsEverySplitHalfInSideOrder() {
+        JsonNode cards = MAPPER.readTree("""
+                [
+                  { "faceName": "Herd", "number": "100", "side": "b", "layout": "split" },
+                  { "faceName": "Saw", "number": "100", "side": "c", "layout": "split" },
+                  { "faceName": "Smelt", "number": "100", "side": "a", "layout": "split" },
+                  { "faceName": "Huntmaster of the Fells", "number": "140", "side": "a", "layout": "transform" },
+                  { "faceName": "Ravager of the Fells", "number": "140", "side": "b", "layout": "transform" }
+                ]
+                """);
+
+        MtgjsonOracleLoader.FaceIndex faces = MtgjsonOracleLoader.indexFacesByCollectorNumber(cards);
+
+        assertThat(faces.splitHalves().get("100")).extracting(half -> half.get("faceName").asText())
+                .containsExactly("Smelt", "Herd", "Saw");
+        assertThat(faces.splitHalves()).containsOnlyKeys("100");
+    }
+
+    @Test
     void parsesCreatureAndNonCreatureTokensUnderScryfallTokenSetCode() {
         JsonNode setData = MAPPER.readTree("""
                 {

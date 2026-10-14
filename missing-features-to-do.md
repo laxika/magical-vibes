@@ -36,33 +36,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 6. Split cards keep each half's own characteristics
-
-**Status:** open · **Found:** 2026-10-13, while fixing F-card tests
-
-**Failing tests:**
-- `FlotsamJetsamTest.jetsamCannotBeCastDuringCombat()`
-
-**What the rules require.** CR 709.3a: only the half being cast is evaluated to see if it can be cast,
-and only that half is put onto the stack. Jetsam is a sorcery half of an instant // sorcery card, so it
-can only be cast at sorcery speed. The engine stores one card type per card (the front face's), and the
-Scryfall loader only reads face 0 of a split card, so Jetsam is timed as an instant.
-
-**Why it's large.** Per-half type, mana cost and timing data has to come through the card-data loader,
-`Card` and the cast path (`selectedSplitModeCharacteristics`), and every split, aftermath and
-fuse card needs re-checking.
-
-**Prompt to start it:**
-
-```
-Give each half of a split card its own characteristics (types, mana cost, timing) per CR 709.3a,
-loaded from Scryfall's card_faces, and use the chosen half's values when casting. Start with
-FlotsamJetsamTest, then run the other split/aftermath/fuse card tests and ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 7. Choose in APNAP order, then move simultaneously (clash, each-player discards)
 
 **Status:** open · **Found:** 2026-10-13, while fixing F-card tests

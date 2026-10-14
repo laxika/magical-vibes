@@ -160,6 +160,8 @@ public class Card {
      * colour predicate may read it, because a land is colourless under CR 202.2.
      */
     private List<CardColor> colorIdentity = List.of();
+    /** Each half of a split card with only its own characteristics (CR 709.3b); empty otherwise. */
+    private List<OracleData> splitHalves = List.of();
 
     private Set<CardType> additionalTypes = Set.of();
     private Set<CardSupertype> supertypes = Set.of();
@@ -354,6 +356,7 @@ public class Card {
             this.color = oracle.color();
             this.colors = oracle.colors();
             this.colorIdentity = oracle.colorIdentity();
+            this.splitHalves = oracle.splitHalves();
             this.supertypes = oracle.supertypes();
             this.subtypes = oracle.subtypes();
             this.cardText = oracle.cardText();
@@ -406,6 +409,7 @@ public class Card {
         this.color = source.color;
         this.colors = source.colors;
         this.colorIdentity = source.colorIdentity;
+        this.splitHalves = source.splitHalves;
         this.additionalTypes = source.additionalTypes;
         this.supertypes = source.supertypes;
         this.subtypes = source.subtypes;
@@ -555,6 +559,7 @@ public class Card {
         this.color = face.color;
         this.colors = face.colors;
         this.colorIdentity = face.colorIdentity;
+        this.splitHalves = face.splitHalves;
         this.additionalTypes = face.additionalTypes;
         this.supertypes = face.supertypes;
         this.subtypes = face.subtypes;

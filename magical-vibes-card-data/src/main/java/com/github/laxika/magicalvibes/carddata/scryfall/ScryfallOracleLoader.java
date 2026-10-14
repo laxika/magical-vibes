@@ -235,7 +235,42 @@ public class ScryfallOracleLoader implements OracleLoader {
     }
 
     static OracleData parseOracleData(JsonNode card) {
-        return FaceOracleMapper.toOracleData(toRawFrontFace(card), false);
+        RawFace front = toRawFrontFace(card);
+        if (FaceOracleMapper.isSplitLayout(front.layout())) {
+            return FaceOracleMapper.toSplitCardOracleData(front, toRawSplitHalves(card));
+        }
+        return FaceOracleMapper.toOracleData(front, false);
+    }
+
+    /**
+     * Each {@code card_faces} entry of a split card as a half. Scryfall keeps a half's name, cost,
+     * type line and text on the face but its colours (combined) and keywords on the card.
+     */
+    private static List<RawFace> toRawSplitHalves(JsonNode card) {
+        JsonNode faces = card.get("card_faces");
+        if (faces == null || !faces.isArray()) {
+            return List.of();
+        }
+        List<RawFace> halves = new ArrayList<>();
+        for (JsonNode face : faces) {
+            halves.add(new RawFace(
+                    CardDataSupport.text(face, "name"),
+                    CardDataSupport.text(face, "mana_cost"),
+                    CardDataSupport.text(face, "type_line"),
+                    CardDataSupport.text(face, "oracle_text"),
+                    List.of(),
+                    List.of(),
+                    CardDataSupport.strings(card, "color_identity"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    CardDataSupport.strings(card, "keywords"),
+                    null,
+                    CardDataSupport.text(card, "layout"),
+                    null));
+        }
+        return halves;
     }
 
     static List<String> parseFaceNames(JsonNode card) {
