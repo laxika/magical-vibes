@@ -390,6 +390,10 @@ public class GraveyardChoiceHandlerService {
                 if (destination == GraveyardChoiceDestination.BATTLEFIELD
                         && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
                     blockedFromEntering = true;
+                } else if (destination == GraveyardChoiceDestination.BATTLEFIELD
+                        && gameData.pendingGraveyardReturnBatch != null
+                        && gameData.pendingGraveyardReturnBatch.holdInGraveyard()) {
+                    // Stays in the graveyard until the whole batch enters.
                 } else if (destination == GraveyardChoiceDestination.EXILE) {
                     permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
                 } else {
@@ -690,7 +694,7 @@ public class GraveyardChoiceHandlerService {
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
-        } else if (gameData.pendingGraveyardReturnBatch != null) {
+        } else if (gameData.pendingGraveyardReturnBatch != null || gameData.graveyardReturnQueueLeaveBatchOpen) {
             graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;

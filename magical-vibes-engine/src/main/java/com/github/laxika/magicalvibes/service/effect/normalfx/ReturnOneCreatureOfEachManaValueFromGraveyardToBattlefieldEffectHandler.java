@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.PendingGraveyardReturnBatch;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +28,6 @@ public class ReturnOneCreatureOfEachManaValueFromGraveyardToBattlefieldEffectHan
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,6 +41,9 @@ public class ReturnOneCreatureOfEachManaValueFromGraveyardToBattlefieldEffectHan
         UUID controllerId = entry.getControllerId();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
 
+        // Every card is chosen first and they all return together (CR 603.6a); until then the chosen
+        // cards stay in the graveyard.
+        gameData.pendingGraveyardReturnBatch = PendingGraveyardReturnBatch.heldInGraveyard(controllerId);
         for (int manaValue : e.manaValues()) {
             if (graveyard == null || graveyard.isEmpty()) {
                 break;
@@ -52,24 +54,16 @@ public class ReturnOneCreatureOfEachManaValueFromGraveyardToBattlefieldEffectHan
                     .filter(card -> predicateEvaluationService.matchesCardPredicate(card, filter, null))
                     .toList();
 
-            if (matching.isEmpty()) {
-                continue;
-            }
-
             if (matching.size() == 1) {
-                Card card = matching.getFirst();
-                graveyard.remove(card);
-                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
-                graveyardReturnSupport.putCardOntoBattlefield(gameData, controllerId, card);
-            } else {
+                gameData.pendingGraveyardReturnBatch =
+                        gameData.pendingGraveyardReturnBatch.add(matching.getFirst(), controllerId);
+            } else if (matching.size() > 1) {
                 gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
                         controllerId, 1, filter, GraveyardChoiceDestination.BATTLEFIELD, false, true, false));
             }
         }
 
-        if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {
-            graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
-        }
+        graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
     }
 
     private CardPredicate creatureWithManaValue(int manaValue) {

@@ -71,7 +71,7 @@ class RedshiftRocketeerChiefTest extends BaseCardTest {
                 (PendingInteraction.HandCardChoice) gd.interaction.activeInteraction();
         assertThat(choice.validIndices()).containsExactly(0, 1);
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -176,7 +176,7 @@ class RedshiftRocketeerChiefTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
         resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Brightfield Glider").isSaddled()).isTrue();

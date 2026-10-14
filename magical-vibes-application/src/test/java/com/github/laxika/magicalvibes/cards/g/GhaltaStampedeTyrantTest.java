@@ -39,7 +39,7 @@ class GhaltaStampedeTyrantTest extends BaseCardTest {
         assertThat(choice.putAnyNumber()).isTrue();
 
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(abrade);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -121,7 +121,7 @@ class GhaltaStampedeTyrantTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Rampaging Ceratops");

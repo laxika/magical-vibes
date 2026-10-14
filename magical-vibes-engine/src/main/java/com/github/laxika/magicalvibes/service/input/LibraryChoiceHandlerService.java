@@ -3261,7 +3261,36 @@ public class LibraryChoiceHandlerService {
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         List<UUID> selectedPermanentIds = new ArrayList<>();
-        if (selectedCards.size() == 1 && selectedCards.getFirst().isAura()
+        if (!libraryRevealChoice.selectedToBattlefieldCloaked()
+                && libraryRevealChoice.battlefieldEntryReplacement() == null
+                && libraryRevealChoice.battlefieldSelectionFollowUp() == null
+                && selectedCards.stream().allMatch(card -> isTakenFromEveryZone(gameData, card))) {
+            // The chosen cards enter in one event (CR 603.6a); each Aura's host is chosen as it enters
+            // (CR 303.4f) among objects already on the battlefield. They go back into the library they
+            // were revealed from so one that can't enter stays there.
+            List<Card> library = gameData.playerDecks.get(controllerId);
+            library.addAll(selectedCards);
+            battlefieldEntryBatchSupport.begin(gameData, selectedCards.stream()
+                    .map(card -> new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                            controllerId, controllerId, card, Zone.LIBRARY, null)
+                            .withTapped(libraryRevealChoice.selectedToBattlefieldTapped()))
+                    .toList());
+            if (!gameData.interaction.isAwaitingInput()) {
+                List<UUID> enteredIds = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                        .filter(permanent -> selectedIds.contains(permanent.getOriginalCard().getId()))
+                        .map(Permanent::getId)
+                        .toList();
+                StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                if (pendingEntry != null && selectedCards.size() == 1 && enteredIds.size() == 1) {
+                    pendingEntry.setChosenPermanentId(enteredIds.getFirst());
+                }
+                if (pendingEntry != null && !enteredIds.isEmpty()
+                        && libraryRevealChoice.selectedToBattlefieldSimultaneously()) {
+                    pendingEntry.setSearchedPermanentIds(enteredIds);
+                }
+                selectedCards.removeIf(library::contains);
+            }
+        } else if (selectedCards.size() == 1 && selectedCards.getFirst().isAura()
                 && !libraryRevealChoice.selectedToBattlefieldCloaked()
                 && !libraryRevealChoice.selectedToBattlefieldTapped()
                 && libraryRevealChoice.battlefieldEntryReplacement() == null) {
@@ -3340,6 +3369,15 @@ public class LibraryChoiceHandlerService {
         }
 
         finishRevealedCards(gameData, libraryRevealChoice, selectedCards, remainingCards);
+    }
+
+    /** Whether a revealed card has been taken out of its library and sits in no other zone either. */
+    private boolean isTakenFromEveryZone(GameData gameData, Card card) {
+        UUID cardId = card.getId();
+        return gameData.findExiledCard(cardId) == null
+                && gameQueryService.findGraveyardOwnerById(gameData, cardId) == null
+                && gameData.playerHands.values().stream().flatMap(List::stream).noneMatch(c -> c.getId().equals(cardId))
+                && gameData.playerDecks.values().stream().flatMap(List::stream).noneMatch(c -> c.getId().equals(cardId));
     }
 
     /**

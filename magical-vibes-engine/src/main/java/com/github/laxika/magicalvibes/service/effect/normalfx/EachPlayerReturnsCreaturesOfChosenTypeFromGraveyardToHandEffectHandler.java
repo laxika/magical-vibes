@@ -84,7 +84,7 @@ public class EachPlayerReturnsCreaturesOfChosenTypeFromGraveyardToHandEffectHand
             }
         }
 
-        graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
+        graveyardReturnSupport.beginGraveyardReturnQueueAsOneEvent(gameData);
     }
 
     private CardPredicate filterFor(CardSubtype chosenSubtype) {

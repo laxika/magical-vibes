@@ -119,6 +119,11 @@ public class BattlefieldEntryBatchSupport {
                         remaining.subList(i, remaining.size()), ready, false, libraryRemainders);
                 return;
             }
+            // A face-down permanent has no subtypes or enchant ability to choose for.
+            if (candidate.preparedPermanent() != null && candidate.preparedPermanent().isFaceDown()) {
+                ready.add(candidate);
+                continue;
+            }
             Card enteringCard = candidate.enteringCard();
             if (enteringCard.getSubtypes().contains(CardSubtype.SIEGE)
                     && candidate.protectorPlayerId() == null) {
@@ -230,7 +235,7 @@ public class BattlefieldEntryBatchSupport {
             pending.set(0, prepared);
             gameData.pendingBattlefieldEntryBatch = new PermanentChoiceContext.AuraEntryBatchChoice(
                     pending, ready, false, remainders);
-            if (battlefieldEntryService.beginNativeCardNameChoice(gameData, request)) return;
+            if (!permanent.isFaceDown() && battlefieldEntryService.beginNativeCardNameChoice(gameData, request)) return;
             if (battlefieldPlacementService.prepareNativeBatchChoices(gameData, request)) return;
             if (request.unleashChoice() == null) request = request.withUnleashChoice(false);
             if (request.riotCounters() == null) request = request.withRiotChoices(0, false);
@@ -287,7 +292,9 @@ public class BattlefieldEntryBatchSupport {
                 if (gameQueryService.findPermanentController(gameData, permanent.getId()) != null) {
                     entered.add(permanent);
                     gameData.stack.addAll(candidate.afterEntryTriggers());
-                    gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " enters the battlefield."));
+                    gameLogService.append(gameData, permanent.isFaceDown()
+                            ? GameLog.text("A face-down card enters the battlefield.")
+                            : GameLog.cardThen(permanent.getCard(), " enters the battlefield."));
                 }
             }
         } finally {
@@ -295,7 +302,9 @@ public class BattlefieldEntryBatchSupport {
         }
         for (Permanent permanent : entered) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-            if (controllerId != null) {
+            if (controllerId != null && permanent.isFaceDown()) {
+                battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, permanent.getCard());
+            } else if (controllerId != null) {
                 battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, permanent.getCard(), null, false);
             }
         }

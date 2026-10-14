@@ -69,7 +69,7 @@ class MyojinOfLifesWebTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
@@ -143,7 +143,7 @@ class MyojinOfLifesWebTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         harness.passBothPriorities();
         harness.passBothPriorities();

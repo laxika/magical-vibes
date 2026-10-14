@@ -66,39 +66,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 10. Batched simultaneous entry for "any number" puts and multi-card returns
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GhaltaStampedeTyrantTest` "Creatures entering together see each other's entry regardless of selection order"
-- `GishathSunsAvatarTest.selectedDinosaursEnterSimultaneously()`
-- `GenesisWaveTest` / `GenesisUltimatumTest` (Aura chosen together with other permanents gets no host choice)
-- `GruesomeMenagerieTest` (three creatures chosen first, then returned together)
-- `GraveSifterTest` (cards returned to hand one at a time, one trigger per card)
-
-**What the rules require.** CR 603.6a: when one event puts several permanents onto the battlefield, all
-of them (including the newcomers) are checked for enters triggers, so each sees the others enter. An Aura
-entering this way still has its controller choose what it enchants (CR 303.4f). The engine's "any number"
-put (`PutCardToBattlefieldEffect.anyNumber`, `CardChoiceHandlerService` repeat loop) and several
-reveal/return flows place cards one at a time as they are picked.
-
-**Why it's large.** Each flow is a separate interaction chain. They need a "collect all picks, then place
-together" stage like `BattlefieldEntryBatchSupport` / `WorldsWithinWorldsSupport.finish()`, including Aura
-host selection inside a batch and a hand-return batch for "one or more cards leave" triggers.
-
-**Prompt to start it:**
-
-```
-Make "put any number of cards onto the battlefield" and multi-card reveal/return effects place all chosen
-cards in one simultaneous event (CR 603.6a), with Aura host choices inside the batch (CR 303.4f). Start
-with GhaltaStampedeTyrantTest, GishathSunsAvatarTest, GenesisWaveTest, GenesisUltimatumTest,
-GruesomeMenagerieTest and GraveSifterTest, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 11. Modal triggered abilities choose their mode when put on the stack
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests

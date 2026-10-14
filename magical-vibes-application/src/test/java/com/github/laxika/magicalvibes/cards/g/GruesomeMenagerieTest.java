@@ -58,7 +58,7 @@ class GruesomeMenagerieTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Cannot decline forced graveyard choice");
 
-        harness.handleGraveyardCardChosen(player1, 1);
+        harness.handleGraveyardCardChosen(player1, 2);
 
         harness.assertOnBattlefield(player1, "Elvish Mystic");
         harness.assertOnBattlefield(player1, "Grizzly Bears");

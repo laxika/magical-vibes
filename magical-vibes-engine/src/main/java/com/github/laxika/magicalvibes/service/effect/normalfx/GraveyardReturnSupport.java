@@ -2877,6 +2877,19 @@ public class GraveyardReturnSupport {
      */
 
     /**
+     * Starts the queued graveyard choices of one effect as a single graveyard-leave event, so every
+     * card they move counts as leaving together for "one or more cards leave your graveyard" triggers.
+     * The event ends once the queue runs out.
+     */
+    public void beginGraveyardReturnQueueAsOneEvent(GameData gameData) {
+        if (!gameData.graveyardReturnQueueLeaveBatchOpen) {
+            gameData.graveyardReturnQueueLeaveBatchOpen = true;
+            graveyardService.beginGraveyardLeaveBatch(gameData);
+        }
+        beginNextGraveyardReturnFromQueue(gameData);
+    }
+
+    /**
      * Pops the next entry from the graveyard return queue and prompts that player to choose
      * a card to return from their graveyard. Does nothing if the queue is empty.
      */
@@ -2885,7 +2898,18 @@ public class GraveyardReturnSupport {
             if (gameData.pendingGraveyardReturnBatch != null) {
                 PendingGraveyardReturnBatch batch = gameData.pendingGraveyardReturnBatch;
                 gameData.pendingGraveyardReturnBatch = null;
-                putCardsOntoBattlefieldSimultaneouslyUnderController(gameData, batch);
+                if (batch.holdInGraveyard()) {
+                    battlefieldEntryBatchSupport.begin(gameData, batch.cards().stream()
+                            .map(card -> new BattlefieldEntryCard(batch.controllerId(),
+                                    batch.graveyardOwnerByCardId().get(card.getId()), card, Zone.GRAVEYARD, null))
+                            .toList());
+                } else {
+                    putCardsOntoBattlefieldSimultaneouslyUnderController(gameData, batch);
+                }
+            }
+            if (gameData.graveyardReturnQueueLeaveBatchOpen) {
+                gameData.graveyardReturnQueueLeaveBatchOpen = false;
+                graveyardService.endGraveyardLeaveBatch(gameData);
             }
             return;
         }
@@ -2935,7 +2959,8 @@ public class GraveyardReturnSupport {
                 ? next.choosingPlayerId()
                 : batch == null || batch.eachPlayerChooses() ? next.playerId() : batch.controllerId();
         List<Card> matchingCards = matchingIndices.stream().map(graveyard::get).toList();
-        List<Integer> choiceIndices = batch == null
+        boolean choosesFromPool = batch != null && !batch.holdInGraveyard();
+        List<Integer> choiceIndices = !choosesFromPool
                 ? matchingIndices
                 : IntStream.range(0, matchingCards.size()).boxed().toList();
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
@@ -2943,7 +2968,7 @@ public class GraveyardReturnSupport {
                         "Return a " + filterLabel + " from "
                                 + gameData.playerIdToName.get(next.playerId()) + "'s graveyard to " + destText + ".")
                 .mandatory(next.mandatory());
-        if (batch != null) {
+        if (choosesFromPool) {
             choice.cardPool(matchingCards);
         }
         interactionHandlerRegistry.begin(gameData, choice.build());

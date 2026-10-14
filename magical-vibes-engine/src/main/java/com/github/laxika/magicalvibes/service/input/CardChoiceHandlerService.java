@@ -143,6 +143,9 @@ public class CardChoiceHandlerService {
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
 
     /** Gives the chosen card in hand a persistent offspring-as-kicker implementation. */
     public void handlePerpetualOffspringCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -622,6 +625,15 @@ public class CardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        // "Put any number of … cards from your hand onto the battlefield" is one event (CR 603.6a):
+        // every pick waits in hand until the player stops, then all of them enter together.
+        if (putAnyNumber && !drawAndRepeat && !isTargeted && !cloaked && enterTappedAndAttackingIf == null
+                && !returnToHandAtEndStep && untapSourceIfEnteredCardHasAnySubtype.isEmpty()) {
+            handleAnyNumberHandPutChoice(gameData, player, cardIndex, drawAndRepeatPredicate, drawAndRepeatLabel,
+                    enterTapped, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes);
+            return;
+        }
+
         if (cardIndex == -1) {
             String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
             gameLogService.append(gameData, GameLog.text(logEntry));
@@ -783,6 +795,54 @@ public class CardChoiceHandlerService {
             return;
         }
 
+        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleAnyNumberHandPutChoice(GameData gameData, Player player, int cardIndex,
+                                              CardPredicate predicate, String label, boolean enterTapped,
+                                              boolean faceDown, int faceDownPower, int faceDownToughness,
+                                              Set<CardType> faceDownCardTypes) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (cardIndex != -1) {
+            Card chosen = hand.get(cardIndex);
+            gameData.pendingAnyNumberHandPutCardIds.add(chosen.getId());
+            if (faceDown) {
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses a card from their hand."));
+            } else {
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses ", chosen, "."));
+            }
+            PutCardToBattlefieldEffect repeatEffect = new PutCardToBattlefieldEffect(predicate, label, enterTapped,
+                    false, false, false, false, false, false, true, faceDown, faceDownPower, faceDownToughness,
+                    faceDownCardTypes, false);
+            Set<UUID> chosenIds = Set.copyOf(gameData.pendingAnyNumberHandPutCardIds);
+            playerInteractionSupport.applyPutCardToBattlefield(gameData, playerId, repeatEffect, 0, null, null,
+                    card -> !chosenIds.contains(card.getId()));
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        } else {
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " stops choosing cards."));
+        }
+
+        List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> entering = new ArrayList<>();
+        for (UUID cardId : gameData.pendingAnyNumberHandPutCardIds) {
+            hand.stream().filter(card -> card.getId().equals(cardId)).findFirst().ifPresent(card -> {
+                var entry = new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                        playerId, playerId, card, Zone.HAND, null).withTapped(enterTapped);
+                if (faceDown) {
+                    Permanent permanent = new Permanent(card, Zone.HAND);
+                    permanent.setFaceDown(faceDownPower, faceDownToughness, faceDownCardTypes);
+                    entry = entry.withPreparedPermanent(permanent, List.of());
+                }
+                entering.add(entry);
+            });
+        }
+        gameData.pendingAnyNumberHandPutCardIds.clear();
+        battlefieldEntryBatchSupport.begin(gameData, entering);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

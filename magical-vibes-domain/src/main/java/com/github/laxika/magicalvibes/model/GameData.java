@@ -968,6 +968,12 @@ public class GameData {
      * is free again.
      */
     public final List<PendingEntryCopyChoice> pendingEntryCopyChoices = new ArrayList<>();
+    /**
+     * Hand cards already chosen for an "any number of cards from your hand" put (Ghalta, Stampede
+     * Tyrant). They stay in hand, out of the remaining choices, until the player stops choosing, then
+     * all enter in one batch.
+     */
+    public final List<UUID> pendingAnyNumberHandPutCardIds = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
     /** Votes collected while a voting spell or ability is resolving, keyed by its controller. */
@@ -1628,6 +1634,12 @@ public class GameData {
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     public final List<DeferredSpellCopy> deferredGraveyardCastCopies = Collections.synchronizedList(new ArrayList<>());
     public PendingGraveyardReturnBatch pendingGraveyardReturnBatch;
+    /**
+     * Set while the {@link #pendingGraveyardReturnQueue} choices of one effect share a single
+     * graveyard-leave batch, so "one or more cards leave your graveyard" triggers once for all of
+     * them (Grave Sifter). The batch ends when the queue runs out.
+     */
+    public boolean graveyardReturnQueueLeaveBatchOpen;
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** Draw count before the current optional draw instruction, retained across replacement choices. */
@@ -7430,6 +7442,7 @@ public class GameData {
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
         copy.deferredGraveyardCastCopies.addAll(this.deferredGraveyardCastCopies);
         copy.pendingGraveyardReturnBatch = this.pendingGraveyardReturnBatch;
+        copy.graveyardReturnQueueLeaveBatchOpen = this.graveyardReturnQueueLeaveBatchOpen;
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
         copy.pendingEachPlayerMayDrawChosenCount = this.pendingEachPlayerMayDrawChosenCount;
@@ -8384,6 +8397,7 @@ public class GameData {
         this.pendingBattlefieldEntryRequests.forEach((id, request) ->
                 copy.pendingBattlefieldEntryRequests.put(id, request.deepCopy()));
         this.pendingEntryCopyChoices.forEach(choice -> copy.pendingEntryCopyChoices.add(choice.deepCopy()));
+        copy.pendingAnyNumberHandPutCardIds.addAll(this.pendingAnyNumberHandPutCardIds);
         copy.cloneOperation.physicalCard = this.cloneOperation.physicalCard;
         copy.cloneOperation.preparedPermanent = this.cloneOperation.preparedPermanent == null
                 ? null : new Permanent(this.cloneOperation.preparedPermanent);

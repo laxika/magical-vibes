@@ -56,7 +56,7 @@ class TezzeretCruelMachinistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
 
         List<Permanent> faceDown = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(Permanent::isFaceDown)
@@ -144,7 +144,7 @@ class TezzeretCruelMachinistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 

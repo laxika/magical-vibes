@@ -89,7 +89,7 @@ class WrennAndSevenTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 1, null, null);
             harness.passBothPriorities();
             harness.handleCardChosen(player1, 0);
-            harness.handleCardChosen(player1, 0);
+            harness.handleCardChosen(player1, 1);
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
             harness.handlePermanentChosen(player1, player2.getId());
@@ -99,7 +99,7 @@ class WrennAndSevenTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Puts chosen lands from hand onto the battlefield tapped until declined")
+        @DisplayName("Chosen lands wait in hand until the choice is declined, then enter tapped together")
         void putsLandsTappedUntilDeclined() {
             Permanent wrenn = addReadyWrenn(player1);
             Card forest = new Forest();
@@ -120,12 +120,14 @@ class WrennAndSevenTest extends BaseCardTest {
 
             harness.handleCardChosen(player1, 0); // Forest
             assertThat(gd.playerBattlefields.get(player1.getId()))
-                    .anyMatch(p -> p.getCard().getName().equals("Forest") && p.isTapped());
+                    .noneMatch(p -> p.getCard().getName().equals("Forest"));
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
 
             harness.handleCardChosen(player1, -1);
 
             assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .anyMatch(p -> p.getCard() == forest && p.isTapped());
             assertThat(gd.playerHands.get(player1.getId())).contains(island, bears);
             assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().hasType(CardType.LAND))
