@@ -8,19 +8,20 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseUpToOnePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -31,10 +32,11 @@ public class GixsCommand extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on up to one creature. It gains lifelink until end of turn",
-                        List.of(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)),
-                        TargetFilters.creature(), null, 0, 1, false, null),
+                        SequenceEffect.of(
+                                new ChooseUpToOnePermanentEffect(new PermanentIsCreaturePredicate(),
+                                        "Choose up to one creature to get two +1/+1 counters and lifelink."),
+                                new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
+                                new GrantKeywordToChosenCreatureEffect(Keyword.LIFELINK, GrantDuration.END_OF_TURN))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy each creature with power 2 or less",
                         new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(

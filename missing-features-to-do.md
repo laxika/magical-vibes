@@ -66,38 +66,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 12. Untargeted "choose" during resolution (proliferate, "up to one creature")
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GitaxianAnatomistTest` "Proliferate may choose no permanents even after paying the tap cost",
-  "Proliferate can increase opposing permanent counters and player poison", "Its ETB trigger may tap it and proliferate"
-- `GixsCommandTest` (four tests: the counters-and-lifelink mode's creature is chosen during resolution,
-  may be an opponent's, may be none, and counters land before the destroy mode checks power)
-
-All fail with "Not awaiting PermanentsChosen input".
-
-**What the rules require.** CR 701.34a: proliferate means to *choose* any number of permanents and/or
-players with counters, on resolution, not to target them. Gix's Command's "up to one creature" isn't
-targeted either, so the creature is chosen on resolution and the destroy mode, which comes later in the
-same resolution, sees the new counters (CR 608.2c).
-
-**Why it's large.** The engine's proliferate and these modes skip the choice (or choose at cast time).
-They need a shared "choose any number of permanents/players during resolution" interaction that pauses
-and resumes the resolution in the middle of a multi-mode spell.
-
-**Prompt to start it:**
-
-```
-Add a resolution-time "choose any number of permanents and/or players" interaction and use it for
-proliferate (CR 701.34a) and Gix's Command's "up to one creature" mode, so the rest of the resolution
-continues after the choice. Start with GitaxianAnatomistTest and GixsCommandTest, then ask me to run the
-full suite. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 13. Rules-modifying resolution effects that bind objects entering later
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests

@@ -1126,6 +1126,8 @@ public class MultiPermanentChoiceHandlerService {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToAttackNextTurn ctx) {
             handleChooseCreaturesToAttackNextTurn(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.RecordChosenPermanent) {
+            handleRecordChosenPermanent(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreaturesToBlockThisTurnIfAble) {
             handleChooseCreaturesToBlockThisTurnIfAble(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.CulturalExchange ctx) {
@@ -2544,6 +2546,20 @@ public class MultiPermanentChoiceHandlerService {
                 + " creature(s) that must attack during their next turn; other creatures can't attack."));
 
         // Standard completion: SBA → may abilities → resume effects
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleRecordChosenPermanent(GameData gameData, UUID chooserId, List<UUID> permanentIds) {
+        Permanent chosen = permanentIds.isEmpty() ? null
+                : gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+        if (gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.setChosenPermanentId(chosen == null ? null : chosen.getId());
+        }
+
+        String chooserName = gameData.playerIdToName.get(chooserId);
+        gameLogService.append(gameData, chosen == null
+                ? GameLog.text(chooserName + " chooses nothing.")
+                : GameLog.builder().text(chooserName + " chooses ").card(chosen.getCard()).text(".").build());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

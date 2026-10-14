@@ -837,6 +837,13 @@ public sealed interface MultiPermanentChoiceContext {
     record ChooseCreaturesToAttackNextTurn(UUID targetPlayerId) implements MultiPermanentChoiceContext {
     }
 
+    /**
+     * The controller chose up to one permanent during resolution; the answer is recorded as the
+     * resolving entry's chosen permanent for the effects after it.
+     */
+    record RecordChosenPermanent() implements MultiPermanentChoiceContext {
+    }
+
     /** The controller chooses any number of creatures that must block this combat if able. */
     record ChooseCreaturesToBlockThisTurnIfAble() implements MultiPermanentChoiceContext {
     }
