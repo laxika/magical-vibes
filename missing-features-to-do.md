@@ -467,6 +467,97 @@ Don't commit until I say so.
 
 ---
 
+## 22. A split card keeps its full name after a half resolves
+
+**Status:** open · **Found:** 2026-10-14, while giving split halves their own characteristics
+
+**Failing tests:**
+- `CeaseDesistTest` "Cease's player target is independent of the chosen graveyard" (the graveyard card is
+  named "Cease", not "Cease // Desist")
+
+**What the rules require.** CR 709.4: in every zone except the stack, a split card has the combined
+characteristics of both halves. Once Cease resolves, the card in the graveyard is Cease // Desist again.
+The engine puts the stack's runtime copy, which has only the cast half's name and characteristics, into
+the graveyard instead of restoring the whole card.
+
+**Why it's large.** Every path where a spell leaves the stack (resolve, counter, fizzle, exile, return to
+hand) has to restore the physical card's whole-card characteristics. Copies and spells cast from other
+zones must keep working.
+
+**Prompt to start it:**
+
+```
+When a split-card spell leaves the stack, restore the card's whole-card characteristics (CR 709.4) so
+Cease // Desist is named "Cease // Desist" in the graveyard after Cease resolves. Cover resolving,
+countering, fizzling and other stack exits. Start with CeaseDesistTest, then run the other
+split/aftermath/fuse card tests and ask me to run the full suite.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 23. Fuse only from hand, and only on cards with fuse
+
+**Status:** open · **Found:** 2026-10-14, while giving split halves their own characteristics
+
+**Failing tests:**
+- `ProtectServeTest.castingFromExileOffersOnlyIndividualHalves()`
+- `ReadyWillingTest` "Possibility Storm offers only individual halves when casting from exile"
+- `PrimevalSpawnTest` "Wear // Tear cannot be fused when cast from exile by the leave ability"
+- `ProfitLossTest` "Fuse cannot be cast from the library through Melek"
+- `ToilTroubleTest` "Fuse cannot be cast from the library with Melek"
+- `TurnBurnTest.fuseCannotBeCastFromLibraryWithMelek()`
+- `InvertInventTest` "Both halves cannot be cast together because the card has no fuse ability"
+- `ThrashThreatTest` "Thrash // Threat cannot fuse because it has no fuse ability"
+
+**What the rules require.** CR 702.102a: fuse applies only while the card is in a player's hand. Only
+when it is cast from the hand may the player cast both halves. The engine offers the fuse mode when the
+card is cast from exile or the library too. The last two tests expect a cast of both halves to be
+rejected for split cards without fuse, and the engine accepts it. Neither cause has been diagnosed yet.
+
+**Why it's large.** Fuse is a regular `ChooseOneEffect` mode, so the cast path, the mode list shown to
+the player and every "cast from exile/library" permission (Melek, Possibility Storm, Primeval Spawn and
+others) have to filter it by source zone.
+
+**Prompt to start it:**
+
+```
+Only offer and allow the fuse mode of a split card when it is cast from its owner's hand (CR 702.102a),
+and reject casting both halves of a split card without fuse. Start with ProtectServeTest and
+InvertInventTest, then run the other split/fuse card tests and ask me to run the full suite.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 24. Mana value limits on cast split cards use only the chosen half
+
+**Status:** open · **Found:** 2026-10-14, while giving split halves their own characteristics
+
+**Failing tests:**
+- `InvokeCalamityTest.splitSpellBudgetUsesTheChosenHalfRatherThanBothHalves()`
+- `PrimevalSpawnTest` "The aggregate limit permits Wear and Avatar of Might, whose spells total ten"
+
+**What the rules require.** CR 709.3a: only the chosen half is evaluated to see if it can be cast. Invoke
+Calamity's and Primeval Spawn's total mana value limits count the spells being cast, so a cast half
+counts with its own mana value. The card in hand or exile has the combined mana value (CR 709.4b). The
+engine checks the limit against the whole card's combined mana value, so it rejects legal choices.
+
+**Why it's large.** The "cast with total mana value N or less" choice flows have to ask which half is
+being cast before they check the limit. Any other card with a similar free-cast budget has to be
+checked for the same mistake.
+
+**Prompt to start it:**
+
+```
+Make free-cast mana value budgets (Invoke Calamity, Primeval Spawn and similar) count a split card by
+the half being cast (CR 709.3a), not its combined mana value. Start with InvokeCalamityTest, then
+PrimevalSpawnTest, and ask me to run the full suite.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 
