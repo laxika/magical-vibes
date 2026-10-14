@@ -3,13 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AbandonSchemeUnlessDiscardOrPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AbandonSchemeUnlessDiscardOrPayLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SchemeAbandonSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
 import java.util.UUID;
@@ -25,8 +24,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AbandonSchemeUnlessDiscardOrPayLifeHandler implements MayEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final AbandonSchemeUnlessDiscardOrPayLifeEffectHandler abandonHandler;
+    private final SchemeAbandonSupport schemeAbandonSupport;
     private final LifeSupport lifeSupport;
     private final InputCompletionService inputCompletionService;
 
@@ -57,10 +56,7 @@ public class AbandonSchemeUnlessDiscardOrPayLifeHandler implements MayEffectHand
         if (payLife) {
             lifeSupport.applyLifePayment(gameData, controllerId, effect.lifeCost(), ability.sourceCard().getName());
         } else {
-            Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
-            if (source != null) {
-                abandonHandler.abandon(gameData, source);
-            }
+            schemeAbandonSupport.abandon(gameData, ability.sourceCard(), ability.sourcePermanentId());
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

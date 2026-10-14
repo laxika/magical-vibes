@@ -6009,6 +6009,11 @@ public class GameQueryService {
                             targetOnSameBattlefield, 0, position++, true));
                 }
             }
+            // CR 314.4: a face-up scheme's static abilities affect the game from the command zone.
+            for (Card scheme : gameData.faceUpSchemes(playerId)) {
+                sources.add(new StaticSource(new Permanent(scheme), playerId,
+                        targetOnSameBattlefield, 0, position++, false));
+            }
         }
         sources.sort(Comparator.comparingLong(StaticSource::timestamp).thenComparingInt(StaticSource::position));
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);

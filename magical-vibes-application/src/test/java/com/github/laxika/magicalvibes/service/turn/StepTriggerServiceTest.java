@@ -485,6 +485,43 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Face-up scheme in the command zone triggers at its owner's upkeep")
+        void faceUpSchemeInCommandZoneTriggersAtUpkeep() {
+            Card scheme = createScheme("Fear My Authority");
+            gd.playerCommandZones.put(player1Id, new ArrayList<>(List.of(scheme)));
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard()).isSameAs(scheme);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1Id);
+        }
+
+        @Test
+        @DisplayName("Face-down scheme in the command zone does not trigger at upkeep")
+        void faceDownSchemeInCommandZoneDoesNotTrigger() {
+            Card scheme = createScheme("Fear My Authority");
+            gd.playerCommandZones.put(player1Id, new ArrayList<>(List.of(scheme)));
+            gd.faceDownCommandZoneCards.add(scheme.getId());
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Face-up scheme does not trigger at an opponent's upkeep")
+        void faceUpSchemeDoesNotTriggerAtOpponentsUpkeep() {
+            Card scheme = createScheme("Fear My Authority");
+            gd.playerCommandZones.put(player1Id, new ArrayList<>(List.of(scheme)));
+            gd.activePlayerId = player2Id;
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("Permanent with upkeep effect pushes trigger onto stack")
         void permanentWithUpkeepEffectPushesTrigger() {
             gd.turnNumber = 2;
@@ -2864,6 +2901,13 @@ class StepTriggerServiceTest {
     private static Card createCardWithName(String name) {
         Card card = new Card();
         card.setName(name);
+        return card;
+    }
+
+    private static Card createScheme(String name) {
+        Card card = createCardWithName(name);
+        card.setType(CardType.SCHEME);
+        card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(1));
         return card;
     }
 

@@ -733,6 +733,7 @@ public class LayerSystemService {
                 for (Card card : commandZone) {
                     h = mix(h, System.identityHashCode(card));
                     h = mix(h, card.getColorIdentity().hashCode());
+                    h = mix(h, gameData.faceDownCommandZoneCards.contains(card.getId()) ? 1 : 0);
                 }
             }
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -1293,6 +1294,24 @@ public class LayerSystemService {
                             classification.characteristicDefining(), sourcePermanent.getTimestamp(), source.position()));
                 }
             }
+            }
+        }
+        int schemePosition = graveyardPosition;
+        for (UUID ownerId : gameData.orderedPlayerIds) {
+            for (Card scheme : gameData.faceUpSchemes(ownerId)) {
+                // CR 314.4: a face-up scheme's static abilities affect the game from the command zone.
+                PermanentSlot source = new PermanentSlot(ownerId, new Permanent(scheme), schemePosition++);
+                for (CardEffect effect : scheme.getEffects(EffectSlot.STATIC)) {
+                    if (isConditionalWrapper(effect) && !admitsConditionalWrapper(effect, layer)) {
+                        continue;
+                    }
+                    LayerClassifier.LayerClassification classification = classifyOrNull(effect);
+                    if (classification == null || !classification.layers().contains(layer)) {
+                        continue;
+                    }
+                    instances.add(new EffectInstance(source, effect, effect, null,
+                            classification.characteristicDefining(), 0, source.position()));
+                }
             }
         }
         if (gameData.planechase != null) {

@@ -599,6 +599,11 @@ public class GameData {
     public final Map<UUID, List<Card>> playerCommandZones = new ConcurrentHashMap<>();
     /** Command-zone cards that have been turned face down by a resolving ability. */
     public final Set<UUID> faceDownCommandZoneCards = ConcurrentHashMap.newKeySet();
+    /**
+     * Each player's scheme deck, top card first. The cards also stay in {@link #playerCommandZones}
+     * and are face down, because a scheme deck is part of the command zone (CR 904.4).
+     */
+    public final Map<UUID, List<Card>> playerSchemeDecks = new ConcurrentHashMap<>();
     /** Cards currently designated as each player's commander, including commanders on the battlefield. */
     public final Map<UUID, List<Card>> playerCommanders = new ConcurrentHashMap<>();
     /** Commander tax by card identity. */
@@ -5033,6 +5038,57 @@ public class GameData {
                 .sum();
     }
 
+    /**
+     * The scheme cards face up in the player's command zone. Only these schemes' static abilities
+     * apply and triggered abilities trigger (CR 314.4).
+     */
+    public List<Card> faceUpSchemes(UUID playerId) {
+        List<Card> commandZone = playerCommandZones.get(playerId);
+        if (commandZone == null) {
+            return List.of();
+        }
+        List<Card> schemes = new ArrayList<>();
+        for (Card card : commandZone) {
+            if (isFaceUpScheme(card)) {
+                schemes.add(card);
+            }
+        }
+        return schemes;
+    }
+
+    /** Whether the card is a scheme face up in its owner's command zone (CR 314.4). */
+    public boolean isFaceUpScheme(Card card) {
+        if (card == null || !card.hasType(CardType.SCHEME) || faceDownCommandZoneCards.contains(card.getId())) {
+            return false;
+        }
+        for (List<Card> commandZone : playerCommandZones.values()) {
+            if (commandZone.contains(card)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Abandons a scheme in a player's command zone: it is turned face down and put on the bottom
+     * of its owner's scheme deck (CR 701.33b). Returns false when the card is not in a command zone.
+     */
+    public boolean abandonScheme(Card scheme) {
+        for (Map.Entry<UUID, List<Card>> commandZone : playerCommandZones.entrySet()) {
+            if (!commandZone.getValue().contains(scheme)) {
+                continue;
+            }
+            faceDownCommandZoneCards.add(scheme.getId());
+            List<Card> schemeDeck = playerSchemeDecks.computeIfAbsent(
+                    commandZone.getKey(), ignored -> new ArrayList<>());
+            schemeDeck.remove(scheme);
+            schemeDeck.add(scheme);
+            return true;
+        }
+        return false;
+    }
+
+
     /** Records a commander cast for cast paths that do not use the ordinary spell stack recorder. */
     public void recordCommanderCastFromCommandZone(UUID playerId) {
         if (playerId != null) {
@@ -7920,6 +7976,7 @@ public class GameData {
         this.playerGraveyards.forEach((k, v) -> copy.playerGraveyards.put(k, new ArrayList<>(v)));
         this.playerCommandZones.forEach((k, v) -> copy.playerCommandZones.put(k, new ArrayList<>(v)));
         copy.faceDownCommandZoneCards.addAll(this.faceDownCommandZoneCards);
+        this.playerSchemeDecks.forEach((k, v) -> copy.playerSchemeDecks.put(k, new ArrayList<>(v)));
         this.playerCommanders.forEach((k, v) -> copy.playerCommanders.put(k, new ArrayList<>(v)));
         copy.commanderTaxByCardId.putAll(this.commanderTaxByCardId);
         copy.commanderCastsFromCommandZoneThisGame.putAll(this.commanderCastsFromCommandZoneThisGame);

@@ -36,28 +36,40 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 8. Face-up schemes in the command zone
+## 8. Face-up schemes in the command zone: remaining trigger slots
 
-**Status:** open · **Found:** 2026-10-13, while fixing F-card tests
+**Status:** partly done · **Found:** 2026-10-13, while fixing F-card tests
+
+**Already done (2026-10-14):** face-up schemes in the command zone apply their `STATIC` abilities in the
+layer pass and static-bonus assembly, fire `UPKEEP_TRIGGERED` at their owner's upkeep, and abandoning puts
+a scheme face down on the bottom of `GameData.playerSchemeDecks` (CR 314.4, CR 701.33b). FearMyAuthorityTest
+passes.
 
 **Failing tests:**
-- `FearMyAuthorityTest.faceUpSchemeInCommandZoneBuffsCreatures()`
-- `FearMyAuthorityTest.faceUpSchemeInCommandZoneTriggersAtControllersUpkeep()`
+- `MineIsTheOnlyTruthTest.controllerDrawsWhenAnyPlayerCastsASpell()`, `controllerAlsoDrawsForTheirOwnSpell()`
+  (`ON_ANY_PLAYER_CASTS_SPELL` from the command zone)
+- `MyChampionStandsSupremeTest.abandonsWhenYourCommanderLeavesTheBattlefield()`
+  (`ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD` from the command zone)
+- `MyChampionStandsSupremeTest.putsCountersOnYourCommanderAttackingUnderOpponentsControl()` and
+  `doesNotPutCountersOnAnOpponentsCommanderYouControl()` ("your commander" means owned, not controlled;
+  the card grants to `ALL_OWN_CREATURES`)
 
-**What the rules require.** CR 314.4: while a scheme is face up in the command zone, its static abilities
-affect the game and its triggered abilities can trigger. CR 701.33b: abandoning a scheme turns it face down
-and puts it on the bottom of its owner's scheme deck. The layer system and trigger collection only scan
-permanents, so an ongoing scheme's static boost and upkeep trigger never apply.
+**What the rules require.** CR 314.4: while a scheme is face up in the command zone, its triggered
+abilities can trigger. Only the upkeep slot scans face-up schemes today; every other trigger collector
+(spell cast, leaves the battlefield, end step, combat damage, beginning of combat, ...) scans only
+permanents. The ongoing schemes that use those slots (I Am Duskmourn, I Am Untouchable, Mine Is the Only
+Truth, My Champion Stands Supreme, My Laughter Echoes, My Tendrils Run Deep, Reality Is Mine to Control,
+You Cannot Hide from Me) still work only when a test puts them on the battlefield.
 
-**Why it's large.** The command zone needs to become a source of static and triggered abilities for the
-layer system and every trigger collector, plus a scheme deck to abandon to.
+**Why it's large.** Each trigger collector needs a command-zone source with no source permanent, and
+the effects those triggers resolve (`SacrificeSelfEffect` already abandons a command-zone scheme) must
+not depend on a source permanent.
 
 **Prompt to start it:**
 
 ```
-Let face-up ongoing schemes in the command zone apply their static abilities and trigger their
-triggered abilities (CR 314.4), and implement abandoning to the bottom of the scheme deck (CR 701.33b).
-Start with FearMyAuthorityTest, then ask me to run the full suite.
+Let face-up schemes in the command zone trigger from every trigger slot, not just upkeep (CR 314.4).
+Start with MineIsTheOnlyTruthTest and MyChampionStandsSupremeTest, then ask me to run the full suite.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

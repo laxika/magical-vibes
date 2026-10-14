@@ -1034,7 +1034,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `MULLIGAN_ACTION` | Special action offered while deciding whether to mulligan |
 | `STATIC` | Continuous effect, always active while on battlefield |
 | `UPKEEP_TRIGGERED` | Controller's upkeep. Supports any-target routing (creature/planeswalker/battle/player) when an effect is true "any target" (`targetSpec()` admits both `Kind.PLAYER` and `Kind.PERMANENT`, e.g. Form of the Dragon via `UpkeepAnyTargetTrigger`), single-player targeting (e.g. Bloodgift Demon via `UpkeepPlayerTargetTrigger`), and multi-player targeting (e.g. Axis of Mortality via `UpkeepMultiPlayerTargetTrigger` when any effect has `targetSpec().playerTargetCount() >= 2`) |
-| `COMMAND_ZONE_UPKEEP_TRIGGERED` | Controller's upkeep while the source card is in their command zone; use an intervening `SourceCardInCommandZone` condition when leaving the command zone before resolution should stop the effect |
+| `COMMAND_ZONE_UPKEEP_TRIGGERED` | Controller's upkeep while the source card is in their command zone; use an intervening `SourceCardInCommandZone` condition when leaving the command zone before resolution should stop the effect. A face-up scheme (CR 314.4) also fires its ordinary `UPKEEP_TRIGGERED` effects from here, with no source permanent (Fear My Authority) |
 | `EACH_UPKEEP_TRIGGERED` | Each player's upkeep |
 | `OPPONENT_UPKEEP_TRIGGERED` | Each opponent's upkeep |
 | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Upkeep of the enchanted permanent's controller (fires regardless of which player controls the aura). `affectedPlayerId` is baked in at trigger time for effects like `EnchantedCreatureControllerLosesLifeEffect` |

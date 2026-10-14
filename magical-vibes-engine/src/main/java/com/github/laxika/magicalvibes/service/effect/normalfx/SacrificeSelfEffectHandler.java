@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,6 +23,7 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final PermanentControlSupport permanentControlSupport;
+    private final SchemeAbandonSupport schemeAbandonSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,6 +33,11 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var sacrifice = (SacrificeSelfEffect) effect;
+        if (entry.getCard() != null && entry.getCard().hasType(CardType.SCHEME)) {
+            // A scheme's "abandon this scheme" (CR 701.33b), never a sacrifice.
+            schemeAbandonSupport.abandon(gameData, entry.getCard(), entry.getSourcePermanentId());
+            return;
+        }
         if (entry.getSourcePermanentId() == null) {
             return;
         }

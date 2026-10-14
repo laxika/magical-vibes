@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -130,6 +131,90 @@ class FearMyAuthorityTest extends BaseCardTest {
         resolveUpkeep();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    void faceUpSchemeInCommandZoneDoesNotBuffOpponentsCreatures() {
+        gd.playerCommandZones.get(player1.getId()).add(new FearMyAuthority());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    void faceUpSchemeInCommandZoneIsKeptByDiscarding() {
+        Card scheme = new FearMyAuthority();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        Card discarded = new Shock();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLife(player1, 20);
+
+        resolveUpkeep();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+    }
+
+    @Test
+    void abandonedSchemeGoesFaceDownToBottomOfSchemeDeck() {
+        Card scheme = new FearMyAuthority();
+        Card otherScheme = new FearMyAuthority();
+        gd.playerCommandZones.get(player1.getId()).addAll(List.of(scheme, otherScheme));
+        gd.faceDownCommandZoneCards.add(otherScheme.getId());
+        gd.playerSchemeDecks.put(player1.getId(), new ArrayList<>(List.of(otherScheme)));
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 2);
+
+        resolveUpkeep();
+
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+        assertThat(gd.playerSchemeDecks.get(player1.getId())).containsExactly(otherScheme, scheme);
+        assertThat(gd.playerCommandZones.get(player1.getId())).contains(scheme);
+        harness.assertLife(player1, 2);
+    }
+
+    @Test
+    void abandonedSchemeStopsBuffingCreatures() {
+        Card scheme = new FearMyAuthority();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        resolveUpkeep();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    void faceDownSchemeInCommandZoneDoesNotTrigger() {
+        Card scheme = new FearMyAuthority();
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        gd.faceDownCommandZoneCards.add(scheme.getId());
+        harness.setHand(player1, List.of(new Shock()));
+
+        resolveUpkeep();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void abandoningSchemeOnBattlefieldPutsItOnBottomOfSchemeDeck() {
+        Permanent scheme = addScheme();
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 2);
+
+        resolveUpkeep();
+
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getCard().getId());
+        assertThat(gd.playerSchemeDecks.get(player1.getId())).containsExactly(scheme.getCard());
     }
 
     @Test

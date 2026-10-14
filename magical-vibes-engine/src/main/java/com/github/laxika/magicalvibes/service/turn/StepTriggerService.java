@@ -1565,8 +1565,12 @@ public class StepTriggerService {
 
         if (commandZone != null) {
             for (Card card : new ArrayList<>(commandZone)) {
-                List<CardEffect> commandZoneUpkeepEffects = card.getEffects(
-                        EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED);
+                List<CardEffect> commandZoneUpkeepEffects = new ArrayList<>(card.getEffects(
+                        EffectSlot.COMMAND_ZONE_UPKEEP_TRIGGERED));
+                // CR 314.4: a face-up scheme's "at the beginning of your upkeep" abilities trigger.
+                if (gameData.isFaceUpScheme(card)) {
+                    commandZoneUpkeepEffects.addAll(card.getEffects(EffectSlot.UPKEEP_TRIGGERED));
+                }
                 if (commandZoneUpkeepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : commandZoneUpkeepEffects) {

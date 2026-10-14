@@ -4,12 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AbandonSchemeUnlessDiscardOrPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +19,7 @@ public class AbandonSchemeUnlessDiscardOrPayLifeEffectHandler implements NormalE
 
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final PermanentRemovalService permanentRemovalService;
+    private final SchemeAbandonSupport schemeAbandonSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,8 +30,7 @@ public class AbandonSchemeUnlessDiscardOrPayLifeEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (AbandonSchemeUnlessDiscardOrPayLifeEffect) effect;
         UUID controllerId = entry.getControllerId();
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
+        if (!schemeAbandonSupport.isSchemeInPlay(gameData, entry.getCard(), entry.getSourcePermanentId())) {
             return;
         }
 
@@ -42,7 +39,7 @@ public class AbandonSchemeUnlessDiscardOrPayLifeEffectHandler implements NormalE
         boolean canPayLife = canPayLife(gameData, controllerId, e.lifeCost());
 
         if (!canDiscard && !canPayLife) {
-            abandon(gameData, source);
+            schemeAbandonSupport.abandon(gameData, entry.getCard(), entry.getSourcePermanentId());
             return;
         }
 
@@ -66,13 +63,5 @@ public class AbandonSchemeUnlessDiscardOrPayLifeEffectHandler implements NormalE
     public void discard(GameData gameData, UUID playerId) {
         gameData.discardCausedByOpponent = false;
         playerInteractionSupport.resolveDiscardCards(gameData, playerId, 1, DiscardFollowUp.NONE);
-    }
-
-    /** CR 701.33b: the scheme is turned face down and put on the bottom of its owner's scheme deck. */
-    public void abandon(GameData gameData, Permanent scheme) {
-        Card card = scheme.getCard();
-        if (permanentRemovalService.removePermanentToCommandZone(gameData, scheme)) {
-            gameData.faceDownCommandZoneCards.add(card.getId());
-        }
     }
 }

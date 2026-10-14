@@ -126,6 +126,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
@@ -523,6 +524,19 @@ class GameQueryServiceTest {
         lordCard.addEffect(EffectSlot.STATIC, carrierEffect);
         when(staticEffectRegistry.getHandler(carrierEffect)).thenReturn(handler);
         return addPermanent(playerId, lordCard);
+    }
+
+    /** Puts a face-up scheme into the player's command zone whose static effect is handled by the given handler. */
+    private Card addSchemeWithHandler(UUID playerId,
+                                      com.github.laxika.magicalvibes.service.effect.StaticEffectHandler handler) {
+        CardEffect carrierEffect = new DoubleDamageEffect();
+        Card scheme = new Card();
+        scheme.setName("Test Scheme");
+        scheme.setType(CardType.SCHEME);
+        scheme.addEffect(EffectSlot.STATIC, carrierEffect);
+        lenient().when(staticEffectRegistry.getHandler(carrierEffect)).thenReturn(handler);
+        gd.playerCommandZones.put(playerId, new ArrayList<>(List.of(scheme)));
+        return scheme;
     }
 
     // ===== findPermanentById =====
@@ -1076,6 +1090,25 @@ class GameQueryServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(gqs.hasKeyword(gd, perm, Keyword.FLYING)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns true when keyword granted by a face-up scheme in the command zone")
+        void returnsTrueForKeywordGrantedByFaceUpScheme() {
+            addSchemeWithHandler(player1Id, (ctx, eff, acc) -> acc.addKeyword(Keyword.FLYING));
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            assertThat(gqs.hasKeyword(gd, perm, Keyword.FLYING)).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when the granting scheme is face down in the command zone")
+        void returnsFalseForKeywordGrantedByFaceDownScheme() {
+            Card scheme = addSchemeWithHandler(player1Id, (ctx, eff, acc) -> acc.addKeyword(Keyword.FLYING));
+            gd.faceDownCommandZoneCards.add(scheme.getId());
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            assertThat(gqs.hasKeyword(gd, perm, Keyword.FLYING)).isFalse();
         }
 
         @Test
