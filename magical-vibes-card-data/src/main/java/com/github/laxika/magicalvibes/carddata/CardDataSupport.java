@@ -116,6 +116,7 @@ public final class CardDataSupport {
         KEYWORD_MAP.put("Nightbound", Keyword.NIGHTBOUND);
         KEYWORD_MAP.put("Flashback", Keyword.FLASHBACK);
         KEYWORD_MAP.put("Aftermath", Keyword.AFTERMATH);
+        KEYWORD_MAP.put("Fuse", Keyword.FUSE);
         KEYWORD_MAP.put("Haunt", Keyword.HAUNT);
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
         KEYWORD_MAP.put("Bargain", Keyword.BARGAIN);

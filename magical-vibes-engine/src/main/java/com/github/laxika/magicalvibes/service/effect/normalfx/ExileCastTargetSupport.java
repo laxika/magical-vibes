@@ -90,7 +90,16 @@ public class ExileCastTargetSupport {
         if (card.getMaxTargets() > 1) {
             return nextSlotCandidates(gameData, card, controllerId, List.of());
         }
+        return effectTargetCandidates(gameData, card, spellEffects, controllerId);
+    }
 
+    /**
+     * Every object that is a legal target for the prepared spell's effects, ignoring per-slot target
+     * filters — for a single target, or a target group declared without a filter (Fire's "any
+     * target").
+     */
+    public List<UUID> effectTargetCandidates(GameData gameData, Card card, List<CardEffect> spellEffects,
+                                             UUID controllerId) {
         Set<UUID> candidates = new LinkedHashSet<>(flatSingleTargetCandidates(gameData, card, controllerId));
         candidates.addAll(gameData.orderedPlayerIds);
         gameData.forEachPermanent((ignored, permanent) -> candidates.add(permanent.getId()));
@@ -135,8 +144,17 @@ public class ExileCastTargetSupport {
      * underlying validator.
      */
     public List<UUID> nextSlotCandidates(GameData gameData, Card card, UUID controllerId, List<UUID> chosenTargets) {
-        ValidTargetsResponse response =
-                validTargetService.computeValidTargetsForSpell(gameData, card, controllerId, chosenTargets);
+        return nextSlotCandidates(gameData, card, controllerId, chosenTargets, null);
+    }
+
+    /**
+     * Legal candidates for the next target slot of a prepared modal spell, evaluated against the
+     * modes {@code modeEncoding} selects, as a normal cast of those modes would be.
+     */
+    public List<UUID> nextSlotCandidates(GameData gameData, Card card, UUID controllerId, List<UUID> chosenTargets,
+                                         Integer modeEncoding) {
+        ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                gameData, card, controllerId, chosenTargets, modeEncoding);
         List<UUID> candidates = new ArrayList<>();
         candidates.addAll(response.validPermanentIds());
         candidates.addAll(response.validPlayerIds());

@@ -67,8 +67,17 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.SplitFreeCastMoreTargetsChoice) {
+            // Optional extra targets of a free split half: cast with the targets already chosen.
+            String done = interaction.options().getLast();
+            log.info("AI: Choosing \"{}\" for optional split-half targets in game {}", done, gameId);
+            ctx.gameActions().answerInteraction(new InteractionAnswer.ListChoiceMade(done));
+            return;
+        }
+
         if (context instanceof ChoiceContext.ChooseModeChoice
-                || context instanceof ChoiceContext.LibraryCastModeChoice) {
+                || context instanceof ChoiceContext.LibraryCastModeChoice
+                || context instanceof ChoiceContext.SplitFreeCastHalfChoice) {
             // Modal abilities and free-cast modal spells take the first option.
             String chosenMode = interaction.options().getFirst();
             log.info("AI: Choosing modal option \"{}\" in game {}", chosenMode, gameId);

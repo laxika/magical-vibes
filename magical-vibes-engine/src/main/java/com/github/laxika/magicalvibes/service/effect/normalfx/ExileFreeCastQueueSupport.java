@@ -436,7 +436,11 @@ public class ExileFreeCastQueueSupport {
         }
     }
 
-    private PreparedModalCast prepareModalCast(GameData gameData, Card card, UUID controllerId,
+    /**
+     * Prepares a runtime copy of {@code card} cast with the chosen modes: their effects replace the
+     * modal, their targets are declared, and a split half takes that half's characteristics.
+     */
+    public PreparedModalCast prepareModalCast(GameData gameData, Card card, UUID controllerId,
                                                ChooseOneEffect modal, List<Integer> chosenModeIndices) {
         int[] indices = chosenModeIndices.stream().mapToInt(Integer::intValue).toArray();
         int modeEncoding = modal.modesMayRepeat()
@@ -716,7 +720,8 @@ public class ExileFreeCastQueueSupport {
         castNextFromQueue(gameData, playerId);
     }
 
-    private record PreparedModalCast(Card card, List<CardEffect> effects, int effectiveXValue) {
+    /** A modal spell ready for the stack: its runtime card, chosen effects and X value. */
+    public record PreparedModalCast(Card card, List<CardEffect> effects, int effectiveXValue) {
     }
 
     /**

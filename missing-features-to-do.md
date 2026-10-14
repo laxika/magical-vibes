@@ -512,33 +512,34 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 24. Free casts from hand or graveyard choose a split half on resolution
+## 24. Other split-card casts still choose the half on resolution
 
-**Status:** open · **Found:** 2026-10-14, while counting free-cast mana value budgets by the cast half
+**Status:** open · **Found:** 2026-10-14, while moving free hand and graveyard casts to a cast-time half
+choice
 
 **Failing tests:**
-- None yet. Add one with Invoke Calamity: Wear // Tear with a sorcery of mana value 4 from the
-  graveyard must be accepted, and only Wear may then be cast.
+- None yet. Add one where a split card is cast from the graveyard by paying its cost, or as a copy, and
+  assert that the half and its targets are chosen before the spell is put onto the stack.
 
 **What the rules require.** CR 709.3: a player chooses which half of a split card they are casting before
-putting it onto the stack, and CR 709.3a: only that half is evaluated to see if it can be cast. Free
-casts from hand and graveyard (`MayCastHandlerService`, used by Invoke Calamity and others) put the whole
-`ChooseOneEffect` on the stack and ask for the half when the spell resolves. Invoke Calamity therefore
-can't restrict the half to its remaining limit, so it counts each split card at its most expensive mode,
-including the fused spell. That rejects some legal choices but never allows an illegal one. The exile
-free-cast queue (Primeval Spawn) already chooses the half at cast time and spends only that half. Per-card
-limits ("mana value N or less") still compare the whole card's combined mana value.
+putting it onto the stack, and CR 709.3a: only that half is evaluated to see if it can be cast. Free casts
+from hand and graveyard now do this (`SplitCardFreeCastSupport`). Graveyard casts that pay a cost or cast
+copies, and the other `MayCastHandlerService` paths, still put the whole `ChooseOneEffect` on the stack and
+ask for the half on resolution. Per-card limits ("mana value N or less") still compare the whole card's
+combined mana value instead of the half being cast. `SplitCardFreeCastSupport` also fixes the division of
+divided damage only when it is forced (one target, or as many targets as damage); no split half needs a
+free choice today.
 
-**Why it's large.** The hand and graveyard free-cast paths need the exile queue's cast-time mode choice,
-including targets chosen for the chosen half, and every "cast without paying" permission that uses them
-has to keep working.
+**Why it's large.** Every remaining cast path needs the cast-time half choice, and each "mana value N or
+less" permission has to check the half being cast rather than the card.
 
 **Prompt to start it:**
 
 ```
-Make free casts from hand and graveyard choose a split card's half when it is cast (CR 709.3), not on
-resolution, then count Invoke Calamity's limit by the chosen half instead of the most expensive mode.
-Start with InvokeCalamityTest, and ask me to run the full suite.
+Make the remaining split-card cast paths (paid and copied graveyard casts, other MayCastHandlerService
+paths) choose the half when the spell is cast (CR 709.3) through SplitCardFreeCastSupport, and check
+per-card mana value limits against the half being cast. Start with InvokeCalamityTest's split-card tests
+as the model, and ask me to run the full suite.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

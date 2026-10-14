@@ -244,6 +244,10 @@ public class ChoiceHandlerService {
             exileFreeCastQueueSupport;
 
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardFreeCastSupport
+            splitCardFreeCastSupport;
+
+    @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnTargetPermanentEffectHandler
             counterPlacementHandler;
 
@@ -1473,6 +1477,14 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.LibraryCastModeChoice ctx) {
             libraryChoiceHandlerService.handleLibraryCastModeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SplitFreeCastHalfChoice ctx) {
+            splitCardFreeCastSupport.handleHalfChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SplitFreeCastMoreTargetsChoice ctx) {
+            splitCardFreeCastSupport.handleMoreTargetsChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ExileFreeCastModeChoice ctx) {

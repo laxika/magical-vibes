@@ -29,6 +29,9 @@ import java.util.UUID;
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
 
+    /** Chooses the next target of a split half cast for free from hand or graveyard. */
+    record SplitFreeCastTarget(SplitCardFreeCast.Targeting targeting) implements PermanentChoiceContext {}
+
     /** Chooses the recipient of damage redirected from the controller's creatures. */
     record RedirectCreatureDamage(UUID controllerId) implements PermanentChoiceContext {}
 
