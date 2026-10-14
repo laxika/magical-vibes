@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MarchOfBurgeoningLife.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class, Card.class})
+@CardUsed({MarchOfBurgeoningLife.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class})
 class MarchOfBurgeoningLifeTest extends BaseCardTest {
 
     @Test

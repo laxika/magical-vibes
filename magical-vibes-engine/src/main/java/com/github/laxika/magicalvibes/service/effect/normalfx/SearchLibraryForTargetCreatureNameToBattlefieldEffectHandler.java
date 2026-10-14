@@ -75,7 +75,7 @@ public class SearchLibraryForTargetCreatureNameToBattlefieldEffectHandler implem
             return null;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || !gameQueryService.isCreature(gameData, target) || target.getCard().isToken()) {
+        if (target == null || !gameQueryService.isCreature(gameData, target) || (target.getCard().isToken() && !searchEffect.allowTokenTargets())) {
             return null;
         }
         return searchEffect.targetRestriction() == null

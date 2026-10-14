@@ -31,6 +31,6 @@ public class SpectralBears extends Card {
                                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate())
                         )))),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)));
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)));
     }
 }

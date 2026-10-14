@@ -19,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RootbornDefenses.class, DoomBlade.class, GrizzlyBears.class, Card.class})
+@CardUsed({RootbornDefenses.class, DoomBlade.class, GrizzlyBears.class})
 class RootbornDefensesTest extends BaseCardTest {
 
     @Test

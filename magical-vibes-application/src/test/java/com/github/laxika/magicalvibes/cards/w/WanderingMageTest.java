@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WanderingMage.class, GuerrillaTactics.class, SwornDefender.class, Card.class})
+@CardUsed({WanderingMage.class, GuerrillaTactics.class, SwornDefender.class})
 class WanderingMageTest extends BaseCardTest {
 
     private Permanent addMageReady() {

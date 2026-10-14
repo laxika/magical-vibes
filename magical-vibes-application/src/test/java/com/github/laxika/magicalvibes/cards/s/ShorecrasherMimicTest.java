@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShorecrasherMimic.class, Card.class})
+@CardUsed({ShorecrasherMimic.class})
 class ShorecrasherMimicTest extends BaseCardTest {
 
     @BeforeEach
@@ -69,6 +69,7 @@ class ShorecrasherMimicTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(mimic.getEffectivePower()).isEqualTo(5);
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(mimic.getEffectivePower()).isEqualTo(2);

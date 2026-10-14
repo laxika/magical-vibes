@@ -21,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RunoStromkirk.class, KrothussLordOfTheDeep.class, GrizzlyBears.class,
-        ColossalDreadmaw.class, HullbreakerHorror.class, MarneusCalgar.class, Card.class})
+        ColossalDreadmaw.class, HullbreakerHorror.class, MarneusCalgar.class})
 class RunoStromkirkTest extends BaseCardTest {
 
     @Test
@@ -83,9 +83,6 @@ class RunoStromkirkTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, seaMonster.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         List<Permanent> copies = findPermanents(player1, "Sea Serpent");
         List<Permanent> tokenCopies = copies.stream().filter(permanent -> permanent.getCard().isToken()).toList();
@@ -105,7 +102,6 @@ class RunoStromkirkTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, otherCreature.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         List<Permanent> copies = findPermanents(player1, "Grizzly Bears");
         List<Permanent> tokenCopies = copies.stream().filter(permanent -> permanent.getCard().isToken()).toList();
@@ -174,9 +170,6 @@ class RunoStromkirkTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, kraken.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Hullbreaker Horror").stream()

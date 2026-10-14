@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PromiseOfAclazotz.class, FoulRebirth.class, GrizzlyBears.class, Card.class})
+@CardUsed({PromiseOfAclazotz.class, FoulRebirth.class, GrizzlyBears.class})
 class PromiseOfAclazotzTest extends BaseCardTest {
 
     @Test

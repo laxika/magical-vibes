@@ -2157,6 +2157,11 @@ public class TriggeredAbilityQueueService {
                 if (pending.targetGroups().size() == 1) {
                     chapterEntry.setTargetFilters(java.util.Collections.nCopies(
                             pending.chosenTargetsSoFar().size(), pending.targetGroups().getFirst().filter()));
+                } else if (pending.targetGroups().stream().allMatch(g -> g.minTargets() == 1 && g.maxTargets() == 1)
+                        && pending.chosenTargetsSoFar().size() == pending.targetGroups().size()) {
+                    chapterEntry.setTargetFilters(pending.targetGroups().stream()
+                            .<TargetFilter>map(SagaChapterTargetGroup::filter)
+                            .toList());
                 }
                 gameData.stack.add(chapterEntry);
                 continue;
@@ -3177,6 +3182,15 @@ public class TriggeredAbilityQueueService {
                 .allMatch(java.util.Objects::isNull);
     }
 
+    /**
+     * The card's per-controller constraint describes a single "for each player, up to one target" phrase, so it
+     * only applies to chapters with one target group. Chapters with several groups (such as "target Mutant fights
+     * target creature named Fenric") target each group independently.
+     */
+    private static MultiTargetConstraint sagaChapterPerControllerConstraint(PermanentChoiceContext.SagaChapterTarget pending) {
+        return pending.targetGroups().size() == 1 ? pending.sourceCard().getMultiTargetConstraint() : null;
+    }
+
     private List<UUID> collectSagaChapterTargetGroup(GameData gameData,
                                                       PermanentChoiceContext.SagaChapterTarget pending,
                                                       SagaChapterTargetGroup group) {
@@ -3189,7 +3203,7 @@ public class TriggeredAbilityQueueService {
                 if (pending.chosenTargetsSoFar().contains(playerId)) {
                     continue;
                 }
-                if (pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                if (sagaChapterPerControllerConstraint(pending) == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
                         && sagaChapterTargetControllerAlreadyChosen(
                         pending.chosenTargetsSoFar(), playerId, gameData)) {
                     continue;
@@ -3226,8 +3240,9 @@ public class TriggeredAbilityQueueService {
             return validTargets;
         }
 
-        Set<UUID> chosenControllers = pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
-                || pending.sourceCard().getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
+        MultiTargetConstraint perControllerConstraint = sagaChapterPerControllerConstraint(pending);
+        Set<UUID> chosenControllers = perControllerConstraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
+                || perControllerConstraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
                 ? pending.chosenTargetsSoFar().stream()
                 .map(id -> gameQueryService.findPermanentController(gameData, id))
                 .filter(java.util.Objects::nonNull)

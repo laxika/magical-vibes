@@ -17,7 +17,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OldRutstein.class, Forest.class, GrizzlyBears.class, Shock.class, Card.class,
+@CardUsed({OldRutstein.class, Forest.class, GrizzlyBears.class, Shock.class,
         RestInPeace.class, BruvacTheGrandiloquent.class})
 class OldRutsteinTest extends BaseCardTest {
 

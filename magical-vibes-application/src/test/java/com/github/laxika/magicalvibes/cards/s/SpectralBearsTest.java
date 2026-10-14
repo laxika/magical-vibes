@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpectralBears.class, BeastWalkers.class, BlackCarriage.class, BindingGrasp.class, Card.class})
+@CardUsed({SpectralBears.class, BeastWalkers.class, BlackCarriage.class, BindingGrasp.class})
 class SpectralBearsTest extends BaseCardTest {
 
     @Test

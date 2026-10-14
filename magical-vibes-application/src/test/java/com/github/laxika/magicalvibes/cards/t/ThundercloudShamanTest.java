@@ -22,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Card.class, ThundercloudShaman.class, AvianChangeling.class, BlindSpotGiant.class,
+@CardUsed({ThundercloudShaman.class, AvianChangeling.class, BlindSpotGiant.class,
         ChandraNalaar.class, GoldmeadowHarrier.class, SentinelsOfGlenElendra.class})
 class ThundercloudShamanTest extends BaseCardTest {
 

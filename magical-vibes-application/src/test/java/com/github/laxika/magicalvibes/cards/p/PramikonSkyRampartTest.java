@@ -15,7 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PramikonSkyRampart.class, GrizzlyBears.class, Card.class, ObNixilisReignited.class})
+@CardUsed({PramikonSkyRampart.class, GrizzlyBears.class, ObNixilisReignited.class})
 class PramikonSkyRampartTest extends BaseCardTest {
 
     @Test

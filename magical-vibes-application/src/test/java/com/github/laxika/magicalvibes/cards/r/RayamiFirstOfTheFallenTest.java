@@ -42,7 +42,6 @@ class RayamiFirstOfTheFallenTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Card.class)
     void doesNotReplaceTokenCreatureDeaths() {
         Permanent rayami = harness.addToBattlefieldAndReturn(player1, new RayamiFirstOfTheFallen());
         Card tokenCard = new Card();

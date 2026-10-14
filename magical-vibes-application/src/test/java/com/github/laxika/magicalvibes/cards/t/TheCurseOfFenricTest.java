@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheCurseOfFenric.class, GrizzlyBears.class, ClockworkDroid.class, Card.class})
+@CardUsed({TheCurseOfFenric.class, GrizzlyBears.class, ClockworkDroid.class})
 class TheCurseOfFenricTest extends BaseCardTest {
 
     @Test
@@ -86,7 +86,6 @@ class TheCurseOfFenricTest extends BaseCardTest {
 
         triggerChapter();
         harness.handlePermanentChosen(player1, victim.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         Permanent mutant = mutants(player1).getFirst();
 

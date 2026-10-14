@@ -21,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MorcantsEyes.class, GrizzlyBears.class, Card.class, EclipsedElf.class, EvolvingWilds.class, GanglyStompling.class})
+@CardUsed({MorcantsEyes.class, GrizzlyBears.class, EclipsedElf.class, EvolvingWilds.class, GanglyStompling.class})
 class MorcantsEyesTest extends BaseCardTest {
 
     @Test

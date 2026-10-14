@@ -25,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TheFertileLandsOfSaulvinia.class, Forest.class, Panopticon.class,
-        SimicGrowthChamber.class, SolRing.class, SpatialMerging.class, Card.class})
+        SimicGrowthChamber.class, SolRing.class, SpatialMerging.class})
 class TheFertileLandsOfSaulviniaTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -114,6 +114,7 @@ class TheFertileLandsOfSaulviniaTest extends BaseCardTest {
         int beforeHand = gd.playerHands.get(player1.getId()).size();
 
         harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.planechase.deck).containsExactly(unrevealed, plane);

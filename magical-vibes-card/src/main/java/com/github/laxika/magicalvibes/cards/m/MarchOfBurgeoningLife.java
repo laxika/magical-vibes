@@ -20,6 +20,7 @@ public class MarchOfBurgeoningLife extends Card {
                 false,
                 true,
                 LibrarySearchDestination.BATTLEFIELD_TAPPED,
-                new PermanentManaValueLessThanXPredicate()));
+                new PermanentManaValueLessThanXPredicate(),
+                true));
     }
 }

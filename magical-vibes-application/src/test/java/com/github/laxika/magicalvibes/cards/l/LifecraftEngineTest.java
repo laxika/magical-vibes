@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LifecraftEngine.class, DuskLegionDreadnought.class, GreasewrenchGoblin.class, Card.class})
+@CardUsed({LifecraftEngine.class, DuskLegionDreadnought.class, GreasewrenchGoblin.class})
 class LifecraftEngineTest extends BaseCardTest {
 
     private static Card createCreature(String name, CardSubtype subtype) {
@@ -92,6 +92,12 @@ class LifecraftEngineTest extends BaseCardTest {
         assertThat(bonus.toughness()).isEqualTo(0);
     }
 
+    private void animateAsCrewed(Permanent vehicle) {
+        vehicle.setAnimatedUntilEndOfTurn(true);
+        vehicle.setAnimatedPower(4);
+        vehicle.setAnimatedToughness(4);
+    }
+
     private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player, CardSubtype subtype) {
         return harness.addToBattlefieldAndReturn(player, createCreature(subtype.name(), subtype));
     }
@@ -139,8 +145,8 @@ class LifecraftEngineTest extends BaseCardTest {
         opposing.setChosenSubtype(CardSubtype.ELF);
 
         assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.GOBLIN)).isFalse();
-        other.setAnimatedUntilEndOfTurn(true);
-        opposing.setAnimatedUntilEndOfTurn(true);
+        animateAsCrewed(other);
+        animateAsCrewed(opposing);
 
         assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.GOBLIN)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, other, CardSubtype.ELF)).isTrue();

@@ -458,8 +458,9 @@ public class AttackLegalityService {
                 continue;
             }
             for (Permanent source : battlefield) {
+                AttackDirection direction = chosenDirection(source);
                 if (source.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, source)
-                        || source.getChosenAttackDirection() == null) {
+                        || direction == null) {
                     continue;
                 }
                 boolean hasRestriction = gameQueryService.getActiveStaticEffects(gameData, source).stream()
@@ -467,8 +468,7 @@ public class AttackLegalityService {
                 if (!hasRestriction) {
                     continue;
                 }
-                UUID nearestOpponent = nearestOpponentInDirection(gameData, attackerControllerId,
-                        source.getChosenAttackDirection());
+                UUID nearestOpponent = nearestOpponentInDirection(gameData, attackerControllerId, direction);
                 if (nearestOpponent == null || !nearestOpponent.equals(targetControllerId)
                         || (!targetIsPlayer && !targetIsPlaneswalker)) {
                     return true;
@@ -476,6 +476,18 @@ public class AttackLegalityService {
             }
         }
         return false;
+    }
+
+    /** The direction chosen by a Left/Right effect, or the Left/Right as-enters mode choice. */
+    private static AttackDirection chosenDirection(Permanent source) {
+        if (source.getChosenAttackDirection() != null) {
+            return source.getChosenAttackDirection();
+        }
+        for (String label : source.getChosenModeLabels()) {
+            if ("Left".equals(label)) return AttackDirection.LEFT;
+            if ("Right".equals(label)) return AttackDirection.RIGHT;
+        }
+        return null;
     }
 
     private UUID nearestOpponentInDirection(GameData gameData, UUID playerId, AttackDirection direction) {

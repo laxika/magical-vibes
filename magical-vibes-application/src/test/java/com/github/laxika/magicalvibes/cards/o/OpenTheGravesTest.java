@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OpenTheGraves.class, GrizzlyBears.class, WrathOfGod.class, Card.class})
+@CardUsed({OpenTheGraves.class, GrizzlyBears.class, WrathOfGod.class})
 class OpenTheGravesTest extends BaseCardTest {
 
     @Test

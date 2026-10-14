@@ -43,20 +43,23 @@ public class MillControllerAndCreateTokensByMilledCardTypeEffectHandler implemen
             return;
         }
 
-        Card milledCard = deck.getFirst();
-        List<Card> milledCards = graveyardService.resolveMillPlayer(gameData, controllerId, 1);
-        if (!milledCards.contains(milledCard)) {
+        List<Card> milledCards = graveyardService.resolveMillPlayerIncludingExiled(gameData, controllerId, 1);
+        if (milledCards.isEmpty()) {
             return;
         }
 
-        List<CardEffect> tokenEffects = new ArrayList<>(2);
-        if (milledCard.hasType(CardType.LAND)) {
+        boolean anyLand = milledCards.stream().anyMatch(card -> card.hasType(CardType.LAND));
+        boolean anyCreature = milledCards.stream().anyMatch(card -> card.hasType(CardType.CREATURE));
+        boolean anyNoncreatureNonland = milledCards.stream()
+                .anyMatch(card -> !card.hasType(CardType.LAND) && !card.hasType(CardType.CREATURE));
+        List<CardEffect> tokenEffects = new ArrayList<>(3);
+        if (anyLand) {
             tokenEffects.add(e.landToken());
         }
-        if (milledCard.hasType(CardType.CREATURE)) {
+        if (anyCreature) {
             tokenEffects.add(e.creatureToken());
         }
-        if (!milledCard.hasType(CardType.LAND) && !milledCard.hasType(CardType.CREATURE)) {
+        if (anyNoncreatureNonland) {
             tokenEffects.add(e.nonCreatureNonLandToken());
         }
 
@@ -66,6 +69,6 @@ public class MillControllerAndCreateTokensByMilledCardTypeEffectHandler implemen
         }
         entry.insertEffectsToResolve(effectIndex + 1, tokenEffects);
         log.info("Game {} - {} milled {} and queued {} token effect(s)",
-                gameData.id, playerName, milledCard.getName(), tokenEffects.size());
+                gameData.id, playerName, milledCards.stream().map(Card::getName).toList(), tokenEffects.size());
     }
 }

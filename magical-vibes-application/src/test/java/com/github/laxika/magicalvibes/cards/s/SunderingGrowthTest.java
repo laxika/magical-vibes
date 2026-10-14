@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SunderingGrowth.class, RakdosKeyrune.class, SphereOfSafety.class, AxebaneStag.class,
-        CallOfTheConclave.class, RootbornDefenses.class, Card.class})
+        CallOfTheConclave.class, RootbornDefenses.class})
 class SunderingGrowthTest extends BaseCardTest {
 
     @Test

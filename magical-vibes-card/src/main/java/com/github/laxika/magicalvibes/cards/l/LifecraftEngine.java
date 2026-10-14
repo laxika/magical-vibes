@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -26,5 +29,11 @@ public class LifecraftEngine extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)))));
         addEffect(EffectSlot.STATIC, BoostCreaturesOfChosenSubtypeEffect.otherOwnCreatures(1, 1));
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                null,
+                List.of(new CrewCost(3), AnimatePermanentsEffect.crew()),
+                "Crew 3"
+        ));
     }
 }

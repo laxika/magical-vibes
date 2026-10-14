@@ -2017,8 +2017,7 @@ public class PermanentRemovalService {
 
     private NontokenCreatureDyingExileReplacement nontokenCreatureDyingExileReplacement(
             GameData gameData, Permanent dyingPermanent) {
-        if (dyingPermanent != null && dyingPermanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect.class::isInstance)) {
+        if (dyingPermanent != null && hasBloodCounterExileReplacement(gameData, dyingPermanent)) {
             return new NontokenCreatureDyingExileReplacement(
                     dyingPermanent.getCard(), dyingPermanent.getId());
         }
@@ -2027,21 +2026,27 @@ public class PermanentRemovalService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect.class::isInstance)) {
+                if (hasBloodCounterExileReplacement(gameData, permanent)) {
                     return new NontokenCreatureDyingExileReplacement(
                             permanent.getCard(), permanent.getId());
                 }
             }
         }
         for (Permanent permanent : gameData.simultaneousDyingPermanents.values()) {
-            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect.class::isInstance)) {
                 return new NontokenCreatureDyingExileReplacement(
                         permanent.getCard(), permanent.getId());
             }
         }
         return null;
+    }
+
+    private boolean hasBloodCounterExileReplacement(GameData gameData, Permanent permanent) {
+        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect.class::isInstance)
+                && !gameQueryService.hasLostPrintedAbilities(gameData, permanent);
     }
 
     private record NontokenCreatureDyingExileReplacement(Card sourceCard, UUID sourcePermanentId) {

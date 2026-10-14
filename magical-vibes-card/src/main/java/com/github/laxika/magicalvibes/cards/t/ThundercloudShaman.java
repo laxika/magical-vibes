@@ -8,8 +8,12 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "195")
 @CardRegistration(set = "MMA", collectorNumber = "135")
@@ -18,11 +22,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class ThundercloudShaman extends Card {
 
     public ThundercloudShaman() {
-        // When this creature enters, it deals damage equal to the number of Giants you control
-        // to each non-Giant creature. (The handler already restricts targets to creatures.)
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToEachMatchingPermanentEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.GIANT), CountScope.CONTROLLER),
-                new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GIANT)),
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.GIANT)))),
                 EachPermanentScope.ALL_PLAYERS));
     }
 }

@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WoodlurkerMimic.class, Card.class})
+@CardUsed({WoodlurkerMimic.class})
 class WoodlurkerMimicTest extends BaseCardTest {
 
     @BeforeEach
@@ -69,6 +69,7 @@ class WoodlurkerMimicTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(mimic.getEffectivePower()).isEqualTo(4);
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(mimic.getEffectivePower()).isEqualTo(2);
