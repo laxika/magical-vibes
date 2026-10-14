@@ -1544,6 +1544,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /**
+     * Target choice for the mode just announced for a modal triggered ability already on the stack.
+     * {@code stackEntryId} is the entry's {@link StackEntry#getTargetableId()}.
+     */
+    record StackedModalTriggerTarget(UUID stackEntryId, Card sourceCard, TargetFilter targetFilter)
+            implements PermanentChoiceContext {}
+
     record TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                  UUID sourcePermanentId, boolean modesResetEachTurn,
                                  boolean consumeModes, UUID triggeringCardId,

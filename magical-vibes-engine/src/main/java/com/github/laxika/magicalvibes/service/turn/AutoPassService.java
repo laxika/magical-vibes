@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
@@ -51,6 +52,7 @@ public class AutoPassService {
     private final CombatAttackService combatAttackService;
     private final GameMutationCoordinator mutationCoordinator;
     private final StateBasedActionService stateBasedActionService;
+    private final StackedModalTriggerService stackedModalTriggerService;
 
     public AutoPassService(
             GameQueryService gameQueryService,
@@ -60,7 +62,8 @@ public class AutoPassService {
             StepTriggerService stepTriggerService,
             CombatAttackService combatAttackService,
             GameMutationCoordinator mutationCoordinator,
-            @Lazy StateBasedActionService stateBasedActionService) {
+            @Lazy StateBasedActionService stateBasedActionService,
+            StackedModalTriggerService stackedModalTriggerService) {
         this.gameQueryService = gameQueryService;
         this.actionAvailabilityService = actionAvailabilityService;
         this.triggerCollectionService = triggerCollectionService;
@@ -69,6 +72,7 @@ public class AutoPassService {
         this.combatAttackService = combatAttackService;
         this.mutationCoordinator = mutationCoordinator;
         this.stateBasedActionService = stateBasedActionService;
+        this.stackedModalTriggerService = stackedModalTriggerService;
     }
 
     /**
@@ -104,6 +108,12 @@ public class AutoPassService {
             gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
             gameData.pendingManaAbilityTriggers.clear();
             gameData.priorityPassedBy.clear();
+        }
+
+        // CR 603.3c: modal triggers already on the stack announce their mode before anyone gets priority.
+        if (stackedModalTriggerService.announceNextMode(gameData)) {
+            invalidateForAllPlayers(gameData);
+            return;
         }
 
         if (!gameData.interaction.isAwaitingInput()
@@ -331,6 +341,8 @@ public class AutoPassService {
             if (gameData.stack.isEmpty()) return;
             if (gameData.interaction.isAwaitingInput()) return;
             if (gameData.status == GameStatus.FINISHED) return;
+            if (stackedModalTriggerService.announceNextMode(gameData)) return;
+            if (gameData.stack.isEmpty()) return;
 
             UUID stackPriorityHolder = gameQueryService.getPriorityPlayerId(gameData);
             if (stackPriorityHolder == null) {

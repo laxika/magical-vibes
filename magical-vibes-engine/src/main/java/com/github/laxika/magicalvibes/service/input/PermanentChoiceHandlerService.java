@@ -68,6 +68,9 @@ public class PermanentChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport splitCardCastSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService;
 
     private final PlayerInputService playerInputService;
 
@@ -686,6 +689,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleExileReturnAttackTarget(gameData, permanentId, erat);
         } else if (context instanceof PermanentChoiceContext.EntersTriggerTarget ett) {
             triggerHandler.handleEntersTrigger(gameData, permanentId, ett);
+        } else if (context instanceof PermanentChoiceContext.StackedModalTriggerTarget stackedModalTarget) {
+            stackedModalTriggerService.handleTargetChosen(gameData, permanentId, stackedModalTarget);
         } else if (context instanceof PermanentChoiceContext.EmblemTriggerTarget ett) {
             triggerHandler.handleEmblemTrigger(gameData, permanentId, ett);
         } else if (context instanceof PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger umpt) {

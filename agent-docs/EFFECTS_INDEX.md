@@ -1523,14 +1523,17 @@ return a `TargetSpec` (a `TargetPredicate` + a `harmful` flag + an optional `Per
 `setNeedsTarget`/`setNeedsSpellTarget`. For kicker/modal spells use
 `EffectResolution.resolveEffects(effects, kicked, modeIndex)` first to get the resolved effect list.
 
-**Modal triggered abilities** (e.g. a "choose one" upkeep trigger, Etherwrought Page): spells/ETB
-pick their `ChooseOneEffect` mode at cast time and never reach the stack as a raw ChooseOneEffect; a
-triggered ability has no cast, so put the `ChooseOneEffect` directly in the trigger slot and the mode
-is picked as the ability resolves. `ChooseOneEffectHandler` (normalfx, handles `ChooseOneEffect.class`)
-opens a `ChoiceContext.ChooseModeChoice` list pick; `ChoiceHandlerService.handleChooseModeChoice`
-splices the chosen mode's effects into the paused resolution so they resolve in card-text order
-(gain/lose life resolve immediately; a surveil mode still queues its "may" prompt). Non-targeting modes
-only � a targeted mode would need per-mode trigger-time target selection (cf. RelicBindModeChoice).
+**Modal triggered abilities** (e.g. a "choose one" upkeep trigger, Etherwrought Page; Graviton,
+Fundamental Force; Grenzo, Havoc Raiser): put the `ChooseOneEffect` directly in the trigger slot. A trigger
+path that pushes it onto the stack as a raw `ChooseOneEffect` has its mode announced before any player
+receives priority (CR 603.3c): `StackedModalTriggerService.announceNextMode`, called from
+`AutoPassService`, offers only modes with a legal target (`ChoiceContext.StackedModalTriggerModeChoice`),
+then that mode's single player/permanent target (`PermanentChoiceContext.StackedModalTriggerTarget`), and
+removes the ability from the stack when no mode is legal. The stack entry keeps its trigger context
+(damaged player, event value); only its effects, target and target filter change. Combat-damage modes that
+act on "that player" reuse the damaged player bound on the entry. Optional, multi-mode, multi-target and
+graveyard/exile/spell-target modals are not announced there and still pick their mode on resolution via
+`ChooseOneEffectHandler` (`ChoiceContext.ChooseModeChoice`); use `ChooseOneAtTriggerTimeEffect` for those.
 
 **Modal triggered abilities with targets** ("choose one that hasn't been chosen", Demonic Pact): use `ChooseModeNotYetChosenEffect(List<ChooseOneOption>)` in `UPKEEP_TRIGGERED`. `StepTriggerService` queues a `PermanentChoiceContext.UpkeepModalTrigger`, drained BEFORE any targeting, which opens the mode pick with `beginChooseModeChoice(..., triggerTime=true, permanentId)`. `ChoiceHandlerService.handleTriggerTimeModeChoice` records the label on `Permanent.chosenModeLabels` (so a mode is offered once per object) and calls `StepTriggerService.queueChosenModeUpkeepTrigger`, which routes the chosen mode into the ordinary any-target / player-target / non-targeting upkeep pipelines. The mode's own `ChooseOneOption.targetFilter` rides on `UpkeepAnyTargetTrigger` / `UpkeepPlayerTargetTrigger` and overrides the card's filter.
 

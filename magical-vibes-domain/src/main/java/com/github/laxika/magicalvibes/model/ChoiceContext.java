@@ -2262,6 +2262,15 @@ public sealed interface ChoiceContext {
     }
 
     /**
+     * Mode announcement for a modal triggered ability that is already on the stack but whose mode
+     * has not been chosen yet (CR 603.3c). {@code stackEntryId} is the entry's
+     * {@link StackEntry#getTargetableId()}; {@code effect} holds only the modes that can legally be
+     * chosen.
+     */
+    record StackedModalTriggerModeChoice(UUID stackEntryId, UUID chooserId, Card sourceCard,
+                                         ChooseOneEffect effect) implements ChoiceContext {}
+
+    /**
      * A modal triggered ability's "choose one" mode pick, made as the ability resolves (the engine
      * has no cast-time modal machinery for triggered abilities). {@code sourceCard} is the ability's
      * source (used for logging), {@code controllerId} chooses the mode, and {@code effect} carries the

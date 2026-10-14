@@ -76,6 +76,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         if (context instanceof ChoiceContext.ChooseModeChoice
+                || context instanceof ChoiceContext.StackedModalTriggerModeChoice
                 || context instanceof ChoiceContext.LibraryCastModeChoice
                 || context instanceof ChoiceContext.SplitFreeCastHalfChoice) {
             // Modal abilities and free-cast modal spells take the first option.

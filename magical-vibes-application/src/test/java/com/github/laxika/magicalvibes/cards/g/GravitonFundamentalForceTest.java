@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -38,6 +39,7 @@ class GravitonFundamentalForceTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 
+        harness.setHand(player1, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.CLEANUP);
 
@@ -101,6 +103,40 @@ class GravitonFundamentalForceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only modes with a legal target are offered when the trigger is announced")
+    void offersOnlyModesWithLegalTargets() {
+        Permanent graviton = harness.addToBattlefieldAndReturn(player1, new GravitonFundamentalForce());
+        prepareLibrary();
+
+        drawCard();
+        drawCard();
+        harness.passPriority(player1);
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly(FLYING_MODE, TAP_MODE);
+        harness.handleListChoice(player1, TAP_MODE);
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice.validIds()).containsExactly(graviton.getId());
+    }
+
+    @Test
+    @DisplayName("The trigger is removed from the stack when no creature can be targeted")
+    void removedWhenNoModeCanBeChosen() {
+        Permanent graviton = harness.addToBattlefieldAndReturn(player1, new GravitonFundamentalForce());
+        prepareLibrary();
+
+        drawCard();
+        drawCard();
+        gd.playerBattlefields.get(player1.getId()).remove(graviton);
+        harness.passPriority(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

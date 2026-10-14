@@ -976,7 +976,8 @@ public class GameSimulator {
                 } else if (ccCtx.context() instanceof ChoiceContext.ReplacementEffectOrder order) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(
                             ReplacementOrderChoice.choose(order, ccCtx.options())));
-                } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice) {
+                } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice
+                        || ccCtx.context() instanceof ChoiceContext.StackedModalTriggerModeChoice) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(ccCtx.options().getFirst()));
                 } else {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("RED"));

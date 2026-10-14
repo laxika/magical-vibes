@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.service.turn.AutoPassService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
+import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -190,7 +191,8 @@ class GameLifecycleEventSequenceTest {
                 stepTriggers,
                 mock(CombatAttackService.class),
                 coordinator,
-                mock(StateBasedActionService.class));
+                mock(StateBasedActionService.class),
+                mock(StackedModalTriggerService.class));
         TurnProgressionService turns = new TurnProgressionService(
                 combat,
                 gameLogs,

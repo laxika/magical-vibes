@@ -127,6 +127,8 @@ public class ChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     @Autowired @Lazy
     private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService;
 
     private final LibraryRevealSupport libraryRevealSupport;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.VentureIntoDungeonEffectHandler> ventureHandlerProvider;
@@ -1493,6 +1495,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseModeChoice ctx) {
             handleChooseModeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.StackedModalTriggerModeChoice ctx) {
+            stackedModalTriggerService.handleModeChosen(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.RedistributePlayerLifeTotalsChoice ctx) {
