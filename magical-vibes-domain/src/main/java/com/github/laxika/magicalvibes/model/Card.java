@@ -1925,6 +1925,18 @@ public class Card {
         return cost != null ? cost.getManaValue() : 0;
     }
 
+    /**
+     * The smallest mana value this card can have as a spell. Only the half of a split card being
+     * cast is put onto the stack (CR 709.3a), so its cheaper half counts; any other card counts
+     * with its own mana value.
+     */
+    public int getSmallestSpellManaValue() {
+        return splitHalves.size() < 2 ? getManaValue() : splitHalves.stream()
+                .mapToInt(half -> half.manaCost() == null ? 0 : new ManaCost(half.manaCost()).getManaValue())
+                .min()
+                .orElse(getManaValue());
+    }
+
     public boolean hasType(CardType cardType) {
         return type == cardType || additionalTypes.contains(cardType);
     }

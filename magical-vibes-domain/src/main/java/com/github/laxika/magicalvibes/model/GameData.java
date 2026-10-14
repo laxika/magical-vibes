@@ -2242,6 +2242,13 @@ public class GameData {
      */
     public final Set<UUID> pendingFreeCastAsCopyIds = ConcurrentHashMap.newKeySet();
 
+    /**
+     * Total mana value still available to the spells in {@link #pendingFreeCastQueue} when their
+     * cast shares one limit (Primeval Spawn), or null when it is not limited. Each spell spends its
+     * own mana value as it is cast, so a split card spends only the half being cast (CR 709.3a).
+     */
+    public Integer pendingFreeCastManaValueBudget;
+
     /** Spellweaver Volute copy state waiting for the copied spell to be cast and the Aura reattached. */
     public PendingSpellweaverVoluteReattachment pendingSpellweaverVoluteReattachment;
 
@@ -8664,6 +8671,7 @@ public class GameData {
         });
         copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
         copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
+        copy.pendingFreeCastManaValueBudget = this.pendingFreeCastManaValueBudget;
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
         copy.pendingExileFreeCastRemainderToLibraryBottom.addAll(this.pendingExileFreeCastRemainderToLibraryBottom);
         copy.pendingExileFreeCastRemainderToHand.addAll(this.pendingExileFreeCastRemainderToHand);

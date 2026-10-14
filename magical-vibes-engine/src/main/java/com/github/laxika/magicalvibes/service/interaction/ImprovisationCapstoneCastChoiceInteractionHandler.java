@@ -44,12 +44,17 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
                 || cardIds.stream().anyMatch(id -> gameData.findExiledCard(id) == null)) {
             throw new IllegalStateException("Choose distinct cards from the offered exiled cards");
         }
-        if (interaction.maxTotalManaValue() != null
-                && cardIds.stream()
-                .map(gameData::findExiledCard)
-                .mapToInt(exiled -> exiled.card().getManaValue())
-                .sum() > interaction.maxTotalManaValue()) {
-            throw new IllegalStateException("The chosen cards exceed the total mana value limit");
+        // Each spell counts with its own mana value, so a split card counts only the half being cast
+        // (CR 709.3a). Its half is not chosen yet, so the cheapest half must fit now and the casts
+        // spend the actual halves from the budget.
+        if (interaction.maxTotalManaValue() != null) {
+            if (cardIds.stream()
+                    .map(gameData::findExiledCard)
+                    .mapToInt(exiled -> exiled.card().getSmallestSpellManaValue())
+                    .sum() > interaction.maxTotalManaValue()) {
+                throw new IllegalStateException("The chosen cards exceed the total mana value limit");
+            }
+            gameData.pendingFreeCastManaValueBudget = interaction.maxTotalManaValue();
         }
         if (interaction.castAsCopies()) {
             gameData.interaction.clearAwaitingInput();

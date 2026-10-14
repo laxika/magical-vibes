@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -15,13 +14,15 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
+import static com.github.laxika.magicalvibes.service.effect.normalfx.CastUpToTwoInstantOrSorceriesFromHandOrGraveyardWithoutPayingManaCostEffectHandler.MAX_TOTAL_MANA_VALUE;
+import static com.github.laxika.magicalvibes.service.effect.normalfx.CastUpToTwoInstantOrSorceriesFromHandOrGraveyardWithoutPayingManaCostEffectHandler.isEligible;
+import static com.github.laxika.magicalvibes.service.effect.normalfx.CastUpToTwoInstantOrSorceriesFromHandOrGraveyardWithoutPayingManaCostEffectHandler.largestSpellManaValue;
+
 /** Applies Invoke Calamity's capped selection and queues its selected spells in order. */
 @Component
 @RequiredArgsConstructor
 public class InvokeCalamityCastChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.InvokeCalamityCastChoice> {
-
-    private static final int MAX_TOTAL_MANA_VALUE = 6;
 
     private final InputCompletionService inputCompletionService;
 
@@ -51,7 +52,7 @@ public class InvokeCalamityCastChoiceInteractionHandler
                 .map(id -> findEligibleCard(gameData, interaction.playerId(), id))
                 .toList();
         if (cards.stream().anyMatch(card -> card == null)
-                || cards.stream().mapToInt(Card::getManaValue).sum() > MAX_TOTAL_MANA_VALUE) {
+                || cards.stream().mapToInt(card -> largestSpellManaValue(card)).sum() > MAX_TOTAL_MANA_VALUE) {
             throw new IllegalStateException("Chosen spells exceed Invoke Calamity's mana value limit");
         }
 
@@ -88,10 +89,5 @@ public class InvokeCalamityCastChoiceInteractionHandler
             return null;
         }
         return cards.stream().filter(card -> card.getId().equals(cardId)).findFirst().orElse(null);
-    }
-
-    private static boolean isEligible(Card card) {
-        return (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                && card.getManaValue() <= MAX_TOTAL_MANA_VALUE;
     }
 }

@@ -500,29 +500,33 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 24. Mana value limits on cast split cards use only the chosen half
+## 24. Free casts from hand or graveyard choose a split half on resolution
 
-**Status:** open · **Found:** 2026-10-14, while giving split halves their own characteristics
+**Status:** open · **Found:** 2026-10-14, while counting free-cast mana value budgets by the cast half
 
 **Failing tests:**
-- `InvokeCalamityTest.splitSpellBudgetUsesTheChosenHalfRatherThanBothHalves()`
-- `PrimevalSpawnTest` "The aggregate limit permits Wear and Avatar of Might, whose spells total ten"
+- None yet. Add one with Invoke Calamity: Wear // Tear with a sorcery of mana value 4 from the
+  graveyard must be accepted, and only Wear may then be cast.
 
-**What the rules require.** CR 709.3a: only the chosen half is evaluated to see if it can be cast. Invoke
-Calamity's and Primeval Spawn's total mana value limits count the spells being cast, so a cast half
-counts with its own mana value. The card in hand or exile has the combined mana value (CR 709.4b). The
-engine checks the limit against the whole card's combined mana value, so it rejects legal choices.
+**What the rules require.** CR 709.3: a player chooses which half of a split card they are casting before
+putting it onto the stack, and CR 709.3a: only that half is evaluated to see if it can be cast. Free
+casts from hand and graveyard (`MayCastHandlerService`, used by Invoke Calamity and others) put the whole
+`ChooseOneEffect` on the stack and ask for the half when the spell resolves. Invoke Calamity therefore
+can't restrict the half to its remaining limit, so it counts each split card at its most expensive mode,
+including the fused spell. That rejects some legal choices but never allows an illegal one. The exile
+free-cast queue (Primeval Spawn) already chooses the half at cast time and spends only that half. Per-card
+limits ("mana value N or less") still compare the whole card's combined mana value.
 
-**Why it's large.** The "cast with total mana value N or less" choice flows have to ask which half is
-being cast before they check the limit. Any other card with a similar free-cast budget has to be
-checked for the same mistake.
+**Why it's large.** The hand and graveyard free-cast paths need the exile queue's cast-time mode choice,
+including targets chosen for the chosen half, and every "cast without paying" permission that uses them
+has to keep working.
 
 **Prompt to start it:**
 
 ```
-Make free-cast mana value budgets (Invoke Calamity, Primeval Spawn and similar) count a split card by
-the half being cast (CR 709.3a), not its combined mana value. Start with InvokeCalamityTest, then
-PrimevalSpawnTest, and ask me to run the full suite.
+Make free casts from hand and graveyard choose a split card's half when it is cast (CR 709.3), not on
+resolution, then count Invoke Calamity's limit by the chosen half instead of the most expensive mode.
+Start with InvokeCalamityTest, and ask me to run the full suite.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 

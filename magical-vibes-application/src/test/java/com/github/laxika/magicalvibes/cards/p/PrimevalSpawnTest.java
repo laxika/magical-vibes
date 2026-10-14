@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.e.EssenceOfTheWild;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.i.InkwellLeviathan;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
@@ -22,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PrimevalSpawn.class, AvatarOfMight.class, GrizzlyBears.class, Forest.class,
-        Humility.class, SolRing.class, WearTear.class, EssenceOfTheWild.class})
+        Humility.class, SolRing.class, WearTear.class, EssenceOfTheWild.class, InkwellLeviathan.class,
+        GloriousAnthem.class})
 class PrimevalSpawnTest extends BaseCardTest {
 
     @Test
@@ -130,6 +133,34 @@ class PrimevalSpawnTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Avatar of Might");
         harness.assertInGraveyard(player2, "Sol Ring");
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(avatar, splitCard);
+    }
+
+    @Test
+    @DisplayName("With Inkwell Leviathan still to cast, only Tear fits the remaining limit")
+    void splitHalfOverRemainingLimitIsNotOffered() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PrimevalSpawn());
+        harness.addToBattlefield(player2, new SolRing());
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        InkwellLeviathan leviathan = new InkwellLeviathan();
+        WearTear splitCard = new WearTear();
+        harness.setLibrary(player1, List.of(leviathan, splitCard));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(splitCard.getId(), leviathan.getId()));
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("Tear — Destroy target enchantment");
+
+        harness.handleListChoice(player1, "Tear — Destroy target enchantment");
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Glorious Anthem"));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertOnBattlefield(player2, "Sol Ring");
+        harness.assertOnBattlefield(player1, "Inkwell Leviathan");
     }
 
     @Test

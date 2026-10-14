@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -274,6 +275,7 @@ public class ExileFreeCastQueueSupport {
             return;
         }
 
+        spendManaValueBudget(gameData, cardToCast.getManaValue());
         if (additionalCosts.any()) {
             if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
                     && (additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardCost() != null)
@@ -384,6 +386,7 @@ public class ExileFreeCastQueueSupport {
         }
         PreparedModalCast prepared = prepareModalCast(
                 gameData, context.cardToCast(), context.controllerId(), context.effect(), chosenModeIndices);
+        spendManaValueBudget(gameData, prepared.card().getManaValue());
         List<String> labels = chosenModeIndices.stream()
                 .map(context.effect().options()::get)
                 .map(ChooseOneEffect.ChooseOneOption::label)
@@ -417,6 +420,9 @@ public class ExileFreeCastQueueSupport {
         try {
             PreparedModalCast prepared = prepareModalCast(
                     gameData, card, controllerId, modal, chosenModeIndices);
+            if (prepared.card().getManaValue() > availableManaValue(gameData)) {
+                return false;
+            }
             if (!needsCastTarget(prepared.card(), prepared.effects())) {
                 return true;
             }
@@ -721,7 +727,31 @@ public class ExileFreeCastQueueSupport {
      * the same {@code MayEffect} and prompts a second time — casting a second copy if accepted. The
      * active frame completes the resolution itself, so skip the epilogue while one is running.
      */
+    /**
+     * The mana value the spell being cast may have under a shared total limit: what is left after
+     * the earlier casts, keeping enough for the cheapest half of every spell still queued
+     * (CR 709.3a). Unlimited when the casts share no limit.
+     */
+    private static int availableManaValue(GameData gameData) {
+        if (gameData.pendingFreeCastManaValueBudget == null) {
+            return Integer.MAX_VALUE;
+        }
+        int reserved = gameData.pendingFreeCastQueue.stream()
+                .map(gameData::findExiledCard)
+                .filter(Objects::nonNull)
+                .mapToInt(exiled -> exiled.card().getSmallestSpellManaValue())
+                .sum();
+        return gameData.pendingFreeCastManaValueBudget - reserved;
+    }
+
+    private static void spendManaValueBudget(GameData gameData, int manaValue) {
+        if (gameData.pendingFreeCastManaValueBudget != null) {
+            gameData.pendingFreeCastManaValueBudget -= manaValue;
+        }
+    }
+
     private void finishFreeCastProcess(GameData gameData) {
+        gameData.pendingFreeCastManaValueBudget = null;
         spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
         putRemainderIntoLibraryBottom(gameData);
