@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -83,7 +84,8 @@ class GiantAdephageTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 5));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 5)));
 
         harness.assertLife(player2, 15);
         harness.assertInGraveyard(player1, "Giant Adephage");

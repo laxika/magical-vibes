@@ -36,7 +36,7 @@ public class RegisterDelayedReturnSourceAuraToCreatureOnDeathEffectHandler
         }
 
         gameData.queueDelayedAction(new DelayedReturnSourceAuraToCreature(
-                auraCard.getId(), entry.getControllerId()));
+                auraCard.getId(), entry.getControllerId(), gameData.graveyardEntryVersion(auraCard.getId())));
         gameLogService.append(gameData,
                 GameLog.cardThen(auraCard, " will return to the battlefield at the beginning of the next end step."));
     }

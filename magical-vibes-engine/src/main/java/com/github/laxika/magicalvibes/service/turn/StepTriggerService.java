@@ -240,6 +240,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.PregameChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -3116,12 +3117,19 @@ public class StepTriggerService {
             List<LoseLifeAtNextDrawStepUnlessPays> pending = gameData.drainDelayedActions(
                     LoseLifeAtNextDrawStepUnlessPays.class, a -> a.playerId().equals(activePlayerId));
             for (LoseLifeAtNextDrawStepUnlessPays action : pending) {
-                gameData.stack.add(new StackEntry(
+                // The delayed ability belongs to whoever controlled the ability that created it
+                // (CR 603.7d); the drawing player is the one who loses life.
+                StackEntry delayed = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         action.sourceCard(),
-                        activePlayerId,
+                        action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(new LoseLifeEffect(action.lifeLoss())))));
+                        new ArrayList<>(List.of(new LoseLifeEffect(action.lifeLoss(),
+                                LoseLifeRecipient.TRIGGERING_PLAYER))),
+                        activePlayerId,
+                        (UUID) null);
+                delayed.setNonTargeting(true);
+                gameData.stack.add(delayed);
 
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers — " + gameData.playerIdToName.get(activePlayerId)
@@ -3143,6 +3151,10 @@ public class StepTriggerService {
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
                 for (CardEffect effect : drawEffects) {
+                    if (effect instanceof PutCountersOnUntapLockedPermanentsEffect) {
+                        // A delayed trigger of the lock's activator, collected below.
+                        continue;
+                    }
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
                     } else {
@@ -3155,15 +3167,6 @@ public class StepTriggerService {
                                 activePlayerId,
                                 perm.getId()
                         );
-                        if (effect instanceof PutCountersOnUntapLockedPermanentsEffect) {
-                            List<UUID> lockedPermanentIds = new ArrayList<>();
-                            gameData.forEachPermanent((playerId, permanent) -> {
-                                if (permanent.getUntapPreventedByPermanentIds().contains(perm.getId())) {
-                                    lockedPermanentIds.add(permanent.getId());
-                                }
-                            });
-                            triggerEntry.setEventCardIds(lockedPermanentIds);
-                        }
                         triggerEntry.setSourcePermanentSnapshot(new Permanent(perm));
                         gameData.stack.add(triggerEntry);
 
@@ -3173,6 +3176,37 @@ public class StepTriggerService {
                 }
             }
         }
+
+        // Giant Oyster: "at the beginning of each of your draw steps, put a -1/-1 counter on that
+        // creature" is a delayed trigger of the player who activated the lock (CR 603.7d), so it
+        // follows that player's draw steps even if the Oyster changes control.
+        gameData.forEachPermanent((sourceControllerId, perm) -> {
+            if (perm.isFaceDown()) return;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.DRAW_TRIGGERED)) {
+                if (!(effect instanceof PutCountersOnUntapLockedPermanentsEffect)) continue;
+                UUID activatorId = gameData.untapLockActivatorBySource.getOrDefault(perm.getId(), sourceControllerId);
+                if (!activePlayerId.equals(activatorId)) continue;
+                List<UUID> lockedPermanentIds = new ArrayList<>();
+                gameData.forEachPermanent((playerId, permanent) -> {
+                    if (permanent.getUntapPreventedByPermanentIds().contains(perm.getId())) {
+                        lockedPermanentIds.add(permanent.getId());
+                    }
+                });
+                if (lockedPermanentIds.isEmpty()) continue;
+                StackEntry triggerEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        activatorId,
+                        perm.getCard().getName() + "'s draw step ability",
+                        new ArrayList<>(List.of(effect)),
+                        activatorId,
+                        perm.getId());
+                triggerEntry.setEventCardIds(lockedPermanentIds);
+                triggerEntry.setSourcePermanentSnapshot(new Permanent(perm));
+                gameData.stack.add(triggerEntry);
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s draw step ability triggers."));
+            }
+        });
 
         // Auras: ENCHANTED_PERMANENT_CONTROLLER_DRAW_TRIGGERED fires on the enchanted permanent's
         // controller's draw step (e.g. Righteous Authority), baking that player as targetId.
@@ -5512,7 +5546,8 @@ public class StepTriggerService {
                     gameData.drainDelayedActions(DelayedReturnSourceAuraToCreature.class);
             for (DelayedReturnSourceAuraToCreature pending : pendingReturns) {
                 Card auraCard = gameQueryService.findCardInGraveyardById(gameData, pending.auraCardId());
-                if (auraCard == null) {
+                if (auraCard == null
+                        || gameData.graveyardEntryVersion(auraCard.getId()) != pending.graveyardEntryVersion()) {
                     continue;
                 }
 

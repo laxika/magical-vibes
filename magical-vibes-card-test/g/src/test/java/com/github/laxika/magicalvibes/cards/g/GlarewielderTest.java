@@ -75,6 +75,9 @@ class GlarewielderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreatureWithEvoke(player1, 0, null);
+        harness.passBothPriorities();
+        // Glarewielder itself is a legal "up to two target creatures" choice; choose no targets.
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Glarewielder");

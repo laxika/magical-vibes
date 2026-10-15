@@ -16,6 +16,9 @@ import java.util.Set;
  * Parameterised by {@link GrantScope} (which permanents), {@link EffectDuration} (how long),
  * and the granted subtypes/keywords/colour/card-types.
  *
+ * <p>{@code becomesCreature} is {@code false} only for {@link #vehicles}, which sets the
+ * Vehicle's base power and toughness and leaves its card types alone.
+ *
  * <p>Scopes used by this effect:
  * <ul>
  *   <li>{@link GrantScope#SELF} — the source permanent (manlands, Crew, Chimeric Staff/Mass,
@@ -41,10 +44,35 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
                                       GrantScope scope, EffectDuration duration,
                                       PermanentPredicate filter, Set<CardColor> animatedColors,
                                       boolean cardTypeOverriding,
-                                      boolean dynamicPowerToughness) implements CardEffect {
+                                      boolean dynamicPowerToughness,
+                                      boolean becomesCreature) implements CardEffect {
 
     public AnimatePermanentsEffect {
         animatedColors = Set.copyOf(animatedColors);
+    }
+
+    /** Every form that makes the permanents creatures; see {@link #vehicles} for the other. */
+    public AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughness,
+                                   List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords,
+                                   CardColor animatedColor, Set<CardType> grantedCardTypes,
+                                   GrantScope scope, EffectDuration duration,
+                                   PermanentPredicate filter, Set<CardColor> animatedColors,
+                                   boolean cardTypeOverriding, boolean dynamicPowerToughness) {
+        this(power, toughness, grantedSubtypes, grantedKeywords, animatedColor, grantedCardTypes,
+                scope, duration, filter, animatedColors, cardTypeOverriding, dynamicPowerToughness, true);
+    }
+
+    /**
+     * Until end of turn, each permanent you control matching {@code filter} becomes a
+     * {@code power}/{@code toughness} Vehicle in addition to its other types and gains the keywords,
+     * without becoming a creature (Ghirapur). A Vehicle has that power and toughness only once it
+     * is also a creature, e.g. after it's crewed (CR 301.7a, 301.7b).
+     */
+    public static AnimatePermanentsEffect vehicles(int power, int toughness, Set<Keyword> grantedKeywords,
+                                                   PermanentPredicate filter) {
+        return new AnimatePermanentsEffect(new Fixed(power), new Fixed(toughness), List.of(CardSubtype.VEHICLE),
+                grantedKeywords, null, Set.of(), GrantScope.OWN_PERMANENTS, EffectDuration.UNTIL_END_OF_TURN,
+                filter, Set.of(), false, false, false);
     }
 
     public AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughness,

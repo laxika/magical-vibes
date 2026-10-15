@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Shared animation/transform helpers used by every "normal" Animation effect handler and by
@@ -256,7 +257,11 @@ public class AnimationSupport {
         self.setAnimatedToughness(toughness);
         self.setAnimatedColor(effect.animatedColor());
         applyAnimatedColors(self, effect);
-        self.getTransientSubtypes().clear();
+        boolean crew = effect.equals(AnimatePermanentsEffect.crew());
+        // Crew only makes the Vehicle an artifact creature (CR 702.122a); it keeps its subtypes.
+        if (!crew) {
+            self.getTransientSubtypes().clear();
+        }
         self.getTransientSubtypes().addAll(effect.grantedSubtypes());
         self.getGrantedKeywords().addAll(effect.grantedKeywords());
         self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
@@ -273,7 +278,7 @@ public class AnimationSupport {
         gameLogService.append(gameData, GameLog.cardThen(self.getCard(),
                 " becomes a " + power + "/" + toughness + " creature " + durationText + "."));
 
-        if (effect.equals(AnimatePermanentsEffect.crew())) {
+        if (crew) {
             // The Vehicle becomes a creature at the crew ability's own timestamp (CR 613.1d, 613.7b), so
             // an earlier type-setting effect (Swift Reconfiguration) does not strip it.
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
@@ -507,6 +512,16 @@ public class AnimationSupport {
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (predicateEvaluationService.matchesPermanentPredicate(permanent, effect.filter(), filterContext)) {
+                if (!effect.becomesCreature()) {
+                    // "becomes a 5/3 Vehicle in addition to its other types" (Ghirapur): no creature
+                    // type, so the base P/T only shows once something else makes it a creature.
+                    permanent.getTransientSubtypes().addAll(effect.grantedSubtypes());
+                    permanent.getGrantedKeywords().addAll(effect.grantedKeywords());
+                    addAnimationBasePtFloatingEffect(gameData, entry, permanent, power, toughness,
+                            EffectDuration.UNTIL_END_OF_TURN);
+                    count++;
+                    continue;
+                }
                 permanent.setAnimatedUntilEndOfTurn(true);
                 permanent.setAnimatedPower(power);
                 permanent.setAnimatedToughness(toughness);
@@ -535,7 +550,10 @@ public class AnimationSupport {
             }
         }
 
-        String logEntry = count + " permanent(s) become " + power + "/" + toughness + " creature(s) until end of turn.";
+        String logEntry = count + " permanent(s) become " + power + "/" + toughness
+                + (effect.becomesCreature() ? " creature(s)" : " " + effect.grantedSubtypes().stream()
+                        .map(CardSubtype::getDisplayName).collect(Collectors.joining(" ")) + "(s)")
+                + " until end of turn.";
         gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} permanents animated as {}/{} creatures until end of turn",

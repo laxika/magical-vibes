@@ -33,6 +33,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -110,6 +111,11 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, newControllerId, perm,
                     enterTappedTypes, simultaneouslyEntered);
+            if (exiledEntry.ownerId() != null && !exiledEntry.ownerId().equals(newControllerId)) {
+                // Gisa: the card still belongs to its owner, so it goes to that player's graveyard.
+                graveyardReturnSupport.trackStolenCreature(gameData, perm.getId(), newControllerId,
+                        exiledEntry.ownerId());
+            }
             entry.rememberReturnedPermanent(perm.getId());
             simultaneouslyEntered.add(perm);
             if (returnEffect.sacrificeAtEndStep()) {

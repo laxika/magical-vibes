@@ -7523,7 +7523,9 @@ public class GameQueryService {
                 || (target.isProtectionFromColorlessUntilEndOfTurn() && sourceColors.isEmpty())
                 || hasProtectionFromEnemyColoredMulticolored(gameData, target, sourceColors)
                 || hasProtectionFromMonocolored(gameData, target, sourceColors)
-                || hasProtectionFromColoredSpellSource(gameData, target, sourceCard)
+                // A spell Ghostly Flame makes a colorless damage source isn't a colored spell for damage.
+                || (!sourceColors.isEmpty() && isSpellOnStack(gameData, sourceCard)
+                && hasProtectionFromColoredSpells(gameData, target))
                 || hasProtectionFromSourceCardTypes(gameData, target, sourceCard)
                 || hasProtectionFromSourceSubtypes(gameData, target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
@@ -8920,6 +8922,11 @@ public class GameQueryService {
      * a {@link ControllerSpellsCantBeCounteredEffect} protects spells controlled by the spell's controller,
      * or a {@link SpellsCantBeCounteredEffect} protects every spell or every matching spell.
      */
+    /** Whether abilities on the stack can't be countered (Spider-Punk's "Spells and abilities can't be countered"). */
+    public boolean areAbilitiesUncounterable(GameData gameData) {
+        return anyBattlefieldHasStaticEffect(gameData, SpellsAndAbilitiesCantBeCounteredEffect.class);
+    }
+
     public boolean isUncounterable(GameData gameData, Card card) {
         StackEntry spell = findStackEntryByCardId(gameData, card.getId());
         if (anyBattlefieldHasStaticEffect(gameData, SpellsAndAbilitiesCantBeCounteredEffect.class)) {

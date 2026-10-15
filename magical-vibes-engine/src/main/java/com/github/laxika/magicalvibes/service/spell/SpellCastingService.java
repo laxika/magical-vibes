@@ -13235,6 +13235,7 @@ public class SpellCastingService {
         int previewLifeCost = 2 * phyrexianSymbolsPaidWithLife;
         if (cost.hasPhyrexianMana()) {
             ManaPool previewPool = new ManaPool(pool);
+            int previewLent = lendRestrictedRedForPhyrexian(previewPool, cost, flags);
             if (phyrexianLifeCount != null) {
                 previewLifeCost += cost.payPhyrexianMana(previewPool,
                         phyrexianLifeCount - phyrexianSymbolsPaidWithLife);
@@ -13242,6 +13243,7 @@ public class SpellCastingService {
                 int restDemand = cost.hasX() ? effectiveXValue + additionalCost : additionalCost;
                 previewLifeCost = cost.payPhyrexianManaAuto(previewPool, restDemand);
             }
+            returnUnspentRestrictedRed(previewPool, previewLent);
         }
         if (previewLifeCost > 0 && (gameData.getLife(playerId) < previewLifeCost
                 || !gameQueryService.canPlayerLoseLife(gameData, playerId)
@@ -13251,12 +13253,14 @@ public class SpellCastingService {
 
         int phyrexianLifeCost = 2 * phyrexianSymbolsPaidWithLife;
         if (cost.hasPhyrexianMana()) {
+            int lent = lendRestrictedRedForPhyrexian(pool, cost, flags);
             if (phyrexianLifeCount != null) {
                 phyrexianLifeCost += cost.payPhyrexianMana(pool, phyrexianLifeCount - phyrexianSymbolsPaidWithLife);
             } else {
                 int restDemand = cost.hasX() ? effectiveXValue + additionalCost : additionalCost;
                 phyrexianLifeCost = cost.payPhyrexianManaAuto(pool, restDemand);
             }
+            returnUnspentRestrictedRed(pool, lent);
         }
 
         if (convokeContributions != null && !convokeContributions.isEmpty()) {
@@ -14396,6 +14400,35 @@ public class SpellCastingService {
         if (counters > 0) {
             gameData.spellAdditionalEnterCounters.merge(card.getId(), counters, Integer::sum);
         }
+    }
+
+    /**
+     * Phyrexian symbols are paid before the restriction-aware payment, from ordinary pool mana only.
+     * When this spell may spend Geosurge's creature/artifact-only red, move that red into the
+     * ordinary pool so {R/P} can be paid with it; {@link #returnUnspentRestrictedRed} undoes the
+     * part the Phyrexian payment didn't use, so the restriction never leaks onto other spells.
+     *
+     * Only the red the cost's red symbols can't already get from the ordinary pool is moved.
+     *
+     * @return how much restricted red was moved
+     */
+    private int lendRestrictedRedForPhyrexian(ManaPool pool, ManaCost cost, ManaRestrictionFlags flags) {
+        if (!flags.hasRestrictedRedContext()) {
+            return 0;
+        }
+        int shortfall = Math.max(0, cost.countColorSymbols(ManaColor.RED) - pool.get(ManaColor.RED));
+        int lent = Math.min(pool.getRestrictedRed(), shortfall);
+        pool.removeRestrictedRed(lent);
+        pool.add(ManaColor.RED, lent);
+        return lent;
+    }
+
+    private void returnUnspentRestrictedRed(ManaPool pool, int lent) {
+        int unspent = Math.min(lent, pool.get(ManaColor.RED));
+        for (int i = 0; i < unspent; i++) {
+            pool.remove(ManaColor.RED);
+        }
+        pool.addRestrictedRed(unspent);
     }
 
     private void applyRiotGrantingMana(GameData gameData, UUID playerId, Card card,

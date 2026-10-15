@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -20,7 +20,6 @@ import java.util.Set;
 public class MaskedBandits extends Card {
 
     public MaskedBandits() {
-        addCastingOption(new ExileCast());
 
         ActivatedAbility landManaAbility = new ActivatedAbility(
                 true,
@@ -49,7 +48,9 @@ public class MaskedBandits extends Card {
                         GrantScope.TARGET,
                         null,
                         EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
-                )),
+                ),
+                        // "You may cast this card for as long as it remains exiled" only if the ability resolves.
+                        AllowCastSourceCardFromExileEffect.whileExiled()),
                 "{2}, Exile this card from your hand: Target land gains \"{T}: Add {B}, {R}, or {G}\" until this card is cast from exile.",
                 TargetFilters.land()
         ).withExilesSourceFromHand());

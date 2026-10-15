@@ -442,7 +442,10 @@ public class ETBTokenTargetService {
                     for (Permanent p : battlefield) {
                         if (targetAlreadyChosen(pending, p.getId())) continue;
                         if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
-                                pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue())) {
+                                pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue())
+                                // Shroud, hexproof and protection still apply (Gilded Drake vs Morphling).
+                                && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                                        gameData, p, card, pending.controllerId()).isEmpty()) {
                             validPermanentTargets.add(p.getId());
                         }
                     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -31,6 +31,6 @@ public class HeavenSent extends Card {
                 ConditionalEffect.unless(new NotCondition(opponentAtZero),
                         SequenceEffect.of(
                                 new ExileSelfEffect(),
-                                new AllowCastSourceCardFromExileThisTurnEffect())));
+                                AllowCastSourceCardFromExileEffect.thisTurn())));
     }
 }

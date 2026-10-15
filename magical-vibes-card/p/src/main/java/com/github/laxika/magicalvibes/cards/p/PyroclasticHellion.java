@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -16,7 +17,8 @@ public class PyroclasticHellion extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 new ReturnPermanentControlledByPlayerToHandThenEffect(
                         new PermanentIsLandPredicate(),
-                        new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                        new QueueReflexiveAbilityEffect(
+                                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT)),
                         "land"),
                 "You may return a land you control to its owner's hand?"));
     }

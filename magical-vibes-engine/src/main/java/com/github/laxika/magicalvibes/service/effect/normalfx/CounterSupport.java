@@ -90,6 +90,10 @@ public class CounterSupport {
             log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
             return null;
         }
+        if (!spell && gameQueryService.areAbilitiesUncounterable(gameData)) {
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getDescription());
+            return null;
+        }
 
         if (spell && gameQueryService.isProtectedFromCounterBySpellColor(gameData, targetEntry.getControllerId(), counterSource)) {
             log.info("Game {} - {} cannot be countered by {} spells",

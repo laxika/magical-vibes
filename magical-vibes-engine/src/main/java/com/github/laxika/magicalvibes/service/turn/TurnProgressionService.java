@@ -923,9 +923,13 @@ public class TurnProgressionService {
         // Check for pending Taunt on the new active player: promote it to an active this-turn requirement
         gameData.tauntedThisTurn.clear();
         UUID taunter = gameData.tauntedNextTurn.remove(nextActive);
-        if (taunter != null && gameData.playerIds.contains(taunter)) {
+        // The taunter is a player, or a permanent that must be attacked (Gideon Jura's +2).
+        Permanent tauntingPermanent = taunter == null || gameData.playerIds.contains(taunter)
+                ? null : gameQueryService.findPermanentById(gameData, taunter);
+        if (taunter != null && (gameData.playerIds.contains(taunter) || tauntingPermanent != null)) {
             gameData.tauntedThisTurn.put(nextActive, taunter);
-            String taunterName = gameData.playerIdToName.get(taunter);
+            String taunterName = tauntingPermanent != null ? tauntingPermanent.getCard().getName()
+                    : gameData.playerIdToName.get(taunter);
             String tauntLog = "Creatures " + nextActiveName + " controls must attack " + taunterName + " this turn if able.";
             gameLogService.append(gameData, GameLog.text(tauntLog));
             log.info("Game {} - {}'s creatures must attack {} this turn (Taunt)", gameData.id, nextActiveName, taunterName);

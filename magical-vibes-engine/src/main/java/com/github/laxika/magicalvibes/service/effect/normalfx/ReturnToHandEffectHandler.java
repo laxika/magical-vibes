@@ -99,6 +99,15 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
     private void resolveEnchanted(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         UUID hostId = aura != null && aura.isAttached() ? aura.getAttachedTo() : e.enchantedPermanentId();
+        if (aura == null) {
+            // Last known information: what the Aura enchanted as it left the battlefield, which can
+            // differ from the activation-time binding if it moved first (Aura Graft).
+            Permanent departed = gameData.departedPermanentSnapshots.get(entry.getCard().getId());
+            if (departed != null && departed.getId().equals(entry.getSourcePermanentId())
+                    && departed.isAttached()) {
+                hostId = departed.getAttachedTo();
+            }
+        }
         if (hostId == null) {
             // The Aura may have been sacrificed as a cost; the activation path then captures the
             // attached creature in the entry target.

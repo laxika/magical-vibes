@@ -214,8 +214,11 @@ public class GraveyardService {
         int cardsEntered = (int) cardsEnteredGraveyard.stream()
                 .filter(card -> !isToken(gameData, card))
                 .count();
-        int nonlandCardsEntered = (int) cardsEnteredGraveyard.stream()
+        // A card a replacement effect moved to another public zone (Rest in Peace's exile) was still
+        // milled (CR 701.17c), so "whenever a player mills a nonland card" counts it too.
+        int nonlandCardsEntered = (int) milledCards.stream()
                 .filter(card -> !card.isToken() && !card.hasType(CardType.LAND))
+                .filter(card -> cardsEnteredGraveyard.contains(card) || gameData.findExiledCard(card.getId()) != null)
                 .count();
         triggerCollectionService.checkOpponentMillTriggers(
                 gameData, targetPlayerId, cardsEnteredGraveyard.size());

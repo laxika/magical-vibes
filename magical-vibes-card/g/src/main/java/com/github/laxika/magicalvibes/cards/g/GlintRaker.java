@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
@@ -24,9 +25,10 @@ public class GlintRaker extends Card {
                 new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate()),
                 new Fixed(0), GrantScope.SELF));
 
+        // "Reveal that many cards": the combat damage this creature dealt.
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
                 new LookAtTopCardsEffect(
-                        new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate()),
+                        new EventValue(),
                         new Fixed(1), new CardTypePredicate(CardType.ARTIFACT),
                         LookDestination.GRAVEYARD, true, LibrarySearchDestination.HAND, false,
                         false, null, null, false, 0, true),

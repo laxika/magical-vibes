@@ -76,10 +76,10 @@ class GilaCourserTest extends BaseCardTest {
         courser.setSaddled(true);
         Card topCard = new GilaCourser();
         harness.setLibrary(player1, List.of(topCard));
-        int attackTurn = gd.turnNumber;
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(topCard.getId())).isEqualTo(attackTurn + 2);
+        // "Until the end of your next turn": the expiry is fixed when player1's next turn begins.
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer.get(topCard.getId())).isEqualTo(player1.getId());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 3);
 

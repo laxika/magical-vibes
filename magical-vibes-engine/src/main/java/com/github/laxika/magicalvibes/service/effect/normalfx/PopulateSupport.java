@@ -61,6 +61,9 @@ public class PopulateSupport {
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                     gameData, controllerId, tokenCard);
             Permanent tokenPermanent = new Permanent(tokenCard);
+            if (MakeCreatedPermanentsAttackingEffectHandler.entersTappedAndAttacking(entry)) {
+                tokenPermanent.tap();
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
             if (entry != null) {
                 entry.getCreatedPermanentIds().add(tokenPermanent.getId());

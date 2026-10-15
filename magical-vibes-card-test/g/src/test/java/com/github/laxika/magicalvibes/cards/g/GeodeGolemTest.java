@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -124,8 +125,10 @@ class GeodeGolemTest extends BaseCardTest {
     @DisplayName("A commander arriving before trigger resolution can be cast")
     void commanderMayEnterCommandZoneAfterCombatDamage() {
         addAttackingGeodeGolem();
-        resolveCombat();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+        // The "may" is chosen as the trigger resolves (CR 603.5), so only the trigger exists yet.
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getName()).isEqualTo("Geode Golem"));
         Card commander = putCommanderInCommandZone();
 
         harness.passBothPriorities();

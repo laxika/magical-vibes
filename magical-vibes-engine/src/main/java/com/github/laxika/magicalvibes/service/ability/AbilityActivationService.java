@@ -5273,7 +5273,7 @@ public class AbilityActivationService {
                     candidates.stream().map(Card::getId).toList(), craftMaterialCost);
         }
 
-        boolean nonTargeting = !ability.isNeedsSpellTarget()
+        boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                 && !EffectResolution.needsTarget(activationEffects, List.of(), false, false);
         UUID resolutionTargetId = targetId;
         Zone resolutionTargetZone = targetZone;
@@ -6019,7 +6019,7 @@ public class AbilityActivationService {
                 source.getCard(), costDerivedXValue);
         payExileArtifactsCost(gameData, player, permanentIds,
                 cost.trackWithSource() ? context.sourcePermanentId() : null);
-        boolean nonTargeting = !ability.isNeedsSpellTarget()
+        boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                 && !EffectResolution.needsTarget(abilityEffects, List.of(), false, false);
         completeActivationAndRecord(gameData, player, source, ability, abilityEffects, costDerivedXValue,
                 context.targetId(), context.targetZone(), nonTargeting, effectiveAbilityIndex(context.abilityIndex()),
@@ -6116,7 +6116,7 @@ public class AbilityActivationService {
             Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
             chooseSacrificeAsCost(gameData, player, chosen);
         }
-        boolean nonTargeting = !ability.isNeedsSpellTarget()
+        boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                 && !EffectResolution.needsTarget(abilityEffects, List.of(), false, false);
         completeActivationAndRecord(gameData, player, source, ability, abilityEffects, costDerivedXValue,
                 context.targetId(), context.targetZone(), nonTargeting, effectiveAbilityIndex(context.abilityIndex()),

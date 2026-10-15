@@ -1715,6 +1715,11 @@ public class PermanentChoiceBattlefieldHandlerService {
                                 context.sourceCard().getName() + " — Choose any target.");
                         return;
                     }
+                } else if (gameData.pendingEffectResolutionEntry != null) {
+                    // "If you do, …" is part of the same resolution, not a new ability; a "when you do"
+                    // payoff wraps itself in QueueReflexiveAbilityEffect to reach the stack (CR 603.12).
+                    gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                            gameData.pendingEffectResolutionIndex, thenEffects);
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,

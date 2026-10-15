@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ExiledCreatureCopyOnEnterService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -983,7 +984,13 @@ public class CloneService {
     private void applyAdditionalSubtypes(Card copy, Set<CardSubtype> additionalSubtypes) {
         if (additionalSubtypes == null || additionalSubtypes.isEmpty()) return;
         List<CardSubtype> subtypes = new ArrayList<>(copy.getSubtypes());
+        // A copy of a noncreature (Glasspool Mimic copying an animated land) can't gain creature
+        // types (CR 205.3d).
+        boolean canHaveCreatureTypes = copy.hasType(CardType.CREATURE) || copy.hasType(CardType.KINDRED);
         for (CardSubtype subtype : additionalSubtypes) {
+            if (!canHaveCreatureTypes && StaticEffectSupport.isCreatureSubtype(subtype)) {
+                continue;
+            }
             if (!subtypes.contains(subtype)) {
                 subtypes.add(subtype);
             }

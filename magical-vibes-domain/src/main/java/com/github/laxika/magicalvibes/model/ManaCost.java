@@ -583,8 +583,10 @@ public class ManaCost {
                     if (lifeSymbolsRemaining > 0) {
                         lifeCost += 2;
                         lifeSymbolsRemaining--;
-                    } else {
+                    } else if (coloredManaAvailable(pool, entry.getKey()) > 0) {
                         removeColoredMana(pool, entry.getKey());
+                    } else {
+                        throw new IllegalStateException("Not enough mana to pay Phyrexian mana");
                     }
                 }
             }
@@ -602,6 +604,8 @@ public class ManaCost {
                     removeColoredMana(pool, color);
                 } else if (autoMode) {
                     lifeCost += 2;
+                } else {
+                    throw new IllegalStateException("Not enough mana to pay Phyrexian mana");
                 }
             }
         }

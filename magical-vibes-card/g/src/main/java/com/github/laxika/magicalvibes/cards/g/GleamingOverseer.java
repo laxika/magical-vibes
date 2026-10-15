@@ -56,6 +56,6 @@ public class GleamingOverseer extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                 new PermanentIsTokenPredicate()));
         addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.MENACE), GrantScope.OWN_CREATURES, zombieToken));
+                new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.MENACE), GrantScope.ALL_OWN_CREATURES, zombieToken));
     }
 }

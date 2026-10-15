@@ -23,6 +23,16 @@ public class MakeCreatedPermanentsAttackingEffectHandler implements NormalEffect
 
     private final GameQueryService gameQueryService;
 
+    /**
+     * Whether permanents this entry creates are put onto the battlefield "tapped and attacking", so
+     * the creating handler must tap them before they enter (Amulet of Vigor sees them enter tapped).
+     */
+    public static boolean entersTappedAndAttacking(StackEntry entry) {
+        return entry != null && entry.getEffectsToResolve().stream()
+                .anyMatch(effect -> effect instanceof MakeCreatedPermanentsAttackingEffect makeAttacking
+                        && makeAttacking.tapped());
+    }
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return MakeCreatedPermanentsAttackingEffect.class;
@@ -32,25 +42,17 @@ public class MakeCreatedPermanentsAttackingEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var makeAttacking = (MakeCreatedPermanentsAttackingEffect) effect;
         if (makeAttacking.tapped()) {
-            Permanent source = entry.getSourcePermanentId() == null ? entry.getSourcePermanentSnapshot()
-                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (source == null) {
-                source = entry.getSourcePermanentSnapshot();
-            }
-            var attackTarget = source == null ? null : source.getAttackTarget();
+            // Creators that check entersTappedAndAttacking already put these onto the battlefield
+            // tapped; this only covers the rest.
             for (var createdId : entry.getCreatedPermanentIds()) {
                 Permanent created = gameQueryService.findPermanentById(gameData, createdId);
-                if (created == null) continue;
-                created.tap();
-                if (gameQueryService.isCreature(gameData, created)) {
-                    created.setAttacking(true);
-                    created.setAttackedOrBlockedSinceLastUpkeep(true);
-                    created.setAttackTarget(attackTarget);
+                if (created != null && !created.isTapped()) {
+                    created.tap();
                 }
             }
-            return;
         }
 
+        // Its controller chooses what each one attacks (CR 508.4).
         List<CardEffect> choices = new ArrayList<>();
         for (var createdId : entry.getCreatedPermanentIds()) {
             Permanent created = gameQueryService.findPermanentById(gameData, createdId);

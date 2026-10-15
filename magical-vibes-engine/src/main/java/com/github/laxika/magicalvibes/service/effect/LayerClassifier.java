@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffe
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureByColorCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesByManaSymbolEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostOtherMulticoloredCreaturesByColorCountEffect;
@@ -345,6 +346,12 @@ public final class LayerClassifier {
                 new Entry(Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L6_ABILITIES, Layer.L7B_SET_PT),
                         (effect, fromOwnStaticSlot) -> {
                             AnimatePermanentsEffect animate = (AnimatePermanentsEffect) effect;
+                            if (animate.scope() == GrantScope.SELF && animate.power() instanceof Fixed
+                                    && animate.toughness() instanceof Fixed) {
+                                // A static self-animation's fixed P/T is a 7b setter at the source's
+                                // timestamp, so a later base P/T effect overrides it (Gideon Blackblade).
+                                return new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L7B_SET_PT), false, false);
+                            }
                             if (animate.scope() != GrantScope.ALL_PERMANENTS
                                     && animate.scope() != GrantScope.OWN_PERMANENTS) {
                                 return new LayerClassification(Set.of(Layer.L4_TYPE), false, false);

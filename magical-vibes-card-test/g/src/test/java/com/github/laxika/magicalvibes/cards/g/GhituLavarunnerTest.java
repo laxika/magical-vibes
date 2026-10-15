@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -143,7 +144,7 @@ class GhituLavarunnerTest extends BaseCardTest {
         Permanent lavarunner = harness.addToBattlefieldAndReturn(player1, new GhituLavarunner());
         lavarunner.setSummoningSick(true);
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(lavarunner.isAttacking()).isTrue();
     }

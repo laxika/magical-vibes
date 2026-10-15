@@ -47,9 +47,9 @@ class GlintRakerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(powerstone.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(powerstone);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(memnite, shock, secondShock);

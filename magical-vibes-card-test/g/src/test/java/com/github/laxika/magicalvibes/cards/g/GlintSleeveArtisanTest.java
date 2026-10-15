@@ -22,8 +22,8 @@ class GlintSleeveArtisanTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode puts a +1/+1 counter on Glint-Sleeve Artisan")
     void fabricateCountersMode() {
-        castArtisan(0);
-        resolveCreatureAndEtb();
+        castArtisan();
+        resolveCreatureAndEtb(true);
 
         Permanent artisan = findPermanent(player1, "Glint-Sleeve Artisan");
         assertThat(artisan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -34,8 +34,8 @@ class GlintSleeveArtisanTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode creates a 1/1 colorless Servo artifact creature token")
     void fabricateServoMode() {
-        castArtisan(1);
-        resolveCreatureAndEtb();
+        castArtisan();
+        resolveCreatureAndEtb(false);
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
@@ -52,7 +52,7 @@ class GlintSleeveArtisanTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate waits until the trigger resolves to ask for the choice")
     void fabricateChoiceIsMadeOnResolution() {
-        castArtisan(0);
+        castArtisan();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         harness.passBothPriorities();
@@ -69,7 +69,7 @@ class GlintSleeveArtisanTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate creates a Servo if Artisan dies before the trigger resolves")
     void fabricateCreatesServoWhenSourceDies() {
-        castArtisan(0);
+        castArtisan();
         harness.passBothPriorities();
         Permanent artisan = findPermanent(player1, "Glint-Sleeve Artisan");
 
@@ -88,14 +88,16 @@ class GlintSleeveArtisanTest extends BaseCardTest {
                 .isEmpty();
     }
 
-    private void castArtisan(int mode) {
+    private void castArtisan() {
         harness.setHand(player1, List.of(new GlintSleeveArtisan()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
     }
 
-    private void resolveCreatureAndEtb() {
+    /** Fabricate's choice is made as the trigger resolves (CR 702.123a). */
+    private void resolveCreatureAndEtb(boolean putCounter) {
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, putCounter);
     }
 }

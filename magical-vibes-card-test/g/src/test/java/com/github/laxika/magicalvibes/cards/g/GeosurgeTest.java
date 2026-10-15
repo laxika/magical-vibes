@@ -20,7 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Geosurge.class, AirElemental.class, CopperMyr.class, Shock.class,
-        GoblinEliteInfantry.class, FlamebornViron.class, ShrineOfBurningRage.class, SlashPanther.class})
+        GoblinEliteInfantry.class, FlamebornViron.class, ShrineOfBurningRage.class, SlashPanther.class,
+        GutShot.class})
 class GeosurgeTest extends BaseCardTest {
 
     
@@ -204,5 +205,20 @@ class GeosurgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Slash Panther");
         harness.assertLife(player1, lifeBefore);
         assertThat(gd.playerManaPools.get(player1.getId()).getRestrictedRed()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Restricted red can't pay {R/P} of an instant, so paying that symbol with mana is rejected")
+    void restrictedManaCannotPayPhyrexianSymbolOfInstant() {
+        resolveGeosurge();
+        harness.setHand(player1, List.of(new GutShot()));
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, player2.getId(), null,
+                List.of(), List.of(), false, null, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getRestrictedRed()).isEqualTo(7);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        harness.assertInHand(player1, "Gut Shot");
     }
 }

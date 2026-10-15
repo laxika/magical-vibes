@@ -93,6 +93,7 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
                         continue;
                     }
                     target.getUntapPreventedByPermanentIds().add(sourcePermanentId);
+                    gameData.untapLockActivatorBySource.put(sourcePermanentId, entry.getControllerId());
                     gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " won't untap as long as ", entry.getCard(), " remains tapped."));
                     log.info("Game {} - {} untap prevented while {} remains tapped", gameData.id, target.getCard().getName(), entry.getCard().getName());
                 }

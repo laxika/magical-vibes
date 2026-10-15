@@ -81,6 +81,10 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyi
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect;
@@ -1061,6 +1065,15 @@ public class DeathTriggerCollectorService {
                 && sd.dyingPermanent() != null) {
             triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(sd.dyingPermanent()));
         }
+        // "Another target card" excludes this card: for a copy (Phantasmal Image copying Gixian
+        // Puppeteer) that is the copy's own physical card, not the copied card.
+        if (triggerEffect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.filter() != null
+                && sd.dyingPermanent() != null
+                && !sd.dyingPermanent().getOriginalCard().getId().equals(sd.dyingCard().getId())) {
+            triggerEffect = returnEffect.toBuilder()
+                    .filter(bindSelfToCard(returnEffect.filter(), sd.dyingPermanent().getOriginalCard().getId()))
+                    .build();
+        }
         // Graveyard-targeting death triggers (e.g. Ruin Rat: "exile target card from an opponent's
         // graveyard") also queue as a DeathTriggerTarget; processNextDeathTriggerTarget routes them
         // to a graveyard card choice made as the trigger goes on the stack.
@@ -1098,6 +1111,18 @@ public class DeathTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private static CardPredicate bindSelfToCard(CardPredicate predicate, UUID cardId) {
+        return switch (predicate) {
+            case CardIsSelfPredicate ignored -> new CardIdSetPredicate(Set.of(cardId));
+            case CardNotPredicate not -> new CardNotPredicate(bindSelfToCard(not.predicate(), cardId));
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(p -> bindSelfToCard(p, cardId)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(p -> bindSelfToCard(p, cardId)).toList());
+            default -> predicate;
+        };
     }
 
     private CardEffect snapshotDynamicMaxManaValue(TriggerMatchContext match, CardEffect effect,
@@ -3854,6 +3879,15 @@ public class DeathTriggerCollectorService {
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
     boolean handleOpponentCreatureDeathMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
+        // "You may return target artifact card from your graveyard" (Glissa, the Traitor): the target
+        // is chosen as the trigger goes on the stack; the "may" is decided as it resolves.
+        if (graveyardTargetingSupport.findTarget(List.of(may)) != null) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(may)),
+                    null, new Permanent(match.permanent()), null, null, true));
+            logOpponentCreatureDeath(match);
+            return true;
+        }
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
         logOpponentCreatureDeath(match);
         return true;

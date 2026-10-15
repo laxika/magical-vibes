@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -185,7 +186,12 @@ class GisaGloriousResurrectorTest extends BaseCardTest {
         Permanent returned = findPermanents(player1, "Graveyard Trespasser").getFirst();
         returned.setSummoningSick(false);
 
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(1)));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            // The Trespasser's attack trigger chooses its graveyard target as it goes on the stack.
+            var targetChoice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+            harness.handleMultipleCardsChosen(player1, List.of(targetChoice.cards().getFirst().getId()));
+        });
 
         assertThat(gd.stack).hasSize(2);
     }

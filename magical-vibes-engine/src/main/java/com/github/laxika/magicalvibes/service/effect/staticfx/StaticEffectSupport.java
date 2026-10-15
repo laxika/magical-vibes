@@ -322,8 +322,10 @@ public class StaticEffectSupport {
             accumulator.setSelfBecomeCreature(true);
             // Conditional self-become-creature statics (Rusted Relic, Warden of the Wall) always use
             // a fixed base P/T; static bonus computation has no stack entry to evaluate a dynamic amount.
-            accumulator.addPower(animate.power() instanceof Fixed p ? p.value() : 0);
-            accumulator.addToughness(animate.toughness() instanceof Fixed t ? t.value() : 0);
+            if (animate.power() instanceof Fixed p && animate.toughness() instanceof Fixed t) {
+                // Base P/T in layer 7b (CR 613.4b), not a modifier, so later setters override it.
+                accumulator.setBasePTOverride(p.value(), t.value());
+            }
             for (CardSubtype subtype : animate.grantedSubtypes()) {
                 accumulator.addGrantedSubtype(subtype);
             }

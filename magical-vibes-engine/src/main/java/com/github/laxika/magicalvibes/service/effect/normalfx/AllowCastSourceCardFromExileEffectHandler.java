@@ -3,16 +3,16 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AllowCastSourceCardFromExileThisTurnEffectHandler implements NormalEffectHandlerBean {
+public class AllowCastSourceCardFromExileEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return AllowCastSourceCardFromExileThisTurnEffect.class;
+        return AllowCastSourceCardFromExileEffect.class;
     }
 
     @Override
@@ -23,6 +23,8 @@ public class AllowCastSourceCardFromExileThisTurnEffectHandler implements Normal
         }
 
         gameData.exilePlayPermissions.put(sourceCard.getId(), entry.getControllerId());
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(sourceCard.getId());
+        if (((AllowCastSourceCardFromExileEffect) effect).thisTurnOnly()) {
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(sourceCard.getId());
+        }
     }
 }

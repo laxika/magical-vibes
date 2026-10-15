@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -47,14 +46,7 @@ public class Ghirapur extends Card {
                         GrantScope.OWN_PERMANENTS,
                         noncreatureNonVehicleArtifact,
                         EffectDuration.UNTIL_END_OF_TURN),
-                new AnimatePermanentsEffect(
-                        new Fixed(5), new Fixed(3),
-                        List.of(CardSubtype.VEHICLE),
-                        Set.of(Keyword.TRAMPLE, Keyword.HASTE),
-                        null,
-                        Set.of(),
-                        GrantScope.OWN_PERMANENTS,
-                        EffectDuration.UNTIL_END_OF_TURN,
+                AnimatePermanentsEffect.vehicles(5, 3, Set.of(Keyword.TRAMPLE, Keyword.HASTE),
                         noncreatureNonVehicleArtifact)));
 
         addEffect(EffectSlot.CHAOS_TRIGGERED, ReturnCardFromGraveyardEffect.builder()

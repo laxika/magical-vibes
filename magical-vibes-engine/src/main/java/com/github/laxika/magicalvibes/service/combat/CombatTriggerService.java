@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentFilterEffect;
@@ -177,6 +178,12 @@ public class CombatTriggerService {
                                 && !conditionEvaluationService.isMet(gameData, ce.condition(), attackTargetContext));
                         effectsForStack.replaceAll(e -> e instanceof ConditionalEffect ce
                                 && ce.condition() instanceof AttackedTargetIsMonarch ? ce.wrapped() : e);
+                        // "if it's the first combat phase of the turn" (Genji Glove) is an intervening-if
+                        // (CR 603.4): in a later combat phase the ability doesn't trigger at all.
+                        effectsForStack.removeIf(e -> e instanceof ConditionalEffect ce
+                                && ce.interveningIf()
+                                && ce.condition() instanceof FirstCombatPhase
+                                && !conditionEvaluationService.isMet(gameData, ce.condition(), attackTargetContext));
                     }
 
                     if (effectsForStack.isEmpty()) return;

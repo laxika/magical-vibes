@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -153,7 +154,8 @@ class GhaltaAndMavrenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handlePermanentChosen(player1, battle.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handlePermanentChosen(player1, battle.getId()));
         assertThat(findPermanent(player1, "Dinosaur").getAttackTarget()).isEqualTo(battle.getId());
     }
 
@@ -168,7 +170,8 @@ class GhaltaAndMavrenTest extends BaseCardTest {
         harness.handleListChoice(player1,
                 "Create a tapped and attacking X/X green Dinosaur creature token with trample.");
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, planeswalker.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handlePermanentChosen(player1, planeswalker.getId()));
 
         Permanent dinosaur = findPermanent(player1, "Dinosaur");
         assertThat(dinosaur.getCard().getPower()).isEqualTo(2);

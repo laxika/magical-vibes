@@ -30,8 +30,8 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseFirstGraveyardTarget();
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -64,8 +64,8 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseFirstGraveyardTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -83,8 +83,8 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseFirstGraveyardTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -117,8 +117,8 @@ class GlissaTheTraitorTest extends BaseCardTest {
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castAndResolveInstant(player1, 0, bearsId);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseFirstGraveyardTarget();
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -167,8 +167,8 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseFirstGraveyardTarget();
         harness.setGraveyard(player1, List.of(remainingArtifact));
         harness.passBothPriorities();
 
@@ -182,5 +182,11 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    /** The trigger's graveyard target is chosen as it goes on the stack. */
+    private void chooseFirstGraveyardTarget() {
+        harness.handleMultipleCardsChosen(player1,
+                List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
     }
 }

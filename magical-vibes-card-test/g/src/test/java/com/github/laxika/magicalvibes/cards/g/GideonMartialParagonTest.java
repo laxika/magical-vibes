@@ -187,8 +187,7 @@ class GideonMartialParagonTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.CLEANUP);
         assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
         assertThat(opponent.isTapped()).isTrue();

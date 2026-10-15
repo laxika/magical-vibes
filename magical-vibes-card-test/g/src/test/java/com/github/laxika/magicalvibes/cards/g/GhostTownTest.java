@@ -84,7 +84,7 @@ class GhostTownTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Ghost Town");
         assertThat(gd.stack).hasSize(1);
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.assertNotOnBattlefield(player1, "Ghost Town");
         harness.assertInHand(player1, "Ghost Town");

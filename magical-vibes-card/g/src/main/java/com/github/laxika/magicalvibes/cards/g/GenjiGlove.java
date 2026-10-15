@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -21,12 +20,9 @@ public class GenjiGlove extends Card {
     public GenjiGlove() {
         addEffect(EffectSlot.STATIC,
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ATTACK,
-                new ConditionalEffect(new FirstCombatPhase(), SequenceEffect.of(
-                        new UntapPermanentsEffect(TapUntapScope.SELF),
-                        new AdditionalCombatPhaseEffect(1))),
-                GrantScope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new FirstCombatPhase(), SequenceEffect.of(
+                new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
+                new AdditionalCombatPhaseEffect(1))));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -24,7 +24,6 @@ import java.util.Set;
 public class GlamorousOutlaw extends Card {
 
     public GlamorousOutlaw() {
-        addCastingOption(new ExileCast());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(2));
@@ -56,7 +55,9 @@ public class GlamorousOutlaw extends Card {
                         GrantScope.TARGET,
                         null,
                         EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
-                )),
+                ),
+                        // "You may cast this card for as long as it remains exiled" only if the ability resolves.
+                        AllowCastSourceCardFromExileEffect.whileExiled()),
                 "{2}, Exile this card from your hand: Target land gains \"{T}: Add {U}, {B}, or {R}\" until this card is cast from exile.",
                 TargetFilters.land()
         ).withExilesSourceFromHand());

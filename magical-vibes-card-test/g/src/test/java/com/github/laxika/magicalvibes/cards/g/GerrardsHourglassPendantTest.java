@@ -154,6 +154,8 @@ class GerrardsHourglassPendantTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GerrardsHourglassPendant());
         harness.addToBattlefield(player2, new GrizzlyBears());
         var creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        // A second legal host, so the Aura's controller has a real choice to make.
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Pacifism(), new Naturalize()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castEnchantment(player1, 0, creatureId);

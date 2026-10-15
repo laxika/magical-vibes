@@ -344,17 +344,17 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        for (Map.Entry<UUID, List<Card>> group : cardsByOwner.entrySet()) {
-            List<Card> cards = group.getValue();
-            gameData.queueDelayedAction(new PendingExileReturn(
-                    cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
-                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
-                    false, e.grantHaste(), false, false, null, null, false,
-                    e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
-                    Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
-                    e.countersOnReturn(), e.returnLandsTapped())
-                    .withTriggerSource(entry.getCard(), entry.getControllerId()));
-        }
+        // One delayed triggered ability returns every card, each under its owner's control.
+        List<Card> cards = cardsByOwner.values().stream().flatMap(List::stream).toList();
+        gameData.queueDelayedAction(new PendingExileReturn(
+                cards.getFirst(), cardsByOwner.keySet().iterator().next(), e.returnTapped(), false, e.returnStep(),
+                e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
+                false, e.grantHaste(), false, false, null, null, false,
+                e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
+                Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
+                e.countersOnReturn(), e.returnLandsTapped())
+                .withTriggerSource(entry.getCard(), entry.getControllerId())
+                .withReturnControllers(returnControllersByCardId(cardsByOwner)));
         log.info("Game {} - {} exiles {} permanents; they return at next {}",
                 gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
     }
@@ -378,20 +378,26 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        for (Map.Entry<UUID, List<Card>> group : cardsByOwner.entrySet()) {
-            List<Card> cards = group.getValue();
-            gameData.queueDelayedAction(new PendingExileReturn(
-                    cards.getFirst(), group.getKey(), e.returnTapped(), false, e.returnStep(),
-                    e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
-                    e.returnAtControllerNextStep(), e.grantHaste(), false, false,
-                    e.returnAtControllerNextStep() ? controllerId : null, null, false,
-                    e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
-                    Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
-                    e.countersOnReturn(), e.returnLandsTapped())
-                    .withTriggerSource(entry.getCard(), entry.getControllerId()));
-        }
+        // One delayed triggered ability returns every card, each under its owner's control (Ghostway).
+        List<Card> cards = cardsByOwner.values().stream().flatMap(List::stream).toList();
+        gameData.queueDelayedAction(new PendingExileReturn(
+                cards.getFirst(), cardsByOwner.keySet().iterator().next(), e.returnTapped(), false, e.returnStep(),
+                e.plusOnePlusOneCountersOnReturn(), cards.subList(1, cards.size()),
+                e.returnAtControllerNextStep(), e.grantHaste(), false, false,
+                e.returnAtControllerNextStep() ? controllerId : null, null, false,
+                e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
+                Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
+                e.countersOnReturn(), e.returnLandsTapped())
+                .withTriggerSource(entry.getCard(), entry.getControllerId())
+                .withReturnControllers(returnControllersByCardId(cardsByOwner)));
         log.info("Game {} - {} exiles {} permanents; they return at next {}",
                 gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
+    }
+
+    private static Map<UUID, UUID> returnControllersByCardId(Map<UUID, List<Card>> cardsByOwner) {
+        Map<UUID, UUID> controllerByCardId = new LinkedHashMap<>();
+        cardsByOwner.forEach((ownerId, cards) -> cards.forEach(card -> controllerByCardId.put(card.getId(), ownerId)));
+        return controllerByCardId;
     }
 
     private void resolveImmediate(GameData gameData, StackEntry entry, FlickerEffect e) {

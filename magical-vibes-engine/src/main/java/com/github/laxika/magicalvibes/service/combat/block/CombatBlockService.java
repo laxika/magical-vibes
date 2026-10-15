@@ -2107,6 +2107,10 @@ public class CombatBlockService {
                             if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, permConditional.predicate())) {
                                 filteredEffects.add(permConditional.wrapped());
                             }
+                        } else if (e instanceof BoostSelfWhenCombatOpponentMatchesEffect conditional) {
+                            // "becomes blocked by a white creature" (Ghost Hounds): the blocker's color is
+                            // part of the trigger event, so a nonmatching blocker triggers nothing.
+                            addResolvedCombatOpponentBoost(gameData, filteredEffects, conditional, List.of(blocker));
                         } else if (e instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect) {
                             if (predicateEvaluationService.matchesPermanentPredicate(
                                     gameData, blocker, destroyEffect.filter())) {

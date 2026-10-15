@@ -1480,7 +1480,10 @@ public class AmountEvaluationService {
     }
 
     private int sumPermanentCounters(GameData gameData, PermanentCounterSum amount, AmountContext ctx) {
-        FilterContext filterContext = GameQueryService.isStaticEvaluationActive()
+        boolean staticEvaluation = GameQueryService.isStaticEvaluationActive();
+        boolean ownershipNeedsBoard = staticEvaluation
+                && predicateEvaluationService.requiresGameDataForStaticFilter(amount.filter());
+        FilterContext filterContext = staticEvaluation && !ownershipNeedsBoard
                 ? FilterContext.empty()
                 : FilterContext.of(gameData);
         filterContext = filterContext.withSourceControllerId(ctx.controllerId());
@@ -1496,8 +1499,11 @@ public class AmountEvaluationService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (amount.filter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext)) {
+                // Static evaluation reads layered types, so March of the Machines' artifacts are creatures.
+                boolean matchesFilter = amount.filter() == null || (staticEvaluation
+                        ? predicateEvaluationService.matchesStaticFilter(permanent, amount.filter(), filterContext)
+                        : predicateEvaluationService.matchesPermanentPredicate(permanent, amount.filter(), filterContext));
+                if (matchesFilter) {
                     total += amount.counterType() == null
                             ? permanent.getTotalCounterCount()
                             : permanent.getCounterCount(amount.counterType());

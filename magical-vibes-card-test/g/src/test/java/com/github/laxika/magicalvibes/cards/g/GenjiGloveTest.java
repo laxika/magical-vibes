@@ -39,7 +39,7 @@ class GenjiGloveTest extends BaseCardTest {
         declareAttackers(player1, List.of(0), 1);
         assertThat(creature.isTapped()).isTrue();
 
-        harness.passBothPriorities();
+        resolveTriggerDuringDeclareAttackers();
 
         assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
@@ -90,7 +90,7 @@ class GenjiGloveTest extends BaseCardTest {
         declareAttackers(player1, List.of(0), 1);
 
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        resolveTriggerDuringDeclareAttackers();
         assertThat(creature.isTapped()).isFalse();
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
     }
@@ -118,7 +118,7 @@ class GenjiGloveTest extends BaseCardTest {
         declareAttackers(player1, List.of(0), 1);
         gd.playerBattlefields.get(player1.getId()).remove(glove);
 
-        harness.passBothPriorities();
+        resolveTriggerDuringDeclareAttackers();
 
         assertThat(creature.isTapped()).isFalse();
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
@@ -126,6 +126,11 @@ class GenjiGloveTest extends BaseCardTest {
 
     private Permanent addGloveReady(Player player) {
         return harness.addToBattlefieldAndReturn(player, new GenjiGlove());
+    }
+
+    /** Resolves the attack trigger without letting auto-pass run on into the extra combat phase. */
+    private void resolveTriggerDuringDeclareAttackers() {
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
     }
 
     private void declareAttackers(Player player, List<Integer> attackerIndices, int combatPhaseNumber) {

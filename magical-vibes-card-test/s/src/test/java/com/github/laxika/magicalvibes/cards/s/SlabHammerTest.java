@@ -79,7 +79,6 @@ class SlabHammerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Mountain"));
-        harness.passBothPriorities();
 
         assertThat(creature.getPowerModifier()).isEqualTo(2);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

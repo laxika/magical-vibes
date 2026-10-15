@@ -2018,6 +2018,12 @@ public class GraveyardReturnSupport {
             Permanent permanent = placement.preparedPermanent();
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, placement.controllerId(), permanent, enterTappedTypes, simultaneouslyEntered);
+            // A card taken from another player's graveyard still belongs to that player (Ghouls' Night Out).
+            UUID graveyardOwnerId = permanent.getEnteredFromGraveyardOwnerId();
+            if (graveyardOwnerId != null && !graveyardOwnerId.equals(placement.controllerId())
+                    && !gameData.stolenCreatures.containsKey(permanent.getId())) {
+                trackStolenCreature(gameData, permanent.getId(), placement.controllerId(), graveyardOwnerId);
+            }
             simultaneouslyEntered.add(permanent);
             enteredPermanents.add(new ReturnedPermanent(placement.controllerId(), permanent, placement.auraCard()));
         }

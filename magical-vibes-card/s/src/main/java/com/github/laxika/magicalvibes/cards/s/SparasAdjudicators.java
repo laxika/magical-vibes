@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -22,7 +22,6 @@ import java.util.Set;
 public class SparasAdjudicators extends Card {
 
     public SparasAdjudicators() {
-        addCastingOption(new ExileCast());
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LockTargetPermanentEffect(
                         true, true, false, EffectDuration.UNTIL_YOUR_NEXT_TURN));
@@ -54,7 +53,9 @@ public class SparasAdjudicators extends Card {
                         GrantScope.TARGET,
                         null,
                         EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
-                )),
+                ),
+                        // "You may cast this card for as long as it remains exiled" only if the ability resolves.
+                        AllowCastSourceCardFromExileEffect.whileExiled()),
                 "{2}, Exile this card from your hand: Target land gains \"{T}: Add {G}, {W}, or {U}\" until this card is cast from exile.",
                 TargetFilters.land()
         ).withExilesSourceFromHand());

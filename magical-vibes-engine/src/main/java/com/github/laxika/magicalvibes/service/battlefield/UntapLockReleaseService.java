@@ -5,6 +5,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersWhenUntapLockEndsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +23,8 @@ import java.util.UUID;
 /**
  * Runs the {@link RemoveCountersWhenUntapLockEndsEffect} cleanup for a permanent whose
  * {@code WHILE_SOURCE_TAPPED} untap locks have just ended — Giant Oyster's "When this creature
- * leaves the battlefield or becomes untapped, remove all -1/-1 counters from the creature."
+ * leaves the battlefield or becomes untapped, remove all -1/-1 counters from the creature." The
+ * lock ends at once; the counter removal goes on the stack as a triggered ability.
  *
  * <p>Called from the two events that end such a lock: the untap paths
  * ({@code TapUntapSupport.untapPermanent}, {@code MayMiscHandlerService.handleMayNotUntapChoice})
@@ -50,21 +56,27 @@ public class UntapLockReleaseService {
             }
         });
 
+        UUID activatorId = gameData.untapLockActivatorBySource.remove(sourceId);
+        if (counterTypes.isEmpty() || locked.isEmpty()) {
+            return;
+        }
+        // "When this creature leaves the battlefield or becomes untapped, remove all -1/-1 counters
+        // from the creature" is a delayed triggered ability of the lock's activator (CR 603.7d).
+        UUID controllerId = activatorId != null ? activatorId
+                : gameData.findControllerOf(source) != null ? gameData.findControllerOf(source)
+                : source.getCard().getOwnerId();
         for (Permanent p : locked) {
-            for (CounterType counterType : counterTypes) {
-                int removed = p.getCounterCount(counterType);
-                if (removed <= 0) {
-                    continue;
-                }
-                p.setCounterCount(counterType, 0);
-                if (counterType == CounterType.OIL) {
-                    gameData.recordOilCounterRemoved(p, removed);
-                }
-                gameLogService.append(gameData, GameLog.cardTextCard(
-                        source.getCard(), " removes all counters it placed on ", p.getCard(), "."));
-                log.info("Game {} - {} removes {} {} counters from {}", gameData.id,
-                        source.getCard().getName(), removed, counterType, p.getCard().getName());
-            }
+            List<CardEffect> removals = counterTypes.stream()
+                    .<CardEffect>map(counterType -> new RemoveAllCountersEffect(counterType, CounterRemovalSubject.TARGET))
+                    .toList();
+            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
+                    source.getCard().getName() + "'s delayed ability", new ArrayList<>(removals),
+                    p.getId(), sourceId);
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s delayed ability triggers."));
+            log.info("Game {} - {} counter-removal trigger for {}", gameData.id,
+                    source.getCard().getName(), p.getCard().getName());
         }
     }
 }
