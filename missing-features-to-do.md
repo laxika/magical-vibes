@@ -89,37 +89,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 19. One search per event and the "may" before searching (needs a decision)
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GaeasBalanceTest` "All selected lands enter together after the search finishes" (also see #10),
-  "Searching an empty library triggers an opponent's search ability only once"
-- `GhostQuarterTest` "Controller can decline searching even when the library has no basic lands",
-  "Controller can decline the search without shuffling"
-- `GeomancersGambitTest` "The controller may decline searching entirely and the caster still draws"
-
-**What the rules require.** Gaea's Balance is one search for five land types, so it's one search event
-(one trigger for "whenever an opponent searches"), and the lands enter together. Ghost Quarter and
-Geomancer's Gambit say "may search": other tests in these classes expect the search window directly
-(declining by finding nothing), these expect a yes/no prompt first and no shuffle on "no". Earlier
-attempts to wrap the search in a `MayEffect` broke the other tests.
-
-**Why it's large.** The search flow runs one search per land type, and the classes' own tests disagree
-on the "may" flow. Pick one behavior from the official rulings first, then update the losing tests.
-
-**Prompt to start it:**
-
-```
-Decide from official rulings whether "you may search" asks a yes/no first or opens the search directly,
-and make it consistent across GhostQuarterTest and GeomancersGambitTest. Then make Gaea's Balance a
-single search event whose lands enter together. Ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 20. Monstrosity must still be activatable on a monstrous creature
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests
