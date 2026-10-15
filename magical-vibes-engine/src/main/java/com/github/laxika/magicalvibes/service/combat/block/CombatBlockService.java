@@ -1182,11 +1182,12 @@ public class CombatBlockService {
                                 new DealDamageToTargetCreatureEffect(new SourcePower()),
                                 new AssignNoCombatDamageEffect()),
                         "have it deal damage equal to its power to a target creature?");
-                // CR 603.5: source permanent is the unblocked attacker ("it"); source card is Gaze
-                // of Pain (governs targeting via effect targetSpec → any creature).
-                gameData.queueMayAbility(delayed.sourceCard(), delayed.controllerId(), may,
-                        null, attacker.getId());
-                gameData.stack.getLast().setSourcePermanentSnapshot(new Permanent(attacker));
+                // CR 603.3d: the target creature is chosen as the trigger is put on the stack; the
+                // "you may" is decided as it resolves (CR 603.5). The source permanent is the
+                // unblocked attacker ("it"); the source card is Gaze of Pain.
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        delayed.sourceCard(), delayed.controllerId(), List.of(may), attacker.getId(),
+                        delayed.controllerId(), attacker.getAttackTarget(), null));
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         delayed.sourceCard(), " — ", attacker.getCard(),
                         " attacks unblocked."));

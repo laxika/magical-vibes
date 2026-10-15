@@ -11895,16 +11895,17 @@ public class TriggerCollectionService {
         } else if (resolved instanceof MayEffect may) {
             gameData.queueMayAbility(sourceCard, controllerId, may);
         } else {
-            StackEntry trigger = new StackEntry(
+            gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     controllerId,
                     sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(resolved))
-            );
-            trigger.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
-            gameData.stack.add(trigger);
+            ));
         }
+        // CR 400.7: the trigger refers to this stay of the card in the graveyard; once the card
+        // leaves and returns, it is a new object the trigger can no longer move.
+        gameData.stack.getLast().setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} graveyard trigger fires when a creature enters a graveyard",
                 gameData.id, sourceCard.getName());

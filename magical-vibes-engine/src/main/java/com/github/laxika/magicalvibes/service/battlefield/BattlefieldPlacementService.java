@@ -561,9 +561,6 @@ public class BattlefieldPlacementService {
             landEquilibriumSupport.applyPlan(gameData, controllerId, permanent,
                     landEquilibriumPlan, request.landPlayZone());
         }
-        if (simultaneouslyEntered.isEmpty()) {
-            gameData.activeMysticReflectionsForEntryBatch.clear();
-        }
     }
 
     /** Determines native entry choices while the batch's physical cards remain in their old zones. */
@@ -830,16 +827,10 @@ public class BattlefieldPlacementService {
             return gameQueryService.resolveTokenCreationController(
                     gameData, controllerId, permanent.getCard().hasType(CardType.CREATURE));
         }
-        if (gameData.playersGatheringSpecimensThisTurn.isEmpty()
-                || !permanent.getCard().hasType(CardType.CREATURE)) {
+        if (!permanent.getCard().hasType(CardType.CREATURE)) {
             return controllerId;
         }
-        for (UUID gatherer : gameData.orderedPlayerIds) {
-            if (!gatherer.equals(controllerId) && gameData.playersGatheringSpecimensThisTurn.contains(gatherer)) {
-                return gatherer;
-            }
-        }
-        return controllerId;
+        return gameQueryService.resolveGatherSpecimensController(gameData, controllerId);
     }
 
     /**

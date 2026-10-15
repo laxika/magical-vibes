@@ -85,7 +85,7 @@ class KrovikanRotTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.assertInHand(player1, "Krovikan Rot");
 
-        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, gd.playerHands.get(player1.getId()).indexOf(rot), target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

@@ -1427,8 +1427,11 @@ public class GameData {
             new ConcurrentHashMap<>();
     /** Players whose permanents are protected for the game from damage dealt by named planes. */
     public final Map<UUID, Set<String>> playersWithDamageFromNamedPlanesPrevented = new ConcurrentHashMap<>();
-    /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
-    public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
+    /**
+     * One entry per Gather Specimens resolved this turn, naming its controller: each is a separate
+     * replacement effect that gains control of a creature that would enter under an opponent's control.
+     */
+    public final List<UUID> playersGatheringSpecimensThisTurn = new java.util.concurrent.CopyOnWriteArrayList<>();
     /** Players who, this turn, gain control of tokens that would be created under an opponent's control (Crafty Cutpurse). */
     public final List<UUID> playersGatheringTokensThisTurn = new java.util.concurrent.CopyOnWriteArrayList<>();
     /** Players who, this turn, exile creatures that would enter without having been cast (Hallowed Moonlight). */

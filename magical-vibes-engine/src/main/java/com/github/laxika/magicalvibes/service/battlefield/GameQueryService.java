@@ -10906,26 +10906,48 @@ public class GameQueryService {
         return adjustedAmount[0];
     }
 
+    /**
+     * Gather Specimens' control-changing replacement effects for an entering creature (CR 614.1):
+     * each resolved Gather Specimens applies at most once to the event (CR 614.5) and only while
+     * the creature would enter under one of its controller's opponents' control.
+     */
+    public UUID resolveGatherSpecimensController(GameData gameData, UUID controllerId) {
+        List<UUID> gatherers = List.copyOf(gameData.playersGatheringSpecimensThisTurn);
+        Set<Integer> used = new HashSet<>();
+        UUID effectiveControllerId = controllerId;
+        UUID gatherer;
+        while ((gatherer = applyNextGatherer(gatherers, used, effectiveControllerId)) != null) {
+            effectiveControllerId = gatherer;
+        }
+        return effectiveControllerId;
+    }
+
+    /** The controller of the first unused gatherer that is not {@code currentControllerId}, marking it used. */
+    private static UUID applyNextGatherer(List<UUID> gatherers, Set<Integer> used, UUID currentControllerId) {
+        for (int index = 0; index < gatherers.size(); index++) {
+            UUID gatherer = gatherers.get(index);
+            if (!gatherer.equals(currentControllerId) && used.add(index)) {
+                return gatherer;
+            }
+        }
+        return null;
+    }
+
     /** Resolves control-changing replacement effects before a token is created. */
     public UUID resolveTokenCreationController(GameData gameData, UUID controllerId, boolean creatureToken) {
         UUID effectiveControllerId = controllerId;
-        Set<UUID> usedGatherers = new HashSet<>();
+        List<UUID> creatureGatherers = List.copyOf(gameData.playersGatheringSpecimensThisTurn);
+        Set<Integer> usedGatherers = new HashSet<>();
         List<UUID> tokenGatherers = List.copyOf(gameData.playersGatheringTokensThisTurn);
         Set<Integer> usedTokenGatherers = new HashSet<>();
         boolean changed;
         do {
             changed = false;
             if (creatureToken) {
-                for (UUID gatherer : gameData.orderedPlayerIds) {
-                    if (!gatherer.equals(effectiveControllerId)
-                            && gameData.playersGatheringSpecimensThisTurn.contains(gatherer)
-                            && usedGatherers.add(gatherer)) {
-                        effectiveControllerId = gatherer;
-                        changed = true;
-                        break;
-                    }
-                }
-                if (changed) {
+                UUID gatherer = applyNextGatherer(creatureGatherers, usedGatherers, effectiveControllerId);
+                if (gatherer != null) {
+                    effectiveControllerId = gatherer;
+                    changed = true;
                     continue;
                 }
             }

@@ -39,9 +39,11 @@ class GazeOfPainTest extends BaseCardTest {
         return addCreatureReady(player2, new BalduvianBears());
     }
 
-    private void advanceToUnblockedMay() {
+    /** Declares no blockers, targets {@code target} as the trigger goes on the stack, then resolves to its may. */
+    private void advanceToUnblockedMay(Permanent target) {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 
@@ -53,11 +55,10 @@ class GazeOfPainTest extends BaseCardTest {
         Permanent victim = addDefenderCreature();
         harness.setLife(player2, 20);
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(victim);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -72,9 +73,8 @@ class GazeOfPainTest extends BaseCardTest {
         Permanent victim = addDefenderCreature();
         harness.setLife(player2, 20);
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(victim);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         harness.passBothPriorities();
 
@@ -93,12 +93,14 @@ class GazeOfPainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveInstant(player1, 0, victim.getId());
 
-        advanceToUnblockedMay();
-        harness.handleMayAbilityChosen(player1, true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.handlePermanentChosen(player1, victim.getId());
         harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(4);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage)
@@ -114,10 +116,10 @@ class GazeOfPainTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
+        harness.handlePermanentChosen(player1, victim.getId());
         destroyAttacker(attacker);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.getMarkedDamage()).isEqualTo(2);
     }
@@ -131,6 +133,7 @@ class GazeOfPainTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
+        harness.handlePermanentChosen(player1, victim.getId());
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -139,7 +142,6 @@ class GazeOfPainTest extends BaseCardTest {
         destroyAttacker(attacker);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.getMarkedDamage()).isEqualTo(5);
     }
@@ -151,7 +153,7 @@ class GazeOfPainTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addDefenderCreature();
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(victim);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(victim.getMarkedDamage()).isZero();
@@ -198,9 +200,8 @@ class GazeOfPainTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addDefenderCreature();
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(victim);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
 
@@ -250,9 +251,8 @@ class GazeOfPainTest extends BaseCardTest {
         ward.setChosenColor(CardColor.GREEN);
         gd.playerBattlefields.get(player2.getId()).add(ward);
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(victim);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, victim.getId());
 
         assertThat(victim.getMarkedDamage()).isZero();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -265,10 +265,10 @@ class GazeOfPainTest extends BaseCardTest {
     void decliningAllowsCombatDamage() {
         castGaze();
         addAttacker();
-        addDefenderCreature();
+        Permanent victim = addDefenderCreature();
         harness.setLife(player2, 20);
 
-        advanceToUnblockedMay();
+        advanceToUnblockedMay(victim);
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 

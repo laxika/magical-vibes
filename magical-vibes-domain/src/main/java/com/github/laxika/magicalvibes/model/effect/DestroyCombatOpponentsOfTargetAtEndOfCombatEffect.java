@@ -6,9 +6,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * only destroys creatures blocked by it (Glyph of Doom).
  * <p>
  * At resolution a {@link com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat}
- * delayed action is queued for the target. The set of creatures to destroy is only computed when
- * that action is drained in {@code CombatService.processEndOfCombatCombatOpponentDestructions()},
- * so blocks declared after this spell resolved count too; regeneration and indestructible apply.
+ * delayed action is queued for the target. As the next end of combat step begins,
+ * {@code CombatService.processEndOfCombatCombatOpponentDestructions()} puts a delayed trigger
+ * carrying this effect on the stack with the creature as its source permanent and no target; that
+ * trigger computes the creatures to destroy as it resolves, so blocks declared after this spell
+ * resolved count too; regeneration and indestructible apply.
  * <p>
  * Unlike {@link DestroyCombatOpponentAtEndOfCombatEffect}, which is a Basilisk-style combat trigger
  * on the source permanent, this is a one-shot spell effect keyed to a chosen target.

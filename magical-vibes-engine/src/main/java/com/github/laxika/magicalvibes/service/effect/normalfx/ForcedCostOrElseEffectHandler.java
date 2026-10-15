@@ -305,7 +305,14 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 && entry.getTriggeringCardGraveyardEntryVersion() >= 0
                 && gameQueryService.findCardInGraveyardById(gameData, sourceCardId) != null
                 && gameData.graveyardEntryVersion(sourceCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
-            return;
+            if (!e.optional()) {
+                return;
+            }
+            // The card left its graveyard and came back as a new object (CR 400.7), so neither the
+            // paid nor the unpaid effect can find it, but the ability still resolves and its
+            // controller may still pay (Garza's Assassin's recover).
+            e = new ForcedCostOrElseEffect(e.forcedCost(), List.of(), true, e.anyPlayerMayPay(),
+                    e.payerIsEnchantedController(), e.payerIsDefendingPlayer(), List.of());
         }
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost cost) {

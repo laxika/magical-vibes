@@ -164,12 +164,14 @@ class GateToPhyrexiaTest extends BaseCardTest {
         firstFodder.tap();
         secondFodder.tap();
 
-        harness.activateAbility(player1, battlefieldIndex(firstGate), null, firstArtifact.getId());
-        harness.handlePermanentChosen(player1, firstFodder.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, battlefieldIndex(firstGate), null, firstArtifact.getId());
+            harness.handlePermanentChosen(player1, firstFodder.getId());
+            harness.passBothPriorities();
 
-        harness.activateAbility(player1, battlefieldIndex(secondGate), null, secondArtifact.getId());
-        harness.passBothPriorities();
+            harness.activateAbility(player1, battlefieldIndex(secondGate), null, secondArtifact.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(firstGate, secondGate);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();

@@ -74,13 +74,13 @@ These G-card test classes still fail after two Haiku rounds and a Sonnet pass. N
 shared root cause. Most are one-card engine gaps (wrong timing of a choice, a missing replacement or
 trigger condition, a lost-ability or LKI case) rather than test setup. Each needs its own investigation.
 
-**Remaining:** `GarzasAssassinTest`, `GateToPhyrexiaTest`, `GatherSpecimensTest`, `GatherTheTownsfolkTest`, `GazeOfPainTest`, `GazeOfTheGorgonTest`, `GemOfBecomingTest`, `GenesisTest`, `GenjiGloveTest`, `GeodeGolemTest`, `GeosurgeTest`, `GeothermalKamiTest`, `GerrardsHourglassPendantTest`, `GetawayCarTest`, `GhaltaAndMavrenTest`, `GhirapurTest`, `GhiredConclaveExileTest`, `GhituLavarunnerTest`, `GhostHoundsTest`, `GhostlyDancersTest`, `GhostlyFlameTest`, `GhostlyWingsTest`, `GhostTownTest`, `GhostwayTest`, `GhoulishImpetusTest`, `GhoulishProcessionTest`, `GhoulsNightOutTest`, `GhyrsonStarnKelermorphTest`, `GiantAdephageTest`, `GiantInheritanceTest`, `GiantOysterTest`, `GideonBlackbladeTest`, `GideonJuraTest`, `GideonMartialParagonTest`, `GideonsSacrificeTest`, `GilaCourserTest`, `GildedDrakeTest`, `GilraenDNedainProtectorTest`, `GirderGoonsTest`, `GisaGloriousResurrectorTest`, `GixianPuppeteerTest`, `GlaciersTest`, `GlamermiteTest`, `GlamorousOutlawTest`, `GlarbCalamitysAugurTest`, `GlarewielderTest`, `GlassAspTest`, `GlassOfTheGuildpactTest`, `GlasspoolMimicTest`, `GleamingOverseerTest`, `GleamOfAuthorityTest`, `GlenElendrasAnswerTest`, `GlimpseOfTomorrowTest`, `GlimpseTheUnthinkablePlaytestTest`, `GlintHawkTest`, `GlintRakerTest`, `GlintSleeveArtisanTest`, `GlintWeaverTest`, `GlissaTheTraitorTest`, `GlitchInterpreterTest`, `GloomlanceTest`, `GloomshriekerTest`, `GloomSurgeonTest`, `GloriousPurposeTest`, `GlowingOneTest`, `GlyphOfDoomTest`, `GoblinArsonistTest`, `GoblinBarrageTest`, `GoblinCrashPilotTest`, `GoblinDarkDwellersTest`, `GoblinDiplomatsTest`, `GoblinFlectomancerTest`, `GoblinFlotillaTest`, `GoblinGrapplerTest`, `GoblinKitesTest`, `GoblinSappersTest`, `GoblinslideTest`, `GoblinTestPilotTest`, `GoblinTinkererTest`, `GoblinTownTest`, `GoblinTrapfinderTest`, `GoblinTraprunnerTest`, `GoblinWarBuggyTest`, `GoblinWarCryTest`, `GoddricCloakedRevelerTest`, `GodEternalKefnetTest`, `GodEternalOketraTest`, `GodosIrregularsTest`, `GogoMasterOfMimicryTest`, `GogoMysteriousMimeTest`, `GoldenArgosyTest`, `GoldlustTriadTest`, `GoldmeadowTest`, `GoldveinPickTest`, `GoliathDaydreamerTest`, `GoNinjaGoTest`, `GontiLordOfLuxuryTest`, `GontisAetherHeartTest`, `GorillaWarCryTest`, `GoShintaiOfLostWisdomTest`, `GossipsTalentTest`, `GraazUnstoppableJuggernautTest`, `GracefulAdeptTest`, `GracefulAntelopeTest`, `GracefulTakedownTest`, `GrafRatsTest`, `GraftedGrowthTest`, `GrahaTiaScionRebornTest`, `GrapplingHookTest`, `GrapplingKrakenTest`, `GraspingShadowsTest`, `GraspOfFateTest`, `GraspOfTheHieromancerTest`, `GraveExpectationsTest`, `GravenArchfiendTest`, `GravePactTest`, `GraveResearcherReanimateTest`, `GravestormTest`, `GravitationalShiftTest`, `GreasefangOkibaBossTest`, `GreatbowDoyenTest`, `GreatFangChroniclersTest`, `GreatGildedBoatTest`, `GreatOakGuardianTest`, `GreatTrainHeistTest`, `GreenGoblinBackForMoreTest`, `GreenSunsTwilightTest`, `GreenSunsZenithTest`, `GreenwardenOfMurasaTest`, `GremlinInfestationTest`, `GriefTest`, `GrimCaptainsCallTest`, `GrimDraugrTest`, `GrimeGorgerTest`, `GrimHaruspexTest`, `GrimHarvestTest`, `GrimoireOfTheDeadTest`, `GrimoireThiefTest`, `GrimReaperLethalLegionnaireTest`, `GrimReapersSprintTest`, `GristleGluttonTest`, `GrixisSojournersTest`, `GrizzledHuntmasterTest`, `GrotagNightRunnerTest`, `GroveOfTheDreampodsTest`, `GrubStoriedMatriarchTest`, `GruesomeDiscoveryTest`, `GruesomeEncoreTest`, `GruesomeSlaughterTest`, `GuardianArchonTest`, `GuardianOfGhirapurTest`, `GuardiansOfKoilosTest`, `GuildFeudTest`, `GuildpactGreenwalkerTest`, `GuiltyConscienceTest`, `GunnerConscriptTest`, `GurmagRakshasaTest`, `GusthasScepterTest`, `GutFanaticalPriestessTest`, `GutterSkulkerTest`, `GutTrueSoulZealotTest`, `GuulDrazAssassinTest`, `GuyInTheChairTest`, `GwafaHazidProfiteerTest`, `GwenomRemorselessTest`, `GwenStacyTest`, `GyrusWakerOfCorpsesTest`.
+**Remaining:** `GenjiGloveTest`, `GeodeGolemTest`, `GeosurgeTest`, `GeothermalKamiTest`, `GerrardsHourglassPendantTest`, `GetawayCarTest`, `GhaltaAndMavrenTest`, `GhirapurTest`, `GhiredConclaveExileTest`, `GhituLavarunnerTest`, `GhostHoundsTest`, `GhostlyDancersTest`, `GhostlyFlameTest`, `GhostlyWingsTest`, `GhostTownTest`, `GhostwayTest`, `GhoulishImpetusTest`, `GhoulishProcessionTest`, `GhoulsNightOutTest`, `GhyrsonStarnKelermorphTest`, `GiantAdephageTest`, `GiantInheritanceTest`, `GiantOysterTest`, `GideonBlackbladeTest`, `GideonJuraTest`, `GideonMartialParagonTest`, `GideonsSacrificeTest`, `GilaCourserTest`, `GildedDrakeTest`, `GilraenDNedainProtectorTest`, `GirderGoonsTest`, `GisaGloriousResurrectorTest`, `GixianPuppeteerTest`, `GlaciersTest`, `GlamermiteTest`, `GlamorousOutlawTest`, `GlarbCalamitysAugurTest`, `GlarewielderTest`, `GlassAspTest`, `GlassOfTheGuildpactTest`, `GlasspoolMimicTest`, `GleamingOverseerTest`, `GleamOfAuthorityTest`, `GlenElendrasAnswerTest`, `GlimpseOfTomorrowTest`, `GlimpseTheUnthinkablePlaytestTest`, `GlintHawkTest`, `GlintRakerTest`, `GlintSleeveArtisanTest`, `GlintWeaverTest`, `GlissaTheTraitorTest`, `GlitchInterpreterTest`, `GloomlanceTest`, `GloomshriekerTest`, `GloomSurgeonTest`, `GloriousPurposeTest`, `GlowingOneTest`, `GoblinArsonistTest`, `GoblinBarrageTest`, `GoblinCrashPilotTest`, `GoblinDarkDwellersTest`, `GoblinDiplomatsTest`, `GoblinFlectomancerTest`, `GoblinFlotillaTest`, `GoblinGrapplerTest`, `GoblinKitesTest`, `GoblinSappersTest`, `GoblinslideTest`, `GoblinTestPilotTest`, `GoblinTinkererTest`, `GoblinTownTest`, `GoblinTrapfinderTest`, `GoblinTraprunnerTest`, `GoblinWarBuggyTest`, `GoblinWarCryTest`, `GoddricCloakedRevelerTest`, `GodEternalKefnetTest`, `GodEternalOketraTest`, `GodosIrregularsTest`, `GogoMasterOfMimicryTest`, `GogoMysteriousMimeTest`, `GoldenArgosyTest`, `GoldlustTriadTest`, `GoldmeadowTest`, `GoldveinPickTest`, `GoliathDaydreamerTest`, `GoNinjaGoTest`, `GontiLordOfLuxuryTest`, `GontisAetherHeartTest`, `GorillaWarCryTest`, `GoShintaiOfLostWisdomTest`, `GossipsTalentTest`, `GraazUnstoppableJuggernautTest`, `GracefulAdeptTest`, `GracefulAntelopeTest`, `GracefulTakedownTest`, `GrafRatsTest`, `GraftedGrowthTest`, `GrahaTiaScionRebornTest`, `GrapplingHookTest`, `GrapplingKrakenTest`, `GraspingShadowsTest`, `GraspOfFateTest`, `GraspOfTheHieromancerTest`, `GraveExpectationsTest`, `GravenArchfiendTest`, `GravePactTest`, `GraveResearcherReanimateTest`, `GravestormTest`, `GravitationalShiftTest`, `GreasefangOkibaBossTest`, `GreatbowDoyenTest`, `GreatFangChroniclersTest`, `GreatGildedBoatTest`, `GreatOakGuardianTest`, `GreatTrainHeistTest`, `GreenGoblinBackForMoreTest`, `GreenSunsTwilightTest`, `GreenSunsZenithTest`, `GreenwardenOfMurasaTest`, `GremlinInfestationTest`, `GriefTest`, `GrimCaptainsCallTest`, `GrimDraugrTest`, `GrimeGorgerTest`, `GrimHaruspexTest`, `GrimoireOfTheDeadTest`, `GrimoireThiefTest`, `GrimReaperLethalLegionnaireTest`, `GrimReapersSprintTest`, `GristleGluttonTest`, `GrixisSojournersTest`, `GrizzledHuntmasterTest`, `GrotagNightRunnerTest`, `GroveOfTheDreampodsTest`, `GrubStoriedMatriarchTest`, `GruesomeDiscoveryTest`, `GruesomeEncoreTest`, `GruesomeSlaughterTest`, `GuardianArchonTest`, `GuardianOfGhirapurTest`, `GuardiansOfKoilosTest`, `GuildFeudTest`, `GuildpactGreenwalkerTest`, `GuiltyConscienceTest`, `GunnerConscriptTest`, `GurmagRakshasaTest`, `GusthasScepterTest`, `GutFanaticalPriestessTest`, `GutterSkulkerTest`, `GutTrueSoulZealotTest`, `GuulDrazAssassinTest`, `GuyInTheChairTest`, `GwafaHazidProfiteerTest`, `GwenomRemorselessTest`, `GwenStacyTest`, `GyrusWakerOfCorpsesTest`.
 
 **What the rules require.** It differs per card. Verify the Oracle text and rulings for each one before
 changing anything. Several of these tests already had wrong agent "fixes" reverted, so read the whole
 test class first.
 
-**Why it's large.** About 167 classes, each with its own cause.
+**Why it's large.** About 157 classes, each with its own cause.
 
 **Prompt to start it:**
 
@@ -121,6 +121,40 @@ triggers and no division was supplied with a cast, prompt the controller to choo
 targets and divide the damage as the trigger is put on the stack (CR 603.3d, 601.2d). Make
 GandalfSparkStarterTest and GangOfDevilsTest pass without breaking InfernoTitanTest or
 AngelOfSalvationTest. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 23. "At end of combat" delayed actions resolve without using the stack
+
+**Status:** open · **Found:** 2026-10-15, while fixing G-card tests
+
+**Failing tests:** none known yet. Gaze of the Gorgon, Venomous Breath and Glyph of Doom were moved onto
+the stack while fixing their tests; the other end-of-combat delayed actions were not checked.
+
+**What the rules require.** CR 603.7: an effect that does something "at end of combat" creates a delayed
+triggered ability, which goes on the stack like any trigger. CR 511.2: abilities that trigger "at end of
+combat" trigger as the end of combat step begins, so one created during that step waits for a later
+combat. `TurnProgressionService.processEndOfCombatActions` still applies most of these delayed actions
+directly, with no stack and no chance to respond: `SacrificeAtEndOfCombat`, the `DelayedPermanentAction`
+end-of-combat kinds, `DestroyEquipmentAtEndOfCombat`, `PutMinusOneCounterAtEndOfCombat`,
+`PutCounterOnPermanentAtEndOfCombat`, `RemoveCounterFromSourceAtEndOfCombat`,
+`GainControlOfPermanentAtEndOfCombat`, `ExileAndReturnTransformedAtEndOfCombat`,
+`DealDamageToPermanentAtEndOfCombat`, `DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource`,
+`TapAndSkipUntapAtEndOfCombat`, `TapCombatOpponentsAtEndOfCombat` and `PhaseOutAtEndOfCombat`. It also
+applies them as the step ends when they were created during it. Some of these may be turn-based or
+rules-correct as written, so check each card's Oracle text first.
+
+**Why it's large.** About a dozen delayed-action kinds and every card that uses them. Each needs a stack
+entry with the right source and controller, and tests that respond to it.
+
+**Prompt to start it:**
+
+```
+Work through missing-features-to-do.md entry 23: for each end-of-combat delayed action that is really
+an "at end of combat" delayed trigger, put it on the stack as the end of combat step begins (CR 603.7,
+511.2) instead of applying it directly, the way DestroyCombatOpponentsAtEndOfCombat now does. Add a
+"can be responded to" test per card. Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---

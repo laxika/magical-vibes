@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.r.RiftstonePortal;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -173,10 +174,11 @@ class GenesisTest extends BaseCardTest {
         harness.setHand(player1, List.of(warthog));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
         harness.assertInGraveyard(player1, "Genesis");
         harness.assertInHand(player1, "Giant Warthog");

@@ -701,8 +701,13 @@ public class StackResolutionService {
             return;
         }
 
+        // CR 614.12: an "enter as a copy" choice is made by the player the creature will enter under,
+        // after control-changing replacements such as Gather Specimens' have applied.
+        UUID enteringControllerId = characteristics.hasType(CardType.CREATURE)
+                ? gameQueryService.resolveGatherSpecimensController(gameData, controllerId)
+                : controllerId;
         if (!entry.isCastFaceDown() && cloneService.prepareCloneReplacementEffect(
-                gameData, controllerId, characteristics, entry.getTargetId(), entry.getXValue(),
+                gameData, enteringControllerId, characteristics, entry.getTargetId(), entry.getXValue(),
                 entry.getManaSpentToCast(), entry.getPhysicalCard(), characteristics != card)) {
             return;
         }

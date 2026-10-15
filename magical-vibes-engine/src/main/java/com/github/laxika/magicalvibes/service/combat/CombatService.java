@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentsOfTargetAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -398,45 +399,34 @@ public class CombatService {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
-    private static Set<UUID> unionOfCombatOpponents(Set<UUID> captured, Set<UUID> live) {
-        if (captured == null) {
-            return live;
-        }
-        Set<UUID> union = new java.util.HashSet<>(captured);
-        union.addAll(live);
-        return union;
-    }
-
     /**
-     * Destroys creatures scheduled for directional or bidirectional combat-opponent destruction.
-     * The opponent set was captured when the delayed effect was created. Respects indestructible and regeneration via
-     * {@link PermanentRemovalService#tryDestroyPermanent}.
+     * Puts the delayed "at end of combat, destroy the creatures that blocked or were blocked by it"
+     * trigger on the stack for each scheduled directional or bidirectional combat-opponent
+     * destruction. The trigger carries the opponent set captured when it was created.
      */
     public void processEndOfCombatCombatOpponentDestructions(GameData gameData) {
         List<DestroyCombatOpponentsAtEndOfCombat> scheduled =
                 gameData.drainDelayedActions(DestroyCombatOpponentsAtEndOfCombat.class);
         for (DestroyCombatOpponentsAtEndOfCombat action : scheduled) {
-            Set<UUID> opponentIds = action.onlyCreaturesBlockedByTarget()
-                    ? gameData.combatOpponentIdsBlockedByThisTurn.getOrDefault(
-                            action.creatureId(), action.combatOpponentIds())
-                    : unionOfCombatOpponents(action.combatOpponentIds(),
-                            gameData.combatBlockOpponentIdsThisCombat.getOrDefault(action.creatureId(), Set.of()));
-            if (opponentIds == null) {
+            if (action.sourceCard() == null) {
                 continue;
             }
-            for (UUID opponentId : opponentIds) {
-                Permanent opponent = gameQueryService.findPermanentById(gameData, opponentId);
-                if (opponent == null) {
-                    continue;
-                }
-                if (permanentRemovalService.tryDestroyPermanent(gameData, opponent, false)) {
-                    gameLogService.append(gameData, GameLog.isDestroyed(opponent.getCard()));
-                    log.info("Game {} - {} destroyed at end of combat (combat-opponent destruction)",
-                            gameData.id, opponent.getCard().getName());
-                }
-            }
+            // "At end of combat, destroy ..." is a delayed triggered ability (CR 603.7), so it uses
+            // the stack and players may respond before the creatures are destroyed.
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    action.sourceCard(),
+                    action.controllerId(),
+                    action.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(List.of(new DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(
+                            action.onlyCreaturesBlockedByTarget()))),
+                    null,
+                    action.creatureId());
+            trigger.setNonTargeting(true);
+            trigger.setTriggeringPermanentIds(List.copyOf(action.combatOpponentIds()));
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed trigger triggers."));
         }
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     /**

@@ -51,7 +51,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPower
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
-import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
@@ -661,13 +660,17 @@ public class TurnProgressionService {
                 || gameData.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)
                 || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class)
                 || gameData.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)
-                || gameData.hasDelayedAction(DestroyCombatOpponentsAtEndOfCombat.class)
                 || gameData.hasDelayedAction(DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource.class)
                 || gameData.hasDelayedAction(TapAndSkipUntapAtEndOfCombat.class)
                 || gameData.hasDelayedAction(TapCombatOpponentsAtEndOfCombat.class)
                 || gameData.hasDelayedAction(PhaseOutAtEndOfCombat.class);
     }
 
+    /**
+     * Applies the end-of-combat delayed actions. The combat-opponent destruction is excluded from
+     * {@link #hasEndOfCombatActions}: it is a delayed trigger that triggers only as an end of combat
+     * step begins (CR 511.2), so one created during that step waits for a later combat.
+     */
     private void processEndOfCombatActions(GameData gameData) {
         combatService.processEndOfCombatSacrifices(gameData);
         combatService.processEndOfCombatTaps(gameData);
