@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Savannah;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, Island.class, KrosanVerge.class, KrosanWayfarer.class, Plains.class})
+@CardUsed({Forest.class, Island.class, KrosanVerge.class, KrosanWayfarer.class, Plains.class, Savannah.class})
 class KrosanVergeTest extends BaseCardTest {
 
     @Test
@@ -242,6 +243,26 @@ class KrosanVergeTest extends BaseCardTest {
 
         harness.assertLife(player1, 10);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land that is both a Forest and a Plains fills only one of the two picks")
+    void dualLandFillsOnlyOnePick() {
+        Savannah savannah = new Savannah();
+        addVergeAndMana();
+        harness.setLibrary(player1, List.of(savannah));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(savannah);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement()
+                .matches(permanent -> permanent.getCard() == savannah && permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     @Test

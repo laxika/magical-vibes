@@ -60,7 +60,8 @@ class GhostQuarterTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Forest");
 
-        // Player 2 (the land's controller) is prompted to search
+        // Player 2 (the land's controller) chooses to search, then is prompted to pick
+        acceptSearch(player2);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -80,6 +81,7 @@ class GhostQuarterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        acceptSearch(player2);
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
         harness.handleCardChosen(player2, 0);
 
@@ -92,7 +94,7 @@ class GhostQuarterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Land's controller can fail to find (may search)")
+    @DisplayName("Land's controller can search and fail to find, which still shuffles")
     void controllerCanFailToFind() {
         harness.addToBattlefield(player1, new GhostQuarter());
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
@@ -102,6 +104,7 @@ class GhostQuarterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
+        acceptSearch(player2);
         harness.handleCardChosen(player2, -1);
 
         // No new land on battlefield
@@ -110,6 +113,7 @@ class GhostQuarterTest extends BaseCardTest {
                         || p.getCard().getName().equals("Island")
                         || p.getCard().getName().equals("Mountain"));
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
     }
 
     @Test
@@ -126,7 +130,8 @@ class GhostQuarterTest extends BaseCardTest {
         // Own land is destroyed
         harness.assertInGraveyard(player1, "Forest");
 
-        // Player 1 is prompted to search their own library
+        // Player 1 chooses to search their own library
+        acceptSearch(player1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
     }
@@ -161,6 +166,23 @@ class GhostQuarterTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gameLogContains("Library is shuffled")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Controller is asked before searching and may search a library with no basic lands")
+    void noBasicLandsStillAllowsChoosingToSearch() {
+        harness.addToBattlefield(player1, new GhostQuarter());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
+        harness.setLibrary(player2, List.of(new DoomedTraveler(), new DoomedTraveler()));
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.passBothPriorities();
+        acceptSearch(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
     }
 
     @Test
@@ -242,6 +264,7 @@ class GhostQuarterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
+        acceptSearch(player2);
         harness.handleCardChosen(player2, 0);
 
         harness.assertOnBattlefield(player2, "Forest");
@@ -263,6 +286,7 @@ class GhostQuarterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
+        acceptSearch(player2);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .containsExactly(plains);
@@ -270,6 +294,12 @@ class GhostQuarterTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Plains");
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(nonbasic, creature);
+    }
+
+    private void acceptSearch(Player player) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player.getId());
+        harness.handleMayAbilityChosen(player, true);
     }
 
     private void setupLibrary(Player player) {

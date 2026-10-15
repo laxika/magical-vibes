@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.d.DruidOfTheAnima;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
+import com.github.laxika.magicalvibes.cards.o.OppositionAgent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +21,8 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ClarionUltimatum.class, Forest.class, Island.class, DruidOfTheAnima.class, CosisTrickster.class, Clone.class})
+@CardUsed({ClarionUltimatum.class, Forest.class, Island.class, DruidOfTheAnima.class, CosisTrickster.class, Clone.class,
+        ObNixilisUnshackled.class, OppositionAgent.class})
 class ClarionUltimatumTest extends BaseCardTest {
 
     @Test
@@ -175,7 +178,8 @@ class ClarionUltimatumTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
             harness.handleCardChosen(player1, 0);
             assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-            assertThat(gd.stack).isEmpty();
+            assertThat(gd.stack).singleElement()
+                    .matches(entry -> entry.getCard().getName().equals("Clarion Ultimatum"));
             harness.handleCardChosen(player1, 0);
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player2, true);
@@ -239,6 +243,46 @@ class ClarionUltimatumTest extends BaseCardTest {
         assertThat(entering).hasSize(2).allMatch(Permanent::isTapped);
         assertThat(entering).allMatch(permanent -> "Druid of the Anima".equals(permanent.getCard().getName()));
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All same-name picks are one library search, so Ob Nixilis triggers once")
+    void sameNamePicksAreOneSearch() {
+        List<Permanent> forests = setupForests(2);
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        setupLibrary();
+        castClarion();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, forests.stream().map(Permanent::getId).toList());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Under an opposing Opposition Agent the found cards are exiled instead of entering")
+    void oppositionAgentExilesFoundCards() {
+        List<Permanent> forests = setupForests(2);
+        harness.addToBattlefield(player2, new OppositionAgent());
+        setupLibrary();
+        castClarion();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, forests.stream().map(Permanent::getId).toList());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).decidingPlayerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(forestsOnBattlefield()).containsExactlyElementsOf(forests);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .hasSize(2)
+                .allMatch(card -> "Forest".equals(card.getName()));
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
     private List<Permanent> setupForests(int count) {

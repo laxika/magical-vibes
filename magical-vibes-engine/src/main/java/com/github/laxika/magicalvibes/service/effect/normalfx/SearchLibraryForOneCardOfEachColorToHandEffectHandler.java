@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -12,7 +10,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,7 +26,6 @@ public class SearchLibraryForOneCardOfEachColorToHandEffectHandler implements No
     private static final List<CardColor> COLORS =
             List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN);
 
-    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -41,15 +37,6 @@ public class SearchLibraryForOneCardOfEachColorToHandEffectHandler implements No
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        String playerName = gameData.playerIdToName.get(controllerId);
-
-        if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    playerName + " searches their library but it is empty. Library is shuffled."));
-            return;
-        }
 
         librarySearchSupport.startSingleSearchToHandPicks(gameData, controllerId,
                 LibrarySearchFollowUp.colorToHandPicks(COLORS));

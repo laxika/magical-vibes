@@ -269,15 +269,29 @@ public class LibrarySearchSupport {
      * is one permanent's name; the queue's own destination and creature-only restriction apply to
      * every pick, and the advanced remainder rides the begun search. Names with no matching card in
      * the library are skipped. A queue may also identify a different library owner and battlefield
-     * controller, as used by Dichotomancy. Returns true if a search was initiated, false if the
-     * queue is exhausted or absent, search is prevented, or the library is empty.
+     * controller, as used by Dichotomancy. A simultaneous queue is a single search: the first call
+     * records it and fixes the library cards it can find, and later picks stay within those cards.
+     * Returns true if a search was initiated, false if the queue is exhausted or absent, search is
+     * prevented, or the library is empty.
      */
     public boolean startNextSameNamePick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
-        SameNamePickQueue queue = followUp.remainingSameNamePicks();
-        if (queue == null) return false;
+        SameNamePickQueue startingQueue = followUp.remainingSameNamePicks();
+        if (startingQueue == null) return false;
 
-        UUID libraryOwnerId = queue.libraryOwnerId() != null ? queue.libraryOwnerId() : playerId;
+        UUID libraryOwnerId = startingQueue.libraryOwnerId() != null ? startingQueue.libraryOwnerId() : playerId;
         if (isSearchPrevented(gameData, playerId, libraryOwnerId, true, playerId)) return false;
+
+        if (startingQueue.simultaneous() && startingQueue.searchableCardIds() == null) {
+            List<Card> library = gameData.playerDecks.getOrDefault(libraryOwnerId, List.of());
+            int limit = Math.min(opponentSearchTopCardsLimit(gameData, playerId), library.size());
+            startingQueue = startingQueue.withSearchableCardIds(library.subList(0, limit).stream()
+                    .map(Card::getId).collect(java.util.stream.Collectors.toSet()));
+            followUp = followUp.withRemainingSameNamePicks(startingQueue);
+            if (libraryOwnerId.equals(playerId)) {
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+            }
+        }
+        SameNamePickQueue queue = startingQueue;
 
         boolean tapped = queue.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
@@ -291,9 +305,11 @@ public class LibrarySearchSupport {
                     .filter(card -> !queue.selectedCards().contains(card))
                     .filter(card -> card.hasAllCardNames() || name.equals(card.getName()))
                     .filter(card -> !queue.creatureOnly() || card.hasType(CardType.CREATURE))
+                    .filter(card -> queue.searchableCardIds() == null
+                            || queue.searchableCardIds().contains(card.getId()))
                     .toList();
             int topLimit = opponentSearchTopCardsLimit(gameData, playerId);
-            if (topLimit != Integer.MAX_VALUE) {
+            if (queue.searchableCardIds() == null && topLimit != Integer.MAX_VALUE) {
                 matches = restrictToTopCards(gameData, libraryOwnerId, matches, topLimit);
             }
             if (matches.isEmpty()) {
@@ -313,7 +329,9 @@ public class LibrarySearchSupport {
                             .battlefieldControllerId(queue.battlefieldControllerId())
                             .shuffleAfterSelection(!queue.simultaneous())
                             .followUp(followUp.withRemainingSameNamePicks(queue.withNames(remaining)))
-                            .build(), prompt, true);
+                            .build(), prompt, true,
+                    gameData.playerIdToName.get(playerId) + " searches " + libraryDescription.replace("your", "their") + ".",
+                    queue.searchableCardIds());
             return true;
         }
         return false;
@@ -451,6 +469,76 @@ public class LibrarySearchSupport {
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
         }
         gameLogService.append(gameData, GameLog.text(playerName + "'s library is shuffled."));
+        return false;
+    }
+
+    /**
+     * Begins one search of {@code playerId}'s library for a card of each of {@code subtypes} (and of
+     * {@code requiredType} when non-null) that are put onto the battlefield together (Gaea's Balance).
+     * The search is recorded once, and the cards it can find are fixed when it begins. Returns true
+     * if a pick was begun. Otherwise nothing can be found: the library is shuffled and false is
+     * returned.
+     */
+    public boolean startSubtypeToBattlefieldPicks(GameData gameData, UUID playerId,
+                                                  List<com.github.laxika.magicalvibes.model.CardSubtype> subtypes,
+                                                  CardType requiredType, LibrarySearchDestination destination) {
+        if (isSearchPrevented(gameData, playerId)) return false;
+        List<Card> deck = gameData.playerDecks.getOrDefault(playerId, List.of());
+        int limit = Math.min(opponentSearchTopCardsLimit(gameData, playerId), deck.size());
+        Set<UUID> searchableCardIds = deck.subList(0, limit).stream()
+                .map(Card::getId).collect(java.util.stream.Collectors.toSet());
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+        if (startNextSubtypeToBattlefieldPick(gameData, playerId, LibrarySearchFollowUp.subtypeToBattlefieldPicks(
+                subtypes, requiredType, destination, searchableCardIds))) {
+            return true;
+        }
+        LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
+                + " searches their library and finds no matching cards. Library is shuffled."));
+        return false;
+    }
+
+    /**
+     * Offers the next pick of the follow-up's {@link LibrarySearchFollowUp.SubtypeToBattlefieldPickQueue},
+     * skipping subtypes with no unselected matching card among the search's cards. Returns false
+     * once no pick remains; the caller then puts the selected cards onto the battlefield and
+     * shuffles.
+     */
+    public boolean startNextSubtypeToBattlefieldPick(GameData gameData, UUID playerId,
+                                                     LibrarySearchFollowUp followUp) {
+        LibrarySearchFollowUp.SubtypeToBattlefieldPickQueue queue = followUp.subtypeToBattlefieldPicks();
+        if (queue == null) return false;
+        List<Card> deck = gameData.playerDecks.getOrDefault(playerId, List.of());
+        Set<UUID> selectedIds = queue.selectedCards().stream()
+                .map(Card::getId).collect(java.util.stream.Collectors.toSet());
+        List<com.github.laxika.magicalvibes.model.CardSubtype> remaining = new ArrayList<>(queue.remainingSubtypes());
+        while (!remaining.isEmpty()) {
+            com.github.laxika.magicalvibes.model.CardSubtype subtype = remaining.removeFirst();
+            List<Card> matches = deck.stream()
+                    .filter(card -> queue.searchableCardIds().contains(card.getId()))
+                    .filter(card -> !selectedIds.contains(card.getId()))
+                    .filter(card -> card.getSubtypes().contains(subtype))
+                    .filter(card -> queue.requiredType() == null || card.hasType(queue.requiredType()))
+                    .toList();
+            if (matches.isEmpty()) {
+                continue;
+            }
+            String descriptor = subtype.getDisplayName()
+                    + (queue.requiredType() == null ? "" : " " + queue.requiredType().getDisplayName().toLowerCase());
+            String playerName = gameData.playerIdToName.get(playerId);
+            sendLibrarySearchToPlayer(gameData, playerId,
+                    LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
+                            .canFailToFind(true)
+                            .destination(queue.destination())
+                            .shuffleAfterSelection(false)
+                            .followUp(followUp.withSubtypeToBattlefieldPicks(queue.withRemainingSubtypes(remaining)))
+                            .build(),
+                    "Search your library for a " + descriptor + " card to put onto the battlefield.",
+                    true,
+                    playerName + " searches their library for a " + descriptor + " card.",
+                    queue.searchableCardIds());
+            return true;
+        }
         return false;
     }
 

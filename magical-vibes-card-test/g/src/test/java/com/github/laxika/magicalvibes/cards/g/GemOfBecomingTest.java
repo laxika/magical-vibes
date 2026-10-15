@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GemOfBecoming.class, Island.class, Swamp.class, Mountain.class, Plains.class})
+@CardUsed({GemOfBecoming.class, Island.class, Swamp.class, Mountain.class, Plains.class,
+        ObNixilisUnshackled.class})
 class GemOfBecomingTest extends BaseCardTest {
 
     @Test
@@ -44,7 +46,7 @@ class GemOfBecomingTest extends BaseCardTest {
         assertThat(gameLogContains("reveals Island")).isTrue();
         assertThat(gameLogContains("reveals Swamp")).isTrue();
         assertThat(gameLogContains("reveals Mountain")).isTrue();
-        assertThat(gameLogContains("library is shuffled")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -76,7 +78,7 @@ class GemOfBecomingTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
-        assertThat(gameLogContains("library is shuffled")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -113,6 +115,32 @@ class GemOfBecomingTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void findingAllThreeSubtypesIsOneSearchAndTriggersObNixilisOnce() {
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        startSearch(List.of(new Island(), new Swamp(), new Mountain()));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void searchingAnEmptyLibraryStillTriggersObNixilis() {
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        startSearch(List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
     }
 
     @Test

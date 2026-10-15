@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
@@ -40,19 +41,20 @@ public class GhostQuarter extends Card {
 
         // {T}, Sacrifice Ghost Quarter: Destroy target land. Its controller may search their
         // library for a basic land card, put it onto the battlefield, then shuffle.
-        // (A restricted search can always fail to find, so "may search" needs no extra flag.)
+        // The controller first chooses whether to search; declining neither searches nor shuffles.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(
                         new SacrificeSelfCost(),
                         new DestroyTargetPermanentThenEffect(
-                                new SearchLibraryEffect(
+                                new MayEffect(new SearchLibraryEffect(
                                         new CardAllOfPredicate(List.of(
                                                 new CardSupertypePredicate(CardSupertype.BASIC),
                                                 new CardTypePredicate(CardType.LAND)
                                         )),
                                         LibrarySearchDestination.BATTLEFIELD),
+                                        "Search your library for a basic land card?"),
                                 ThenEffectRecipient.TARGET_CONTROLLER)
                 ),
                 "{T}, Sacrifice Ghost Quarter: Destroy target land. Its controller may search their library for a basic land card, put it onto the battlefield, then shuffle.",

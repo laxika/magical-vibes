@@ -37,6 +37,7 @@ class GeomancersGambitTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Forest");
+        acceptSearch(player2);
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
@@ -57,6 +58,7 @@ class GeomancersGambitTest extends BaseCardTest {
         castGambit(target);
 
         harness.passBothPriorities();
+        acceptSearch(player2);
         chooseLibraryCard(player2, -1);
 
         harness.assertInGraveyard(player2, "Forest");
@@ -87,6 +89,12 @@ class GeomancersGambitTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
+    private void acceptSearch(Player player) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player.getId());
+        harness.handleMayAbilityChosen(player, true);
+    }
+
     private void chooseLibraryCard(Player player, int index) {
         harness.getGameService().handleInteractionAnswer(
                 gd, player, new InteractionAnswer.LibraryCardChosen(index));
@@ -107,6 +115,7 @@ class GeomancersGambitTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertInGraveyard(player2, "Forest");
+        acceptSearch(player2);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player2.getId());
@@ -121,7 +130,7 @@ class GeomancersGambitTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can fail to find and still draws a card")
+    @DisplayName("Is asked to search even without a basic land in the library and still draws a card")
     void canFailToFindAndStillDraws() {
         harness.addToBattlefield(player2, new Forest());
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
@@ -131,8 +140,10 @@ class GeomancersGambitTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Forest");
         harness.castSorcery(player1, 0, targetId);
         harness.passBothPriorities();
+        acceptSearch(player2);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
@@ -171,6 +182,7 @@ class GeomancersGambitTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Island");
         harness.assertNotOnBattlefield(player2, "Plains");
         harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gameLogContains("Library is shuffled")).isFalse();
     }
 
     @Test
@@ -181,6 +193,7 @@ class GeomancersGambitTest extends BaseCardTest {
         castGambit(target);
 
         harness.passBothPriorities();
+        acceptSearch(player1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().playerId()).isEqualTo(player1.getId());
         chooseLibraryCard(player1, 0);
@@ -200,6 +213,7 @@ class GeomancersGambitTest extends BaseCardTest {
         castGambit(target);
 
         harness.passBothPriorities();
+        acceptSearch(player2);
         chooseLibraryCard(player2, 0);
 
         harness.assertOnBattlefield(player2, "Darksteel Citadel");
@@ -218,6 +232,7 @@ class GeomancersGambitTest extends BaseCardTest {
         castGambit(target);
 
         harness.passBothPriorities();
+        acceptSearch(player2);
 
         harness.assertInGraveyard(player2, "Forest");
         harness.assertNotOnBattlefield(player2, "Darksteel Citadel");

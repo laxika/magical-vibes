@@ -50,6 +50,8 @@ import java.util.UUID;
  * reveal-only search.
  * {@code remainingEachPlayerLandToBattlefieldSearches} is the APNAP remainder of an opponent land
  * search flow (Hired Giant).
+ * {@code subtypeToBattlefieldPicks} is the remainder of one search for a card of each listed subtype
+ * whose found cards enter the battlefield together (Gaea's Balance).
  */
 public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
                                     List<UUID> remainingEachPlayerBasicLandSearches,
@@ -68,7 +70,8 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                     BasicLandSearchQueue basicLandSearchQueue,
                                     GrimReminderSearch grimReminderSearch,
                                     List<UUID> remainingEachPlayerLandToBattlefieldSearches,
-                                    SelectedCardFollowUp selectedCardFollowUp) {
+                                    SelectedCardFollowUp selectedCardFollowUp,
+                                    SubtypeToBattlefieldPickQueue subtypeToBattlefieldPicks) {
 
     public record SelectedCardFollowUp(CardPredicate predicate, CardEffect effect,
                                        boolean useSelectedCardManaValue,
@@ -252,15 +255,58 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     /**
+     * The picks still owed by a single "search your library for a card of each listed subtype and put
+     * them onto the battlefield" search (Gaea's Balance). Each entry of {@code remainingSubtypes} is one
+     * pick, offered in order, among the cards that have that subtype and (when non-null)
+     * {@code requiredType}. {@code searchableCardIds} fixes the library cards the search can find when
+     * it began. The {@code selectedCards} stay in the library until the last pick, then all of them
+     * enter the battlefield at the same time and the library is shuffled once.
+     */
+    public record SubtypeToBattlefieldPickQueue(List<CardSubtype> remainingSubtypes, CardType requiredType,
+                                                LibrarySearchDestination destination,
+                                                java.util.Set<UUID> searchableCardIds,
+                                                List<Card> selectedCards) {
+
+        public SubtypeToBattlefieldPickQueue {
+            remainingSubtypes = List.copyOf(remainingSubtypes);
+            searchableCardIds = java.util.Set.copyOf(searchableCardIds);
+            selectedCards = List.copyOf(selectedCards);
+        }
+
+        public SubtypeToBattlefieldPickQueue withRemainingSubtypes(List<CardSubtype> remaining) {
+            return new SubtypeToBattlefieldPickQueue(remaining, requiredType, destination,
+                    searchableCardIds, selectedCards);
+        }
+
+        public SubtypeToBattlefieldPickQueue withSelectedCard(Card card) {
+            var selected = new java.util.ArrayList<>(selectedCards);
+            selected.add(card);
+            return new SubtypeToBattlefieldPickQueue(remainingSubtypes, requiredType, destination,
+                    searchableCardIds, selected);
+        }
+    }
+
+    /**
      * A "for each of these permanents, you may search your library for a card with the same name and
      * put it onto the battlefield" queue: the {@code names} still to be searched for, whether only
      * creature cards qualify ({@code creatureOnly}, Doubling Chant), whether each search is optional,
-     * and where the found card goes.
+     * and where the found card goes. A {@code simultaneous} queue is one search whose found cards
+     * enter together (Clarion Ultimatum, Doubling Chant, Dichotomancy): {@code searchableCardIds} is
+     * null until that search begins, then fixes the library cards it can find.
      */
     public record SameNamePickQueue(List<String> names, boolean creatureOnly,
                                     LibrarySearchDestination destination,
                                     UUID libraryOwnerId, UUID battlefieldControllerId,
-                                    boolean optional, boolean simultaneous, List<Card> selectedCards) {
+                                    boolean optional, boolean simultaneous, List<Card> selectedCards,
+                                    java.util.Set<UUID> searchableCardIds) {
+
+        public SameNamePickQueue(List<String> names, boolean creatureOnly,
+                                 LibrarySearchDestination destination, UUID libraryOwnerId,
+                                 UUID battlefieldControllerId, boolean optional, boolean simultaneous,
+                                 List<Card> selectedCards) {
+            this(names, creatureOnly, destination, libraryOwnerId, battlefieldControllerId,
+                    optional, simultaneous, selectedCards, null);
+        }
 
         public SameNamePickQueue(List<String> names, boolean creatureOnly,
                                  LibrarySearchDestination destination, UUID libraryOwnerId,
@@ -277,18 +323,25 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
         public SameNamePickQueue {
             names = List.copyOf(names);
             selectedCards = List.copyOf(selectedCards);
+            searchableCardIds = searchableCardIds == null ? null : java.util.Set.copyOf(searchableCardIds);
         }
 
         public SameNamePickQueue withNames(List<String> remaining) {
             return new SameNamePickQueue(remaining, creatureOnly, destination,
-                    libraryOwnerId, battlefieldControllerId, optional, simultaneous, selectedCards);
+                    libraryOwnerId, battlefieldControllerId, optional, simultaneous, selectedCards,
+                    searchableCardIds);
+        }
+
+        public SameNamePickQueue withSearchableCardIds(java.util.Set<UUID> cardIds) {
+            return new SameNamePickQueue(names, creatureOnly, destination,
+                    libraryOwnerId, battlefieldControllerId, optional, simultaneous, selectedCards, cardIds);
         }
 
         public SameNamePickQueue withSelectedCard(Card card) {
             var selected = new java.util.ArrayList<>(selectedCards);
             selected.add(card);
             return new SameNamePickQueue(names, creatureOnly, destination, libraryOwnerId,
-                    battlefieldControllerId, optional, simultaneous, selected);
+                    battlefieldControllerId, optional, simultaneous, selected, searchableCardIds);
         }
     }
 
@@ -437,6 +490,34 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                 ? null
                 : List.copyOf(remainingInstantManaValueToHandPicks);
         remainingEachPlayerLandToBattlefieldSearches = List.copyOf(remainingEachPlayerLandToBattlefieldSearches);
+    }
+
+    /** Follow-up without a subtype-to-battlefield pick queue. */
+    public LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
+                                 List<UUID> remainingEachPlayerBasicLandSearches,
+                                 boolean eachPlayerSearchTapped,
+                                 PendingOpponentExileChoice opponentExileChoice,
+                                 UUID imprintSourcePermanentId,
+                                 List<UUID> remainingEachPlayerToHandSearches,
+                                 int eachPlayerToHandCount,
+                                 boolean eachPlayerToHandCreatureOnly,
+                                 List<UUID> remainingEachPlayerCreatureToBattlefieldSearches,
+                                 List<UUID> remainingTargetPlayerTopSearches,
+                                 SecondBoundedPick secondBoundedPick,
+                                 SameNamePickQueue remainingSameNamePicks,
+                                 List<ToHandPick> remainingToHandPicks,
+                                 List<Integer> remainingInstantManaValueToHandPicks,
+                                 BasicLandSearchQueue basicLandSearchQueue,
+                                 GrimReminderSearch grimReminderSearch,
+                                 List<UUID> remainingEachPlayerLandToBattlefieldSearches,
+                                 SelectedCardFollowUp selectedCardFollowUp) {
+        this(basicLandToHand, cardToGraveyard, remainingEachPlayerBasicLandSearches,
+                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
+                remainingEachPlayerToHandSearches, eachPlayerToHandCount, eachPlayerToHandCreatureOnly,
+                remainingEachPlayerCreatureToBattlefieldSearches, remainingTargetPlayerTopSearches,
+                secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
+                remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch,
+                remainingEachPlayerLandToBattlefieldSearches, selectedCardFollowUp, null);
     }
 
     public LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
@@ -758,6 +839,17 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     /**
+     * One search for a card of each listed subtype (and of {@code requiredType} when non-null) whose
+     * found cards enter the battlefield together (Gaea's Balance), limited to {@code searchableCardIds}.
+     */
+    public static LibrarySearchFollowUp subtypeToBattlefieldPicks(List<CardSubtype> subtypes, CardType requiredType,
+                                                                  LibrarySearchDestination destination,
+                                                                  java.util.Set<UUID> searchableCardIds) {
+        return NONE.withSubtypeToBattlefieldPicks(new SubtypeToBattlefieldPickQueue(
+                subtypes, requiredType, destination, searchableCardIds, List.of()));
+    }
+
+    /**
      * The queue of exact mana values still to search for, one instant card per value to hand
      * (Firemind's Foresight). {@code null} on the follow-up means this mechanic is absent;
      * an empty list means every value has already been searched (shuffle once).
@@ -883,6 +975,17 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                 eachPlayerToHandCount, eachPlayerToHandCreatureOnly, remainingEachPlayerCreatureToBattlefieldSearches,
                 secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
                 remainingInstantManaValueToHandPicks, queue, grimReminderSearch);
+    }
+
+    /** The same follow-up with the subtype-to-battlefield pick queue replaced. */
+    public LibrarySearchFollowUp withSubtypeToBattlefieldPicks(SubtypeToBattlefieldPickQueue queue) {
+        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, remainingEachPlayerBasicLandSearches,
+                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId,
+                remainingEachPlayerToHandSearches, eachPlayerToHandCount, eachPlayerToHandCreatureOnly,
+                remainingEachPlayerCreatureToBattlefieldSearches, remainingTargetPlayerTopSearches,
+                secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
+                remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch,
+                remainingEachPlayerLandToBattlefieldSearches, selectedCardFollowUp, queue);
     }
 
     /** The same follow-up with the consumed basic-land-to-hand pick cleared. */

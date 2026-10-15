@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
+import com.github.laxika.magicalvibes.cards.o.OppositionAgent;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.Taiga;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GaeasBalance.class, Forest.class, GrizzlyBears.class, Island.class, Mountain.class,
-        Plains.class, Swamp.class, Taiga.class, ObNixilisUnshackled.class})
+        Plains.class, Swamp.class, Taiga.class, ObNixilisUnshackled.class, OppositionAgent.class})
 class GaeasBalanceTest extends BaseCardTest {
 
     @Test
@@ -210,6 +211,34 @@ class GaeasBalanceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Under an opposing Opposition Agent the Agent's controller picks and the found lands are exiled")
+    void oppositionAgentExilesFoundLands() {
+        List<UUID> sacrificeIds = addLandsToBattlefield(List.of(
+                new Plains(), new Island(), new Swamp(), new Mountain(), new Forest()));
+        harness.addToBattlefield(player2, new OppositionAgent());
+        Card plains = new Plains();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(plains, forest));
+        harness.setHand(player1, List.of(new GaeasBalance()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorceryWithSacrifices(player1, 0, null, sacrificeIds);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(plains);
+        assertThat(search.decidingPlayerId()).isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(plains, forest);
+        assertThat(gd.exilePlayPermissions.get(plains.getId())).isEqualTo(player2.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     @Test

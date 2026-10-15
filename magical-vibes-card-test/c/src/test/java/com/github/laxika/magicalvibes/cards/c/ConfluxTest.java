@@ -131,7 +131,7 @@ class ConfluxTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Empty library resolves without a search interaction")
+    @DisplayName("Empty library resolves without a search interaction and still shuffles")
     void emptyLibrary() {
         setupAndCast();
         harness.setLibrary(player1, List.of());
@@ -140,7 +140,21 @@ class ConfluxTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(e -> e.contains("it is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(e -> e.contains("library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Searching an empty library is still a search and triggers Ob Nixilis once")
+    void emptyLibrarySearchTriggersOnce() {
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(harness.getGameData().getLife(player1.getId())).isEqualTo(10);
     }
 
     @Test

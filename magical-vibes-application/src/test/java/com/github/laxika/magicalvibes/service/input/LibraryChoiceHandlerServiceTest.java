@@ -388,6 +388,56 @@ class LibraryChoiceHandlerServiceTest {
     }
 
     @Test
+    @DisplayName("A subtype-to-battlefield pick leaves the chosen card in the library while picks remain")
+    void subtypeToBattlefieldPickDefersEntryWhilePicksRemain() {
+        Card plains = createBasicLand("Plains");
+        gd.playerDecks.get(player1Id).add(plains);
+        var librarySearchSupport = (com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport)
+                org.springframework.test.util.ReflectionTestUtils.getField(service, "librarySearchSupport");
+        when(librarySearchSupport.startNextSubtypeToBattlefieldPick(eq(gd), eq(player1Id), any())).thenReturn(true);
+        beginSubtypeToBattlefieldPick(plains, List.of());
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(librarySearchSupport).startNextSubtypeToBattlefieldPick(eq(gd), eq(player1Id),
+                argThat(followUp -> followUp.subtypeToBattlefieldPicks().selectedCards().equals(List.of(plains))));
+        verifyNoInteractions(battlefieldEntryBatchSupport);
+        assertThat(gd.playerDecks.get(player1Id)).containsExactly(plains);
+    }
+
+    @Test
+    @DisplayName("The last subtype-to-battlefield pick puts every chosen card onto the battlefield together")
+    void lastSubtypeToBattlefieldPickEntersAllSelectedCardsTogether() {
+        Card plains = createBasicLand("Plains");
+        Card forest = createBasicLand("Forest");
+        gd.playerDecks.get(player1Id).addAll(List.of(plains, forest));
+        beginSubtypeToBattlefieldPick(forest, List.of(plains));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(battlefieldEntryBatchSupport).begin(eq(gd),
+                argThat((List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> entering) ->
+                        entering.stream().map(com.github.laxika.magicalvibes.model.BattlefieldEntryCard::card)
+                                .toList().equals(List.of(plains, forest))
+                                && entering.stream().noneMatch(
+                                        com.github.laxika.magicalvibes.model.BattlefieldEntryCard::tapped)),
+                eq(List.of(new com.github.laxika.magicalvibes.model.BattlefieldEntryLibraryRemainder(
+                        player1Id, List.of(), true))));
+    }
+
+    private void beginSubtypeToBattlefieldPick(Card offered, List<Card> alreadySelected) {
+        var queue = new LibrarySearchFollowUp.SubtypeToBattlefieldPickQueue(List.of(), CardType.LAND,
+                LibrarySearchDestination.BATTLEFIELD, Set.of(offered.getId()), alreadySelected);
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(offered))
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.BATTLEFIELD)
+                .shuffleAfterSelection(false)
+                .followUp(LibrarySearchFollowUp.NONE.withSubtypeToBattlefieldPicks(queue))
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose a land", true));
+    }
+
+    @Test
     @DisplayName("Adds a persistent controller end-step return trigger to the found creature")
     void addsPersistentControllerEndStepReturnTrigger() {
         Card creature = createCard("Creature", CardType.CREATURE);

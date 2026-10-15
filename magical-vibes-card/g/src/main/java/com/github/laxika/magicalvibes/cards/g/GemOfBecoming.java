@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEachSubtypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForOneCardOfEachSubtypeEffect;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class GemOfBecoming extends Card {
                 true,
                 "{3}",
                 List.of(new SacrificeSelfCost(),
-                        new SearchLibraryForOneCardOfEachSubtypeToHandEffect(
+                        new SearchLibraryForOneCardOfEachSubtypeEffect(
                                 List.of(CardSubtype.ISLAND, CardSubtype.SWAMP, CardSubtype.MOUNTAIN))),
                 "{3}, {T}, Sacrifice Gem of Becoming: Search your library for an Island card, a Swamp "
                         + "card, and a Mountain card. Reveal those cards, put them into your hand, then shuffle."));

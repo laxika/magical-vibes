@@ -283,10 +283,15 @@ public class LibraryChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        boolean oppositionAgentDecision = librarySearch.decisionPlayerId() != null
+                && !librarySearch.decisionPlayerId().equals(playerId);
+
         if (followUp.remainingSameNamePicks() != null && followUp.remainingSameNamePicks().simultaneous()) {
             var queue = followUp.remainingSameNamePicks();
-            if (cardIndex >= 0) {
-                if (cardIndex >= searchCards.size()) throw new IllegalStateException("Invalid card index: " + cardIndex);
+            if (cardIndex >= 0 && oppositionAgentDecision) {
+                exileCardFoundUnderOppositionAgent(gameData, player, activeSearch, searchCards.get(cardIndex),
+                        gameData.playerDecks.get(deckOwnerId), deckOwnerId);
+            } else if (cardIndex >= 0) {
                 queue = queue.withSelectedCard(searchCards.get(cardIndex));
             }
             var next = followUp.withRemainingSameNamePicks(queue);
@@ -297,6 +302,29 @@ public class LibraryChoiceHandlerService {
             battlefieldEntryBatchSupport.begin(gameData, queue.selectedCards().stream()
                             .map(selected -> new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
                                     queuedBattlefieldControllerId, deckOwnerId, selected, Zone.LIBRARY, null).withTapped(enterTapped))
+                            .toList(),
+                    List.of(new com.github.laxika.magicalvibes.model.BattlefieldEntryLibraryRemainder(
+                            deckOwnerId, List.of(), true)));
+            finishSearchAndResume(gameData);
+            return;
+        }
+
+        if (followUp.subtypeToBattlefieldPicks() != null) {
+            var queue = followUp.subtypeToBattlefieldPicks();
+            if (cardIndex >= 0 && oppositionAgentDecision) {
+                exileCardFoundUnderOppositionAgent(gameData, player, activeSearch, searchCards.get(cardIndex),
+                        gameData.playerDecks.get(deckOwnerId), deckOwnerId);
+            } else if (cardIndex >= 0) {
+                queue = queue.withSelectedCard(searchCards.get(cardIndex));
+            }
+            if (librarySearchSupport.startNextSubtypeToBattlefieldPick(gameData, playerId,
+                    followUp.withSubtypeToBattlefieldPicks(queue))) {
+                return;
+            }
+            boolean enterTapped = queue.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
+            battlefieldEntryBatchSupport.begin(gameData, queue.selectedCards().stream()
+                            .map(selected -> new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                                    playerId, deckOwnerId, selected, Zone.LIBRARY, null).withTapped(enterTapped))
                             .toList(),
                     List.of(new com.github.laxika.magicalvibes.model.BattlefieldEntryLibraryRemainder(
                             deckOwnerId, List.of(), true)));
@@ -1981,20 +2009,7 @@ public class LibraryChoiceHandlerService {
                                              Card chosenCard, List<Card> sourceZone, List<Card> deck,
                                              UUID deckOwnerId) {
         LibrarySearchParams librarySearch = activeSearch.params();
-        boolean removed = sourceZone.removeIf(card -> card.getId().equals(chosenCard.getId()));
-        if (!removed) {
-            throw new IllegalStateException("Chosen card not found in library");
-        }
-
-        UUID agentControllerId = activeSearch.decidingPlayerId();
-        if (sourceZone == gameData.playerGraveyards.get(deckOwnerId)) {
-            graveyardService.notifyCardsLeftGraveyard(gameData, deckOwnerId, chosenCard);
-        }
-        exileService.exileCard(gameData, deckOwnerId, chosenCard);
-        gameData.exilePlayPermissions.put(chosenCard.getId(), agentControllerId);
-        gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " exiles ", chosenCard, " and may play it for as long as it remains exiled."));
+        exileCardFoundUnderOppositionAgent(gameData, player, activeSearch, chosenCard, sourceZone, deckOwnerId);
 
         List<String> excludedCardNames = new ArrayList<>(librarySearch.excludedCardNames());
         if (librarySearch.requireDifferentNames()) {
@@ -2036,6 +2051,29 @@ public class LibraryChoiceHandlerService {
         if (librarySearchSupport.startNextInstantManaValueToHandPick(gameData, playerId, followUp)) return;
         if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
         finishSearchAndResume(gameData);
+    }
+
+    /**
+     * Opposition Agent: the searching opponent exiles the card found, and the Agent's controller
+     * ({@code player}, who made the choice) may play it for as long as it remains exiled.
+     */
+    private void exileCardFoundUnderOppositionAgent(GameData gameData, Player player,
+                                                    PendingInteraction.LibrarySearch activeSearch,
+                                                    Card chosenCard, List<Card> sourceZone, UUID deckOwnerId) {
+        boolean removed = sourceZone.removeIf(card -> card.getId().equals(chosenCard.getId()));
+        if (!removed) {
+            throw new IllegalStateException("Chosen card not found in library");
+        }
+
+        UUID agentControllerId = activeSearch.decidingPlayerId();
+        if (sourceZone == gameData.playerGraveyards.get(deckOwnerId)) {
+            graveyardService.notifyCardsLeftGraveyard(gameData, deckOwnerId, chosenCard);
+        }
+        exileService.exileCard(gameData, deckOwnerId, chosenCard);
+        gameData.exilePlayPermissions.put(chosenCard.getId(), agentControllerId);
+        gameData.exilePlayAnyManaTypeWhileExiled.add(chosenCard.getId());
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " exiles ", chosenCard, " and may play it for as long as it remains exiled."));
     }
 
     private List<Card> findOppositionAgentSearchMatches(GameData gameData, List<Card> deck,
