@@ -47,6 +47,7 @@ public class ConjureRandomCardFromSpellbookToExileMayPlayUntilNextTurnEffectHand
 
         CardPrinting printing = cardCatalog.findByCollectorNumber(set, reference.collectorNumber());
         Card conjuredCard = printing.createCard();
+        conjuredCard.setConjured(true);
         conjuredCard.setOwnerId(entry.getControllerId());
         conjuredCard.freeze();
         exileService.exileCard(gameData, entry.getControllerId(), conjuredCard);

@@ -50,8 +50,6 @@ public class ConjureDuplicateOfTargetCreatureCardFromOpponentGraveyardIntoHandEf
 
         Card duplicate = targetCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
-        duplicate.setToken(true);
-        duplicate.setTokenCard(true);
         duplicate.addEffect(EffectSlot.STATIC, new PerpetualAnyManaTypeToCastSelfEffect());
         duplicate.freeze();
         gameData.addCardToHand(entry.getControllerId(), duplicate);

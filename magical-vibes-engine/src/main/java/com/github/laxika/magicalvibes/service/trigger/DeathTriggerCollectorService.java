@@ -985,6 +985,9 @@ public class DeathTriggerCollectorService {
         if (triggerEffect instanceof DyingCreatureCountersAwareEffect aware) {
             triggerEffect = aware.boundToDyingCreatureCounters(snapshotConcreteCounters(dyingPermanent));
         }
+        if (triggerEffect instanceof DyingCreatureCardAwareEffect aware) {
+            triggerEffect = aware.boundToDyingCard(dyingPermanent.getOriginalCard().getId());
+        }
 
         if (triggerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || triggerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)

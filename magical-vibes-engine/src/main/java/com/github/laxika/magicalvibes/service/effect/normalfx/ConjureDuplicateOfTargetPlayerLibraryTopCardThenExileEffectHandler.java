@@ -45,7 +45,7 @@ public class ConjureDuplicateOfTargetPlayerLibraryTopCardThenExileEffectHandler
         }
 
         Card topCard = library.getFirst();
-        Card duplicate = topCard.createCardCopy();
+        Card duplicate = topCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
         duplicate.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());

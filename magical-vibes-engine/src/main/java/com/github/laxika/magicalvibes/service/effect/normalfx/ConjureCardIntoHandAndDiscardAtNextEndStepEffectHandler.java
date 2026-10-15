@@ -37,6 +37,7 @@ public class ConjureCardIntoHandAndDiscardAtNextEndStepEffectHandler implements 
         }
 
         Card conjured = cardCatalog.findByCollectorNumber(set, e.collectorNumber()).createCard();
+        conjured.setConjured(true);
         gameData.addCardToHand(entry.getControllerId(), conjured);
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(entry.getControllerId()) + " conjures ", conjured,

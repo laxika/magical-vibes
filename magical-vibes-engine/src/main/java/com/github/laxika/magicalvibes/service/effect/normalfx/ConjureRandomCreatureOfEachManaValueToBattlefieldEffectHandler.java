@@ -67,6 +67,7 @@ public class ConjureRandomCreatureOfEachManaValueToBattlefieldEffectHandler
                     continue;
                 }
                 Card card = printing.createCard();
+                card.setConjured(true);
                 if (card.hasType(CardType.CREATURE) && card.getManaValue() == manaValue) {
                     matchingNames.add(card.getName());
                 }

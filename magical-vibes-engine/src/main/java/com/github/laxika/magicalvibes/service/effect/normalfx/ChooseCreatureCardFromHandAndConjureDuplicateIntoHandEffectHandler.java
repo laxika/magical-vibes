@@ -33,7 +33,7 @@ public class ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var choiceEffect = (ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffect) effect;
         if (choiceEffect.chosenCard() != null) {
-            Card duplicate = choiceEffect.chosenCard().createCardCopy();
+            Card duplicate = choiceEffect.chosenCard().createConjuredCopy();
             duplicate.setOwnerId(entry.getControllerId());
             duplicate.freeze();
             gameData.addCardToHand(entry.getControllerId(), duplicate);

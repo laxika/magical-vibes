@@ -37,10 +37,8 @@ public class ConjureDuplicateOfTriggeringSpellIntoHandEffectHandler implements N
             return;
         }
 
-        Card duplicate = triggeringSpell.createRuntimeCopyWithNewId();
+        Card duplicate = triggeringSpell.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
-        duplicate.setToken(true);
-        duplicate.setTokenCard(true);
         duplicate.freeze();
         gameData.addCardToHand(entry.getControllerId(), duplicate);
 

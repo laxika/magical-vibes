@@ -34,7 +34,7 @@ class NashiIllusionGadgeteerTest extends BaseCardTest {
 
         Card duplicate = gd.playerHands.get(player1.getId()).getFirst();
         assertThat(duplicate.getName()).isEqualTo("Grizzly Bears");
-        assertThat(duplicate.isTokenCard()).isTrue();
+        assertThat(duplicate.isConjured()).isTrue();
         assertThat(duplicate.hasKeyword(Keyword.FLASH)).isTrue();
         assertThat(duplicate.getId()).isNotEqualTo(creature.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature, land);
@@ -50,7 +50,7 @@ class NashiIllusionGadgeteerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         Card duplicate = gd.playerHands.get(player1.getId()).getFirst();
         assertThat(duplicate.getName()).isEqualTo("Forest");
-        assertThat(duplicate.isTokenCard()).isTrue();
+        assertThat(duplicate.isConjured()).isTrue();
         assertThat(duplicate.hasKeyword(Keyword.FLASH)).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
     }

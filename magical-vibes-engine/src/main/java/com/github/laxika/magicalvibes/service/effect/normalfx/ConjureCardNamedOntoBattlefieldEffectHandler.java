@@ -42,6 +42,7 @@ public class ConjureCardNamedOntoBattlefieldEffectHandler implements NormalEffec
         }
 
         Card card = cardCatalog.findByCollectorNumber(set, conjure.collectorNumber()).createCard();
+        card.setConjured(true);
         Permanent permanent = new Permanent(card);
         battlefieldEntryService.putPermanentOntoBattlefield(
                 gameData, entry.getControllerId(), permanent, conjure.enterTappedTypes());

@@ -58,7 +58,7 @@ class ScalesoulGnomeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         Card duplicate = gd.playerHands.get(player1.getId()).getFirst();
         assertThat(duplicate.getId()).isNotEqualTo(spell.getId());
-        assertThat(duplicate.isTokenCard()).isTrue();
+        assertThat(duplicate.isConjured()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == spell);
     }
@@ -78,7 +78,7 @@ class ScalesoulGnomeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         Card duplicate = gd.playerHands.get(player1.getId()).getFirst();
         assertThat(duplicate.getId()).isNotEqualTo(land.getId());
-        assertThat(duplicate.isTokenCard()).isTrue();
+        assertThat(duplicate.isConjured()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == land);
     }

@@ -40,7 +40,7 @@ public class ConjureDuplicateOfTargetCreatureIntoHandEffectHandler implements No
                 continue;
             }
 
-            Card copy = target.getCard().createCardCopy();
+            Card copy = target.getCard().createConjuredCopy();
             copy.setOwnerId(entry.getControllerId());
             copy.freeze();
             gameData.addCardToHand(entry.getControllerId(), copy);

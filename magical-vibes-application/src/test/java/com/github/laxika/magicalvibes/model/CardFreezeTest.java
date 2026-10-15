@@ -84,6 +84,26 @@ class CardFreezeTest {
         assertThatThrownBy(() -> original.setName("X")).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("createConjuredCopy makes a fresh-identity conjured card that is never a token")
+    void conjuredCopyIsAConjuredNontokenCard() {
+        Card original = new Card();
+        original.setName("Token Bear");
+        original.setToken(true);
+        original.setTokenCard(true);
+        original.freeze();
+
+        Card copy = original.createConjuredCopy();
+
+        assertThat(copy.getId()).isNotEqualTo(original.getId());
+        assertThat(copy.getName()).isEqualTo("Token Bear");
+        assertThat(copy.isConjured()).isTrue();
+        assertThat(copy.isToken()).isFalse();
+        assertThat(copy.isTokenCard()).isFalse();
+        assertThat(original.isConjured()).isFalse();
+        assertThat(original.isToken()).isTrue();
+    }
+
     /**
      * Tripwire: the copy constructor {@code Card(Card)} copies every field by hand. When a field
      * is added to Card, this count changes and the test fails — update the copy constructor AND
@@ -101,6 +121,6 @@ class CardFreezeTest {
         assertThat(instanceFields)
                 .as("Card's instance field count changed — copy the new field in Card(Card source) "
                         + "and update this expected count")
-                .isEqualTo(77);
+                .isEqualTo(78);
     }
 }

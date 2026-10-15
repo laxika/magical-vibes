@@ -24,11 +24,13 @@ public class GyoxBrutalCarnivora extends Card {
                 .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                         new PutCounterOnTargetPermanentEffect(CounterType.OIL));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        TriggeringPermanentConditionalEffect deathTrigger = new TriggeringPermanentConditionalEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new PermanentHasCountersPredicate(CounterType.OIL))),
-                new ConjureDuplicatesOfDyingCreatureIntoLibraryEffect()));
+                new ConjureDuplicatesOfDyingCreatureIntoLibraryEffect());
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, deathTrigger);
+        addEffect(EffectSlot.ON_DEATH, deathTrigger);
     }
 }

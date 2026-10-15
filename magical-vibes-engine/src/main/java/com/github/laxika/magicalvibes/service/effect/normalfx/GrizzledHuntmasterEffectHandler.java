@@ -106,7 +106,7 @@ public class GrizzledHuntmasterEffectHandler implements NormalEffectHandlerBean 
 
     private void conjureCopies(GameData gameData, UUID controllerId, Card sourceCard, int count) {
         for (int i = 0; i < count; i++) {
-            Card copy = sourceCard.createCardCopy();
+            Card copy = sourceCard.createConjuredCopy();
             copy.setOwnerId(controllerId);
             copy.freeze();
             gameData.addCardToHand(controllerId, copy);

@@ -59,7 +59,9 @@ public class ConjureCardToHandEffectHandler implements NormalEffectHandlerBean {
         if (set == null) {
             throw new IllegalArgumentException("Unknown card set: " + setCode);
         }
-        return cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
+        Card conjured = cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
+        conjured.setConjured(true);
+        return conjured;
     }
 
     private Card findCard(String cardName) {
@@ -70,6 +72,7 @@ public class ConjureCardToHandEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 Card card = printing.createCard();
+                card.setConjured(true);
                 if (cardName.equals(card.getName())) {
                     return card;
                 }

@@ -197,6 +197,11 @@ public class Card {
      * remain in zones other than the battlefield.
      */
     private boolean tokenCard;
+    /**
+     * A card created by conjure (Alchemy). Conjured cards are not tokens: they count as nontoken,
+     * persist in every zone like any other card, and are owned by the player who conjured them.
+     */
+    private boolean conjured;
     /** "This spell can't be copied." Honored by the copy effect handlers. */
     private boolean cantBeCopied;
     /**
@@ -393,7 +398,7 @@ public class Card {
         this(source, source.id);
     }
 
-    /** Creates a mutable copy with a fresh card identity for conjured/duplicated cards. */
+    /** Creates a mutable copy with a fresh card identity, for snapshots of a card's last known state. */
     public Card createCardCopy() {
         return new Card(this, UUID.randomUUID());
     }
@@ -430,6 +435,7 @@ public class Card {
         this.token = source.token;
         this.bedtimeStory = source.bedtimeStory;
         this.tokenCard = source.tokenCard;
+        this.conjured = source.conjured;
         this.cantBeCopied = source.cantBeCopied;
         this.sacrificeAtEndStep = source.sacrificeAtEndStep;
         this.requiresCreatureMana = source.requiresCreatureMana;
@@ -492,14 +498,21 @@ public class Card {
         return new Card(this);
     }
 
-    /** Creates an unfrozen copy with a fresh identity, for a newly conjured card. */
+    /** Creates an unfrozen copy with a fresh identity, for snapshots that must not alias the original. */
     public Card createRuntimeCopyWithNewId() {
         return new Card(this, UUID.randomUUID());
     }
 
-    /** Creates a new-identity copy for conjured duplicates. */
+    /**
+     * Creates a mutable, fresh-identity duplicate for a conjure effect. The duplicate is a conjured
+     * card, never a token, even when this card is a token or a token card.
+     */
     public Card createConjuredCopy() {
-        return new Card(this, UUID.randomUUID());
+        Card copy = new Card(this, UUID.randomUUID());
+        copy.token = false;
+        copy.tokenCard = false;
+        copy.conjured = true;
+        return copy;
     }
 
     /**
@@ -705,6 +718,7 @@ public class Card {
     public void setSplitHalves(List<OracleData> splitHalves) { assertMutable(); this.splitHalves = List.copyOf(splitHalves); }
     public void setBedtimeStory(boolean bedtimeStory) { assertMutable(); this.bedtimeStory = bedtimeStory; }
     public void setTokenCard(boolean tokenCard) { assertMutable(); this.tokenCard = tokenCard; }
+    public void setConjured(boolean conjured) { assertMutable(); this.conjured = conjured; }
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }
     public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
     public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }

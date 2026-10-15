@@ -64,6 +64,7 @@ public class ConjureCardToOpponentBattlefieldEffectHandler implements NormalEffe
         }
         CardPrinting printing = cardCatalog.findByCollectorNumber(set, conjure.collectorNumber());
         Card conjuredCard = printing.createCard();
+        conjuredCard.setConjured(true);
         conjuredCard.setOwnerId(opponentId);
         Permanent permanent = new Permanent(conjuredCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, opponentId, permanent);

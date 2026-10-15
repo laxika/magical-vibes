@@ -32,7 +32,7 @@ class WarzoneDuplicatorTest extends BaseCardTest {
                 .filter(card -> card.getName().equals("Grizzly Bears"))
                 .findFirst()
                 .orElseThrow();
-        assertThat(duplicate.isTokenCard()).isTrue();
+        assertThat(duplicate.isConjured()).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -43,7 +43,7 @@ class WarzoneDuplicatorTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Grizzly Bears")
-                        && permanent.getCard().isToken());
+                        && permanent.getCard().isConjured());
     }
 
     @Test

@@ -40,7 +40,6 @@ public class ConjureDuplicateOfTriggeringPermanentOntoBattlefieldEffectHandler
         if (sourceCard == null || sourceCard.isToken()) return;
 
         Card conjuredCard = sourceCard.createConjuredCopy();
-        conjuredCard.setToken(false);
         conjuredCard.setOwnerId(entry.getControllerId());
 
         Permanent permanent = new Permanent(conjuredCard);

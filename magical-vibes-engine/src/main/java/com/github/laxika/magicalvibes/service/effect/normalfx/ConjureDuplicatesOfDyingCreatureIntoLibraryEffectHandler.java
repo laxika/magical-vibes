@@ -47,10 +47,8 @@ public class ConjureDuplicatesOfDyingCreatureIntoLibraryEffectHandler implements
         }
 
         for (int i = 0; i < conjure.oilCounterCount(); i++) {
-            Card duplicate = dyingCard.createCardCopy();
+            Card duplicate = dyingCard.createConjuredCopy();
             duplicate.setOwnerId(entry.getControllerId());
-            duplicate.setToken(true);
-            duplicate.setTokenCard(true);
             duplicate.freeze();
             PerpetualCardPowerToughnessSupport.remember(
                     gameData, duplicate, conjure.oilCounterCount(), conjure.oilCounterCount());

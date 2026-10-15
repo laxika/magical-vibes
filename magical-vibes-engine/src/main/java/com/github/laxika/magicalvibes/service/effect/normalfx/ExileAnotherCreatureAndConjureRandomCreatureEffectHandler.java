@@ -98,6 +98,7 @@ public class ExileAnotherCreatureAndConjureRandomCreatureEffectHandler
             return;
         }
         Card conjuredCard = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).createCard();
+        conjuredCard.setConjured(true);
         Permanent conjuredPermanent = new Permanent(conjuredCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, conjuredPermanent);
         triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);

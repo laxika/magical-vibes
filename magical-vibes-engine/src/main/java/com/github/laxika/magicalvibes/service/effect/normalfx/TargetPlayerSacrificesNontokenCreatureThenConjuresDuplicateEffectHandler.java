@@ -108,7 +108,7 @@ public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHa
     }
 
     private void conjure(GameData gameData, UUID recipientId, Card sourceCard) {
-        Card duplicate = sourceCard.createCardCopy();
+        Card duplicate = sourceCard.createConjuredCopy();
         duplicate.setOwnerId(recipientId);
         duplicate.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());

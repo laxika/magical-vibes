@@ -86,6 +86,7 @@ public class ConjureRandomCardFromSpellbookToBattlefieldEffectHandler
                     continue;
                 }
                 Card card = printing.createCard();
+                card.setConjured(true);
                 if (cardName.equals(card.getName())) {
                     return card;
                 }

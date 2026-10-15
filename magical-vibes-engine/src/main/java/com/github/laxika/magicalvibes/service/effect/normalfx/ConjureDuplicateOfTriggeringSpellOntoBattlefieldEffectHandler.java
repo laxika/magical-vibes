@@ -44,7 +44,6 @@ public class ConjureDuplicateOfTriggeringSpellOntoBattlefieldEffectHandler
         if (triggeringSpell == null || triggeringSpell.isToken()) return;
 
         Card duplicate = triggeringSpell.createConjuredCopy();
-        duplicate.setToken(false);
         duplicate.setOwnerId(entry.getControllerId());
         EnumSet<Keyword> keywords = duplicate.getKeywords().isEmpty()
                 ? EnumSet.noneOf(Keyword.class)

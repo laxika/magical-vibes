@@ -42,7 +42,7 @@ public class ConjureRandomCreatureFromOpponentLibraryEffectHandler implements No
             return;
         }
 
-        Card copy = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).createCardCopy();
+        Card copy = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).createConjuredCopy();
         copy.setOwnerId(entry.getControllerId());
         copy.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(copy.getId());

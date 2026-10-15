@@ -43,6 +43,7 @@ public class ConjureCardsFromSpellbookToHandEffectHandler implements NormalEffec
 
             CardPrinting printing = cardCatalog.findByCollectorNumber(set, reference.collectorNumber());
             Card card = printing.createCard();
+            card.setConjured(true);
             card.setOwnerId(entry.getControllerId());
             card.freeze();
             spellbookCards.add(card);

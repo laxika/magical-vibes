@@ -36,10 +36,8 @@ public class ConjureDuplicateOfTargetSpellIntoHandEffectHandler implements Norma
             return;
         }
 
-        Card duplicate = targetSpell.getCard().createRuntimeCopyWithNewId();
+        Card duplicate = targetSpell.getCard().createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
-        duplicate.setToken(true);
-        duplicate.setTokenCard(true);
         duplicate.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());
         gameData.addCardToHand(entry.getControllerId(), duplicate);

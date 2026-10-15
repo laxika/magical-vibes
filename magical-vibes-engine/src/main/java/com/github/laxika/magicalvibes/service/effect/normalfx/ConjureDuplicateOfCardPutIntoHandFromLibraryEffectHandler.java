@@ -32,7 +32,7 @@ public class ConjureDuplicateOfCardPutIntoHandFromLibraryEffectHandler
             return;
         }
 
-        Card duplicate = triggeringCard.createCardCopy();
+        Card duplicate = triggeringCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
         duplicate.freeze();
         gameData.addCardToHand(entry.getControllerId(), duplicate);

@@ -68,6 +68,7 @@ public class ConjureRandomCreatureWithManaValueEffectHandler implements NormalEf
         }
 
         Card card = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).createCard();
+        card.setConjured(true);
         card.setOwnerId(entry.getControllerId());
         Permanent permanent = new Permanent(card);
         if (typed.temporary()) {

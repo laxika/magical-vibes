@@ -57,7 +57,7 @@ public class EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHa
 
             for (int i = 0; i < conjure.count(); i++) {
                 Card duplicate = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()))
-                        .createCardCopy();
+                        .createConjuredCopy();
                 duplicate.setOwnerId(playerId);
                 duplicate.freeze();
                 gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());

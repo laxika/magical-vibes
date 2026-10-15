@@ -51,6 +51,7 @@ public class ConjureCardsIntoTopOfLibrariesEffectHandler implements NormalEffect
 
             for (int i = 0; i < e.amount(); i++) {
                 Card conjured = printing.createCard();
+                conjured.setConjured(true);
                 conjured.setOwnerId(playerId);
                 conjured.freeze();
                 library.add(0, conjured);

@@ -40,6 +40,7 @@ public class ConjureCardToGraveyardEffectHandler implements NormalEffectHandlerB
 
         CardPrinting printing = cardCatalog.findByCollectorNumber(set, conjure.collectorNumber());
         Card conjuredCard = printing.createCard();
+        conjuredCard.setConjured(true);
         conjuredCard.setOwnerId(entry.getControllerId());
         conjuredCard.freeze();
         graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), conjuredCard);

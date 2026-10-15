@@ -69,7 +69,9 @@ public class ConjureRandomCardFromSpellbookToExileMayCastFreeUntilEndOfTurnEffec
         }
         try {
             CardPrinting printing = cardCatalog.findByCollectorNumber(set, reference.collectorNumber());
-            return printing.createCard();
+            Card conjured = printing.createCard();
+            conjured.setConjured(true);
+            return conjured;
         } catch (IllegalArgumentException ignored) {
             return null;
         }

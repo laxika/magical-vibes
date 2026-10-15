@@ -128,8 +128,7 @@ public class ConjureDarigaazShivanChampionSpellbookEffectHandler implements Norm
         card.setToughness(toughness);
         card.setKeywords(keywords);
         card.setOwnerId(ownerId);
-        card.setToken(false);
-        card.setTokenCard(true);
+        card.setConjured(true);
         card.addEffect(EffectSlot.EXILED_UPKEEP_TRIGGERED,
                 new RemoveEggCounterFromExileAndReturnEffect(card.getId(), false));
         card.freeze();

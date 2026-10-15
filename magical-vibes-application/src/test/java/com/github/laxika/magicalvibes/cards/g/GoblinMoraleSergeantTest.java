@@ -37,7 +37,7 @@ class GoblinMoraleSergeantTest extends BaseCardTest {
         assertThat(updatedLibrary).hasSize(6);
         int duplicateIndex = java.util.stream.IntStream.range(0, updatedLibrary.size())
                 .filter(index -> updatedLibrary.get(index).getName().equals("Grizzly Bears")
-                        && updatedLibrary.get(index).isTokenCard())
+                        && updatedLibrary.get(index).isConjured())
                 .findFirst().orElseThrow();
         assertThat(duplicateIndex).isLessThan(5);
     }
@@ -72,7 +72,7 @@ class GoblinMoraleSergeantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent duplicate = findPermanents(player1, "Grizzly Bears").stream()
-                .filter(permanent -> permanent.getCard().isTokenCard())
+                .filter(permanent -> permanent.getCard().isConjured())
                 .findFirst()
                 .orElseThrow();
         assertThat(gqs.getEffectivePower(gd, duplicate)).isEqualTo(3);

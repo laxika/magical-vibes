@@ -44,6 +44,7 @@ public class ConjureDuplicateOfSourceCardIntoHandEffectHandler implements Normal
         }
 
         Card duplicate = cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
+        duplicate.setConjured(true);
         Set<Keyword> removedKeywords = ((ConjureDuplicateOfSourceCardIntoHandEffect) effect).removedKeywords();
         if (!removedKeywords.isEmpty()) {
             EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);

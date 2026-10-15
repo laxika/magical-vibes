@@ -33,10 +33,8 @@ public class ConjureDuplicateOfReturnedPermanentIntoHandEffectHandler implements
             return;
         }
 
-        Card duplicate = returnedCard.createRuntimeCopyWithNewId();
+        Card duplicate = returnedCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
-        duplicate.setToken(true);
-        duplicate.setTokenCard(true);
         duplicate.addEffect(EffectSlot.STATIC, new PerpetualAnyManaTypeToCastSelfEffect());
         duplicate.freeze();
 

@@ -43,7 +43,7 @@ class JuggernautPeddlerTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(nonland);
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Forest", "Juggernaut");
-        assertThat(gd.playerHands.get(player2.getId())).filteredOn(Card::isTokenCard)
+        assertThat(gd.playerHands.get(player2.getId())).filteredOn(Card::isConjured)
                 .extracting(Card::getName).containsExactly("Juggernaut");
     }
 

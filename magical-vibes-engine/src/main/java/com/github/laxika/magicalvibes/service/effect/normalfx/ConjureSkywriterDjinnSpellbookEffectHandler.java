@@ -306,8 +306,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         card.setColors(List.of(CardColor.BLUE));
         card.setCardText(cardText);
         card.setOwnerId(ownerId);
-        card.setToken(true);
-        card.setTokenCard(true);
+        card.setConjured(true);
         return card;
     }
 

@@ -32,7 +32,7 @@ public class ConjureDuplicateOfCardReturnedFromGraveyardToHandEffectHandler
             return;
         }
 
-        Card copy = returnedCard.createCardCopy();
+        Card copy = returnedCard.createConjuredCopy();
         copy.setOwnerId(entry.getControllerId());
         copy.freeze();
         gameData.addCardToHand(entry.getControllerId(), copy);

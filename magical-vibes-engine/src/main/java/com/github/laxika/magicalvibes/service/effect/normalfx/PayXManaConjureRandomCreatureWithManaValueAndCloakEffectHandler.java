@@ -100,6 +100,7 @@ public class PayXManaConjureRandomCreatureWithManaValueAndCloakEffectHandler
         }
 
         Card card = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).createCard();
+        card.setConjured(true);
         card.setOwnerId(entry.getControllerId());
         Permanent cloaked = new Permanent(card);
         cloaked.setFaceDownAsCloaked();

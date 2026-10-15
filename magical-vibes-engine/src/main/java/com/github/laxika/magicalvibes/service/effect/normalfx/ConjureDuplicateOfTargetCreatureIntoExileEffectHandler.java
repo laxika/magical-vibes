@@ -53,6 +53,7 @@ public class ConjureDuplicateOfTargetCreatureIntoExileEffectHandler implements N
         Card duplicate = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
                 target.getCard(), new CreateTokenCopyOfTargetPermanentEffect());
         duplicate.setToken(false);
+        duplicate.setConjured(true);
         duplicate.setOwnerId(entry.getControllerId());
         duplicate.freeze();
         gameData.addToExile(entry.getControllerId(), duplicate, entry.getSourcePermanentId());

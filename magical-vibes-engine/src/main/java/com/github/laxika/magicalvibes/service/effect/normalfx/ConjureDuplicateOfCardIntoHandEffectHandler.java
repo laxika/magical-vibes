@@ -26,7 +26,7 @@ public class ConjureDuplicateOfCardIntoHandEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Card duplicate = ((ConjureDuplicateOfCardIntoHandEffect) effect).card().createCardCopy();
+        Card duplicate = ((ConjureDuplicateOfCardIntoHandEffect) effect).card().createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
         duplicate.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());

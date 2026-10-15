@@ -65,10 +65,8 @@ public class ReturnCardAndConjureOpponentGraveyardDuplicateEffectHandler
                 continue;
             }
 
-            Card duplicate = sourceCard.createRuntimeCopyWithNewId();
+            Card duplicate = sourceCard.createConjuredCopy();
             duplicate.setOwnerId(controllerId);
-            duplicate.setToken(true);
-            duplicate.setTokenCard(true);
             duplicate.addEffect(EffectSlot.STATIC, new PerpetualAnyManaTypeToCastSelfEffect());
             duplicate.freeze();
             gameData.addCardToHand(controllerId, duplicate);

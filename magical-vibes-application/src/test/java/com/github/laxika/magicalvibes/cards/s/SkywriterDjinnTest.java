@@ -41,7 +41,7 @@ class SkywriterDjinnTest extends BaseCardTest {
 
         assertThat(harness.getGameData().playerHands.get(player1.getId()))
                 .hasSize(1)
-                .allMatch(Card::isTokenCard)
+                .allMatch(Card::isConjured)
                 .extracting(Card::getName)
                 .allMatch(SPELLBOOK::contains);
     }
@@ -60,7 +60,7 @@ class SkywriterDjinnTest extends BaseCardTest {
 
         assertThat(harness.getGameData().playerHands.get(player1.getId()))
                 .hasSize(3)
-                .allMatch(Card::isTokenCard)
+                .allMatch(Card::isConjured)
                 .extracting(Card::getName)
                 .allMatch(SPELLBOOK::contains);
     }

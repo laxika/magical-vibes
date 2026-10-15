@@ -63,7 +63,9 @@ public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandle
         if (set == null) {
             throw new IllegalArgumentException("Unknown card set: " + setCode);
         }
-        return cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
+        Card conjured = cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
+        conjured.setConjured(true);
+        return conjured;
     }
 
     private Card findCard(String cardName) {
@@ -74,6 +76,7 @@ public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandle
                     continue;
                 }
                 Card card = printing.createCard();
+                card.setConjured(true);
                 if (cardName.equals(card.getName())) {
                     return card;
                 }

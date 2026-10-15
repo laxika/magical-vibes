@@ -100,7 +100,7 @@ class BindToSecrecyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Card duplicate = gd.playerHands.get(player1.getId()).stream()
-                .filter(card -> card.getName().equals("Grizzly Bears") && card.isTokenCard())
+                .filter(card -> card.getName().equals("Grizzly Bears") && card.isConjured())
                 .findFirst().orElseThrow();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
 
@@ -156,7 +156,7 @@ class BindToSecrecyTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears") && card.isTokenCard());
+                .anyMatch(card -> card.getName().equals("Grizzly Bears") && card.isConjured());
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

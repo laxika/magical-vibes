@@ -39,11 +39,9 @@ public class ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffectHandler implemen
             return;
         }
 
-        Card duplicate = source.createRuntimeCopyWithNewId();
+        Card duplicate = source.createConjuredCopy();
         UUID controllerId = entry.getControllerId();
         duplicate.setOwnerId(controllerId);
-        duplicate.setToken(true);
-        duplicate.setTokenCard(true);
         EnumSet<Keyword> keywords = duplicate.getKeywords() == null || duplicate.getKeywords().isEmpty()
                 ? EnumSet.noneOf(Keyword.class)
                 : EnumSet.copyOf(duplicate.getKeywords());

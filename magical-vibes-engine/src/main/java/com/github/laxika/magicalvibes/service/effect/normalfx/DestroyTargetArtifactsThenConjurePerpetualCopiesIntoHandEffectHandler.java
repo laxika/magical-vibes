@@ -62,7 +62,7 @@ public class DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandl
                 continue;
             }
 
-            Card copy = destroyedPermanent.getCard().createCardCopy();
+            Card copy = destroyedPermanent.getCard().createConjuredCopy();
             copy.setOwnerId(entry.getControllerId());
             copy.addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{R}"))));
             copy.freeze();

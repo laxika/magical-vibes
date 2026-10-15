@@ -74,10 +74,8 @@ public class ChooseCardFromGraveyardAndConjureDuplicateIntoHandEffectHandler
     }
 
     private void conjureDuplicate(GameData gameData, StackEntry entry, Card selectedCard) {
-        Card duplicate = selectedCard.createRuntimeCopyWithNewId();
+        Card duplicate = selectedCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
-        duplicate.setToken(true);
-        duplicate.setTokenCard(true);
         if (!duplicate.hasType(CardType.LAND)) {
             EnumSet<Keyword> keywords = duplicate.getKeywords().isEmpty()
                     ? EnumSet.noneOf(Keyword.class)

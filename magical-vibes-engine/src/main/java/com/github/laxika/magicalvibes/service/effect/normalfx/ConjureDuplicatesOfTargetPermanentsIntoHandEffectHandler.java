@@ -45,7 +45,7 @@ public class ConjureDuplicatesOfTargetPermanentsIntoHandEffectHandler implements
                 continue;
             }
 
-            Card copy = target.getCard().createCardCopy();
+            Card copy = target.getCard().createConjuredCopy();
             copy.setOwnerId(entry.getControllerId());
             copy.freeze();
             gameData.perpetualAnyColorManaForCastCardIds.add(copy.getId());

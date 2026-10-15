@@ -66,34 +66,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 14. Conjured cards are not tokens
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GyoxBrutalCarnivoraTest` (`gyoxTriggersForItsOwnDeathWithOil()`, `conjuredCreatureCanTriggerGyoxWhenItDies()`,
-  "A nontoken creature with oil counters dying conjures scaled perpetual duplicates into the library")
-- `GoblinMoraleSergeantTest.enlistingPreviouslyConjuredCreatureStillOffersDuplicate()`
-
-**What the rules require.** Conjure (a digital-only mechanic, no CR entry) creates a *card* in a zone; per
-the Alchemy rulings a conjured card is not a token, so "nontoken creature" checks and duplicate effects
-treat it like any other card. The engine builds conjured cards with the token flag set.
-
-**Why it's large.** The token flag currently also drives cleanup (tokens cease to exist outside the
-battlefield). Conjured cards need their own marker so they persist in every zone while still counting as
-nontoken, and every conjure effect has to switch over.
-
-**Prompt to start it:**
-
-```
-Stop marking conjured cards as tokens: give them their own "conjured" marker, keep them in every zone,
-and make "nontoken" checks treat them as cards. Check the Alchemy rulings first. Start with
-GyoxBrutalCarnivoraTest and GoblinMoraleSergeantTest, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 15. Last-known information for sources that changed zones
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests

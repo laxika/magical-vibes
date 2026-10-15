@@ -28,9 +28,9 @@ class SpellchainScatterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Card duplicate = gd.playerHands.get(player1.getId()).stream()
-                .filter(card -> card.getName().equals("Shock") && card.isTokenCard())
+                .filter(card -> card.getName().equals("Shock") && card.isConjured())
                 .findFirst().orElseThrow();
-        assertThat(duplicate.isTokenCard()).isTrue();
+        assertThat(duplicate.isConjured()).isTrue();
 
         resolveAllTriggers();
         assertThat(gd.playerHands.get(player1.getId())).contains(duplicate);
@@ -54,7 +54,7 @@ class SpellchainScatterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Card duplicate = gd.playerHands.get(player1.getId()).stream()
-                .filter(card -> card.getName().equals("Shock") && card.isTokenCard())
+                .filter(card -> card.getName().equals("Shock") && card.isConjured())
                 .findFirst().orElseThrow();
         resolveAllTriggers();
         advanceToNextEndStep();
@@ -209,7 +209,7 @@ class SpellchainScatterTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Shock") && card.isTokenCard());
+                .anyMatch(card -> card.getName().equals("Shock") && card.isConjured());
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

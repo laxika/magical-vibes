@@ -76,10 +76,8 @@ public class ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler
             return;
         }
 
-        Card duplicate = dealer.getCard().createRuntimeCopyWithNewId();
+        Card duplicate = dealer.getCard().createConjuredCopy();
         duplicate.setOwnerId(controllerId);
-        duplicate.setToken(true);
-        duplicate.setTokenCard(true);
         duplicate.freeze();
         gameData.addCardToHand(controllerId, duplicate);
         gameLogService.append(gameData, GameLog.textCardText(

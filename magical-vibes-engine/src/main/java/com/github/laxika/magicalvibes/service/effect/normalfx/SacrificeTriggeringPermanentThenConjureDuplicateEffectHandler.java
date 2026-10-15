@@ -62,6 +62,7 @@ public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler imple
 
         Card duplicateCard = TokenCopySupport.buildTokenCopyCard(sourceCard, replacement.copyProfile());
         duplicateCard.setToken(false);
+        duplicateCard.setConjured(true);
         duplicateCard.setOwnerId(entry.getControllerId());
         Permanent duplicate = new Permanent(duplicateCard);
         battlefieldEntryService.putPermanentOntoBattlefield(

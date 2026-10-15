@@ -72,7 +72,7 @@ public class ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler
     }
 
     private void conjure(GameData gameData, UUID recipientId, Card discardedCard) {
-        Card copy = discardedCard.createCardCopy();
+        Card copy = discardedCard.createConjuredCopy();
         copy.setOwnerId(recipientId);
         copy.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(copy.getId());

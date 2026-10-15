@@ -35,10 +35,8 @@ public class ConjureCardIntoTargetPlayerHandEffectHandler implements NormalEffec
             return;
         }
 
-        Card conjured = conjureEffect.card().createRuntimeCopyWithNewId();
+        Card conjured = conjureEffect.card().createConjuredCopy();
         conjured.setOwnerId(targetPlayerId);
-        conjured.setToken(true);
-        conjured.setTokenCard(true);
         conjured.freeze();
         gameData.addCardToHand(targetPlayerId, conjured);
         gameLogService.append(gameData, GameLog.textCardText(

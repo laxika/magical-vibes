@@ -54,7 +54,7 @@ public class ConjureDuplicateOfTargetExiledCardIntoHandEffectHandler implements 
                 continue;
             }
 
-            Card copy = exiled.card().createCardCopy();
+            Card copy = exiled.card().createConjuredCopy();
             copy.setOwnerId(entry.getControllerId());
             copy.freeze();
             applyPerpetualChanges(gameData, copy, conjure);

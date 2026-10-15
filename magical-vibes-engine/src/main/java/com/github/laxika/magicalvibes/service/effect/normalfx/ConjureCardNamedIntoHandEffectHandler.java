@@ -58,6 +58,7 @@ public class ConjureCardNamedIntoHandEffectHandler implements NormalEffectHandle
         for (CardSet set : CardSet.values()) {
             for (CardPrinting printing : cardCatalog.getPrintings(set)) {
                 Card card = printing.createCard();
+                card.setConjured(true);
                 if (cardName.equals(card.getName())) {
                     return card;
                 }

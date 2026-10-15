@@ -151,8 +151,7 @@ public class ConjurePowerNineIntoLibraryEffectHandler implements NormalEffectHan
         }
         card.setCardText(cardText);
         card.setOwnerId(ownerId);
-        card.setToken(true);
-        card.setTokenCard(true);
+        card.setConjured(true);
         return card;
     }
 

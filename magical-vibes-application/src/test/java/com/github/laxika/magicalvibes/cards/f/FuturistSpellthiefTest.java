@@ -32,10 +32,10 @@ class FuturistSpellthiefTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Card duplicate = gd.playerHands.get(player1.getId()).stream()
-                .filter(Card::isTokenCard)
+                .filter(Card::isConjured)
                 .findFirst()
                 .orElseThrow();
-        assertThat(duplicate.isTokenCard()).isTrue();
+        assertThat(duplicate.isConjured()).isTrue();
         assertThat(gd.perpetualAnyColorManaForCastCardIds).contains(duplicate.getId());
     }
 
@@ -166,7 +166,7 @@ class FuturistSpellthiefTest extends BaseCardTest {
     private int findConjuredDuplicateIndex(Player player) {
         List<Card> hand = gd.playerHands.get(player.getId());
         for (int i = 0; i < hand.size(); i++) {
-            if (hand.get(i).isTokenCard()) {
+            if (hand.get(i).isConjured()) {
                 return i;
             }
         }
@@ -182,7 +182,7 @@ class FuturistSpellthiefTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveAllTriggers();
 
-        assertThat(gd.playerHands.get(player1.getId())).anyMatch(Card::isTokenCard);
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(Card::isConjured);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 }

@@ -42,10 +42,8 @@ public class ConjureDuplicateOfExiledCardIntoTopFiveEffectHandler implements Nor
             return;
         }
 
-        Card duplicate = exiledCard.createRuntimeCopyWithNewId();
+        Card duplicate = exiledCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
-        duplicate.setToken(true);
-        duplicate.setTokenCard(true);
         duplicate.freeze();
 
         List<Card> library = gameData.playerDecks.get(entry.getControllerId());

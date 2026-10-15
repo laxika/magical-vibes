@@ -33,10 +33,8 @@ public class ConjureDuplicateOfTriggeringCardIntoHandEffectHandler implements No
             return;
         }
 
-        Card duplicate = triggeringCard.createRuntimeCopyWithNewId();
+        Card duplicate = triggeringCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
-        duplicate.setToken(true);
-        duplicate.setTokenCard(true);
         duplicate.freeze();
         gameData.addCardToHand(entry.getControllerId(), duplicate);
 

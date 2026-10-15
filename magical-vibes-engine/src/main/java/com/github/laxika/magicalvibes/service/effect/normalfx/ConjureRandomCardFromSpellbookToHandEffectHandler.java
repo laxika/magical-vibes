@@ -54,6 +54,7 @@ public class ConjureRandomCardFromSpellbookToHandEffectHandler implements Normal
 
             CardPrinting printing = cardCatalog.findByCollectorNumber(set, reference.collectorNumber());
             Card conjuredCard = printing.createCard();
+            conjuredCard.setConjured(true);
             conjuredCard.setOwnerId(entry.getControllerId());
             conjuredCard.freeze();
             gameData.addCardToHand(entry.getControllerId(), conjuredCard);

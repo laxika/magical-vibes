@@ -36,7 +36,7 @@ class DarigaazShivanChampionTest extends BaseCardTest {
                 .filteredOn(entry -> SPELLBOOK.contains(entry.card().getName()))
                 .singleElement()
                 .satisfies(entry -> {
-                    assertThat(entry.card().isTokenCard()).isTrue();
+                    assertThat(entry.card().isConjured()).isTrue();
                     assertThat(entry.faceDown()).isTrue();
                     assertThat(gd.exiledCardEggCounters).containsEntry(entry.card().getId(), 3);
                 });

@@ -39,7 +39,7 @@ public class ConjureDuplicateOfCombatDamageSourceIntoHandEffectHandler
             return;
         }
 
-        Card duplicate = sourceCard.createCardCopy();
+        Card duplicate = sourceCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
         duplicate.freeze();
         gameData.addCardToHand(entry.getControllerId(), duplicate);
