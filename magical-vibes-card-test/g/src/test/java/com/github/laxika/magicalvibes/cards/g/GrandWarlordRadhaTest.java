@@ -13,12 +13,13 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GrandWarlordRadha.class, LlanowarElves.class})
 class GrandWarlordRadhaTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Attacking with two creatures triggers mana production — choosing RED adds 2 red mana")
+    @DisplayName("Attacking with two creatures triggers mana production — choosing RED twice adds 2 red mana")
     void attackWithTwoCreaturesAddsChosenColorMana() {
         addCreatureReady(player1, new GrandWarlordRadha());
 
@@ -26,10 +27,10 @@ class GrandWarlordRadhaTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
 
-        // Resolve the attack trigger — should prompt for mana color choice
+        // Resolve the attack trigger — prompts once per mana
         harness.passBothPriorities();
 
-        // Choose RED
+        harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "RED");
 
         // 2 attackers → 2 red mana
@@ -49,6 +50,8 @@ class GrandWarlordRadhaTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
 
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
         harness.handleListChoice(player1, "GREEN");
 
         // 3 attackers → 3 green mana
@@ -130,6 +133,40 @@ class GrandWarlordRadhaTest extends BaseCardTest {
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
         assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mixed mana from Radha survives step transitions")
+    void mixedManaIsPersistent() {
+        addCreatureReady(player1, new GrandWarlordRadha());
+        addCreatureReady(player1, new LlanowarElves());
+        addCreatureReady(player1, new LlanowarElves());
+        declareAttackers(List.of(0, 1, 2));
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Colors other than red and green cannot be chosen")
+    void rejectsColorsOutsideRedAndGreen() {
+        addCreatureReady(player1, new GrandWarlordRadha());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "BLUE"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
     @Test
@@ -152,6 +189,7 @@ class GrandWarlordRadhaTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         gd.playerBattlefields.get(player1.getId()).remove(0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
@@ -198,6 +236,8 @@ class GrandWarlordRadhaTest extends BaseCardTest {
 
         // Resolve the attack trigger
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "RED");
 
         // Still 3 mana — count was locked at trigger time (3 attackers were declared)

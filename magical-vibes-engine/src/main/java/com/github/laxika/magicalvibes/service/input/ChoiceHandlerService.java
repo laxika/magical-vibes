@@ -739,9 +739,8 @@ public class ChoiceHandlerService {
             return;
         }
 
-        // Attack mana split choice (Grand Warlord Radha, etc.)
-        if (colorChoice.context() instanceof ChoiceContext.AttackManaSplitChoice ctx) {
-            handleAttackManaSplitChosen(gameData, player, colorName, ctx);
+        if (colorChoice.context() instanceof ChoiceContext.PersistentManaDistributionChoice ctx) {
+            handlePersistentManaDistributionChosen(gameData, player, colorName, ctx);
             return;
         }
 
@@ -2873,19 +2872,31 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleAttackManaSplitChosen(GameData gameData, Player player, String colorName, ChoiceContext.AttackManaSplitChoice ctx) {
-        ManaColor manaColor = ManaColor.valueOf(colorName);
+    private void handlePersistentManaDistributionChosen(GameData gameData, Player player, String colorName,
+                                                        ChoiceContext.PersistentManaDistributionChoice ctx) {
+        ManaColor chosen = ManaColor.valueOf(colorName);
+        if (!ctx.colors().contains(chosen)) {
+            throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
+        }
 
         gameData.interaction.clearAwaitingInput();
 
-        ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
-        // Add as persistent mana — doesn't drain at step/phase transitions until end of turn
-        manaPool.addPersistentMana(manaColor, ctx.attackerCount());
+        ManaColor manaColor = ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), chosen);
+        // Persistent — doesn't drain at step/phase transitions until end of turn
+        gameData.playerManaPools.get(ctx.playerId()).addPersistentMana(manaColor, 1);
 
-        String logEntry = player.getUsername() + " adds " + ctx.attackerCount() + " " + colorName.toLowerCase() + " mana.";
-        gameLogService.append(gameData, GameLog.text(logEntry));
-        log.info("Game {} - {} adds {} {} mana (attacking creatures, persistent until end of turn)",
-                gameData.id, player.getUsername(), ctx.attackerCount(), colorName.toLowerCase());
+        gameLogService.append(gameData, GameLog.text(player.getUsername() + " adds one "
+                + manaColor.name().toLowerCase() + " mana."));
+        log.info("Game {} - {} adds one {} mana (persistent until end of turn), {} left to assign",
+                gameData.id, player.getUsername(), manaColor, ctx.remaining() - 1);
+
+        int remaining = ctx.remaining() - 1;
+        if (remaining > 0) {
+            interactionHandlerRegistry.begin(gameData, new ChoiceContext.PersistentManaDistributionChoice(
+                    ctx.playerId(), remaining, ctx.colors()).prompt());
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

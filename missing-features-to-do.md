@@ -66,29 +66,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 16. Per-mana color choice for "that much mana in any combination of colors"
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GrandWarlordRadhaTest` "Two attackers can produce one red and one green mana"
-
-**What the rules require.** Grand Warlord Radha adds "that much mana in any combination of {R} and/or
-{G}", so each mana gets its own color. The engine asks once and adds all of it in one color.
-
-**Why it's large.** The mana-color choice interaction returns a single color. It needs a "split N mana
-across colors" choice (client UI included) and reuse by other "any combination" producers.
-
-**Prompt to start it:**
-
-```
-Add a "distribute N mana among these colors" choice and use it for Grand Warlord Radha's "any
-combination of {R} and/or {G}". Start with GrandWarlordRadhaTest, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 21. Undiagnosed G-card failures
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests

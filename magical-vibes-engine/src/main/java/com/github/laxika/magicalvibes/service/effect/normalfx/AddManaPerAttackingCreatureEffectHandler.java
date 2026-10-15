@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,17 +37,12 @@ public class AddManaPerAttackingCreatureEffectHandler implements NormalEffectHan
             return;
         }
 
-        // Present color choice: player picks one of the two offered colors, all mana is added as that color
-        ChoiceContext.AttackManaSplitChoice choiceContext =
-                new ChoiceContext.AttackManaSplitChoice(controllerId, attackerCount);
-        List<String> colors = List.of(e.color1().name(), e.color2().name());
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, choiceContext, colors,
-                "Choose a color of mana to add (" + attackerCount + " mana)."));
+        // "Any combination" — each mana gets its own color, so distribute them one at a time
+        interactionHandlerRegistry.begin(gameData, new ChoiceContext.PersistentManaDistributionChoice(
+                controllerId, attackerCount, List.of(e.color1(), e.color2())).prompt());
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        log.info("Game {} - Awaiting {} to choose mana color for {} attacking creatures",
-                gameData.id, playerName, attackerCount);
-    
+        log.info("Game {} - Awaiting {} to distribute {} mana among {} and {}",
+                gameData.id, playerName, attackerCount, e.color1(), e.color2());
     }
 }

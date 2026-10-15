@@ -1778,13 +1778,28 @@ public sealed interface ChoiceContext {
                                String entryDescription) implements ChoiceContext {}
 
     /**
-     * Tracks a "choose a mana color, add N of it" choice for effects like Grand Warlord Radha.
-     * Also sets mana drain prevention for the controller until end of turn.
+     * Distributes {@code remaining} mana among a fixed set of colors, one mana per answer, for "add N
+     * mana in any combination of {R} and/or {G}" (Grand Warlord Radha). Each answer adds one mana of
+     * the chosen color that doesn't empty from the pool until end of turn, then re-prompts until all
+     * of it has been assigned.
      *
-     * @param playerId       the player who chooses and receives the mana
-     * @param attackerCount  the number of attacking creatures (amount of mana to add)
+     * @param playerId  the player who chooses and receives the mana
+     * @param remaining how much mana is still to be assigned a color
+     * @param colors    the colors each mana may be
      */
-    record AttackManaSplitChoice(UUID playerId, int attackerCount) implements ChoiceContext {}
+    record PersistentManaDistributionChoice(UUID playerId, int remaining, List<ManaColor> colors)
+            implements ChoiceContext {
+        public PersistentManaDistributionChoice {
+            colors = List.copyOf(colors);
+        }
+
+        /** The color prompt that assigns the next mana of this distribution. */
+        public PendingInteraction.ColorChoice prompt() {
+            return new PendingInteraction.ColorChoice(playerId, null, null, this,
+                    colors.stream().map(Enum::name).toList(),
+                    "Choose a color for the next mana (" + remaining + " left to add).");
+        }
+    }
 
     /**
      * The controller chooses a color at resolution, then {@code targetPlayerId} reveals their hand
