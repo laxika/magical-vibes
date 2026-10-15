@@ -200,9 +200,7 @@ class GoblinTownTest extends BaseCardTest {
         readyMainPhase();
         harness.activateAbility(player1, battlefieldIndex(town), 1, null, goblin.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(goblin);
-        gd.playerBattlefields.get(player2.getId()).add(goblin);
-        gd.stolenCreatures.put(goblin.getId(), player1.getId());
+        setOwnerAndController(goblin, player1, player2);
         harness.passBothPriorities();
 
         assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

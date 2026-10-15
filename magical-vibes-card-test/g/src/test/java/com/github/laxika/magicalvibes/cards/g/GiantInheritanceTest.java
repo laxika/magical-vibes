@@ -51,7 +51,7 @@ class GiantInheritanceTest extends BaseCardTest {
     }
 
     @Test
-    void attackTriggerCanBeDeclinedAndCreatesUnattachedRole() {
+    void attackTriggerCanBeDeclinedAndUnattachedRoleIsPutIntoGraveyard() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new GiantInheritance());
         aura.setAttachedTo(creature.getId());
@@ -61,8 +61,9 @@ class GiantInheritanceTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
-        Permanent role = findPermanent(player1, "Monster");
-        assertThat(role.getAttachedTo()).isNull();
+        // The Role is created unattached, so it is put into the graveyard (CR 704.5m).
+        assertThat(gameLogContains("A Monster enchantment token enters the battlefield")).isTrue();
+        assertThat(countPermanents(player1, "Monster")).isZero();
     }
 
     @Test

@@ -133,9 +133,7 @@ class GutFanaticalPriestessTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GutFanaticalPriestess()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        harness.castCreature(player1, 0, List.of(opposingCreature.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        castGutWithoutOwnFighter(opposingCreature);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature);
         assertThat(opposingCreature.getMarkedDamage()).isZero();
@@ -180,9 +178,7 @@ class GutFanaticalPriestessTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
         harness.setHand(player1, List.of(new GutFanaticalPriestess()));
         harness.addMana(player1, ManaColor.RED, 6);
-        harness.castCreature(player1, 0, List.of(opposingCreature.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        castGutWithoutOwnFighter(opposingCreature);
         Permanent gut = findPermanent(player1, "Gut, Fanatical Priestess");
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
@@ -220,6 +216,15 @@ class GutFanaticalPriestessTest extends BaseCardTest {
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
+    }
+
+    /** Casts Gut choosing no creature for the "up to one" fighter, so nothing fights the opposing target. */
+    private void castGutWithoutOwnFighter(Permanent opposingCreature) {
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, opposingCreature.getId());
+        harness.passBothPriorities();
     }
 
     private Permanent castGutAndResolveFight() {

@@ -138,6 +138,8 @@ class GuulDrazAssassinTest extends BaseCardTest {
         harness.passBothPriorities();
         assertStats(target, 4, 4);
         assertStats(assassin, 4, 4);
+        // Ulamog's Crusher attacks each combat if able; tapped, it can skip combat.
+        target.tap();
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         assertStats(target, 8, 8);
         assertStats(assassin, 4, 4);

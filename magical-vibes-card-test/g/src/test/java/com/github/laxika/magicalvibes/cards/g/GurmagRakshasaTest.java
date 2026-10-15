@@ -146,11 +146,10 @@ class GurmagRakshasaTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setHand(player1, List.of(new GurmagRakshasa(), new Unsummon()));
         harness.addMana(player1, ManaColor.BLACK, 6);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0, List.of(opposingCreature.getId(), ownCreature.getId()));
         harness.passBothPriorities();
-        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0,
                 bounceOpponent ? opposingCreature.getId() : ownCreature.getId());
         harness.passBothPriorities();

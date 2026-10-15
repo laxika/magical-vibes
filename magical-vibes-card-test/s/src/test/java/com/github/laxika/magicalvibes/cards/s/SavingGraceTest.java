@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.r.RuinRat;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -214,8 +215,12 @@ class SavingGraceTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handlePermanentChosen(player1, second.getId());
+        // Each Saving Grace is its own replacement effect; the affected player picks one (CR 616.1).
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactly(
+                "Redirect the damage to Grizzly Bears (1)", "Redirect the damage to Grizzly Bears (2)");
+        harness.handleListChoice(player1, "Redirect the damage to Grizzly Bears (2)");
         harness.assertLife(player1, 20);
         assertThat(first.getMarkedDamage()).isZero();
         assertThat(second.getMarkedDamage()).isEqualTo(2);

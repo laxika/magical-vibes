@@ -118,6 +118,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class CastingPermissionService {
 
+    /** Stand-in X for a cast whose X is not chosen yet; large enough for any mana value threshold. */
+    private static final int UNCHOSEN_X_FOR_PERMISSION_CHECK = 1_000;
+
     public record FilteredGraveyardPermission(UUID sourcePermanentId,
                                                CastSpellsFromGraveyardPermission permission) {
     }
@@ -2352,6 +2355,15 @@ public class CastingPermissionService {
 
     /** Returns whether a specific card may be cast from the top of the player's library. */
     public boolean canCastFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
+        return canCastFromTopOfLibrary(gameData, playerId, card, null);
+    }
+
+    /**
+     * As {@link #canCastFromTopOfLibrary(GameData, UUID, Card)}, checking a permission's mana value
+     * filter with the {@code X} chosen for the cast (Glarb: X must make the mana value 4 or more).
+     * A {@code null} X means it isn't chosen yet, so a card with {X} may still qualify.
+     */
+    public boolean canCastFromTopOfLibrary(GameData gameData, UUID playerId, Card card, Integer xValue) {
         if (!card.hasType(CardType.LAND)
                 && (hasLibraryTopCardFreePlayPermission(gameData, playerId, card)
                 || hasLibraryTopCardLifePlayPermission(gameData, playerId, card))) {
@@ -2364,7 +2376,7 @@ public class CastingPermissionService {
                 && gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)) {
             return true;
         }
-        return canCastFromTopOfLibraryNormally(gameData, playerId, card)
+        return canCastFromTopOfLibraryNormally(gameData, playerId, card, xValue)
                 || canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, card);
     }
 
@@ -2387,9 +2399,13 @@ public class CastingPermissionService {
 
     /** Returns whether a specific card may be cast from the top by paying its normal cost. */
     public boolean canCastFromTopOfLibraryNormally(GameData gameData, UUID playerId, Card card) {
+        return canCastFromTopOfLibraryNormally(gameData, playerId, card, null);
+    }
+
+    private boolean canCastFromTopOfLibraryNormally(GameData gameData, UUID playerId, Card card, Integer xValue) {
         return hasSourceCardTopLibraryCastPermission(gameData, playerId, card)
                 || hasAnyLibraryTopPermission(gameData, playerId)
-                || findTopLibraryCastPermissionSource(gameData, playerId, card).isPresent();
+                || findTopLibraryCastPermissionSourceInternal(gameData, playerId, card, xValue) != null;
     }
 
     private boolean hasSourceCardTopLibraryCastPermission(GameData gameData, UUID playerId, Card card) {
@@ -2403,13 +2419,13 @@ public class CastingPermissionService {
 
     /** Returns the source permanent granting a normal-cost top-library cast. */
     public Optional<UUID> findTopLibraryCastPermissionSource(GameData gameData, UUID playerId, Card card) {
-        TopLibraryCastPermissionSource source = findTopLibraryCastPermissionSourceInternal(gameData, playerId, card);
+        TopLibraryCastPermissionSource source = findTopLibraryCastPermissionSourceInternal(gameData, playerId, card, null);
         return source == null ? Optional.empty() : Optional.of(source.permanentId());
     }
 
     /** Marks the selected once-each-turn top-library permission as used by a successful cast. */
     public void markTopLibraryCastPermissionUsed(GameData gameData, UUID playerId, Card card) {
-        TopLibraryCastPermissionSource source = findTopLibraryCastPermissionSourceInternal(gameData, playerId, card);
+        TopLibraryCastPermissionSource source = findTopLibraryCastPermissionSourceInternal(gameData, playerId, card, null);
         if (source != null && source.enterWithCounterCount() > 0 && card.hasType(CardType.CREATURE)) {
             gameData.spellAdditionalEnterCounters.merge(card.getId(), source.enterWithCounterCount(), Integer::sum);
         }
@@ -2423,7 +2439,7 @@ public class CastingPermissionService {
     }
 
     private TopLibraryCastPermissionSource findTopLibraryCastPermissionSourceInternal(
-            GameData gameData, UUID playerId, Card card) {
+            GameData gameData, UUID playerId, Card card, Integer xValue) {
         if (card.hasType(CardType.LAND)) return null;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return null;
@@ -2443,7 +2459,7 @@ public class CastingPermissionService {
                     continue;
                 }
                 if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
-                        && matchesTopLibraryPermission(gameData, playerId, perm, card, allow)
+                        && matchesTopLibraryPermission(gameData, playerId, perm, card, allow, xValue)
                         && canPayTopLibraryAdditionalCosts(gameData, playerId, allow)) {
                     if (!allow.oncePerTurn()) {
                         unlimitedFallback = new TopLibraryCastPermissionSource(
@@ -2561,10 +2577,24 @@ public class CastingPermissionService {
 
     private boolean matchesTopLibraryPermission(GameData gameData, UUID playerId, Permanent source,
                                                 Card card, AllowCastFromTopOfLibraryEffect permission) {
+        return matchesTopLibraryPermission(gameData, playerId, source, card, permission, null);
+    }
+
+    /**
+     * A {@code null} X is not chosen yet: a card with {X} in its cost is checked as if a large X were
+     * chosen, so a mana value filter that some X satisfies still offers the cast.
+     */
+    private boolean matchesTopLibraryPermission(GameData gameData, UUID playerId, Permanent source,
+                                                Card card, AllowCastFromTopOfLibraryEffect permission,
+                                                Integer xValue) {
+        Integer filterXValue = xValue != null ? xValue
+                : card.getParsedManaCost() != null && card.getParsedManaCost().getXSymbolCount() > 0
+                ? UNCHOSEN_X_FOR_PERMISSION_CHECK : null;
         return permission.matches(card)
                 || (card.getType() != CardType.LAND && permission.filter() != null
                 && predicateEvaluationService.matchesCardPredicate(
-                card, permission.filter(), source.getOriginalCard().getId(), gameData, playerId));
+                card, permission.filter(), source.getOriginalCard().getId(), gameData, playerId,
+                null, null, filterXValue));
     }
 
     /**

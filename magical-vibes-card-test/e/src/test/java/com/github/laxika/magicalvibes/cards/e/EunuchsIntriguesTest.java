@@ -27,8 +27,8 @@ class EunuchsIntriguesTest extends BaseCardTest {
         castEunuchsIntrigues();
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
-        assertThat(kept.isCantBlockThisTurn()).isFalse();
-        assertThat(other.isCantBlockThisTurn()).isTrue();
+        assertThat(canBlockACreature(kept)).isTrue();
+        assertThat(canBlockACreature(other)).isFalse();
     }
 
     @Test
@@ -39,7 +39,7 @@ class EunuchsIntriguesTest extends BaseCardTest {
         castEunuchsIntrigues();
         harness.handleMultiplePermanentsChosen(player2, List.of(only.getId()));
 
-        assertThat(only.isCantBlockThisTurn()).isFalse();
+        assertThat(canBlockACreature(only)).isTrue();
     }
 
     @Test
@@ -60,8 +60,8 @@ class EunuchsIntriguesTest extends BaseCardTest {
         castEunuchsIntrigues();
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
-        assertThat(own.isCantBlockThisTurn()).isFalse();
-        assertThat(other.isCantBlockThisTurn()).isTrue();
+        assertThat(canBlockACreature(own)).isTrue();
+        assertThat(canBlockACreature(other)).isFalse();
     }
 
     @Test
@@ -154,4 +154,10 @@ class EunuchsIntriguesTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
+    /** Whether {@code blocker} could block an attacking creature (the restriction is pairwise). */
+    private boolean canBlockACreature(Permanent blocker) {
+        Permanent attacker = new Permanent(new ShuFootSoldiers());
+        return bls.canBlock(gd, blocker) && bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(gd.findControllerOf(blocker)));
+    }
 }

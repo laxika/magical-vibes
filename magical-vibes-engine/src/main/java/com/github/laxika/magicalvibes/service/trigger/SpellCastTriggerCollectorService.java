@@ -3101,10 +3101,10 @@ public class SpellCastTriggerCollectorService {
                 ? spellManaValue(match.gameData(), spellCard) : 0;
 
         MayEffect optionalMay = optionalMayEffect(match.rawEffect());
-        // CR 603.5: a plain "you may" spell-cast trigger goes on the stack and the choice is made when it
-        // resolves, so it is wrapped in a MayEffect for the stack path instead of a cast-time prompt.
+        // CR 603.5: a plain "you may" or "you may pay {N}" spell-cast trigger goes on the stack and the
+        // choice (and payment) is made when it resolves, so it is wrapped in a MayEffect or
+        // MayPayManaEffect for the stack path instead of a cast-time prompt.
         boolean plainOptionalTrigger = optionalMay != null
-                && trigger.manaCost() == null
                 && !needsSpellManaSpentX
                 && !needsTargeting
                 && !needsGraveyardTarget
@@ -3112,10 +3112,19 @@ public class SpellCastTriggerCollectorService {
                 && resolved.stream().noneMatch(effect -> effect instanceof ChooseOneEffect
                         || effect instanceof ChooseModeNotYetChosenEffect);
         if (plainOptionalTrigger) {
-            resolved = List.of(new MayEffect(
-                    resolved.size() == 1 ? resolved.getFirst()
-                            : SequenceEffect.of(resolved.toArray(CardEffect[]::new)),
-                    optionalMay.prompt()));
+            CardEffect wrapped = resolved.size() == 1 ? resolved.getFirst()
+                    : SequenceEffect.of(resolved.toArray(CardEffect[]::new));
+            resolved = List.of(trigger.manaCost() == null
+                    ? new MayEffect(wrapped, optionalMay.prompt())
+                    : new MayPayManaEffect(trigger.manaCost(), wrapped, optionalMay.prompt()));
+            optionalMay = null;
+        }
+        // "You may pay {N}. If you do, [targeted effect]": the payment is the optional part, so the
+        // targeted path below wraps each effect in a MayPayManaEffect asked on resolution (CR 603.5).
+        boolean optionalPaymentOnResolution = optionalMay != null && trigger.manaCost() != null
+                && needsTargeting && !needsSpellManaSpentX && !needsGraveyardTarget && !needsSpellTarget;
+        String mayPayPrompt = optionalPaymentOnResolution ? optionalMay.prompt() : "Pay " + trigger.manaCost() + "?";
+        if (optionalPaymentOnResolution) {
             optionalMay = null;
         }
         if (optionalMay != null) {
@@ -3174,7 +3183,7 @@ public class SpellCastTriggerCollectorService {
             List<CardEffect> queued = trigger.manaCost() == null
                     ? resolved
                     : resolved.stream().map(e -> (CardEffect) new MayPayManaEffect(
-                            trigger.manaCost(), e, "Pay " + trigger.manaCost() + "?")).toList();
+                            trigger.manaCost(), e, mayPayPrompt)).toList();
             boolean multiTarget = sourceCard.getSpellTargets().size() > 1
                     || sourceCard.getSpellTargets().stream()
                     .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0);

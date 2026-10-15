@@ -81,9 +81,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
         castGuardians();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, lotus.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(lotus);
-        gd.playerBattlefields.get(player2.getId()).add(lotus);
-        gd.stolenCreatures.put(lotus.getId(), player1.getId());
+        setOwnerAndController(lotus, player1, player2);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

@@ -2695,6 +2695,11 @@ public class ManaCost {
             }
             if (snowCost > 0) {
                 pool.removeSnowMana(snowCost);
+                // The rest of the cost spends untagged mana first, keeping snow mana for later {S} costs.
+                EnumMap<ManaColor, Integer> unspentSnowTags = pool.getSnowManaTotals();
+                withoutSnowCost().pay(pool, xValue);
+                pool.capSnowManaTags(unspentSnowTags);
+                return;
             }
             if (pool.isSnowManaSpendableAsAnyColor()) {
                 applySnowManaAsAnyColor(pool);
@@ -2760,6 +2765,11 @@ public class ManaCost {
             }
             if (snowCost > 0) {
                 pool.removeSnowMana(snowCost);
+                // The rest of the cost spends untagged mana first, keeping snow mana for later {S} costs.
+                EnumMap<ManaColor, Integer> unspentSnowTags = pool.getSnowManaTotals();
+                withoutSnowCost().payWithAdditionalGenericCost(pool, xValue, additionalGenericCost);
+                pool.capSnowManaTags(unspentSnowTags);
+                return;
             }
             if (pool.isSnowManaSpendableAsAnyColor()) {
                 applySnowManaAsAnyColor(pool);
@@ -3332,6 +3342,12 @@ public class ManaCost {
         try {
             if (snowCost > 0) {
                 pool.removeSnowMana(snowCost);
+                // The rest of the cost spends untagged mana first, keeping snow mana for later {S} costs.
+                EnumMap<ManaColor, Integer> unspentSnowTags = pool.getSnowManaTotals();
+                withoutSnowCost().payWithAdditionalGenericCost(pool, xValue, additionalGenericCost, artifactContext, myrContext,
+                        restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, powerstoneContext);
+                pool.capSnowManaTags(unspentSnowTags);
+                return;
             }
             if (pool.isSnowManaSpendableAsAnyColor()) {
                 applySnowManaAsAnyColor(pool);
@@ -3684,6 +3700,16 @@ public class ManaCost {
             }
             if (snowCost > 0) {
                 pool.removeSnowMana(snowCost);
+                // The rest of the cost spends untagged mana first, keeping snow mana for later {S} costs.
+                EnumMap<ManaColor, Integer> unspentSnowTags = pool.getSnowManaTotals();
+                withoutSnowCost().payWithAdditionalGenericCost(pool, xValue, additionalGenericCost, artifactContext,
+                        myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext,
+                        subtypeCreatureContext, subtypeSpellOrAbilityContext, creatureSpellOnlyContext,
+                        artifactAbilityOnlyContext, legendarySpellOnlyContext, manaValueAtLeastFourContext,
+                        subtypeOrPlaneswalkerSpellContext, subtypeCreatureSourceSpellOrAbilityContext,
+                        powerstoneContext, subtypeSpellOnlyContext);
+                pool.capSnowManaTags(unspentSnowTags);
+                return;
             }
             if (pool.isSnowManaSpendableAsAnyColor()) {
                 applySnowManaAsAnyColor(pool);

@@ -23,12 +23,13 @@ import java.util.Set;
 public class GutTrueSoulZealot extends Card {
 
     public GutTrueSoulZealot() {
-        var anotherCreatureOrArtifact = new PermanentAllOfPredicate(List.of(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsCreaturePredicate()
-                )),
-                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+        // "Another creature or an artifact": an artifact Gut may sacrifice itself.
+        var anotherCreatureOrArtifact = new PermanentAnyOfPredicate(List.of(
+                new PermanentIsArtifactPredicate(),
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                ))
         ));
 
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new MayEffect(
@@ -36,7 +37,7 @@ public class GutTrueSoulZealot extends Card {
                         anotherCreatureOrArtifact,
                         new CreateTokenEffect(1, "Skeleton", 4, 1, CardColor.BLACK,
                                 List.of(CardSubtype.SKELETON), Set.of(Keyword.MENACE), true, false),
-                        "another creature or artifact"),
+                        "another creature or artifact", false, false),
                 "Sacrifice another creature or artifact?"));
     }
 }

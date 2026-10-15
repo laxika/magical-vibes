@@ -11693,7 +11693,7 @@ public class SpellCastingService {
         }
 
         // Verify the player can cast from top of library
-        if (!freeTopPlay && !castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, card)) {
+        if (!freeTopPlay && !castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, card, xValue)) {
             throw new IllegalStateException("Top card is not castable from library");
         }
 

@@ -18,7 +18,9 @@ public final class RedirectedDamageRules {
             "PlayersAndBattlesBonus", "ToOpponentsBonus", "ControllerToOpponentBonus", "SpellToOpponentsBonus",
             "ControllerNoncombatBonus", "PerpetualNoncombatBonus", "SpellDamageReduction", "OjerAxonil",
             "ReflectDamage", "TargetSorceryRedirect", "SourceNextCombatDamageToController",
-            "SourceNextCombatDamageToOpponentRedirect", "SourceNextRedirectToPermanent");
+            "SourceNextCombatDamageToOpponentRedirect", "SourceNextRedirectToPermanent",
+            // A redirect shield that already moved this damage can't move it again (CR 614.5).
+            "TurnRedirectToCreature");
 
     private RedirectedDamageRules() {
     }

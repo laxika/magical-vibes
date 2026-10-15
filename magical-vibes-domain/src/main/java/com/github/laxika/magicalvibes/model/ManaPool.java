@@ -848,6 +848,16 @@ public class ManaPool {
         addSnowManaTag(color, amount);
     }
 
+    /**
+     * Restores snow tags removed while paying with untagged mana: each color keeps at most
+     * {@code tags} snow mana, and never more than the mana of that color still in the pool.
+     */
+    public void capSnowManaTags(EnumMap<ManaColor, Integer> tags) {
+        for (ManaColor color : ManaColor.values()) {
+            snowMana.put(color, Math.min(tags.getOrDefault(color, 0), Math.max(0, pool.getOrDefault(color, 0))));
+        }
+    }
+
     /** Copies a snow tag onto mana already present in this pool. */
     public void addSnowManaTag(ManaColor color, int amount) {
         snowMana.merge(color, amount, Integer::sum);

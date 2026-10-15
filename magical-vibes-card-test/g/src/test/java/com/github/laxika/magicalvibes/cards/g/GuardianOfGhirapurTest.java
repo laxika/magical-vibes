@@ -119,9 +119,7 @@ class GuardianOfGhirapurTest extends BaseCardTest {
         castGuardian(bears.getId());
         harness.passBothPriorities();
 
-        gd.playerBattlefields.get(player1.getId()).remove(bears);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-        gd.stolenCreatures.put(bears.getId(), player1.getId());
+        setOwnerAndController(bears, player1, player2);
         harness.passBothPriorities();
         advanceToEndStep();
 

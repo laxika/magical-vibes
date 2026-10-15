@@ -46,14 +46,12 @@ class GyrusWakerOfCorpsesTest extends BaseCardTest {
         addReadyGyrus(3);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0, 1);
-        harness.handleGraveyardCardChosen(player1, choice.validIndices().getFirst());
+        assertThat(choice.cards()).containsExactlyInAnyOrder(smallerCreature, anotherSmallerCreature);
+        harness.handleMultipleCardsChosen(player1, List.of(smallerCreature.getId()));
     }
 
     @Test
@@ -65,6 +63,7 @@ class GyrusWakerOfCorpsesTest extends BaseCardTest {
         gd.playerAutoStopSteps.values().forEach(stops -> stops.add(TurnStep.DECLARE_BLOCKERS));
 
         declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -83,6 +82,8 @@ class GyrusWakerOfCorpsesTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        // The "exile the token at end of combat" delayed trigger uses the stack.
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken()
@@ -97,6 +98,7 @@ class GyrusWakerOfCorpsesTest extends BaseCardTest {
         addReadyGyrus(3);
 
         declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

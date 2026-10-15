@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -21,7 +22,7 @@ import java.util.Set;
 public class GhostlyDancers extends Card {
 
     public GhostlyDancers() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return an enchantment card from your graveyard to your hand",
                         ReturnCardFromGraveyardEffect.builder()
@@ -30,7 +31,7 @@ public class GhostlyDancers extends Card {
                                 .build()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Unlock a locked door of a Room you control",
-                        new UnlockControlledRoomDoorEffect()))));
+                        new UnlockControlledRoomDoorEffect())))));
 
         CreateTokenEffect spiritToken = new CreateTokenEffect(
                 "Spirit", 3, 1, CardColor.WHITE,

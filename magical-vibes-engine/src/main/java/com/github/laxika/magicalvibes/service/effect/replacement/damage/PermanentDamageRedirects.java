@@ -80,11 +80,18 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                                 ctx.gameData(), chosenSourceId(ctx), ctx.target().getId()),
                         ctx -> prevention.applySourceNextDamageRedirectToPermanent(
                                 ctx.gameData(), chosenSourceId(ctx), ctx.target().getId(), ctx.amount())),
-                redirect("TurnRedirectToCreature", "Redirect the damage to a creature (Saving Grace)",
-                        ctx -> prevention.hasTurnDamageRedirectToCreatureForPermanent(
-                                ctx.gameData(), ctx.targetControllerId(), ctx.target().getId(), ctx.combat()),
-                        ctx -> prevention.applyTurnDamageRedirectToCreature(ctx.gameData(), ctx.targetControllerId(),
-                                ctx.target().getId(), ctx.amount(), ctx.combat())),
+                new Rule<PermanentDamageContext>("TurnRedirectToCreature", REDIRECT, false,
+                        ctx -> redirectable(ctx) && !turnRedirectAlreadyMoved(ctx)
+                                ? prevention.applicableTurnDamageRedirectToCreatureShields(ctx.gameData(),
+                                        ctx.targetControllerId(), ctx.target().getId(), null, ctx.combat())
+                                .stream().map(String::valueOf).toList()
+                                : List.of(),
+                        (ctx, instance) -> "Redirect the damage to "
+                                + turnRedirectDestinationName(ctx, instance),
+                        (ctx, instance) -> ctx.event(),
+                        (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
+                                prevention.applyTurnDamageRedirectToCreatureShield(ctx.gameData(),
+                                        Integer.parseInt(instance), ctx.targetControllerId(), ctx.amount())))),
                 new Rule<PermanentDamageContext>("PermanentAbsorbsDamage", REDIRECT, false,
                         ctx -> redirectable(ctx)
                                 ? prevention.staticPermanentDamageRedirectSources(ctx.gameData(),
@@ -161,6 +168,22 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
         }
         return ctx.gameData().orderedPlayerIds.stream()
                 .filter(ctx.gameData().playersRedirectingAllCreatureDamage::contains).toList();
+    }
+
+    /**
+     * Damage one of these shields already moved stays where it went: with several Saving Graces, all
+     * damage dealt at once goes to the one enchanted creature its player chooses (Saving Grace
+     * ruling, 2017-07-14), so another shield doesn't move it again.
+     */
+    private static boolean turnRedirectAlreadyMoved(PermanentDamageContext ctx) {
+        return ctx.event().appliedKeys().stream().anyMatch(key -> key.startsWith("TurnRedirectToCreature"));
+    }
+
+    private String turnRedirectDestinationName(PermanentDamageContext ctx, String shieldIndex) {
+        UUID destinationId = ctx.gameData().turnDamageRedirectToCreatureShields
+                .get(Integer.parseInt(shieldIndex)).redirectTargetCreatureId();
+        Permanent destination = gameQueryService.findPermanentById(ctx.gameData(), destinationId);
+        return destination == null ? "a creature" : destination.getCard().getName();
     }
 
     private Permanent absorber(PermanentDamageContext ctx, String instance) {

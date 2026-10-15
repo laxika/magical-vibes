@@ -167,9 +167,7 @@ class GraspOfFateTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, List.of(bear.getId()));
         harness.passBothPriorities();
 
-        gd.playerBattlefields.get(player2.getId()).remove(bear);
-        gd.playerBattlefields.get(player1.getId()).add(bear);
-        gd.stolenCreatures.put(bear.getId(), player2.getId());
+        setOwnerAndController(bear, player2, player1);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);

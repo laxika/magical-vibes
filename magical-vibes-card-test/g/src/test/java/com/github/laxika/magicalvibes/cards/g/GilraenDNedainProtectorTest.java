@@ -87,9 +87,7 @@ class GilraenDNedainProtectorTest extends BaseCardTest {
     void immediateReturnGoesToOwnerAndRemovesOldCounters() {
         addCreatureReady(player1, new GilraenDNedainProtector());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).remove(target);
-        gd.playerBattlefields.get(player1.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         activate(target);
         harness.handleMayAbilityChosen(player1, true);
@@ -106,9 +104,7 @@ class GilraenDNedainProtectorTest extends BaseCardTest {
     void delayedReturnGoesToOwnerEvenAfterGilraenLeaves() {
         Permanent gilraen = addCreatureReady(player1, new GilraenDNedainProtector());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).remove(target);
-        gd.playerBattlefields.get(player1.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
         activate(target);
         harness.handleMayAbilityChosen(player1, false);
         gd.playerBattlefields.get(player1.getId()).remove(gilraen);
@@ -200,9 +196,7 @@ class GilraenDNedainProtectorTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, target.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Grizzly Bears").getId()).isEqualTo(target.getId());

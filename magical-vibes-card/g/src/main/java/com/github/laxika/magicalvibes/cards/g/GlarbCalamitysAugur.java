@@ -18,7 +18,7 @@ public class GlarbCalamitysAugur extends Card {
     public GlarbCalamitysAugur() {
         addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
         addEffect(EffectSlot.STATIC, new PlayLandsFromTopOfLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(new CardMinManaValuePredicate(4)));
+        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(new CardMinManaValuePredicate(4, true)));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

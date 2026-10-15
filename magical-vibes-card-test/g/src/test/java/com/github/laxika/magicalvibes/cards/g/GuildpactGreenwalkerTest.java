@@ -51,8 +51,8 @@ class GuildpactGreenwalkerTest extends BaseCardTest {
         Permanent shredFreak = addReadyCreature(player1, new RakdosShredFreak());
 
         castShockAt(player2, shredFreak);
+        // Bob has no mana left for ward {2}, so the Shock is countered without a payment prompt.
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(shredFreak);
     }

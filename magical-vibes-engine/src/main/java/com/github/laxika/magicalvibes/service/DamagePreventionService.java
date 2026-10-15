@@ -2424,28 +2424,65 @@ public class DamagePreventionService {
         if (damage <= 0 || protectedPlayerId == null || gameData.turnDamageRedirectToCreatureShields.isEmpty()) return damage;
 
         for (TurnDamageRedirectToCreatureShield shield : gameData.turnDamageRedirectToCreatureShields) {
-            if (!shield.protectedPlayerId().equals(protectedPlayerId)) continue;
-            if (shield.combatOnly() && !combatDamage) continue;
-            if (shield.damageSourceId() != null && !shield.damageSourceId().equals(damageSourceId)) continue;
-            if (!shield.includeControlledPermanents() && damagedPermanentId != null) continue;
-            if (shield.controlledCreaturesOnly() && damagedPermanentId != null) {
-                Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, damagedPermanentId);
-                if (damagedPermanent == null || !gameQueryService.isCreature(gameData, damagedPermanent)) continue;
+            if (turnDamageRedirectShieldApplies(gameData, shield, protectedPlayerId, damagedPermanentId,
+                    damageSourceId, combatDamage)) {
+                gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                        protectedPlayerId, null, damage, shield.redirectTargetCreatureId()));
+                return 0;
             }
-            UUID targetId = shield.redirectTargetCreatureId();
-            // Redirecting damage to the destination creature itself is a no-op; deal it normally.
-            if (targetId.equals(damagedPermanentId)) continue;
-            // Gideon's Sacrifice also permits a planeswalker destination, but only while the chosen
-            // permanent is still a creature or planeswalker on the battlefield.
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null || (!gameQueryService.isCreature(gameData, target)
-                    && (!shield.allowsPlaneswalker() || !gameQueryService.isPlaneswalker(gameData, target)))) {
-                continue;
-            }
-            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(protectedPlayerId, null, damage, targetId));
-            return 0;
         }
         return damage;
+    }
+
+    /**
+     * The positions in {@link GameData#turnDamageRedirectToCreatureShields} of the shields that would
+     * redirect this damage. Each shield is its own replacement effect (CR 616.1), so two Gideon's
+     * Sacrifices give the affected player two options.
+     */
+    public List<Integer> applicableTurnDamageRedirectToCreatureShields(GameData gameData, UUID protectedPlayerId,
+                                                                        UUID damagedPermanentId, UUID damageSourceId,
+                                                                        boolean combatDamage) {
+        if (protectedPlayerId == null) return List.of();
+        List<Integer> applicable = new ArrayList<>();
+        List<TurnDamageRedirectToCreatureShield> shields = gameData.turnDamageRedirectToCreatureShields;
+        for (int i = 0; i < shields.size(); i++) {
+            if (turnDamageRedirectShieldApplies(gameData, shields.get(i), protectedPlayerId, damagedPermanentId,
+                    damageSourceId, combatDamage)) {
+                applicable.add(i);
+            }
+        }
+        return applicable;
+    }
+
+    /** Redirects the damage through the shield at {@code shieldIndex}; returns the damage left (0). */
+    public int applyTurnDamageRedirectToCreatureShield(GameData gameData, int shieldIndex,
+                                                       UUID protectedPlayerId, int damage) {
+        if (damage <= 0) return damage;
+        TurnDamageRedirectToCreatureShield shield = gameData.turnDamageRedirectToCreatureShields.get(shieldIndex);
+        gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                protectedPlayerId, null, damage, shield.redirectTargetCreatureId()));
+        return 0;
+    }
+
+    private boolean turnDamageRedirectShieldApplies(GameData gameData, TurnDamageRedirectToCreatureShield shield,
+                                                    UUID protectedPlayerId, UUID damagedPermanentId,
+                                                    UUID damageSourceId, boolean combatDamage) {
+        if (!shield.protectedPlayerId().equals(protectedPlayerId)) return false;
+        if (shield.combatOnly() && !combatDamage) return false;
+        if (shield.damageSourceId() != null && !shield.damageSourceId().equals(damageSourceId)) return false;
+        if (!shield.includeControlledPermanents() && damagedPermanentId != null) return false;
+        if (shield.controlledCreaturesOnly() && damagedPermanentId != null) {
+            Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, damagedPermanentId);
+            if (damagedPermanent == null || !gameQueryService.isCreature(gameData, damagedPermanent)) return false;
+        }
+        UUID targetId = shield.redirectTargetCreatureId();
+        // Redirecting damage to the destination creature itself is a no-op; deal it normally.
+        if (targetId.equals(damagedPermanentId)) return false;
+        // Gideon's Sacrifice also permits a planeswalker destination, but only while the chosen
+        // permanent is still a creature or planeswalker on the battlefield.
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        return target != null && (gameQueryService.isCreature(gameData, target)
+                || shield.allowsPlaneswalker() && gameQueryService.isPlaneswalker(gameData, target));
     }
 
     /** Redirects combat damage from a chosen source to a protected player onto that source's controller. */

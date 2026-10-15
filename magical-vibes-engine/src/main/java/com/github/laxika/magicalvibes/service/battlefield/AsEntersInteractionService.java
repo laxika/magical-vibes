@@ -370,6 +370,7 @@ public class AsEntersInteractionService {
                 justEntered.getProtectionFromPlayerIdsPermanently().clear();
                 justEntered.getProtectionFromPlayerIdsPermanently().add(onlyOpponentId);
                 justEntered.setRememberedTargetPlayerId(onlyOpponentId);
+                justEntered.setAsEntersPlayerChooserId(controllerId);
             } else if (justEntered.getChosenPlayerIds().isEmpty() && !validOpponentIds.isEmpty()) {
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChoosePlayerAsEnter(
                         justEntered.getId(), controllerId, card, targetId, wasCastFromHand,

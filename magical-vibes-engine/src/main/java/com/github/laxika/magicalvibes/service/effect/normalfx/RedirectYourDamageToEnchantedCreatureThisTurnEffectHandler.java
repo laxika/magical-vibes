@@ -33,13 +33,18 @@ public class RedirectYourDamageToEnchantedCreatureThisTurnEffectHandler implemen
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // "Enchanted creature" uses the Aura's last known information if it has left the battlefield,
+        // so redirection still goes to the creature it was last attached to.
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null || !aura.isAttached()) return;
+        if (aura == null) aura = entry.getSourcePermanentSnapshot();
+        if (aura == null) return;
+        UUID enchantedId = aura.getAttachedTo() != null ? aura.getAttachedTo() : aura.getLastAttachedTo();
+        if (enchantedId == null) return;
 
-        Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        Permanent creature = gameQueryService.findPermanentById(gameData, enchantedId);
         if (creature == null) return;
 
-        UUID controllerId = gameQueryService.findPermanentController(gameData, aura.getId());
+        UUID controllerId = entry.getControllerId();
         if (controllerId == null) return;
 
         gameData.turnDamageRedirectToCreatureShields.add(

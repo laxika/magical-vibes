@@ -25,7 +25,7 @@ public class GloriousPurpose extends Card {
         // itself, so the threshold is checked only when the counter is put, not again on resolution.
         addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(6, CounterType.PLAN),
-                SacrificeSelfThenEffect.reflexive(
+                new SacrificeSelfThenEffect(
                         ExileTopCardsAndMayCastSpellsEffect.controllerWithRestToHand(4))));
     }
 }

@@ -340,6 +340,7 @@ public class GameTestHarness {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             battlefieldEntryService.processCreatureETBEffects(
                     gameData, player.getId(), permanent.getCard(), null, false);
+            triggerCollectionService.processNextTriggeredModalTrigger(gameData);
         });
         return permanent;
     }
@@ -351,6 +352,9 @@ public class GameTestHarness {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
             battlefieldEntryService.processLandETBEffects(gameData, player.getId(), permanent.getCard());
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggerCollectionService.processNextSpellTargetTrigger(gameData);
+            }
         });
         return permanent;
     }
@@ -2033,19 +2037,55 @@ public class GameTestHarness {
         int stackSizeBefore = gameData.stack.size();
         StackEntry topBefore = gameData.stack.isEmpty() ? null : gameData.stack.getLast();
 
+        if (gameData.orderedPlayerIds.size() > 2) {
+            passEveryPlayerOnce(stepBefore, stackSizeBefore, topBefore);
+            return;
+        }
+
         gameService.passPriority(gameData, first);
 
         // After auto-pass rework, the first pass may trigger an auto-pass cascade
         // that handles the second player too (advancing the step or resolving the stack).
         // Also stop if the game entered an awaiting-input state (e.g. may ability prompt).
-        if (gameData.status != GameStatus.RUNNING
-                || gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore
-                || (!gameData.stack.isEmpty() && gameData.stack.getLast() != topBefore)
-                || gameData.interaction.isAwaitingInput()) {
+        if (priorityRoundEnded(stepBefore, stackSizeBefore, topBefore)) {
             return;
         }
 
         gameService.passPriority(gameData, second);
+    }
+
+    /**
+     * Passes priority for each player of a game with more than two players, in turn order starting
+     * with the player holding priority (CR 117.3d), until the round ends.
+     */
+    private void passEveryPlayerOnce(TurnStep stepBefore, int stackSizeBefore, StackEntry topBefore) {
+        for (int passes = 0; passes < gameData.orderedPlayerIds.size(); passes++) {
+            UUID holderId = gameData.currentPriorityPlayerId();
+            if (holderId == null) {
+                return;
+            }
+            gameService.passPriority(gameData, playerById(holderId));
+            if (priorityRoundEnded(stepBefore, stackSizeBefore, topBefore)) {
+                return;
+            }
+        }
+    }
+
+    private boolean priorityRoundEnded(TurnStep stepBefore, int stackSizeBefore, StackEntry topBefore) {
+        return gameData.status != GameStatus.RUNNING
+                || gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore
+                || (!gameData.stack.isEmpty() && gameData.stack.getLast() != topBefore)
+                || gameData.interaction.isAwaitingInput();
+    }
+
+    private Player playerById(UUID playerId) {
+        if (player1.getId().equals(playerId)) {
+            return player1;
+        }
+        if (player2.getId().equals(playerId)) {
+            return player2;
+        }
+        return new Player(playerId, gameData.playerIdToName.get(playerId));
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
@@ -102,12 +103,16 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                         ctx -> "Redirect the next damage from " + ctx.source().getName() + " to a creature (Opal-Eye)",
                         ctx -> redirected(ctx, prevention.applySourceNextDamageRedirectToPermanent(
                                 ctx.gameData(), ctx.damageSourceId(), null, ctx.amount()))),
-                effect("TurnRedirectToCreature", REDIRECT,
-                        ctx -> prevention.hasTurnDamageRedirectToCreature(
-                                ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.combat()),
-                        ctx -> "Redirect the damage to a creature (Saving Grace)",
-                        ctx -> redirected(ctx, prevention.applyTurnDamageRedirectToCreature(
-                                ctx.gameData(), ctx.playerId(), null, ctx.damageSourceId(), ctx.amount(), ctx.combat()))),
+                new Rule<PlayerDamageContext>("TurnRedirectToCreature", REDIRECT, false,
+                        ctx -> prevention.applicableTurnDamageRedirectToCreatureShields(ctx.gameData(),
+                                        ctx.playerId(), null, ctx.damageSourceId(), ctx.combat())
+                                .stream().map(String::valueOf).toList(),
+                        (ctx, instance) -> "Redirect the damage to "
+                                + turnRedirectDestinationName(ctx.gameData(), instance),
+                        (ctx, instance) -> ctx.event(),
+                        (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
+                                prevention.applyTurnDamageRedirectToCreatureShield(ctx.gameData(),
+                                        Integer.parseInt(instance), ctx.playerId(), ctx.amount())))),
                 effect("SourceAndControllerNextRedirect", REDIRECT,
                         ctx -> prevention.hasSourcePermanentAndControllerNextDamageRedirectToPlayer(
                                 ctx.gameData(), ctx.playerId()),
@@ -190,6 +195,13 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
     private UUID targetSorceryController(PlayerDamageContext ctx) {
         UUID controllerId = prevention.getTargetSorceryDamageRedirectController(ctx.gameData(), ctx.entry());
         return controllerId == null || controllerId.equals(ctx.playerId()) ? null : controllerId;
+    }
+
+    private String turnRedirectDestinationName(GameData gameData, String shieldIndex) {
+        UUID destinationId = gameData.turnDamageRedirectToCreatureShields
+                .get(Integer.parseInt(shieldIndex)).redirectTargetCreatureId();
+        Permanent destination = gameQueryService.findPermanentById(gameData, destinationId);
+        return destination == null ? "a creature" : destination.getCard().getName();
     }
 
     private DamageEvent redirected(PlayerDamageContext ctx, int remaining) {

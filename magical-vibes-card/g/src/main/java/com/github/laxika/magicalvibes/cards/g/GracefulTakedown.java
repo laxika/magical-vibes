@@ -34,6 +34,6 @@ public class GracefulTakedown extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsEnchantedPredicate())),
-                "Target must be an enchanted creature you control"), 0, 99);
+                "Target must be an enchanted creature you control"), 0, Integer.MAX_VALUE);
     }
 }

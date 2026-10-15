@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.cards.v.Venomthrope;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -131,8 +133,9 @@ class GhyrsonStarnKelermorphTest extends BaseCardTest {
         addCreatureReady(player1, new RagingGoblin()).setAttacking(true);
         harness.setLife(player2, 20);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
         harness.assertLife(player2, 18);
+        assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -235,7 +238,7 @@ class GhyrsonStarnKelermorphTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FieryConfluence()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorceryWithModes(player1, 0, 3, 0, 0, 1);
+        harness.castModalSorcery(player1, 0, ChooseOneEffect.encodeRepeatedModeSelection(3, 0, 0, 1), List.of());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Ghyrson Starn, Kelermorph");
@@ -286,7 +289,7 @@ class GhyrsonStarnKelermorphTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FieryConfluence()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorceryWithModes(player1, 0, 3, 0, 1, 1);
+        harness.castModalSorcery(player1, 0, ChooseOneEffect.encodeRepeatedModeSelection(3, 0, 1, 1), List.of());
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();

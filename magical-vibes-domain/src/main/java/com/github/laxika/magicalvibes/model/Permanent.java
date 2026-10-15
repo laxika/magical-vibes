@@ -241,6 +241,11 @@ public class Permanent {
     @Getter private final List<UUID> rememberedTargetPlayerIds = new ArrayList<>();
     /** Players chosen by an as-enters effect such as Bitter Feud. */
     private final List<UUID> chosenPlayerIds = new ArrayList<>();
+    /**
+     * The player who secretly chose a player as this permanent entered (Guardian Archon). Only that
+     * player can reveal the choice, so a later controller can't pay a reveal cost.
+     */
+    @Setter private UUID asEntersPlayerChooserId;
     /** Life lost by the controller when this permanent's Soulgorger Orgg-style ETB resolved. */
     @Setter private int lifeLostWhenEntered;
     /** Player who lost the recorded life when this permanent's Soulgorger Orgg-style ETB resolved. */
@@ -906,6 +911,7 @@ public class Permanent {
         this.rememberedTargetPlayerId = source.rememberedTargetPlayerId;
         this.rememberedTargetPlayerIds.addAll(source.rememberedTargetPlayerIds);
         this.chosenPlayerIds.addAll(source.chosenPlayerIds);
+        this.asEntersPlayerChooserId = source.asEntersPlayerChooserId;
         this.lifeLostWhenEntered = source.lifeLostWhenEntered;
         this.lifeLostWhenEnteredControllerId = source.lifeLostWhenEnteredControllerId;
         this.tappedPermanentsForAbilityThisTurn.addAll(source.tappedPermanentsForAbilityThisTurn);

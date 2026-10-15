@@ -90,6 +90,7 @@ public class BattlefieldEntryService {
                 permanent.getProtectionFromPlayerIdsPermanently().clear();
                 permanent.getProtectionFromPlayerIdsPermanently().add(onlyOpponentId);
                 permanent.setRememberedTargetPlayerId(onlyOpponentId);
+                permanent.setAsEntersPlayerChooserId(controllerId);
             }
         }
         return effect != null && effect.handAccess() == ChooseCardNameOnEnterEffect.HandAccess.NONE

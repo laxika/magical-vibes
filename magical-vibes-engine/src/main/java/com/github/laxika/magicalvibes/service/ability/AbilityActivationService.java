@@ -6440,6 +6440,13 @@ public class AbilityActivationService {
             throw new IllegalStateException("No player was chosen as this permanent entered");
         }
 
+        // Only the player who made the secret choice can reveal it (Guardian Archon ruling, 2021-04-16).
+        if (abilityEffects.stream().anyMatch(RevealChosenPlayerCost.class::isInstance)
+                && permanent.getAsEntersPlayerChooserId() != null
+                && !permanent.getAsEntersPlayerChooserId().equals(playerId)) {
+            throw new IllegalStateException("You didn't choose a player as this permanent entered");
+        }
+
         if (abilityEffects.stream().anyMatch(effect -> effect instanceof UnattachEquipmentEffect unattach
                 && unattach.equipmentId() == null)
                 && !permanent.isAttached()) {

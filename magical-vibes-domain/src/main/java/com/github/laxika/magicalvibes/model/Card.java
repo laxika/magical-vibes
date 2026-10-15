@@ -1260,9 +1260,10 @@ public class Card {
      * Returns the maximum total number of targets allowed.
      */
     public int getMaxTargets() {
-        return spellTargets.stream()
-                .mapToInt(st -> Math.max(st.getMaxTargets(), st.getKickedMaxTargets()))
-                .sum();
+        // Saturates so an "any number of targets" group (Integer.MAX_VALUE) beside others can't overflow.
+        return (int) Math.min(Integer.MAX_VALUE, spellTargets.stream()
+                .mapToLong(st -> Math.max(st.getMaxTargets(), st.getKickedMaxTargets()))
+                .sum());
     }
 
     /**

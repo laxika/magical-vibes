@@ -2955,7 +2955,8 @@ public class GraveyardReturnSupport {
                 : null;
         for (int i = 0; i < graveyard.size(); i++) {
             if ((trackedIds == null || trackedIds.contains(graveyard.get(i).getId()))
-                    && predicateEvaluationService.matchesCardPredicate(graveyard.get(i), next.filter(), null)
+                    && predicateEvaluationService.matchesCardPredicate(graveyard.get(i), next.filter(), null,
+                            gameData, next.playerId())
                     && !next.excludedManaValues().contains(graveyard.get(i).getManaValue())
                     && !next.excludedCardIds().contains(graveyard.get(i).getId())) {
                 matchingIndices.add(i);

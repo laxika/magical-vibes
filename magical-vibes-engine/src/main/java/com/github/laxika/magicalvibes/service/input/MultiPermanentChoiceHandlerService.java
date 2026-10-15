@@ -2516,16 +2516,12 @@ public class MultiPermanentChoiceHandlerService {
         com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerChoosesCreatureRestCantBlockEffectHandler
                 .restrictOtherCreatures(gameData, targetPlayerId, keptId);
 
+        // The floating effect follows control (CR 611.2c), so no per-creature flag is set here: a creature
+        // that leaves the player's control may block again.
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-        int count = 0;
-        if (battlefield != null) {
-            for (Permanent perm : battlefield) {
-                if (gameQueryService.isCreature(gameData, perm) && !perm.getId().equals(keptId)) {
-                    perm.setCantBlockThisTurn(true);
-                    count++;
-                }
-            }
-        }
+        long count = battlefield == null ? 0 : battlefield.stream()
+                .filter(perm -> gameQueryService.isCreature(gameData, perm) && !perm.getId().equals(keptId))
+                .count();
 
         if (count > 0) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);

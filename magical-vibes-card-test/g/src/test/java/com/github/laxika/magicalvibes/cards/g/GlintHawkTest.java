@@ -250,7 +250,7 @@ class GlintHawkTest extends BaseCardTest {
     @DisplayName("A controlled artifact is returned to its owner's hand")
     void returnsControlledArtifactToItsOwnersHand() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Memnite());
-        gd.stolenCreatures.put(artifact.getId(), player2.getId());
+        setOwnerAndController(artifact, player2, player1);
         harness.setHand(player1, List.of(new GlintHawk()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);

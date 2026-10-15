@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -18,6 +22,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
+import java.util.UUID;
 
 @Tag("scryfall")
 @ExtendWith(CardUsedExtension.class)
@@ -211,6 +216,22 @@ public abstract class BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.beginBlockerDeclarationInput();
+    }
+
+    /**
+     * Makes {@code controller} control {@code permanent} while {@code owner} owns it, backed by a
+     * permanent control effect so the engine's control recomputation keeps it there. Only
+     * recording the owner in {@link GameData#stolenCreatures} would let the next recomputation
+     * hand the permanent back to its owner.
+     */
+    protected void setOwnerAndController(Permanent permanent, Player owner, Player controller) {
+        gd.playerBattlefields.values().forEach(battlefield -> battlefield.remove(permanent));
+        gd.playerBattlefields.get(controller.getId()).add(permanent);
+        gd.stolenCreatures.put(permanent.getId(), owner.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), "Control setup", null, controller.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                permanent.getId(), null, null, EffectDuration.PERMANENT, 0));
     }
 
     /** Passes priority until the stack is empty, a trigger asks for player input, or the game ends. */

@@ -142,6 +142,12 @@ class GetawayCarTest extends BaseCardTest {
         if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
             harness.handlePermanentChosen(player, crewer.getId());
         }
+        PendingInteraction.PermanentChoice extraCrewers =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (extraCrewers != null && extraCrewers.validPlayerIds().contains(player.getId())) {
+            // Crew may tap any number of creatures (CR 702.122a); stop after the chosen crewer.
+            harness.handlePermanentChosen(player, player.getId());
+        }
         harness.passBothPriorities();
     }
 }

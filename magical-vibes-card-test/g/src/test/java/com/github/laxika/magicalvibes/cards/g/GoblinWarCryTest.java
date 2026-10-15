@@ -31,8 +31,8 @@ class GoblinWarCryTest extends BaseCardTest {
         castGoblinWarCry();
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
-        assertThat(kept.isCantBlockThisTurn()).isFalse();
-        assertThat(other.isCantBlockThisTurn()).isTrue();
+        assertThat(canBlockACreature(kept)).isTrue();
+        assertThat(canBlockACreature(other)).isFalse();
     }
 
     @Test
@@ -45,9 +45,9 @@ class GoblinWarCryTest extends BaseCardTest {
         castGoblinWarCry();
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
-        assertThat(kept.isCantBlockThisTurn()).isFalse();
-        assertThat(other1.isCantBlockThisTurn()).isTrue();
-        assertThat(other2.isCantBlockThisTurn()).isTrue();
+        assertThat(canBlockACreature(kept)).isTrue();
+        assertThat(canBlockACreature(other1)).isFalse();
+        assertThat(canBlockACreature(other2)).isFalse();
     }
 
     @Test
@@ -61,8 +61,8 @@ class GoblinWarCryTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
         assertThat(island.isCantBlockThisTurn()).isFalse();
-        assertThat(kept.isCantBlockThisTurn()).isFalse();
-        assertThat(other.isCantBlockThisTurn()).isTrue();
+        assertThat(canBlockACreature(kept)).isTrue();
+        assertThat(canBlockACreature(other)).isFalse();
     }
 
     @Test
@@ -73,7 +73,7 @@ class GoblinWarCryTest extends BaseCardTest {
         castGoblinWarCry();
         harness.handleMultiplePermanentsChosen(player2, List.of(only.getId()));
 
-        assertThat(only.isCantBlockThisTurn()).isFalse();
+        assertThat(canBlockACreature(only)).isTrue();
     }
 
     @Test
@@ -94,8 +94,8 @@ class GoblinWarCryTest extends BaseCardTest {
         castGoblinWarCry();
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
-        assertThat(own.isCantBlockThisTurn()).isFalse();
-        assertThat(other.isCantBlockThisTurn()).isTrue();
+        assertThat(canBlockACreature(own)).isTrue();
+        assertThat(canBlockACreature(other)).isFalse();
     }
 
     @Test
@@ -192,7 +192,7 @@ class GoblinWarCryTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(other.isCantBlockThisTurn()).isFalse();
+        assertThat(canBlockACreature(other)).isTrue();
         addReadyCreature(player1);
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -223,6 +223,13 @@ class GoblinWarCryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GoblinWarCry()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+    }
+
+    /** Whether {@code blocker} could block an attacking creature (the restriction is pairwise). */
+    private boolean canBlockACreature(Permanent blocker) {
+        Permanent attacker = new Permanent(new BearCub());
+        return bls.canBlock(gd, blocker) && bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(gd.findControllerOf(blocker)));
     }
 
     private Permanent addReadyCreature(Player player) {

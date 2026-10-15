@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GutTrueSoulZealot.class, GrizzlyBears.class, LeoninScimitar.class, LiquimetalCoating.class})
 class GutTrueSoulZealotTest extends BaseCardTest {
+
+    /** Stops before combat damage so the Skeleton is still attacking when it is checked. */
+    @BeforeEach
+    void stopAtDeclareBlockers() {
+        gd.playerAutoStopSteps.values().forEach(stops -> stops.add(TurnStep.DECLARE_BLOCKERS));
+    }
 
     @Test
     @DisplayName("Attacking may sacrifice another creature to create a tapped and attacking Skeleton")
@@ -31,7 +38,6 @@ class GutTrueSoulZealotTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
@@ -48,7 +54,6 @@ class GutTrueSoulZealotTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
@@ -96,7 +101,6 @@ class GutTrueSoulZealotTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, attacker.getId());
-        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertSkeletonWasCreated(gut);
@@ -113,7 +117,6 @@ class GutTrueSoulZealotTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Skeleton")).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
