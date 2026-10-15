@@ -70,9 +70,9 @@ class ArthurMarigoldKnightTest extends BaseCardTest {
         assertThat(entered.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        gs.advanceStep(gd);
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(entered);

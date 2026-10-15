@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -443,29 +444,24 @@ class CombatServiceTest {
     }
 
     @Nested
-    @DisplayName("processEndOfCombatTaps")
-    class ProcessEndOfCombatTapsTest {
+    @DisplayName("processEndOfCombatCombatOpponentTaps")
+    class ProcessEndOfCombatCombatOpponentTapsTest {
 
         @Test
-        @DisplayName("Taps the scheduled permanent and locks its next untap step")
-        void tapsAndLocksScheduledPermanent() {
-            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            gd.queueDelayedAction(new TapAndSkipUntapAtEndOfCombat(creature.getId()));
+        @DisplayName("Puts the delayed tap trigger on the stack instead of tapping directly")
+        void putsDelayedTriggerOnStack() {
+            Permanent blocker = addPermanent(player1Id, createCreature("Grizzly Bears"));
+            Card source = createCreature("Triton Tactics");
+            gd.queueDelayedAction(new TapCombatOpponentsAtEndOfCombat(List.of(blocker.getId()), source, player1Id));
 
-            combatService.processEndOfCombatTaps(gd);
+            combatService.processEndOfCombatCombatOpponentTaps(gd);
 
-            verify(tapUntapSupport).tapPermanent(gd, creature);
-            assertThat(creature.getSkipUntapCount()).isEqualTo(1);
-            assertThat(gd.getDelayedActions(TapAndSkipUntapAtEndOfCombat.class)).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Skips a permanent that already left the battlefield")
-        void skipsMissingPermanent() {
-            gd.queueDelayedAction(new TapAndSkipUntapAtEndOfCombat(UUID.randomUUID()));
-
-            combatService.processEndOfCombatTaps(gd);
-
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+                assertThat(entry.getTriggeringPermanentIds()).containsExactly(blocker.getId());
+            });
+            assertThat(gd.getDelayedActions(TapCombatOpponentsAtEndOfCombat.class)).isEmpty();
             verifyNoInteractions(tapUntapSupport);
         }
     }

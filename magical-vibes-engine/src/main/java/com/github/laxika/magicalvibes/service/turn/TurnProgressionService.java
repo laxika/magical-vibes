@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextMainPhase;
-import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
@@ -40,8 +39,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedDestroyCreatureDealing
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.action.DelayedSourceDamageMultiplication;
@@ -50,19 +47,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerGainL
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
-import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
-import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
-import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
-import com.github.laxika.magicalvibes.model.action.PhaseOutAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TargetCreatureMustAttackNextCombat;
 import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -142,13 +128,6 @@ public class TurnProgressionService {
         // The mana pool drains at step boundaries, so nothing recorded before this point can
         // still be reverted by the cancel-casting UI.
         gameData.revertableManaActivations.clear();
-
-        // Process end-of-combat sacrifices, exiles, and equipment destruction when leaving END_OF_COMBAT
-        if (gameData.currentStep == TurnStep.END_OF_COMBAT && hasEndOfCombatActions(gameData)) {
-            processEndOfCombatActions(gameData);
-            gameData.resetPriorityToActivePlayer();
-            return;
-        }
 
         if (gameData.currentStep == TurnStep.END_OF_COMBAT && gameData.mindControlUntilEndOfCombat) {
             gameData.mindControlledPlayerId = null;
@@ -646,46 +625,18 @@ public class TurnProgressionService {
         completeTurnAdvance(gameData);
     }
 
-    private boolean hasEndOfCombatActions(GameData gameData) {
-        return gameData.hasDelayedAction(SacrificeAtEndOfCombat.class)
-                || gameData.hasDelayedAction(DelayedPermanentAction.class,
-                        action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
-                                || action.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT
-                                || action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_OF_COMBAT
-                                || action.kind() == DelayedPermanentActionKind.PUT_ON_TOP_OF_LIBRARY_AT_END_OF_COMBAT)
-                || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
-                || gameData.hasDelayedAction(PutMinusOneCounterAtEndOfCombat.class)
-                || gameData.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)
-                || gameData.hasDelayedAction(RemoveCounterFromSourceAtEndOfCombat.class)
-                || gameData.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)
-                || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class)
-                || gameData.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)
-                || gameData.hasDelayedAction(DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource.class)
-                || gameData.hasDelayedAction(TapAndSkipUntapAtEndOfCombat.class)
-                || gameData.hasDelayedAction(TapCombatOpponentsAtEndOfCombat.class)
-                || gameData.hasDelayedAction(PhaseOutAtEndOfCombat.class);
-    }
-
     /**
-     * Applies the end-of-combat delayed actions. The combat-opponent destruction is excluded from
-     * {@link #hasEndOfCombatActions}: it is a delayed trigger that triggers only as an end of combat
-     * step begins (CR 511.2), so one created during that step waits for a later combat.
+     * Puts the delayed "at end of combat" triggers on the stack as the end of combat step begins
+     * (CR 511.2). One created during the step waits for a later end of combat (CR 603.7).
      */
     private void processEndOfCombatActions(GameData gameData) {
         combatService.processEndOfCombatSacrifices(gameData);
-        combatService.processEndOfCombatTaps(gameData);
         combatService.processEndOfCombatCombatOpponentTaps(gameData);
         combatService.processEndOfCombatExiles(gameData);
-        combatService.processEndOfCombatEquipmentDestruction(gameData);
         combatService.processEndOfCombatDestructions(gameData);
         combatService.processEndOfCombatCombatOpponentDestructions(gameData);
-        combatService.processEndOfCombatSourceCounters(gameData);
-        combatService.processEndOfCombatOpponentCounters(gameData);
         combatService.processEndOfCombatCounterRemovals(gameData);
         combatService.processEndOfCombatDamage(gameData);
-        combatService.processEndOfCombatControlGains(gameData);
-        combatService.processEndOfCombatExileAndReturnTransformed(gameData);
-        combatService.processEndOfCombatPhaseOuts(gameData);
         combatService.processEndOfCombatReturnsToHand(gameData);
         combatService.processEndOfCombatLibraryTucks(gameData);
     }

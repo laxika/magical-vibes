@@ -3,12 +3,17 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
-import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCountersOnTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -44,13 +49,17 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
         if (target == null) {
             return;
         }
+        // The destruction is a delayed "at end of combat" trigger (CR 603.7), so it uses the stack.
         if (destroyEffect.putCounterOnSourceIfDestroyed()) {
-            gameData.queueDelayedAction(new DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource(
-                    targetId,
-                    entry.getTriggeringPermanentId(),
-                    entry.getControllerId(),
-                    entry.getCard(),
-                    destroyEffect.cannotBeRegenerated()));
+            // Infinite Authority: "At the beginning of the next end step, if that creature was
+            // destroyed this way, put a +1/+1 counter on the first creature."
+            gameData.queueDelayedAction(new DelayedEndOfCombatTrigger(entry.getControllerId(),
+                    entry.getCard(), entry.getSourcePermanentId(), targetId,
+                    new DestroyTargetPermanentThenEffect(EventStat.NONE,
+                            new RegisterDelayedCountersOnTriggeringPermanentEffect(
+                                    new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                            ThenEffectRecipient.CONTROLLER, null, destroyEffect.cannotBeRegenerated(), true),
+                    entry.getTriggeringPermanentId()));
         } else {
             gameData.queueDelayedAction(new DelayedEndOfCombatTrigger(entry.getControllerId(),
                     entry.getCard(), entry.getSourcePermanentId(), targetId,

@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -17,8 +15,8 @@ import java.util.UUID;
 import java.util.Set;
 
 /**
- * Resolves {@link TapCombatOpponentAtEndOfCombatEffect}: schedules the referenced combat opponent
- * (carried as the stack entry's non-targeting target) to be tapped at end of combat and to skip its
+ * Resolves the "At end of combat" trigger carrying {@link TapCombatOpponentAtEndOfCombatEffect}:
+ * taps each creature that blocked the source this turn and keeps it from untapping during its
  * controller's next untap step. See Joven's Ferrets.
  */
 @Component
@@ -36,30 +34,11 @@ public class TapCombatOpponentAtEndOfCombatEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetId = entry.getTargetId();
-        if (targetId == null && gameData.currentStep == TurnStep.END_OF_COMBAT) {
-            Set<UUID> blockerIds = gameData.combatBlockOpponentIdsThisTurn
-                    .getOrDefault(entry.getSourcePermanentId(), Set.of());
-            for (UUID blockerId : blockerIds) {
-                tapAndLock(gameData, blockerId);
-            }
-            return;
+        Set<UUID> blockerIds = gameData.combatBlockOpponentIdsThisTurn
+                .getOrDefault(entry.getSourcePermanentId(), Set.of());
+        for (UUID blockerId : blockerIds) {
+            tapAndLock(gameData, blockerId);
         }
-        if (targetId == null) {
-            return;
-        }
-        if (gameData.currentStep == TurnStep.END_OF_COMBAT) {
-            tapAndLock(gameData, targetId);
-            return;
-        }
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || !gameQueryService.isCreature(gameData, target)) {
-            return;
-        }
-
-        gameData.queueDelayedAction(new TapAndSkipUntapAtEndOfCombat(targetId));
-        gameLogService.append(gameData,
-                GameLog.cardThen(target.getCard(), " will be tapped at end of combat."));
     }
 
     private void tapAndLock(GameData gameData, UUID permanentId) {

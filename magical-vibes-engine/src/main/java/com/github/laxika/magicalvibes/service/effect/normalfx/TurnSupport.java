@@ -4,17 +4,9 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.PhaseOutAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -102,18 +94,10 @@ public class TurnSupport {
         combatService.clearCombatState(gameData);
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
         gameData.clearDelayedActions(DelayedEndOfCombatTrigger.class);
-        gameData.clearDelayedActions(TapAndSkipUntapAtEndOfCombat.class);
         gameData.clearDelayedActions(TapCombatOpponentsAtEndOfCombat.class);
-        gameData.clearDelayedActions(PhaseOutAtEndOfCombat.class);
         gameData.clearDelayedActions(DealDamageToPermanentAtEndOfCombat.class);
         gameData.clearDelayedActions(DestroyCombatOpponentsAtEndOfCombat.class);
-        gameData.clearDelayedActions(DestroyEquipmentAtEndOfCombat.class);
-        gameData.clearDelayedActions(PutMinusOneCounterAtEndOfCombat.class);
-        gameData.clearDelayedActions(PutCounterOnPermanentAtEndOfCombat.class);
-        gameData.clearDelayedActions(DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource.class);
         gameData.clearDelayedActions(RemoveCounterFromSourceAtEndOfCombat.class);
-        gameData.clearDelayedActions(GainControlOfPermanentAtEndOfCombat.class);
-        gameData.clearDelayedActions(ExileAndReturnTransformedAtEndOfCombat.class);
         gameData.clearDelayedActions(DelayedPermanentAction.class,
                 a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
                         || a.kind() == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT

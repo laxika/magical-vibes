@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TritonTactics.class, GrizzlyBears.class, GiantSpider.class, Mountain.class})
+@CardUsed({TritonTactics.class, GrizzlyBears.class, GiantSpider.class, Mountain.class, WordOfUndoing.class})
 class TritonTacticsTest extends BaseCardTest {
 
     @Test
@@ -224,7 +226,9 @@ class TritonTacticsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.hasDelayedAction(TapCombatOpponentsAtEndOfCombat.class)).isFalse();
+
+        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
         prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
@@ -272,8 +276,31 @@ class TritonTacticsTest extends BaseCardTest {
     }
 
     private void advanceThroughEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("The delayed tap trigger can be responded to")
+    void delayedTapCanBeRespondedTo() {
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        Permanent attacker = addCreatureReady(player1, new GiantSpider());
+        attacker.setAttacking(true);
+        castTritonTactics(List.of(blocker.getId()));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.castAndResolveInstant(player1, 0, attacker.getId());
+            resolveAllTriggers();
+        });
+
+        harness.assertInHand(player1, "Giant Spider");
+        assertThat(attacker.getSkipUntapCount()).isZero();
     }
 }

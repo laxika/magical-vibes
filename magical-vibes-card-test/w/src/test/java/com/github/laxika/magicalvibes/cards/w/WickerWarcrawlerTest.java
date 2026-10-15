@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WickerWarcrawler.class, GrizzlyBears.class})
+@CardUsed({WickerWarcrawler.class, GrizzlyBears.class, WordOfUndoing.class})
 class WickerWarcrawlerTest extends BaseCardTest {
 
     @Test
@@ -24,9 +25,7 @@ class WickerWarcrawlerTest extends BaseCardTest {
         Permanent crawler = addCreatureReady(player1, new WickerWarcrawler());
 
         declareAttackers(player1, List.of(0));
-        // No blockers exist, so priorities cascade through the combat damage step and out of
-        // end of combat, draining the scheduled counter.
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(crawler.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(5);
@@ -59,7 +58,7 @@ class WickerWarcrawlerTest extends BaseCardTest {
         declareAttackers(player1, List.of()); // stays back
         harness.passBothPriorities();
 
-        assertThat(gd.hasDelayedAction(PutMinusOneCounterAtEndOfCombat.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
 
         leaveEndOfCombat();
 
@@ -102,8 +101,28 @@ class WickerWarcrawlerTest extends BaseCardTest {
     }
 
     private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("The end-of-combat counter trigger can be responded to")
+    void counterTriggerCanBeRespondedTo() {
+        Permanent crawler = addCreatureReady(player1, new WickerWarcrawler());
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+            assertThat(gd.stack).hasSize(1);
+
+            harness.setHand(player1, List.of(new WordOfUndoing()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.castAndResolveInstant(player1, 0, crawler.getId());
+            resolveAllTriggers();
+        });
+
+        harness.assertInHand(player1, "Wicker Warcrawler");
+        assertThat(crawler.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 }

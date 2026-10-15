@@ -302,6 +302,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.condition.MinimumAttackersThisCombat;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
@@ -1240,6 +1241,8 @@ public class ConditionEvaluationService {
                     ctx.xValue() == c.attackerCount();
             case MinimumAttackers c ->
                     ctx.xValue() >= c.minimumAttackers();
+            case MinimumAttackersThisCombat c ->
+                    gameData.declaredAttackerIdsThisCombat.size() >= c.minimumAttackers();
             case MinimumMatchingAttackers c ->
                     countMatchingAttackers(gameData, ctx, c.predicate()) >= c.minimum();
             case OpponentAttacksWithAtLeastCreatures c ->

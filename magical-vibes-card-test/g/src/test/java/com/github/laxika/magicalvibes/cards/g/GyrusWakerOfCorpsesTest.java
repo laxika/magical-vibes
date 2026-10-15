@@ -79,11 +79,9 @@ class GyrusWakerOfCorpsesTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .contains("Grizzly Bears");
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        // The "exile the token at end of combat" delayed trigger uses the stack.
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken()

@@ -106,40 +106,6 @@ AngelOfSalvationTest. Don't run the full test suite; ask me. Don't commit until 
 
 ---
 
-## 23. "At end of combat" delayed actions resolve without using the stack
-
-**Status:** open · **Found:** 2026-10-15, while fixing G-card tests
-
-**Failing tests:** none known yet. Gaze of the Gorgon, Venomous Breath and Glyph of Doom were moved onto
-the stack while fixing their tests; the other end-of-combat delayed actions were not checked.
-
-**What the rules require.** CR 603.7: an effect that does something "at end of combat" creates a delayed
-triggered ability, which goes on the stack like any trigger. CR 511.2: abilities that trigger "at end of
-combat" trigger as the end of combat step begins, so one created during that step waits for a later
-combat. `TurnProgressionService.processEndOfCombatActions` still applies most of these delayed actions
-directly, with no stack and no chance to respond: `SacrificeAtEndOfCombat`, the `DelayedPermanentAction`
-end-of-combat kinds, `DestroyEquipmentAtEndOfCombat`, `PutMinusOneCounterAtEndOfCombat`,
-`PutCounterOnPermanentAtEndOfCombat`, `RemoveCounterFromSourceAtEndOfCombat`,
-`GainControlOfPermanentAtEndOfCombat`, `ExileAndReturnTransformedAtEndOfCombat`,
-`DealDamageToPermanentAtEndOfCombat`, `DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource`,
-`TapAndSkipUntapAtEndOfCombat`, `TapCombatOpponentsAtEndOfCombat` and `PhaseOutAtEndOfCombat`. It also
-applies them as the step ends when they were created during it. Some of these may be turn-based or
-rules-correct as written, so check each card's Oracle text first.
-
-**Why it's large.** About a dozen delayed-action kinds and every card that uses them. Each needs a stack
-entry with the right source and controller, and tests that respond to it.
-
-**Prompt to start it:**
-
-```
-Work through missing-features-to-do.md entry 23: for each end-of-combat delayed action that is really
-an "at end of combat" delayed trigger, put it on the stack as the end of combat step begins (CR 603.7,
-511.2) instead of applying it directly, the way DestroyCombatOpponentsAtEndOfCombat now does. Add a
-"can be responded to" test per card. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

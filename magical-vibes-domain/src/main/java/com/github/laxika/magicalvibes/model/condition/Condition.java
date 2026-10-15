@@ -277,6 +277,7 @@ public sealed interface Condition permits
         Metalcraft,
         MaxSpeed,
         MinimumAttackers,
+        MinimumAttackersThisCombat,
         MinimumMatchingAttackers,
         MinimumAttackingCreaturesOfSubtype,
         Morbid,

@@ -1,11 +1,18 @@
 package com.github.laxika.magicalvibes.model.action;
 
+import com.github.laxika.magicalvibes.model.Card;
+
+import java.util.List;
 import java.util.UUID;
 
 /**
- * Creature whose blocked attackers are tapped and kept from untapping at the next end of combat.
- * The directional opponent set is read when the action is drained, so blocks made after the spell
- * resolves are included.
+ * Triton Tactics' delayed "at this turn's next end of combat" trigger: taps each creature blocked by
+ * one of {@code creatureIds} and keeps it from untapping. Drained in
+ * {@code CombatService.processEndOfCombatCombatOpponentTaps()}, which puts the trigger from
+ * {@code sourceCard} on the stack under {@code controllerId}; the directional opponent set is read
+ * as that trigger resolves, so blocks made after the spell resolved are included. Discarded at
+ * cleanup when no end of combat came this turn.
  */
-public record TapCombatOpponentsAtEndOfCombat(UUID creatureId) implements DelayedAction {
+public record TapCombatOpponentsAtEndOfCombat(List<UUID> creatureIds, Card sourceCard, UUID controllerId)
+        implements DelayedAction {
 }

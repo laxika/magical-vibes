@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.ArdentMilitia;
 import com.github.laxika.magicalvibes.cards.e.EmpyrialArmor;
+import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.PhaseOutAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TeferisVeil.class, ArdentMilitia.class, EmpyrialArmor.class})
+@CardUsed({TeferisVeil.class, ArdentMilitia.class, EmpyrialArmor.class, WordOfUndoing.class})
 class TeferisVeilTest extends BaseCardTest {
 
     @Test
@@ -66,7 +68,7 @@ class TeferisVeilTest extends BaseCardTest {
         declareAttackers(player1, List.of());
         resolveCombat();
 
-        assertThat(gd.hasDelayedAction(PhaseOutAtEndOfCombat.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bystander);
     }
 
@@ -207,5 +209,27 @@ class TeferisVeilTest extends BaseCardTest {
         assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of()))
                 .doesNotContain(attacker, replacement);
         harness.assertInGraveyard(player1, "Ardent Militia");
+    }
+
+    @Test
+    @DisplayName("The delayed phase-out trigger can be responded to")
+    void phaseOutTriggerCanBeRespondedTo() {
+        harness.addToBattlefield(player1, new TeferisVeil());
+        Permanent attacker = addCreatureReady(player1, new ArdentMilitia());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1)));
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.castAndResolveInstant(player1, 0, attacker.getId());
+            resolveAllTriggers();
+        });
+
+        harness.assertInHand(player1, "Ardent Militia");
+        assertThat(gd.phasedOutPermanents.getOrDefault(player1.getId(), List.of())).doesNotContain(attacker);
     }
 }

@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.c.ChokingVines;
+import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TolarianEntrancer.class, BenalishKnight.class, ChokingVines.class})
+@CardUsed({TolarianEntrancer.class, BenalishKnight.class, ChokingVines.class, WordOfUndoing.class})
 class TolarianEntrancerTest extends BaseCardTest {
 
     @Test
@@ -85,7 +86,7 @@ class TolarianEntrancerTest extends BaseCardTest {
 
         leaveEndOfCombat();
 
-        assertThat(gd.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(knight);
     }
 
@@ -102,7 +103,7 @@ class TolarianEntrancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(entrancer.isBlockedWithoutBlockers()).isTrue();
-        assertThat(gd.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -168,8 +169,35 @@ class TolarianEntrancerTest extends BaseCardTest {
     }
 
     private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("The delayed control trigger can be responded to by bouncing the blocker")
+    void controlTriggerCanBeRespondedTo() {
+        addCreatureReady(player1, new TolarianEntrancer());
+        Permanent knight = addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            resolveAllTriggers();
+        });
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new WordOfUndoing()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.castAndResolveInstant(player2, 0, knight.getId());
+            resolveAllTriggers();
+        });
+
+        harness.assertInHand(player2, "Benalish Knight");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(knight);
     }
 }

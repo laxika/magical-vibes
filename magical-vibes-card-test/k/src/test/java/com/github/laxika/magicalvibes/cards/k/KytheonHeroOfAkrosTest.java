@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TimberpackWolf;
+import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KytheonHeroOfAkros.class, Shock.class, TimberpackWolf.class})
+@CardUsed({KytheonHeroOfAkros.class, Shock.class, TimberpackWolf.class, WordOfUndoing.class})
 class KytheonHeroOfAkrosTest extends BaseCardTest {
 
     @Test
@@ -31,9 +32,7 @@ class KytheonHeroOfAkrosTest extends BaseCardTest {
         declareAttackers(List.of(0, 1, 2));
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Kytheon, Hero of Akros");
         harness.assertOnBattlefield(player1, "Gideon, Battle-Forged");
@@ -52,9 +51,7 @@ class KytheonHeroOfAkrosTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertOnBattlefield(player1, "Kytheon, Hero of Akros");
         harness.assertNotOnBattlefield(player1, "Gideon, Battle-Forged");
@@ -187,4 +184,26 @@ class KytheonHeroOfAkrosTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Gideon, Battle-Forged");
     }
 
+    @Test
+    @DisplayName("The end-of-combat transform trigger can be responded to")
+    void transformTriggerCanBeRespondedTo() {
+        Permanent kytheon = addKytheon(player1);
+        addCreatureReady(player1, new TimberpackWolf());
+        addCreatureReady(player1, new TimberpackWolf());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0, 1, 2)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.castAndResolveInstant(player1, 0, kytheon.getId());
+            resolveAllTriggers();
+        });
+
+        harness.assertInHand(player1, "Kytheon, Hero of Akros");
+        harness.assertNotOnBattlefield(player1, "Gideon, Battle-Forged");
+    }
 }

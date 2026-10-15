@@ -181,6 +181,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                 entry.getDescription(), List.of(thenEffect), thenTargetId, entry.getSourcePermanentId());
         thenEntry.setEventValue(statValue);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        thenEntry.setTriggeringPermanentId(entry.getTriggeringPermanentId());
         if (thenEffect instanceof SacrificePermanentsEffect && targetCardId != null) {
             thenEntry.setTargetCardIds(List.of(targetCardId));
         }

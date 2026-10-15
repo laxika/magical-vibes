@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -25,11 +26,10 @@ public class KjeldoranHomeGuard extends Card {
 
     public KjeldoranHomeGuard() {
         // At end of combat, if this creature attacked or blocked this combat, put a -0/-1 counter on
-        // this creature and create a 0/1 white Deserter creature token. Scheduled from the attack /
-        // block trigger so the counter lands after combat damage, leaving it at full toughness.
-        addEffect(EffectSlot.ON_ATTACK, new PutCounterOnSourceAtEndOfCombatEffect(
-                CounterType.MINUS_ZERO_MINUS_ONE, 1, DESERTER_TOKEN));
-        addEffect(EffectSlot.ON_BLOCK, new PutCounterOnSourceAtEndOfCombatEffect(
-                CounterType.MINUS_ZERO_MINUS_ONE, 1, DESERTER_TOKEN), TriggerMode.ONCE_PER_BLOCK);
+        // this creature and create a 0/1 white Deserter creature token.
+        addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED, new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),
+                new PutCountersOnSelfEffect(CounterType.MINUS_ZERO_MINUS_ONE)));
+        addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED, new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),
+                DESERTER_TOKEN));
     }
 }

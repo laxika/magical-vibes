@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GiveNoGround;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KjeldoranHomeGuard.class, GiveNoGround.class})
+@CardUsed({KjeldoranHomeGuard.class, GiveNoGround.class, Shock.class})
 class KjeldoranHomeGuardTest extends BaseCardTest {
 
     @Test
@@ -45,7 +46,7 @@ class KjeldoranHomeGuardTest extends BaseCardTest {
 
         prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities(); // resolve the block trigger
+        assertThat(gd.stack).isEmpty();
 
         assertThat(guard.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
         assertThat(findPermanents(player2, "Deserter")).isEmpty();
@@ -134,8 +135,34 @@ class KjeldoranHomeGuardTest extends BaseCardTest {
     }
 
     private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("The end-of-combat ability can be responded to before it puts a counter or creates a token")
+    void endOfCombatAbilityCanBeRespondedTo() {
+        Permanent guard = addCreatureReady(player1, new KjeldoranHomeGuard());
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+            assertThat(gd.stack).hasSize(1);
+
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+
+            harness.assertLife(player2, 17);
+            assertThat(guard.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isZero();
+            assertThat(findPermanents(player1, "Deserter")).isEmpty();
+
+            resolveAllTriggers();
+        });
+
+        assertThat(guard.getCounterCount(CounterType.MINUS_ZERO_MINUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Deserter")).hasSize(1);
     }
 }

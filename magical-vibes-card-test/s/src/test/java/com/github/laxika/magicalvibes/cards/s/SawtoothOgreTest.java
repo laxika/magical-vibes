@@ -146,7 +146,8 @@ class SawtoothOgreTest extends BaseCardTest {
     }
 
     private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
     }
 }

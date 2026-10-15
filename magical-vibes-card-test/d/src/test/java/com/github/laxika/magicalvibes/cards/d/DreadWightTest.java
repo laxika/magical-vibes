@@ -245,9 +245,11 @@ class DreadWightTest extends BaseCardTest {
     }
 
     private void leaveEndOfCombat() {
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.END_OF_COMBAT);
+        if (gd.currentStep != TurnStep.END_OF_COMBAT) {
+            harness.forceStep(TurnStep.COMBAT_DAMAGE);
+            harness.clearPriorityPassed();
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+        }
         harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
     }
 

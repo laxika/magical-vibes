@@ -3827,6 +3827,7 @@ public class StepTriggerService {
                     delayedTrigger.sourcePermanentId()
             );
             delayedEntry.setNonTargeting(delayedTrigger.affectedPermanentId() != null);
+            delayedEntry.setTriggeringPermanentId(delayedTrigger.triggeringPermanentId());
             gameData.stack.add(delayedEntry);
 
             gameLogService.append(gameData, GameLog.cardThen(

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.k.Karakas;
 import com.github.laxika.magicalvibes.cards.k.KeepersOfTheFaith;
 import com.github.laxika.magicalvibes.cards.t.TheWretched;
 import com.github.laxika.magicalvibes.cards.w.WallOfEarth;
+import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({InfiniteAuthority.class, ClergyOfTheHolyNimbus.class, DurkwoodBoars.class,
-        KeepersOfTheFaith.class, Karakas.class, TheWretched.class, WallOfEarth.class})
+        KeepersOfTheFaith.class, Karakas.class, TheWretched.class, WallOfEarth.class, WordOfUndoing.class})
 class InfiniteAuthorityTest extends BaseCardTest {
 
     @Test
@@ -67,6 +68,7 @@ class InfiniteAuthorityTest extends BaseCardTest {
 
         resolveAllTriggers();
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -90,6 +92,7 @@ class InfiniteAuthorityTest extends BaseCardTest {
 
         resolveAllTriggers();
         resolveCombat(player2);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
         harness.passUntil(player2, TurnStep.END_STEP);
@@ -255,5 +258,56 @@ class InfiniteAuthorityTest extends BaseCardTest {
     private void addAuthorityAttachedTo(Player player, Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player, new InfiniteAuthority());
         aura.setAttachedTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("The delayed destruction can be responded to, and a creature that escapes it grants no counter")
+    void delayedDestructionCanBeRespondedTo() {
+        Permanent attacker = addCreatureReady(player1, new KeepersOfTheFaith());
+        addAuthorityAttachedTo(player1, attacker);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new KeepersOfTheFaith());
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        });
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new WordOfUndoing()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.castAndResolveInstant(player2, 0, blocker.getId());
+            resolveAllTriggers();
+        });
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Keepers of the Faith");
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Destroying a token blocker this way still grants the counter")
+    void destroyedTokenGrantsCounter() {
+        Permanent attacker = addCreatureReady(player1, new KeepersOfTheFaith());
+        addAuthorityAttachedTo(player1, attacker);
+        attacker.setAttacking(true);
+        KeepersOfTheFaith tokenCard = new KeepersOfTheFaith();
+        tokenCard.setToken(true);
+        Permanent blocker = addCreatureReady(player2, tokenCard);
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+            resolveAllTriggers();
+        });
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

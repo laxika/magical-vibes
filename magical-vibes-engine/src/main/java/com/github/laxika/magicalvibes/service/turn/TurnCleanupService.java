@@ -124,6 +124,8 @@ public class TurnCleanupService {
         gameData.skipCombatPhaseExpirationsThisTurn.clear();
         gameData.drainDelayedActions(
                 com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat.class);
+        gameData.drainDelayedActions(
+                com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat.class);
         gameData.controlLossUnattachTriggers.clear();
         gameData.controlLossTapTriggers.clear();
         gameData.sacrificeForbiddenThisTurn.clear();

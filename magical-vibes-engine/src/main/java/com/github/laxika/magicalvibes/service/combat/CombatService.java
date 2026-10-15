@@ -1,27 +1,17 @@
 package com.github.laxika.magicalvibes.service.combat;
 
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource;
 import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerUntapRemoveFromCombat;
-import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtNextEndStep;
-import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.PhaseOutAtEndOfCombat;
-import com.github.laxika.magicalvibes.model.action.TapAndSkipUntapAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -29,27 +19,19 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentsOfTargetAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
-import com.github.laxika.magicalvibes.service.battlefield.ExileAndReturnTransformedService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
-import com.github.laxika.magicalvibes.service.turn.PhasingService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,8 +39,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -87,17 +67,6 @@ public class CombatService {
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final CreatureControlService creatureControlService;
-    private final PermanentCounterSupport permanentCounterSupport;
-    private final TriggerCollectionService triggerCollectionService;
-    private final PermanentControlSupport permanentControlSupport;
-    private final TapUntapSupport tapUntapSupport;
-    private final ExileAndReturnTransformedService exileAndReturnTransformedService;
-    private final PhasingService phasingService;
-
-    /** Layer-2 control effect wrapping each end-of-combat control gain (drives layer classification). */
-    private static final GainControlOfTargetEffect CONTROL_OPPONENT_EFFECT =
-            new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD);
 
 
     public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
@@ -244,104 +213,11 @@ public class CombatService {
     }
 
     /**
-     * Taps every creature scheduled by Joven's Ferrets and increments its skip-untap count, so it
-     * misses its controller's next untap step. Creatures that already left the battlefield are
-     * skipped; an already-tapped creature still picks up the untap lock.
-     */
-    public void processEndOfCombatTaps(GameData gameData) {
-        List<TapAndSkipUntapAtEndOfCombat> actions =
-                gameData.drainDelayedActions(TapAndSkipUntapAtEndOfCombat.class);
-        for (TapAndSkipUntapAtEndOfCombat action : actions) {
-            tapAndSkipUntapAtEndOfCombat(gameData, action.permanentId());
-        }
-    }
-
-    /**
-     * Taps each creature that was blocked by one of Triton Tactics' chosen creatures and gives it the
-     * same one-untap-step lock as Joven's Ferrets. The directional block map is read at end of combat,
-     * so the spell can resolve before blockers are declared.
-     */
-    public void processEndOfCombatCombatOpponentTaps(GameData gameData) {
-        List<TapCombatOpponentsAtEndOfCombat> actions =
-                gameData.drainDelayedActions(TapCombatOpponentsAtEndOfCombat.class);
-        Set<UUID> opponentIds = new java.util.LinkedHashSet<>();
-        for (TapCombatOpponentsAtEndOfCombat action : actions) {
-            Set<UUID> combatOpponents = gameData.combatOpponentIdsBlockedByThisTurn.get(action.creatureId());
-            if (combatOpponents != null) {
-                opponentIds.addAll(combatOpponents);
-            }
-        }
-        for (UUID opponentId : opponentIds) {
-            tapAndSkipUntapAtEndOfCombat(gameData, opponentId);
-        }
-    }
-
-    private void tapAndSkipUntapAtEndOfCombat(GameData gameData, UUID permanentId) {
-        Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
-        if (perm == null) {
-            return;
-        }
-        tapUntapSupport.tapPermanent(gameData, perm);
-        perm.setSkipUntapCount(perm.getSkipUntapCount() + 1);
-        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                " is tapped and doesn't untap during its controller's next untap step."));
-        log.info("Game {} - {} tapped and untap-locked at end of combat", gameData.id,
-                perm.getCard().getName());
-    }
-
-    /**
-     * Phases out every permanent scheduled for end-of-combat phasing (e.g. by Teferi's Veil's
-     * "whenever a creature you control attacks, it phases out at end of combat"). Attachments follow
-     * indirectly (CR 702.26g) and each permanent is removed from combat (CR 506.4); because it
-     * phased out directly it phases in during its controller's next untap step (CR 702.26a).
-     */
-    public void processEndOfCombatPhaseOuts(GameData gameData) {
-        List<Permanent> phasingOut = gameData.drainDelayedActions(PhaseOutAtEndOfCombat.class).stream()
-                .map(action -> gameQueryService.findPermanentById(gameData, action.permanentId()))
-                .filter(Objects::nonNull)
-                .toList();
-        if (phasingOut.isEmpty()) {
-            return;
-        }
-        phasingService.phaseOut(gameData, phasingOut);
-    }
-
-    /**
      * Exiles all tokens marked for end-of-combat exile (e.g. Geist of Saint Traft's Angel token).
      */
     public void processEndOfCombatExiles(GameData gameData) {
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
-        permanentRemovalService.removeOrphanedAuras(gameData);
-    }
-
-    /**
-     * Destroys all Equipment attached to creatures marked for end-of-combat equipment destruction
-     * (e.g. by Corrosive Ooze's trigger). Respects indestructible via
-     * {@link PermanentRemovalService#tryDestroyPermanent}.
-     */
-    public void processEndOfCombatEquipmentDestruction(GameData gameData) {
-        List<UUID> creatureIds = gameData.drainDelayedActions(DestroyEquipmentAtEndOfCombat.class).stream()
-                .map(DestroyEquipmentAtEndOfCombat::creatureId)
-                .toList();
-
-        for (UUID creatureId : creatureIds) {
-            List<Permanent> equipmentToDestroy = new ArrayList<>();
-            gameData.forEachPermanent((playerId, p) -> {
-                if (creatureId.equals(p.getAttachedTo())
-                        && p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
-                    equipmentToDestroy.add(p);
-                }
-            });
-
-            for (Permanent equipment : equipmentToDestroy) {
-                if (permanentRemovalService.tryDestroyPermanent(gameData, equipment)) {
-                    gameLogService.append(gameData, GameLog.isDestroyed(equipment.getCard()));
-                    log.info("Game {} - {} destroyed at end of combat (equipment destruction)",
-                            gameData.id, equipment.getCard().getName());
-                }
-            }
-        }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
@@ -354,27 +230,6 @@ public class CombatService {
     public void processEndOfCombatDestructions(GameData gameData) {
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT);
-
-        List<DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource> counterActions =
-                gameData.drainDelayedActions(DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource.class);
-        for (DestroyCombatOpponentAtEndOfCombatThenPutCounterOnSource action : counterActions) {
-            Permanent opponent = gameQueryService.findPermanentById(gameData, action.opponentId());
-            if (opponent == null) {
-                continue;
-            }
-            if (permanentRemovalService.tryDestroyPermanent(gameData, opponent,
-                    action.cannotBeRegenerated())) {
-                gameLogService.append(gameData, GameLog.isDestroyed(opponent.getCard()));
-                log.info("Game {} - {} destroyed at end of combat (combat-opponent counter rider)",
-                        gameData.id, opponent.getCard().getName());
-                if (action.sourcePermanentId() != null && action.controllerId() != null
-                        && action.sourceCard() != null) {
-                    gameData.queueDelayedAction(new PutCounterOnPermanentAtNextEndStep(
-                            action.sourcePermanentId(), action.controllerId(),
-                            CounterType.PLUS_ONE_PLUS_ONE, 1, action.sourceCard()));
-                }
-            }
-        }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
@@ -430,96 +285,20 @@ public class CombatService {
     }
 
     /**
-     * Puts -1/-1 counters on all permanents scheduled for end-of-combat counter placement (e.g. by
-     * Wicker Warcrawler's "whenever this creature attacks or blocks, put a -1/-1 counter on it at
-     * end of combat"). Respects {@code cantHaveCounters}/{@code cantHaveMinusOneMinusOneCounters}
-     * and fires "whenever a -1/-1 counter is put on a creature" triggers.
+     * Puts Triton Tactics' delayed "at this turn's next end of combat, tap each creature that was
+     * blocked by one of those creatures" trigger on the stack, carrying the chosen creatures as its
+     * triggering permanents (CR 603.7).
      */
-    public void processEndOfCombatSourceCounters(GameData gameData) {
-        List<PutMinusOneCounterAtEndOfCombat> toCounter =
-                gameData.drainDelayedActions(PutMinusOneCounterAtEndOfCombat.class);
-        for (PutMinusOneCounterAtEndOfCombat action : toCounter) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
-            if (perm == null || action.amount() <= 0) {
-                continue;
-            }
-            if (gameQueryService.cantHaveCounters(gameData, perm)
-                    || gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
-                continue;
-            }
-            int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, perm, action.amount());
-            if (counters <= 0) {
-                continue;
-            }
-            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
-                    perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-            UUID counterPlacerId = gameQueryService.findPermanentController(gameData, perm.getId());
-            triggerCollectionService.checkYouPutCountersTriggers(gameData, counterPlacerId, counters);
-            permanentCounterSupport.recordCounterPlacedOnCreature(gameData, perm,
-                    counterPlacerId);
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                    " gets " + counters + " -1/-1 counter(s)."));
-            log.info("Game {} - {} gets {} -1/-1 counter(s) at end of combat",
-                    gameData.id, perm.getCard().getName(), counters);
-            // The permanent's controller is the player putting these self-counters (Nest of Scarabs).
-            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, counters, counterPlacerId);
-        }
-    }
-
-    /**
-     * Puts the scheduled counters on all permanents marked for end-of-combat counter placement on a
-     * combat opponent (e.g. Greater Werewolf's "put a -0/-2 counter on each creature blocking or
-     * blocked by this creature") — also used for the source itself (Kjeldoran Home Guard), including
-     * its "and create a … token" rider. Respects {@code cantHaveCounters}. When {@code alsoTap} is set
-     * the permanent is tapped (Dread Wight). Paralyzation counters also grant
-     * "{4}: Remove a paralyzation counter from this creature" for as long as the permanent remains
-     * (source-independent — survives the creating creature leaving).
-     */
-    public void processEndOfCombatOpponentCounters(GameData gameData) {
-        List<PutCounterOnPermanentAtEndOfCombat> toCounter =
-                gameData.drainDelayedActions(PutCounterOnPermanentAtEndOfCombat.class);
-        for (PutCounterOnPermanentAtEndOfCombat action : toCounter) {
-            Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
-            if (perm == null || action.amount() <= 0
-                    || action.requiredSourcePermanentId() != null
-                    && gameQueryService.findPermanentById(gameData, action.requiredSourcePermanentId()) == null) {
-                continue;
-            }
-            // One trigger does both, so the token is created even when the counter can't be placed.
-            if (action.tokenForController() != null) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                if (controllerId != null) {
-                    permanentControlSupport.applyCreateToken(gameData, controllerId,
-                            action.tokenForController(), perm.getCard().getSetCode());
-                }
-            }
-            if (!gameQueryService.cantHaveCounters(gameData, perm)) {
-                perm.setCounterCount(action.counterType(),
-                        perm.getCounterCount(action.counterType()) + action.amount());
-                if (action.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
-                    UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                    if (controllerId != null) {
-                        if (gameQueryService.isCreature(gameData, perm)) {
-                            gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(controllerId);
-                        }
-                        gameData.playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn.add(controllerId);
-                    }
-                    permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
-                            gameData, perm, action.amount(), action.placingPlayerId());
-                }
-            }
-            if (action.alsoTap()) {
-                perm.tap();
-            }
-            if (action.counterType() == CounterType.PARALYZATION) {
-                grantParalyzationRemoveAbility(perm);
-            }
-            String tapText = action.alsoTap() ? " and becomes tapped" : "";
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                    " gets " + action.amount() + " counter(s)" + tapText + "."));
-            log.info("Game {} - {} gets {} {} counter(s){} at end of combat",
-                    gameData.id, perm.getCard().getName(), action.amount(), action.counterType(),
-                    action.alsoTap() ? " and is tapped" : "");
+    public void processEndOfCombatCombatOpponentTaps(GameData gameData) {
+        for (TapCombatOpponentsAtEndOfCombat action : gameData.drainDelayedActions(TapCombatOpponentsAtEndOfCombat.class)) {
+            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, action.sourceCard(),
+                    action.controllerId(), action.sourceCard().getName() + "'s delayed trigger",
+                    new ArrayList<>(List.of(new TapCombatOpponentsOfTargetAtEndOfCombatEffect(false))),
+                    (UUID) null, (UUID) null);
+            trigger.setNonTargeting(true);
+            trigger.setTriggeringPermanentIds(action.creatureIds());
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed trigger triggers."));
         }
     }
 
@@ -581,50 +360,5 @@ public class CombatService {
             trigger.setSourcePermanentSnapshot(new Permanent(perm));
             gameData.enqueueTrigger(trigger);
         }
-    }
-
-    /**
-     * Gains control of all permanents scheduled for end-of-combat control change (e.g. The Wretched's
-     * "At end of combat, gain control of all creatures blocking this creature for as long as you
-     * control this creature"). Control is applied with {@code WHILE_SOURCE_ON_BATTLEFIELD} keyed to
-     * the source, so it ends when the source leaves the battlefield or its controller loses it.
-     */
-    public void processEndOfCombatControlGains(GameData gameData) {
-        List<GainControlOfPermanentAtEndOfCombat> toControl =
-                gameData.drainDelayedActions(GainControlOfPermanentAtEndOfCombat.class);
-        for (GainControlOfPermanentAtEndOfCombat action : toControl) {
-            Permanent target = gameQueryService.findPermanentById(gameData, action.permanentId());
-            if (target == null) {
-                continue;
-            }
-            // A source-linked duration needs the source still on the battlefield under the gaining
-            // player; a permanent gain is independent of the source.
-            if (action.duration().isSourceLinked()) {
-                Permanent source = gameQueryService.findPermanentById(gameData, action.sourcePermanentId());
-                if (source == null
-                        || !action.newControllerId().equals(gameData.findControllerOf(source))) {
-                    continue;
-                }
-            }
-            creatureControlService.applyControlEffect(gameData, action.newControllerId(), target,
-                    CONTROL_OPPONENT_EFFECT, action.duration().toEffectDuration(),
-                    action.sourcePermanentId(), action.sourceCardName());
-        }
-    }
-
-    /**
-     * Exiles all permanents marked for end-of-combat exile-and-return-transformed
-     * (e.g. Conqueror's Galleon). Each permanent is exiled and immediately returned
-     * to the battlefield transformed (as its back face) under its controller's control.
-     */
-    public void processEndOfCombatExileAndReturnTransformed(GameData gameData) {
-        List<UUID> toProcess = gameData.drainDelayedActions(ExileAndReturnTransformedAtEndOfCombat.class).stream()
-                .map(ExileAndReturnTransformedAtEndOfCombat::permanentId)
-                .toList();
-
-        for (UUID permId : toProcess) {
-            exileAndReturnTransformedService.exileAndReturnTransformed(gameData, permId);
-        }
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 }
