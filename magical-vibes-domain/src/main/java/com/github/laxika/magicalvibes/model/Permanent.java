@@ -72,13 +72,11 @@ public class Permanent {
     private final Set<UUID> playersAttackedLastCombat = new HashSet<>();
     /** Creatures that were tapped to pay this Vehicle's crew cost during the current turn. */
     private final Set<UUID> creaturesThatCrewedThisTurn = new HashSet<>();
-    /** Set when this creature is declared as an attacker; unlike {@link #attackedThisTurn} it survives
-     *  the intervening opponent turns and is rolled into {@link #attackedDuringControllersLastTurn} at
-     *  the start of its controller's next turn by {@link #rollOverAttackRecord()}. */
-    @Setter private boolean attackedDuringControllersCurrentTurn;
-    /** True when this creature attacked during its controller's previous turn (Halls of Mist). Read by
-     *  {@code PermanentAttackedDuringControllersLastTurnPredicate}. */
-    @Setter private boolean attackedDuringControllersLastTurn;
+    /** Players during whose most recent turn this creature attacked, updated as each turn ends by
+     *  {@link #recordTurnEnded(UUID)}. Keyed by player rather than by controller so that "attacked
+     *  during its controller's last turn" (Halls of Mist, Giant Turtle, Tangle Kelp) follows the
+     *  current controller after a control change. */
+    private final Set<UUID> playersDuringWhoseLastTurnThisAttacked = new HashSet<>();
     /** When true, this creature can't be declared as an attacker during its controller's next turn
      *  (Wall of Dust's block trigger). Promoted into {@link #cantAttackThisTurn} at the start of the
      *  controller's next turn by {@link #promoteCantAttackNextTurn()}. */
@@ -843,8 +841,7 @@ public class Permanent {
         this.playersAttackedThisCombat.addAll(source.playersAttackedThisCombat);
         this.playersAttackedLastCombat.addAll(source.playersAttackedLastCombat);
         this.creaturesThatCrewedThisTurn.addAll(source.creaturesThatCrewedThisTurn);
-        this.attackedDuringControllersCurrentTurn = source.attackedDuringControllersCurrentTurn;
-        this.attackedDuringControllersLastTurn = source.attackedDuringControllersLastTurn;
+        this.playersDuringWhoseLastTurnThisAttacked.addAll(source.playersDuringWhoseLastTurnThisAttacked);
         this.cantAttackNextTurn = source.cantAttackNextTurn;
         this.cantAttackThisTurn = source.cantAttackThisTurn;
         this.blocking = source.blocking;
@@ -1296,7 +1293,6 @@ public class Permanent {
             this.attacksThisTurn++;
             this.attacksThisGame++;
             this.attackedThisCombat = true;
-            this.attackedDuringControllersCurrentTurn = true;
             if (attackTarget != null) {
                 playersAttackedThisCombat.add(attackTarget);
             }
@@ -1322,13 +1318,22 @@ public class Permanent {
     }
 
     /**
-     * Shifts the "attacked on my controller's turn" record one controller-turn back. Called at the
-     * start of a turn for the permanents the new active player controls, so that during that turn
-     * {@link #attackedDuringControllersLastTurn} means "attacked during their previous turn".
+     * Records whether this creature attacked during the turn of {@code endingActivePlayerId}, which is
+     * ending. Only the active player's creatures can attack, so the turn's attack flag is that
+     * player's record until their next turn ends.
      */
-    public void rollOverAttackRecord() {
-        this.attackedDuringControllersLastTurn = this.attackedDuringControllersCurrentTurn;
-        this.attackedDuringControllersCurrentTurn = false;
+    public void recordTurnEnded(UUID endingActivePlayerId) {
+        if (endingActivePlayerId == null) return;
+        if (attackedThisTurn) {
+            playersDuringWhoseLastTurnThisAttacked.add(endingActivePlayerId);
+        } else {
+            playersDuringWhoseLastTurnThisAttacked.remove(endingActivePlayerId);
+        }
+    }
+
+    /** Whether this creature attacked during {@code playerId}'s most recent completed turn. */
+    public boolean attackedDuringLastTurnOf(UUID playerId) {
+        return playerId != null && playersDuringWhoseLastTurnThisAttacked.contains(playerId);
     }
 
     /** Remembers the host in {@link #lastAttachedTo} so it survives the detach. */

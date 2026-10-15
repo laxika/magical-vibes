@@ -1710,7 +1710,8 @@ public class ConditionEvaluationService {
             }
             case SourceAttackedDuringControllersLastTurn ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
-                yield source != null && source.isAttackedDuringControllersLastTurn();
+                yield source != null && source.attackedDuringLastTurnOf(
+                        gameQueryService.findPermanentController(gameData, source.getId()));
             }
             case SourceIsPaired ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);

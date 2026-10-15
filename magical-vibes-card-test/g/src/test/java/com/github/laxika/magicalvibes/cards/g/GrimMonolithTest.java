@@ -37,7 +37,7 @@ class GrimMonolithTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(monolith.isTapped()).isTrue();
     }

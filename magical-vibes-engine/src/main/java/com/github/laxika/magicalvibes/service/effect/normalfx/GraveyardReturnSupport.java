@@ -2604,89 +2604,24 @@ public class GraveyardReturnSupport {
         UUID controllerId = entry.getControllerId();
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        List<CardSubtype> tokenSubtypes = new ArrayList<>();
-        if (!replaceSubtypes && sourceCard.getSubtypes() != null) {
-            tokenSubtypes.addAll(sourceCard.getSubtypes());
-        }
-        if (additionalSubtypes != null) {
-            for (CardSubtype subtype : additionalSubtypes) {
-                if (!tokenSubtypes.contains(subtype)) {
-                    tokenSubtypes.add(subtype);
-                }
-            }
-        }
+        List<CardSubtype> tokenSubtypes = tokenCopySubtypes(sourceCard, additionalSubtypes, replaceSubtypes);
         int tokenMultiplier = gameQueryService.getTokenCreationAmount(
                 gameData, controllerId, 1, tokenSubtypes, sourceCard.hasType(CardType.CREATURE));
         Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         for (int copy = 0; copy < tokenMultiplier; copy++) {
-            Card tokenCard = new Card();
-            tokenCard.setName(sourceCard.getName());
-            tokenCard.setType(sourceCard.getType());
-            EnumSet<CardType> tokenAdditionalTypes = EnumSet.noneOf(CardType.class);
-            if (sourceCard.getAdditionalTypes() != null) {
-                tokenAdditionalTypes.addAll(sourceCard.getAdditionalTypes());
+            Card tokenCard = buildTokenCopyCard(sourceCard, tokenSubtypes, grantHaste, colorOverride,
+                    powerOverride, toughnessOverride, replaceSubtypes, grantHasteUntilEndOfTurn,
+                    additionalKeywords, removeLegendary, additionalTypes);
+            if (sourceCard.getBackFaceCard() != null) {
+                // CR 707.8a: a token copy of a double-faced card is a double-faced token whose back
+                // face copies the card's back face; the copy effect's exceptions (CR 707.9b) are part
+                // of the copying process, so they apply to that face as well.
+                Card sourceBack = sourceCard.getBackFaceCard();
+                tokenCard.setBackFaceCard(buildTokenCopyCard(sourceBack,
+                        tokenCopySubtypes(sourceBack, additionalSubtypes, replaceSubtypes), grantHaste,
+                        colorOverride, powerOverride, toughnessOverride, replaceSubtypes,
+                        grantHasteUntilEndOfTurn, additionalKeywords, removeLegendary, additionalTypes));
             }
-            if (additionalTypes != null) {
-                additionalTypes.stream()
-                        .filter(type -> type != sourceCard.getType())
-                        .forEach(tokenAdditionalTypes::add);
-            }
-            tokenCard.setAdditionalTypes(tokenAdditionalTypes);
-            tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
-            tokenCard.setToken(true);
-            if (colorOverride != null) {
-                tokenCard.setColor(colorOverride);
-                tokenCard.setColors(List.of(colorOverride));
-            } else {
-                tokenCard.setColor(sourceCard.getColor());
-                tokenCard.setColors(sourceCard.getColors() == null
-                        ? new ArrayList<>() : new ArrayList<>(sourceCard.getColors()));
-            }
-            if (removeLegendary && sourceCard.getSupertypes() != null) {
-                EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
-                supertypes.addAll(sourceCard.getSupertypes());
-                supertypes.remove(CardSupertype.LEGENDARY);
-                tokenCard.setSupertypes(supertypes);
-            } else {
-                tokenCard.setSupertypes(sourceCard.getSupertypes());
-            }
-            tokenCard.setPower(powerOverride != null ? powerOverride : sourceCard.getPower());
-            tokenCard.setToughness(toughnessOverride != null ? toughnessOverride : sourceCard.getToughness());
-            tokenCard.setCardText(sourceCard.getCardText());
-            tokenCard.setSetCode(sourceCard.getSetCode());
-            tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
-
-            tokenCard.setSubtypes(new ArrayList<>(tokenSubtypes));
-
-            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-            if (sourceCard.getKeywords() != null) {
-                keywords.addAll(sourceCard.getKeywords());
-            }
-            if (replaceSubtypes) {
-                // CR 707.9d: the copy's specific creature types replace the changeling CDA's types.
-                keywords.remove(Keyword.CHANGELING);
-            }
-            if (grantHaste && !grantHasteUntilEndOfTurn) {
-                keywords.add(Keyword.HASTE);
-            }
-            if (additionalKeywords != null) {
-                keywords.addAll(additionalKeywords);
-            }
-            tokenCard.setKeywords(keywords);
-
-            for (EffectSlot slot : EffectSlot.values()) {
-                for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
-                    if ((powerOverride != null || toughnessOverride != null)
-                            && reg.effect().isPowerToughnessDefining()) {
-                        continue;
-                    }
-                    tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
-                }
-            }
-            for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
-                tokenCard.addActivatedAbility(ability);
-            }
-            tokenCard.copyTargetingFrom(sourceCard);
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                     gameData, controllerId, tokenCard);
 
@@ -2730,6 +2665,98 @@ public class GraveyardReturnSupport {
 
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
         }
+    }
+
+    private Card buildTokenCopyCard(Card sourceCard, List<CardSubtype> tokenSubtypes, boolean grantHaste,
+                                    CardColor colorOverride, Integer powerOverride, Integer toughnessOverride,
+                                    boolean replaceSubtypes, boolean grantHasteUntilEndOfTurn,
+                                    Set<Keyword> additionalKeywords, boolean removeLegendary,
+                                    Set<CardType> additionalTypes) {
+        Card tokenCard = new Card();
+        tokenCard.setName(sourceCard.getName());
+        tokenCard.setType(sourceCard.getType());
+        EnumSet<CardType> tokenAdditionalTypes = EnumSet.noneOf(CardType.class);
+        if (sourceCard.getAdditionalTypes() != null) {
+            tokenAdditionalTypes.addAll(sourceCard.getAdditionalTypes());
+        }
+        if (additionalTypes != null) {
+            additionalTypes.stream()
+                    .filter(type -> type != sourceCard.getType())
+                    .forEach(tokenAdditionalTypes::add);
+        }
+        tokenCard.setAdditionalTypes(tokenAdditionalTypes);
+        tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
+        tokenCard.setToken(true);
+        if (colorOverride != null) {
+            tokenCard.setColor(colorOverride);
+            tokenCard.setColors(List.of(colorOverride));
+        } else {
+            tokenCard.setColor(sourceCard.getColor());
+            tokenCard.setColors(sourceCard.getColors() == null
+                    ? new ArrayList<>() : new ArrayList<>(sourceCard.getColors()));
+        }
+        if (removeLegendary && sourceCard.getSupertypes() != null) {
+            EnumSet<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
+            supertypes.addAll(sourceCard.getSupertypes());
+            supertypes.remove(CardSupertype.LEGENDARY);
+            tokenCard.setSupertypes(supertypes);
+        } else {
+            tokenCard.setSupertypes(sourceCard.getSupertypes());
+        }
+        tokenCard.setPower(powerOverride != null ? powerOverride : sourceCard.getPower());
+        tokenCard.setToughness(toughnessOverride != null ? toughnessOverride : sourceCard.getToughness());
+        tokenCard.setCardText(sourceCard.getCardText());
+        tokenCard.setSetCode(sourceCard.getSetCode());
+        tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
+
+        tokenCard.setSubtypes(new ArrayList<>(tokenSubtypes));
+
+        Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+        if (sourceCard.getKeywords() != null) {
+            keywords.addAll(sourceCard.getKeywords());
+        }
+        if (replaceSubtypes) {
+            // CR 707.9d: the copy's specific creature types replace the changeling CDA's types.
+            keywords.remove(Keyword.CHANGELING);
+        }
+        if (grantHaste && !grantHasteUntilEndOfTurn) {
+            keywords.add(Keyword.HASTE);
+        }
+        if (additionalKeywords != null) {
+            keywords.addAll(additionalKeywords);
+        }
+        tokenCard.setKeywords(keywords);
+
+        for (EffectSlot slot : EffectSlot.values()) {
+            for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
+                if ((powerOverride != null || toughnessOverride != null)
+                        && reg.effect().isPowerToughnessDefining()) {
+                    continue;
+                }
+                tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+            }
+        }
+        for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
+            tokenCard.addActivatedAbility(ability);
+        }
+        tokenCard.copyTargetingFrom(sourceCard);
+        return tokenCard;
+    }
+
+    private static List<CardSubtype> tokenCopySubtypes(Card sourceCard, List<CardSubtype> additionalSubtypes,
+                                                       boolean replaceSubtypes) {
+        List<CardSubtype> tokenSubtypes = new ArrayList<>();
+        if (!replaceSubtypes && sourceCard.getSubtypes() != null) {
+            tokenSubtypes.addAll(sourceCard.getSubtypes());
+        }
+        if (additionalSubtypes != null) {
+            for (CardSubtype subtype : additionalSubtypes) {
+                if (!tokenSubtypes.contains(subtype)) {
+                    tokenSubtypes.add(subtype);
+                }
+            }
+        }
+        return tokenSubtypes;
     }
 
     /**

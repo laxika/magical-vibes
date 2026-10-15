@@ -80,7 +80,7 @@ class GloriousEndTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PlatinumAngel());
         castGloriousEnd();
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities(); // resolve the loss trigger
 
         // Can't-lose: the trigger resolves but the player stays in the game.

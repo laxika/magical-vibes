@@ -26,7 +26,7 @@ class GoblinRockSledTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(sled.isAttackedDuringControllersCurrentTurn()).isTrue();
+        assertThat(sled.isAttackedThisTurn()).isTrue();
     }
 
     @Test
@@ -55,7 +55,7 @@ class GoblinRockSledTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(sled.isAttackedDuringControllersCurrentTurn()).isTrue();
+        assertThat(sled.isAttackedThisTurn()).isTrue();
         assertThat(gd.stack).isEmpty();
     }
 

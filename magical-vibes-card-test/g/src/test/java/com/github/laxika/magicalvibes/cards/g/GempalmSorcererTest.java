@@ -104,7 +104,7 @@ class GempalmSorcererTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleCardChosen(player1, 0));
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertInGraveyard(player1, "Gempalm Sorcerer");

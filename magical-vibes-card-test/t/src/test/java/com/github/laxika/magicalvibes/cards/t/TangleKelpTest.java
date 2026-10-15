@@ -39,7 +39,8 @@ class TangleKelpTest extends BaseCardTest {
     void preventsUntapAfterCreatureAttackedLastTurn() {
         Permanent creature = addCreatureReady(player2, new Squire());
         creature.tap();
-        creature.setAttackedDuringControllersCurrentTurn(true);
+        creature.setAttackedThisTurn(true);
+        creature.recordTurnEnded(player2.getId());
         attachTangleKelp(creature);
 
         advanceToNextTurn(player1);
@@ -64,7 +65,8 @@ class TangleKelpTest extends BaseCardTest {
     void allowsUntapAfterAnIdleTurn() {
         Permanent creature = addCreatureReady(player2, new Squire());
         creature.tap();
-        creature.setAttackedDuringControllersCurrentTurn(true);
+        creature.setAttackedThisTurn(true);
+        creature.recordTurnEnded(player2.getId());
         attachTangleKelp(creature);
 
         advanceToNextTurn(player1);
@@ -155,7 +157,8 @@ class TangleKelpTest extends BaseCardTest {
     void removingAuraRestoresUntap() {
         Permanent creature = addCreatureReady(player2, new Squire());
         creature.tap();
-        creature.setAttackedDuringControllersCurrentTurn(true);
+        creature.setAttackedThisTurn(true);
+        creature.recordTurnEnded(player2.getId());
         attachTangleKelp(creature);
         Permanent aura = findPermanent(player1, "Tangle Kelp");
         gd.playerBattlefields.get(player1.getId()).remove(aura);

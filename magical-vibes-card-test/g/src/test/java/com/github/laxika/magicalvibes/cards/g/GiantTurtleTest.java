@@ -128,7 +128,7 @@ class GiantTurtleTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(player2, TurnStep.UNTAP);
-        harness.handleMayAbilityChosen(player2, false);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player2, false));
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(harness.getCombatAttackService()

@@ -40,7 +40,7 @@ class GyomeMasterChefTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gyome), null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(countPermanents(player1, "Food")).isZero();
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -125,7 +125,7 @@ class GyomeMasterChefTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(target.isTapped()).isTrue();
@@ -138,6 +138,6 @@ class GyomeMasterChefTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
 }

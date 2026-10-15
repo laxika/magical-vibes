@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -134,6 +136,7 @@ class GiantCaterpillarTest extends BaseCardTest {
     @DisplayName("Activation during the end step waits until the following turn's end step")
     void activationDuringEndStepWaitsForNextTurnsEndStep() {
         setupCaterpillar();
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -154,7 +157,7 @@ class GiantCaterpillarTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Butterfly")).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Butterfly");
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
         assertThat(countPermanents(player1, "Butterfly")).isEqualTo(1);
     }

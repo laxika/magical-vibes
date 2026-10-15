@@ -861,6 +861,10 @@ public class TurnProgressionService {
             gameData.snapshotPlayerAttacksForLastTurn(gameData.activePlayerId);
         }
         gameData.snapshotPlayerAttacksForLastTurn(gameData.activePlayerId);
+        UUID endingActivePlayerId = gameData.activePlayerId;
+        gameData.forEachPermanent((controllerId, permanent) -> permanent.recordTurnEnded(endingActivePlayerId));
+        gameData.phasedOutPermanents.values().forEach(
+                battlefield -> battlefield.forEach(permanent -> permanent.recordTurnEnded(endingActivePlayerId)));
         // Clear any active mind control from the ending turn
         gameData.mindControlledPlayerId = null;
         gameData.mindControllerPlayerId = null;
@@ -1350,9 +1354,6 @@ public class TurnProgressionService {
         List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
         if (activePlayerBf != null) {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
-            // Halls of Mist: "attacked during their controller's last turn" is scoped to the
-            // controller's own turns, so the record shifts only when that player's turn begins.
-            activePlayerBf.forEach(Permanent::rollOverAttackRecord);
             // Promote/expire Wall of Dust "can't attack next turn" restrictions on the active player's
             // creatures (scoped to their controller's turn so it never arms on an opponent's turn).
             activePlayerBf.forEach(Permanent::promoteCantAttackNextTurn);

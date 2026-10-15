@@ -1705,7 +1705,7 @@ public class PredicateEvaluationService {
             case PermanentIsBlockingPredicate ignored ->
                     permanent.isBlocking();
             case PermanentAttackedDuringControllersLastTurnPredicate ignored ->
-                    permanent.isAttackedDuringControllersLastTurn();
+                    attackedDuringControllersLastTurn(gameData, permanent);
             case PermanentAttackedThisTurnPredicate ignored ->
                     permanent.isAttackedThisTurn();
             case PermanentAttackedOrBlockedThisTurnPredicate ignored ->
@@ -3500,7 +3500,7 @@ public class PredicateEvaluationService {
                         && gameData.playerIds.contains(permanent.getAttackTarget());
             }
             case PermanentAttackedDuringControllersLastTurnPredicate ignored ->
-                    matchesStaticLeaf(permanent, predicate);
+                    attackedDuringControllersLastTurn(context == null ? null : context.gameData(), permanent);
             case PermanentIsAttackingOpponentOfSourceControllerPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceControllerId = context == null ? null : context.sourceControllerId();
@@ -3745,6 +3745,11 @@ public class PredicateEvaluationService {
         // Death triggers evaluate the last-known permanent after it has left the battlefield.
         return gameData.playerGraveyards.getOrDefault(context.sourceControllerId(), List.of()).stream()
                 .anyMatch(card -> card.getId().equals(originalCard.getId()));
+    }
+
+    private boolean attackedDuringControllersLastTurn(GameData gameData, Permanent permanent) {
+        return gameData != null && permanent.attackedDuringLastTurnOf(
+                gameQueryService.findPermanentController(gameData, permanent.getId()));
     }
 
     public boolean matchesStaticLeaf(Permanent permanent, PermanentPredicate predicate) {
