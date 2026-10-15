@@ -57,18 +57,50 @@ class AngelOfSalvationTest extends BaseCardTest {
     }
 
     @Test
-    void etbPreventionWithNoAssignmentsDoesNothing() {
+    void etbAsksForTargetsAndDivisionWhenNoneWasSupplied() {
         gd.pendingETBDamageAssignments = Map.of();
 
         harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    void etbPreventionGoesToTheChosenTargetsInTheAnnouncedDivision() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BladeOfTheSixthPride());
+
+        harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId(), creature.getId()));
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "3");
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new ArcBlade()));
-        harness.addMana(player1, ManaColor.RED, 5);
+        harness.setHand(player1, List.of(new ArcBlade(), new ArcBlade()));
+        harness.addMana(player1, ManaColor.RED, 10);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void singleChosenTargetGetsAllTheAnnouncedPrevention() {
+        harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new ArcBlade(), new ArcBlade(), new ArcBlade()));
+        harness.addMana(player1, ManaColor.RED, 15);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 19);
     }
 
     @Test

@@ -225,12 +225,27 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Division before a spell or triggered ability is stacked; a null counter type denotes damage. */
+    /**
+     * Division before a spell or triggered ability is stacked; a null counter type denotes damage.
+     * A non-null {@code stackEntryId} names a triggered ability already on the stack whose division
+     * is being announced before any player receives priority; the answer is recorded on that entry
+     * instead of pushing a new one.
+     */
     record CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, CounterType counterType,
                                           List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
                                           int nextTargetIndex, boolean allowsPartialDistribution,
-                                          PermanentChoiceContext.HandCastSpellTarget spellCast) implements ChoiceContext {
+                                          PermanentChoiceContext.HandCastSpellTarget spellCast,
+                                          UUID stackEntryId) implements ChoiceContext {
+
+        public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                              UUID sourcePermanentId, CounterType counterType,
+                                              List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
+                                              int nextTargetIndex, boolean allowsPartialDistribution,
+                                              PermanentChoiceContext.HandCastSpellTarget spellCast) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, counterType, targetIds, assignments,
+                    total, nextTargetIndex, allowsPartialDistribution, spellCast, null);
+        }
 
         public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                               UUID sourcePermanentId, CounterType counterType,

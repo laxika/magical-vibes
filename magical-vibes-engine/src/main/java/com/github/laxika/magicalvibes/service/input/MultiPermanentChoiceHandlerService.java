@@ -88,6 +88,9 @@ public class MultiPermanentChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService stackedDividedDamageTriggerService;
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
@@ -842,6 +845,10 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.isEmpty()) {
             throw new IllegalStateException("At least one target creature must be selected");
         }
+        if (context instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets
+                && permanentIds.isEmpty()) {
+            throw new IllegalStateException("At least one target must be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOne ctx
                 && ctx.opponentChoosing() && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
@@ -1289,6 +1296,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSagaChapterCounterDistribution(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.CounterDistribution ctx) {
             handleCounterDistribution(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets ctx) {
+            stackedDividedDamageTriggerService.handleTargetsChosen(gameData, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {

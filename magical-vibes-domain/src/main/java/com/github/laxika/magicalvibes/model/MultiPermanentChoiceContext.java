@@ -142,6 +142,16 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /**
+     * Chooses the one to {@code maxTargets} targets of a divided-damage or divided-prevention
+     * triggered ability already on the stack, before any player receives priority (CR 603.3d); the
+     * division follows. {@code prevention} marks a division of damage prevention.
+     */
+    record StackedDividedDamageTargets(UUID stackEntryId, Card sourceCard, UUID controllerId, int total,
+                                       boolean prevention)
+            implements MultiPermanentChoiceContext {
+    }
+
     record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                 UUID sourcePermanentId, CounterType counterType, int total,
                                 PermanentChoiceContext.HandCastSpellTarget spellCast)

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -53,6 +54,7 @@ public class AutoPassService {
     private final GameMutationCoordinator mutationCoordinator;
     private final StateBasedActionService stateBasedActionService;
     private final StackedModalTriggerService stackedModalTriggerService;
+    private final StackedDividedDamageTriggerService stackedDividedDamageTriggerService;
 
     public AutoPassService(
             GameQueryService gameQueryService,
@@ -63,7 +65,8 @@ public class AutoPassService {
             CombatAttackService combatAttackService,
             GameMutationCoordinator mutationCoordinator,
             @Lazy StateBasedActionService stateBasedActionService,
-            StackedModalTriggerService stackedModalTriggerService) {
+            StackedModalTriggerService stackedModalTriggerService,
+            StackedDividedDamageTriggerService stackedDividedDamageTriggerService) {
         this.gameQueryService = gameQueryService;
         this.actionAvailabilityService = actionAvailabilityService;
         this.triggerCollectionService = triggerCollectionService;
@@ -73,6 +76,7 @@ public class AutoPassService {
         this.mutationCoordinator = mutationCoordinator;
         this.stateBasedActionService = stateBasedActionService;
         this.stackedModalTriggerService = stackedModalTriggerService;
+        this.stackedDividedDamageTriggerService = stackedDividedDamageTriggerService;
     }
 
     /**
@@ -112,6 +116,13 @@ public class AutoPassService {
 
         // CR 603.3c: modal triggers already on the stack announce their mode before anyone gets priority.
         if (stackedModalTriggerService.announceNextMode(gameData)) {
+            invalidateForAllPlayers(gameData);
+            return;
+        }
+
+        // CR 603.3d / 601.2d: divided-damage triggers already on the stack announce their targets and
+        // division before anyone gets priority.
+        if (stackedDividedDamageTriggerService.announceNextDivision(gameData)) {
             invalidateForAllPlayers(gameData);
             return;
         }
@@ -342,6 +353,7 @@ public class AutoPassService {
             if (gameData.interaction.isAwaitingInput()) return;
             if (gameData.status == GameStatus.FINISHED) return;
             if (stackedModalTriggerService.announceNextMode(gameData)) return;
+            if (stackedDividedDamageTriggerService.announceNextDivision(gameData)) return;
             if (gameData.stack.isEmpty()) return;
 
             UUID stackPriorityHolder = gameQueryService.getPriorityPlayerId(gameData);

@@ -129,6 +129,8 @@ public class ChoiceHandlerService {
     private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService stackedDividedDamageTriggerService;
 
     private final LibraryRevealSupport libraryRevealSupport;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.VentureIntoDungeonEffectHandler> ventureHandlerProvider;
@@ -5922,7 +5924,7 @@ public class ChoiceHandlerService {
                     new ChoiceContext.CounterDistributionAssignment(
                             ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
                             ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex,
-                            ctx.allowsPartialDistribution(), ctx.spellCast());
+                            ctx.allowsPartialDistribution(), ctx.spellCast(), ctx.stackEntryId());
             playerInputService.beginCounterDistributionAssignmentChoice(gameData, player.getId(), next);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
@@ -5940,6 +5942,11 @@ public class ChoiceHandlerService {
         if (ctx.spellCast() != null) {
             permanentChoiceSpellHandlerService.completeHandCastDistribution(gameData, ctx.spellCast(),
                     ctx.targetIds(), assignments);
+            return;
+        }
+        if (ctx.stackEntryId() != null) {
+            stackedDividedDamageTriggerService.announceDivision(gameData, ctx.stackEntryId(), assignments);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
         StackEntry entry = new StackEntry(

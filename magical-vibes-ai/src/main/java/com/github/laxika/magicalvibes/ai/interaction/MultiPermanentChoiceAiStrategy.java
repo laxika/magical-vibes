@@ -44,7 +44,14 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         List<Permanent> opponentField = gameData.getOpponentBattlefield(ctx.aiPlayerId());
 
         List<UUID> chosen;
-        if (interaction.context()
+        if (interaction.context() instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets divided
+                && divided.prevention()) {
+            chosen = validPlayerIds != null && validPlayerIds.contains(ctx.aiPlayerId())
+                    ? List.of(ctx.aiPlayerId())
+                    : validPermanentIds == null || validPermanentIds.isEmpty()
+                            ? List.of(validPlayerIds.getFirst())
+                            : List.of(validPermanentIds.getFirst());
+        } else if (interaction.context()
                 instanceof MultiPermanentChoiceContext.EachPlayerChoosesCreaturesWithTotalPowerAtMostChoice powerChoice) {
             chosen = chooseCreaturesWithinPowerLimit(interaction, ctx, powerChoice.maxPower());
         } else {
@@ -58,6 +65,14 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
             if (interaction.context()
                     instanceof MultiPermanentChoiceContext.UntapPermanentsForAmount exactChoice) {
                 chosen = fillRequiredPermanents(chosen, validPermanentIds, exactChoice.requiredCount());
+            }
+            if (chosen.isEmpty()
+                    && interaction.context() instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets
+                    && validPlayerIds != null) {
+                chosen = validPlayerIds.stream()
+                        .filter(id -> !id.equals(ctx.aiPlayerId()))
+                        .limit(interaction.maxCount())
+                        .toList();
             }
             if (chosen.isEmpty()) {
                 List<UUID> validTargets = new ArrayList<>();

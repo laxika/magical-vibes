@@ -99,6 +99,32 @@ class GangOfDevilsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Death trigger's controller chooses targets and divides the damage as it goes on the stack")
+    void deathTriggerAnnouncesChosenTargetsAndDivision() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new MoorlandInquisitor());
+        UUID creatureId = harness.getPermanentId(player2, "Moorland Inquisitor");
+        harness.addToBattlefield(player1, new GangOfDevils());
+        harness.setHand(player2, List.of(new ThunderousWrath()));
+        harness.addMana(player2, ManaColor.RED, 6);
+
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Gang of Devils"));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(creatureId, player2.getId()));
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "1");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getDamageAssignments())
+                .containsExactlyInAnyOrderEntriesOf(Map.of(creatureId, 2, player2.getId(), 1));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Moorland Inquisitor");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
     @DisplayName("Death trigger divides damage between two targets")
     void deathDividesDamageAmongTwoTargets() {
         harness.addToBattlefield(player2, new MoorlandInquisitor());

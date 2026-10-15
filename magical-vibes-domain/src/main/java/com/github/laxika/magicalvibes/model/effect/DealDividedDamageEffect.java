@@ -39,8 +39,11 @@ import java.util.List;
  * @param damagedCreaturesCantBlock    if {@code true}, creatures dealt damage this way can't block this turn.
  * @param etbAssignments    if {@code true} (CHOSEN only), assignments come from
  *                          {@code GameData.pendingETBDamageAssignments}; a null target restriction
- *                          uses the non-targeting ETB path, while a non-null restriction keeps
- *                          the declared targets and prompts for amounts at resolution.
+ *                          uses the non-targeting ETB path (a trigger put on the stack without a
+ *                          staged division has its controller announce targets and division
+ *                          before priority, via {@code StackedDividedDamageTriggerService}), while
+ *                          a non-null restriction keeps the declared targets and prompts for
+ *                          amounts at resolution.
  * @param tapDamagedCreatures if {@code true}, each creature dealt damage this way is tapped.
  * @param damagedPlayersCantCastNoncreatureSpells if {@code true}, each player dealt damage this way
  *                          can't cast noncreature spells for the rest of the turn.

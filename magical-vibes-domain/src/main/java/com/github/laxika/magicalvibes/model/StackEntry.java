@@ -121,7 +121,7 @@ public class StackEntry {
     /** Controller of the source permanent when an activated ability was put on the stack. */
     @Setter private UUID sourcePermanentControllerId;
     @Setter private com.github.laxika.magicalvibes.model.planar.PlanarObject sourcePlanarObject;
-    private final Map<UUID, Integer> damageAssignments;
+    private Map<UUID, Integer> damageAssignments;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
     /** Results of {@code DeterminedOnce} amounts already evaluated during this resolution (CR 608.2h). */
@@ -1545,6 +1545,20 @@ public class StackEntry {
     /** Complete flat target list, including occurrences found illegal during resolution. */
     public List<UUID> getDeclaredTargetIds() {
         return targetIds;
+    }
+
+    /**
+     * Records the targets and division a triggered ability announces after it was put on the stack
+     * but before any player receives priority (CR 601.2d, 603.3d), replacing the flat target list
+     * with the assignment keys.
+     *
+     * @param assignments each chosen target mapped to its share of the divided amount
+     */
+    public void announceDamageAssignments(Map<UUID, Integer> assignments) {
+        this.damageAssignments = new LinkedHashMap<>(assignments);
+        this.targetIds = assignmentTargetIds(this.damageAssignments);
+        this.targetIdsFromAssignments = !this.targetIds.isEmpty();
+        this.illegalTargetIndices.clear();
     }
 
     public void setDeclaredTargetIds(List<UUID> targetIds) {

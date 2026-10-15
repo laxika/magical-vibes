@@ -81,38 +81,6 @@ Don't commit until I say so.
 
 ---
 
-## 22. Divided-damage triggers that don't come from a cast never choose targets
-
-**Status:** open · **Found:** 2026-10-15, while fixing G-card tests
-
-**Failing tests:**
-- `GandalfSparkStarterTest.asksForTargetsAndDivisionWhenMandatoryAbilityTriggers()`
-- `GangOfDevilsTest` "Death trigger requires targets and a division before resolution"
-
-**What the rules require.** CR 603.3d: a triggered ability's targets and division are chosen as it is
-put on the stack, the same way as for a spell (CR 601.2c–d). CR 601.2d: when dividing, the player
-announces the division and each target gets at least one. `DealDividedDamageEffect.chosenAmongAnyTargetsEtb`
-(Gandalf, Spark Starter; Gang of Devils; Inferno Titan; Angel of Salvation) reads the division only from
-`GameData.pendingETBDamageAssignments`. That buffer is filled only by the `damageAssignments` of a
-`PlayCardRequest`. So a death trigger, an attack trigger, or an ETB from a permanent that wasn't cast
-gets no division and resolves doing nothing, even though the ability is mandatory and legal targets exist.
-
-**Why it's large.** It needs an interactive "choose one to N targets, then divide the total" step
-when the trigger is put on the stack. That step has to work for ETB, death and attack triggers,
-replace or coexist with the cast-time buffer, and be supported by the frontend and the AI.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 22: when a DealDividedDamageEffect with etbAssignments
-triggers and no division was supplied with a cast, prompt the controller to choose one to maxTargets
-targets and divide the damage as the trigger is put on the stack (CR 603.3d, 601.2d). Make
-GandalfSparkStarterTest and GangOfDevilsTest pass without breaking InfernoTitanTest or
-AngelOfSalvationTest. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 
