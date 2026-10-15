@@ -750,7 +750,19 @@ public class DeathTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     sd.dyingCard(), sd.controllerId(), List.of(mayPay)));
         } else {
-            match.gameData().queueMayAbility(sd.dyingCard(), sd.controllerId(), mayPay, null);
+            // Carry the dying permanent's id and last-known state so the paid effect can read its
+            // damage and combat history after the card leaves the graveyard (Giant Albatross).
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sd.dyingCard(),
+                    sd.controllerId(),
+                    sd.dyingCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(mayPay)),
+                    null,
+                    match.permanent().getId()
+            );
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            match.gameData().stack.add(entry);
         }
         return true;
     }

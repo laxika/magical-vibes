@@ -66,34 +66,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 15. Last-known information for sources that changed zones
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GiantAlbatrossTest` "Exiling the Albatross in response does not erase its death trigger's damage history"
-- `GomazoaTest.stillTucksBlockedCreatureWhenSourceIsReturnedToHand()`
-
-**What the rules require.** CR 608.2h: when the source has left the zone it was expected in, the effect
-uses its last known information. Giant Albatross's death trigger must still know which creatures it dealt
-damage to after the card is exiled from the graveyard; Gomazoa's ability must still find the creatures it
-blocked after Gomazoa itself is put into a library or hand. The engine looks this data up on the live
-permanent, which is gone.
-
-**Why it's large.** Per-permanent combat and damage history isn't snapshotted onto stack entries. It
-needs a general LKI snapshot (combat relations, damage dealt this turn) captured when the ability is put
-on the stack or when its source leaves.
-
-**Prompt to start it:**
-
-```
-Snapshot a source's combat and damage history onto its stack entry so effects use last-known
-information when the source has left its zone (CR 608.2h). Start with GiantAlbatrossTest and GomazoaTest,
-then ask me to run the full suite. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 16. Per-mana color choice for "that much mana in any combination of colors"
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests

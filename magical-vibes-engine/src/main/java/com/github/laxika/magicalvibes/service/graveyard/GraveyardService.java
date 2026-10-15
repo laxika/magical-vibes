@@ -1441,6 +1441,7 @@ public class GraveyardService {
         gameData.creatureCardsDamagedThisTurnBySourcePermanent
                 .computeIfAbsent(sourcePermanentId, ignored -> ConcurrentHashMap.newKeySet())
                 .add(damagedCreature.getCard().getId());
+        damagedCreature.recordDamageDealtByPermanent(sourcePermanentId);
         recordCreatureDamagedBySource(gameData, sourcePermanentId, damagedCreature, damage);
     }
 

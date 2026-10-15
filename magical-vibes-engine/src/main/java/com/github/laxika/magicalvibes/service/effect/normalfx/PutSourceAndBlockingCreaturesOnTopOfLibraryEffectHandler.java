@@ -37,18 +37,22 @@ public class PutSourceAndBlockingCreaturesOnTopOfLibraryEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PutSourceAndBlockingCreaturesOnTopOfLibraryEffect tuckEffect =
                 (PutSourceAndBlockingCreaturesOnTopOfLibraryEffect) effect;
+        // CR 608.2h: once the source has left the battlefield, its last-known combat state still
+        // decides which creatures it was blocking or blocked by; the source itself stays where it is.
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
+        Permanent sourceInfo = source != null ? source : entry.getSourcePermanentSnapshot();
+        if (sourceInfo == null) {
             return;
         }
+        UUID sourceId = sourceInfo.getId();
 
         List<Permanent> permanents = new ArrayList<>();
         Set<UUID> permanentIds = new LinkedHashSet<>();
-        permanentIds.add(source.getId());
-        permanentIds.addAll(source.getBlockingTargetIds());
+        permanentIds.add(sourceId);
+        permanentIds.addAll(sourceInfo.getBlockingTargetIds());
         if (tuckEffect.includeCreaturesBlockingSource()) {
             gameData.forEachPermanent((ignored, permanent) -> {
-                if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(source.getId())) {
+                if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(sourceId)) {
                     permanentIds.add(permanent.getId());
                 }
             });

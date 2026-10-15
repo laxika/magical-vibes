@@ -165,6 +165,9 @@ A resolving entry remembers controllers of departing declared targets, so later 
 spell copies can use that last-known controller after the target is sacrificed during resolution.
 Generic triggered-ability doublers include their last-known simultaneous death snapshots when
 collecting abilities caused by those deaths.
+A stack entry's `sourcePermanentSnapshot` is the source's last-known information (CR 608.2h): it is
+refreshed as the source leaves the battlefield and carries combat state (`blockingTargetIds`) and
+`Permanent.permanentIdsThatDealtDamageThisTurn`, so handlers fall back to it when the live source is gone.
 Token-copy creation applies Squirrel replacements to the full prepared event. Each Chatterfang
 replacement doubles the event's token count by adding Squirrels, while event instructions such as
 haste, entering tapped and attacking, and delayed exile apply to the added tokens too.

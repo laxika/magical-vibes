@@ -1338,9 +1338,13 @@ public class TurnProgressionService {
             p.setBecomeTargetCounterUsedThisTurn(false);
             p.setBackupAbilityCopyUsedThisTurn(false);
             p.getChosenModeLabelsThisTurn().clear();
+            p.getPermanentIdsThatDealtDamageThisTurn().clear();
         });
         gameData.phasedOutPermanents.values().forEach(
-                battlefield -> battlefield.forEach(p -> p.getChosenModeLabelsThisTurn().clear()));
+                battlefield -> battlefield.forEach(p -> {
+                    p.getChosenModeLabelsThisTurn().clear();
+                    p.getPermanentIdsThatDealtDamageThisTurn().clear();
+                }));
 
         // Clear "until your next turn" activated abilities for the active player's permanents
         List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);

@@ -18,12 +18,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect}: every creature
- * still on the battlefield that dealt damage to the source card this turn gets an independent
- * pay-or-be-destroyed decision, made by that creature's controller. Damage history is read from
- * {@code GameData.creatureCardsDamagedBySourceThatDiedThisTurn}, which maps a damaging permanent to
- * the cards of the creatures it damaged that have since died, so the lookup is the inverse of that
- * map. The live {@code creatureCardsDamagedThisTurnBySourcePermanent} map can't be used here: a dying
- * creature's card id is purged from it as its death triggers are collected.
+ * still on the battlefield that dealt damage to the source this turn gets an independent
+ * pay-or-be-destroyed decision, made by that creature's controller. Damage history is read from the
+ * source permanent while it is still on the battlefield, otherwise from the stack entry's source
+ * snapshot, so the ability keeps working after the source card has left the graveyard (CR 608.2h).
  *
  * <p>Decisions are offered one at a time (remaining permanent ids live in
  * {@link GameData#destroyDamagersUnlessPaysRemaining}); a controller who can't pay has their creature
@@ -45,7 +43,7 @@ public class DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect) effect;
-        List<UUID> damagers = damagersOf(gameData, entry.getCard().getId());
+        List<UUID> damagers = damagersOf(gameData, entry);
 
         gameData.destroyDamagersUnlessPaysRemaining.clear();
         if (damagers.isEmpty()) {
@@ -112,20 +110,26 @@ public class DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHand
     }
 
     /**
-     * Creatures currently on the battlefield that dealt damage to {@code damagedCardId} this turn, in
+     * Creatures currently on the battlefield that dealt damage to the entry's source this turn, in
      * APNAP order so simultaneous decisions are offered in turn order.
      */
-    private List<UUID> damagersOf(GameData gameData, UUID damagedCardId) {
+    private List<UUID> damagersOf(GameData gameData, StackEntry entry) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         List<UUID> damagers = new ArrayList<>();
+        if (source == null) {
+            return damagers;
+        }
+        Set<UUID> damagerIds = source.getPermanentIdsThatDealtDamageThisTurn();
         for (UUID playerId : apnapOrder(gameData)) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) {
                 continue;
             }
             for (Permanent perm : List.copyOf(battlefield)) {
-                Set<UUID> damaged = gameData.creatureCardsDamagedBySourceThatDiedThisTurn.get(perm.getId());
-                if (damaged != null && damaged.contains(damagedCardId)
-                        && gameQueryService.isCreature(gameData, perm)) {
+                if (damagerIds.contains(perm.getId()) && gameQueryService.isCreature(gameData, perm)) {
                     damagers.add(perm.getId());
                 }
             }

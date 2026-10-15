@@ -110,6 +110,10 @@ public class Permanent {
     private final List<UUID> blockingTargetIds = new ArrayList<>();
     /** Creatures this permanent blocked during the current combat, retained when it leaves combat. */
     private final List<UUID> blockedAttackerIdsThisCombat = new ArrayList<>();
+    /** Permanents that dealt damage to this permanent this turn, kept so a stack entry's source
+     *  snapshot carries the damage history as last-known information (CR 608.2h). Cleared at the
+     *  start of each turn. */
+    private final Set<UUID> permanentIdsThatDealtDamageThisTurn = new HashSet<>();
     /** Identifies the attacking band (CR 702.22) this creature was declared in, or null if it is not
      *  in a band. Shared by every member of the same band. Set at declare-attackers time and cleared
      *  by {@link #clearCombatState()} when combat ends; persists for the rest of combat even if banding
@@ -857,6 +861,7 @@ public class Permanent {
         this.blockingTargets.addAll(source.blockingTargets);
         this.blockingTargetIds.addAll(source.blockingTargetIds);
         this.blockedAttackerIdsThisCombat.addAll(source.blockedAttackerIdsThisCombat);
+        this.permanentIdsThatDealtDamageThisTurn.addAll(source.permanentIdsThatDealtDamageThisTurn);
         this.bandId = source.bandId;
         this.summoningSick = source.summoningSick;
         this.persistentPowerModifier = source.persistentPowerModifier;
@@ -1362,6 +1367,11 @@ public class Permanent {
         if (!blockedAttackerIdsThisCombat.contains(permanentId)) {
             blockedAttackerIdsThisCombat.add(permanentId);
         }
+    }
+
+    /** Records that the permanent {@code sourcePermanentId} dealt damage to this permanent this turn. */
+    public void recordDamageDealtByPermanent(UUID sourcePermanentId) {
+        this.permanentIdsThatDealtDamageThisTurn.add(sourcePermanentId);
     }
 
     public void setSummoningSick(boolean summoningSick) {
