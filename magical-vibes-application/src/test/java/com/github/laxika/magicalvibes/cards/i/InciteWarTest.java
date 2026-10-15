@@ -49,7 +49,7 @@ class InciteWarTest extends BaseCardTest {
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(ownCreature.isMustAttackThisTurn()).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, ownCreature)).isPositive();
     }
 
     @Test
@@ -63,7 +63,7 @@ class InciteWarTest extends BaseCardTest {
         declareAttackers(player2, List.of());
 
         assertThat(tappedCreature.isAttacking()).isFalse();
-        assertThat(tappedCreature.isMustAttackThisTurn()).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, tappedCreature)).isPositive();
     }
 
     @Test

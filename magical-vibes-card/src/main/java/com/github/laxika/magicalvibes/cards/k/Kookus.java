@@ -32,7 +32,7 @@ public class Kookus extends Card {
                 new ControlsPermanentCountAtMost(0, KEEPER_OF_KOOKUS),
                 SequenceEffect.of(
                         new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER),
-                        new MatchingCreaturesMustAttackThisTurnEffect(new PermanentIsSourceCardPredicate())
+                        new MatchingCreaturesMustAttackThisTurnEffect(new PermanentIsSourceCardPredicate(), true)
                 )));
 
         // {R}: This creature gets +1/+0 until end of turn.

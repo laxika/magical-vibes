@@ -32,9 +32,9 @@ class GoblinDiplomatsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(diplomats.isTapped()).isTrue();
-        assertThat(diplomats.isMustAttackThisTurn()).isTrue();
-        assertThat(ownBoar.isMustAttackThisTurn()).isTrue();
-        assertThat(enemyBoar.isMustAttackThisTurn()).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, diplomats)).isPositive();
+        assertThat(als.getMustAttackRequirementCount(gd, ownBoar)).isPositive();
+        assertThat(als.getMustAttackRequirementCount(gd, enemyBoar)).isPositive();
     }
 
     @Test
@@ -49,7 +49,7 @@ class GoblinDiplomatsTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(enemyBoar.isMustAttackThisTurn()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, enemyBoar)).isZero();
     }
 
     @Test
@@ -60,12 +60,12 @@ class GoblinDiplomatsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(diplomats.isTapped()).isTrue();
-        assertThat(boar.isMustAttackThisTurn()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, boar)).isZero();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        assertThat(boar.isMustAttackThisTurn()).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, boar)).isPositive();
     }
 
     @Test

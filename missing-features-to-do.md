@@ -66,33 +66,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 13. Rules-modifying resolution effects that bind objects entering later
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GrizzledAnglerTest.backFaceForcesHastyCreatureEnteringAfterResolutionToAttack()`
-- `GalactusDevourerOfWorldsTest.noncreatureSilverSurferDoesNotRemoveAttackRequirement()`
-
-**What the rules require.** CR 611.2c: a resolved continuous effect that doesn't change characteristics or
-control (such as "creatures ... attack this turn if able") modifies the rules of the game, so it also
-applies to creatures that enter afterwards. The engine records attack requirements on the permanents that
-exist when the effect resolves.
-
-**Why it's large.** Attack requirements live as per-permanent flags. They need a game-level
-"rules modification" list evaluated at declare attackers, with each card's own end condition.
-
-**Prompt to start it:**
-
-```
-Model resolved "must attack" style effects as game-level rules modifications that apply to creatures
-entering later (CR 611.2c) instead of per-permanent flags. Start with GrizzledAnglerTest and
-GalactusDevourerOfWorldsTest, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 14. Conjured cards are not tokens
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests

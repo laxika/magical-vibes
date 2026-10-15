@@ -28,7 +28,7 @@ class ImaginaryThreatsTest extends BaseCardTest {
 
         castImaginaryThreats(player2.getId());
 
-        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, enemyBear)).isPositive();
         assertThat(enemyBear.isTapped()).isFalse();
         enemyBear.tap();
         advanceToNextTurn(player1);
@@ -43,7 +43,7 @@ class ImaginaryThreatsTest extends BaseCardTest {
 
         castImaginaryThreats(player2.getId());
 
-        assertThat(ownBear.isMustAttackThisTurn()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, ownBear)).isZero();
         assertThat(ownBear.getSkipUntapCount()).isZero();
         assertThat(enemyArtifact.getSkipUntapCount()).isZero();
     }
@@ -77,7 +77,7 @@ class ImaginaryThreatsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ImaginaryThreats()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, enemyBear)).isPositive();
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

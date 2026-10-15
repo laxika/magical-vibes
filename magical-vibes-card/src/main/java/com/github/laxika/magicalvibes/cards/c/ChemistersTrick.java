@@ -39,7 +39,7 @@ public class ChemistersTrick extends Card {
         addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                 new Overloaded(),
                 new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK),
-                new MatchingCreaturesMustAttackThisTurnEffect(opponentCreatures)));
+                new MatchingCreaturesMustAttackThisTurnEffect(opponentCreatures, true)));
         target(TargetFilters.creatureAnOpponentControls());
     }
 }

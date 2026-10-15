@@ -36,10 +36,10 @@ class WalkingDesecrationTest extends BaseCardTest {
 
         assertThat(walkingDesecration.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
-        assertThat(walkingDesecration.isMustAttackThisTurn()).isTrue();
-        assertThat(ownZombie.isMustAttackThisTurn()).isTrue();
-        assertThat(opponentZombie.isMustAttackThisTurn()).isTrue();
-        assertThat(human.isMustAttackThisTurn()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, walkingDesecration)).isPositive();
+        assertThat(als.getMustAttackRequirementCount(gd, ownZombie)).isPositive();
+        assertThat(als.getMustAttackRequirementCount(gd, opponentZombie)).isPositive();
+        assertThat(als.getMustAttackRequirementCount(gd, human)).isZero();
     }
 
     @Test
@@ -54,8 +54,8 @@ class WalkingDesecrationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "GOBLIN");
 
-        assertThat(changeling.isMustAttackThisTurn()).isTrue();
-        assertThat(human.isMustAttackThisTurn()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, changeling)).isPositive();
+        assertThat(als.getMustAttackRequirementCount(gd, human)).isZero();
     }
 
     @Test
@@ -88,7 +88,7 @@ class WalkingDesecrationTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(opponentZombie.isMustAttackThisTurn()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, opponentZombie)).isZero();
     }
 
     @Test

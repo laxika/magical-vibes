@@ -43,7 +43,7 @@ public class GogoMysteriousMime extends Card {
                                 "Gogo, Mysterious Mime", Set.of()),
                         new BoostSelfEffect(2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF),
-                        new MatchingCreaturesMustAttackThisTurnEffect(new PermanentIsSourceCardPredicate()),
+                        new MatchingCreaturesMustAttackThisTurnEffect(new PermanentIsSourceCardPredicate(), true),
                         new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
                         new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK)

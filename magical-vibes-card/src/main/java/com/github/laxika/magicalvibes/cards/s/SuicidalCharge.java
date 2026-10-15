@@ -24,7 +24,7 @@ public class SuicidalCharge extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new BoostAllCreaturesEffect(-1, -1, opponentCreatures),
-                        new MatchingCreaturesMustAttackThisTurnEffect(opponentCreatures)
+                        new MatchingCreaturesMustAttackThisTurnEffect(opponentCreatures, true)
                 ),
                 "Sacrifice Suicidal Charge: Creatures your opponents control get -1/-1 until end of turn. "
                         + "Those creatures attack this turn if able."

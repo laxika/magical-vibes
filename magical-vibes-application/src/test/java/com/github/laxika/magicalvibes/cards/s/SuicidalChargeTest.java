@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinOutlander;
 import com.github.laxika.magicalvibes.cards.t.TukatongueThallid;
+import com.github.laxika.magicalvibes.cards.v.VillageMessenger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SuicidalCharge.class, GoblinOutlander.class, TukatongueThallid.class})
+@CardUsed({SuicidalCharge.class, GoblinOutlander.class, TukatongueThallid.class, VillageMessenger.class})
 class SuicidalChargeTest extends BaseCardTest {
 
     @Test
@@ -137,6 +138,18 @@ class SuicidalChargeTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GoblinOutlander());
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+
+        assertThatCode(() -> declareAttackers(player2, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A creature entering after resolution is not one of \"those creatures\" and need not attack")
+    void creatureEnteringAfterResolutionIsNotRequiredToAttack() {
+        harness.addToBattlefield(player1, new SuicidalCharge());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player2, new VillageMessenger());
 
         assertThatCode(() -> declareAttackers(player2, List.of())).doesNotThrowAnyException();
     }

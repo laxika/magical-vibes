@@ -21,6 +21,15 @@ public interface CombatAttackRequirementEffect extends CardEffect {
         return true;
     }
 
+    /**
+     * A permanent whose presence under the source controller's control switches this static
+     * requirement off ("... unless you control a creature named X"), or {@code null} for none.
+     * Evaluated by the engine with the layered characteristics of the controller's permanents.
+     */
+    default PermanentPredicate exemptingControlledPermanent() {
+        return null;
+    }
+
     /** Whether this requirement ends when its source changes controllers. */
     default boolean endsWhenSourceControllerChanges() {
         return false;

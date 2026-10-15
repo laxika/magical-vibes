@@ -32,8 +32,8 @@ class InstigatorTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(targetCreature.isMustAttackThisTurn()).isTrue();
-        assertThat(ownCreature.isMustAttackThisTurn()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, targetCreature)).isPositive();
+        assertThat(als.getMustAttackRequirementCount(gd, ownCreature)).isZero();
         assertThat(instigator.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Fresh Volunteers");
     }
@@ -50,7 +50,7 @@ class InstigatorTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(targetCreature.isMustAttackThisTurn()).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, targetCreature)).isPositive();
     }
 
     @Test

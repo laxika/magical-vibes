@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
 
 @Slf4j
 @Component
@@ -32,25 +34,36 @@ public class MatchingCreaturesMustAttackThisTurnEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MatchingCreaturesMustAttackThisTurnEffect) effect;
 
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
-                .withSourceControllerId(entry.getControllerId());
-        final int[] count = {0};
+        if (e.lockedAtResolution()) {
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                    .withSourceControllerId(entry.getControllerId())
+                    .withSourcePermanentId(entry.getSourcePermanentId());
+            final int[] count = {0};
+            gameData.forEachPermanent((playerId, permanent) -> {
+                // "if able" is enforced by combat: the must-attack requirement only bites creatures that
+                // can legally attack, so setting the flag on ones that can't is harmless.
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && predicateEvaluationService.matchesPermanentPredicate(permanent, e.matcher(), filterContext)) {
+                    permanent.setMustAttackThisTurn(true);
+                    count[0]++;
+                }
+            });
+            gameLogService.append(gameData,
+                    GameLog.text(entry.getCard().getName() + " forces " + count[0]
+                            + " creature(s) to attack this turn if able."));
+            return;
+        }
 
-        gameData.forEachPermanent((playerId, permanent) -> {
-            // "if able" is enforced by combat: the must-attack requirement only bites creatures that
-            // can legally attack, so setting the flag on ones that can't is harmless.
-            if (gameQueryService.isCreature(gameData, permanent)
-                    && predicateEvaluationService.matchesPermanentPredicate(permanent, e.matcher(), filterContext)) {
-                permanent.setMustAttackThisTurn(true);
-                count[0]++;
-            }
-        });
+        // A group requirement doesn't change characteristics or control, so it modifies the game rules
+        // and also binds creatures that enter or start matching later this turn (CR 611.2c).
+        gameData.playerStaticEffectsUntilEndOfTurn
+                .computeIfAbsent(entry.getControllerId(), ignored -> new ArrayList<>())
+                .add(new MatchingCreaturesMustAttackEffect(e.matcher()));
 
         gameLogService.append(gameData,
-                GameLog.text(entry.getCard().getName() + " forces " + count[0]
-                        + " creature(s) to attack this turn if able."));
-        log.info("Game {} - {} forces {} creatures to attack this turn if able",
-                gameData.id, entry.getCard().getName(), count[0]);
+                GameLog.cardThen(entry.getCard(), " forces matching creatures to attack this turn if able."));
+        log.info("Game {} - {} forces matching creatures to attack this turn if able",
+                gameData.id, entry.getCard().getName());
     }
 }

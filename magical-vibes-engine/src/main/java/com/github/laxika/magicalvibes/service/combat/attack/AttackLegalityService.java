@@ -1003,6 +1003,7 @@ public class AttackLegalityService {
         if (sourcePermanent.isFaceDown()
                 || gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)
                 || !requirement.isActive(gameData, sourcePermanent)
+                || isExemptedByControlledPermanent(gameData, sourcePermanent, requirement, context)
                 || !predicateEvaluationService.matchesPermanentPredicate(
                 creature, requirement.affectedPredicate(), context)) {
             return false;
@@ -1011,7 +1012,20 @@ public class AttackLegalityService {
         return requiredTargetId == null || canAttackRequiredTarget(gameData, creature, requiredTargetId);
     }
 
-    private boolean canAttackRequiredTarget(GameData gameData, Permanent creature, UUID targetId) {
+    private boolean isExemptedByControlledPermanent(GameData gameData, Permanent sourcePermanent,
+                                                    CombatAttackRequirementEffect requirement,
+                                                    FilterContext context) {
+        PermanentPredicate exemption = requirement.exemptingControlledPermanent();
+        if (exemption == null) {
+            return false;
+        }
+        UUID controllerId = gameData.findControllerOf(sourcePermanent);
+        List<Permanent> battlefield = controllerId == null ? null : gameData.playerBattlefields.get(controllerId);
+        return battlefield != null && battlefield.stream().anyMatch(permanent ->
+                predicateEvaluationService.matchesPermanentPredicate(permanent, exemption, context));
+    }
+
+        private boolean canAttackRequiredTarget(GameData gameData, Permanent creature, UUID targetId) {
         UUID creatureControllerId = gameData.findControllerOf(creature);
         return creatureControllerId != null
                 && getValidAttackTargetIds(gameData, creatureControllerId).contains(targetId)

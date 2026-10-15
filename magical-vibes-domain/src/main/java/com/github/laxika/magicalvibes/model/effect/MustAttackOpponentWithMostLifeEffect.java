@@ -10,9 +10,10 @@ import java.util.UUID;
 
 /**
  * Static combat requirement for a creature to attack the opponent with the most life each combat.
- * The requirement is inactive while the source's controller controls a named exempting permanent.
+ * The requirement is inactive while the source's controller controls a permanent matching
+ * {@code exemptingPermanent} (Galactus: "unless you control a creature named Silver Surfer, ...").
  */
-public record MustAttackOpponentWithMostLifeEffect(String exemptingCardName)
+public record MustAttackOpponentWithMostLifeEffect(PermanentPredicate exemptingPermanent)
         implements CombatAttackRequirementEffect {
 
     private static final PermanentPredicate SOURCE = new PermanentIsSourceCardPredicate();
@@ -23,14 +24,8 @@ public record MustAttackOpponentWithMostLifeEffect(String exemptingCardName)
     }
 
     @Override
-    public boolean isActive(GameData gameData, Permanent sourcePermanent) {
-        UUID controllerId = gameData.findControllerOf(sourcePermanent);
-        if (controllerId == null) {
-            return false;
-        }
-        var battlefield = gameData.playerBattlefields.get(controllerId);
-        return battlefield == null || battlefield.stream()
-                .noneMatch(permanent -> exemptingCardName.equals(permanent.getCard().getName()));
+    public PermanentPredicate exemptingControlledPermanent() {
+        return exemptingPermanent;
     }
 
     @Override

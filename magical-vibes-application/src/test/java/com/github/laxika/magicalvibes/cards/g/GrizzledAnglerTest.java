@@ -76,8 +76,8 @@ class GrizzledAnglerTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, anglerfish), null, null);
         harness.passBothPriorities();
 
-        assertThat(enemyBear.isMustAttackThisTurn()).isTrue();
-        assertThat(ownBear.isMustAttackThisTurn()).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, enemyBear)).isPositive();
+        assertThat(als.getMustAttackRequirementCount(gd, ownBear)).isZero();
     }
 
     @Test
