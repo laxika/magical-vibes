@@ -338,7 +338,7 @@ class ReviewServerTest {
     }
 
     private Path sourceRoot() {
-        return root.resolve("magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a");
+        return root.resolve("magical-vibes-card/a/src/main/java/com/github/laxika/magicalvibes/cards/a");
     }
 
     private void writeCard(String name, String registrations) throws IOException {

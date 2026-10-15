@@ -202,7 +202,7 @@ function Invoke-CardContext {
     }
 
     Write-Section "Reprint Check"
-    $classHits = Invoke-RepoSearch -Pattern "class\s+$ClassName\s+" -Paths @("magical-vibes-card/src/main/java") -MaxResults 20
+    $classHits = Invoke-RepoSearch -Pattern "class\s+$ClassName\s+" -Paths @("magical-vibes-card") -MaxResults 20
     if ($classHits.Count -gt 0) {
         Write-Host "EXISTING CLASS FOUND - reprint: add @CardRegistration only, no logic, no tests."
         $classHits | ForEach-Object { Write-Host $_ }

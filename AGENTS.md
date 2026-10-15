@@ -18,7 +18,7 @@ Use the configured Scryfall MCP `get_card` tool for any extra card lookup; never
 
 Gradle multi-module CCG (WebSocket real-time multiplayer, Angular frontend). What card work needs:
 
-- Card classes are `Card` subclasses in `magical-vibes-card` (`cards/{letter}/`), annotated `@CardRegistration(set, collectorNumber)`. Constructors contain **only engine logic** (effects, abilities, targeting) — all metadata (name, type, mana, color, P/T, subtypes, keywords, text) is auto-loaded from Scryfall; never set it.
+- Card classes are `Card` subclasses in the `magical-vibes-card/{letter}` submodule (`cards/{letter}/`; cards constructed by a card of another letter go in `magical-vibes-card/shared`), annotated `@CardRegistration(set, collectorNumber)`. Constructors contain **only engine logic** (effects, abilities, targeting) — all metadata (name, type, mana, color, P/T, subtypes, keywords, text) is auto-loaded from Scryfall; never set it.
 - Effects are records implementing `CardEffect` (`magical-vibes-domain`, `model/effect/`), resolved by `GameService.resolveStackEntry()` (`magical-vibes-engine`) via instanceof dispatch.
 - **Before changing anything beyond a card class + its test** (new effect/predicate, service change, static/continuous effect, new `Card` field, networking/frontend), read `agent-docs/ARCHITECTURE.md` — module map plus the invariants engine changes must respect (card freezing, CR 613 layer system, thread safety, Jackson 3 imports, view immutability).
 

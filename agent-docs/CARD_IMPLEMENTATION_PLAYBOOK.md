@@ -4,11 +4,11 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 
 ## Fast workflow
 
-1. **Reprint check** — run `grep -r "class CardName " magical-vibes-card/src/` (replace `CardName` with the PascalCase class name). If the class already exists, just add a `@CardRegistration` annotation for the new set/collector-number and stop — no new code or tests needed.
+1. **Reprint check** — run `grep -r --include=*.java "class CardName " magical-vibes-card/` (replace `CardName` with the PascalCase class name). If the class already exists, just add a `@CardRegistration` annotation for the new set/collector-number and stop — no new code or tests needed.
 2. Find a similar card in `CARD_PATTERN_INDEX.md` for reference.
 3. Reuse existing effects from `EFFECTS_INDEX.md`.
 4. Check `ACTIVATED_ABILITY_GUIDE.md` for constructor patterns and EffectSlot reference.
-5. Add card class + `@CardRegistration`.
+5. Add card class + `@CardRegistration` in `magical-vibes-card/{letter}/` — or in `magical-vibes-card/shared/` if a card of another letter constructs it (back face, meld partner, conjure target), since letter modules can't depend on each other.
 6. Use `target(filter).addEffect(slot, effect)` for targeting spells.
 7. Write focused tests extending `BaseCardTest` (provides `harness`, `player1`, `player2`, `gs`, `gqs`, `gd`). Do NOT test Scryfall metadata.
 8. Only if needed: add new effect record + `NormalEffectHandlerBean` handler (see below).
@@ -32,7 +32,7 @@ public class ExampleCard extends Card {
 - Targeted burn spell:
   - `addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(N))`
   - Targeting is computed from effects — no `setNeedsTarget` call needed.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/Shock.java`
+  - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/Shock.java`
 
 - **Power-based damage (fight, bite, Pack Hunt, Berserker, Arc-Lightning-style source damage, planeswalker power-to-loyalty):**
   - `GameQueryService` exposes three related but distinct queries. Pick the right one:
@@ -45,84 +45,84 @@ public class ExampleCard extends Card {
 
 - Multi-step spell resolution with shared target:
   - chain effects in order with repeated `addEffect(EffectSlot.SPELL, ...)`
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/c/Condemn.java`
+  - Example: `magical-vibes-card/c/src/main/java/com/github/laxika/magicalvibes/cards/c/Condemn.java`
 
 - Spell that targets stack entries:
   - `target(new StackEntryPredicateTargetFilter(...)).addEffect(EffectSlot.SPELL, new CounterSpellEffect())` if restricted
   - `addEffect(EffectSlot.SPELL, new CounterSpellEffect())` if targeting any spell (no filter needed)
   - Spell targeting is computed from effects — no `setNeedsSpellTarget` call needed.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
+  - Example: `magical-vibes-card/t/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
 
 - Static combat restriction on self:
   - `addEffect(EffectSlot.STATIC, new CantBlockEffect())`
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SpinelessThug.java`
+  - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SpinelessThug.java`
 
 - Static "controller can't cast spells of specified types":
   - `addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(CardType.CREATURE)))`
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SteelGolem.java`
+  - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SteelGolem.java`
 
 - Aura with static effect:
   - Auras automatically derive that they NEED a target from `isAura()` — but NOT what they may target. Every aura MUST declare its oracle "Enchant X" line explicitly: `target(TargetFilters.creature())` for "Enchant creature" (swap the predicate for other enchant types); "Enchant player" auras use the Curse subtype or `setEnchantPlayer(true)`; only "Enchant permanent" needs no filter. Without the filter, every validation path (UI and AI) will attach the aura to any permanent, including lands. Guarded by `AuraEnchantTargetInvariantTest` (magical-vibes-card-data), which cross-checks every registered aura class against its oracle text.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
+  - Example: `magical-vibes-card/p/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
 
 - Aura with static + activated ability:
   - static enchanted effect + `addActivatedAbility(...)`
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/ShimmeringWings.java`
+  - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/ShimmeringWings.java`
 
 - ETB trigger + activated ability with additional cost:
   - add ETB effect + ability containing cost-like effect first, then outcome effect
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
+  - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommander.java`
 
 - ETB target-opponent control handoff:
   - `setTargetFilter(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT), ...))`
   - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerGainsControlOfSourceCreatureEffect())`
   - Targeting is computed from the ETB effect — no `setNeedsTarget` call needed.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`
+  - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SleeperAgent.java`
 
 - Composition before custom effect:
   - combine multiple existing effects in one ability/spell
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/o/OrcishArtillery.java`
+  - Example: `magical-vibes-card/o/src/main/java/com/github/laxika/magicalvibes/cards/o/OrcishArtillery.java`
 
 - Upkeep sacrifice-unless-discard (any card):
   - `addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessDiscardCardTypeEffect(null))`
   - For a reflexive post-discard effect, use `new SacrificeUnlessDiscardCardTypeEffect(null, thenEffect)`; target filters on `thenEffect` receive the discarded card's mana value as X.
   - Pass `CardType.X` instead of `null` to restrict to a specific card type
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
+  - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 
 - Controller draw step may-trigger with targeting:
   - `addEffect(EffectSlot.DRAW_TRIGGERED, new MayEffect(new DealDamageToTargetCreatureEffect(N), "prompt"))`
   - `DRAW_TRIGGERED` fires only on the controller's draw step; use `EACH_DRAW_TRIGGERED` for all draw steps
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
+  - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 
 - Opponent draw trigger:
   - use `addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToPlayersEffect(N, DamageRecipient.TARGET_PLAYER))` when the effect should hit the player who drew
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
+  - Example: `magical-vibes-card/u/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
 
 - Conditional self cast-cost reduction ("this spell costs {N} less to cast if …"):
   - wrap the single `ReduceOwnCastCostEffect` in a `ConditionalEffect`: `addEffect(EffectSlot.STATIC, new ConditionalEffect(new OpponentControlsMoreCreatures(M), new ReduceOwnCastCostEffect(new Fixed(N))))`
   - reuse an existing `Condition` (Metalcraft, ControlsPermanent, OpponentControlsMoreCreatures, CardsLeftGraveyardThisTurn, …); "for each …" reductions instead pass a counting `DynamicAmount` directly to `ReduceOwnCastCostEffect`. **Never add a per-variant `ReduceOwnCastCostIf*`/`Per*` record** — see `COST_MODIFICATION_HANDLERS.md`.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
+  - Example: `magical-vibes-card/a/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
 
 - Attacker blocked-only-by-flying-or-subtype:
   - prefer composed permanent predicates on attacker: `addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(new PermanentAnyOfPredicate(List.of(new PermanentHasKeywordPredicate(Keyword.FLYING), new PermanentHasSubtypePredicate(CardSubtype.X))), "creatures with flying or Xs"))`
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/e/ElvenRiders.java`
+  - Example: `magical-vibes-card/e/src/main/java/com/github/laxika/magicalvibes/cards/e/ElvenRiders.java`
 
 - Equipment with static keyword + evasion:
   - `addEffect(EffectSlot.STATIC, new CantBeBlockedEffect())` + `addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.X, GrantScope.EQUIPPED_CREATURE))` + equip ability
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/w/WhispersilkCloak.java`
+  - Example: `magical-vibes-card/w/src/main/java/com/github/laxika/magicalvibes/cards/w/WhispersilkCloak.java`
 
 - Creature land (manland) — enters tapped, taps for mana, animates:
   - `addEffect(EffectSlot.STATIC, new EntersTappedEffect())` + `addEffect(EffectSlot.ON_TAP, new AwardManaEffect(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimatePermanentsEffect(power, toughness, subtypes, keywords, color)), description))`
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FaerieConclave.java`
+  - Example: `magical-vibes-card/f/src/main/java/com/github/laxika/magicalvibes/cards/f/FaerieConclave.java`
 
 - Kindred Enchantment with ETB token creation + activated token ability:
   - `addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(N, tokenName, power, toughness, color, colors, subtypes))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new CreateTokenEffect(tokenName, power, toughness, color, colors, subtypes)), description))`
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/c/ClachanFestival.java`
+  - Example: `magical-vibes-card/c/src/main/java/com/github/laxika/magicalvibes/cards/c/ClachanFestival.java`
 
 - Per-blocker trigger ("becomes blocked by a creature"):
   - `addEffect(EffectSlot.ON_BECOMES_BLOCKED, effect, TriggerMode.PER_BLOCKER)` — fires once per blocking creature
   - TriggerMode is on the registration, not the effect — keeps effects pure and reusable
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/i/InfiltrationLens.java`
+  - Example: `magical-vibes-card/i/src/main/java/com/github/laxika/magicalvibes/cards/i/InfiltrationLens.java`
 
 - One trigger for several permanents tapped as one event:
   - `addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, effect, TriggerMode.ONCE_PER_BATCH)`
@@ -138,18 +138,18 @@ public class ExampleCard extends Card {
   - For "Exile X [quality] cards from your graveyard" in the flashback cost, compose `new ManaCastingCost("{cost}")` with `new ExileXCardsFromGraveyardCastingCost(new CardColorPredicate(COLOR), "label")`; the graveyard cast path validates and pays the selected indices against the announced X
   - Card is cast as a spell from the graveyard (counterable, triggers "whenever you cast"), then exiled whether it resolves or fizzles
   - Distinct from graveyard activated abilities (which put ABILITIES on stack, not spells)
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AncientGrudge.java`
+  - Example: `magical-vibes-card/a/src/main/java/com/github/laxika/magicalvibes/cards/a/AncientGrudge.java`
 - Miracle spell (reveal on first draw, cast for miracle cost during trigger resolution):
   - `addCastingOption(new MiracleCast("{cost}"))` + normal effects (e.g. `ControllerExtraTurnEffect` + `ExileSpellEffect`)
   - Do **not** use `AlternateHandCast` — miracle cost is only available via the draw→reveal→trigger path
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/t/TemporalMastery.java`
+  - Example: `magical-vibes-card/t/src/main/java/com/github/laxika/magicalvibes/cards/t/TemporalMastery.java`
 
 - Aftermath split (front half from hand; back half from graveyard only, then exile):
   - Front class: normal SPELL effects + `setBackFaceCard(new Back())` + `getBackFaceClassName()` (same DFC wiring as transform)
   - Back class (no `@CardRegistration`): its own SPELL effects + `addCastingOption(new FlashbackCast("{cost}"))` using the back half's mana cost
   - Do **not** put `FlashbackCast` on the front — that would allow casting the front half from the graveyard
   - Engine uses `Card.effectiveFlashbackCast()` / `graveyardCastHalf()` so GY cast pays the back cost, resolves the back effects/type, and exiles the parent card
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FarmMarket.java` (+ `cards/m/Market.java`)
+  - Example: `magical-vibes-card/f/src/main/java/com/github/laxika/magicalvibes/cards/f/FarmMarket.java` (+ `cards/m/Market.java`)
 
 - Alternate hand cast (non-mana alternate cost from hand):
   - `addCastingOption(new AlternateHandCast(List.of(new LifeCastingCost(N), new SacrificePermanentsCost(N, predicate))))`
@@ -161,9 +161,9 @@ public class ExampleCard extends Card {
 - Emerge (sacrifice a creature; pay emerge mana cost reduced by its mana value):
   - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}"), new SacrificePermanentsCost(1, PermanentIsCreaturePredicate())), true))` — trailing `true` = `reduceManaBySacrificedManaValue` (generic only)
   - Replaces normal mana cost; composed from `CastingCost` components (`LifeCastingCost`, `SacrificePermanentsCost`, `ManaCastingCost`, `TapUntappedPermanentsCost`, `ReturnPermanentsCost`, `ExileCardsFromHandCastingCost`, `ExileTopCardsFromGraveyardCastingCost`)
-  - Example (sacrifice + life): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/d/DemonOfDeathsGate.java`
-  - Example (mana + tap artifact): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/z/ZahidDjinnOfTheLamp.java`
-  - Example (mana + return basic land — the Alara Reborn Borderposts): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FieldmistBorderpost.java` uses `new ReturnPermanentsCost(1, new PermanentAllOfPredicate(List.of(new PermanentIsLandPredicate(), new PermanentHasSupertypePredicate(CardSupertype.BASIC))))`
+  - Example (sacrifice + life): `magical-vibes-card/d/src/main/java/com/github/laxika/magicalvibes/cards/d/DemonOfDeathsGate.java`
+  - Example (mana + tap artifact): `magical-vibes-card/z/src/main/java/com/github/laxika/magicalvibes/cards/z/ZahidDjinnOfTheLamp.java`
+  - Example (mana + return basic land — the Alara Reborn Borderposts): `magical-vibes-card/f/src/main/java/com/github/laxika/magicalvibes/cards/f/FieldmistBorderpost.java` uses `new ReturnPermanentsCost(1, new PermanentAllOfPredicate(List.of(new PermanentIsLandPredicate(), new PermanentHasSupertypePredicate(CardSupertype.BASIC))))`
 
 - Prowl ("Prowl {cost}" — an alternate hand cost gated on combat damage):
   - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}")), CardSubtype.X))` — the second arg gates the alternate cost on "you dealt combat damage to a player this turn with a [subtype]" (a Changeling creature counts). For "with a Faerie or Rogue" (multiple qualifying subtypes) pass `Set.of(CardSubtype.FAERIE, CardSubtype.ROGUE)` instead. Populated in `CombatDamageService`, tracked per controller in `GameData.combatDamageToPlayerControllerSubtypesThisTurn`, checked by `CastingCostService.prowlConditionMet`.
@@ -172,7 +172,7 @@ public class ExampleCard extends Card {
   - A static "[filter] permanent spells you cast have evoke {cost}" grant uses `GrantEvokeToSpellsEffect`; the engine synthesizes the alternate cast and adds the standard evoke sacrifice ETB to the runtime card.
   - "When this creature enters, if its prowl cost was paid, [effect]": wrap the ETB effect in `ConditionalEffect(new CastForProwlCost(), innerEffect)` on `ON_ENTER_BATTLEFIELD` (Latchkey Faerie = `DrawCardEffect`). The prowl flag is stamped on the `StackEntry`/`Permanent` at cast/resolution and gated by `EtbEffectResolver` (unwrap when paid, drop otherwise — CR 603.4).
 - Freerunning ("Freerunning {cost}" — an alternate hand cost gated on combat damage with an Assassin or commander): use `new AlternateHandCast(List.of(new ManaCastingCost("{cost}")), new Freerunning(), false)`. The condition reads the existing combat-damage source history and designated commander identities; cast it through `GameService.playCardWithAlternateCost` / harness `castWithAlternateCost`.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/k/KnowledgeExploitation.java`
+  - Example: `magical-vibes-card/k/src/main/java/com/github/laxika/magicalvibes/cards/k/KnowledgeExploitation.java`
 
 - Blitz ("Creature spells you cast from your hand have blitz {cost}"): use `GrantBlitzToSpellsEffect("{cost}", new CardTypePredicate(CardType.CREATURE))`; the granted alternate cast adds haste, a next-end-step sacrifice, and draw on death to the runtime card.
 
@@ -182,37 +182,37 @@ public class ExampleCard extends Card {
     - Blustersquall = `ConditionalReplacementEffect(new Overloaded(), new TapPermanentsEffect(TapUntapScope.TARGET), new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))` + `target(TargetFilters.creatureAnOpponentControls())`.
   - `Overloaded` is the one `ConditionalReplacementEffect` condition whose branches differ in **target shape**, so `ConditionalReplacementEffect.targetSpec()` special-cases it and reports the *base* (printed) spec. The overload cast path instead resolves the wrapper away up front via `EffectResolution.resolveEffects(effects, kicked, overloaded, modeIndex)` before deciding whether a target is required, and stamps `StackEntry.overloaded` so the same swap happens again at resolution (`ConditionContext.overloaded()` → `ConditionEvaluationService`).
   - Like evoke and prowl, overload has **no websocket/UI path yet** — it is reachable from the engine and tests only. The AI never overloads.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/b/Blustersquall.java`
+  - Example: `magical-vibes-card/b/src/main/java/com/github/laxika/magicalvibes/cards/b/Blustersquall.java`
 
 - Graveyard cast ("You may cast this card from your graveyard"):
   - `addCastingOption(new GraveyardCast())` — uses the card’s normal mana cost, no exile after resolution (unlike flashback)
   - `addCastingOption(new GraveyardCast(new Condition()))` — same permission, but only while the supplied condition is met (e.g. max speed)
   - Card goes to graveyard normally if it dies, allowing repeated graveyard casts
   - Can be combined with additional costs like `ExileNCardsFromGraveyardCost`
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SkaabRuinator.java`
+  - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SkaabRuinator.java`
   - `new GraveyardCast("{cost}")` overrides the normal mana cost with an alternate one paid *rather than* the card's mana cost when cast from the graveyard ("by paying {W}{U}{B}{R}{G} rather than paying its mana cost"). Paid like a normal mana cost (no flashback mana restriction) in `SpellCastingService.payFlashbackOrGraveyardCastCost`; advertised via the same alternate string in `GameActionAvailabilityService`.
   - For "If you do, it enters with … counters" (i.e. only when cast from the graveyard), add `ON_ENTER_BATTLEFIELD ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new EnterWithCountersEffect(...))`. The entering permanent carries its cast-from zone (`Permanent.castFromZone`, stamped in `StackResolutionService.resolveCreatureSpell`) so the as-enters replacement `applyEnterWithCounters` can gate on it.
-  - Example (alternate cost + graveyard-only ETB counters): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/w/WorldheartPhoenix.java`
+  - Example (alternate cost + graveyard-only ETB counters): `magical-vibes-card/w/src/main/java/com/github/laxika/magicalvibes/cards/w/WorldheartPhoenix.java`
 
 - Exile cast ("You may cast this card from exile"):
   - `addCastingOption(new ExileCast())` — uses the card's normal mana cost, card goes to graveyard normally after resolution
   - Can be combined with `GraveyardCast` for cards castable from both zones
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SqueeTheImmortal.java`
+  - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SqueeTheImmortal.java`
 
 - Graveyard activated ability (pay mana from graveyard zone):
   - `addGraveyardActivatedAbility(new ActivatedAbility(false, cost, List.of(effect), description))` — activated ability usable while card is in graveyard
   - Distinct from `GRAVEYARD_UPKEEP_TRIGGERED` which is a triggered ability firing on upkeep
   - Blocked by Pithing Needle. Mana is paid on activation. Puts ACTIVATED_ABILITY on stack.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/m/MagmaPhoenix.java`
+  - Example: `magical-vibes-card/m/src/main/java/com/github/laxika/magicalvibes/cards/m/MagmaPhoenix.java`
 
 - Shuffle-into-library replacement effect ("if would be put into graveyard from anywhere, shuffle into library instead"):
   - `addEffect(EffectSlot.STATIC, new ShuffleIntoLibraryReplacementEffect())` — checked in `GraveyardService.addCardToGraveyard()`. Works for all zone transitions that route through graveyard: combat death, sacrifice, mill, discard, spell resolution.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/b/BlightsteelColossus.java`, `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/l/LegacyWeapon.java`
+  - Example: `magical-vibes-card/b/src/main/java/com/github/laxika/magicalvibes/cards/b/BlightsteelColossus.java`, `magical-vibes-card/l/src/main/java/com/github/laxika/magicalvibes/cards/l/LegacyWeapon.java`
 
 - Discard-to-battlefield replacement effect ("if opponent causes you to discard this card, put it onto the battlefield instead"):
   - `addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT, new EnterBattlefieldOnDiscardEffect())` — checked in `CardChoiceHandlerService` during both self-discard-choice and revealed-hand-choice flows. Only applies when `gameData.discardCausedByOpponent` is true. Filtered out from triggered ability processing in `TriggerCollectionService`. ETB triggers still fire normally.
   - For the variant that enters with counters, use `new EnterBattlefieldOnDiscardEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)`; the counters are applied during battlefield entry only for the discard replacement.
-  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/o/ObstinateBaloth.java`
+  - Example: `magical-vibes-card/o/src/main/java/com/github/laxika/magicalvibes/cards/o/ObstinateBaloth.java`
 
 ## Targeting checklist
 

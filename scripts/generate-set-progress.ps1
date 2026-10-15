@@ -72,7 +72,7 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$cardRoot = Join-Path $repoRoot "magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards"
+$cardRoot = Join-Path $repoRoot "magical-vibes-card"
 
 if (-not $OutputPath) {
     $OutputPath = Join-Path $PSScriptRoot "stats/index.html"
@@ -98,9 +98,9 @@ function Read-ImplementedPrintings {
         .SYNOPSIS
             Returns per-set printing counts, (set, number) pairs, and implemented totals.
 
-        Card classes live in single-letter directories under cards/; the infrastructure types
-        (CardSet, CardScanner, ...) sit alongside them and carry no registrations, so only the
-        letter directories are scanned. Printings is the flat list of registered (set, collector
+        Card classes live in single-letter cards/ directories spread over the card submodules
+        (shared, a..z); the infrastructure types (CardSet, CardScanner, ...) live in core's cards/
+        directory and carry no registrations, so only the letter directories are scanned. Printings is the flat list of registered (set, collector
         number) pairs used later to resolve implemented card names via MTGJSON.
     #>
     param([string] $CardRoot)
@@ -192,7 +192,7 @@ function Read-SupportedSetCodes {
     #>
     param([string] $CardRoot)
 
-    $enumPath = Join-Path $CardRoot "CardSet.java"
+    $enumPath = Join-Path $CardRoot "core/src/main/java/com/github/laxika/magicalvibes/cards/CardSet.java"
     if (-not (Test-Path -LiteralPath $enumPath)) {
         Write-Warning "CardSet.java not found; no set will be flagged as engine-supported."
         return @()

@@ -63,7 +63,8 @@ if ($PSBoundParameters.ContainsKey("From") -and $PSBoundParameters.ContainsKey("
 
 $SetCode = $SetCode.ToUpperInvariant()
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$cardRoot = Join-Path $repositoryRoot "magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards"
+# Card classes are spread over the card submodules (core, shared, a..z); scan them all.
+$cardRoot = Join-Path $repositoryRoot "magical-vibes-card"
 if (-not (Test-Path -LiteralPath $cardRoot -PathType Container)) {
     throw "Card source directory not found: $cardRoot"
 }

@@ -23,6 +23,12 @@ subprojects {
             mavenCentral()
         }
 
+        if (parent?.name == "magical-vibes-card") {
+            configure<BasePluginExtension> {
+                archivesName.set("magical-vibes-card-$name")
+            }
+        }
+
         configure<JavaPluginExtension> {
             toolchain {
                 languageVersion.set(JavaLanguageVersion.of(25))

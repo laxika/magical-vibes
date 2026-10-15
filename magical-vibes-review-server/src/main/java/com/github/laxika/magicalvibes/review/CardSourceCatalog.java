@@ -30,11 +30,12 @@ public class CardSourceCatalog {
     }
 
     public List<SourceCard> scan() throws IOException {
-        Path directory = root.resolve("magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards");
+        // Cards are spread over the card submodules (core, shared, a..z), each with its own source tree
+        Path directory = root.resolve("magical-vibes-card");
         Map<String, Map<String, String>> names = new HashMap<>();
         List<SourceCard> cards = new ArrayList<>();
         try (var files = Files.walk(directory)) {
-            for (Path file : files.filter(path -> path.toString().endsWith(".java")).sorted().toList()) {
+            for (Path file : files.filter(CardSourceCatalog::isCardSource).sorted().toList()) {
                 String source = withoutComments(Files.readString(file));
                 var packageMatch = PACKAGE.matcher(source);
                 var classMatch = CLASS.matcher(source);
@@ -68,6 +69,11 @@ public class CardSourceCatalog {
         }
         cards.sort(Comparator.comparing(SourceCard::className));
         return List.copyOf(cards);
+    }
+
+    private static boolean isCardSource(Path path) {
+        return path.toString().replace('\\', '/').contains("/src/main/java/com/github/laxika/magicalvibes/cards/")
+                && path.toString().endsWith(".java");
     }
 
     private Map<String, String> cachedNames(String set) {

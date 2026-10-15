@@ -30,7 +30,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: card-data-cache
-          key: card-data-cache-${{ hashFiles('magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/CardSet.java') }}
+          key: card-data-cache-${{ hashFiles('magical-vibes-card/core/src/main/java/com/github/laxika/magicalvibes/cards/CardSet.java') }}
           restore-keys: |
             card-data-cache-
 

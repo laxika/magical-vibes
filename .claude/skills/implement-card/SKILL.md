@@ -49,7 +49,9 @@ Apply the reuse-over-creation rule from `AGENTS.md` when choosing effects.
 
 ## Step 4 — Write the card class
 
-Create `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/{letter}/{ClassName}.java` extending `Card`, where `{letter}` is the lowercased first letter of the class name.
+Create `magical-vibes-card/{letter}/src/main/java/com/github/laxika/magicalvibes/cards/{letter}/{ClassName}.java` extending `Card`, where `{letter}` is the lowercased first letter of the class name (each letter is its own Gradle module, `:magical-vibes-card:{letter}`).
+
+**Cross-letter references:** letter modules can't depend on each other, so a card that is constructed by a card of a *different* letter (a back face via `setBackFaceCard(new X())`, a meld partner, a conjure target, …) lives in `magical-vibes-card/shared/src/main/java/com/github/laxika/magicalvibes/cards/{its letter}/` instead, keeping its `cards.{letter}` package. If your new card constructs such a card, create it there — or `git mv` an existing one there, together with every card it constructs in turn. Same-letter references need nothing special. A misplaced card fails compilation, so `./gradlew :magical-vibes-card:assemble` tells you.
 
 The constructor contains **only engine logic** — `addEffect()`, `addActivatedAbility()`, `target(...)`, `setNeedsTarget()`, etc. All metadata (name, type, mana, color, subtypes, keywords, P/T, card text) is auto-loaded from Scryfall; never set it. Add the `@CardRegistration` annotation(s). Mirror the structure and comment style of a recent card (e.g. `cards/t/TragicSlip.java`, `cards/t/TorchFiend.java`).
 

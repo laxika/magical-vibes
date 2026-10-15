@@ -20,7 +20,7 @@ class ReviewPersistenceTest {
 
     @Test
     void migratesExistingReviewsAndAcceptsLegacyUploadRetries() throws Exception {
-        var directory = root.resolve("magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a");
+        var directory = root.resolve("magical-vibes-card/a/src/main/java/com/github/laxika/magicalvibes/cards/a");
         Files.createDirectories(directory);
         Files.writeString(directory.resolve("Alpha.java"), "package example; @CardRegistration(set=\"SOS\",collectorNumber=\"1\") public class Alpha extends Card {}");
         long taskId;
@@ -60,7 +60,7 @@ class ReviewPersistenceTest {
 
     @Test
     void restartsKeepResultsActiveRunAndUnfinishedClaimsWithoutReassignment() throws Exception {
-        var directory = root.resolve("magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a");
+        var directory = root.resolve("magical-vibes-card/a/src/main/java/com/github/laxika/magicalvibes/cards/a");
         Files.createDirectories(directory);
         for (String name : List.of("Alpha", "Beta")) {
             Files.writeString(directory.resolve(name + ".java"), "package example; @CardRegistration(set=\"SOS\",collectorNumber=\"1\") public class " + name + " extends Card {}");
