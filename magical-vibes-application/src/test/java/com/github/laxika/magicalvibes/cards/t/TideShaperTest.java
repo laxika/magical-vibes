@@ -38,7 +38,7 @@ class TideShaperTest extends BaseCardTest {
 
         assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.ISLAND);
 
-        gd.playerBattlefields.get(player1.getId()).remove(tideShaper);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, tideShaper);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.MOUNTAIN);
     }

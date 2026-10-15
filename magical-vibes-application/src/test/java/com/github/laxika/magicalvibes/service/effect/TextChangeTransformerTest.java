@@ -13,7 +13,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +29,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Word-rewriting rules of the layer-3 text-change transform (CR 612 / 613.2c). Behavior through
+ * Word-rewriting rules of the layer-3 text-change transform (CR 612 / 613.1c). Behavior through
  * the engine (Mind Bend on Goblin King / Blood Moon / auras) is pinned by
  * {@code SevenLayerTest.Layer3Text}; this covers the transformer's own contract.
  */
@@ -140,5 +144,32 @@ class TextChangeTransformerTest {
 
         assertThat(((GrantEffectEffect) result).effect())
                 .isEqualTo(new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
+    }
+
+    @Test
+    @DisplayName("A color word replacement rewrites a spell-cast trigger's spell filter")
+    void colorReplacementRewritesSpellCastTriggerFilter() {
+        SpellCastTriggerEffect trigger = new SpellCastTriggerEffect(
+                new CardAllOfPredicate(List.of(
+                        new CardColorPredicate(CardColor.BLACK),
+                        new CardNotPredicate(new CardColorPredicate(CardColor.RED)))),
+                List.of());
+
+        CardEffect result = TextChangeTransformer.transform(trigger, List.of(BLACK_TO_BLUE));
+
+        assertThat(((SpellCastTriggerEffect) result).spellFilter()).isEqualTo(new CardAllOfPredicate(List.of(
+                new CardColorPredicate(CardColor.BLUE),
+                new CardNotPredicate(new CardColorPredicate(CardColor.RED)))));
+    }
+
+    @Test
+    @DisplayName("A spell-cast trigger without the replaced word is returned unchanged")
+    void untouchedSpellCastTriggerKeepsIdentity() {
+        SpellCastTriggerEffect trigger = new SpellCastTriggerEffect(
+                new CardColorPredicate(CardColor.RED), List.of());
+
+        CardEffect result = TextChangeTransformer.transform(trigger, List.of(BLACK_TO_BLUE, MOUNTAIN_TO_ISLAND));
+
+        assertThat(result).isSameAs(trigger);
     }
 }

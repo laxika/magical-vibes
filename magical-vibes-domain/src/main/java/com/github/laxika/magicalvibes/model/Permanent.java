@@ -567,10 +567,6 @@ public class Permanent {
      *  Each entry means: "this permanent doesn't untap for as long as that source permanent is on the battlefield."
      *  Unlike {@link #untapPreventedByPermanentIds}, the tapped state of the source does not matter. */
     private final Set<UUID> untapPreventedWhileSourceOnBattlefieldIds = new HashSet<>();
-    /** Basic land types applied to lands by this permanent until it leaves the battlefield. The
-     *  layered static effect reads this map, so the grants survive turn resets but end when this
-     *  permanent's static effects stop being collected. */
-    private final Map<UUID, CardSubtype> landTypesUntilSourceLeaves = new HashMap<>();
     /** Land permanent ids that this Cyclopean Tomb put mire counters onto while it was on the battlefield. */
     private final Set<UUID> mireCounterLandIds = new HashSet<>();
     /** Number of untap steps this permanent should skip. Decremented each untap step.
@@ -1040,7 +1036,6 @@ public class Permanent {
         this.mustBlockIdsUntilEndOfCombat.addAll(source.mustBlockIdsUntilEndOfCombat);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
-        this.landTypesUntilSourceLeaves.putAll(source.landTypesUntilSourceLeaves);
         this.mireCounterLandIds.addAll(source.mireCounterLandIds);
         this.skipUntapCount = source.skipUntapCount;
         this.skipUntapControllerId = source.skipUntapControllerId;

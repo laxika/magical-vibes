@@ -3697,6 +3697,7 @@ public class SpellCastingService {
         }
         gameData.spellColorOverrides.remove(card.getId());
         gameData.spellColorOverridesUntilEndOfTurn.remove(card.getId());
+        gameData.spellTextReplacements.remove(card.getId());
         boolean hasGiftChoice = card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(GiftEffect.class::isInstance);
         if (giftPromised && !hasGiftChoice) {

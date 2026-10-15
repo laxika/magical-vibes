@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -3605,7 +3606,7 @@ public class TargetLegalityService {
                                 effectiveTargetFilter, entry.isKicked(), entry.isGiftPromised(),
                                 entry.isTeamworkCostPaid());
                         effectiveTargetFilter = TextChangeTransformer.transformTargetFilter(
-                                effectiveTargetFilter, TextChangeTransformer.globalColorWordReplacements(gameData));
+                                effectiveTargetFilter, resolutionTextReplacements(gameData, entry));
                         if (effectiveTargetFilter != null) {
                             try {
                                 predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,
@@ -3961,12 +3962,32 @@ public class TargetLegalityService {
                 gameQueryService.findPermanentController(gameData, targetId));
     }
 
+    /**
+     * The text changes a resolving entry's target restriction is read through (CR 612.1): those
+     * made to the spell itself while it was on the stack (Glamerdye), then any global color-word
+     * change. Abilities on the stack are independent of their source, so only spells carry their own.
+     */
+    private static List<TextReplacement> resolutionTextReplacements(GameData gameData, StackEntry entry) {
+        List<TextReplacement> global = TextChangeTransformer.globalColorWordReplacements(gameData);
+        if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY || entry.getCard() == null) {
+            return global;
+        }
+        List<TextReplacement> own = gameData.spellTextReplacements.get(entry.getCard().getId());
+        if (own == null || own.isEmpty()) {
+            return global;
+        }
+        List<TextReplacement> combined = new ArrayList<>(own);
+        combined.addAll(global);
+        return combined;
+    }
+
     private boolean isBattlefieldTargetLegalOnResolution(GameData gameData, StackEntry entry, UUID targetId,
                                                           TargetFilter targetFilter) {
         targetFilter = targetFilterForCast(targetFilter, entry.isKicked(), entry.isGiftPromised(),
                 entry.isTeamworkCostPaid());
         targetFilter = TextChangeTransformer.transformTargetFilter(
-                targetFilter, TextChangeTransformer.globalColorWordReplacements(gameData));
+                targetFilter, resolutionTextReplacements(gameData, entry));
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             if (!gameData.playerIds.contains(targetId)) {

@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
@@ -218,6 +219,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellC
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.model.effect.MayFightTargetCreatureOnAllyCreatureEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
@@ -16910,12 +16912,16 @@ public class TriggerCollectionService {
         if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
         boolean triggered = false;
         if (!gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+            List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
             for (EffectRegistration registration : perm.getCard().getEffectRegistrations(slot)) {
                 if (oncePerBatchOnly != null
                         && (registration.triggerMode() == TriggerMode.ONCE_PER_BATCH) != oncePerBatchOnly) {
                     continue;
                 }
-                CardEffect effect = registration.effect();
+                // Layer 3 (CR 612.1): the trigger condition is read from the permanent's
+                // text-changed words (Glamerdye on Riverfall Mimic).
+                CardEffect effect = TextChangeTransformer.transform(
+                        registration.effect(), perm.getTextReplacements(), globalWordChange);
                 if (slot == EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE
                         && effect instanceof OncePerTurnTriggerEffect once && once.firstLandGraveyardEvent()
                         && gameData.landCardGraveyardEntriesThisTurn.getOrDefault(controllerId, 0) > 1) {

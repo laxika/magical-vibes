@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 
 /**
  * Changes a target land to a fixed basic land type for as long as the source permanent remains on
- * the battlefield. The source's static companion effect applies the change in the layered
- * characteristic state, so the land reverts automatically when the source leaves.
+ * the battlefield. Resolution creates a {@code WHILE_SOURCE_REMAINS} floating layer-4 effect with
+ * its own timestamp (CR 613.7), so it overrides type changes that existed when it resolved and
+ * ends when the source leaves.
  */
 public record TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect(CardSubtype subtype)
         implements CardEffect {

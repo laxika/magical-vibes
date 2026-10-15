@@ -934,7 +934,7 @@ public class BattlefieldPlacementService {
     }
 
     /**
-     * CR 613.7: a text change made to a spell (e.g. Glamerdye targeting a permanent spell) carries
+     * CR 400.7a: a text change made to a spell (e.g. Glamerdye targeting a permanent spell) carries
      * onto the permanent that spell resolves into. The replacements were recorded keyed by the
      * spell's card id; the entering permanent shares that card id, so move them onto it.
      */

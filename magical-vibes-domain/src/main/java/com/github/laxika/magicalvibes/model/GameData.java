@@ -1721,7 +1721,7 @@ public class GameData {
     public final Set<UUID> spellsMadeUncounterable = ConcurrentHashMap.newKeySet();
 
     /** Text-change replacements applied to a spell on the stack (e.g. Glamerdye targeting a spell).
-     *  Keyed by the spell's card id; carried onto the permanent it resolves into (CR 613.7). */
+     *  Keyed by the spell's card id; carried onto the permanent it resolves into (CR 400.7a). */
     public final Map<UUID, List<TextReplacement>> spellTextReplacements = new ConcurrentHashMap<>();
 
     /** Color override applied to a spell on the stack (e.g. Purelace targeting a spell — "becomes white",

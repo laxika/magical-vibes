@@ -36,7 +36,7 @@ class GracefulAntelopeTest extends BaseCardTest {
 
         assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.PLAINS);
 
-        gd.playerBattlefields.get(player1.getId()).remove(antelope);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, antelope);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.MOUNTAIN);
     }
@@ -98,7 +98,7 @@ class GracefulAntelopeTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
         harness.handlePermanentChosen(player1, mountain.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(antelope);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, antelope);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);

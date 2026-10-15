@@ -605,6 +605,7 @@ public class StackResolutionService {
         Card physicalCard = entry.getPhysicalCard();
         gameData.spellColorOverrides.remove(physicalCard.getId());
         gameData.spellColorOverridesUntilEndOfTurn.remove(physicalCard.getId());
+        gameData.spellTextReplacements.remove(physicalCard.getId());
         gameData.spellEntryCounters.remove(card.getId());
         gameData.spellGrantedSubtypesOnEntry.remove(card.getId());
         if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
@@ -1598,6 +1599,7 @@ public class StackResolutionService {
         Card physicalCard = entry.getPhysicalCard();
         gameData.spellColorOverrides.remove(physicalCard.getId());
         gameData.spellColorOverridesUntilEndOfTurn.remove(physicalCard.getId());
+        gameData.spellTextReplacements.remove(physicalCard.getId());
         boolean plotOnResolution = gameData.spellsWithPlotOnResolution.remove(physicalCard.getId());
         if (entry.isSpellMovedDuringResolution()) {
             return;

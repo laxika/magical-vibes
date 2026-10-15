@@ -96,8 +96,7 @@ class GaeasLiegeTest extends BaseCardTest {
         Permanent plains = forestTargetPlains(player1);
         assertThat(gqs.computeStaticBonus(gd, plains).landSubtypeOverriding()).isTrue();
 
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Gaea's Liege"));
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, findPermanent(player1, "Gaea's Liege"));
 
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, plains);
         assertThat(bonus.landSubtypeOverriding()).isFalse();

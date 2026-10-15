@@ -322,7 +322,7 @@ correctly follows the pre-switch power into toughness). `Permanent.getEffectiveP
 getEffectiveToughness()` are plain pre-switch accessors (base + modifiers + counters) for the
 debt-listed direct readers above.
 
-**Implementation status (step 9 — layer 3 text changes, CR 612/613.2c):** text changes rewrite
+**Implementation status (step 9 — layer 3 text changes, CR 612/613.1c):** text changes rewrite
 the WORDS of an object's abilities and everything downstream (layers 4–7, protection, mana
 abilities) sees the rewritten text. Storage is unchanged — `Permanent.textReplacements`, written
 by Mind Bend's resolution (`ChoiceHandlerService`), surviving turns (`resetModifiers` does not
@@ -351,7 +351,16 @@ in `landTypeOverrides` so the tap funnel produces the new mana color (CR 305.6);
 setter simply overwrites the entry; (d) both handler loops in
 `GameQueryService.assembleStaticBonus` pass the transformed view to the legacy handlers (managed
 suppression still checks the original), so unmanaged outputs (7c boosts behind text-changed
-filters, self CDAs counting a text-changed land word) follow the rewritten text too.
+filters, self CDAs counting a text-changed land word) follow the rewritten text too;
+(e) `TriggerCollectionService.dispatchSlot` transforms each battlefield trigger with the
+permanent's own and global replacements before matching, so `SpellCastTriggerEffect`'s
+`spellFilter` (`CardColorPredicate`/`CardSubtypePredicate`, recursing through card
+AllOf/AnyOf/Not) follows the rewritten words (Glamerdye on Riverfall Mimic); (f)
+`TargetLegalityService`'s resolution-time target checks read a spell's target restriction
+through its own `GameData.spellTextReplacements` (then the global change), so a text change
+made to a spell on the stack can make its target illegal (Glamerdye on Soul Reap). Those
+replacements are dropped when the spell is cast or leaves the stack, and carried onto the
+permanent a permanent spell becomes (CR 400.7a).
 Chosen-as-enters colors stay handled by the resolution-time `chosenColor` update. **Known gaps**
 (effect types with color/basic-land-type words that are continuously read but NOT yet rewritten;
 extend the transformer's visitor when a card needs them): `PreventDamageEffect.fromColors(...)`,
@@ -359,8 +368,8 @@ extend the transformer's visitor when a card needs them): `PreventDamageEffect.f
 `GrantControllerSpellsCantBeCounteredByColorsEffect`, `GrantLifelinkToControllerSpellsByColorEffect`,
 `BoostColorSourceDamageThisTurnEffect`, `DealDamageOnSpellLifeGainEffect`,
 `PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect`,
-`AwardAnyColorManaEffect`'s `subtype`, and color/land-type words inside trigger
-predicates and activated-ability definitions. The remaining `CardColor`/`CardSubtype`-carrying
+`AwardAnyColorManaEffect`'s `subtype`, color/land-type words inside trigger effects other
+than `SpellCastTriggerEffect`'s spell filter, and activated-ability target restrictions. The remaining `CardColor`/`CardSubtype`-carrying
 effect types (token creators, one-shot damage/draw/return effects, costs) consume their
 parameters at resolution and are never re-read from a permanent's text. Text changes applied to
 a spell on the stack instead rewrite that stack entry's frozen resolving effects immediately.

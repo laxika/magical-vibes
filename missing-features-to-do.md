@@ -89,36 +89,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 17. Layer timestamps and text-changing effects
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GaeasLiegeTest` "A resolved conversion overrides an earlier Evil Presence even if Liege entered first"
-- `GlamerdyeTest` "Changing nongreen to nonblue makes a blue creature target illegal",
-  "Changing a color word changes which multicolored spell triggers the target",
-  "A text change to a target spell carries onto the permanent it becomes (CR 400.7a)"
-
-**What the rules require.** CR 613.7: within a layer, effects apply in timestamp order, so Gaea's Liege's
-resolved land-type change (timestamped when its ability resolved) overrides an earlier Evil Presence. CR
-612.1: a text-changing effect changes the words on the object, so Glamerdye's changed color word changes
-the targeting restrictions and triggers that read it. The engine stamps the Liege's effect with the
-permanent's timestamp and has no real text-changing layer (layer 3).
-
-**Why it's large.** Effects created by resolution need their own timestamps in layer 4, and text changes
-need a layer-3 rewrite of color/type words that the predicates and triggers read.
-
-**Prompt to start it:**
-
-```
-Give resolved type-changing effects their own timestamps (CR 613.7) and add a layer-3 text-changing
-effect for color words (CR 612.1) that targeting predicates and triggers read. Start with GaeasLiegeTest
-and GlamerdyeTest, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 18. Playing exiled cards during resolution (Gix, Yawgmoth Praetor)
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests

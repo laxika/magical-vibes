@@ -31,7 +31,14 @@ import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -349,6 +356,18 @@ public final class TextChangeTransformer {
                 yield condition == conditional.condition() && wrapped == conditional.wrapped() ? conditional
                         : new ConditionalEffect(condition, wrapped);
             }
+            case SpellCastTriggerEffect trigger -> {
+                CardPredicate spellFilter = apply(trigger.spellFilter(), substitution);
+                yield spellFilter == trigger.spellFilter() ? trigger
+                        : new SpellCastTriggerEffect(spellFilter, trigger.resolvedEffects(), trigger.manaCost(),
+                        trigger.targetFilter(), trigger.castSpellTargetCondition(),
+                        trigger.onlyDuringOpponentTurn(), trigger.onlyDuringControllerTurn(),
+                        trigger.intervening(), trigger.nthSpellNumber(), trigger.minimumSpellNumber(),
+                        trigger.triggersOnAnyPlayer(), trigger.requiresManaProducedBySource(),
+                        trigger.expendThreshold(), trigger.requiresTreasureMana(),
+                        trigger.requiresTwoOrMoreCardTypes(), trigger.onlyWhenCasterNotActiveTurn(),
+                        trigger.onlyDuringCombat());
+            }
             case EnchantedPermanentConditionalEffect conditional -> {
                 PermanentPredicate filter = apply(conditional.filter(), substitution);
                 CardEffect ifMatch = apply(conditional.ifMatch(), substitution);
@@ -405,6 +424,44 @@ public final class TextChangeTransformer {
             result.add(transformed);
         }
         return changed ? result : conditions;
+    }
+
+    private static CardPredicate apply(CardPredicate predicate, Substitution substitution) {
+        return switch (predicate) {
+            case null -> null;
+            case CardColorPredicate color -> substitution.fromColor() != null
+                    && color.color() == substitution.fromColor()
+                    ? new CardColorPredicate(substitution.toColor()) : color;
+            case CardSubtypePredicate has -> {
+                CardSubtype subtype = replaceSubtype(has.subtype(), substitution);
+                yield subtype == has.subtype() ? has : new CardSubtypePredicate(subtype);
+            }
+            case CardAllOfPredicate allOf -> {
+                List<CardPredicate> children = applyCardPredicates(allOf.predicates(), substitution);
+                yield children == allOf.predicates() ? allOf : new CardAllOfPredicate(children);
+            }
+            case CardAnyOfPredicate anyOf -> {
+                List<CardPredicate> children = applyCardPredicates(anyOf.predicates(), substitution);
+                yield children == anyOf.predicates() ? anyOf : new CardAnyOfPredicate(children);
+            }
+            case CardNotPredicate not -> {
+                CardPredicate inner = apply(not.predicate(), substitution);
+                yield inner == not.predicate() ? not : new CardNotPredicate(inner);
+            }
+            default -> predicate;
+        };
+    }
+
+    private static List<CardPredicate> applyCardPredicates(List<CardPredicate> predicates,
+                                                           Substitution substitution) {
+        List<CardPredicate> result = new ArrayList<>(predicates.size());
+        boolean changed = false;
+        for (CardPredicate predicate : predicates) {
+            CardPredicate transformed = apply(predicate, substitution);
+            changed |= transformed != predicate;
+            result.add(transformed);
+        }
+        return changed ? result : predicates;
     }
 
     private static StackEntryPredicate apply(StackEntryPredicate predicate, Substitution substitution) {

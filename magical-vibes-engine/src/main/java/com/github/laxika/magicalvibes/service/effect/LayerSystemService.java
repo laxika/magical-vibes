@@ -67,7 +67,6 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PrimevalCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -904,14 +903,6 @@ public class LayerSystemService {
         h = mix(h, enumOrdinal(p.getPersistentLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getTransientCreatureTypeOverride()));
         h = hashEnums(h, p.getTransientCreatureTypeOverrides());
-        // Source-bound land type changes drive a layer-4 type grant.
-        long trackedLandTypesSum = 0;
-        for (Map.Entry<UUID, CardSubtype> trackedLand : p.getLandTypesUntilSourceLeaves().entrySet()) {
-            trackedLandTypesSum += mix64(trackedLand.getKey().hashCode()
-                    ^ (31L * (trackedLand.getValue() == null ? 0 : trackedLand.getValue().ordinal())));
-        }
-        h = mix(h, trackedLandTypesSum);
-        h = mix(h, p.getLandTypesUntilSourceLeaves().size());
 
         for (TextReplacement replacement : p.getTextReplacements()) {
             h = mix(h, System.identityHashCode(replacement));
@@ -2106,24 +2097,6 @@ public class LayerSystemService {
                         setLandType(state, target.permanent().getId(), to, landTypeOverrides);
                         record(board, instance, target, new L4Contribution(to, true, true, null, null));
                     }
-                }
-            }
-            case TrackedLandsBecomeBasicLandTypeEffect e -> {
-                // Each recorded land becomes the effect's fixed basic land type.
-                manage(board, instance);
-                if (instance.source() == null) return;
-                for (Map.Entry<UUID, CardSubtype> trackedLand
-                        : instance.source().permanent().getLandTypesUntilSourceLeaves().entrySet()) {
-                    UUID landId = trackedLand.getKey();
-                    PermanentSlot target = slotsById.get(landId);
-                    if (target == null || isSource(instance, target)) continue;
-                    CharacteristicState state = states.get(landId);
-                    if (state == null || !state.hasCardType(CardType.LAND)) continue;
-                    CardSubtype subtype = trackedLand.getValue();
-                    if (subtype != e.subtype()) continue;
-                    setLandType(state, landId, subtype, landTypeOverrides);
-                    record(board, instance, target, new L4Contribution(
-                            subtype, true, true, null, null));
                 }
             }
             case AnimateNoncreatureArtifactsEffect ignored -> {

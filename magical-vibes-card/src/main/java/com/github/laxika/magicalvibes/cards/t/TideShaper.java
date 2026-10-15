@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +19,6 @@ public class TideShaper extends Card {
 
     public TideShaper() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}"));
-        addEffect(EffectSlot.STATIC, new TrackedLandsBecomeBasicLandTypeEffect(CardSubtype.ISLAND));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));

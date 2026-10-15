@@ -130,7 +130,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffe
 import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.TrackedLandsBecomeBasicLandTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromImprintedCardTypesEffect;
@@ -370,7 +369,6 @@ public final class LayerClassifier {
         map.put(ControlledLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(BasicLandsOfChosenTypesBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         // Source-bound land type changes apply in the type layer.
-        map.put(TrackedLandsBecomeBasicLandTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllCreatureTypesEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllLandTypesEffect.class, fixed(Layer.L4_TYPE));
         map.put(SetCreatureTypesToImprintedCreatureEffect.class, fixed(Layer.L4_TYPE));
