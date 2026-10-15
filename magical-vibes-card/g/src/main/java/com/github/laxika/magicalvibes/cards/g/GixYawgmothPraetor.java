@@ -6,11 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryScope;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -32,17 +30,12 @@ public class GixYawgmothPraetor extends Card {
                         new MayPayManaEffect("{0}", 1, new DrawCardEffect(1),
                                 "Pay 1 life to draw a card?")));
 
-        addEffect(EffectSlot.STATIC,
-                new AllowCastFromCardsExiledWithSourceEffect(
-                        false, null, false, false, 0, null, false, false, true));
-
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{B}{B}{B}",
                 List.of(
                         new DiscardXCardsCost(),
-                        new ExileTopCardsToSourceEffect(
-                                new XValue(), false, false, LibraryScope.TARGET_OPPONENT, true)),
+                        ExileTopCardsAndMayCastSpellsEffect.targetedOpponentPlayLandsAndSpells(new XValue())),
                 "{4}{B}{B}{B}, Discard X cards: Exile the top X cards of target opponent's library. "
                         + "You may play lands and cast spells from among cards exiled this way without "
                         + "paying their mana costs.",

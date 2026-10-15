@@ -2265,6 +2265,13 @@ public class GameData {
     public final Set<UUID> pendingFreeCastAsCopyIds = ConcurrentHashMap.newKeySet();
 
     /**
+     * Lands in {@link #pendingFreeCastQueue} that the resolving effect lets its controller play
+     * rather than cast (Brilliant Ultimatum, Gix, Yawgmoth Praetor). They are played only on the
+     * controller's turn while they have a land play left.
+     */
+    public final Set<UUID> pendingFreeCastLandPlayIds = ConcurrentHashMap.newKeySet();
+
+    /**
      * Total mana value still available to the spells in {@link #pendingFreeCastQueue} when their
      * cast shares one limit (Primeval Spawn), or null when it is not limited. Each spell spends its
      * own mana value as it is cast, so a split card spends only the half being cast (CR 709.3a).
@@ -8796,6 +8803,7 @@ public class GameData {
         });
         copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
         copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
+        copy.pendingFreeCastLandPlayIds.addAll(this.pendingFreeCastLandPlayIds);
         copy.pendingFreeCastManaValueBudget = this.pendingFreeCastManaValueBudget;
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
         copy.pendingExileFreeCastRemainderToLibraryBottom.addAll(this.pendingExileFreeCastRemainderToLibraryBottom);

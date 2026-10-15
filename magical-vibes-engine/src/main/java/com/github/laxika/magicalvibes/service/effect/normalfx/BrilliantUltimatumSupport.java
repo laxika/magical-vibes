@@ -134,6 +134,12 @@ public class BrilliantUltimatumSupport {
         gameData.interaction.clearAwaitingInput();
 
         if (cardIds != null && !cardIds.isEmpty()) {
+            for (UUID cardId : cardIds) {
+                ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+                if (exiled != null && exiled.card().hasType(CardType.LAND)) {
+                    gameData.pendingFreeCastLandPlayIds.add(cardId);
+                }
+            }
             exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, cardIds);
             return;
         }
@@ -158,7 +164,7 @@ public class BrilliantUltimatumSupport {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
         gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
         gameLogService.append(gameData, GameLog.playerPlays(playerName, card, " without paying its mana cost."));
-        log.info("Game {} - {} plays land {} from exile (Brilliant Ultimatum)", gameData.id, playerName, card.getName());
+        log.info("Game {} - {} plays land {} from exile", gameData.id, playerName, card.getName());
         battlefieldEntryService.processLandETBEffects(gameData, playerId, card);
         if (!gameData.interaction.isAwaitingInput()) {
             triggerCollectionService.checkControllerPlaysLandTriggers(gameData, playerId, card, true);

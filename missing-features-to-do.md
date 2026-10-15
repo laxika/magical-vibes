@@ -89,32 +89,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 18. Playing exiled cards during resolution (Gix, Yawgmoth Praetor)
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GixYawgmothPraetorTest` "Discarding X cards exiles X cards and offers play during resolution",
-  "Activation on an opponent's turn offers a creature spell during resolution"
-
-**What the rules require.** Gix's last ability lets you play lands and cast spells from among the exiled
-cards *while the ability resolves*, without paying their mana costs, ignoring timing restrictions (a
-creature spell on an opponent's turn). The engine only grants a play-from-exile permission for later.
-
-**Why it's large.** Casting spells in the middle of a resolution needs the "cast during resolution" loop
-used by cascade-style effects, extended to lands and to a chosen subset of several exiled cards.
-
-**Prompt to start it:**
-
-```
-Let Gix, Yawgmoth Praetor's ability cast spells and play lands from among the exiled cards during its
-resolution, without paying mana costs and ignoring timing. Reuse the cascade-style cast-during-resolution
-flow. Start with GixYawgmothPraetorTest, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 19. One search per event and the "may" before searching (needs a decision)
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests

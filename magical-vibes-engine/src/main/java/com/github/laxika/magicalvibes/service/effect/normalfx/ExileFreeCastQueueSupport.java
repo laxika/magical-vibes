@@ -216,9 +216,7 @@ public class ExileFreeCastQueueSupport {
         }
 
         Card card = exiledEntry.card();
-        if (card.hasType(CardType.LAND) && gameData.pendingEffectResolutionEntry != null
-                && gameData.pendingEffectResolutionEntry.getCard().getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(com.github.laxika.magicalvibes.model.effect.BrilliantUltimatumEffect.class::isInstance)) {
+        if (card.hasType(CardType.LAND) && gameData.pendingFreeCastLandPlayIds.remove(cardId)) {
             brilliantUltimatumSupport.playLandFromExile(gameData, playerId, card);
             if (!gameData.interaction.isAwaitingInput()) castNextFromQueue(gameData, playerId);
             return;
@@ -772,6 +770,7 @@ public class ExileFreeCastQueueSupport {
 
     private void finishFreeCastProcess(GameData gameData) {
         gameData.pendingFreeCastManaValueBudget = null;
+        gameData.pendingFreeCastLandPlayIds.clear();
         spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);
         putRemainderIntoLibraryBottom(gameData);

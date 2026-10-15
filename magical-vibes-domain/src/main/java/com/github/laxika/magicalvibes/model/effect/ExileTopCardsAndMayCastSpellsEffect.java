@@ -11,6 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
  * without paying their mana costs. The cast choices are made during resolution; uncast cards
  * normally remain exiled, or return to the owner's library bottom in random order when requested.
  * They may alternatively be put into their owners' hands after the cast choices are complete.
+ *
+ * <p>When {@code playLands} is true, exiled lands are offered too and are played during resolution
+ * (Gix, Yawgmoth Praetor), still only on the controller's turn and only while they have a land play
+ * left.
  */
 public record ExileTopCardsAndMayCastSpellsEffect(
         int count,
@@ -26,7 +30,8 @@ public record ExileTopCardsAndMayCastSpellsEffect(
         boolean putUncastCardsIntoHand,
         CardPredicate uncastCardsToHandFilter,
         Integer totalManaValueLimit,
-        boolean normalCost
+        boolean normalCost,
+        boolean playLands
 ) implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     public ExileTopCardsAndMayCastSpellsEffect(int count, DynamicAmount dynamicCount, LibraryScope scope,
@@ -37,13 +42,20 @@ public record ExileTopCardsAndMayCastSpellsEffect(
                                                CardPredicate uncastCardsToHandFilter, Integer totalManaValueLimit) {
         this(count, dynamicCount, scope, trackWithSource, faceDown, manaValueLimit, castFilter, maxCastCount,
                 targetedOpponent, putUncastCardsOnBottomRandom, putUncastCardsIntoHand,
-                uncastCardsToHandFilter, totalManaValueLimit, false);
+                uncastCardsToHandFilter, totalManaValueLimit, false, false);
     }
 
     /** Exiles cards and allows each to be played immediately while paying its normal costs. */
     public static ExileTopCardsAndMayCastSpellsEffect controllerMayPlayWithNormalCost(int count) {
         return new ExileTopCardsAndMayCastSpellsEffect(count, null, LibraryScope.CONTROLLER, false, false,
-                null, null, Integer.MAX_VALUE, false, false, false, null, null, true);
+                null, null, Integer.MAX_VALUE, false, false, false, null, null, true, false);
+    }
+
+    /** Exiles {@code count} cards from a targeted opponent, then lets the controller play any number
+     * of the exiled lands and spells without paying their mana costs. */
+    public static ExileTopCardsAndMayCastSpellsEffect targetedOpponentPlayLandsAndSpells(DynamicAmount count) {
+        return new ExileTopCardsAndMayCastSpellsEffect(0, count, LibraryScope.TARGET_OPPONENT, false, false,
+                null, null, Integer.MAX_VALUE, true, false, false, null, null, false, true);
     }
 
     /** Exiles the top {@code count} cards of the controller's library. */

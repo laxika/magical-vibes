@@ -62,6 +62,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                 : Math.max(0, amountEvaluationService.evaluate(gameData, e.manaValueLimit(),
                         AmountContext.forStackEntry(entry, null)));
         List<UUID> castableSpellIds = new ArrayList<>();
+        List<UUID> playableLandIds = new ArrayList<>();
         List<UUID> exiledCardIds = new ArrayList<>();
         List<UUID> uncastCardsToHandIds = new ArrayList<>();
         List<UUID> uncastCardsToBottomIds = new ArrayList<>();
@@ -106,6 +107,9 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
 
                 if (isCastable(card, e, entry) && card.getManaValue() <= manaValueLimit) {
                     castableSpellIds.add(card.getId());
+                } else if (e.playLands() && card.hasType(CardType.LAND)) {
+                    castableSpellIds.add(card.getId());
+                    playableLandIds.add(card.getId());
                 }
             }
         }
@@ -147,6 +151,15 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             return;
         }
 
+        if (e.playLands()) {
+            gameData.pendingFreeCastLandPlayIds.addAll(playableLandIds);
+            interactionHandlerRegistry.begin(gameData,
+                    new PendingInteraction.ImprovisationCapstoneCastChoice(
+                            controllerId, castableSpellIds, maxCastCount,
+                            "You may play lands and cast spells from among the exiled cards without "
+                                    + "paying their mana costs."));
+            return;
+        }
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.ImprovisationCapstoneCastChoice(
                         controllerId, castableSpellIds, maxCastCount,
