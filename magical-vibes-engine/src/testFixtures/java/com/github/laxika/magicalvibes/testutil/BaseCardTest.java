@@ -213,9 +213,10 @@ public abstract class BaseCardTest {
         harness.beginBlockerDeclarationInput();
     }
 
-    /** Passes priority until the stack is empty or a trigger asks for player input. */
+    /** Passes priority until the stack is empty, a trigger asks for player input, or the game ends. */
     protected void resolveAllTriggers() {
-        while (!gd.interaction.isAwaitingInput()
+        while (gd.status != GameStatus.FINISHED
+                && !gd.interaction.isAwaitingInput()
                 && (!gd.stack.isEmpty() || !gd.pendingManaAbilityTriggers.isEmpty())) {
             harness.passBothPriorities();
         }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.state;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -112,9 +113,13 @@ public class StateTriggerService {
      * For each qualifying permanent not already tracked, pushes a triggered ability
      * onto the stack and marks it in {@link GameData#stateTriggerOnStack}.
      *
-     * <p>Iterates in APNAP order (orderedPlayerIds) so triggers are stacked correctly.</p>
+     * <p>Iterates in APNAP order (orderedPlayerIds) so triggers are stacked correctly.
+     * Nothing triggers once the game has ended.</p>
      */
     public void checkStateTriggers(GameData gameData) {
+        if (gameData.status == GameStatus.FINISHED) {
+            return;
+        }
         checkPlanarStateTriggers(gameData);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
