@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
@@ -31,6 +29,6 @@ public class NemesisOfMortals extends Card {
                 "{7}{G}{G}",
                 List.of(new ReduceActivationCostEffect(creatureCardsInGraveyard), new MonstrosityEffect(5)),
                 "{7}{G}{G}: Monstrosity 5. This ability costs {1} less to activate for each creature card in your graveyard."
-        ).withActivationCondition(new NotCondition(new SourceIsMonstrous()), "This creature is already monstrous"));
+        ));
     }
 }

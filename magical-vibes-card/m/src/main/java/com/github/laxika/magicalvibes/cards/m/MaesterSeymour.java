@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,13 +35,12 @@ public class MaesterSeymour extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE,
                                 new SourcePower()));
 
-        SourceIsMonstrous monstrous = new SourceIsMonstrous();
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}{G}",
                 List.of(new MonstrosityEffect(new PermanentCounterSum(
                         null, new PermanentIsCreaturePredicate(), CountScope.CONTROLLER))),
                 "{3}{G}{G}: Monstrosity X, where X is the number of counters among creatures you control."
-        ).withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+        ));
     }
 }

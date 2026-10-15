@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 
@@ -24,14 +22,12 @@ import java.util.Set;
 public class HydraBroodmaster extends Card {
 
     public HydraBroodmaster() {
-        SourceIsMonstrous monstrous = new SourceIsMonstrous();
-
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}{X}{G}",
                 List.of(new MonstrosityEffect(new XValue())),
                 "{X}{X}{G}: Monstrosity X."
-        ).withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+        ));
 
         addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS, new CreateTokenEffect(
                 CardType.CREATURE,

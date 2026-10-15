@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
@@ -22,8 +21,7 @@ public class HundredHandedOne extends Card {
         SourceIsMonstrous monstrous = new SourceIsMonstrous();
 
         addActivatedAbility(new ActivatedAbility(false, "{3}{W}{W}{W}", List.of(new MonstrosityEffect(3)),
-                "{3}{W}{W}{W}: Monstrosity 3.")
-                .withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+                "{3}{W}{W}{W}: Monstrosity 3."));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,
                 new GrantKeywordEffect(Keyword.REACH, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,

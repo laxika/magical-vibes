@@ -89,31 +89,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 20. Monstrosity must still be activatable on a monstrous creature
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:** none in the G set now (Gluttonous Cyclops was fixed). Wildfire Cerberus, Nessian Asp,
-Nemesis of Mortals, Ill-Tempered Cyclops and Vitality Hunter still refuse the activation once monstrous,
-and about seven of their tests assert that wrong behavior.
-
-**What the rules require.** CR 701.37a: "Monstrosity N" means "If this permanent isn't monstrous, put N
-+1/+1 counters on it and it becomes monstrous." The ability can still be activated (and the cost paid);
-it just does nothing on resolution.
-
-**Why it's large.** It's small in code, but it means rewriting other cards' test assertions, which the
-G-card task wasn't allowed to do.
-
-**Prompt to start it:**
-
-```
-Remove the "already monstrous" activation gate from the remaining Monstrosity cards so the ability can
-be activated and does nothing on resolution (CR 701.37a), and fix their tests that assert the gate.
-Ask me to run the full suite. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 21. Undiagnosed G-card failures
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests

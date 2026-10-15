@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -27,7 +25,7 @@ public class WildfireCerberus extends Card {
                 "{5}{R}{R}",
                 List.of(new MonstrosityEffect(1)),
                 "{5}{R}{R}: Monstrosity 1."
-        ).withActivationCondition(new NotCondition(new SourceIsMonstrous()), "This creature is already monstrous"));
+        ));
 
         addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS,
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));

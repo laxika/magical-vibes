@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -27,7 +26,7 @@ public class SwarmbornGiant extends Card {
                 "{4}{G}{G}",
                 List.of(new MonstrosityEffect(2)),
                 "{4}{G}{G}: Monstrosity 2."
-        ).withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+        ));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,
                 new GrantKeywordEffect(Keyword.REACH, GrantScope.SELF)));
     }

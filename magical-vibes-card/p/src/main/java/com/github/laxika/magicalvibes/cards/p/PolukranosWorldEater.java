@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetCreatureDealsPowerDamageToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
@@ -20,13 +18,9 @@ import java.util.List;
 public class PolukranosWorldEater extends Card {
 
     public PolukranosWorldEater() {
-        SourceIsMonstrous monstrous = new SourceIsMonstrous();
-
         addActivatedAbility(new ActivatedAbility(false, "{X}{X}{G}",
                 List.of(new MonstrosityEffect(new XValue())),
-                "{X}{X}{G}: Monstrosity X.")
-                .withActivationCondition(new NotCondition(monstrous),
-                        "This creature is already monstrous"));
+                "{X}{X}{G}: Monstrosity X."));
 
         targetUpTo(new XValue(), TargetFilters.creatureAnOpponentControls(), 99)
                 .addEffect(EffectSlot.ON_SELF_BECOMES_MONSTROUS,

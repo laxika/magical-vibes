@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -21,13 +19,12 @@ import java.util.List;
 public class ProtectorOfTheWastes extends Card {
 
     public ProtectorOfTheWastes() {
-        SourceIsMonstrous monstrous = new SourceIsMonstrous();
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}",
                 List.of(new MonstrosityEffect(3)),
                 "{4}{W}: Monstrosity 3."
-        ).withActivationCondition(new NotCondition(monstrous), "This creature is already monstrous"));
+        ));
 
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         PermanentAnyOfPredicate artifactOrEnchantment = new PermanentAnyOfPredicate(List.of(
