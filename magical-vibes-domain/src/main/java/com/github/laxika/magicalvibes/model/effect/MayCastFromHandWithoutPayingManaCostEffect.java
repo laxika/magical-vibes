@@ -23,7 +23,8 @@ public record MayCastFromHandWithoutPayingManaCostEffect(
         CardEffect declineEffect,
         boolean exileInsteadOfGraveyard,
         CardEffect afterSuccessfulCastEffect,
-        List<Integer> castableSplitModes
+        List<Integer> castableSplitModes,
+        boolean castAsAdventure
 ) implements CardEffect {
 
     public MayCastFromHandWithoutPayingManaCostEffect {
@@ -36,7 +37,7 @@ public record MayCastFromHandWithoutPayingManaCostEffect(
                                                        boolean exileInsteadOfGraveyard,
                                                        CardEffect afterSuccessfulCastEffect) {
         this(revealCardOnDecline, choiceGroupId, declineEffect, exileInsteadOfGraveyard,
-                afterSuccessfulCastEffect, null);
+                afterSuccessfulCastEffect, null, false);
     }
 
     public MayCastFromHandWithoutPayingManaCostEffect() {
@@ -66,6 +67,12 @@ public record MayCastFromHandWithoutPayingManaCostEffect(
     /** This permission letting a split card be cast only as {@code modes}. */
     public MayCastFromHandWithoutPayingManaCostEffect withCastableSplitModes(List<Integer> modes) {
         return new MayCastFromHandWithoutPayingManaCostEffect(revealCardOnDecline, choiceGroupId, declineEffect,
-                exileInsteadOfGraveyard, afterSuccessfulCastEffect, modes);
+                exileInsteadOfGraveyard, afterSuccessfulCastEffect, modes, castAsAdventure);
+    }
+
+    /** This permission casting the adventurer card as its Adventure (CR 715.3). */
+    public MayCastFromHandWithoutPayingManaCostEffect asAdventure() {
+        return new MayCastFromHandWithoutPayingManaCostEffect(revealCardOnDecline, choiceGroupId, declineEffect,
+                exileInsteadOfGraveyard, afterSuccessfulCastEffect, castableSplitModes, true);
     }
 }

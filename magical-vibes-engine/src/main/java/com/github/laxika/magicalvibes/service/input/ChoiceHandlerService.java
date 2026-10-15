@@ -134,6 +134,7 @@ public class ChoiceHandlerService {
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.VentureIntoDungeonEffectHandler> ventureHandlerProvider;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.GameService> gameServiceProvider;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport> exileFreeCastSupportProvider;
+    private final org.springframework.beans.factory.ObjectProvider<MayCastHandlerService> mayCastHandlerServiceProvider;
 
     private final GameQueryService gameQueryService;
     @Autowired @Lazy
@@ -690,6 +691,10 @@ public class ChoiceHandlerService {
             return;
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.LibraryFreeCastModeChoice ctx) {
+            mayCastHandlerServiceProvider.getObject().completeLibraryFreeCastModeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ExileFreeCastFaceChoice ctx) {
             exileFreeCastSupportProvider.getObject().completeFaceChoice(gameData, player, colorName, ctx);
             return;

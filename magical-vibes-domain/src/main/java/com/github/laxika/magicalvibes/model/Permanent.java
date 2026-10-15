@@ -1172,6 +1172,24 @@ public class Permanent {
         this.originalCard = card;
     }
 
+    /**
+     * Makes this permanent, which a resolving copy of a permanent spell became, a token (CR 111.13):
+     * both the face it shows and its original card, so it stays a token wherever it later goes.
+     */
+    public void becomeTokenFromCopiedSpell() {
+        boolean showingOriginal = card == originalCard;
+        originalCard = tokenVersionOf(originalCard);
+        card = showingOriginal ? originalCard : tokenVersionOf(card);
+    }
+
+    private static Card tokenVersionOf(Card card) {
+        if (card.isToken()) return card;
+        Card token = card.createRuntimeCopy();
+        token.setToken(true);
+        token.freeze();
+        return token;
+    }
+
     public void restoreBombardmentCard(Card card) {
         this.card = card;
         this.originalCard = card;

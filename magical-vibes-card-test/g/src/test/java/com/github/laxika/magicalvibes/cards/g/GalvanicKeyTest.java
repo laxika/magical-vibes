@@ -30,12 +30,14 @@ class GalvanicKeyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.passPriority(player2);
 
-        harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.assertOnBattlefield(player1, "Galvanic Key");
-        harness.passPriority(player2);
-        harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castArtifact(player1, 0);
+            harness.passBothPriorities();
+            harness.assertOnBattlefield(player1, "Galvanic Key");
+            harness.passPriority(player2);
+            harness.activateAbility(player1, 0, null, target.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(target.isTapped()).isFalse();
     }

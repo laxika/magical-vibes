@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -72,6 +73,7 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
         java.util.function.Predicate<Card> qualifies = spell -> spell.getManaValue() <= maxManaValue
                 && predicateEvaluationService.matchesCardPredicate(spell, e.spellFilter(), null, gameData, controllerId);
         Map<Card, List<Integer>> eligible = new LinkedHashMap<>();
+        List<Card> eligibleAdventures = new ArrayList<>();
         hand.stream()
                 .filter(c -> !e.drawnCardsOnly() || entry.getDrawnCardIdsThisResolution().contains(c.getId()))
                 .filter(c -> !c.hasType(CardType.LAND))
@@ -85,9 +87,26 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                     } else if (qualifies.test(c)) {
                         eligible.put(c, null);
                     }
+                    // CR 715.3a: an adventurer card cast as an Adventure is judged by its Adventure's
+                    // characteristics alone.
+                    if (c.getCastingOption(AdventureCast.class).isPresent() && c.getBackFaceCard() != null
+                            && qualifies.test(c.getBackFaceCard())) {
+                        eligibleAdventures.add(c);
+                    }
                 });
 
         UUID choiceGroupId = UUID.randomUUID();
+        for (int i = eligibleAdventures.size() - 1; i >= 0; i--) {
+            Card c = eligibleAdventures.get(i);
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    c, controllerId,
+                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(
+                            e.revealDrawnCards(), choiceGroupId, null, false, e.afterSuccessfulCastEffect())
+                            .asAdventure()),
+                    "Cast " + c.getBackFaceCard().getName() + " without paying its mana cost?",
+                    entry.getSourcePermanentId(), (Integer) null
+            ));
+        }
         List<Card> cards = new ArrayList<>(eligible.keySet());
         for (int i = cards.size() - 1; i >= 0; i--) {
             Card c = cards.get(i);

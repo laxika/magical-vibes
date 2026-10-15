@@ -288,7 +288,7 @@ class GalvanothTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleListChoice(player1, "Slagstorm deals 3 damage to each player");
-        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == slagstorm);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(slagstorm.getId()));
         harness.passBothPriorities();
 
         harness.assertLife(player1, 17);

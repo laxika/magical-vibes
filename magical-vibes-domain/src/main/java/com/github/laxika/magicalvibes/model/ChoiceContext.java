@@ -143,6 +143,13 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Chooses the mode of a modal spell cast from the top of a library during resolution (Galvanoth). */
+    record LibraryFreeCastModeChoice(UUID cardId, Map<String, Integer> modes) implements ChoiceContext {
+        public LibraryFreeCastModeChoice {
+            modes = Map.copyOf(modes);
+        }
+    }
+
     /** Adds chosen fixed-color mana before resolving the remaining effects of a mana ability. */
     record FixedManaColorThenEffectsChoice(UUID recipientPlayerId, List<ManaColor> colors,
                                            int amount, StackEntry followUp) implements ChoiceContext {

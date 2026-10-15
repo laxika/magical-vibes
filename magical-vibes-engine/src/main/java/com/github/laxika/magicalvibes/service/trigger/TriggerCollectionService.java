@@ -1571,12 +1571,14 @@ public class TriggerCollectionService {
                 }
             }
             if (spellEntry != null) {
+                Card spellOnStack = SpellCastTriggerCollectorService.spellOnStackWithChosenX(
+                        spellCard, spellEntry.getXValue());
                 List<CopyNextSpellCastThisTurnEffect> matchingCopies = new ArrayList<>();
                 List<CopyNextSpellCastThisTurnEffect> remainingCopies = new ArrayList<>();
                 for (CopyNextSpellCastThisTurnEffect copyEffect : pendingFilteredCopies) {
                     if (copyEffect.spellFilter() == null
                             || predicateEvaluationService.matchesCardPredicate(
-                            spellCard, copyEffect.spellFilter(), null, gameData, castingPlayerId)) {
+                            spellOnStack, copyEffect.spellFilter(), null, gameData, castingPlayerId)) {
                         matchingCopies.add(copyEffect);
                     } else {
                         remainingCopies.add(copyEffect);

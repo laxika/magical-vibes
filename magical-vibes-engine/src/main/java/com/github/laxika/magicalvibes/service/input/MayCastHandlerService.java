@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -62,6 +64,7 @@ import org.springframework.stereotype.Service;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -221,8 +224,8 @@ public class MayCastHandlerService {
                     inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
-                deck.removeFirst();
                 if (SplitCardCastSupport.isSplitCard(cardToCast)) {
+                    deck.removeFirst();
                     if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToCast,
                             Zone.LIBRARY, 0, player.getId(), false, Integer.MAX_VALUE, null, null))) {
                         return;
@@ -233,52 +236,24 @@ public class MayCastHandlerService {
                     return;
                 }
 
-                StackEntryType spellType = mapCardTypeToSpellType(cardToCast);
-                boolean isPermanentSpell = cardToCast.hasType(CardType.CREATURE)
-                        || cardToCast.hasType(CardType.ARTIFACT)
-                        || cardToCast.hasType(CardType.ENCHANTMENT)
-                        || cardToCast.hasType(CardType.PLANESWALKER)
-                        || cardToCast.hasType(CardType.BATTLE);
-                List<CardEffect> spellEffects = isPermanentSpell
-                        ? List.of()
-                        : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
-
-                if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
-                    // Targeted spell — need to choose target before putting on stack
-                    List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects, player.getId());
-
-                    if (validTargets.isEmpty()) {
-                        // No valid targets — spell can't be cast, put card back on top of library
-                        deck.addFirst(cardToCast);
-                        
-                        gameLogService.append(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
-                        log.info("Game {} - {} cast-from-library has no valid targets", gameData.id, cardToCast.getName());
-                    } else {
-                        gameData.interaction.setPermanentChoiceContext(
-                                new PermanentChoiceContext.LibraryCastSpellTarget(cardToCast, player.getId(), spellEffects, spellType));
-                        playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
-                                "Choose a target for " + cardToCast.getName() + ".");
-
-                        
-                        gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , cardToCast, " without paying its mana cost — choosing target."));
-                        log.info("Game {} - {} casts {} from library, choosing target", gameData.id, playerName, cardToCast.getName());
-                        return; // Wait for target choice
+                // CR 601.2b: a modal spell's mode is chosen as it is cast, before it can be responded to.
+                ChooseOneEffect modal = singleChoiceModal(cardToCast);
+                if (modal != null) {
+                    Map<String, Integer> modes = new LinkedHashMap<>();
+                    for (int mode = 0; mode < modal.options().size(); mode++) {
+                        if (modal.options().get(mode).handOnly()) continue;
+                        modes.put(modal.options().get(mode).label(), mode);
                     }
-                } else {
-                    // Non-targeted spell — put directly on stack
-                    gameData.stack.add(new StackEntry(
-                            spellType, cardToCast, player.getId(), cardToCast.getName(),
-                            spellEffects, 0, (UUID) null, null
-                    ));
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            player.getId(), null, null,
+                            new ChoiceContext.LibraryFreeCastModeChoice(cardToCast.getId(), modes),
+                            new ArrayList<>(modes.keySet()), "Choose a mode for " + cardToCast.getName() + "."));
+                    return;
+                }
 
-                    gameData.recordSpellCast(player.getId(), cardToCast);
-                    gameData.priorityPassedBy.clear();
-
-                    
-                    gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , cardToCast, " without paying its mana cost."));
-                    log.info("Game {} - {} casts {} from library without paying mana", gameData.id, playerName, cardToCast.getName());
-
-                    triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+                deck.removeFirst();
+                if (castFromLibraryWithoutPaying(gameData, player, cardToCast, null)) {
+                    return;
                 }
             }
         } else {
@@ -287,6 +262,88 @@ public class MayCastHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** Completes the mode choice begun by {@link #handleCastFromLibraryChoice} and casts the spell. */
+    public void completeLibraryFreeCastModeChoice(GameData gameData, Player player, String choice,
+                                                  ChoiceContext.LibraryFreeCastModeChoice context) {
+        Integer mode = context.modes().get(choice);
+        if (mode == null) throw new IllegalStateException("Invalid mode choice");
+        gameData.interaction.clearAwaitingInput();
+        List<Card> deck = gameData.playerDecks.get(player.getId());
+        if (deck.isEmpty() || !deck.getFirst().getId().equals(context.cardId())) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        Card card = deck.removeFirst().createRuntimeCopy();
+        List<CardEffect> chosenEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        spellCastingService.prepareModalSpellCast(gameData, player.getId(), card, chosenEffects, mode, false);
+        if (castFromLibraryWithoutPaying(gameData, player, card, chosenEffects)) {
+            return;
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private static ChooseOneEffect singleChoiceModal(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
+                .filter(modal -> modal.choicesRequired() == 1 && !modal.modesMayRepeat())
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * Casts {@code cardToCast}, already removed from the top of its library, without paying its mana
+     * cost. Returns {@code true} when the cast is waiting for a target choice.
+     */
+    private boolean castFromLibraryWithoutPaying(GameData gameData, Player player, Card cardToCast,
+                                                 List<CardEffect> chosenEffects) {
+        String playerName = player.getUsername();
+        List<Card> deck = gameData.playerDecks.get(player.getId());
+        StackEntryType spellType = mapCardTypeToSpellType(cardToCast);
+        boolean isPermanentSpell = cardToCast.hasType(CardType.CREATURE)
+                || cardToCast.hasType(CardType.ARTIFACT)
+                || cardToCast.hasType(CardType.ENCHANTMENT)
+                || cardToCast.hasType(CardType.PLANESWALKER)
+                || cardToCast.hasType(CardType.BATTLE);
+        List<CardEffect> spellEffects = isPermanentSpell
+                ? List.of()
+                : chosenEffects != null ? chosenEffects
+                : new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+
+        if (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast)) {
+            // Targeted spell — need to choose target before putting on stack
+            List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects, player.getId());
+
+            if (validTargets.isEmpty()) {
+                // No valid targets — spell can't be cast, put card back on top of library
+                deck.addFirst(cardToCast);
+                gameLogService.append(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
+                log.info("Game {} - {} cast-from-library has no valid targets", gameData.id, cardToCast.getName());
+                return false;
+            }
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.LibraryCastSpellTarget(cardToCast, player.getId(), spellEffects, spellType));
+            playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                    "Choose a target for " + cardToCast.getName() + ".");
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , cardToCast, " without paying its mana cost — choosing target."));
+            log.info("Game {} - {} casts {} from library, choosing target", gameData.id, playerName, cardToCast.getName());
+            return true;
+        }
+
+        // Non-targeted spell — put directly on stack
+        gameData.stack.add(new StackEntry(
+                spellType, cardToCast, player.getId(), cardToCast.getName(),
+                spellEffects, 0, (UUID) null, null
+        ));
+
+        gameData.recordSpellCast(player.getId(), cardToCast);
+        gameData.priorityPassedBy.clear();
+
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " casts " , cardToCast, " without paying its mana cost."));
+        log.info("Game {} - {} casts {} from library without paying mana", gameData.id, playerName, cardToCast.getName());
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+        return false;
     }
 
     /**
@@ -2020,9 +2077,13 @@ public class MayCastHandlerService {
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
+        boolean castAsAdventure = ability.effects().stream()
+                .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
+                .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
+                .anyMatch(MayCastFromHandWithoutPayingManaCostEffect::castAsAdventure);
         handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability, pendingEffectType,
                 revealCardOnDecline, scryIfDeclined, exileInsteadOfGraveyard,
-                afterSuccessfulCastEffect, maxSpellManaValue, castableSplitModes);
+                afterSuccessfulCastEffect, maxSpellManaValue, castableSplitModes, castAsAdventure);
     }
 
     /** Handles The Face of Boe's offer to cast a suspended spell while paying its suspend cost. */
@@ -2179,8 +2240,13 @@ public class MayCastHandlerService {
                                                      boolean exileInsteadOfGraveyard,
                                                      CardEffect afterSuccessfulCastEffect,
                                                      int maxSpellManaValue,
-                                                     List<Integer> castableSplitModes) {
-        Card cardToCast = ability.sourceCard();
+                                                     List<Integer> castableSplitModes,
+                                                     boolean castAsAdventure) {
+        Card physicalCard = ability.sourceCard();
+        // CR 715.3: cast as an Adventure, the spell has only its Adventure's characteristics.
+        Card cardToCast = castAsAdventure && physicalCard.getBackFaceCard() != null
+                ? physicalCard.createRuntimeCopyWithFace(physicalCard.getBackFaceCard())
+                : physicalCard;
         String playerName = player.getUsername();
 
         if (!accepted) {
@@ -2314,8 +2380,10 @@ public class MayCastHandlerService {
 
         // Remove from hand and cast
         hand.remove(cardIndex);
-        castCardFromHandWithoutPaying(gameData, player, cardToCast, exileInsteadOfGraveyard,
-                declineEffect(ability), ability.sourcePermanentId(), afterSuccessfulCastEffect);
+        castCardFromHandPayingAlternateCost(gameData, player, cardToCast, null, null, 0,
+                exileInsteadOfGraveyard, Zone.HAND, declineEffect(ability),
+                ability.sourcePermanentId(), afterSuccessfulCastEffect,
+                castAsAdventure ? physicalCard : null);
     }
 
     private void queueScryFallback(GameData gameData) {
@@ -2436,6 +2504,22 @@ public class MayCastHandlerService {
                                                      Zone sourceZone, CardEffect noCastEffect,
                                                      UUID afterCastSourcePermanentId,
                                                      CardEffect afterSuccessfulCastEffect) {
+        castCardFromHandPayingAlternateCost(gameData, player, card, paidCostDescription, costLabel,
+                xValue, exileInsteadOfGraveyard, sourceZone, noCastEffect,
+                afterCastSourcePermanentId, afterSuccessfulCastEffect, null);
+    }
+
+    /**
+     * As above; a non-null {@code adventurePhysicalCard} means {@code card} is that adventurer card's
+     * Adventure face, so the spell is exiled with permission to cast its creature face as it resolves.
+     */
+    private void castCardFromHandPayingAlternateCost(GameData gameData, Player player, Card card,
+                                                     String paidCostDescription, String costLabel,
+                                                     int xValue, boolean exileInsteadOfGraveyard,
+                                                     Zone sourceZone, CardEffect noCastEffect,
+                                                     UUID afterCastSourcePermanentId,
+                                                     CardEffect afterSuccessfulCastEffect,
+                                                     Card adventurePhysicalCard) {
         UUID playerId = player.getId();
         String playerName = player.getUsername();
         String costPhrase;
@@ -2502,11 +2586,12 @@ public class MayCastHandlerService {
                 if (sourceZone == Zone.COMMAND) {
                     gameData.playerCommandZones.computeIfAbsent(playerId, ignored -> new ArrayList<>()).add(card);
                 } else {
-                    UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : playerId;
+                    Card physical = adventurePhysicalCard != null ? adventurePhysicalCard : card;
+                    UUID ownerId = physical.getOwnerId() != null ? physical.getOwnerId() : playerId;
                     if (exileInsteadOfGraveyard) {
-                        gameData.addToExile(ownerId, card);
+                        gameData.addToExile(ownerId, physical);
                     } else {
-                        graveyardService.addCardToGraveyard(gameData, ownerId, card, sourceZone);
+                        graveyardService.addCardToGraveyard(gameData, ownerId, physical, sourceZone);
                     }
                 }
                 gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets."));
@@ -2520,7 +2605,7 @@ public class MayCastHandlerService {
             PermanentChoiceContext.HandCastSpellTarget spellCast =
                     new PermanentChoiceContext.HandCastSpellTarget(card, playerId, spellEffects, spellType, xValue,
                             castForMadnessCost, exileInsteadOfGraveyard, sourceZone,
-                            afterSuccessfulCastEffect, afterCastSourcePermanentId);
+                            afterSuccessfulCastEffect, afterCastSourcePermanentId, adventurePhysicalCard);
             com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect distribution =
                     spellEffects.stream()
                             .filter(com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect.class::isInstance)
@@ -2555,6 +2640,10 @@ public class MayCastHandlerService {
         entry.setMadness("madness".equals(costLabel));
         entry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         entry.setSourceZone(sourceZone);
+        if (adventurePhysicalCard != null) {
+            entry.setPhysicalCard(adventurePhysicalCard);
+            entry.setCastWithAdventure(true);
+        }
         if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
         gameData.stack.add(entry);
 

@@ -2286,8 +2286,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                StackEntryType spellType, int xValue, boolean castForMadnessCost,
                                boolean exileInsteadOfGraveyard, Zone sourceZone,
-                               CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId)
+                               CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId,
+                               Card adventurePhysicalCard)
             implements PermanentChoiceContext {
+
+        public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                   StackEntryType spellType, int xValue, boolean castForMadnessCost,
+                                   boolean exileInsteadOfGraveyard, Zone sourceZone,
+                                   CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId) {
+            this(cardToCast, controllerId, spellEffects, spellType, xValue, castForMadnessCost,
+                    exileInsteadOfGraveyard, sourceZone, afterSuccessfulCastEffect, sourcePermanentId, null);
+        }
 
         public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
             this(cardToCast, controllerId, spellEffects, spellType, 0, false, false, Zone.HAND, null, null);
@@ -2318,21 +2327,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     exileInsteadOfGraveyard, sourceZone, null, null);
         }
 
-        public HandCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
-                                   StackEntryType spellType, int xValue, boolean castForMadnessCost,
-                                   boolean exileInsteadOfGraveyard, Zone sourceZone,
-                                   CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId) {
-            this.cardToCast = cardToCast;
-            this.controllerId = controllerId;
-            this.spellEffects = spellEffects;
-            this.spellType = spellType;
-            this.xValue = xValue;
-            this.castForMadnessCost = castForMadnessCost;
-            this.exileInsteadOfGraveyard = exileInsteadOfGraveyard;
-            this.sourceZone = sourceZone;
-            this.afterSuccessfulCastEffect = afterSuccessfulCastEffect;
-            this.sourcePermanentId = sourcePermanentId;
-        }
     }
 
     /** A spell whose controller chooses an opponent, then that opponent chooses the creature target. */

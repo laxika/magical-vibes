@@ -2937,7 +2937,7 @@ public class SpellCastTriggerCollectorService {
      * The spell as it exists on the stack: an {@code {X}} in its mana cost is the chosen X value (CR 202.3e),
      * so a mana value filter sees the real total. Returns the card itself when there is no chosen X.
      */
-    private static Card spellOnStackWithChosenX(Card spellCard, Integer chosenX) {
+    static Card spellOnStackWithChosenX(Card spellCard, Integer chosenX) {
         String manaCost = spellCard.getManaCost();
         if (chosenX == null || manaCost == null || !manaCost.contains("{X}")) {
             return spellCard;

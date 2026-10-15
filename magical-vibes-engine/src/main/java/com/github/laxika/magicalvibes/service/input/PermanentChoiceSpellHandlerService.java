@@ -811,6 +811,7 @@ public class PermanentChoiceSpellHandlerService {
             entry.setMadness(hct.castForMadnessCost());
             entry.setExileInsteadOfGraveyard(hct.exileInsteadOfGraveyard());
             entry.setSourceZone(hct.sourceZone());
+            markAdventureCast(entry, hct);
             if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
             gameData.stack.add(entry);
 
@@ -899,6 +900,13 @@ public class PermanentChoiceSpellHandlerService {
     }
 
     /** Completes announced counter division while preserving the alternative cast's spell identity. */
+    private static void markAdventureCast(StackEntry entry, PermanentChoiceContext.HandCastSpellTarget context) {
+        if (context.adventurePhysicalCard() != null) {
+            entry.setPhysicalCard(context.adventurePhysicalCard());
+            entry.setCastWithAdventure(true);
+        }
+    }
+
     public void completeHandCastDistribution(GameData gameData, PermanentChoiceContext.HandCastSpellTarget context,
                                              List<UUID> targetIds, Map<UUID, Integer> assignments) {
         StackEntry entry = new StackEntry(context.spellType(), context.cardToCast(), context.controllerId(),
@@ -907,6 +915,7 @@ public class PermanentChoiceSpellHandlerService {
         entry.setMadness(context.castForMadnessCost());
         entry.setExileInsteadOfGraveyard(context.exileInsteadOfGraveyard());
         entry.setSourceZone(context.sourceZone());
+        markAdventureCast(entry, context);
         if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
         gameData.stack.add(entry);
         gameData.recordSpellCast(context.controllerId(), context.cardToCast());

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastFromHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
 import java.util.List;
 
@@ -15,15 +16,22 @@ import java.util.List;
 public class GaleWaterdeepProdigy extends Card {
 
     public GaleWaterdeepProdigy() {
+        // Whenever you cast an instant or sorcery spell from your hand, you may cast up to one target
+        // card of the other type from your graveyard. If a spell cast from your graveyard this way
+        // would be put into your graveyard, exile it instead.
+        addCastOtherTypeTrigger(CardType.INSTANT, CardType.SORCERY);
+        addCastOtherTypeTrigger(CardType.SORCERY, CardType.INSTANT);
+    }
+
+    private void addCastOtherTypeTrigger(CardType castType, CardType graveyardType) {
+        CardTypePredicate graveyardFilter = new CardTypePredicate(graveyardType);
+        CastTargetInstantOrSorceryFromGraveyardEffect castFromGraveyard =
+                new CastTargetInstantOrSorceryFromGraveyardEffect(
+                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD, false, true, graveyardFilter);
+        target(new GraveyardCardPredicateTargetFilter(graveyardFilter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
+                0, 1)
+                .bindEffect(castFromGraveyard);
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastFromHandTriggerEffect(
-                new CardTypePredicate(CardType.INSTANT),
-                List.of(new CastTargetInstantOrSorceryFromGraveyardEffect(
-                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                        false, true, new CardTypePredicate(CardType.SORCERY)))));
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastFromHandTriggerEffect(
-                new CardTypePredicate(CardType.SORCERY),
-                List.of(new CastTargetInstantOrSorceryFromGraveyardEffect(
-                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                        false, true, new CardTypePredicate(CardType.INSTANT)))));
+                new CardTypePredicate(castType), List.of(castFromGraveyard)));
     }
 }

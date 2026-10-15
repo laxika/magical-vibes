@@ -456,10 +456,8 @@ public class StackResolutionService {
             perm.setCard(characteristics);
             perm.setTransformed(true);
         }
-        if (entry.isCopy() && !perm.getCard().isToken()) {
-            Card tokenCard = perm.getCard().createRuntimeCopy();
-            tokenCard.setToken(true);
-            perm.setCard(tokenCard);
+        if (entry.isCopy()) {
+            perm.becomeTokenFromCopiedSpell();
         }
         return perm;
     }
@@ -1298,10 +1296,8 @@ public class StackResolutionService {
         UUID controllerId = entry.getControllerId();
 
         Permanent perm = new Permanent(card);
-        if (entry.isCopy() && !perm.getCard().isToken()) {
-            Card tokenCard = perm.getCard().createRuntimeCopy();
-            tokenCard.setToken(true);
-            perm.setCard(tokenCard);
+        if (entry.isCopy()) {
+            perm.becomeTokenFromCopiedSpell();
         }
         // Planeswalkers with printed loyalty "X" (e.g. Nissa, Steward of Elements) enter with
         // loyalty counters equal to the X paid for their {X} cost. Scryfall's non-numeric "X"

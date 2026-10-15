@@ -168,6 +168,29 @@ class GandalfPartyGuestTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
     }
 
+    @Test
+    @DisplayName("Accepting casts the Adventure, which is exiled with permission to cast the creature")
+    void castsAdventureAndExilesCard() {
+        addGandalf();
+        MerfolkSecretkeeper spell = new MerfolkSecretkeeper();
+        harness.setHand(player1, List.of(spell));
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Venture Deeper");
+        assertThat(gd.stack.getFirst().isCastWithAdventure()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(card -> card.getId().equals(spell.getId()));
+        assertThat(gd.exilePlayPermissions).containsEntry(spell.getId(), player1.getId());
+        harness.assertNotInGraveyard(player1, "Merfolk Secretkeeper");
+    }
+
     private void addGandalf() {
         addCreatureReady(player1, new GandalfPartyGuest());
     }
