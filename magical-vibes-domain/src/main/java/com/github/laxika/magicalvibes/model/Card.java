@@ -162,6 +162,12 @@ public class Card {
     private List<CardColor> colorIdentity = List.of();
     /** Each half of a split card with only its own characteristics (CR 709.3b); empty otherwise. */
     private List<OracleData> splitHalves = List.of();
+    /**
+     * The whole split card, with both halves' combined characteristics, that this runtime copy was
+     * cast from as one half; null otherwise. Only the cast half exists on the stack (CR 709.3b), but
+     * the card has its combined characteristics again in every other zone (CR 709.4).
+     */
+    private Card splitWholeCard;
 
     private Set<CardType> additionalTypes = Set.of();
     private Set<CardSupertype> supertypes = Set.of();
@@ -415,6 +421,8 @@ public class Card {
         this.colors = source.colors;
         this.colorIdentity = source.colorIdentity;
         this.splitHalves = source.splitHalves;
+        // A fresh-identity copy is a different object, so it can't be restored to this physical card.
+        this.splitWholeCard = id.equals(source.id) ? source.splitWholeCard : null;
         this.additionalTypes = source.additionalTypes;
         this.supertypes = source.supertypes;
         this.subtypes = source.subtypes;
@@ -648,6 +656,20 @@ public class Card {
      */
     public void freeze() {
         this.frozen = true;
+    }
+
+    /**
+     * Remembers this card's whole split-card characteristics before one half's characteristics are
+     * applied for casting, so the card can be restored when the spell leaves the stack (CR 709.4).
+     * Does nothing once a half has already been applied.
+     */
+    public void rememberSplitWholeCard() {
+        assertMutable();
+        if (splitWholeCard == null) {
+            Card whole = new Card(this);
+            whole.freeze();
+            splitWholeCard = whole;
+        }
     }
 
     private void assertMutable() {

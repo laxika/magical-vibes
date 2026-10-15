@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.Remand;
 import com.github.laxika.magicalvibes.cards.w.Wrench;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CeaseDesist.class, Bonesplitter.class, GloriousAnthem.class, GrizzlyBears.class,
-        CuriousCadaver.class, Wrench.class, CaseOfTheShatteredPact.class})
+        CuriousCadaver.class, Wrench.class, CaseOfTheShatteredPact.class, Cancel.class, Remand.class})
 class CeaseDesistTest extends BaseCardTest {
 
     private static final int CEASE = 0;
@@ -234,5 +235,55 @@ class CeaseDesistTest extends BaseCardTest {
                 .containsExactly("Cease // Desist");
         assertThat(gd.exiledCards.stream().map(entry -> entry.card().getId()))
                 .containsExactly(exiled.getId());
+    }
+
+    @Test
+    @DisplayName("A countered Cease is put into the graveyard as Cease // Desist")
+    void counteredCeaseIsWholeCardInGraveyard() {
+        CeaseDesist ceaseDesist = new CeaseDesist();
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(ceaseDesist));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, CEASE, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, ceaseDesist.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Cease // Desist");
+    }
+
+    @Test
+    @DisplayName("Cease returned to hand by Remand is Cease // Desist and can be cast as Desist")
+    void remandedCeaseReturnsAsWholeCard() {
+        CeaseDesist ceaseDesist = new CeaseDesist();
+        harness.addToBattlefield(player2, new Wrench());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(ceaseDesist));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new Remand()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, CEASE, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, ceaseDesist.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Cease // Desist");
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveSorcery(player1, 0, DESIST);
+
+        harness.assertNotOnBattlefield(player2, "Wrench");
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Cease // Desist");
     }
 }

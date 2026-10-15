@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.k.KavuMauler;
 import com.github.laxika.magicalvibes.cards.m.MeddlingMage;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -147,6 +148,20 @@ class FireIceTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void iceThatFizzlesIsPutIntoTheGraveyardAsFireIce() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new KavuMauler());
+        harness.setHand(player1, List.of(new FireIce()));
+        addMana(ManaColor.BLUE);
+
+        harness.castModalInstant(player1, 0, 1, List.of(kavu.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(kavu);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Fire // Ice");
     }
 
     @Test

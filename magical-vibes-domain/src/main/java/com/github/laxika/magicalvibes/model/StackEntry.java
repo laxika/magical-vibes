@@ -1509,7 +1509,11 @@ public class StackEntry {
         if (bestowOriginalCard != null) {
             return bestowOriginalCard;
         }
-        return physicalCard != null ? physicalCard : card;
+        if (physicalCard != null) {
+            return physicalCard;
+        }
+        // A split half is the whole card again once it leaves the stack (CR 709.4).
+        return card != null && card.getSplitWholeCard() != null ? card.getSplitWholeCard() : card;
     }
 
     /**

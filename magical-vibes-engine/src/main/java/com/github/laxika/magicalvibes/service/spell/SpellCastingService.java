@@ -1054,7 +1054,10 @@ public class SpellCastingService {
                         .map(idx -> coe.options().get(idx))
                         .toList();
                 Card splitCharacteristics = selectedSplitModeCharacteristics(card, effectiveXValue);
-                if (splitCharacteristics != card) card.setName(splitCharacteristics.getName());
+                if (splitCharacteristics != card) {
+                    card.rememberSplitWholeCard();
+                    card.setName(splitCharacteristics.getName());
+                }
                 validateModeCastZone(gameData, controllerId, card, chosenModeIndices, chosenModes, castFromOwnHand);
                 List<List<CardEffect>> chosenModeEffects = chosenModes.stream()
                         .map(ChooseOneEffect.ChooseOneOption::effectsForSelection)
@@ -1324,6 +1327,7 @@ public class SpellCastingService {
         com.github.laxika.magicalvibes.model.OracleData half =
                 splitHalf(card, chosenModeIndices.getFirst(), chosenModes.getFirst());
         if (half != null) {
+            card.rememberSplitWholeCard();
             card.setName(half.name());
             card.setType(half.type());
             card.setAdditionalTypes(half.additionalTypes());

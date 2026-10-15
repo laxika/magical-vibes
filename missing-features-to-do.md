@@ -145,35 +145,6 @@ Don't commit until I say so.
 
 ---
 
-## 22. A split card keeps its full name after a half resolves
-
-**Status:** open · **Found:** 2026-10-14, while giving split halves their own characteristics
-
-**Failing tests:**
-- `CeaseDesistTest` "Cease's player target is independent of the chosen graveyard" (the graveyard card is
-  named "Cease", not "Cease // Desist")
-
-**What the rules require.** CR 709.4: in every zone except the stack, a split card has the combined
-characteristics of both halves. Once Cease resolves, the card in the graveyard is Cease // Desist again.
-The engine puts the stack's runtime copy, which has only the cast half's name and characteristics, into
-the graveyard instead of restoring the whole card.
-
-**Why it's large.** Every path where a spell leaves the stack (resolve, counter, fizzle, exile, return to
-hand) has to restore the physical card's whole-card characteristics. Copies and spells cast from other
-zones must keep working.
-
-**Prompt to start it:**
-
-```
-When a split-card spell leaves the stack, restore the card's whole-card characteristics (CR 709.4) so
-Cease // Desist is named "Cease // Desist" in the graveyard after Cease resolves. Cover resolving,
-countering, fizzling and other stack exits. Start with CeaseDesistTest, then run the other
-split/aftermath/fuse card tests and ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 
