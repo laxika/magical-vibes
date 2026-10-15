@@ -5,10 +5,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.OracleData;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.ModalOptionView;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
@@ -63,6 +67,28 @@ class CardViewFactoryTest {
         front.setBackFaceCard(card("Ravager of the Fells", CardType.CREATURE));
 
         assertThat(factory.create(front).prepareSpell()).isNull();
+    }
+
+    @Test
+    @DisplayName("Only a split card's fused mode is marked as castable from hand alone")
+    void splitCardFusedModeIsHandOnly() {
+        Card card = card("Wax // Wane", CardType.INSTANT);
+        card.setKeywords(Set.of(Keyword.FUSE));
+        card.setSplitHalves(List.of(splitHalf("Wax", "{G}"), splitHalf("Wane", "{W}")));
+        card.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Wax", List.of(new DrawCardEffect(1))).withManaCost("{G}"),
+                new ChooseOneEffect.ChooseOneOption("Wane", List.of(new DrawCardEffect(1))).withManaCost("{W}"),
+                new ChooseOneEffect.ChooseOneOption("Fuse — Wax and then Wane",
+                        List.of(new DrawCardEffect(1), new DrawCardEffect(1))).withManaCost("{G}{W}"))));
+
+        assertThat(factory.create(card).modalOptions())
+                .extracting(ModalOptionView::handOnly)
+                .containsExactly(false, false, true);
+    }
+
+    private static OracleData splitHalf(String name, String manaCost) {
+        return new OracleData(name, CardType.INSTANT, Set.of(), manaCost, null, List.of(), List.of(),
+                Set.of(), List.of(), "", null, null, Set.of(), null, null, null);
     }
 
     @Test

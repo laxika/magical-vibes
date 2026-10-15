@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -87,6 +88,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -221,6 +223,61 @@ class SpellCastingServiceTest {
         assertThat(spellEffects).isEmpty();
         assertThat(room.getSelectedRoomDoor()).isZero();
         assertThat(room.getSpellTargets().get(room.getEffectTargetIndex(counter)).getMaxTargets()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A split card without fuse can't cast both halves, even from its owner's hand")
+    void fusedModeRequiresTheFuseKeyword() {
+        Card card = splitCard(Set.of());
+        gd.playerHands.get(player1Id).add(card);
+        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+
+        assertThatThrownBy(() -> svc.prepareModalSpellCast(gd, player1Id, card, spellEffects, 2))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("This card has no fuse ability");
+    }
+
+    @Test
+    @DisplayName("A split card with fuse can cast both halves only from its owner's hand")
+    void fusedModeRequiresCastingFromOwnHand() {
+        Card card = splitCard(Set.of(Keyword.FUSE));
+
+        assertThatThrownBy(() -> svc.prepareModalSpellCast(gd, player1Id, card,
+                new ArrayList<>(card.getEffects(EffectSlot.SPELL)), 2))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("This mode can only be cast from hand");
+        assertThatThrownBy(() -> svc.prepareModalSpellCast(gd, player1Id, card,
+                new ArrayList<>(card.getEffects(EffectSlot.SPELL)), 2, false))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("This mode can only be cast from hand");
+
+        List<CardEffect> fromHand = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        svc.prepareModalSpellCast(gd, player1Id, card, fromHand, 2, true);
+        assertThat(fromHand).hasSize(2).allMatch(DrawCardEffect.class::isInstance);
+
+        List<CardEffect> oneHalf = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        svc.prepareModalSpellCast(gd, player1Id, card, oneHalf, 0);
+        assertThat(oneHalf).hasSize(1);
+    }
+
+    /** "Wax // Wane", two draw-a-card instant halves whose third mode casts both. */
+    private static Card splitCard(Set<Keyword> keywords) {
+        Card card = new Card();
+        card.setName("Wax // Wane");
+        card.setType(CardType.INSTANT);
+        card.setKeywords(keywords);
+        card.setSplitHalves(List.of(splitHalf("Wax", "{G}"), splitHalf("Wane", "{W}")));
+        card.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Wax", List.of(new DrawCardEffect(1))).withManaCost("{G}"),
+                new ChooseOneEffect.ChooseOneOption("Wane", List.of(new DrawCardEffect(1))).withManaCost("{W}"),
+                new ChooseOneEffect.ChooseOneOption("Fuse — Wax and then Wane",
+                        List.of(new DrawCardEffect(1), new DrawCardEffect(1))).withManaCost("{G}{W}"))));
+        return card;
+    }
+
+    private static OracleData splitHalf(String name, String manaCost) {
+        return new OracleData(name, CardType.INSTANT, Set.of(), manaCost, null, List.of(), List.of(),
+                Set.of(), List.of(), "", null, null, Set.of(), null, null, null);
     }
 
     private GameData gd;

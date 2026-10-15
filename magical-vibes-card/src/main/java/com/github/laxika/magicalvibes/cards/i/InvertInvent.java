@@ -53,16 +53,7 @@ public class InvertInvent extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Invent — Search your library for an instant card and/or a sorcery card, reveal them, put them into your hand, then shuffle",
                         List.of(searchInstant, searchSorcery)
-                ).withManaCost("{4}{U}{R}"),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Fuse — Invert and then Invent",
-                        List.of(invert, searchInstant, searchSorcery),
-                        creature,
-                        null,
-                        0,
-                        2,
-                        false,
-                        "{4}{U}{R}{U/R}")
+                ).withManaCost("{4}{U}{R}")
         )));
     }
 }

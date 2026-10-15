@@ -131,6 +131,7 @@ export class TargetingChoiceService {
     this.modeOptional = false;
     this.modeModesMayRepeat = false;
     this.modeSelectedIndices = [];
+    this.modeFromOwnHand = true;
     this.pendingModalTargeting = false;
     this.spellTargetCount = 1;
     this.spellTargetSelectedIds = [];
@@ -288,6 +289,8 @@ export class TargetingChoiceService {
   modeOptional = false;
   modeModesMayRepeat = false;
   modeSelectedIndices: number[] = [];
+  /** Whether the card is cast from its owner's hand, the only place hand-only modes such as fuse are offered. */
+  modeFromOwnHand = true;
   modeForAbility = false;
   modeAbilityPermanentIndex = -1;
   modeAbilityIndex = -1;
@@ -765,6 +768,7 @@ export class TargetingChoiceService {
       this.modeOptional = card.modalOptional;
       this.modeModesMayRepeat = card.modalModesMayRepeat === true;
       this.modeSelectedIndices = [];
+      this.modeFromOwnHand = !this.pendingCommandCardId;
       return;
     }
 
@@ -1097,6 +1101,11 @@ export class TargetingChoiceService {
     }
   }
 
+  /** Hand-only modes (a split card's fuse) are offered only when casting from the owner's hand. */
+  isModeOffered(option: ModalOptionView): boolean {
+    return this.modeFromOwnHand || !option.handOnly;
+  }
+
   isModeSelected(optionIndex: number): boolean {
     return this.modeSelectedIndices.includes(optionIndex);
   }
@@ -1244,6 +1253,7 @@ export class TargetingChoiceService {
     this.modeOptional = false;
     this.modeModesMayRepeat = false;
     this.modeSelectedIndices = [];
+    this.modeFromOwnHand = true;
     this.modeForAbility = false;
     this.modeAbilityPermanentIndex = -1;
     this.modeAbilityIndex = -1;
@@ -1583,6 +1593,7 @@ export class TargetingChoiceService {
       this.modeOptional = card.modalOptional;
       this.modeModesMayRepeat = card.modalModesMayRepeat === true;
       this.modeSelectedIndices = [];
+      this.modeFromOwnHand = false;
       return;
     }
 

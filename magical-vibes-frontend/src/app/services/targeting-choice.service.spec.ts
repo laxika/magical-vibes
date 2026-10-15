@@ -443,3 +443,32 @@ describe('Commander casting choices', () => {
     expect(sent[0].commandCardId).toBeUndefined();
   });
 });
+
+describe('TargetingChoiceService split card fuse mode', () => {
+  function fuseCard(): Card {
+    const option = (label: string, handOnly: boolean) =>
+      ({ label, needsTarget: false, needsSpellTarget: false, targetCount: 0, manaCost: null, handOnly });
+    return {
+      id: 'profit-loss', name: 'Profit // Loss', modalChoicesRequired: 1, modalChoicesMax: 1,
+      modalOptions: [option('Profit', false), option('Loss', false), option('Fuse', true)],
+    } as unknown as Card;
+  }
+
+  function offeredLabels(service: TargetingChoiceService): string[] {
+    return service.modeOptions.filter(option => service.isModeOffered(option)).map(option => option.label);
+  }
+
+  it('offers the fuse mode when the card is cast from hand', () => {
+    const ws = { currentUser: { userId: ME }, send: () => {} } as unknown as WebsocketService;
+    const service = new TargetingChoiceService(ws);
+    service.init(signal({ ...gameWithPriority(), hand: [fuseCard()] } as unknown as Game), () => [], () => [], () => 0);
+    service.playCard(0, () => true);
+    expect(offeredLabels(service)).toEqual(['Profit', 'Loss', 'Fuse']);
+  });
+
+  it('hides the fuse mode when the card is cast from the top of the library', () => {
+    const service = makeService([]);
+    service.startLibraryTopPlay(fuseCard());
+    expect(offeredLabels(service)).toEqual(['Profit', 'Loss']);
+  });
+});

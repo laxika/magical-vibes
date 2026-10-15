@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 @Service
 public class CardViewFactory {
@@ -145,8 +146,11 @@ public class CardViewFactory {
         // put on the stack (CR 603.3d), so its options never ask for targets while casting.
         boolean modalEtb = modalEffect != null && !card.getEffects(EffectSlot.SPELL).contains(modalEffect);
         List<ModalOptionView> modalOptions = modalEffect == null ? null
-                : modalEffect.options().stream()
-                .map(option -> modalEtb ? createUntargetedModalOptionView(option) : createModalOptionView(option))
+                : IntStream.range(0, modalEffect.options().size())
+                .mapToObj(index -> modalEtb
+                        ? createUntargetedModalOptionView(modalEffect.options().get(index))
+                        : createModalOptionView(modalEffect.options().get(index),
+                                isHandOnlyMode(card, modalEffect.options().get(index), index)))
                 .toList();
 
         ChooseXValueCost xValueCost = card.getEffects(EffectSlot.SPELL).stream()
@@ -414,17 +418,26 @@ public class CardViewFactory {
     }
 
     private static ModalOptionView createUntargetedModalOptionView(ChooseOneEffect.ChooseOneOption option) {
-        return new ModalOptionView(option.label(), false, false, 0, option.manaCost());
+        return new ModalOptionView(option.label(), false, false, 0, option.manaCost(), false);
     }
 
-    private ModalOptionView createModalOptionView(ChooseOneEffect.ChooseOneOption option) {
+    /**
+     * Whether the mode may be chosen only when the card is cast from its owner's hand: a split card's
+     * fused mode, which follows its halves (CR 702.102a), or a mode marked hand-only.
+     */
+    private static boolean isHandOnlyMode(Card card, ChooseOneEffect.ChooseOneOption option, int index) {
+        return option.handOnly() || (card.getSplitHalves().size() >= 2 && index >= card.getSplitHalves().size());
+    }
+
+    private ModalOptionView createModalOptionView(ChooseOneEffect.ChooseOneOption option, boolean handOnly) {
         boolean needsSpellTarget = EffectResolution.needsSpellTarget(option.effects());
         boolean needsTarget = !needsSpellTarget
                 && (option.targetFilter() != null || option.targetFilters() != null
                         || EffectResolution.needsTarget(option.effects(), List.of(), false, false));
         int targetCount = option.targetFilters() != null ? option.targetFilters().size()
                 : (needsTarget || needsSpellTarget ? 1 : 0);
-        return new ModalOptionView(option.label(), needsTarget, needsSpellTarget, targetCount, option.manaCost());
+        return new ModalOptionView(option.label(), needsTarget, needsSpellTarget, targetCount, option.manaCost(),
+                handOnly);
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {
@@ -435,7 +448,7 @@ public class CardViewFactory {
                         .anyMatch(e -> e instanceof ManaProducingEffect);
         ChooseOneEffect modalEffect = ability.modalEffectAtActivation();
         List<ModalOptionView> modalOptions = modalEffect == null ? null
-                : modalEffect.options().stream().map(this::createModalOptionView).toList();
+                : modalEffect.options().stream().map(option -> createModalOptionView(option, false)).toList();
         return new ActivatedAbilityView(
                 ability.getDescription(),
                 ability.isRequiresTap(),

@@ -318,9 +318,7 @@ public class SplitCardCastSupport {
         if (cast.allowedModes() != null && !cast.allowedModes().contains(modeIndex)) {
             return false;
         }
-        boolean fused = isFusedMode(card, modeIndex);
-        boolean fromOwnHand = cast.sourceZone() == Zone.HAND && cast.ownerId().equals(cast.controllerId());
-        if (fused && (!fromOwnHand || !card.hasKeyword(Keyword.FUSE))) {
+        if (isFusedMode(card, modeIndex) && (!isFromOwnHand(cast) || !card.hasKeyword(Keyword.FUSE))) {
             return false;
         }
         try {
@@ -393,7 +391,11 @@ public class SplitCardCastSupport {
     private ExileFreeCastQueueSupport.PreparedModalCast prepare(GameData gameData, SplitCardCast cast,
                                                                 ChooseOneEffect modal, int modeIndex) {
         return exileFreeCastQueueSupport.prepareModalCast(
-                gameData, cast.physicalCard(), cast.controllerId(), modal, List.of(modeIndex));
+                gameData, cast.physicalCard(), cast.controllerId(), modal, List.of(modeIndex), isFromOwnHand(cast));
+    }
+
+    private static boolean isFromOwnHand(SplitCardCast cast) {
+        return cast.sourceZone() == Zone.HAND && cast.ownerId().equals(cast.controllerId());
     }
 
     private boolean hasLegalTargets(GameData gameData, UUID controllerId,

@@ -251,6 +251,8 @@ export interface ModalOptionView {
   /** The mode's own total cost (a split card's half or its fuse mode); null when every mode
    *  costs the card's printed cost. */
   manaCost: string | null;
+  /** Chosen only when the card is cast from its owner's hand (a split card's fuse mode). */
+  handOnly: boolean;
 }
 
 /** One attributed contribution of a continuous effect to a permanent's characteristics —

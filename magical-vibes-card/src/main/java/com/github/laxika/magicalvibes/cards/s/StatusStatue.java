@@ -25,8 +25,6 @@ import java.util.List;
 public class StatusStatue extends Card {
 
     public StatusStatue() {
-        setAllowSharedTargets(true);
-
         TargetFilter creature = TargetFilters.creature();
         TargetFilter artifactCreatureOrEnchantment = new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
@@ -51,12 +49,7 @@ public class StatusStatue extends Card {
                         "Statue — Destroy target artifact, creature, or enchantment",
                         statue,
                         artifactCreatureOrEnchantment
-                ).withManaCost("{2}{B}{G}"),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Fuse — Status and then Statue",
-                        List.of(status, statue),
-                        List.of(creature, artifactCreatureOrEnchantment)
-                ).withManaCost("{2}{B}{G}{B/G}")
+                ).withManaCost("{2}{B}{G}")
         )));
     }
 }

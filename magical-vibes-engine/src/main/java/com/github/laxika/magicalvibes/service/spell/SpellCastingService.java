@@ -200,6 +200,7 @@ import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.HandCastCardCharacteristicsService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1029,6 +1030,18 @@ public class SpellCastingService {
     private int unwrapChooseOneEffect(GameData gameData, UUID controllerId, Card card,
                                       List<CardEffect> effects, int effectiveXValue,
                                       boolean kicked, boolean collectEvidenceCostPaid, boolean teamworkCostPaid) {
+        return unwrapChooseOneEffect(gameData, controllerId, card, effects, effectiveXValue,
+                kicked, collectEvidenceCostPaid, teamworkCostPaid, null);
+    }
+
+    /**
+     * {@code castFromOwnHand} says whether the card is being cast from its owner's hand; {@code null}
+     * infers it from whether the card is still in the caster's hand.
+     */
+    private int unwrapChooseOneEffect(GameData gameData, UUID controllerId, Card card,
+                                      List<CardEffect> effects, int effectiveXValue,
+                                      boolean kicked, boolean collectEvidenceCostPaid, boolean teamworkCostPaid,
+                                      Boolean castFromOwnHand) {
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) instanceof ChooseOneEffect coe) {
                 boolean additionalModesAllowed = coe.additionalModesCondition() == null
@@ -1042,11 +1055,7 @@ public class SpellCastingService {
                         .toList();
                 Card splitCharacteristics = selectedSplitModeCharacteristics(card, effectiveXValue);
                 if (splitCharacteristics != card) card.setName(splitCharacteristics.getName());
-                if (gameData != null && chosenModes.stream().anyMatch(ChooseOneEffect.ChooseOneOption::handOnly)
-                        && gameData.playerHands.getOrDefault(controllerId, List.of()).stream()
-                        .noneMatch(handCard -> handCard.getId().equals(card.getId()))) {
-                    throw new IllegalStateException("This mode can only be cast from hand");
-                }
+                validateModeCastZone(gameData, controllerId, card, chosenModeIndices, chosenModes, castFromOwnHand);
                 List<List<CardEffect>> chosenModeEffects = chosenModes.stream()
                         .map(ChooseOneEffect.ChooseOneOption::effectsForSelection)
                         .toList();
@@ -1125,8 +1134,43 @@ public class SpellCastingService {
         return unwrapChooseOneEffect(gameData, controllerId, card, effects, modeEncoding);
     }
 
+    /**
+     * As {@link #prepareModalSpellCast(GameData, UUID, Card, List, int)}, for a cast that may already
+     * have taken the card out of its zone and so says itself whether it is a cast from the owner's
+     * hand; {@code null} infers it from whether the card is still in the caster's hand.
+     */
+    public int prepareModalSpellCast(GameData gameData, UUID controllerId, Card card,
+                                     List<CardEffect> effects, int modeEncoding, Boolean castFromOwnHand) {
+        return unwrapChooseOneEffect(gameData, controllerId, card, effects, modeEncoding,
+                false, false, false, castFromOwnHand);
+    }
+
     public int prepareModalSpellCast(Card card, List<CardEffect> effects, int modeEncoding) {
         return unwrapChooseOneEffect(null, null, card, effects, modeEncoding);
+    }
+
+    /**
+     * Only a split card with fuse has a mode casting both halves, and that fused mode, like any mode
+     * restricted to the hand, may be chosen only when the card is cast from its owner's hand
+     * (CR 702.102a).
+     */
+    private static void validateModeCastZone(GameData gameData, UUID controllerId, Card card,
+                                             List<Integer> chosenModeIndices,
+                                             List<ChooseOneEffect.ChooseOneOption> chosenModes,
+                                             Boolean castFromOwnHand) {
+        boolean fused = chosenModeIndices.stream().anyMatch(index -> SplitCardCastSupport.isFusedMode(card, index));
+        if (fused && !card.hasKeyword(Keyword.FUSE)) {
+            throw new IllegalStateException("This card has no fuse ability");
+        }
+        if (gameData == null || (!fused && chosenModes.stream().noneMatch(ChooseOneEffect.ChooseOneOption::handOnly))) {
+            return;
+        }
+        boolean fromOwnHand = castFromOwnHand != null ? castFromOwnHand
+                : gameData.playerHands.getOrDefault(controllerId, List.of()).stream()
+                .anyMatch(handCard -> handCard.getId().equals(card.getId()));
+        if (!fromOwnHand) {
+            throw new IllegalStateException("This mode can only be cast from hand");
+        }
     }
 
     private static void validateOptionalCostModalSelection(

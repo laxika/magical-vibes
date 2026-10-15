@@ -446,6 +446,17 @@ public class ExileFreeCastQueueSupport {
      */
     public PreparedModalCast prepareModalCast(GameData gameData, Card card, UUID controllerId,
                                                ChooseOneEffect modal, List<Integer> chosenModeIndices) {
+        return prepareModalCast(gameData, card, controllerId, modal, chosenModeIndices, null);
+    }
+
+    /**
+     * As {@link #prepareModalCast(GameData, Card, UUID, ChooseOneEffect, List)}, for a cast that says
+     * whether it is from the owner's hand, where a split card with fuse may cast both halves.
+     * {@code null} infers it from whether {@code card} is still in the caster's hand.
+     */
+    public PreparedModalCast prepareModalCast(GameData gameData, Card card, UUID controllerId,
+                                               ChooseOneEffect modal, List<Integer> chosenModeIndices,
+                                               Boolean castFromOwnHand) {
         int[] indices = chosenModeIndices.stream().mapToInt(Integer::intValue).toArray();
         int modeEncoding = modal.modesMayRepeat()
                 ? modal.encodeRepeatedSelection(indices)
@@ -455,7 +466,7 @@ public class ExileFreeCastQueueSupport {
         List<CardEffect> effects = new ArrayList<>(runtimeCard.getEffects(EffectSlot.SPELL));
         additionalSpellCostService.extractAndRemove(gameData, controllerId, runtimeCard, effects, false);
         int effectiveXValue = spellCastingService.prepareModalSpellCast(
-                gameData, controllerId, runtimeCard, effects, modeEncoding);
+                gameData, controllerId, runtimeCard, effects, modeEncoding, castFromOwnHand);
         return new PreparedModalCast(runtimeCard, effects, effectiveXValue);
     }
 

@@ -261,37 +261,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 23. Fuse only from hand, and only on cards with fuse
-
-**Status:** open · **Found:** 2026-10-14, while giving split halves their own characteristics
-
-**Failing tests:**
-- `ProfitLossTest` "Fuse cannot be cast from the library through Melek"
-- `ToilTroubleTest` "Fuse cannot be cast from the library with Melek"
-- `TurnBurnTest.fuseCannotBeCastFromLibraryWithMelek()`
-- `InvertInventTest` "Both halves cannot be cast together because the card has no fuse ability"
-- `ThrashThreatTest` "Thrash // Threat cannot fuse because it has no fuse ability"
-
-**What the rules require.** CR 702.102a: fuse applies only while the card is in a player's hand. Only
-when it is cast from the hand may the player cast both halves. The engine offers the fuse mode when the
-card is cast from exile or the library too. The last two tests expect a cast of both halves to be
-rejected for split cards without fuse, and the engine accepts it. Neither cause has been diagnosed yet.
-
-**Why it's large.** Fuse is a regular `ChooseOneEffect` mode, so the cast path, the mode list shown to
-the player and every "cast from exile/library" permission (Melek, Possibility Storm, Primeval Spawn and
-others) have to filter it by source zone.
-
-**Prompt to start it:**
-
-```
-Only offer and allow the fuse mode of a split card when it is cast from its owner's hand (CR 702.102a),
-and reject casting both halves of a split card without fuse. Start with ProfitLossTest and
-InvertInventTest, then run the other split/fuse card tests and ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

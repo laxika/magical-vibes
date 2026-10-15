@@ -7,8 +7,9 @@ package com.github.laxika.magicalvibes.networking.model;
  * {@code targetCount} is the number of targets the mode declares (&gt;1 only for modes that
  * declare one filter per effect). {@code manaCost} is the mode's own total cost when it has one
  * (a split card's half or its fuse mode), and {@code null} when every mode costs the card's
- * printed cost.
+ * printed cost. {@code handOnly} marks a mode that may be chosen only when the card is cast from
+ * its owner's hand, such as a split card's fused mode.
  */
 public record ModalOptionView(String label, boolean needsTarget, boolean needsSpellTarget, int targetCount,
-                              String manaCost) {
+                              String manaCost, boolean handOnly) {
 }

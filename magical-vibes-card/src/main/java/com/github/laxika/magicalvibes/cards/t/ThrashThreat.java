@@ -54,12 +54,7 @@ public class ThrashThreat extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Threat — Create a 4/4 red and green Beast creature token with trample",
                         threat
-                ).withManaCost("{2}{R}{G}"),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Fuse — Thrash and then Threat",
-                        List.of(thrash, threat),
-                        List.of(creatureYouControl, creatureOrPlaneswalkerYouDoNotControl)
-                ).withManaCost("{2}{R/G}{R/G}{R}{G}")
+                ).withManaCost("{2}{R}{G}")
         )));
     }
 }
