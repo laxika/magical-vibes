@@ -31,7 +31,7 @@ class RichlauHeadmasterTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(nonArtifact, target));
         harness.setLibrary(player1, List.of(topCard, bottomCard));
 
-        resolveRichlauAndPay();
+        resolveRichlauAndPay(target);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(nonArtifact.getId());
@@ -49,7 +49,7 @@ class RichlauHeadmasterTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Forest(), target));
         harness.setLibrary(player1, List.of(topCard));
 
-        resolveRichlauAndPay();
+        resolveRichlauAndPay(target);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, target);
         assertThat(gd.perpetualCardCastCostReductions).containsEntry(target.getId(), 1);
@@ -73,8 +73,30 @@ class RichlauHeadmasterTest extends BaseCardTest {
         assertThat(gd.perpetualCardCastCostReductions).doesNotContainKey(target.getId());
     }
 
-    private void resolveRichlauAndPay() {
+    @Test
+    @DisplayName("Paying creates a separate trigger that targets only artifact cards in your graveyard")
+    void payingCreatesSeparateTargetedTrigger() {
+        IchorWellspring target = new IchorWellspring();
+        Forest nonArtifact = new Forest();
+        harness.addToBattlefield(player1, new RichlauHeadmaster());
+        harness.setGraveyard(player1, List.of(nonArtifact, target));
+        harness.setGraveyard(player2, List.of(new Ornithopter()));
+
         resolveRichlau(true);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.perpetualCardCastCostReductions).doesNotContainKey(target.getId());
+    }
+
+    private void resolveRichlauAndPay(Card target) {
+        resolveRichlau(true);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
     }
 
     private void resolveRichlau(boolean pay) {
@@ -82,6 +104,7 @@ class RichlauHeadmasterTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         if (pay) {

@@ -70,4 +70,9 @@ public record SacrificePermanentThenEffect(
     public TargetSpec targetSpec() {
         return targetBeforeSacrifice && thenEffect != null ? thenEffect.targetSpec() : TargetSpec.NONE;
     }
+
+    @Override
+    public boolean targetsChosenByReflexiveAbility() {
+        return reflexive && !targetBeforeSacrifice && thenEffect != null;
+    }
 }

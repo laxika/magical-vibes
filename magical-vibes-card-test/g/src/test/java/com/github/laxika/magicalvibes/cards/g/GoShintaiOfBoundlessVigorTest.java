@@ -32,6 +32,7 @@ class GoShintaiOfBoundlessVigorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, honden.getId());
+        harness.passBothPriorities();
 
         assertThat(honden.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }

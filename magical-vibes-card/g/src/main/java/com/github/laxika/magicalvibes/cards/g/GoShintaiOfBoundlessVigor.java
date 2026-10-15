@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "NEO", collectorNumber = "187")
@@ -16,8 +17,8 @@ public class GoShintaiOfBoundlessVigor extends Card {
 
     public GoShintaiOfBoundlessVigor() {
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                MayPayManaEffect.reflexiveTarget("{1}",
-                        new PutCounterOnTargetPermanentEffect(
+                new MayPayManaEffect("{1}",
+                        new QueueReflexiveAbilityEffect(new PutCounterOnTargetPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 new PermanentCount(
                                         new PermanentHasSubtypePredicate(CardSubtype.SHRINE),
@@ -25,7 +26,7 @@ public class GoShintaiOfBoundlessVigor extends Card {
                                 null,
                                 new PermanentHasSubtypePredicate(CardSubtype.SHRINE),
                                 false,
-                                null),
+                                null)),
                         "Pay {1} to put a +1/+1 counter on target Shrine for each Shrine you control?"));
     }
 }

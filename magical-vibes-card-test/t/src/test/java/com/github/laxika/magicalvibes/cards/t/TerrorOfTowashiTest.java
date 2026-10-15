@@ -56,12 +56,17 @@ class TerrorOfTowashiTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0, 2);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
+                firstCreature.getId(), returnedCreature.getId());
 
-        harness.handleGraveyardCardChosen(player1, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(returnedCreature.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(returnedCreature);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(returnedCreature.getId()))

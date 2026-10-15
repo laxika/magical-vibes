@@ -52,6 +52,11 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     }
 
     @Override
+    public boolean targetsChosenByReflexiveAbility() {
+        return wrapped.targetsChosenByReflexiveAbility();
+    }
+
+    @Override
     public boolean resolvesWhenTargetIllegal() {
         return wrapped.resolvesWhenTargetIllegal();
     }

@@ -33,6 +33,11 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTar
         Objects.requireNonNull(effect, "effect");
     }
 
+    @Override
+    public boolean targetsChosenByReflexiveAbility() {
+        return true;
+    }
+
     /** A combat-damage trigger needs the context of the reflexive effect it queues ("that player"). */
     @Override
     public TriggerContext combatDamageTriggerContext() {

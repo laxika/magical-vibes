@@ -880,7 +880,7 @@ public class EtbTriggerService {
             // filter even when its own spec names no target kind (an Aura's group 0 is its enchant
             // target, never an ETB target).
             boolean etbNeedsTarget = otherEffects.stream()
-                    .filter(e -> !(e instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
+                    .filter(e -> !e.targetsChosenByReflexiveAbility())
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
@@ -894,11 +894,11 @@ public class EtbTriggerService {
                             && (!card.isAura() || card.getEffectTargetIndex(e) != 0)
                             && (ce.targetSpec().admits(TargetPredicate.Kind.PLAYER) || ce.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
-            // Non-reflexive MayPayManaEffect ETBs never take a target from the entering event, so a
+            // MayPayManaEffect ETBs never take a target from the entering event, so a
             // targeting pay/else ability (Knight of the Mists) must choose as the trigger goes on the
             // stack — including the just-entered permanent as a legal choice.
             boolean mayPayManaNeedsTarget = otherEffects.stream()
-                    .anyMatch(e -> e instanceof MayPayManaEffect mayPay && !mayPay.targetAfterPayment()
+                    .anyMatch(e -> e instanceof MayPayManaEffect
                             && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 

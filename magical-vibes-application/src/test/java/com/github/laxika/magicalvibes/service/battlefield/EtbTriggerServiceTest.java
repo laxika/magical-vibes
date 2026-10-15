@@ -20,14 +20,18 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -163,10 +167,11 @@ class EtbTriggerServiceTest {
         Card creature = new Card();
         creature.setName("Reflexive Creature");
         creature.setType(CardType.CREATURE);
-        creature.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                MayPayManaEffect.reflexiveTarget("{2}",
-                        SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.TARGET),
-                                new PutCounterOnTargetPermanentEffect(CounterType.STUN)),
+        creature.target(TargetFilters.creatureAnOpponentControls()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new MayPayManaEffect("{2}",
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                                new TapPermanentsEffect(TapUntapScope.TARGET),
+                                new PutCounterOnTargetPermanentEffect(CounterType.STUN))),
                         "Pay {2} to tap and stun a creature?"));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
 
@@ -176,6 +181,27 @@ class EtbTriggerServiceTest {
                 PermanentChoiceContext.ETBTokenTargetTrigger.class)).isFalse();
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getTargetId()).isNull();
+    }
+
+    @Test
+    void reflexiveSacrificeEtbLeavesUpToTwoTargetGroupForReflexiveAbility() {
+        Card creature = new Card();
+        creature.setName("Reflexive Sacrifice Creature");
+        creature.setType(CardType.CREATURE);
+        creature.target(TargetFilters.creature(), 0, 2).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new MayEffect(
+                        new SacrificePermanentThenEffect(new PermanentIsCreaturePredicate(),
+                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                                "a creature"),
+                        "Sacrifice a creature?"));
+        gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        assertThat(gameData.hasPendingInteraction(
+                PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)).isFalse();
+        assertThat(gameData.stack).hasSize(1);
+        assertThat(gameData.stack.getFirst().getTargetIds()).isEmpty();
     }
 
     @Test

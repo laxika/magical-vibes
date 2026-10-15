@@ -93,6 +93,14 @@ public interface CardEffect {
     default boolean onlyTriggersOnSacrifice() { return false; }
 
     /**
+     * Returns {@code true} if the card-level target group bound to this effect belongs to a
+     * reflexive "when you do" ability it creates (CR 603.12), not to the ability carrying it. Those
+     * targets are chosen as the reflexive ability is put on the stack, after the optional action,
+     * so the carrying trigger must not choose them when it triggers.
+     */
+    default boolean targetsChosenByReflexiveAbility() { return false; }
+
+    /**
      * Returns whether this effect should trigger for the controller's current draw count this turn.
      * Effects that do not restrict a draw count always return {@code true}.
      */

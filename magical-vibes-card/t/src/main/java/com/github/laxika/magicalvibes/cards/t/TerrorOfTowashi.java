@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -15,14 +16,14 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class TerrorOfTowashi extends Card {
 
     public TerrorOfTowashi() {
-        addEffect(EffectSlot.ON_ATTACK, MayPayManaEffect.reflexiveTarget(
+        addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
                 "{3}{B}",
-                ReturnCardFromGraveyardEffect.builder()
+                new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
                         .grantSubtype(CardSubtype.PHYREXIAN)
-                        .build(),
+                        .build()),
                 "Pay {3}{B} to return target creature card from your graveyard to the battlefield?"));
     }
 }

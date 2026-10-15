@@ -35,7 +35,9 @@ public class PerpetuallyReduceTargetArtifactCardCostAndBoostCreatureOrVehicleEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var modification = (PerpetuallyReduceTargetArtifactCardCostAndBoostCreatureOrVehicleEffect) effect;
-        UUID targetCardId = entry.getTargetId();
+        UUID targetCardId = entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()
+                ? entry.getTargetCardIds().getFirst()
+                : entry.getTargetId();
         if (targetCardId == null) {
             return;
         }

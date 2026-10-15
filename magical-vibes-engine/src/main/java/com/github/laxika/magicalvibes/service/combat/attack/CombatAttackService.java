@@ -1276,12 +1276,12 @@ public class CombatAttackService {
                                 || otherEffects.getFirst() instanceof ChooseModeNotChosenDuringLastCombatEffect);
                         boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
                         boolean needsGraveyardTarget = otherEffects.stream()
-                                .filter(e -> !(e instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
+                                .filter(e -> !e.targetsChosenByReflexiveAbility())
                                 .anyMatch(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
                                         && choosingEffect.choosesGraveyardCards()
                                         || e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
                         boolean needsTarget = otherEffects.stream()
-                                .filter(e -> !(e instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
+                                .filter(e -> !e.targetsChosenByReflexiveAbility())
                                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                         || e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                                         || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));

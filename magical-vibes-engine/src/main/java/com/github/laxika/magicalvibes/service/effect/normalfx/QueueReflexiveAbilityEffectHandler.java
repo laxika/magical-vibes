@@ -12,17 +12,22 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -42,6 +47,18 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     @Autowired
     @Lazy
     private TargetLegalityService targetLegalityService;
+
+    @Autowired
+    @Lazy
+    private PredicateEvaluationService predicateEvaluationService;
+
+    @Autowired
+    @Lazy
+    private ValidTargetService validTargetService;
+
+    @Autowired
+    @Lazy
+    private TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -91,6 +108,9 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             int xValue = queueEffect.useEventValueAsX() ? entry.getEventValue() : 0;
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()), null, 0, xValue));
+            if (!gameData.interaction.isAwaitingInput()) {
+                triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
+            }
             return;
         }
         if (beginTargetChoice(gameData, entry, queueEffect.effect(), queueEffect.optionalTarget(),
@@ -147,12 +167,15 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                 .withSourcePermanentId(entry.getSourcePermanentId())
                 .withDefendingPlayerId(defendingPlayerId(gameData, entry.getAttackedTargetId()))
                 .withXValue(xValue);
+        TargetFilter groupFilter = targetGroupFilter(entry, effect);
 
         List<UUID> validPermanentIds = new ArrayList<>();
         if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
                     if (targetPredicateEvaluationService.matchesPermanent(predicate, permanent, filterContext)
+                            && (groupFilter == null || predicateEvaluationService.matchesFilters(
+                            permanent, Set.of(groupFilter), filterContext))
                             && targetLegalityService.checkTriggeredPermanentTargetableReason(
                             gameData, permanent, entry.getCard(), entry.getControllerId()).isEmpty()) {
                         validPermanentIds.add(permanent.getId());
@@ -180,6 +203,10 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                     validPlayerIds.add(playerId);
                 }
             }
+            if (groupFilter != null) {
+                validPlayerIds = validTargetService.filterValidPlayerTargets(
+                        gameData, groupFilter, validPlayerIds, entry.getControllerId());
+            }
         }
         if (optionalTarget && !validPlayerIds.contains(entry.getControllerId())) {
             validPlayerIds.add(entry.getControllerId());
@@ -200,6 +227,19 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 "'s reflexive ability - choose a target."));
         return true;
+    }
+
+    /**
+     * The filter of the card target group the reflexive effect is bound to ("when you do, tap
+     * target creature an opponent controls"), or {@code null} when the effect's own target spec
+     * fully describes its target.
+     */
+    private TargetFilter targetGroupFilter(StackEntry entry, CardEffect effect) {
+        int targetGroupIndex = entry.getCard().getEffectTargetIndex(effect);
+        if (targetGroupIndex < 0 || targetGroupIndex >= entry.getCard().getSpellTargets().size()) {
+            return null;
+        }
+        return entry.getCard().getSpellTargets().get(targetGroupIndex).getFilter();
     }
 
     private UUID defendingPlayerId(GameData gameData, UUID attackedTargetId) {

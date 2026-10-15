@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostControlledSubtypeCountPredicate;
@@ -21,7 +22,8 @@ public class GoShintaiOfHiddenCruelty extends Card {
                 new PermanentToughnessAtMostControlledSubtypeCountPredicate(CardSubtype.SHRINE)
         ));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                MayPayManaEffect.reflexiveTarget("{1}", new DestroyTargetPermanentEffect(targetPredicate),
+                new MayPayManaEffect("{1}",
+                        new QueueReflexiveAbilityEffect(new DestroyTargetPermanentEffect(targetPredicate)),
                         "Pay {1} to destroy target creature with toughness X or less?"));
     }
 }

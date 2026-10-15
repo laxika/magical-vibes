@@ -128,6 +128,7 @@ class SpellbookVendorTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, vendor.getId());
         resolveAllTriggers();
         Permanent oldRole = findPermanent(player1, "Sorcerer");
+        declareAttackers(player1, List.of());
 
         beginCombat();
         harness.addMana(player1, ManaColor.COLORLESS, 1);

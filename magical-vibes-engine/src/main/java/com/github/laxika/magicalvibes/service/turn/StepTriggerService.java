@@ -6233,9 +6233,8 @@ public class StepTriggerService {
                             gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
                         }
                     } else if (effect instanceof MayPayManaEffect mayPay) {
-                        if (mayPay.targetAfterPayment()
-                                || (!mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                && !mayPay.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+                        if (!mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                && !mayPay.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                             gameData.queueMayAbility(perm.getCard(), activePlayerId, mayPay, null, perm.getId());
                         } else {
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
@@ -7124,10 +7123,10 @@ public class StepTriggerService {
         }
 
         boolean needsPermanentTarget = mandatoryEffects.stream()
-                .filter(effect -> !(effect instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
+                .filter(effect -> !effect.targetsChosenByReflexiveAbility())
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         boolean needsGraveyardTarget = mandatoryEffects.stream()
-                .filter(effect -> !(effect instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
+                .filter(effect -> !effect.targetsChosenByReflexiveAbility())
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         if (needsGraveyardTarget) {
             ExileGraveyardCardsEffect exileEffect = mandatoryEffects.stream()

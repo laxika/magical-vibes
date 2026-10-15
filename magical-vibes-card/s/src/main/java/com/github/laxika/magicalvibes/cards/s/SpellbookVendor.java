@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -25,10 +26,9 @@ import java.util.Set;
 public class SpellbookVendor extends Card {
 
     public SpellbookVendor() {
-        setCastTimeTargetFilter(TargetFilters.creatureYouControl());
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                MayPayManaEffect.reflexiveTarget("{1}",
-                        new CreateTokenAttachedToTargetEffect(sorcererRoleToken()),
+        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                new MayPayManaEffect("{1}",
+                        new QueueReflexiveAbilityEffect(new CreateTokenAttachedToTargetEffect(sorcererRoleToken())),
                         "Pay {1} to create a Sorcerer Role token?"));
     }
 

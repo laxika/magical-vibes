@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,10 +26,9 @@ import java.util.Set;
 public class MerryBards extends Card {
 
     public MerryBards() {
-        setCastTimeTargetFilter(TargetFilters.creatureYouControl());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                MayPayManaEffect.reflexiveTarget("{1}",
-                        new CreateTokenAttachedToTargetEffect(youngHeroRoleToken()),
+        target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new MayPayManaEffect("{1}",
+                        new QueueReflexiveAbilityEffect(new CreateTokenAttachedToTargetEffect(youngHeroRoleToken())),
                         "Pay {1} to create a Young Hero Role token?"));
     }
 

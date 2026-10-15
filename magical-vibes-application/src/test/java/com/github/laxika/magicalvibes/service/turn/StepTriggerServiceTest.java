@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SurvivalTriggerEffect;
@@ -2158,7 +2159,8 @@ class StepTriggerServiceTest {
         void controllerEndStepReflexiveMayPayManaEffectQueuesMayAbility() {
             Card card = createCardWithName("Controller Reflexive May Pay Card");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    MayPayManaEffect.reflexiveTarget("{1}", new GainLifeEffect(1), "Pay {1} to gain life?"));
+                    new MayPayManaEffect("{1}", new QueueReflexiveAbilityEffect(new GainLifeEffect(1)),
+                            "Pay {1} to gain life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);

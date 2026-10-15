@@ -36,36 +36,6 @@ Don't run the full test suite; ask me. Don't commit until I say so.
 
 ---
 
-## 9. Reflexive "when you do" triggers that choose targets after the action
-
-**Status:** open · **Found:** 2026-10-14, while fixing G-card tests
-
-**Failing tests:**
-- `GlorifierOfSufferingTest` (5 tests: may, then sacrifice, then up to two targets)
-- `GoShintaiOfAncientWarsTest`, `GoShintaiOfBoundlessVigorTest`, `GoShintaiOfHiddenCrueltyTest` ("you may pay {1}. When you do, ... target ...")
-
-**What the rules require.** CR 603.12: a resolving ability that says "when you do" creates a reflexive
-triggered ability. It triggers after the action is taken, goes on the stack as its own ability, and
-chooses its targets then. The engine either chooses the targets with the original trigger (card-level
-`target(...)` before the "may") or, for `MayPayManaEffect.reflexiveTarget`, resolves the wrapped effect
-inline on payment with no separate stack object.
-
-**Why it's large.** About 11 cards share the `MayPayManaEffect.reflexiveTarget` path, and multi-target
-reflexive triggers (Glorifier's "up to two") have no way to declare targets for a reflexive ability.
-Target selection, stack entries and the may/payment prompts all have to be re-sequenced.
-
-**Prompt to start it:**
-
-```
-Implement reflexive triggered abilities per CR 603.12: after the "you may [pay/sacrifice]" action, put a
-separate triggered ability on the stack and choose its targets then (including multi-target "up to two").
-Migrate MayPayManaEffect.reflexiveTarget users and Glorifier of Suffering. Start with
-GlorifierOfSufferingTest and the three Go-Shintai tests, then ask me to run the full suite.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 21. Undiagnosed G-card failures
 
 **Status:** open · **Found:** 2026-10-14, while fixing G-card tests
