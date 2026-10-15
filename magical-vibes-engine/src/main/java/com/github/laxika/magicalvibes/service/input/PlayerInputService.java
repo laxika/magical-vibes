@@ -456,7 +456,11 @@ public class PlayerInputService {
         int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
         List<String> options = counterAssignmentOptions(remaining, remainingTargets,
                 context.allowsPartialDistribution());
-        String prompt = context.counterType() == null
+        boolean prevention = context.counterType() == null && context.effects().stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect.class::isInstance);
+        String prompt = prevention
+                ? "Choose how much damage to prevent for this target."
+                : context.counterType() == null
                 ? "Choose how much damage to deal to this target."
                 : "Choose how many " + context.counterType().name().toLowerCase().replace('_', ' ')
                 + " counters to put on the target creature.";

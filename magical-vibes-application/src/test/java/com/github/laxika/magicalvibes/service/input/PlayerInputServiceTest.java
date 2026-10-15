@@ -17,7 +17,9 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -401,6 +403,28 @@ class PlayerInputServiceTest {
 
             assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                     .containsExactly("5");
+        }
+
+        @Test
+        @DisplayName("Divided damage and divided prevention prompts name what is being divided")
+        void dividedPromptNamesDamageOrPrevention() {
+            List<UUID> targets = List.of(UUID.randomUUID(), UUID.randomUUID());
+
+            svc.beginCounterDistributionAssignmentChoice(gd, PLAYER1_ID,
+                    new ChoiceContext.CounterDistributionAssignment(
+                            createCreature("Source"), PLAYER1_ID,
+                            List.of(DealDividedDamageEffect.chosenAmongAnyTargetsEtb(3, 3)), UUID.randomUUID(),
+                            null, targets, Map.of(), 3, 0));
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).prompt())
+                    .isEqualTo("Choose how much damage to deal to this target.");
+
+            svc.beginCounterDistributionAssignmentChoice(gd, PLAYER1_ID,
+                    new ChoiceContext.CounterDistributionAssignment(
+                            createCreature("Source"), PLAYER1_ID,
+                            List.of(PreventDividedDamageEffect.chosenAmongAnyTargetsEtb(5)), UUID.randomUUID(),
+                            null, targets, Map.of(), 5, 0));
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).prompt())
+                    .isEqualTo("Choose how much damage to prevent for this target.");
         }
     }
 
