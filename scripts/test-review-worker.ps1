@@ -21,7 +21,7 @@ $script:pushAttempts = 0
 $script:retryDelays = @()
 $script:captureFirstPush = $false
 $script:firstPushWasSynced = $false
-$script:taskTestPath = 'magical-vibes-application/src/test/java/example/cards/a/FirstCardTest.java'
+$script:taskTestPath = 'magical-vibes-card-test/a/src/test/java/example/cards/a/FirstCardTest.java'
 
 function Assert-ReviewTest {
     param([bool] $Condition, [string] $Message)

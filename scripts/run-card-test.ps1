@@ -19,7 +19,7 @@ if ($TestClass -notmatch '\.') {
     $TestClass = "com.github.laxika.magicalvibes.cards.$letter.$TestClass"
 }
 
-$buildDir = Join-Path $repositoryRoot 'magical-vibes-application/build'
+$buildDir = Join-Path $repositoryRoot ((Get-TestProjectDirectory $TestClass) + '/build')
 if (-not (Test-Path $buildDir)) {
     New-Item -ItemType Directory -Force $buildDir | Out-Null
 }

@@ -71,8 +71,8 @@ keeps opening hands when a rollout starts a subgame.
 Run `scripts/run-subgame-tests.ps1` for card, continuation, registry, request,
 reconnect, timeout, projection, and lifecycle regressions. Use `-AiOnly` for the
 affected AI regressions and `-TurnOnly` for turn restart and priority-loop checks.
-Its init script narrows application test compilation;
-ordinary build configuration is unchanged.
+Its card tests run from their `magical-vibes-card-test` letter modules, and its init script
+narrows application test compilation; ordinary build configuration is unchanged.
 
 Frontend regressions are `websocket-subgame.spec.ts`, `game-subgame.spec.ts`, and
 `subgame.browser.spec.ts`. The browser test renders both player perspectives

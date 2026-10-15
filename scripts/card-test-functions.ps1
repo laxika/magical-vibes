@@ -1,3 +1,23 @@
+function Get-TestProjectDirectory {
+    <#
+        .SYNOPSIS
+            The project directory holding a test class: card tests (package ...cards.{letter}) live in
+            the per-letter magical-vibes-card-test/{letter} modules, everything else in the application.
+    #>
+    param([Parameter(Mandatory = $true)][string] $TestClass)
+
+    if ($TestClass -match '(^|\.)cards\.([a-z])\.[A-Za-z_$][A-Za-z0-9_$]*$') {
+        return "magical-vibes-card-test/$($Matches[2])"
+    }
+    return 'magical-vibes-application'
+}
+
+function Get-TestTaskPath {
+    param([Parameter(Mandatory = $true)][string] $TestClass)
+
+    return ':' + (Get-TestProjectDirectory $TestClass).Replace('/', ':') + ':test'
+}
+
 function Invoke-CardTestGradle {
     param(
         [Parameter(Mandatory = $true)]
@@ -15,7 +35,7 @@ function Invoke-CardTestGradle {
     # A private Gradle daemon lets a timeout stop this build's process tree
     # without stopping another terminal's Gradle build.
     $wrapper = Join-Path $Root 'gradlew.bat'
-    $startInfo.Arguments = '/d /s /c ""' + $wrapper + '" :magical-vibes-application:test --tests ' + $TestClass + ' --console=plain --no-daemon > "' + $LogPath + '" 2>&1"'
+    $startInfo.Arguments = '/d /s /c ""' + $wrapper + '" ' + (Get-TestTaskPath $TestClass) + ' --tests ' + $TestClass + ' --console=plain --no-daemon > "' + $LogPath + '" 2>&1"'
     $startInfo.WorkingDirectory = $Root
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true

@@ -70,7 +70,7 @@ After confirming no existing effect/combination works — read `agent-docs/ARCHI
 ## Step 6 — Write tests (skip per script guidance)
 
 Skip tests only when the script says **basic land** or **vanilla** — it prints nothing here otherwise, which means tests are needed. Add
-`magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/{letter}/{ClassName}Test.java` extending `BaseCardTest`.
+`magical-vibes-card-test/{letter}/src/test/java/com/github/laxika/magicalvibes/cards/{letter}/{ClassName}Test.java` extending `BaseCardTest`.
 
 - Follow the Testing rules in `AGENTS.md`: behavior through the engine only — never Scryfall-metadata asserts, never white-box wiring tests.
 - Use the harness: `setHand`, `addMana`, `addToBattlefield`, `castCreature/castInstant`, `activateAbility`, `passBothPriorities`, `forceStep`, `forceActivePlayer`. See `agent-docs/TEST_RECIPES.md` and `agent-docs/TEST_CREATURES_REFERENCE.md`.
@@ -85,4 +85,4 @@ Run the quiet wrapper — **never the full suite** (it takes 20+ min) and never 
 bash -c 'powershell.exe -NoProfile -File scripts/run-card-test.ps1 {ClassName}Test'
 ```
 
-Allow a generous timeout (up to 10 min on a cold build). It prints `PASS …` on success, or each failed test with its assertion message and project stack frames on failure; stale-frontend build failures are retried automatically. Read the full log (`magical-vibes-application/build/card-test.log`) only if the excerpt isn't enough. Report pass/fail honestly. Do not commit unless the user asks.
+Allow a generous timeout (up to 10 min on a cold build). It prints `PASS …` on success, or each failed test with its assertion message and project stack frames on failure; stale-frontend build failures are retried automatically. Read the full log (`magical-vibes-card-test/{letter}/build/card-test.log`) only if the excerpt isn't enough. Report pass/fail honestly. Do not commit unless the user asks.

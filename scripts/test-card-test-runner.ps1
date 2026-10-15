@@ -19,7 +19,7 @@ try {
     $exitCode = Invoke-CardTestGradle $testRoot $testClass $log
     $output = [System.IO.File]::ReadAllText($log)
     Assert-CardRunnerTest ($exitCode -eq 0) 'The default two-hour build failed to launch from a path containing spaces'
-    Assert-CardRunnerTest ($output -match ':magical-vibes-application:test --tests example\.cards\.a\.FirstCardTest --console=plain --no-daemon') 'The build did not use an exact single-class filter and a private daemon'
+    Assert-CardRunnerTest ($output -match ':magical-vibes-card-test:a:test --tests example\.cards\.a\.FirstCardTest --console=plain --no-daemon') 'The build did not use an exact single-class filter and a private daemon'
     Assert-CardRunnerTest ($output -match 'compiler diagnostic') 'Gradle stderr was not written to the log'
     Write-Host 'PASS exact class filter, paths containing spaces and combined build logs'
 

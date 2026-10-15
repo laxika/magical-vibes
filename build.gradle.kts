@@ -23,9 +23,10 @@ subprojects {
             mavenCentral()
         }
 
-        if (parent?.name == "magical-vibes-card") {
+        val parentName = parent?.name
+        if (parentName == "magical-vibes-card" || parentName == "magical-vibes-card-test") {
             configure<BasePluginExtension> {
-                archivesName.set("magical-vibes-card-$name")
+                archivesName.set("$parentName-$name")
             }
         }
 

@@ -4,6 +4,12 @@ command_pattern = "^./gradlew :magical-vibes-application:test --tests .*"
 decision = "always-allow"
 reason = "Allow targeted application tests to manage Gradle wrapper locks and artifacts."
 
+[[approval_rules]]
+# Matches any gradlew command targeting one per-letter card test module
+command_pattern = "^./gradlew :magical-vibes-card-test:[a-z]:test --tests .*"
+decision = "always-allow"
+reason = "Allow targeted card tests to manage Gradle wrapper locks and artifacts."
+
 [features]
 codex_git_commit = true
 

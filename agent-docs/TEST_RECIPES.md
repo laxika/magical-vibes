@@ -865,16 +865,16 @@ Reference: `ChaliceOfLifeTest.java`, `ArguelsBloodFastTest.java`, `TreasureMapTe
 
 ## Reference tests
 
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/o/OrcishArtilleryTest.java`
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/s/ShockTest.java`
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/a/ArcaneTeachingsTest.java` — aura granting activated ability to creature
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/b/BurdenOfGuiltTest.java` — aura with own activated ability
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/c/CondemnTest.java`
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/t/TwincastTest.java`
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommanderTest.java`
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/b/BogardanFirefiendTest.java` — dies → targeted creature trigger
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/p/PerilousMyrTest.java` — dies → any-target trigger (creature or player)
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/f/FesteringGoblinTest.java` — dies → targeted creature trigger (-1/-1)
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/b/BurningOilTest.java` — flashback instant targeting attacking/blocking creatures
-- `magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/c/CallToTheKindredTest.java` — aura with upkeep MayEffect + library creature-sharing-type search
+- `magical-vibes-card-test/o/src/test/java/com/github/laxika/magicalvibes/cards/o/OrcishArtilleryTest.java`
+- `magical-vibes-card-test/s/src/test/java/com/github/laxika/magicalvibes/cards/s/ShockTest.java`
+- `magical-vibes-card-test/a/src/test/java/com/github/laxika/magicalvibes/cards/a/ArcaneTeachingsTest.java` — aura granting activated ability to creature
+- `magical-vibes-card-test/b/src/test/java/com/github/laxika/magicalvibes/cards/b/BurdenOfGuiltTest.java` — aura with own activated ability
+- `magical-vibes-card-test/c/src/test/java/com/github/laxika/magicalvibes/cards/c/CondemnTest.java`
+- `magical-vibes-card-test/t/src/test/java/com/github/laxika/magicalvibes/cards/t/TwincastTest.java`
+- `magical-vibes-card-test/s/src/test/java/com/github/laxika/magicalvibes/cards/s/SiegeGangCommanderTest.java`
+- `magical-vibes-card-test/b/src/test/java/com/github/laxika/magicalvibes/cards/b/BogardanFirefiendTest.java` — dies → targeted creature trigger
+- `magical-vibes-card-test/p/src/test/java/com/github/laxika/magicalvibes/cards/p/PerilousMyrTest.java` — dies → any-target trigger (creature or player)
+- `magical-vibes-card-test/f/src/test/java/com/github/laxika/magicalvibes/cards/f/FesteringGoblinTest.java` — dies → targeted creature trigger (-1/-1)
+- `magical-vibes-card-test/b/src/test/java/com/github/laxika/magicalvibes/cards/b/BurningOilTest.java` — flashback instant targeting attacking/blocking creatures
+- `magical-vibes-card-test/c/src/test/java/com/github/laxika/magicalvibes/cards/c/CallToTheKindredTest.java` — aura with upkeep MayEffect + library creature-sharing-type search
 
