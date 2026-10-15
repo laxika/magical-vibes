@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -92,8 +93,8 @@ public class ExileNormalCostCopySupport {
         }
 
         if (SplitCardCastSupport.isSplitCard(copy)) {
-            if (!splitCardCastSupport.beginFromExile(gameData, player.getId(), copy, true, true, false, 0,
-                    null, null)) {
+            if (!splitCardCastSupport.beginFromExile(gameData, player.getId(), copy, true,
+                    SplitCardCast.ExileCast.ofCopy(), Integer.MAX_VALUE, null, null)) {
                 gameLogService.append(gameData, GameLog.cardThen(copy,
                         " has no half that can be cast and the copy ceases to exist."));
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

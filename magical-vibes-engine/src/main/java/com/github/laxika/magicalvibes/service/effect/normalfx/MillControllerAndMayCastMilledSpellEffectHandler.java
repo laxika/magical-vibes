@@ -45,7 +45,8 @@ public class MillControllerAndMayCastMilledSpellEffectHandler implements NormalE
         List<Card> milled = graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), count);
         List<Card> castable = milled.stream()
                 .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                .filter(card -> card.getManaValue() <= maxManaValue)
+                // "A spell with mana value X or less" checks only the half being cast (CR 709.3a).
+                .filter(card -> card.getSmallestSpellManaValue() <= maxManaValue)
                 .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null)
                 .toList();
 

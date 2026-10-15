@@ -25,14 +25,18 @@ import java.util.UUID;
  *                                         this one is cast
  * @param allowedModes              the modes of the card's modal spell (its halves, or its fused
  *                                  spell) it may be cast as, or null for any
- * @param exileCast                 how a card cast from exile is cast, or null for other zones
+ * @param origin                    how a card cast from exile, from outside the game, held outside
+ *                                  every zone, or played by Word of Command is cast; null for a card
+ *                                  set aside from its hand, graveyard or library
+ * @param alternativeManaCost       the mana cost paid instead of the chosen half's, such as a miracle
+ *                                  cost, or null to pay the half's own
  */
 public record SplitCardCast(UUID controllerId, Card physicalCard, Zone sourceZone, int sourceIndex,
                             UUID ownerId, boolean exileInsteadOfGraveyard, int maxManaValue,
                             CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId,
                             boolean payManaCost, boolean anyManaType, int copyCount,
                             boolean restrictAdditionalSpellsThisTurn, List<Integer> allowedModes,
-                            ExileCast exileCast) {
+                            Origin origin, String alternativeManaCost) {
 
     public SplitCardCast {
         allowedModes = allowedModes == null ? null : List.copyOf(allowedModes);
@@ -43,35 +47,67 @@ public record SplitCardCast(UUID controllerId, Card physicalCard, Zone sourceZon
                          UUID ownerId, boolean exileInsteadOfGraveyard, int maxManaValue,
                          CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId) {
         this(controllerId, physicalCard, sourceZone, sourceIndex, ownerId, exileInsteadOfGraveyard,
-                maxManaValue, afterSuccessfulCastEffect, sourcePermanentId, false, false, 0, false, null, null);
+                maxManaValue, afterSuccessfulCastEffect, sourcePermanentId, false, false, 0, false, null, null, null);
     }
 
     /** This cast paying the chosen half's mana cost, with mana of any type when {@code anyManaType}. */
     public SplitCardCast payingManaCost(boolean anyManaType) {
         return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
                 exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
-                true, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes, exileCast);
+                true, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes,
+                origin, alternativeManaCost);
     }
 
     /** This cast followed by {@code copyCount} copies of the spell. */
     public SplitCardCast withCopies(int copyCount) {
         return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
                 exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
-                payManaCost, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes, exileCast);
+                payManaCost, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes,
+                origin, alternativeManaCost);
     }
 
     /** This cast stopping its caster from casting other spells this turn. */
     public SplitCardCast restrictingAdditionalSpellsThisTurn() {
         return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
                 exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
-                payManaCost, anyManaType, copyCount, true, allowedModes, exileCast);
+                payManaCost, anyManaType, copyCount, true, allowedModes, origin, alternativeManaCost);
     }
 
     /** This cast limited to the given modes of the card's modal spell, or to any when null. */
     public SplitCardCast limitedToModes(List<Integer> modes) {
         return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
                 exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
-                payManaCost, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, modes, exileCast);
+                payManaCost, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, modes,
+                origin, alternativeManaCost);
+    }
+
+    /** This cast paying {@code manaCost} instead of the chosen half's mana cost. */
+    public SplitCardCast payingAlternativeCost(String manaCost) {
+        return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
+                exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
+                true, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes, origin, manaCost);
+    }
+
+    /** This cast from {@code origin}. */
+    public SplitCardCast from(Origin origin) {
+        return new SplitCardCast(controllerId, physicalCard, sourceZone, sourceIndex, ownerId,
+                exileInsteadOfGraveyard, maxManaValue, afterSuccessfulCastEffect, sourcePermanentId,
+                payManaCost, anyManaType, copyCount, restrictAdditionalSpellsThisTurn, allowedModes,
+                origin, alternativeManaCost);
+    }
+
+    /** How the card is cast from exile, or null when it isn't. */
+    public ExileCast exileCast() {
+        return origin instanceof ExileCast exileCast ? exileCast : null;
+    }
+
+    /** How the revealed card is cast, or null when it isn't a revealed card held outside every zone. */
+    public RevealedCast revealedCast() {
+        return origin instanceof RevealedCast revealedCast ? revealedCast : null;
+    }
+
+    /** Where a card that isn't simply set aside from its zone is cast from. */
+    public sealed interface Origin permits ExileCast, RevealedCast, WordOfCommandCast, OutsideGameCast {
     }
 
     /**
@@ -84,9 +120,75 @@ public record SplitCardCast(UUID controllerId, Card physicalCard, Zone sourceZon
      * @param payLifeEqualToManaValue      whether life equal to the chosen half's mana value is paid
      *                                     instead of its mana cost
      * @param lifeLossOnCast               life the caster loses once the spell is cast
+     * @param putIntoHandIfNotCast         whether a card that isn't cast is put into its owner's hand
+     *                                     instead of staying exiled
      */
     public record ExileCast(boolean copy, boolean putOnLibraryBottomInsteadOfGraveyard,
-                            boolean payLifeEqualToManaValue, int lifeLossOnCast) {
+                            boolean payLifeEqualToManaValue, int lifeLossOnCast,
+                            boolean putIntoHandIfNotCast) implements Origin {
+
+        /** An exiled card, which stays exiled if it isn't cast. */
+        public static ExileCast ofCard() {
+            return new ExileCast(false, false, false, 0, false);
+        }
+
+        /** An exiled copy, which ceases to exist if it isn't cast. */
+        public static ExileCast ofCopy() {
+            return new ExileCast(true, false, false, 0, false);
+        }
+
+        /** This cast, putting the spell on the bottom of its owner's library instead of a graveyard. */
+        public ExileCast puttingOnLibraryBottom(boolean libraryBottom) {
+            return new ExileCast(copy, libraryBottom, payLifeEqualToManaValue, lifeLossOnCast, putIntoHandIfNotCast);
+        }
+
+        /** This cast, paying life equal to the half's mana value instead of its mana cost when {@code life}. */
+        public ExileCast payingLifeEqualToManaValue(boolean life) {
+            return new ExileCast(copy, putOnLibraryBottomInsteadOfGraveyard, life, lifeLossOnCast,
+                    putIntoHandIfNotCast);
+        }
+
+        /** This cast, making the caster lose {@code amount} life once the spell is cast. */
+        public ExileCast losingLifeOnCast(int amount) {
+            return new ExileCast(copy, putOnLibraryBottomInsteadOfGraveyard, payLifeEqualToManaValue, amount,
+                    putIntoHandIfNotCast);
+        }
+
+        /** This cast, putting a card that isn't cast into its owner's hand. */
+        public ExileCast puttingIntoHandIfNotCast() {
+            return new ExileCast(copy, putOnLibraryBottomInsteadOfGraveyard, payLifeEqualToManaValue,
+                    lifeLossOnCast, true);
+        }
+    }
+
+    /**
+     * A card Word of Command has its owner play: it stays in their hand while its half and targets
+     * are chosen, then is cast through the normal cast from hand, which pays its cost.
+     */
+    public record WordOfCommandCast() implements Origin {
+    }
+
+    /**
+     * A card set aside from outside the game while its half and targets are chosen.
+     *
+     * @param paySideboardCastTax whether a free cast still pays the cast's generic cost increases and
+     *                            reveals, as a free cast from a sideboard does
+     */
+    public record OutsideGameCast(boolean paySideboardCastTax) implements Origin {
+    }
+
+    /**
+     * How a revealed card that has left its library, and is held outside every zone while it may be
+     * cast, is cast (ripple, Talent of the Telepath, scrycast).
+     *
+     * @param cardsToBottom the other held cards, put on the bottom of the owner's library once this
+     *                      cast is done; null when an uncast card goes to its owner's graveyard instead
+     */
+    public record RevealedCast(List<Card> cardsToBottom) implements Origin {
+
+        public RevealedCast {
+            cardsToBottom = cardsToBottom == null ? null : List.copyOf(cardsToBottom);
+        }
     }
 
     /**

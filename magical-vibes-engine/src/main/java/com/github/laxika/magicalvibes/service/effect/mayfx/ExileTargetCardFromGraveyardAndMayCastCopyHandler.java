@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -76,7 +77,8 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
         }
         if (SplitCardCastSupport.isSplitCard(copy)) {
             if (!splitCardCastSupport.beginFromExile(gameData, player.getId(), copy,
-                    !effect.withoutPayingManaCost(), true, false, effect.lifeLossOnCast(),
+                    !effect.withoutPayingManaCost(),
+                    SplitCardCast.ExileCast.ofCopy().losingLifeOnCast(effect.lifeLossOnCast()), Integer.MAX_VALUE,
                     effect.afterSuccessfulCastEffect(), ability.sourcePermanentId())) {
                 gameLogService.append(gameData, GameLog.cardThen(copy,
                         " has no half that can be cast and the copy ceases to exist."));

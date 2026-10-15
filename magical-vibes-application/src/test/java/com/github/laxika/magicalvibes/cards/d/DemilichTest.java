@@ -256,8 +256,9 @@ class DemilichTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
 
+        // Only Wear's cost can be paid with this mana, so only Wear is offered (CR 601.2h).
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
-                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment");
+                .containsExactly("Wear — Destroy target artifact");
         harness.handleListChoice(player1, "Wear — Destroy target artifact");
         assertThat(gd.stack).isEmpty();
         harness.handlePermanentChosen(player1, fountainId);
@@ -275,12 +276,11 @@ class DemilichTest extends BaseCardTest {
 
     @Test
     @CardUsed({WearTear.class, FountainOfYouth.class})
-    @DisplayName("A split card's copy ceases to exist when its chosen half's cost can't be paid")
+    @DisplayName("A split card's copy with no half whose cost can be paid ceases to exist")
     void unpayableSplitCardCopyCeasesToExist() {
         WearTear wearTear = new WearTear();
         harness.setGraveyard(player1, List.of(wearTear));
         harness.addToBattlefield(player2, new FountainOfYouth());
-        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
         addCreatureReady(player1, new Demilich());
 
         declareAttackers(List.of(0));
@@ -288,9 +288,8 @@ class DemilichTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleListChoice(player1, "Wear — Destroy target artifact");
-        harness.handlePermanentChosen(player1, fountainId);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(wearTear);
         harness.assertOnBattlefield(player2, "Fountain of Youth");

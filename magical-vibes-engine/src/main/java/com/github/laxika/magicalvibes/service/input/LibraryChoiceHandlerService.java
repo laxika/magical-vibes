@@ -377,7 +377,9 @@ public class LibraryChoiceHandlerService {
             // Sunbird's Invocation: cast chosen card without paying, rest to bottom in random order
             if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING) {
                 handleCastWithoutPayingChoice(gameData, player, cardIndex, canFailToFind,
-                        searchCards, sourceCards, deck, grantHaste, sacrificeAtEndStep);
+                        searchCards, sourceCards, deck, grantHaste, sacrificeAtEndStep,
+                        librarySearch.mayCastManaValueAtMost() == null
+                                ? Integer.MAX_VALUE : librarySearch.mayCastManaValueAtMost());
                 return;
             }
 
@@ -4287,14 +4289,15 @@ public class LibraryChoiceHandlerService {
     private void handleCastWithoutPayingChoice(GameData gameData, Player player, int cardIndex,
                                                 boolean canFailToFind, List<Card> searchCards,
                                                 List<Card> sourceCards, List<Card> deck,
-                                                boolean grantHaste, boolean sacrificeAtEndStep) {
+                                                boolean grantHaste, boolean sacrificeAtEndStep,
+                                                int spellManaValueLimit) {
         String playerName = player.getUsername();
         Set<UUID> exiledSourceIds = sourceCards.stream()
                 .filter(card -> gameData.findExiledCard(card.getId()) != null)
                 .map(Card::getId).collect(java.util.stream.Collectors.toSet());
 
         boolean chosenCardCastable = cardIndex == -1 || cardIndex < -1 || cardIndex >= searchCards.size()
-                || canCastWithoutPaying(gameData, player.getId(), searchCards.get(cardIndex));
+                || canCastWithoutPaying(gameData, player.getId(), searchCards.get(cardIndex), spellManaValueLimit);
         if (!sourceCards.isEmpty() && exiledSourceIds.size() == sourceCards.size()
                 && !grantHaste && !sacrificeAtEndStep && chosenCardCastable) {
             if (cardIndex == -1 && !canFailToFind) {
@@ -4321,7 +4324,7 @@ public class LibraryChoiceHandlerService {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
             }
             Card picked = searchCards.get(cardIndex);
-            if (canCastWithoutPaying(gameData, player.getId(), picked)) {
+            if (canCastWithoutPaying(gameData, player.getId(), picked, spellManaValueLimit)) {
                 chosenCard = picked;
                 // Remove chosen card from sourceCards
                 for (int i = 0; i < sourceCards.size(); i++) {
@@ -4362,7 +4365,7 @@ public class LibraryChoiceHandlerService {
             gameData.removeFromExile(chosenCard.getId());
         }
         castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep,
-                exiledSourceIds.contains(chosenCard.getId()) ? Zone.EXILE : Zone.LIBRARY);
+                exiledSourceIds.contains(chosenCard.getId()) ? Zone.EXILE : Zone.LIBRARY, spellManaValueLimit);
     }
 
     private void handleCastWithoutPayingAndShuffleLibraryChoice(
@@ -4469,9 +4472,13 @@ public class LibraryChoiceHandlerService {
         finishSearchAndResume(gameData);
     }
 
+    /**
+     * Whether a searched card may be cast under a "spell with mana value N or less" limit. Only the
+     * half of a split card being cast is checked (CR 709.3a), so its cheapest half counts.
+     */
     private boolean canCastSearchedFace(Card card, Set<CardType> castableTypes, Integer maxManaValue) {
         if (maxManaValue == null) return false;
-        if (!card.hasType(CardType.LAND) && card.getManaValue() <= maxManaValue
+        if (!card.hasType(CardType.LAND) && card.getSmallestSpellManaValue() <= maxManaValue
                 && (castableTypes == null || castableTypes.isEmpty()
                 || castableTypes.contains(card.getType())
                 || card.getAdditionalTypes().stream().anyMatch(castableTypes::contains))) return true;
@@ -4797,6 +4804,16 @@ public class LibraryChoiceHandlerService {
     }
 
     private LegalModalOptions legalModalOptions(GameData gameData, Card card, UUID controllerId) {
+        return legalModalOptions(gameData, card, controllerId, Integer.MAX_VALUE);
+    }
+
+    /**
+     * The modes of {@code card}'s modal spell that can be cast. Under a "spell with mana value N or
+     * less" limit only a split card's half is checked (CR 709.3a), so a half over the limit isn't
+     * offered.
+     */
+    private LegalModalOptions legalModalOptions(GameData gameData, Card card, UUID controllerId,
+                                                int spellManaValueLimit) {
         ChooseOneEffect modal = spellModal(card);
         if (modal == null || modal.choicesRequired() != 1 || modal.choicesMax() != 1) {
             return null;
@@ -4813,6 +4830,9 @@ public class LibraryChoiceHandlerService {
             Card evaluationCard = card.createRuntimeCopy();
             List<CardEffect> effects = new ArrayList<>(evaluationCard.getEffects(EffectSlot.SPELL));
             spellCastingService.prepareModalSpellCast(evaluationCard, effects, modeIndex);
+            if (evaluationCard.getManaValue() > spellManaValueLimit) {
+                continue;
+            }
             boolean needsTarget = EffectResolution.needsSpellCastTarget(
                     effects, evaluationCard.isAuraThatRequiresAttachment(), evaluationCard.isEnchantPlayer());
             if (!needsTarget || !computeCastWithoutPayingTargets(gameData, evaluationCard, effects, controllerId).isEmpty()) {
@@ -4964,6 +4984,14 @@ public class LibraryChoiceHandlerService {
      * {@link #castCardWithoutPaying}.
      */
     private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card) {
+        return canCastWithoutPaying(gameData, controllerId, card, Integer.MAX_VALUE);
+    }
+
+    /**
+     * {@link #canCastWithoutPaying(GameData, UUID, Card)} under a "spell with mana value N or less"
+     * limit, which only the half of a split card being cast has to meet (CR 709.3a).
+     */
+    private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit) {
         Zone sourceZone = gameData.findExiledCard(card.getId()) == null ? Zone.LIBRARY : Zone.EXILE;
         if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)) return false;
         if (!castingPermissionService.isSpellCastingAllowed(gameData, controllerId, card)) return false;
@@ -4971,7 +4999,7 @@ public class LibraryChoiceHandlerService {
             return false;
         }
         if (spellModal(card) != null) {
-            return legalModalOptions(gameData, card, controllerId) != null;
+            return legalModalOptions(gameData, card, controllerId, spellManaValueLimit) != null;
         }
         return !(EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))
                 || !computeCastWithoutPayingTargets(gameData, card, controllerId).isEmpty();
@@ -5005,6 +5033,13 @@ public class LibraryChoiceHandlerService {
     private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
                                        Integer discoverValue, boolean grantHaste,
                                        boolean sacrificeAtEndStep, Zone sourceZone) {
+        castCardWithoutPaying(gameData, player, chosenCard, discoverValue, grantHaste, sacrificeAtEndStep,
+                sourceZone, Integer.MAX_VALUE);
+    }
+
+    private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
+                                       Integer discoverValue, boolean grantHaste,
+                                       boolean sacrificeAtEndStep, Zone sourceZone, int spellManaValueLimit) {
         UUID playerId = player.getId();
         String playerName = player.getUsername();
         boolean creatureSpell = chosenCard.hasType(CardType.CREATURE);
@@ -5020,7 +5055,7 @@ public class LibraryChoiceHandlerService {
         // Cast the chosen card without paying its mana cost
         StackEntryType spellType = mapCardTypeToSpellType(castCard);
 
-        LegalModalOptions modalOptions = legalModalOptions(gameData, castCard, playerId);
+        LegalModalOptions modalOptions = legalModalOptions(gameData, castCard, playerId, spellManaValueLimit);
         if (modalOptions != null) {
             Card runtimeCard = castCard.createRuntimeCopy();
             playerInputService.beginLibraryCastModeChoice(gameData, playerId, runtimeCard,

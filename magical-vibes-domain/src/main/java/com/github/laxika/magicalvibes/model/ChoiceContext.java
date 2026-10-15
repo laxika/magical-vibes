@@ -2666,6 +2666,10 @@ public sealed interface ChoiceContext {
     }
 
     /** Chooses whether a split half cast for free takes another of its optional targets. */
+    /** Announces the value of X for a split card half whose cost has {X}, before its targets (CR 601.2b). */
+    record SplitCastXValueChoice(SplitCardCast.Targeting targeting) implements ChoiceContext {
+    }
+
     record SplitFreeCastMoreTargetsChoice(SplitCardCast.Targeting targeting,
                                           List<UUID> candidates) implements ChoiceContext {
 

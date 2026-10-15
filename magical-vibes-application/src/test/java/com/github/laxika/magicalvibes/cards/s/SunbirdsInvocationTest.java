@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.Fling;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -19,6 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,6 +102,36 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(se ->
                 se.getCard().getName().equals("Llanowar Elves")
                 && se.getEntryType() == StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("Only a split card's halves within the mana value are offered (CR 709.3a)")
+    void offersOnlySplitHalvesWithinTheManaValue() {
+        setupSunbirdsOnBattlefield();
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
+        WearTear wearTear = new WearTear();
+        harness.setLibrary(player1, List.of(wearTear, new Forest()));
+
+        // Llanowar Elves has mana value 1: Wear // Tear's is 3, Wear's 2 and Tear's 1.
+        harness.setHand(player1, List.of(new LlanowarElves()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Tear — Destroy target enchantment");
+        harness.handlePermanentChosen(player1, chorusId);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Tear"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
     }
 
     @Test

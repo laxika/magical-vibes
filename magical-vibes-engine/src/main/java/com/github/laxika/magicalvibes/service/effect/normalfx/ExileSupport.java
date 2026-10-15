@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -53,6 +54,9 @@ public class ExileSupport {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator;
     private final InputCompletionService inputCompletionService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private SplitCardCastSupport splitCardCastSupport;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileSupport(GameQueryService gameQueryService,
@@ -332,6 +336,15 @@ public class ExileSupport {
             gameLogService.append(gameData, GameLog.cardThen(chosenCard,
                     " cannot be cast from exile and stays exiled."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (SplitCardCastSupport.isSplitCard(chosenCard)) {
+            if (!splitCardCastSupport.beginFromExile(gameData, playerId, chosenCard, false,
+                    SplitCardCast.ExileCast.ofCard(), Integer.MAX_VALUE, null, null)) {
+                gameLogService.append(gameData, GameLog.cardThen(chosenCard,
+                        " has no half that can be cast (Knowledge Pool) and stays exiled."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
 

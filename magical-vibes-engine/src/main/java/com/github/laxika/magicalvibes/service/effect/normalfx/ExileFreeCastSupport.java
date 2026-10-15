@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -56,6 +57,8 @@ public class ExileFreeCastSupport {
     private SpellCastingService spellCastingService;
     @org.springframework.beans.factory.annotation.Autowired @Lazy
     private ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    @org.springframework.beans.factory.annotation.Autowired @Lazy
+    private SplitCardCastSupport splitCardCastSupport;
 
     // @Lazy mirrors ParadigmCastSupport: breaks cycles through InputCompletionService/PlayerInputService.
     public ExileFreeCastSupport(GameLogService gameLogService,
@@ -110,6 +113,10 @@ public class ExileFreeCastSupport {
             return;
         }
         Card card = exiled.card();
+        if (SplitCardCastSupport.isSplitCard(card)) {
+            castSplitCard(gameData, player, card, true, true, maxManaValue);
+            return;
+        }
         java.util.Map<String, Integer> faces = new java.util.LinkedHashMap<>();
         if (!card.hasType(CardType.LAND) && card.getManaValue() <= maxManaValue) {
             faces.put("Cast " + card.getName(), 0);
@@ -152,6 +159,10 @@ public class ExileFreeCastSupport {
         }
 
         Card physicalCard = exiledEntry.card();
+        if (face == 0 && SplitCardCastSupport.isSplitCard(physicalCard)) {
+            castSplitCard(gameData, player, physicalCard, returnToHandIfUnable, completeInput, Integer.MAX_VALUE);
+            return;
+        }
         Card card = face == 1 ? physicalCard.createRuntimeCopyWithFace(physicalCard.getBackFaceCard()) : physicalCard;
         ChooseOneEffect splitModes = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
@@ -282,6 +293,30 @@ public class ExileFreeCastSupport {
         triggerCollectionService.checkSpellCastTriggers(
                 gameData, card, playerId, Zone.EXILE, exiledEntry.sourcePermanentId());
         if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Casts an exiled split card as one half, chosen with its targets before it is put onto the stack
+     * (CR 709.3); only a half whose mana value is at most {@code maxManaValue} is offered (CR 709.3a).
+     */
+    private void castSplitCard(GameData gameData, Player player, Card card, boolean returnToHandIfUnable,
+                               boolean completeInput, int maxManaValue) {
+        SplitCardCast.ExileCast exileCast = returnToHandIfUnable
+                ? SplitCardCast.ExileCast.ofCard().puttingIntoHandIfNotCast()
+                : SplitCardCast.ExileCast.ofCard();
+        if (!castingPermissionService.canCastDuringResolution(gameData, player.getId())) {
+            if (returnToHandIfUnable) returnExiledCardToHand(gameData, card.getId());
+            if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (!splitCardCastSupport.beginFromExile(gameData, player.getId(), card, false, exileCast, maxManaValue,
+                null, null)) {
+            if (!returnToHandIfUnable) {
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " has no half that can be cast and stays exiled."));
+            }
+            if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     public boolean returnExiledCardToHand(GameData gameData, UUID exileCardId) {

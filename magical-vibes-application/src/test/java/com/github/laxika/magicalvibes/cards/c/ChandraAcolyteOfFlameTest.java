@@ -244,8 +244,9 @@ class ChandraAcolyteOfFlameTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        // Only Wear's cost can be paid with this mana, so only Wear is offered (CR 601.2h).
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
-                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment");
+                .containsExactly("Wear — Destroy target artifact");
         harness.handleListChoice(player1, "Wear — Destroy target artifact");
         harness.handlePermanentChosen(player1, fountainId);
 
@@ -260,21 +261,19 @@ class ChandraAcolyteOfFlameTest extends BaseCardTest {
 
     @Test
     @CardUsed({WearTear.class, FountainOfYouth.class})
-    @DisplayName("-2 leaves a split card in the graveyard when its chosen half's cost can't be paid")
-    void unpayableSplitHalfStaysInGraveyard() {
+    @DisplayName("-2 offers no half whose cost can't be paid, leaving the split card in the graveyard")
+    void unpayableSplitHalvesAreNotOffered() {
         addReadyChandra(player1, 5);
         WearTear wearTear = new WearTear();
         harness.addToBattlefield(player2, new FountainOfYouth());
-        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
         harness.setGraveyard(player1, List.of(wearTear));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 2, null, wearTear.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleListChoice(player1, "Wear — Destroy target artifact");
-        harness.handlePermanentChosen(player1, fountainId);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(wearTear);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -42,6 +43,9 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
     private final ExileService exileService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private SplitCardCastSupport splitCardCastSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -81,6 +85,12 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
             log.info("Game {} - {} puts {} onto battlefield (Omen Machine)", gameData.id, playerName, topCard.getName());
 
             battlefieldEntryService.processCreatureETBEffects(gameData, targetPlayerId, topCard, null, false);
+        } else if (SplitCardCastSupport.isSplitCard(topCard)) {
+            if (!splitCardCastSupport.beginFromExile(gameData, targetPlayerId, topCard, false,
+                    SplitCardCast.ExileCast.ofCard(), Integer.MAX_VALUE, null, null)) {
+                gameLogService.append(gameData, GameLog.cardThen(topCard,
+                        " has no half that can be cast and remains in exile."));
+            }
         } else {
             // Non-land — cast without paying mana cost if able
             gameData.removeFromExile(topCard.getId());

@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastInstantOrSorceryFromHandWithManaValueEqualToSourceCountersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +27,9 @@ public class MayCastInstantOrSorceryFromHandWithManaValueEqualToSourceCountersEf
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private SplitCardCastSupport splitCardCastSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,17 +56,32 @@ public class MayCastInstantOrSorceryFromHandWithManaValueEqualToSourceCountersEf
             return;
         }
 
-        List<Card> eligible = hand.stream()
-                .filter(card -> card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                .filter(card -> card.getManaValue() == requiredManaValue)
-                .toList();
+        // "A spell with mana value equal to" considers only the half of a split card being cast
+        // (CR 709.3a), so a split card is offered as the halves that match.
+        Map<Card, List<Integer>> eligible = new LinkedHashMap<>();
+        for (Card card : hand) {
+            if (!card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY)) {
+                continue;
+            }
+            if (SplitCardCastSupport.isSplitCard(card)) {
+                List<Integer> modes = splitCardCastSupport.modesMatching(gameData, card, controllerId,
+                        half -> half.getManaValue() == requiredManaValue);
+                if (!modes.isEmpty()) {
+                    eligible.put(card, modes);
+                }
+            } else if (card.getManaValue() == requiredManaValue) {
+                eligible.put(card, null);
+            }
+        }
 
-        for (int i = eligible.size() - 1; i >= 0; i--) {
-            Card card = eligible.get(i);
+        List<Card> cards = new ArrayList<>(eligible.keySet());
+        for (int i = cards.size() - 1; i >= 0; i--) {
+            Card card = cards.get(i);
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     card,
                     controllerId,
-                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
+                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)
+                            .withCastableSplitModes(eligible.get(card))),
                     "Cast " + card.getName() + " without paying its mana cost?"
             ));
         }

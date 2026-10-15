@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -350,5 +353,35 @@ class WildEvocationTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard() == first || permanent.getCard() == second)
                 .hasSize(1);
         assertThat(gd.stack).isEmpty();
+    }
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("A revealed split card can be cast fused from hand, its targets chosen before the stack")
+    void revealedSplitCardCanBeCastFused() {
+        harness.addToBattlefield(player1, new WildEvocation());
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
+        WearTear wearTear = new WearTear();
+        harness.setHand(player1, List.of(wearTear));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities(); // resolve trigger
+
+        // Cast from its owner's hand, so fuse is offered (CR 702.102a).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment",
+                        "Fuse — Wear and then Tear");
+        harness.handleListChoice(player1, "Fuse — Wear and then Tear");
+        harness.handlePermanentChosen(player1, fountainId);
+        harness.handlePermanentChosen(player1, chorusId);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
     }
 }

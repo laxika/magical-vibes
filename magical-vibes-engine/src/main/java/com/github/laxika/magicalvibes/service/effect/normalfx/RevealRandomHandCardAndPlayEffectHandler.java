@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetType;
@@ -30,6 +31,8 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -45,6 +48,9 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final TriggerCollectionService triggerCollectionService;
+    @Autowired
+    @Lazy
+    private SplitCardCastSupport splitCardCastSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -91,6 +97,13 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
             log.info("Game {} - {} puts {} onto battlefield (Wild Evocation)", gameData.id, playerName, revealed.getName());
 
             battlefieldEntryService.processCreatureETBEffects(gameData, targetPlayerId, revealed, null, false);
+        } else if (SplitCardCastSupport.isSplitCard(revealed)) {
+            hand.remove(randomIndex);
+            if (!splitCardCastSupport.begin(gameData, new SplitCardCast(targetPlayerId, revealed, Zone.HAND,
+                    randomIndex, targetPlayerId, false, Integer.MAX_VALUE, null, null))) {
+                gameLogService.append(gameData, GameLog.builder().card(revealed)
+                        .text(" has no half that can be cast and stays in " + playerName + "'s hand.").build());
+            }
         } else {
             // Non-land — cast without paying mana cost if able
             StackEntryType spellType = playerInteractionSupport.mapCardTypeToSpellType(revealed);

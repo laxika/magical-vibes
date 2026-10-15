@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BrazenBorrower;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.p.PlanarIncision;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -155,6 +158,47 @@ class DiscoverTheImpossibleTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(chosenCard);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(chosenCard);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @CardUsed(FireIce.class)
+    @DisplayName("A split instant qualifies by the mana value of the half being cast, not the whole card")
+    void splitInstantQualifiesByItsHalfManaValue() {
+        FireIce fireIce = new FireIce();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castDiscoverTheImpossible(List.of(fireIce));
+
+        harness.handleCardChosen(player1, 0);
+        // Fire // Ice has mana value 4, but each half's is 2 (CR 709.3a).
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Fire — Fire deals 2 damage divided as you choose among one or two targets",
+                        "Ice — Tap target permanent. Draw a card");
+        harness.handleListChoice(player1, "Ice — Tap target permanent. Draw a card");
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Ice");
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(fireIce);
+    }
+
+    @Test
+    @CardUsed(WearTear.class)
+    @DisplayName("A split instant with no half that can be cast is put into hand")
+    void splitInstantWithoutCastableHalfGoesIntoHand() {
+        WearTear wearTear = new WearTear();
+        castDiscoverTheImpossible(List.of(wearTear));
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(wearTear);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     private void castDiscoverTheImpossible(List<Card> topCards) {

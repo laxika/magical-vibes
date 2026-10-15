@@ -1485,6 +1485,10 @@ public class ChoiceHandlerService {
             splitCardCastSupport.handleHalfChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SplitCastXValueChoice ctx) {
+            splitCardCastSupport.handleXValueChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SplitFreeCastMoreTargetsChoice ctx) {
             splitCardCastSupport.handleMoreTargetsChoice(gameData, player, colorName, ctx);
             return;

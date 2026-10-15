@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.OutsideGameCards;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -24,7 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Starts a normal-cost instant or sorcery cast from a sideboard during resolution. */
+/**
+ * Starts a normal-cost instant or sorcery cast from a sideboard during resolution. A split card is
+ * cast through {@link SplitCardCastSupport}, so only one half is cast and only its cost is paid.
+ */
 @Slf4j
 @Component
 public class OutsideGameNormalCostCastSupport {
@@ -34,17 +39,20 @@ public class OutsideGameNormalCostCastSupport {
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final SpellCastingService spellCastingService;
+    private final SplitCardCastSupport splitCardCastSupport;
 
     public OutsideGameNormalCostCastSupport(GameLogService gameLogService,
                                             @Lazy PlayerInputService playerInputService,
                                             @Lazy InputCompletionService inputCompletionService,
                                             ExileCastTargetSupport exileCastTargetSupport,
-                                            @Lazy SpellCastingService spellCastingService) {
+                                            @Lazy SpellCastingService spellCastingService,
+                                            @Lazy SplitCardCastSupport splitCardCastSupport) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
         this.inputCompletionService = inputCompletionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
         this.spellCastingService = spellCastingService;
+        this.splitCardCastSupport = splitCardCastSupport;
     }
 
     public void castFromOutsideGameWithNormalCost(GameData gameData, Player player, UUID cardId) {
@@ -54,6 +62,20 @@ public class OutsideGameNormalCostCastSupport {
                 .orElse(null);
         if (card == null) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (SplitCardCastSupport.isSplitCard(card)) {
+            List<Card> outsideGame = OutsideGameCards.view(gameData, player.getId());
+            int index = outsideGame.indexOf(card);
+            outsideGame.remove(index);
+            if (!splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), card, Zone.OUTSIDE_GAME,
+                    index, player.getId(), false, Integer.MAX_VALUE, null, null)
+                    .payingManaCost(false).from(new SplitCardCast.OutsideGameCast(false)))) {
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " has no half that can be cast and stays outside the game."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
 

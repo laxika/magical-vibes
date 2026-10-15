@@ -57,10 +57,11 @@ public class SunbirdsInvocationRevealAndCastEffectHandler implements NormalEffec
         log.info("Game {} - {} reveals {} cards for Sunbird's Invocation (MV {})",
                 gameData.id, playerName, count, manaValue);
 
-        // Filter to non-land cards with mana value ≤ X
+        // "A spell with mana value X or less" checks only the half of a split card being cast
+        // (CR 709.3a), so a split card qualifies when its cheapest half does.
         List<Card> castable = topCards.stream()
                 .filter(c -> !c.hasType(CardType.LAND))
-                .filter(c -> c.getManaValue() <= manaValue)
+                .filter(c -> c.getSmallestSpellManaValue() <= manaValue)
                 .toList();
 
         if (castable.isEmpty()) {
@@ -86,6 +87,7 @@ public class SunbirdsInvocationRevealAndCastEffectHandler implements NormalEffec
                 .shuffleAfterSelection(false)
                 .prompt(prompt)
                 .destination(LibrarySearchDestination.CAST_WITHOUT_PAYING)
+                .mayCastManaValueAtMost(manaValue)
                 .build(),
                 prompt,
                 true));

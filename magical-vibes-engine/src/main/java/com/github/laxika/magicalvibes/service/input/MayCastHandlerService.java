@@ -140,6 +140,16 @@ public class MayCastHandlerService {
                 }
                 return;
             }
+            if (SplitCardCastSupport.isSplitCard(card)) {
+                if (!splitCardCastSupport.begin(gameData, new SplitCardCast(playerId, card, Zone.HAND, cardIndex,
+                        playerId, false, Integer.MAX_VALUE, null, null)
+                        .payingManaCost(false).from(new SplitCardCast.WordOfCommandCast()))) {
+                    gameLogService.append(gameData, GameLog.cardThen(card,
+                            " has no half that can be cast and stays in hand."));
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
 
             List<CardEffect> spellEffects = permanentSpell(card)
                     ? List.of() : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
@@ -481,6 +491,17 @@ public class MayCastHandlerService {
     public void castRevealedCardWithoutPaying(GameData gameData, Player player, Card card, UUID ownerId,
                                               List<Card> cardsToBottom, boolean deferCompletion) {
         String playerName = player.getUsername();
+        if (SplitCardCastSupport.isSplitCard(card)) {
+            SplitCardCast splitCast = new SplitCardCast(player.getId(), card, Zone.LIBRARY, 0, ownerId, false,
+                    Integer.MAX_VALUE, null, null).from(new SplitCardCast.RevealedCast(cardsToBottom));
+            if (!splitCardCastSupport.begin(gameData, splitCast)) {
+                gameLogService.append(gameData, GameLog.cardThen(card, " has no half that can be cast."));
+                if (!deferCompletion && !gameData.interaction.isAwaitingInput()) {
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                }
+            }
+            return;
+        }
         StackEntryType spellType = switch (card.getType()) {
             case CREATURE -> StackEntryType.CREATURE_SPELL;
             case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
@@ -1486,6 +1507,18 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (SplitCardCastSupport.isSplitCard(cardToCast)) {
+            hand.remove(cardIndex);
+            if (!splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToCast, Zone.HAND,
+                    cardIndex, player.getId(), false, Integer.MAX_VALUE, null, null)
+                    .payingAlternativeCost(costStr))) {
+                gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                        " has no half that can be cast for its miracle cost."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
+            return;
+        }
+
         int xReduction = ability.effects().stream().filter(MayCastForMiracleCostEffect.class::isInstance)
                 .map(MayCastForMiracleCostEffect.class::cast).mapToInt(MayCastForMiracleCostEffect::xReduction)
                 .findFirst().orElse(0);
@@ -1820,6 +1853,23 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (SplitCardCastSupport.isSplitCard(cardToCast)) {
+            sideboard.remove(cardIndex);
+            if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToCast,
+                    Zone.OUTSIDE_GAME, cardIndex, sideboardOwnerId, false, Integer.MAX_VALUE, null, null)
+                    .from(new SplitCardCast.OutsideGameCast(pendingEffectType != null)))) {
+                if (pendingEffectType != null) {
+                    gameData.pendingMayAbilities.removeIf(pma ->
+                            pma.effects().stream().anyMatch(pendingEffectType::isInstance));
+                }
+                return;
+            }
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " has no half that can be cast and stays outside the game."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         StackEntryType spellType = switch (cardToCast.getType()) {
             case CREATURE -> StackEntryType.CREATURE_SPELL;
             case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
@@ -1887,7 +1937,7 @@ public class MayCastHandlerService {
     }
 
     /** Checks or pays the additional reveal-or-mana costs on a sideboard spell. */
-    private boolean paySideboardRevealOrManaCosts(GameData gameData, UUID playerId, Card card, boolean pay) {
+    public boolean paySideboardRevealOrManaCosts(GameData gameData, UUID playerId, Card card, boolean pay) {
         List<Card> reveals = new ArrayList<>();
         int genericCost = Math.max(0, castingCostService.getCastCostModifier(
                 gameData, playerId, card, 0, Zone.OUTSIDE_GAME));

@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.FieryConclusion;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.ReaveSoul;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -225,5 +229,47 @@ class TalentOfTheTelepathTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("A revealed split card is cast as one half, chosen with its target before it is put on the stack")
+    void castsRevealedSplitCardAsOneHalf() {
+        WearTear wearTear = new WearTear();
+        harness.setLibrary(player2, topSeven(wearTear));
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+
+        castTalentTargetingOpponent();
+        harness.handleMayAbilityChosen(player1, true);
+
+        // Fuse applies only from a hand (CR 702.102a), so only the halves are offered.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Wear — Destroy target artifact");
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
+        harness.handlePermanentChosen(player1, fountainId);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Wear");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Angelic Chorus");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(wearTear.getId()));
+    }
+
+    @Test
+    @CardUsed(WearTear.class)
+    @DisplayName("A revealed split card with no castable half joins the other revealed cards in the graveyard")
+    void revealedSplitCardWithoutCastableHalfGoesToGraveyard() {
+        WearTear wearTear = new WearTear();
+        harness.setLibrary(player2, topSeven(wearTear));
+
+        castTalentTargetingOpponent();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(wearTear).hasSize(7);
     }
 }

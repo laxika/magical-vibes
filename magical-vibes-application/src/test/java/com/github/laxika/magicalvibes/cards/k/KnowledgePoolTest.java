@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -464,6 +467,37 @@ class KnowledgePoolTest extends BaseCardTest {
      * Sets up a Knowledge Pool on player1's battlefield by casting it properly,
      * with known nonland cards in the pool from the ETB.
      */
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("A split card from the pool is cast as one half, chosen with its target before the stack")
+    void castsSplitCardFromPoolAsOneHalf() {
+        WearTear wearTear = new WearTear();
+        setupKnowledgePoolManually(List.of(wearTear));
+        UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
+
+        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities(); // resolve KP trigger
+        harness.handleMultipleCardsChosen(player1, List.of(wearTear.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Tear — Destroy target enchantment");
+        assertThat(gd.getCardsExiledByPermanent(kpPermId)).contains(wearTear);
+        harness.handlePermanentChosen(player1, chorusId);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Tear");
+        assertThat(gd.getCardsExiledByPermanent(kpPermId)).doesNotContain(wearTear);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
     private void setupKnowledgePoolWithPool() {
         // Give each player some spells in their library for ETB exile
         harness.setLibrary(player1, List.of(

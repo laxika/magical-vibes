@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -74,8 +75,10 @@ public class ExileReducedCastSupport {
         UUID playerId = player.getId();
         installCostReduction(gameData, exileCardId, playerId, genericCostReduction);
         if (SplitCardCastSupport.isSplitCard(card)) {
-            if (!splitCardCastSupport.beginFromExile(gameData, playerId, card, true, false,
-                    putOnBottomOfOwnersLibraryInsteadOfGraveyard, 0, null, null)) {
+            SplitCardCast.ExileCast exileCast = SplitCardCast.ExileCast.ofCard()
+                    .puttingOnLibraryBottom(putOnBottomOfOwnersLibraryInsteadOfGraveyard);
+            if (!splitCardCastSupport.beginFromExile(gameData, playerId, card, true, exileCast,
+                    Integer.MAX_VALUE, null, null)) {
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         " has no half that can be cast and stays exiled."));
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

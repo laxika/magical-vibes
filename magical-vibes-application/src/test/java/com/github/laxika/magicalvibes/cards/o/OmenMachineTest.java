@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.a.Artillerize;
@@ -360,5 +363,32 @@ class OmenMachineTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard() == secondLand);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(firstLand, secondLand);
+    }
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("An exiled split card is cast as one half, chosen with its target before the stack")
+    void exiledSplitCardIsCastAsOneHalf() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
+        WearTear wearTear = new WearTear();
+        gd.playerDecks.get(player1.getId()).addFirst(wearTear);
+
+        advanceToDraw(player1);
+        harness.passBothPriorities(); // resolve Omen Machine trigger
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment");
+        harness.handleListChoice(player1, "Tear — Destroy target enchantment");
+        assertThat(gd.findExiledCard(wearTear.getId())).isNotNull();
+        harness.handlePermanentChosen(player1, chorusId);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Tear");
+        assertThat(gd.findExiledCard(wearTear.getId())).isNull();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
     }
 }

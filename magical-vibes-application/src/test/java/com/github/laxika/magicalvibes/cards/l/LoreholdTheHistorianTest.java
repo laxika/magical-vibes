@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GerminationPracticum;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.t.TemporalMastery;
+import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -106,6 +110,40 @@ class LoreholdTheHistorianTest extends BaseCardTest {
 
         harness.assertNotInHand(player1, "Germination Practicum");
         assertThat(lorehold.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({WearTear.class, FountainOfYouth.class, AngelicChorus.class})
+    @DisplayName("A drawn split card is cast as the chosen half for the granted miracle cost")
+    void castsDrawnSplitCardHalfForGrantedMiracleCost() {
+        harness.addToBattlefield(player1, new LoreholdTheHistorian());
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID fountainId = harness.getPermanentId(player2, "Fountain of Youth");
+        WearTear wearTear = new WearTear();
+        harness.setLibrary(player1, List.of(wearTear));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        // Cast from hand, so fuse is offered too (CR 702.102a).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact", "Tear — Destroy target enchantment",
+                        "Fuse — Wear and then Tear");
+        harness.handleListChoice(player1, "Wear — Destroy target artifact");
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
+        harness.handlePermanentChosen(player1, fountainId);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Wear");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player2, "Angelic Chorus");
     }
 
     @Test
