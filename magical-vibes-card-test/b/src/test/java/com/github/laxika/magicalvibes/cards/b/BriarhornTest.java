@@ -158,6 +158,7 @@ class BriarhornTest extends BaseCardTest {
     @Test
     @DisplayName("Controller chooses the order of Briarhorn's boost and evoke sacrifice triggers")
     void controllerChoosesEvokeTriggerOrder() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new WoodlandChangeling());
         harness.setHand(player1, List.of(new Briarhorn()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -185,7 +186,7 @@ class BriarhornTest extends BaseCardTest {
             var choice = gd.interaction.activeInteraction(
                     com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
             if (choice != null && choice.context()
-                    instanceof com.github.laxika.magicalvibes.model.ChoiceContext.SpellCastTriggerOrder) {
+                    instanceof com.github.laxika.magicalvibes.model.ChoiceContext.TriggerOrder) {
                 harness.handleListChoice(player1, choice.options().getFirst());
             } else if (gd.interaction.isAwaitingInput()) {
                 break;

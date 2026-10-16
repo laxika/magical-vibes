@@ -34,6 +34,7 @@ class SoulOfMigrationTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke: creates two Bird tokens, then sacrifices Soul of Migration")
     void evokeCreatesBirdsAndSacrificesSelf() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new SoulOfMigration()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -61,6 +62,7 @@ class SoulOfMigrationTest extends BaseCardTest {
     @Test
     @DisplayName("Bird creation resolves even after the evoke sacrifice")
     void createsBirdsAfterSacrifice() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new SoulOfMigration()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -83,6 +85,7 @@ class SoulOfMigrationTest extends BaseCardTest {
     @Test
     @DisplayName("The current controller sacrifices an evoked Soul of Migration")
     void sacrificesAfterOpponentGainsControl() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new SoulOfMigration()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

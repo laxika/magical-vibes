@@ -37,6 +37,7 @@ class SubtletyTest extends BaseCardTest {
     @Test
     @DisplayName("ETB puts a creature spell on the bottom of its owner's library")
     void putsCreatureSpellOnBottom() {
+        harness.setAutoOrderTriggers(player1, false);
         GrizzlyBears creatureSpell = new GrizzlyBears();
         Card topCard = new Island();
         harness.setLibrary(player2, List.of(topCard));
@@ -61,6 +62,7 @@ class SubtletyTest extends BaseCardTest {
     @Test
     @DisplayName("ETB puts a planeswalker spell on top of its owner's library")
     void putsPlaneswalkerSpellOnTop() {
+        harness.setAutoOrderTriggers(player1, false);
         VraskaRelicSeeker planeswalkerSpell = new VraskaRelicSeeker();
         Card topCard = new Island();
         harness.setLibrary(player2, List.of(topCard));
@@ -85,6 +87,7 @@ class SubtletyTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke exiles a blue card and sacrifices Subtlety after tucking a creature spell")
     void evokeExilesBlueCardAndSacrificesSelf() {
+        harness.setAutoOrderTriggers(player1, false);
         GrizzlyBears creatureSpell = new GrizzlyBears();
         MerfolkTrickster blueCard = new MerfolkTrickster();
         harness.forceActivePlayer(player2);
@@ -129,13 +132,14 @@ class SubtletyTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke can exile another Subtlety without choosing a target")
     void evokesWithoutTarget() {
+        harness.setAutoOrderTriggers(player1, false);
         Subtlety blueCard = new Subtlety();
         harness.setHand(player1, List.of(new Subtlety(), blueCard));
 
         harness.castInstantWithAlternateExileFromHand(player1, 0, (java.util.UUID) null, 1);
         harness.passBothPriorities();
         PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (order != null && order.context() instanceof ChoiceContext.SpellCastTriggerOrder) {
+        if (order != null && order.context() instanceof ChoiceContext.TriggerOrder) {
             harness.handleListChoice(player1, "1: Subtlety - sacrifice this creature");
         }
         harness.passBothPriorities();
@@ -206,6 +210,7 @@ class SubtletyTest extends BaseCardTest {
     @Test
     @DisplayName("The tuck trigger still resolves when the evoke sacrifice resolves first")
     void sacrificeCanResolveBeforeTuck() {
+        harness.setAutoOrderTriggers(player1, false);
         GrizzlyBears creatureSpell = new GrizzlyBears();
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, creatureSpell, "{1}{G}");
@@ -214,7 +219,7 @@ class SubtletyTest extends BaseCardTest {
 
         harness.castInstantWithAlternateExileFromHand(player1, 0, creatureSpell.getId(), 1);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "2: Subtlety's ETB ability");
+        harness.chooseTriggerToStackNext(player1, "Subtlety's");
         harness.passBothPriorities();
         harness.passBothPriorities();
 

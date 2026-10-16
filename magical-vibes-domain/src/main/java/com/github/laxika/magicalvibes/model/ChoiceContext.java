@@ -159,9 +159,9 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Orders simultaneous spell-cast triggers from the bottom of the stack upward. */
-    record SpellCastTriggerOrder(List<UUID> remainingIds, List<UUID> orderedIds) implements ChoiceContext {
-        public SpellCastTriggerOrder {
+    /** Orders triggered abilities a player put on the stack together, from the bottom of the stack upward. */
+    record TriggerOrder(List<UUID> remainingIds, List<UUID> orderedIds) implements ChoiceContext {
+        public TriggerOrder {
             remainingIds = List.copyOf(remainingIds);
             orderedIds = List.copyOf(orderedIds);
         }

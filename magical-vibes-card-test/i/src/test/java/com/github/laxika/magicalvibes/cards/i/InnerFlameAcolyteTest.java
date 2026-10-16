@@ -67,6 +67,7 @@ class InnerFlameAcolyteTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke: target still gets +2/+0 and haste, Acolyte is sacrificed by its separate trigger")
     void evokeSacrificesSelf() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new WoodlandChangeling());
         harness.setHand(player1, List.of(new InnerFlameAcolyte()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -106,6 +107,7 @@ class InnerFlameAcolyteTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke sacrifice still resolves when the boost target disappears")
     void evokeSacrificesEvenWhenTargetDisappears() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new WoodlandChangeling());
         harness.setHand(player1, List.of(new InnerFlameAcolyte()));
         harness.addMana(player1, ManaColor.RED, 1);

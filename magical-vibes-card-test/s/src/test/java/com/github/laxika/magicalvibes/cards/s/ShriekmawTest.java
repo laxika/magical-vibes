@@ -89,6 +89,7 @@ class ShriekmawTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke sacrifice can resolve before destruction, which still resolves afterward")
     void controllerCanChooseSacrificeBeforeDestruction() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Shriekmaw()));
         harness.addMana(player1, ManaColor.BLACK, 1);

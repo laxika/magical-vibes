@@ -138,6 +138,7 @@ class GriefTest extends BaseCardTest {
     @Test
     @DisplayName("The controller chooses the order of Grief's discard and evoke sacrifice triggers")
     void controllerChoosesEvokeTriggerOrder() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new Grief(), new Grief()));
         harness.setHand(player2, List.of(new Grief()));
 

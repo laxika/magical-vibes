@@ -508,6 +508,11 @@ public class GameData {
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     /**
+     * Players who let the game put their simultaneous triggered abilities on the stack in the order
+     * they triggered instead of being asked for an order (CR 603.3b leaves the order to the player).
+     */
+    public final Set<UUID> playersAutoOrderingTriggers = ConcurrentHashMap.newKeySet();
+    /**
      * Player ids controlled by an AI opponent. Auto-pass must always hand these players a
      * priority window whenever they can act (so the AI can respond at instant speed), whereas
      * human players are auto-passed through any step outside their configured auto-stop set.
@@ -8079,6 +8084,7 @@ public class GameData {
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, new HashSet<>(v)));
+        copy.playersAutoOrderingTriggers.addAll(this.playersAutoOrderingTriggers);
 
         // --- Map<UUID, List<Card>> (shared Card refs) ---
         this.playerDecks.forEach((k, v) -> copy.playerDecks.put(k, new ArrayList<>(v)));

@@ -257,7 +257,7 @@ public class AutoPassService {
         }
 
         if (!gameData.interaction.isAwaitingInput() && gameData.pendingInteractions.isEmpty()) {
-            triggerCollectionService.beginEvokeTriggerOrder(gameData);
+            triggerCollectionService.beginTriggerOrder(gameData);
         }
 
         boolean checkAfterStepAdvance = false;
@@ -355,6 +355,7 @@ public class AutoPassService {
             if (stackedModalTriggerService.announceNextMode(gameData)) return;
             if (stackedDividedDamageTriggerService.announceNextDivision(gameData)) return;
             if (gameData.stack.isEmpty()) return;
+            if (triggerCollectionService.beginTriggerOrder(gameData)) return;
 
             UUID stackPriorityHolder = gameQueryService.getPriorityPlayerId(gameData);
             if (stackPriorityHolder == null) {

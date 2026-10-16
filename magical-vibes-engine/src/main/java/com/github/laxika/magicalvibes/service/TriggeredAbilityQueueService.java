@@ -1642,58 +1642,80 @@ public class TriggeredAbilityQueueService {
             log.info("Game {} - {} spell-target trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
-        beginSpellCastTriggerOrder(gameData);
+        beginTriggerOrder(gameData);
     }
 
-    public void beginSpellCastTriggerOrder(GameData gameData) {
-        beginSpellCastTriggerOrder(gameData, false);
-    }
-
-    public void beginEvokeTriggerOrder(GameData gameData) {
-        beginSpellCastTriggerOrder(gameData, true);
-    }
-
-    private void beginSpellCastTriggerOrder(GameData gameData, boolean evokeOnly) {
-        if (gameData.interaction.isAwaitingInput()
-                || gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
-                || gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
-            return;
+    /**
+     * Lets players order the triggered abilities that went on the stack together (CR 603.3b): each
+     * player, in APNAP order, whose new triggers include two or more non-equivalent abilities chooses
+     * their order, unless that player lets the game order triggers automatically. Runs once no more
+     * triggers are waiting to go on the stack, before a player receives priority. Every new trigger is
+     * marked as ordered so it never joins a later batch.
+     *
+     * @return true when an ordering prompt was opened
+     */
+    public boolean beginTriggerOrder(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput() || !gameData.pendingInteractions.isEmpty()
+                || !gameData.pendingMayAbilities.isEmpty()) {
+            return false;
         }
-        for (StackEntry candidate : gameData.stack) {
-            if (candidate.getEntryType() != StackEntryType.TRIGGERED_ABILITY
-                    || candidate.getTriggeringCardId() == null || candidate.isTriggerOrderChosen()) {
-                continue;
-            }
-            if (evokeOnly && (candidate.getSourcePermanentSnapshot() == null
-                    || !candidate.getSourcePermanentSnapshot().isEvoked()
-                    || candidate.getCard() == null
-                    || !candidate.getTriggeringCardId().equals(candidate.getCard().getId()))) {
-                continue;
-            }
-            List<StackEntry> simultaneous = gameData.stack.stream()
-                    .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                            && !entry.isTriggerOrderChosen()
-                            && (!evokeOnly || java.util.Objects.equals(
-                            candidate.getSourcePermanentId(), entry.getSourcePermanentId()))
-                            && candidate.getControllerId().equals(entry.getControllerId())
-                            && candidate.getTriggeringCardId().equals(entry.getTriggeringCardId()))
+        for (UUID playerId : apnapOrder(gameData)) {
+            List<StackEntry> batch = gameData.stack.stream()
+                    .filter(entry -> isUnorderedTrigger(entry) && playerId.equals(entry.getControllerId()))
                     .toList();
-            if (simultaneous.size() < 2) {
+            batch.forEach(entry -> entry.setTriggerOrderChosen(true));
+            if (batch.size() < 2 || gameData.playersAutoOrderingTriggers.contains(playerId)
+                    || batch.stream().allMatch(entry -> equivalentTriggers(batch.getFirst(), entry))) {
                 continue;
             }
-            simultaneous.forEach(entry -> entry.setTriggerOrderChosen(true));
-            List<UUID> ids = simultaneous.stream().map(StackEntry::getTargetableId).toList();
+            List<UUID> ids = batch.stream().map(StackEntry::getTargetableId).toList();
             interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
-                    candidate.getControllerId(), null, null,
-                    new com.github.laxika.magicalvibes.model.ChoiceContext.SpellCastTriggerOrder(ids, List.of()),
+                    playerId, null, null,
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.TriggerOrder(ids, List.of()),
                     java.util.stream.IntStream.range(0, ids.size()).mapToObj(index ->
-                            (index + 1) + ": " + spellCastTriggerOrderLabel(simultaneous.get(index))).toList(),
+                            (index + 1) + ": " + triggerOrderLabel(batch.get(index))).toList(),
                     "Choose the trigger to put on the stack first (it will resolve last)."));
-            return;
+            return true;
         }
+        markTriggersOrdered(gameData);
+        return false;
     }
 
-    public static String spellCastTriggerOrderLabel(StackEntry entry) {
+    /** Marks every triggered ability already on the stack as ordered, once a player has had priority. */
+    public static void markTriggersOrdered(GameData gameData) {
+        gameData.stack.stream().filter(TriggeredAbilityQueueService::isUnorderedTrigger)
+                .forEach(entry -> entry.setTriggerOrderChosen(true));
+    }
+
+    private static boolean isUnorderedTrigger(StackEntry entry) {
+        return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && !entry.isTriggerOrderChosen() && !entry.isCopy();
+    }
+
+    /** Triggers whose order can't matter: the same ability of the same source with the same choices. */
+    private static boolean equivalentTriggers(StackEntry first, StackEntry other) {
+        return java.util.Objects.equals(first.getSourcePermanentId(), other.getSourcePermanentId())
+                && first.getCard() != null && other.getCard() != null
+                && first.getCard().getId().equals(other.getCard().getId())
+                && first.getEffectsToResolve().equals(other.getEffectsToResolve())
+                && java.util.Objects.equals(first.getTargetId(), other.getTargetId())
+                && java.util.Objects.equals(first.getTargetIds(), other.getTargetIds())
+                && java.util.Objects.equals(first.getTriggeringCardId(), other.getTriggeringCardId())
+                && first.getXValue() == other.getXValue();
+    }
+
+    private static List<UUID> apnapOrder(GameData gameData) {
+        List<UUID> ordered = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = ordered.indexOf(gameData.activePlayerId);
+        if (activeIndex <= 0) {
+            return ordered;
+        }
+        List<UUID> rotated = new ArrayList<>(ordered.subList(activeIndex, ordered.size()));
+        rotated.addAll(ordered.subList(0, activeIndex));
+        return rotated;
+    }
+
+    public static String triggerOrderLabel(StackEntry entry) {
         if (entry.getEffectsToResolve().stream().anyMatch(
                 com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect.class::isInstance)) {
             return entry.getCard().getName() + " - sacrifice this creature";

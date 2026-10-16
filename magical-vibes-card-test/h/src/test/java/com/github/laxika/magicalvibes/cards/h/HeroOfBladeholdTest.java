@@ -132,6 +132,7 @@ class HeroOfBladeholdTest extends BaseCardTest {
     @Test
     @DisplayName("Controller can choose the order of the simultaneous attack triggers")
     void controllerChoosesAttackTriggerOrder() {
+        harness.setAutoOrderTriggers(player1, false);
         Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroOfBladehold());
         hero.setSummoningSick(false);
 
@@ -144,6 +145,64 @@ class HeroOfBladeholdTest extends BaseCardTest {
                 .isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.options()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Putting battle cry on the stack first lets it boost the Soldier tokens")
+    void battleCryFirstBoostsTokens() {
+        harness.setAutoOrderTriggers(player1, false);
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroOfBladehold());
+        hero.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.toLowerCase().contains("battle cry")).findFirst().orElseThrow());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(2)
+                .allSatisfy(token -> assertThat(token.getPowerModifier()).isEqualTo(1));
+    }
+
+    @Test
+    @DisplayName("Putting token creation on the stack first leaves the Soldier tokens unboosted")
+    void tokenCreationFirstLeavesTokensUnboosted() {
+        harness.setAutoOrderTriggers(player1, false);
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroOfBladehold());
+        hero.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> !option.toLowerCase().contains("battle cry")).findFirst().orElseThrow());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(2)
+                .allSatisfy(token -> assertThat(token.getPowerModifier()).isZero());
+    }
+
+    @Test
+    @DisplayName("A player who lets the game order triggers is not asked")
+    void autoOrderingSkipsPrompt() {
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroOfBladehold());
+        hero.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
     }
 
     @Test

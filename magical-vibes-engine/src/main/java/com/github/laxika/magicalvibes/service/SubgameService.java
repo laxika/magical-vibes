@@ -95,6 +95,7 @@ public class SubgameService {
         child.playerDeckChoices.putAll(parent.playerDeckChoices);
         child.aiPlayerIds.addAll(parent.aiPlayerIds);
         child.alwaysOfferPriorityWindows = parent.alwaysOfferPriorityWindows;
+        child.playersAutoOrderingTriggers.addAll(parent.playersAutoOrderingTriggers);
         Map<UUID, List<Card>> decks = new LinkedHashMap<>();
         mutations.mutate(parent, () -> {
             for (UUID player : parent.orderedPlayerIds) {

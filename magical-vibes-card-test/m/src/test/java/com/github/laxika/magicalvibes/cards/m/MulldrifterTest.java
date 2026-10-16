@@ -53,6 +53,7 @@ class MulldrifterTest extends BaseCardTest {
     @Test
     @DisplayName("The draw trigger still resolves after the evoke sacrifice")
     void drawsAfterSacrificeWhenDrawTriggerIsStackedFirst() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new Mulldrifter()));
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.addMana(player1, ManaColor.BLUE, 1);

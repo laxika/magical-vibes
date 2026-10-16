@@ -71,13 +71,14 @@ class WistfulnessTest extends BaseCardTest {
 
     @Test
     void evokeWithTwoBlueManaDrawsAndSacrificesWistfulness() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setLibrary(player1, List.of(new Forest(), new Mountain()));
         harness.setHand(player1, List.of(new Wistfulness(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreatureWithEvoke(player1, 0, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "1: Wistfulness's ETB ability");
+        harness.chooseTriggerToStackNext(player1, "Wistfulness's");
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -124,13 +125,14 @@ class WistfulnessTest extends BaseCardTest {
 
     @Test
     void evokeWithTwoGreenManaExilesAndSacrificesWistfulness() {
+        harness.setAutoOrderTriggers(player1, false);
         var artifact = harness.addToBattlefieldAndReturn(player2, new ChromaticStar());
         harness.setHand(player1, List.of(new Wistfulness()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreatureWithEvoke(player1, 0, artifact.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "1: Wistfulness's ETB ability");
+        harness.chooseTriggerToStackNext(player1, "Wistfulness's");
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Chromatic Star");

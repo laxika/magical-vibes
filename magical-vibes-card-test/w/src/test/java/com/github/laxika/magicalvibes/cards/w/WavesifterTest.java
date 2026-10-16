@@ -32,6 +32,7 @@ class WavesifterTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke Wavesifter creates two Clues and sacrifices it")
     void evokeCreatesTwoCluesAndSacrificesSelf() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new Wavesifter()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -49,6 +50,7 @@ class WavesifterTest extends BaseCardTest {
     @Test
     @DisplayName("Investigation resolves even after the evoke sacrifice")
     void investigatesAfterSacrifice() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new Wavesifter()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

@@ -130,6 +130,7 @@ class TiborAndLumiaTest extends BaseCardTest {
     @ValueSource(booleans = {true, false})
     @DisplayName("A blue-red spell triggers both abilities in the controller's chosen order")
     void multicoloredSpellAllowsEitherTriggerOrder(boolean flyingFirst) {
+        harness.setAutoOrderTriggers(player1, false);
         Permanent tiborAndLumia = harness.addToBattlefieldAndReturn(player1, new TiborAndLumia());
         harness.addToBattlefield(player2, new DryadSophisticate());
         harness.setHand(player1, List.of(new WeeDragonauts()));

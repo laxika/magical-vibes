@@ -83,6 +83,7 @@ class DeceitTest extends BaseCardTest {
 
     @Test
     void evokeWithBlackBlackDiscardsAndSacrificesDeceit() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
         harness.setHand(player1, List.of(new Deceit()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -174,6 +175,7 @@ class DeceitTest extends BaseCardTest {
 
     @Test
     void blueEvokeCanChooseNoBounceTargetAndStillSacrifices() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new Deceit()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

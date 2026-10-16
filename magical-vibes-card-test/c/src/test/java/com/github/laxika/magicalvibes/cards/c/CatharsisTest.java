@@ -174,7 +174,7 @@ class CatharsisTest extends BaseCardTest {
     private void resolveEvokeTriggers() {
         resolveAllTriggers();
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (choice != null && choice.context() instanceof ChoiceContext.SpellCastTriggerOrder) {
+        if (choice != null && choice.context() instanceof ChoiceContext.TriggerOrder) {
             harness.handleListChoice(player1, choice.options().getFirst());
             resolveAllTriggers();
         }

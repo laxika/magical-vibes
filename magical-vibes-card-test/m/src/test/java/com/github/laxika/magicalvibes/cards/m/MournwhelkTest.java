@@ -67,6 +67,7 @@ class MournwhelkTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke: cast for {3}{B}, ETB still forces the discard, then Mournwhelk is sacrificed")
     void evokeDiscardsThenSacrifices() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player2, new ArrayList<>(List.of(new WoodlandChangeling(), new AxegrinderGiant())));
         harness.setHand(player1, new ArrayList<>(List.of(new Mournwhelk())));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -116,6 +117,7 @@ class MournwhelkTest extends BaseCardTest {
     @Test
     @DisplayName("An empty target hand does not prevent the evoke sacrifice")
     void emptyHandStillSacrificesWhenEvoked() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new Mournwhelk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -135,6 +137,7 @@ class MournwhelkTest extends BaseCardTest {
     @Test
     @DisplayName("The discard trigger resolves even when the evoke sacrifice resolves first")
     void discardResolvesAfterEvokeSacrifice() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player2, List.of(new WoodlandChangeling(), new AxegrinderGiant(), new Mournwhelk()));
         harness.setHand(player1, List.of(new Mournwhelk()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -162,6 +165,7 @@ class MournwhelkTest extends BaseCardTest {
     @Test
     @DisplayName("The current controller must sacrifice an evoked Mournwhelk after control changes")
     void evokeSacrificesAfterOpponentGainsControl() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new Mournwhelk()));
         harness.setHand(player2, List.of(new RayOfCommand()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

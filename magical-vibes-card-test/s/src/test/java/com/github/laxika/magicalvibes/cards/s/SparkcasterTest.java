@@ -112,6 +112,7 @@ class SparkcasterTest extends BaseCardTest {
     @Test
     @DisplayName("The controller can return Sparkcaster before its damage ability resolves")
     void canResolveReturnBeforeDamage() {
+        harness.setAutoOrderTriggers(player1, false);
         castSparkcaster(player2.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "2: Sparkcaster's ETB ability");
@@ -167,7 +168,7 @@ class SparkcasterTest extends BaseCardTest {
 
     private void chooseDamageFirstIfOrderingRequested() {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (choice != null && choice.context() instanceof ChoiceContext.SpellCastTriggerOrder) {
+        if (choice != null && choice.context() instanceof ChoiceContext.TriggerOrder) {
             harness.handleListChoice(player1, "1: Sparkcaster's ETB ability");
         }
     }

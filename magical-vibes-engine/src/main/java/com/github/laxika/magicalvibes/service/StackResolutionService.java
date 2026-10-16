@@ -164,6 +164,9 @@ public class StackResolutionService {
 
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
+        // Everything already on the stack has been through a priority window, so no later trigger
+        // batch may reorder it (CR 603.3b).
+        TriggeredAbilityQueueService.markTriggersOrdered(gameData);
 
         StackEntry entry = gameQueryService.stackUsesFirstInFirstOut(gameData)
                 ? gameData.stack.getFirst()

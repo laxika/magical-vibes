@@ -55,6 +55,7 @@ class WispmareTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke: paying only {W}, ETB still destroys the target enchantment")
     void evokeDestroysEnchantment() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new HoofprintsOfTheStag());
         harness.setHand(player1, List.of(new Wispmare()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -72,6 +73,7 @@ class WispmareTest extends BaseCardTest {
     @Test
     @DisplayName("Evoke: Wispmare is sacrificed when its sacrifice trigger resolves")
     void evokeSacrificesSelf() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new HoofprintsOfTheStag());
         harness.setHand(player1, List.of(new Wispmare()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -103,6 +105,7 @@ class WispmareTest extends BaseCardTest {
     @Test
     @DisplayName("The enchantment trigger resolves before the evoke sacrifice when stacked last")
     void destroysEnchantmentBeforeSacrifice() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new HoofprintsOfTheStag());
         harness.setHand(player1, List.of(new Wispmare()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -126,6 +129,7 @@ class WispmareTest extends BaseCardTest {
     @Test
     @DisplayName("The enchantment trigger still resolves after the evoke sacrifice")
     void destroysEnchantmentAfterSacrifice() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new HoofprintsOfTheStag());
         harness.setHand(player1, List.of(new Wispmare()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -193,6 +197,7 @@ class WispmareTest extends BaseCardTest {
     @CardUsed({Wispmare.class, HoofprintsOfTheStag.class, RayOfCommand.class})
     @DisplayName("Evoke makes Wispmare's current controller sacrifice it after a control change")
     void currentControllerSacrificesEvokedWispmare() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new HoofprintsOfTheStag());
         harness.setHand(player1, List.of(new Wispmare()));
         harness.setHand(player2, List.of(new RayOfCommand()));

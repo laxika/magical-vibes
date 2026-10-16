@@ -112,6 +112,7 @@ class IngotChewerTest extends BaseCardTest {
     @Test
     @DisplayName("The controller can resolve artifact destruction before evoke sacrifice")
     void controllerChoosesDestructionBeforeSacrifice() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player2, new SpringleafDrum());
         harness.setHand(player1, List.of(new IngotChewer()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -157,7 +158,7 @@ class IngotChewerTest extends BaseCardTest {
     protected void resolveAllTriggers() {
         var order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         if (order != null && order.context()
-                instanceof com.github.laxika.magicalvibes.model.ChoiceContext.SpellCastTriggerOrder) {
+                instanceof com.github.laxika.magicalvibes.model.ChoiceContext.TriggerOrder) {
             harness.handleListChoice(player1, order.options().getFirst());
         }
         super.resolveAllTriggers();

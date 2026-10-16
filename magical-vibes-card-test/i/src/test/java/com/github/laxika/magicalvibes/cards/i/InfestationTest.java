@@ -44,6 +44,7 @@ class InfestationTest extends BaseCardTest {
 
     @Test
     void evokePaysThreeLifeConjuresBlowflyAndSacrificesInfestation() {
+        harness.setAutoOrderTriggers(player1, false);
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Infestation()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -67,6 +68,7 @@ class InfestationTest extends BaseCardTest {
 
     @Test
     void evokeCanResolveEntryAbilityBeforeSacrificeAndTriggerConjuredBlowfly() {
+        harness.setAutoOrderTriggers(player1, false);
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         harness.setHand(player1, List.of(new Infestation()));
         harness.addMana(player1, ManaColor.BLACK, 2);

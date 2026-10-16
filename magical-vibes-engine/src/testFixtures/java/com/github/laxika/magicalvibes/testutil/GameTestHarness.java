@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -244,8 +245,23 @@ public class GameTestHarness {
 
         // Force player1 as starting player for deterministic tests
         this.gameData.startingPlayerId = player1.getId();
+        // Tests that don't care about trigger order keep the collection order without a prompt.
+        this.gameData.playersAutoOrderingTriggers.add(player1.getId());
+        this.gameData.playersAutoOrderingTriggers.add(player2.getId());
         this.declaredEtbTargets = new DeclaredEtbTargets(gameData, gameService, targetLegalityService,
                 GameTestEngineContext.get().getBean(ETBTokenTargetService.class), List.of(player1, player2));
+    }
+
+    /**
+     * Chooses whether {@code player} is asked to order their simultaneous triggered abilities
+     * (CR 603.3b). The harness orders them automatically by default; turn this off to test the prompt.
+     */
+    public void setAutoOrderTriggers(Player player, boolean autoOrder) {
+        if (autoOrder) {
+            gameData.playersAutoOrderingTriggers.add(player.getId());
+        } else {
+            gameData.playersAutoOrderingTriggers.remove(player.getId());
+        }
     }
 
     public void skipMulligan() {
@@ -2224,6 +2240,21 @@ public class GameTestHarness {
     public void handleGraveyardCardChosen(Player player, int cardIndex) {
         gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.GraveyardCardChosen(cardIndex));
         declaredEtbTargets.answerOpenPrompts();
+    }
+
+    /**
+     * Answers the open trigger-order prompt by putting the first trigger whose label contains
+     * {@code labelFragment} on the stack next (so it resolves after the triggers still to be placed).
+     */
+    public void chooseTriggerToStackNext(Player player, String labelFragment) {
+        PendingInteraction.ColorChoice order = gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (order == null || !(order.context() instanceof ChoiceContext.TriggerOrder)) {
+            throw new IllegalStateException("No trigger order prompt is open");
+        }
+        handleListChoice(player, order.options().stream()
+                .filter(option -> option.contains(labelFragment)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No trigger matching \"" + labelFragment + "\" in " + order.options())));
     }
 
     public void handleListChoice(Player player, String choiceName) {

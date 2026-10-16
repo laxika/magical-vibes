@@ -1553,7 +1553,7 @@ public class CombatAttackService {
                         StackEntryType.TRIGGERED_ABILITY,
                         attacker.getCard(),
                         playerId,
-                        attacker.getCard().getName() + "'s attack trigger",
+                        attacker.getCard().getName() + "'s battle cry",
                         battleCryEffects,
                         null,
                         attacker.getId()

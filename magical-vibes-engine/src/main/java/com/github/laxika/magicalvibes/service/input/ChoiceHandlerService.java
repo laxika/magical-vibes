@@ -417,7 +417,7 @@ public class ChoiceHandlerService {
 
         recordVotingChoiceIfApplicable(gameData, player.getId(), colorName, colorChoice.context());
 
-        if (colorChoice.context() instanceof ChoiceContext.SpellCastTriggerOrder order) {
+        if (colorChoice.context() instanceof ChoiceContext.TriggerOrder order) {
             int index = colorChoice.options().indexOf(colorName);
             if (index < 0) {
                 throw new IllegalArgumentException("Invalid trigger order choice");
@@ -430,11 +430,11 @@ public class ChoiceHandlerService {
                 List<String> options = java.util.stream.IntStream.range(0, remaining.size())
                         .mapToObj(i -> (i + 1) + ": " + gameData.stack.stream()
                                 .filter(entry -> entry.getTargetableId().equals(remaining.get(i)))
-                                .map(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService::spellCastTriggerOrderLabel)
+                                .map(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService::triggerOrderLabel)
                                 .findFirst().orElseThrow()).toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         player.getId(), null, null,
-                        new ChoiceContext.SpellCastTriggerOrder(remaining, ordered), options,
+                        new ChoiceContext.TriggerOrder(remaining, ordered), options,
                         "Choose the next trigger to put on the stack."));
                 return;
             }
