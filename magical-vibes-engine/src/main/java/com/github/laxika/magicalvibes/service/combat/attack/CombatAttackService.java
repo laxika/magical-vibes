@@ -2687,7 +2687,15 @@ public class CombatAttackService {
                         perm.getId()
                 );
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                // The attack causes this trigger, so "triggers an additional time" effects (Isshin) apply.
+                int previousCopies = gameData.beginTriggeredAbilityCopies(1
+                        + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                        gameData, attackedPlayerId, perm, true));
+                try {
+                    gameData.stack.add(trigger);
+                } finally {
+                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                }
                 gameLogService.append(gameData,
                         GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                 log.info("Game {} - {} ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL trigger for attacking player {}",

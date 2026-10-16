@@ -16855,8 +16855,7 @@ public class TriggerCollectionService {
                     ON_ALLY_CREATURE_ATTACKS,
                     ON_CREATURE_ATTACKS_YOU, ON_CREATURE_ATTACKS_YOU_DIRECTLY, ON_CREATURES_ATTACK_YOU,
                     ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED,
-                    ON_ANY_CREATURE_ATTACKS, ON_ANY_PLAYER_ATTACKS,
-                    ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL -> true;
+                    ON_ANY_CREATURE_ATTACKS, ON_ANY_PLAYER_ATTACKS -> true;
             default -> false;
         };
     }

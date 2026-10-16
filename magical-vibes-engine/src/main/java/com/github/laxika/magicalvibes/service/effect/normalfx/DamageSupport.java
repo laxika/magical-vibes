@@ -76,6 +76,8 @@ import java.util.function.ToIntFunction;
 public class DamageSupport {
     @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
     private InteractionHandlerRegistry interactionHandlerRegistry;
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.state.StateTriggerService stateTriggerService;
 
     private final GraveyardService graveyardService;
     private final DamagePreventionService damagePreventionService;
@@ -1816,6 +1818,9 @@ public class DamageSupport {
         if (!hasEffect) return 0;
 
         graveyardService.exileCardsFromGraveyard(gameData, playerId, damage);
+        // CR 603.8: a state trigger (Immortal Coil's "no cards in your graveyard") triggers as soon as the
+        // state is true, even in the middle of a spell's resolution.
+        stateTriggerService.checkStateTriggers(gameData);
         return damage;
     }
 

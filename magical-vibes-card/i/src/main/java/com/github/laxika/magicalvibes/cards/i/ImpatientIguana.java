@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeStartingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
-@CardRegistration(set = "CMB1", collectorNumber = "55")
+@CardRegistration(set = "MB1", collectorNumber = "55")
 public class ImpatientIguana extends Card {
 
     public ImpatientIguana() {
