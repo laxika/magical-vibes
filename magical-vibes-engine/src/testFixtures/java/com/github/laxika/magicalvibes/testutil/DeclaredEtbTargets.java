@@ -117,9 +117,40 @@ final class DeclaredEtbTargets {
             for (UUID etbTarget : etbTargets) {
                 targetLegalityService.validateSpellTargeting(gameData, card, etbTarget, null, player.getId(),
                         true, xValue, kicked);
+                validateAgainstEtbEffects(card, etbTarget, player.getId(), xValue);
             }
         }
         return new CastTargets(null, List.of(), List.copyOf(etbTargets));
+    }
+
+    /**
+     * Checks a battlefield or player target against the card's ETB effects, since the spell-slot
+     * validation sees none of them: it must be legal for at least one ETB effect that targets.
+     */
+    private void validateAgainstEtbEffects(Card card, UUID target, UUID controllerId, int xValue) {
+        boolean onBattlefield = gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                .anyMatch(permanent -> permanent.getId().equals(target));
+        if (!onBattlefield && !gameData.playerIds.contains(target)) {
+            return;
+        }
+        IllegalStateException firstRejection = null;
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect.targetSpec().targetPredicate() == null) {
+                continue;
+            }
+            try {
+                targetLegalityService.validateEffectTargetInZone(gameData, card, List.of(effect), target,
+                        Zone.BATTLEFIELD, xValue, controllerId);
+                return;
+            } catch (IllegalStateException rejection) {
+                if (firstRejection == null) {
+                    firstRejection = rejection;
+                }
+            }
+        }
+        if (firstRejection != null) {
+            throw firstRejection;
+        }
     }
 
     /** The ETB mode a modal enters-the-battlefield ability picks at cast time via {@code mode}, or null. */

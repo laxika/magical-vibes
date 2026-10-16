@@ -79,6 +79,7 @@ public class ExileTopCardsOfDamagedPlayerLibraryAndPutCreatureOntoBattlefieldEff
         gameData.queueInteraction(new PendingReturnExiledWithSourceCard(true, entry.getControllerId()));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 entry.getControllerId(), exiledCards, creatureCards.stream().map(Card::getId).toList(),
-                1, "Choose a creature card to put onto the battlefield.", false));
+                false, false, false, false, false, 0, null, 1,
+                "Choose a creature card to put onto the battlefield.", false, 1, false));
     }
 }

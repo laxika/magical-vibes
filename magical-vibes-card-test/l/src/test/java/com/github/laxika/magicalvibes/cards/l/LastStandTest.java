@@ -189,7 +189,6 @@ class LastStandTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), griffin.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(island.getId()));
-        harness.handleMultiplePermanentsChosen(player2, List.of(griffin.getId()));
 
         assertThat(findPermanents(player1, "Island")).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

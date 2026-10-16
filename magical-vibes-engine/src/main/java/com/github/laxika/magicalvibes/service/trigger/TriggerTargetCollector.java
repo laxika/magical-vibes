@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -245,7 +246,10 @@ public class TriggerTargetCollector {
         // A declared player filter also makes players targetable for an effect that relies on it
         // instead of declaring a target kind of its own (Merfolk Observer's look at "target
         // player's library").
-        if (targetFilter instanceof PermanentPredicateTargetFilter
+        // A permanent filter that accepts every permanent is only the placeholder an ETB ability
+        // gets when its card declares no filter, so it must not rule out a declared player target.
+        if (targetFilter instanceof PermanentPredicateTargetFilter permanentFilter
+                && !(permanentFilter.predicate() instanceof PermanentTruePredicate)
                 || targetFilter instanceof ControlledPermanentPredicateTargetFilter) {
             canTargetPlayers = false;
             canTargetGraveyardCards = false;

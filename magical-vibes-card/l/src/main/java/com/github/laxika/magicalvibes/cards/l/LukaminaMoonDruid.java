@@ -14,10 +14,12 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeLukaminaEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -47,11 +49,25 @@ public class LukaminaMoonDruid extends Card {
     }
 
     private static void addSpecializeAbility(Card card, CardColor color) {
+        CardSubtype basicLandType = switch (color) {
+            case WHITE -> CardSubtype.PLAINS;
+            case BLUE -> CardSubtype.ISLAND;
+            case BLACK -> CardSubtype.SWAMP;
+            case RED -> CardSubtype.MOUNTAIN;
+            case GREEN -> CardSubtype.FOREST;
+            default -> throw new IllegalStateException("Unsupported Lukamina specialization color: " + color);
+        };
+        CardPredicate discardFilter = new CardAnyOfPredicate(List.of(
+                new CardColorPredicate(color), new CardSubtypePredicate(basicLandType)));
         ActivatedAbility ability = new ActivatedAbility(
                 false,
                 "{3}",
-                List.of(new SpecializeLukaminaEffect(color)),
-                "Specialize {3} — " + color.name().toLowerCase(),
+                List.of(new DiscardCardTypeCost(discardFilter,
+                                color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase()),
+                        new SpecializeLukaminaEffect(color)),
+                "Specialize {3} — " + color.name().toLowerCase()
+                        + " (discard a " + color.name().toLowerCase() + " card or "
+                        + basicLandType.name().toLowerCase() + ")",
                 ActivationTimingRestriction.SORCERY_SPEED);
         ability.withActivationCondition(new ControlsPermanentCount(6, new PermanentIsLandPredicate()),
                 "Activate only if you control six or more lands.");

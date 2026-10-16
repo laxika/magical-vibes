@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -50,18 +51,26 @@ public class UnspecializeLukaminaEffectHandler implements NormalEffectHandlerBea
                     gameData.id, specialized.getName());
             return;
         }
-        if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, specialized, Zone.GRAVEYARD)) {
-            gameLogService.append(gameData, GameLog.cardThen(specialized,
-                    " can't return from the graveyard; it stays in the graveyard."));
-            return;
-        }
-
-        permanentRemovalService.removeCardFromGraveyardById(gameData, specialized.getId());
 
         Card unspecialized = specialized.createRuntimeCopy();
         unspecialized.clearRulesTextAndAbilities();
         LukaminaMoonDruid.setBaseFaceCharacteristics(unspecialized);
         LukaminaMoonDruid.addBaseAbilities(unspecialized);
+
+        if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, specialized, Zone.GRAVEYARD)) {
+            List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
+            for (int i = 0; i < graveyard.size(); i++) {
+                if (graveyard.get(i).getId().equals(specialized.getId())) {
+                    graveyard.set(i, unspecialized);
+                    break;
+                }
+            }
+            gameLogService.append(gameData, GameLog.cardThen(unspecialized,
+                    " unspecializes but can't return from the graveyard; it stays in the graveyard."));
+            return;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, specialized.getId());
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(unspecialized);

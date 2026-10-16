@@ -132,7 +132,7 @@ class LongForgottenGoheiTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GlacialRay(), splicedRay));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castWithSplice(player1, 0, player2.getId(), List.of(1));
+        harness.castWithSpliceTargets(player1, 0, List.of(player2.getId(), player2.getId()), List.of(1));
         harness.passBothPriorities();
 
         harness.assertLife(player2, 16);

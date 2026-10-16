@@ -37,8 +37,12 @@ public class DestroyTargetPermanentAtEndOfCombatEffectHandler implements NormalE
         if (target == null) {
             return;
         }
+        // The delayed trigger belongs to the ability that created it: that ability's source and
+        // controller, not the destroyed permanent's, whatever happens to it before end of combat.
         gameData.queueDelayedAction(new DelayedPermanentAction(target.getId(),
-                DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, destroy.cannotBeRegenerated()));
+                DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT, destroy.cannotBeRegenerated(),
+                null, null, null, false, entry.getCard(), entry.getControllerId(),
+                entry.getSourcePermanentId()));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " will be destroyed at end of combat."));
     }
 }

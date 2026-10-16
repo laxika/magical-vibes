@@ -188,7 +188,8 @@ public class DamageTriggerCollectorService {
                 (TriggerContext.CreatureDealsDamageToPlaneswalker) ctx;
         Permanent watcher = match.permanent();
         if (watcher == null || damageContext.damageSource() == null || damageContext.damage() <= 0
-                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())) {
+                || !gameQueryService.isCreature(match.gameData(), damageContext.damageSource())
+                || !damageContext.damagedPlaneswalkerId().equals(watcher.getAttachedTo())) {
             return false;
         }
 

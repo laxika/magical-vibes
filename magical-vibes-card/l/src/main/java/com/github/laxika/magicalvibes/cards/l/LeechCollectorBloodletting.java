@@ -16,7 +16,7 @@ public class LeechCollectorBloodletting extends Card {
 
         // Whenever you gain life for the first time each turn, this creature becomes prepared.
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
-                new OncePerTurnTriggerEffect(new BecomePreparedEffect()));
+                OncePerTurnTriggerEffect.firstLifeGain(new BecomePreparedEffect()));
     }
 
     @Override

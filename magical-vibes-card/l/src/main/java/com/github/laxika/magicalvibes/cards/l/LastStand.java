@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.DeterminedOnce;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -48,8 +50,8 @@ public class LastStand extends Card {
         addEffect(EffectSlot.SPELL, new GainLifeEffect(new Scaled(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.PLAINS), CountScope.CONTROLLER), 2)));
 
-        PermanentCount islands = new PermanentCount(
-                new PermanentHasSubtypePredicate(CardSubtype.ISLAND), CountScope.CONTROLLER);
+        DynamicAmount islands = new DeterminedOnce(new PermanentCount(
+                new PermanentHasSubtypePredicate(CardSubtype.ISLAND), CountScope.CONTROLLER));
         addEffect(EffectSlot.SPELL, new DrawCardEffect(islands));
         addEffect(EffectSlot.SPELL, new DiscardEffect(islands, DiscardRecipient.CONTROLLER));
     }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -74,7 +75,7 @@ class LlanowarEliteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 8);
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent attacker = findPermanent(player1, "Llanowar Elite");
         attacker.setSummoningSick(false);
@@ -85,6 +86,7 @@ class LlanowarEliteTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 1, player2.getId(), 5));
 
         harness.assertLife(player2, 15);
         harness.assertInGraveyard(player2, "Llanowar Elite");

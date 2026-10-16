@@ -220,8 +220,10 @@ public class GraveyardService {
                 .filter(card -> !card.isToken() && !card.hasType(CardType.LAND))
                 .filter(card -> cardsEnteredGraveyard.contains(card) || gameData.findExiledCard(card.getId()) != null)
                 .count();
-        triggerCollectionService.checkOpponentMillTriggers(
-                gameData, targetPlayerId, cardsEnteredGraveyard.size());
+        int milledCardsCount = (int) milledCards.stream()
+                .filter(card -> cardsEnteredGraveyard.contains(card) || gameData.findExiledCard(card.getId()) != null)
+                .count();
+        triggerCollectionService.checkOpponentMillTriggers(gameData, targetPlayerId, milledCardsCount);
         triggerCollectionService.checkNonlandCardsMilledTriggers(
                 gameData, targetPlayerId, nonlandCardsEntered);
         triggerCollectionService.checkGraveyardOpponentNonlandCardMilledTriggers(
@@ -321,7 +323,8 @@ public class GraveyardService {
         if (applyDiscardToLibraryReplacement && !isToken(gameData, card)
                 && findDiscardToLibraryReplacementSource(gameData, ownerId) != null) {
             gameData.playerDecks.get(ownerId).add(0, card);
-            gameLogService.append(gameData, GameLog.cardThen(card, " is put on top of its owner's library instead of into the graveyard."));
+            gameLogService.append(gameData, GameLog.text(
+                    "A discarded card is put on top of its owner's library instead of into the graveyard."));
             log.info("Game {} - {} discard replacement: put on top of library instead of graveyard", gameData.id, card.getName());
             return false;
         }
@@ -556,7 +559,9 @@ public class GraveyardService {
             return false;
         }
 
-        if (hasShuffleIntoLibraryReplacementEffect(card)
+        Card shuffleReplacementSource = sourceZone == Zone.BATTLEFIELD && battlefieldSnapshot != null
+                && battlefieldSnapshot.getCard() != null ? battlefieldSnapshot.getCard() : card;
+        if (hasShuffleIntoLibraryReplacementEffect(shuffleReplacementSource)
                 && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
                 || !battlefieldSnapshot.isFaceDown() && !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
             if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)
@@ -1004,6 +1009,7 @@ public class GraveyardService {
             if (battlefieldSnapshot != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(battlefieldSnapshot));
             }
+            entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
             gameData.stack.add(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             log.info("Game {} - {} triggers (put into graveyard from battlefield)", gameData.id, card.getName());
@@ -1627,6 +1633,21 @@ public class GraveyardService {
                     if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement) {
                         return new OpponentExileReplacement(replacement, p.getId());
                     }
+                }
+            }
+        }
+        // Permanents leaving the battlefield together still apply their replacement effects to each
+        // other's cards (CR 614.1), even once an earlier member of the group has already left.
+        for (var dying : gameData.simultaneousDyingPermanents.entrySet()) {
+            UUID dyingControllerId = gameData.simultaneousDyingPermanentControllers.get(dying.getKey());
+            Permanent p = dying.getValue();
+            if (dyingControllerId == null || dyingControllerId.equals(ownerId)
+                    || p.isFaceDown() || p.isLosesAllAbilitiesUntilEndOfTurn()) {
+                continue;
+            }
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement) {
+                    return new OpponentExileReplacement(replacement, p.getId());
                 }
             }
         }

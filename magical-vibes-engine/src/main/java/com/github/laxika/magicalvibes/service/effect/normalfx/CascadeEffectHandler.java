@@ -55,7 +55,8 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
         String sourceName = entry.getCard().getName();
         int threshold = entry.getTriggeringCardId() != null
                 ? entry.getEventValue()
-                : entry.getCard().getManaValue();
+                : entry.getCard().getManaValue() + (entry.getCard().getParsedManaCost() == null
+                ? 0 : entry.getXValue() * entry.getCard().getParsedManaCost().getXSymbolCount());
 
         if (deck.isEmpty()) {
             gameLogService.append(gameData,

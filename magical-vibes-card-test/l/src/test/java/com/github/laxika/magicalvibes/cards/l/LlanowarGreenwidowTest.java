@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -192,6 +193,9 @@ class LlanowarGreenwidowTest extends BaseCardTest {
 
         Permanent widow = findPermanent(player1, "Llanowar Greenwidow");
         harness.setHand(player2, List.of(new WitnessProtection(), new RonasVortex()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.castEnchantment(player2, 0, widow.getId());
         harness.passBothPriorities();

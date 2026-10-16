@@ -122,12 +122,12 @@ class LightningReaverTest extends BaseCardTest {
     void fearAllowsBlackBlocker() {
         Permanent reaver = addReadyReaver();
         reaver.setAttacking(true);
-        harness.addToBattlefield(player2, new LightningReaver());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new LightningReaver());
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(reaver.isBlockedThisCombat()).isTrue();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test
@@ -184,8 +184,9 @@ class LightningReaverTest extends BaseCardTest {
     void combatCounterTriggerCannotPutCountersOnDestroyedSource() {
         Permanent reaver = addReadyReaver();
         reaver.setAttacking(true);
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(reaver.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).hasSize(1);
 
         harness.setHand(player1, List.of(new Terminate()));
         harness.addMana(player1, ManaColor.BLACK, 1);

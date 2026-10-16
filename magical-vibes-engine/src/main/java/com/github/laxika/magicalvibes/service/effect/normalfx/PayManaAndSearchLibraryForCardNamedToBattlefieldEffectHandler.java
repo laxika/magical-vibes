@@ -32,8 +32,6 @@ public class PayManaAndSearchLibraryForCardNamedToBattlefieldEffectHandler imple
     private void doResolve(GameData gameData, StackEntry entry,
                                                                   PayManaAndSearchLibraryForCardNamedToBattlefieldEffect effect) {
         UUID controllerId = entry.getControllerId();
-        if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
-
         String playerName = gameData.playerIdToName.get(controllerId);
         ManaCost cost = new ManaCost(effect.manaCost());
         if (!cost.canPay(gameData.playerManaPools.get(controllerId))) {
@@ -43,6 +41,9 @@ public class PayManaAndSearchLibraryForCardNamedToBattlefieldEffectHandler imple
         }
 
         cost.pay(gameData.playerManaPools.get(controllerId));
+
+        // The payment is made even when an effect (Mindlock Orb) stops the search that follows.
+        if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 
         librarySearchSupport.performLibrarySearch(
                 gameData,

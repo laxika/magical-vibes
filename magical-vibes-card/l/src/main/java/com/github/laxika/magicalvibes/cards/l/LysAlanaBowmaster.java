@@ -21,16 +21,18 @@ public class LysAlanaBowmaster extends Card {
 
     public LysAlanaBowmaster() {
         // Whenever you cast an Elf spell, you may have this creature deal 2 damage to target creature with flying.
-        target(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasKeywordPredicate(Keyword.FLYING)
-                )),
-                "Target must be a creature with flying"
-        )).addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(
                         new CardSubtypePredicate(CardSubtype.ELF),
-                        List.of(new DealDamageToTargetCreatureEffect(2))
+                        List.of(new DealDamageToTargetCreatureEffect(2)),
+                        null,
+                        new PermanentPredicateTargetFilter(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasKeywordPredicate(Keyword.FLYING)
+                                )),
+                                "Target must be a creature with flying"
+                        )
                 ),
                 "Have Lys Alana Bowmaster deal 2 damage to target creature with flying?"
         ));

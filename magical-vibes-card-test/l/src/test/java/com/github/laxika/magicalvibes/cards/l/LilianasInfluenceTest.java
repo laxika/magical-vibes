@@ -52,6 +52,7 @@ class LilianasInfluenceTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(liliana.getId()));
 
         harness.assertInHand(player1, "Liliana, Death Wielder");
         harness.assertNotInGraveyard(player1, "Liliana, Death Wielder");
@@ -67,12 +68,11 @@ class LilianasInfluenceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
-                .isEqualTo(player1.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst()
-                .getName()).isEqualTo("Liliana, Death Wielder");
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.pool()).extracting(Card::getName).containsExactly("Liliana, Death Wielder");
+        assertThat(choice.libraryCardIds()).containsExactly(liliana.getId());
     }
 
     @Test
@@ -101,7 +101,7 @@ class LilianasInfluenceTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(other, filler);
@@ -118,7 +118,7 @@ class LilianasInfluenceTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(liliana);

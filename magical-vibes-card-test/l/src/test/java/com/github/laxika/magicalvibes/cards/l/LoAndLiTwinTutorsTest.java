@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.p.PlatypusBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -154,6 +155,8 @@ class LoAndLiTwinTutorsTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PlatypusBear());
         harness.setHand(player2, List.of(new HonestWork()));
         harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castEnchantment(player2, 0, tutors.getId());
         resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, noble, Keyword.LIFELINK)).isFalse();

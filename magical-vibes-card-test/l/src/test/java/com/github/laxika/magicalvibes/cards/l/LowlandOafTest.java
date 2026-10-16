@@ -126,7 +126,7 @@ class LowlandOafTest extends BaseCardTest {
         int basePower = gqs.getEffectivePower(gd, goblin);
 
         harness.activateAbility(player1, 0, null, goblin.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(basePower + 1);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.FLYING)).isTrue();
 

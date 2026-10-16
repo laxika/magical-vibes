@@ -55,7 +55,7 @@ public class LookAtTopCardMayPutMatchingOntoBattlefieldOrBottomEffectHandler imp
                     controllerId,
                     List.of(typed.withStage(
                             LookAtTopCardMayPutMatchingOntoBattlefieldOrBottomEffect.Stage.MAY_BOTTOM)),
-                    sourceName + " — Put the top card of your library on the bottom?"));
+                    sourceName + " — Put " + topCard.getName() + " on the bottom of your library?"));
         }
     }
 }

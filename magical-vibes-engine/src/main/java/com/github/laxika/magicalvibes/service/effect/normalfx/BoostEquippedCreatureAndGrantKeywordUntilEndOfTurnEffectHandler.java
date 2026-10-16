@@ -33,8 +33,11 @@ public class BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffectHandler imp
         String sourceName = entry.getCard() != null ? entry.getCard().getName() : "Equipment";
 
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        UUID attachedCreatureId = equipment != null && equipment.getAttachedTo() != null
-                ? equipment.getAttachedTo()
+        // An equipment that already left the battlefield (e.g. a planeswalker-equipment whose loyalty cost
+        // removed its last counter) is looked back at through the snapshot taken on activation (CR 608.2h).
+        Permanent equipmentLastKnown = equipment != null ? equipment : entry.getSourcePermanentSnapshot();
+        UUID attachedCreatureId = equipmentLastKnown != null && equipmentLastKnown.getAttachedTo() != null
+                ? equipmentLastKnown.getAttachedTo()
                 : entry.getTriggeringPermanentId();
         if (attachedCreatureId == null) {
             log.info("Game {} - {} trigger fizzles: no attached creature was recorded", gameData.id, sourceName);

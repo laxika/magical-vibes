@@ -63,11 +63,10 @@ public class SpecializeLukaminaEffectHandler implements NormalEffectHandlerBean 
             }
             case BLUE -> {
                 CardEffect tapEffect = new TapPermanentsEffect(TapUntapScope.TARGET);
-                CardEffect lockEffect = DoesntUntapEffect.targetWhileSourceOnBattlefield();
+                CardEffect lockEffect = DoesntUntapEffect.targetWhileSourceControlled();
                 specialized.target(TargetFilters.nonlandPermanentAnOpponentControls())
-                        .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, tapEffect)
-                        .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                                lockEffect);
+                        .bindEffect(tapEffect)
+                        .bindEffect(lockEffect);
                 specializationTrigger = List.of(tapEffect, lockEffect);
             }
             case BLACK -> specialized.addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());

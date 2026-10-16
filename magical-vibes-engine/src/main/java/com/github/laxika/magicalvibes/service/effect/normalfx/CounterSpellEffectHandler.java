@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
 
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
+        rememberTargetPlayerOfCounteredAbility(gameData, targetEntry);
 
         switch (((CounterSpellEffect) effect).destination()) {
             case GRAVEYARD -> counterSupport.counterSpell(gameData, entry, targetEntry);
@@ -57,6 +59,24 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
             case LIBRARY_BOTTOM -> counterSupport.counterSpellAndPutOnBottomOfLibrary(gameData, entry, targetEntry);
             case LIBRARY_TOP_OR_BOTTOM -> counterOntoChosenLibraryEnd(gameData, entry, targetEntry);
         }
+    }
+
+    /**
+     * A linked "that player" ability refers to the player chosen when the first ability was put on the
+     * stack, so countering that ability (Stifle) must not lose the choice (Laquatus's Champion).
+     */
+    private void rememberTargetPlayerOfCounteredAbility(GameData gameData, StackEntry countered) {
+        UUID playerId = countered.getTargetId();
+        UUID sourcePermanentId = countered.getSourcePermanentId();
+        if (sourcePermanentId == null || playerId == null || !gameData.playerIds.contains(playerId)
+                || countered.getEffectsToResolve().stream().noneMatch(RememberTargetPlayerEffect.class::isInstance)) {
+            return;
+        }
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (permanent.getId().equals(sourcePermanentId)) {
+                permanent.setRememberedTargetPlayerId(playerId);
+            }
+        });
     }
 
     /**

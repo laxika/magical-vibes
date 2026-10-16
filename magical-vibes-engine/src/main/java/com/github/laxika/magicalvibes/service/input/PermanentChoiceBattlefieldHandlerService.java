@@ -1945,6 +1945,16 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleChampionDeclined(GameData gameData, PermanentChoiceContext.ChampionCreature context) {
+        Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (source != null) {
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, source);
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
+                    " is sacrificed because its controller did not champion a creature."));
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     /** Populate (CR 701.36a): the chosen creature token is copied. */
     public void handlePopulate(GameData gameData, UUID chosenPermanentId, PermanentChoiceContext.Populate context) {
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);

@@ -147,12 +147,12 @@ class LiegeOfTheHollowsTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.getGameService().activateAbility(gd, player1, 0, 0, null, null, null);
         harness.handleXValueChosen(player1, 1);
 
         assertThat(squirrelCount(player1)).isZero();
         assertThat(squirrelCount(player2)).isZero();
-        harness.activateAbility(player2, 0, 0, null, null);
+        harness.getGameService().activateAbility(gd, player2, 0, 0, null, null, null);
         harness.handleXValueChosen(player2, 1);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

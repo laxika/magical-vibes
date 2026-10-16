@@ -61,13 +61,7 @@ public class DoublePlusOneCountersOrKeepOneAndGainLifeEffectHandler implements N
             return;
         }
 
-        int doubledCounters = currentCounters * MaroGoneNutsSupport.apply(gameData, effect, 2);
-        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, doubledCounters);
-        permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(
-                gameData, source, entry.getControllerId());
-        permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
-                gameData, source, doubledCounters - currentCounters, entry.getControllerId());
-        permanentCounterSupport.firePlusOnePlusOneCounterTriggers(
-                gameData, source, entry.getControllerId());
+        int placedCounters = currentCounters * (MaroGoneNutsSupport.apply(gameData, effect, 2) - 1);
+        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, source, placedCounters);
     }
 }

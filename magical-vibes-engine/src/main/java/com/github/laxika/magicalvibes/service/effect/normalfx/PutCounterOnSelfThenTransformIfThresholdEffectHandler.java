@@ -60,7 +60,13 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
                         selfId
                 );
             } else {
-                permanentCounterSupport.removeCountersAndTransform(gameData, self, e.counterType(), counterName);
+                Permanent snapshot = entry.getSourcePermanentSnapshot();
+                boolean transformedSinceActivated = snapshot != null && snapshot.getId().equals(self.getId())
+                        && snapshot.getTransformationSequence() != self.getTransformationSequence();
+                boolean canTransform = !transformedSinceActivated
+                        && !gameQueryService.isTransformPrevented(gameData, self);
+                permanentCounterSupport.removeCountersAndTransform(gameData, self, e.counterType(), counterName,
+                        canTransform);
                 // Append on-transform effects to the resolving entry so they are picked up
                 // by the EffectResolutionService's for-loop (e.g. Treasure Map creates tokens)
                 if (!e.onTransformEffects().isEmpty()) {

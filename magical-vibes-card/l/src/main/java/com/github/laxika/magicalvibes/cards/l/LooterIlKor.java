@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class LooterIlKor extends Card {
 
     public LooterIlKor() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, SequenceEffect.of(
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT, SequenceEffect.of(
                 new DrawCardEffect(),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
     }

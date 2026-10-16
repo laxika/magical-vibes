@@ -151,7 +151,7 @@ class LlanowarLoamspeakerTest extends BaseCardTest {
         assertThat(loamspeaker.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        harness.activateAbility(player1, 1, null, null);
+        harness.tapPermanent(player1, 1);
 
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -166,8 +166,10 @@ class LlanowarLoamspeakerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, color.name());
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleListChoice(player1, color.name());
+        });
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
         assertThat(loamspeaker.isTapped()).isTrue();

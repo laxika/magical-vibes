@@ -27,7 +27,7 @@ class LossarnachCaptainTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.ETBTokenTargetTrigger.class);
         harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
 
@@ -91,7 +91,7 @@ class LossarnachCaptainTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.ETBTokenTargetTrigger.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownVictim.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, opponentVictim.getId());
@@ -151,7 +151,7 @@ class LossarnachCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.ETBTokenTargetTrigger.class);
         harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
         assertThat(victim.isTapped()).isTrue();

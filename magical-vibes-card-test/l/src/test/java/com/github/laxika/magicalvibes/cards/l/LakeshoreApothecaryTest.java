@@ -119,6 +119,7 @@ class LakeshoreApothecaryTest extends BaseCardTest {
     void nextTurnResetsDrawCount() {
         harness.forceActivePlayer(player1);
         Permanent apothecary = harness.addToBattlefieldAndReturn(player1, new LakeshoreApothecary());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new LakeshoreApothecary(), new LakeshoreApothecary(),
                 new LakeshoreApothecary(), new LakeshoreApothecary()));
         drawCard();

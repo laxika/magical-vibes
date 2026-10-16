@@ -46,6 +46,11 @@ public class RegisterDelayedReturnCardFromGraveyardToHandEffectHandler implement
             }
         }
 
+        if (ownerId != null && e.graveyardEntryVersion() != null
+                && gameData.graveyardEntryVersion(cardId) != e.graveyardEntryVersion()) {
+            ownerId = null;
+        }
+
         if (ownerId == null) {
             String logEntry = "Delayed return fizzles — card is no longer in any graveyard.";
             gameLogService.append(gameData, GameLog.text(logEntry));

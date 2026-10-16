@@ -30,14 +30,37 @@ public class EquippedCreatureDealsPowerDamageToTargetCreatureEffectHandler imple
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (equipment == null || equipment.getAttachedTo() == null) {
+        Permanent creature = entry.getTriggeringPermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        if (creature == null && entry.getTriggeringPermanentId() == null) {
+            Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            creature = equipment == null || equipment.getAttachedTo() == null ? null
+                    : gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+            if (creature == null) {
+                return;
+            }
+        }
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
             return;
         }
 
-        Permanent creature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (creature == null || target == null) {
+        if (creature == null) {
+            Permanent lastKnown = entry.getAttachedPermanentSnapshot();
+            UUID lastKnownControllerId = entry.getTriggeringPermanentControllerId();
+            if (lastKnown == null || lastKnownControllerId == null || entry.getTriggeringPermanentPowerAtTrigger() == null) {
+                return;
+            }
+            StackEntry lastKnownEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    lastKnown.getCard(),
+                    lastKnownControllerId,
+                    lastKnown.getCard().getName() + "'s ability",
+                    List.of(),
+                    target.getId(),
+                    lastKnown.getId());
+            damageSupport.dealCreatureDamage(gameData, lastKnownEntry, target,
+                    Math.max(0, entry.getTriggeringPermanentPowerAtTrigger()));
             return;
         }
 

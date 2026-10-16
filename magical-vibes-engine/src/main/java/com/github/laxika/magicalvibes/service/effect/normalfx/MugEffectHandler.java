@@ -37,7 +37,7 @@ public class MugEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Card> milledCards = gameData.orderedPlayerIds.stream()
-                .flatMap(playerId -> graveyardService.resolveMillPlayer(gameData, playerId, 1).stream())
+                .flatMap(playerId -> graveyardService.resolveMillPlayerIncludingExiled(gameData, playerId, 1).stream())
                 .toList();
 
         if (milledCards.stream().anyMatch(card -> card.hasType(CardType.LAND))) {
@@ -46,15 +46,31 @@ public class MugEffectHandler implements NormalEffectHandlerBean {
                     entry.getCard().getSetCode()));
         }
 
-        Set<UUID> spellIds = milledCards.stream()
+        List<Card> spells = milledCards.stream()
                 .filter(card -> !card.hasType(CardType.LAND))
+                .toList();
+        Set<UUID> graveyardSpellIds = spells.stream()
+                .filter(card -> gameData.findExiledCard(card.getId()) == null)
                 .map(Card::getId)
                 .collect(Collectors.toUnmodifiableSet());
-        if (!spellIds.isEmpty()) {
+        List<UUID> exiledSpellIds = spells.stream()
+                .filter(card -> gameData.findExiledCard(card.getId()) != null)
+                .map(Card::getId)
+                .toList();
+        if (!graveyardSpellIds.isEmpty()) {
             gameData.graveyardCastFilterPermissionsThisTurn.add(
                     new GameData.GraveyardCastFilterPermission(
-                            controllerId, new CardIdSetPredicate(spellIds), true, null, null,
+                            controllerId, new CardIdSetPredicate(graveyardSpellIds), true, null, null,
                             true, false, null, null, 0));
+        }
+        if (!exiledSpellIds.isEmpty()) {
+            gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, exiledSpellIds);
+            for (UUID cardId : exiledSpellIds) {
+                gameData.exilePlayPermissions.put(cardId, controllerId);
+                gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
+            }
+        }
+        if (!spells.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId)
                             + " may cast one spell among the cards milled this way this turn."));

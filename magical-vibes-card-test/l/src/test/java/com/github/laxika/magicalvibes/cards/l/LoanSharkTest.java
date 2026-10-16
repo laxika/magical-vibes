@@ -110,6 +110,7 @@ class LoanSharkTest extends BaseCardTest {
 
         harness.setLibrary(player1, List.of(new LoanShark(), new LoanShark(), new LoanShark()));
         harness.setLibrary(player2, List.of(new LoanShark(), new LoanShark(), new LoanShark()));
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThatThrownBy(() -> harness.castFromExile(player1, shark.getId()))
                 .isInstanceOf(IllegalStateException.class);

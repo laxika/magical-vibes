@@ -15,4 +15,9 @@ public record OpponentControlsMoreCreatures(int minimumCreatureDifference) imple
     public String conditionNotMetReason() {
         return "no opponent controls enough more creatures";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

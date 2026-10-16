@@ -176,7 +176,7 @@ class LoranOfTheThirdPathTest extends BaseCardTest {
     void vigilanceLeavesLoranUntapped() {
         Permanent loran = addCreatureReady(player1, new LoranOfTheThirdPath());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(loran.isAttacking()).isTrue();
         assertThat(loran.isTapped()).isFalse();
@@ -189,7 +189,7 @@ class LoranOfTheThirdPathTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("target player");
+                .hasMessageContaining("requires a target");
     }
 
     @Test

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,7 +18,7 @@ public class LoyalUnicorn extends Card {
 
     public LoyalUnicorn() {
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
-                new ControllerControlsCommander(),
+                new ControllerControlsOwnCommander(),
                 SequenceEffect.of(
                         PreventDamageEffect.allCombatToControlledMatchingPermanents(
                                 new PermanentIsCreaturePredicate()),

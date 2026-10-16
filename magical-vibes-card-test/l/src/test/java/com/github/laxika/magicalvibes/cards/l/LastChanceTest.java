@@ -143,7 +143,7 @@ class LastChanceTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
-        advanceToExtraTurn();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         advanceToEndStep();
 
         assertThat(gd.stack).hasSize(1);

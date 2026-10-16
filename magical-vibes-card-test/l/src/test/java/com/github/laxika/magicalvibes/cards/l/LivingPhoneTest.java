@@ -92,6 +92,7 @@ class LivingPhoneTest extends BaseCardTest {
                 sixth, seventh);
         List<Card> opponentLibrary = List.of(new LivingPhone(), new Plains());
         harness.setLibrary(player2, opponentLibrary);
+        harness.setHand(player2, List.of());
         destroyLivingPhone(library);
 
         harness.passBothPriorities();
@@ -147,6 +148,7 @@ class LivingPhoneTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LivingPhone());
         Card chosen = new LivingPhone();
         harness.setLibrary(player2, List.of(chosen));
+        harness.setHand(player2, List.of());
         List<Card> ownLibrary = List.of(new LivingPhone(), new Plains());
         destroyLivingPhone(ownLibrary);
 

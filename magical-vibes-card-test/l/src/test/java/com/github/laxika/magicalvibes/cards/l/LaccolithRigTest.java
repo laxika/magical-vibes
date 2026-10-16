@@ -180,6 +180,7 @@ class LaccolithRigTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         harness.assertInHand(player1, "Defender en-Vec");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
@@ -240,6 +241,7 @@ class LaccolithRigTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, victim.getId());
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(seal),
                 null, victim.getId());
+        harness.passBothPriorities();
         harness.passBothPriorities();
         resolveCombat();
 

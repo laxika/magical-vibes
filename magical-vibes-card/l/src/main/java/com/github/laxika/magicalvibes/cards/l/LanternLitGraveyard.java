@@ -24,13 +24,13 @@ public class LanternLitGraveyard extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLACK), new SkipNextUntapEffect(TapUntapScope.SELF)),
+                List.of(new AwardManaEffect(ManaColor.BLACK), new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)),
                 "{T}: Add {B}. Lantern-Lit Graveyard doesn't untap during your next untap step."
         ));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.RED), new SkipNextUntapEffect(TapUntapScope.SELF)),
+                List.of(new AwardManaEffect(ManaColor.RED), new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)),
                 "{T}: Add {R}. Lantern-Lit Graveyard doesn't untap during your next untap step."
         ));
     }

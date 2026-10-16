@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  *
  * <p>Reads two targets from the flat multi-target list: position 0 is the creature counters are
  * removed from, position 1 is the creature they are placed on. When {@code moveAll} is {@code false},
- * a single counter of one kind is moved (the first present kind if several exist); when {@code true},
+ * a single counter of one kind is moved (the controller chooses the kind on resolution if several exist); when {@code true},
  * every counter of every kind is moved. If the first creature has no counters (or either target is
  * gone) when the effect resolves, nothing happens.</p>
  *

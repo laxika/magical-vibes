@@ -143,7 +143,7 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IntercessorsArrest()));
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castEnchantment(player1, 0, otherCreature.getId());
-        gd.stack.getFirst().setControllerId(player2.getId());
+        gd.stack.getFirst().gainControl(player2.getId());
 
         harness.passBothPriorities();
 

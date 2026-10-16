@@ -125,7 +125,7 @@ class LimDLTheNecromancerTest extends BaseCardTest {
     void returnsOwnedCardThatOpponentControlled() {
         harness.addToBattlefield(player1, new LimDLTheNecromancer());
         Permanent reavers = harness.addToBattlefieldAndReturn(player2, new DrudgeReavers());
-        gd.stolenCreatures.put(reavers.getId(), player1.getId());
+        setOwnerAndController(reavers, player1, player2);
         harness.setHand(player1, List.of(new StranglingSoot()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 2);

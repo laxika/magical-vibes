@@ -25,6 +25,6 @@ public class LeoninRelicWarder extends Card {
                 "Target must be an artifact or enchantment"
         ))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new MayEffect(new ExileTargetPermanentUntilSourceLeavesEffect(), "Exile target artifact or enchantment?"));
+                        new MayEffect(new ExileTargetPermanentUntilSourceLeavesEffect(false, null, true, true), "Exile target artifact or enchantment?"));
     }
 }

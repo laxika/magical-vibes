@@ -166,9 +166,8 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.MultiPermanentChoice.class)
-                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MultiPermanentChoice).isFalse();
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
 
         assertThat(target.isTapped()).isFalse();
         assertThat(target.getSkipUntapCount()).isZero();
@@ -218,7 +217,7 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(target.getCard());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(target.getSkipUntapCount()).isZero();
     }
 }

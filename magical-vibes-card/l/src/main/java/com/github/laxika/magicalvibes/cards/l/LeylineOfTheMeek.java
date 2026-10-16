@@ -17,7 +17,7 @@ public class LeylineOfTheMeek extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of the Meek on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentIsTokenPredicate()));
     }
 }

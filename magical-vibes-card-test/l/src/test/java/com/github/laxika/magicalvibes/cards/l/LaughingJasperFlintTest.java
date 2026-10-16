@@ -142,7 +142,7 @@ class LaughingJasperFlintTest extends BaseCardTest {
         Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof ControlMagic)
                 .findFirst().orElseThrow();
-        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
         assertThat(gd.findControllerOf(jasper)).isEqualTo(player2.getId());
         prepareMainPhase();
         harness.addMana(player1, ManaColor.COLORLESS, 2);

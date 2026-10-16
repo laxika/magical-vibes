@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -156,6 +157,8 @@ class LashknifeBarrierTest extends BaseCardTest {
         secondBlocker.addBlockingTarget(1);
 
         resolveCombat(player1);
+        harness.handleCombatDamageAssigned(player1, 1,
+                Map.of(firstBlocker.getId(), 2, secondBlocker.getId(), 1));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(attacker.getMarkedDamage()).isEqualTo(2);

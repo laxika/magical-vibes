@@ -97,6 +97,7 @@ class LostMonarchOfIfnirTest extends BaseCardTest {
 
     private void setAttacking(Permanent attacker) {
         attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -108,6 +109,9 @@ class LostMonarchOfIfnirTest extends BaseCardTest {
     }
 
     private void advanceToPostcombatMain(Player activePlayer) {
+        if (gd.currentStep == TurnStep.POSTCOMBAT_MAIN) {
+            return;
+        }
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();

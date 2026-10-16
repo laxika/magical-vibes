@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -34,12 +35,18 @@ public class CreateTokenCopyOfEnteringTokenForTargetPlayerEffectHandler implemen
             return;
         }
 
+        // The token may have left the battlefield since the ability triggered; its copy is then made from
+        // last known information (CR 608.2h).
         Permanent enteringToken = gameQueryService.findPermanentById(gameData, enteringTokenId);
-        if (enteringToken == null) {
+        Card enteringCard = enteringToken != null
+                ? enteringToken.getCard() : entry.lastKnownPermanentCard(enteringTokenId);
+        if (enteringCard == null) {
             return;
         }
 
-        UUID enteringTokenControllerId = gameQueryService.findPermanentController(gameData, enteringTokenId);
+        UUID enteringTokenControllerId = enteringToken != null
+                ? gameQueryService.findPermanentController(gameData, enteringTokenId)
+                : entry.getTriggeringPermanentControllerId();
         if (enteringTokenControllerId == null || enteringTokenControllerId.equals(targetPlayerId)) {
             return;
         }
@@ -47,7 +54,7 @@ public class CreateTokenCopyOfEnteringTokenForTargetPlayerEffectHandler implemen
         List<UUID> createdTokenIds = tokenCopySupport.createTokenCopies(
                 gameData,
                 entry,
-                List.of(enteringToken.getCard()),
+                List.of(enteringCard),
                 enteringToken,
                 targetPlayerId,
                 new CreateTokenCopyOfTargetPermanentEffect());

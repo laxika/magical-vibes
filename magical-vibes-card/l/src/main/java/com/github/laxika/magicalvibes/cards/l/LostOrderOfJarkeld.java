@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -18,12 +19,11 @@ public class LostOrderOfJarkeld extends Card {
         // As this creature enters, choose an opponent.
         // Lost Order of Jarkeld's power and toughness are each equal to 1 plus the
         // number of creatures the chosen player controls.
-        // In the two-player engine the chosen opponent is the single opponent
-        // (Nyxathid / Canker Abomination precedent), so OPPONENTS scope counts
-        // exactly the creatures that player controls.
+        // The choice is remembered on the permanent, so a change of control keeps the original player.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
         var pt = new Sum(
                 new Fixed(1),
-                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS));
+                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CHOSEN_PLAYER));
         addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(pt, pt));
     }
 }

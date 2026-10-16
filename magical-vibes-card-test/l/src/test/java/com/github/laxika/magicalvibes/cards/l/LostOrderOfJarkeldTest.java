@@ -138,6 +138,8 @@ class LostOrderOfJarkeldTest extends BaseCardTest {
     }
 
     private Permanent addLostOrder(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new LostOrderOfJarkeld());
+        Permanent lostOrder = harness.addToBattlefieldAndReturn(player, new LostOrderOfJarkeld());
+        lostOrder.setRememberedTargetPlayerId(player == player1 ? player2.getId() : player1.getId());
+        return lostOrder;
     }
 }

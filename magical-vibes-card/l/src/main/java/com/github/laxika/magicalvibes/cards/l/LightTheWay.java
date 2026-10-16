@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -33,9 +33,9 @@ public class LightTheWay extends Card {
                         List.of(
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                                 new UntapPermanentsEffect(TapUntapScope.TARGET)),
-                        new ControlledPermanentPredicateTargetFilter(
+                        new PermanentPredicateTargetFilter(
                                 creatureOrVehicle,
-                                "Target must be a creature or Vehicle you control")),
+                                "Target must be a creature or Vehicle")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target permanent you control to its owner's hand",
                         ReturnToHandEffect.target(),

@@ -19,9 +19,11 @@ import java.util.Set;
 public class LuminousBroodmoth extends Card {
 
     public LuminousBroodmoth() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        TriggeringPermanentConditionalEffect returnWithoutFlying = new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)),
                 new ReturnDyingCreatureToOwnerBattlefieldEffect(
-                        CounterType.FLYING, 1, null, Set.of())));
+                        CounterType.FLYING, 1, null, Set.of()));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, returnWithoutFlying);
+        addEffect(EffectSlot.ON_DEATH, returnWithoutFlying);
     }
 }

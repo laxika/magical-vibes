@@ -195,9 +195,14 @@ class LifeMatrixTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LifeMatrix());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new PsionicEntity());
         advanceToUpkeep(player1);
-        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
+        // Auto-pass skips past an upkeep with only upkeep-only abilities left (draining the mana pool);
+        // the second Matrix is activated in the same upkeep with freshly added mana.
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.activateAbility(player1, 1, null, creature.getId());
         harness.passBothPriorities();
         assertThat(creature.getCounterCount(CounterType.MATRIX)).isEqualTo(2);

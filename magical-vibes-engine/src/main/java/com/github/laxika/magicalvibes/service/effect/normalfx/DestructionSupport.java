@@ -1144,14 +1144,17 @@ public class DestructionSupport {
         } else {
             gameLogService.append(gameData, GameLog.text(playerName + " sacrifices " + pileName + ": " + pileDescription + "."));
 
-            for (UUID permId : pileToSacrifice) {
-                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-                if (perm != null) {
+            List<Permanent> sacrificed = pileToSacrifice.stream()
+                    .map(permId -> gameQueryService.findPermanentById(gameData, permId))
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+            permanentRemovalService.performSimultaneousRemovals(gameData, sacrificed, () -> {
+                for (Permanent perm : sacrificed) {
                     if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, perm)) {
                         gameData.recordSacrificedPermanent(targetPlayerId, perm.getCard());
                     }
                 }
-            }
+            });
         }
 
         gameOutcomeService.checkWinCondition(gameData);

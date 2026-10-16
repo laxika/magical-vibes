@@ -244,8 +244,11 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         while (!state.remaining.isEmpty()) {
             UUID playerId = state.remaining.removeFirst();
             List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
-            if (hand.isEmpty() || !playerId.equals(controllerId)
-                    && gameQueryService.isDiscardPrevented(gameData, playerId)) continue;
+            if (hand.isEmpty()) {
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " has no cards to discard."));
+                continue;
+            }
+            if (!playerId.equals(controllerId) && gameQueryService.isDiscardPrevented(gameData, playerId)) continue;
             int count = Math.min(amount, hand.size());
             if (count <= 0) continue;
             state.currentPlayerId = playerId;

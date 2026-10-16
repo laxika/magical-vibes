@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -22,17 +23,18 @@ public class LeonardoTheBalance extends Card {
 
     public LeonardoTheBalance() {
         addEffect(EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
-                new OncePerTurnTriggerEffect(new MayEffect(
+                OncePerTurnTriggerEffect.markOnAcceptance(new MayEffect(
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
-                        "Put a +1/+1 counter on each creature you control?")));
+                        "Put a +1/+1 counter on each creature you control?")),
+                TriggerMode.PER_TOKEN);
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}{U}{B}{R}{G}",
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.MENACE, Keyword.TRAMPLE, Keyword.LIFELINK),
-                        GrantScope.OWN_CREATURES)),
+                        GrantScope.ALL_OWN_CREATURES)),
                 "{W}{U}{B}{R}{G}: Creatures you control gain menace, trample, and lifelink until end of turn."
         ));
     }

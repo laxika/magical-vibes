@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -40,10 +39,7 @@ public class LilianasTalent extends Card {
                 GrantScope.ENCHANTED_PERMANENT,
                 new PermanentIsPlaneswalkerPredicate()));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER,
-                new DestroyTargetPermanentEffect(),
-                GrantScope.ENCHANTED_PERMANENT,
-                new PermanentIsPlaneswalkerPredicate()));
+        addEffect(EffectSlot.ON_CREATURE_DEALS_DAMAGE_TO_ENCHANTED_PLANESWALKER,
+                new DestroyTargetPermanentEffect());
     }
 }

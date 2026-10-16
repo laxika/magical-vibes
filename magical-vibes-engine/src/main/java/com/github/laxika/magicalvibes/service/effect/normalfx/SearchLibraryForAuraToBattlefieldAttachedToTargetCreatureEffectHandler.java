@@ -52,6 +52,15 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
         // Light-Paws); a mandatory (non-may) use would instead record it as the non-targeting targetId.
         UUID hostId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent host = hostId == null ? null : gameQueryService.findPermanentById(gameData, hostId);
+        if (host == null && auraSearch.restrictToTriggeringAura()) {
+            // The host left the battlefield, so no Aura can be put onto it; the search still ends in a shuffle.
+            if (!librarySearchSupport.isSearchPrevented(gameData, controllerId)) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
+                        + " searches their library but there is nothing to attach an Aura to. Library is shuffled."));
+            }
+            return;
+        }
         if (host == null
                 || (!auraSearch.restrictToTriggeringAura() && !gameQueryService.isCreature(gameData, host))) return;
 
@@ -133,6 +142,8 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
                 && !(filter instanceof OwnedPermanentPredicateTargetFilter)) {
             return false;
         }
+        // A permanent with protection from the Aura can't be enchanted by it (CR 702.16c).
+        if (gameQueryService.hasProtectionFromSource(gameData, host, card, controllerId)) return false;
         FilterContext context = new FilterContext(gameData, card.getId(), controllerId, null, null);
         return predicateEvaluationService.checkTargetFilter(filter, host, context).isEmpty();
     }

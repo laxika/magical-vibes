@@ -17,7 +17,9 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -76,8 +78,13 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
         boolean resolvingSpellSource = source == null
                 && (entry.getEntryType() == StackEntryType.INSTANT_SPELL
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL);
+        Set<UUID> declaredAttackerIds = e.onlyDeclaredAttackers()
+                ? entry.getAttackingPermanentSnapshots().stream().map(Permanent::getId).collect(Collectors.toSet())
+                : Set.of();
         for (Permanent creature : new ArrayList<>(candidates)) {
-            if (!predicateEvaluationService.matchesPermanentPredicate(creature, e.predicate(), ctx)) continue;
+            if (e.onlyDeclaredAttackers()
+                    ? !declaredAttackerIds.contains(creature.getId())
+                    : !predicateEvaluationService.matchesPermanentPredicate(creature, e.predicate(), ctx)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && (source != null
                     ? gameQueryService.hasProtectionFromDamageSource(gameData, creature, source)
                     : gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard(), entry.getControllerId())

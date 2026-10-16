@@ -2580,6 +2580,7 @@ public class CombatBlockService {
                                                    List<Integer> blockable,
                                                    List<BlockerAssignment> blockerAssignments) {
         Map<Integer, Set<Integer>> requiredAttackersByBlocker = new LinkedHashMap<>();
+        Map<Long, Integer> requirementWeights = new HashMap<>();
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
             Set<Integer> requiredAttackerIndices = new LinkedHashSet<>();
@@ -2590,6 +2591,8 @@ public class CombatBlockService {
                         && canBlockAsPartOfLegalDeclaration(gameData, blockContext, attackerBattlefield,
                         defenderBattlefield, blockable, blockerIdx, attackerIdx)) {
                     requiredAttackerIndices.add(attackerIdx);
+                    requirementWeights.put(requirementKey(blockerIdx, attackerIdx),
+                            gameQueryService.lureRequirementCount(gameData, attacker, blocker));
                 }
             }
             if (!requiredAttackerIndices.isEmpty()) {
@@ -2601,11 +2604,14 @@ public class CombatBlockService {
         }
 
         int maximumSatisfiable = maximumSatisfiableLureRequirements(
-                gameData, attackerBattlefield, defenderBattlefield, requiredAttackersByBlocker);
+                gameData, attackerBattlefield, defenderBattlefield, requiredAttackersByBlocker,
+                requirementWeights);
         long currentLureBlocks = blockerAssignments.stream()
                 .filter(assignment -> requiredAttackersByBlocker.getOrDefault(
                         assignment.blockerIndex(), Set.of()).contains(assignment.attackerIndex()))
-                .count();
+                .mapToLong(assignment -> requirementWeights.getOrDefault(
+                        requirementKey(assignment.blockerIndex(), assignment.attackerIndex()), 1))
+                .sum();
         if (currentLureBlocks < maximumSatisfiable) {
             int missingBlockerIdx = requiredAttackersByBlocker.entrySet().stream()
                     .filter(entry -> entry.getValue().stream()
@@ -2624,7 +2630,8 @@ public class CombatBlockService {
             GameData gameData,
             List<Permanent> attackerBattlefield,
             List<Permanent> defenderBattlefield,
-            Map<Integer, Set<Integer>> requiredAttackersByBlocker) {
+            Map<Integer, Set<Integer>> requiredAttackersByBlocker,
+            Map<Long, Integer> requirementWeights) {
         List<Integer> blockerIndices = new ArrayList<>(requiredAttackersByBlocker.keySet());
         List<Integer> attackerIndices = requiredAttackersByBlocker.values().stream()
                 .flatMap(Set::stream)
@@ -2635,6 +2642,8 @@ public class CombatBlockService {
         int attackerStart = blockerStart + blockerIndices.size();
         int sink = attackerStart + attackerIndices.size();
         int[][] residual = new int[sink + 1][sink + 1];
+        int[][] gain = new int[sink + 1][sink + 1];
+        int maxWeight = 1;
 
         Map<Integer, Integer> blockerNodes = new HashMap<>();
         for (int i = 0; i < blockerIndices.size(); i++) {
@@ -2665,10 +2674,15 @@ public class CombatBlockService {
         for (Map.Entry<Integer, Set<Integer>> entry : requiredAttackersByBlocker.entrySet()) {
             int blockerNode = blockerNodes.get(entry.getKey());
             for (int attackerIdx : entry.getValue()) {
-                residual[blockerNode][attackerNodes.get(attackerIdx)] = 1;
+                int attackerNode = attackerNodes.get(attackerIdx);
+                int weight = requirementWeights.getOrDefault(requirementKey(entry.getKey(), attackerIdx), 1);
+                residual[blockerNode][attackerNode] = 1;
+                gain[blockerNode][attackerNode] = weight;
+                gain[attackerNode][blockerNode] = -weight;
+                maxWeight = Math.max(maxWeight, weight);
             }
         }
-        int flow = maximumFlow(residual, source, sink);
+        int flow = maximumWeightedFlow(residual, gain, source, sink);
         if (globalMaxBlockers < blockerIndices.size()) {
             // A global cap on blocking creatures (Dueling Grounds) also bounds how many requirements
             // can be met: at most that many creatures block, each within its own block capacity.
@@ -2679,9 +2693,57 @@ public class CombatBlockService {
                     .limit(globalMaxBlockers)
                     .mapToInt(Integer::intValue)
                     .sum();
-            flow = Math.min(flow, cappedFlow);
+            flow = Math.min(flow, cappedFlow * maxWeight);
         }
         return flow;
+    }
+
+    private static long requirementKey(int blockerIdx, int attackerIdx) {
+        return ((long) blockerIdx << 32) | attackerIdx;
+    }
+
+    /**
+     * Maximum total weight of satisfied requirements: successive augmentation along the
+     * highest-gain residual path (Bellman-Ford), stopping once no path adds weight. With unit
+     * weights this equals the maximum flow.
+     */
+    private int maximumWeightedFlow(int[][] residual, int[][] gain, int source, int sink) {
+        int nodes = residual.length;
+        int total = 0;
+        while (true) {
+            int[] best = new int[nodes];
+            int[] parent = new int[nodes];
+            Arrays.fill(best, Integer.MIN_VALUE);
+            Arrays.fill(parent, -1);
+            best[source] = 0;
+            for (int round = 0; round < nodes; round++) {
+                boolean improved = false;
+                for (int from = 0; from < nodes; from++) {
+                    if (best[from] == Integer.MIN_VALUE) continue;
+                    for (int to = 0; to < nodes; to++) {
+                        if (residual[from][to] > 0 && best[from] + gain[from][to] > best[to]) {
+                            best[to] = best[from] + gain[from][to];
+                            parent[to] = from;
+                            improved = true;
+                        }
+                    }
+                }
+                if (!improved) break;
+            }
+            if (best[sink] == Integer.MIN_VALUE || best[sink] <= 0) {
+                return total;
+            }
+            int pathCapacity = Integer.MAX_VALUE;
+            for (int current = sink; current != source; current = parent[current]) {
+                pathCapacity = Math.min(pathCapacity, residual[parent[current]][current]);
+            }
+            for (int current = sink; current != source; current = parent[current]) {
+                int previous = parent[current];
+                residual[previous][current] -= pathCapacity;
+                residual[current][previous] += pathCapacity;
+            }
+            total += pathCapacity * best[sink];
+        }
     }
 
     private int maximumFlow(int[][] residual, int source, int sink) {

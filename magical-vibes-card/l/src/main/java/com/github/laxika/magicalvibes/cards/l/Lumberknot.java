@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 public class Lumberknot extends Card {
 
     public Lumberknot() {
-        // Whenever a creature dies, put a +1/+1 counter on Lumberknot.
+        // Whenever a creature dies (including Lumberknot itself), put a +1/+1 counter on Lumberknot.
+        addEffect(EffectSlot.ON_DEATH, new PutCountersOnSourceEffect(1, 1, 1));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

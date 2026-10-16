@@ -1641,6 +1641,17 @@ public class GameTestHarness {
                 spliceHandCardIndices, spliceCostPermanentIds);
     }
 
+    /**
+     * Casts with splice when the host spell and the spliced cards each have targets of their own;
+     * {@code targetIds} lists the host's targets first, then each spliced card's, in splice order.
+     */
+    public void castWithSpliceTargets(Player player, int cardIndex, List<UUID> targetIds,
+                                      List<Integer> spliceHandCardIndices) {
+        ensurePriority(player);
+        gameService.playCardWithSplice(gameData, player, cardIndex, 0, null, null, targetIds,
+                spliceHandCardIndices, List.of());
+    }
+
     public void castFromLibraryTop(Player player) {
         ensurePriority(player);
         gameService.playCardFromLibraryTop(gameData, player, null, null);

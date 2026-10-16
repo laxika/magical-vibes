@@ -57,15 +57,19 @@ public class BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler implements N
 
         BecomeCopyOfTargetCreatureCardInGraveyardEffect copyEffect =
                 (BecomeCopyOfTargetCreatureCardInGraveyardEffect) effect;
-        Card printed = source.getOriginalCard();
-        List<ActivatedAbility> retainedAbilities = copyEffect.retainedSourceAbilityIndex() == -1
-                ? List.copyOf(printed.getActivatedAbilities())
-                : List.of(printed.getActivatedAbilities().get(copyEffect.retainedSourceAbilityIndex()));
+        // The retained name and ability belong to the card this ability is on now: for a Clone copying
+        // this card, that is the copied card rather than the Clone's original card.
+        String retainedName = source.getCard().getName();
+        List<ActivatedAbility> retainedAbilities = source.getCard().getActivatedAbilities().stream()
+                .filter(ability -> ability.getEffects().contains(copyEffect))
+                .limit(1)
+                .toList();
         permanentCopierService.applyCloneCopy(source, graveyardCard, null, null, Set.of());
+        gameData.activatedAbilityUsesThisTurn.remove(source.getId());
 
         Card copy = source.getCard();
         if (copyEffect.retainSourceName()) {
-            copy.setName(printed.getName());
+            copy.setName(retainedName);
         }
 
         if (copyEffect.addLegendarySupertype()) {
@@ -87,6 +91,6 @@ public class BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler implements N
         }
 
         gameLogService.append(gameData,
-                GameLog.textCardText(printed.getName() + " becomes a copy of ", graveyardCard, "."));
+                GameLog.textCardText(retainedName + " becomes a copy of ", graveyardCard, "."));
     }
 }

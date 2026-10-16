@@ -32,7 +32,7 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect rawEffect) {
         var effect = (CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect) rawEffect;
-        UUID attackerId = entry.getTargetId();
+        UUID attackerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId();
         UUID controllerId = entry.getControllerId();
         Permanent liveAttacker = attackerId == null
                 ? null : gameQueryService.findPermanentById(gameData, attackerId);
@@ -117,7 +117,8 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
             gameData.pendingAttackingCopyOpponents.remove(effect.choiceBatchId());
         }
         if (opponents.isEmpty()) return;
-        Permanent liveAttacker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent liveAttacker = gameQueryService.findPermanentById(gameData,
+                entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId());
         Permanent attacker = copyableAttacker(gameData, liveAttacker, entry);
         if (attacker == null) return;
         createTokenCopies(gameData, entry, effect, attacker, liveAttacker, entry.getControllerId(), opponents);

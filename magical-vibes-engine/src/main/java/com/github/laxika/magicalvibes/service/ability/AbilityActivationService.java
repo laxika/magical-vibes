@@ -2036,6 +2036,12 @@ public class AbilityActivationService {
         stackEntry.setSourceZone(Zone.GRAVEYARD);
         stackEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
         stackEntry.setTargetFilter(ability.getTargetFilter());
+        if (hasGraveyardTargets) {
+            for (UUID graveyardTargetId : graveyardTargetIds) {
+                stackEntry.getMixedZoneTargetGraveyardVersions().put(
+                        graveyardTargetId, gameData.graveyardEntryVersion(graveyardTargetId));
+            }
+        }
         gameData.stack.add(stackEntry);
         gameData.recordActivatedAbilityOfGraveyardCard(playerId);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);

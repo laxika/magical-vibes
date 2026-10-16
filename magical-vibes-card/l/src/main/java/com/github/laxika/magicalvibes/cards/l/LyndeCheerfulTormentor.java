@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class LyndeCheerfulTormentor extends Card {
 
     public LyndeCheerfulTormentor() {
-        addEffect(EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.CURSE),
                         new RegisterDelayedReturnCurseAttachedToPlayerEffect(null, null)));

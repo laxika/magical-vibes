@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link AssignNoCombatDamageEffect}: adds the stack entry's {@code sourcePermanentId} to
- * {@code creaturesPreventedFromDealingCombatDamage} and {@code creaturesAssigningNoCombatDamage} (which unpreventable
+ * {@code creaturesPreventedFromDealingCombatDamage} and {@code creaturesAssigningNoCombatDamageThisTurn} (which unpreventable
  * damage can't override) so that creature deals no combat damage this
  * turn (cleared at turn cleanup).
  */
@@ -41,7 +41,7 @@ public class AssignNoCombatDamageEffectHandler implements NormalEffectHandlerBea
         }
 
         gameData.creaturesPreventedFromDealingCombatDamage.add(attackerId);
-        gameData.creaturesAssigningNoCombatDamage.add(attackerId);
+        gameData.creaturesAssigningNoCombatDamageThisTurn.add(attackerId);
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
         String attackerName = attacker != null ? attacker.getCard().getName() : "the attacking creature";
         gameLogService.append(gameData,

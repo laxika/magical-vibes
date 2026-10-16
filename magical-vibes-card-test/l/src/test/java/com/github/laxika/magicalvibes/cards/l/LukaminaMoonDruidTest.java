@@ -126,6 +126,7 @@ class LukaminaMoonDruidTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.activateAbility(player1, permanentIndex, colorAbilityIndex, null, null);
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         if (target != null) {
             harness.handlePermanentChosen(player1, target.getId());

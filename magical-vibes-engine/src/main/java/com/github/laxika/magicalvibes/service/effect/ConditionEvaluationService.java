@@ -138,6 +138,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCreatedTokenThis
 import com.github.laxika.magicalvibes.model.condition.ControllerControlledPermanentExploredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerDidntPlayCardFromExileThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsFewerCreaturesThanEachOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMoreLandsThanOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMorePermanentsThanEachOtherPlayer;
@@ -857,6 +858,7 @@ public class ConditionEvaluationService {
             case ControlledDragonAsCast ignored -> ctx.controlledDragonAsCast();
             case ControlledCommanderAsCast ignored -> controlsCommander(gameData, ctx);
             case ControllerControlsCommander ignored -> controllerControlsCommander(gameData, ctx);
+            case ControllerControlsOwnCommander ignored -> controllerControlsOwnCommander(gameData, ctx);
             case ControlledFaerieAsCast ignored -> ctx.controlledFaerieAsCast();
             case ControllerHasCommanderAsCast ignored ->
                     ctx.controllerId() != null
@@ -1089,8 +1091,8 @@ public class ConditionEvaluationService {
             case ControllerMaximumHandSizeOtherThanSeven ignored ->
                     ctx.controllerId() != null
                             && turnCleanupService != null
-                            && (turnCleanupService.hasNoMaximumHandSize(gameData, ctx.controllerId())
-                            || turnCleanupService.getMaxHandSize(gameData, ctx.controllerId()) != 7);
+                            && !turnCleanupService.hasNoMaximumHandSize(gameData, ctx.controllerId())
+                            && turnCleanupService.getMaxHandSize(gameData, ctx.controllerId()) != 7;
             case ControllerOwnsCardInExile ignored ->
                     controllerOwnsCardInExile(gameData, ctx.controllerId());
             case ControllerHadNoCardsInHandAtTurnStart ignored ->
@@ -1762,7 +1764,7 @@ public class ConditionEvaluationService {
             }
             case SourceIsMotivated ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
-                yield source != null && source.isMotivated();
+                yield source != null && ctx.controllerId() != null && ctx.controllerId().equals(source.getMotivatedByPlayerId());
             }
             case SourceIsHarnessed ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
@@ -2949,6 +2951,18 @@ public class ConditionEvaluationService {
 
         return battlefield.stream().anyMatch(permanent -> gameData.playerCommanders.values().stream()
                 .flatMap(List::stream)
+                .anyMatch(commander -> commander.getId().equals(permanent.getOriginalCard().getId())));
+    }
+
+    private boolean controllerControlsOwnCommander(GameData gameData, ConditionContext ctx) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null) return false;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+
+        List<Card> ownCommanders = gameData.playerCommanders.getOrDefault(controllerId, List.of());
+        return battlefield.stream().anyMatch(permanent -> ownCommanders.stream()
                 .anyMatch(commander -> commander.getId().equals(permanent.getOriginalCard().getId())));
     }
 

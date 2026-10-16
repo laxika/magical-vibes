@@ -12,13 +12,17 @@ import java.util.UUID;
  * @param holdInGraveyard if {@code true}, chosen cards stay in their graveyards (keeping the graveyard
  *                        indices of later choices stable) until the last choice, then enter together with
  *                        Aura host choices made inside the batch (Gruesome Menagerie)
+ * @param closedByEffect  if {@code true}, finishing a graveyard choice does not make the batch enter; it
+ *                        stays open across the effects in between until a
+ *                        {@code CloseGraveyardReturnBatchEffect} resolves (Liliana, the Necromancer)
  */
 public record PendingGraveyardReturnBatch(UUID controllerId, List<Card> cards,
                                           Map<UUID, UUID> graveyardOwnerByCardId,
                                           boolean underOwnersControl, boolean eachPlayerChooses,
                                           boolean enterTapped, CounterType enterWithCounter,
                                           CardColor grantColor, CardSubtype grantSubtype,
-                                          Set<Keyword> grantKeywords, boolean holdInGraveyard) {
+                                          Set<Keyword> grantKeywords, boolean holdInGraveyard,
+                                          boolean closedByEffect) {
 
     public PendingGraveyardReturnBatch {
         cards = List.copyOf(cards);
@@ -34,6 +38,22 @@ public record PendingGraveyardReturnBatch(UUID controllerId, List<Card> cards,
                                        Set<Keyword> grantKeywords) {
         this(controllerId, cards, graveyardOwnerByCardId, underOwnersControl, eachPlayerChooses,
                 enterTapped, enterWithCounter, grantColor, grantSubtype, grantKeywords, false);
+    }
+
+    public PendingGraveyardReturnBatch(UUID controllerId, List<Card> cards,
+                                       Map<UUID, UUID> graveyardOwnerByCardId,
+                                       boolean underOwnersControl, boolean eachPlayerChooses,
+                                       boolean enterTapped, CounterType enterWithCounter,
+                                       CardColor grantColor, CardSubtype grantSubtype,
+                                       Set<Keyword> grantKeywords, boolean holdInGraveyard) {
+        this(controllerId, cards, graveyardOwnerByCardId, underOwnersControl, eachPlayerChooses,
+                enterTapped, enterWithCounter, grantColor, grantSubtype, grantKeywords, holdInGraveyard, false);
+    }
+
+    /** An empty batch that collects choices made by separate effects until a close effect lets them enter together. */
+    public static PendingGraveyardReturnBatch openUntilClosed(UUID controllerId) {
+        return new PendingGraveyardReturnBatch(controllerId, List.of(), Map.of(), false, false, false, null,
+                null, null, Set.of(), false, true);
     }
 
     /** A batch for the controller's own graveyard whose chosen cards stay there until all enter together. */
@@ -68,6 +88,6 @@ public record PendingGraveyardReturnBatch(UUID controllerId, List<Card> cards,
         updatedOwners.put(card.getId(), graveyardOwnerId);
         return new PendingGraveyardReturnBatch(controllerId, updatedCards, updatedOwners, underOwnersControl,
                 eachPlayerChooses, enterTapped, enterWithCounter, grantColor, grantSubtype, grantKeywords,
-                holdInGraveyard);
+                holdInGraveyard, closedByEffect);
     }
 }

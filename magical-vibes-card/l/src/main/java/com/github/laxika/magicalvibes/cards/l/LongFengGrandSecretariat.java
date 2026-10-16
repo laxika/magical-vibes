@@ -27,6 +27,10 @@ public class LongFengGrandSecretariat extends Card {
                                 )),
                                 new TriggeringPermanentControllerConditionalEffect(
                                         new PutCounterOnTargetPermanentEffect(
-                                                CounterType.PLUS_ONE_PLUS_ONE, 1))));
+                                                CounterType.PLUS_ONE_PLUS_ONE, 1))))
+                .addEffect(EffectSlot.ON_DEATH,
+                        new TriggeringCardConditionalEffect(
+                                new CardTypePredicate(CardType.LAND),
+                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)));
     }
 }

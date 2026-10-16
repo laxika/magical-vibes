@@ -62,6 +62,10 @@ public class ReturnCardsFromControllerGraveyardToBattlefieldEffectHandler implem
 
         List<Card> matching = new ArrayList<>();
         for (Card card : graveyard) {
+            // A token that has left the battlefield can't come back onto it (CR 111.8).
+            if (card.isToken()) {
+                continue;
+            }
             if (e.manaValueEqualsX() && card.getManaValue() != entry.getXValue()) {
                 continue;
             }

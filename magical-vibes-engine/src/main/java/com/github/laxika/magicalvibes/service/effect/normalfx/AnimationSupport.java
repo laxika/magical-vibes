@@ -48,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -670,6 +671,15 @@ public class AnimationSupport {
         // The animation has no duration, so the granted card types must survive turn cleanup too
         // (Stalking Stones "becomes a 3/3 Elemental artifact creature that's still a land").
         target.getPersistentGrantedCardTypes().addAll(effect.grantedCardTypes());
+        if (effect.cardTypeOverriding()) {
+            // "Becomes a creature" replaces the other card types (CR 205.1a).
+            Set<CardType> replacementTypes = EnumSet.of(CardType.CREATURE);
+            replacementTypes.addAll(effect.grantedCardTypes());
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
+                    sourcePermanentId, controllerId,
+                    new SetCardTypesEffect(replacementTypes, GrantScope.TARGET),
+                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+        }
 
         boolean colorReplaced = false;
         if (effect.animatedColor() != null) {
@@ -862,12 +872,35 @@ public class AnimationSupport {
         return true;
     }
 
+    /**
+     * Olag, Ludevic's Hubris after it became a copy of an exiled creature card: the copy effect keeps applying
+     * when an ability of the copied card transforms it, so only the transformed status changes and it never
+     * becomes Ludevic again. Olag does not transform as it becomes night or day even when it copies a card with
+     * daybound (Ludevic rulings, 2021-09-24).
+     */
+    private boolean isLudevicCopy(Permanent self) {
+        Card backFace = self.getOriginalCard().getBackFaceCard();
+        return backFace != null && self.getCard() != backFace && self.getCard() != self.getOriginalCard()
+                && "Olag, Ludevic's Hubris".equals(self.getCard().getName());
+    }
+
+    private boolean toggleLudevicCopy(GameData gameData, Permanent self, boolean transformed, EffectSlot slot) {
+        self.setTransformed(transformed);
+        gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " transforms."));
+        fireTransformTriggers(gameData, self, self.getCard(), slot);
+        return true;
+    }
+
     private boolean transformToBackFace(GameData gameData, Permanent self, boolean dayNightTransition) {
         Card originalCard = self.getOriginalCard();
         Card backFace = originalCard.getBackFaceCard();
         if (backFace == null) {
             log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
             return false;
+        }
+        if (isLudevicCopy(self)) {
+            return !dayNightTransition && !self.isTransformed()
+                    && toggleLudevicCopy(gameData, self, true, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
         }
 
         if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
@@ -910,6 +943,10 @@ public class AnimationSupport {
     }
 
     private boolean transformToFrontFace(GameData gameData, Permanent self, boolean dayNightTransition) {
+        if (isLudevicCopy(self)) {
+            return !dayNightTransition && self.isTransformed()
+                    && toggleLudevicCopy(gameData, self, false, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
+        }
         if (!dayNightTransition && gameData.dayNight != com.github.laxika.magicalvibes.model.DayNight.NEITHER
                 && isDayNightBound(self)) {
             return false;

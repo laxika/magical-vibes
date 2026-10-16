@@ -44,7 +44,7 @@ public class LarvalScoutlander extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.LANDER))),
                         new SearchLibraryEffect(new Fixed(2), CardPredicateUtils.basicLand(),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                        "a land or Lander"),
+                        "a land or Lander", false, false),
                 "Sacrifice a land or Lander?"));
 
         addActivatedAbility(new ActivatedAbility(

@@ -74,7 +74,7 @@ public final class CombatHelper {
         final boolean[] result = {false};
         gameData.forEachPermanent((playerId, source) -> {
             if (result[0] || !source.isAttached() || !attacker.getId().equals(source.getAttachedTo())
-                    || source.isAuraEffectsIgnoredThisTurn()) {
+                    || source.isAuraEffectsIgnoredFor(gameQueryService.findPermanentController(gameData, attacker.getId()))) {
                 return;
             }
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {

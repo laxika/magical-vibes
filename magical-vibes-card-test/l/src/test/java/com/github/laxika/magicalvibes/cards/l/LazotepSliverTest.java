@@ -160,7 +160,7 @@ class LazotepSliverTest extends BaseCardTest {
     @Test
     @CardUsed({LazotepSliver.class, MirrorEntity.class, GrizzlyBears.class, Shock.class})
     void creatureThatGainedSliverTypeAmassesWhenItDies() {
-        addCreatureReady(player1, new LazotepSliver());
+        Permanent lazotep = addCreatureReady(player1, new LazotepSliver());
         addCreatureReady(player1, new MirrorEntity());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -172,9 +172,11 @@ class LazotepSliverTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
         resolveAllTriggers();
 
-        assertThat(findPermanents(player1, "Sliver Army")).hasSize(1);
-        assertThat(findPermanent(player1, "Sliver Army")
-                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        // Mirror Entity makes the survivors every creature type, Army included (CR 702.73a), so
+        // amass (CR 701.47a) chooses one of them instead of creating an Army token.
+        assertThat(findPermanents(player1, "Sliver Army")).isEmpty();
+        harness.handleMultiplePermanentsChosen(player1, List.of(lazotep.getId()));
+        assertThat(lazotep.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

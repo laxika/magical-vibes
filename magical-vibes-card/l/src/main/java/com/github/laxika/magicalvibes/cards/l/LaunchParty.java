@@ -19,14 +19,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class LaunchParty extends Card {
 
     public LaunchParty() {
-        // The life loss reads the target's controller, so it runs while the creature is still on the
-        // battlefield — listed before the destroy (Soul Reap pattern).
+        // Destroy resolves first (CR 608.2c); the life loss then reads the destroyed creature's controller
+        // from its last known information (CR 608.2h).
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature."
         ))
                 .addEffect(EffectSlot.SPELL, new SacrificeCreatureCost())
-                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
     }
 }

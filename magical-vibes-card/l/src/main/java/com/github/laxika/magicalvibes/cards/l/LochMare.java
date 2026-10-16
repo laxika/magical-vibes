@@ -28,7 +28,7 @@ public class LochMare extends Card {
                 false,
                 "{1}{U}",
                 List.of(
-                        new RemoveCounterFromSourceCost(1, CounterType.MINUS_ONE_MINUS_ONE),
+                        new RemoveCounterFromSourceCost(1, CounterType.ANY),
                         new DrawCardEffect(1)
                 ),
                 "{1}{U}, Remove a counter from this creature: Draw a card."
@@ -38,7 +38,7 @@ public class LochMare extends Card {
                 false,
                 "{2}{U}",
                 List.of(
-                        new RemoveCounterFromSourceCost(2, CounterType.MINUS_ONE_MINUS_ONE),
+                        new RemoveCounterFromSourceCost(2, CounterType.ANY),
                         new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN)
                 ),

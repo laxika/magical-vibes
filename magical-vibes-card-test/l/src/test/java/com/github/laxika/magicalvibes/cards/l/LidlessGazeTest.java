@@ -89,6 +89,7 @@ class LidlessGazeTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(ownCard, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(opponentCard, new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new LidlessGaze()));
+        harness.setHand(player2, List.of());
         addLidlessGazeMana();
         harness.castAndResolveSorcery(player1, 0, 0);
 

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -40,9 +41,15 @@ public class ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffe
         }
         if (targetCardId == null) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
-            return;
+        } else {
+            exileTarget(gameData, entry, effect, targetCardId);
         }
+        grantPlayPermissions(gameData, entry);
+    }
 
+    private void exileTarget(GameData gameData, StackEntry entry,
+                             ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect effect,
+                             UUID targetCardId) {
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameLogService.append(gameData,
@@ -61,11 +68,28 @@ public class ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffe
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, targetCardId);
         gameData.addToExileWithDiscoveryCounter(graveyardOwnerId, targetCard);
-        gameData.exilePlayPermissions.put(targetCardId, entry.getControllerId());
-        gameData.exilePlayPermissionsExpireEndOfTurn.add(targetCardId);
 
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(entry.getControllerId()) + " exiles ", targetCard,
-                " from a graveyard with a discovery counter and may play it this turn."));
+                " from a graveyard with a discovery counter."));
+    }
+
+    /**
+     * "You may play a card from exile with a discovery counter on it this turn": every card in exile with a
+     * discovery counter qualifies, but only one of them may be played.
+     */
+    private void grantPlayPermissions(GameData gameData, StackEntry entry) {
+        List<UUID> playable = gameData.exiledCards.stream()
+                .map(exiled -> exiled.card().getId())
+                .filter(gameData.exiledCardsWithDiscoveryCounters::contains)
+                .toList();
+        if (playable.isEmpty()) {
+            return;
+        }
+        for (UUID cardId : playable) {
+            gameData.exilePlayPermissions.put(cardId, entry.getControllerId());
+            gameData.exilePlayPermissionsExpireEndOfTurn.add(cardId);
+        }
+        gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, playable);
     }
 }

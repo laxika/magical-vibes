@@ -135,7 +135,7 @@ class LeonardoCuttingEdgeTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new LeonardoCuttingEdge());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
-        attacker.setBlockedThisCombat(true);
+        attacker.setBlockedWithoutBlockers(true);
         harness.setHand(player1, List.of(new LeonardoCuttingEdge()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

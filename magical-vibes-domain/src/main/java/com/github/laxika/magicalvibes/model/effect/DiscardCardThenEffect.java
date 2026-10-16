@@ -22,6 +22,10 @@ import com.github.laxika.magicalvibes.model.CardType;
  *                          has this type
  * @param alternateThenEffect alternate reflexive effect selected by {@code alternateCardType}
  * @param recipient         player who must discard; the default is the stack-entry controller
+ * @param resolveThenDuringSameResolution continue resolving the current spell or ability after the discard
+ *                          instead of creating a trigger
+ * @param thenWithoutDiscard when true, {@code thenEffect} still resolves when there is no card to
+ *                          discard ("Discard a card, then draw a card" is not an "if you do" clause)
  */
 public record DiscardCardThenEffect(
         CardPredicate filter,
@@ -32,8 +36,17 @@ public record DiscardCardThenEffect(
         CardType alternateCardType,
         CardEffect alternateThenEffect,
         DiscardRecipient recipient,
-        boolean resolveThenDuringSameResolution
+        boolean resolveThenDuringSameResolution,
+        boolean thenWithoutDiscard
 ) implements CardEffect {
+
+    public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
+                                 CardPredicate condition, boolean useEntryTarget,
+                                 CardType alternateCardType, CardEffect alternateThenEffect,
+                                 DiscardRecipient recipient, boolean resolveThenDuringSameResolution) {
+        this(filter, thenEffect, cardDescription, condition, useEntryTarget, alternateCardType,
+                alternateThenEffect, recipient, resolveThenDuringSameResolution, false);
+    }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
                                  CardPredicate condition, boolean useEntryTarget,

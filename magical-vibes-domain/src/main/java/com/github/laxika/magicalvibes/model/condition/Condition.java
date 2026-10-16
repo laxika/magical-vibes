@@ -154,6 +154,7 @@ public sealed interface Condition permits
         ControllerSacrificedPermanentSubtypeAtLeastThisTurn,
         ControllerHasMoreCardsInHandThanEachOpponent,
         ControllerControlsCommander,
+        ControllerControlsOwnCommander,
         ControllerControlsFewerCreaturesThanEachOpponent,
         ControllerHasMoreLifeThanAnOpponent,
         ControllerControlsMoreLandsThanOpponent,

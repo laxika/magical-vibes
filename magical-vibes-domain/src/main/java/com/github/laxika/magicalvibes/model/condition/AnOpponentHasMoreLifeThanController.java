@@ -15,4 +15,9 @@ public record AnOpponentHasMoreLifeThanController() implements Condition {
     public String conditionNotMetReason() {
         return "no opponent has more life than you";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

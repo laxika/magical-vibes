@@ -201,7 +201,7 @@ class LazotepQuarryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, battlefieldIndex(quarry), 2, 2, target.getId(), Zone.GRAVEYARD);
-        harness.setGraveyard(player1, List.of());
+        gd.playerGraveyards.get(player1.getId()).removeIf(card -> card.getId().equals(target.getId()));
         harness.setExile(player1, List.of(target));
         harness.passBothPriorities();
 

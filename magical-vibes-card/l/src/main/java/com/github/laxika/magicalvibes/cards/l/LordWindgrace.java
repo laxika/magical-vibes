@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,7 +32,8 @@ public class LordWindgrace extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(new DiscardCardThenEffect(
-                        null, new DrawCardEffect(1), "a card", CardType.LAND, new DrawCardEffect(2))),
+                        null, new DrawCardEffect(1), "a card", null, false, CardType.LAND,
+                        new DrawCardEffect(2), DiscardRecipient.CONTROLLER, true, true)),
                 "+2: Discard a card, then draw a card. If a land card is discarded this way, draw an additional card."
         ));
 

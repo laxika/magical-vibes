@@ -493,7 +493,10 @@ Reasoning behind the non-obvious mappings:
   reading the layer-5 state (Bad Moon's "black creatures get +1/+1") would not see the black. The
   L5 pass harvests only the colour from the same handler and, again, leaves the effect unmanaged so
   the accumulator pass still runs it. Living Lands and Nature's Revolt pass no colour and classify
-  as L4 alone.
+  as L4 + 7b (the fixed base P/T is harvested from the handler as a timestamped 7b entry, so a newer
+  or older base-P/T setter such as Lignify or an animated Mishra's Factory wins by timestamp).
+  `EnchantedPermanentBecomesCreatureEffect` with a named colour (Living Terrain's green) is likewise
+  L4 + L5 + 7b; its colour is harvested in layer 5 and managed, so a later colour-setting effect replaces it.
 - **Changeling keyword grants are L4 + L6** (`GrantKeywordEffect` whose keywords contain
   `CHANGELING` → both layers, one timestamp): "gains all creature types" defines the object's
   creature types (CR 702.73a), a layer-4 contribution — so an Elf lord with an EARLIER

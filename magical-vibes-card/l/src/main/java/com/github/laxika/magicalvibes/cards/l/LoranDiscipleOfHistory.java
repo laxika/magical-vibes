@@ -7,8 +7,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "13")
 public class LoranDiscipleOfHistory extends Card {
@@ -16,7 +20,9 @@ public class LoranDiscipleOfHistory extends Card {
     public LoranDiscipleOfHistory() {
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardSupertypePredicate(CardSupertype.LEGENDARY),
+                        new CardAnyOfPredicate(List.of(
+                                new CardIsSelfPredicate(),
+                                new CardSupertypePredicate(CardSupertype.LEGENDARY))),
                         ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(
                                 new CardTypePredicate(CardType.ARTIFACT))));
     }

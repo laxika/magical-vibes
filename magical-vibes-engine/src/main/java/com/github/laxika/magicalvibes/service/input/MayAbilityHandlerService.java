@@ -852,7 +852,8 @@ public class MayAbilityHandlerService {
                     && (pendingEntry.getTargetId() != null
                     || !pendingEntry.getTargetIds().isEmpty()
                     || !pendingEntry.getTargetCardIds().isEmpty()
-                    || !pendingEntry.getTargetGroupSizes().isEmpty());
+                    || !pendingEntry.getTargetGroupSizes().isEmpty()
+                    || declaredUpToMultipleTargets(pendingEntry));
             if ((innerEffect instanceof AttachTargetEquipmentToTargetCreatureEffect
                     || innerEffect instanceof AttachTargetAuraOrEquipmentToTargetCreatureEffect)
                     && !targetAlreadySet) {
@@ -1311,6 +1312,15 @@ public class MayAbilityHandlerService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " accepts — choosing graveyard targets for ",
                 ability.sourceCard(), "'s ability."));
+    }
+
+    /**
+     * A triggered ability with "up to N target" (N above one) had its targets chosen when it was put
+     * on the stack (CR 603.3d), so choosing none there is not a reason to ask again at resolution.
+     */
+    private boolean declaredUpToMultipleTargets(StackEntry entry) {
+        return entry.getCard() != null && entry.getCard().getSpellTargets().stream()
+                .anyMatch(target -> target.getMinTargets() == 0 && target.getMaxTargets() > 1);
     }
 
     private void handleResolutionTimeTargetSelection(GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry, boolean canTargetPermanent, boolean canTargetPlayer) {

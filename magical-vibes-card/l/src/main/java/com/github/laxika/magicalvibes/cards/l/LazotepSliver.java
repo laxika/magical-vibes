@@ -11,8 +11,13 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "733")
 @CardRegistration(set = "CMM", collectorNumber = "764")
@@ -32,6 +37,10 @@ public class LazotepSliver extends Card {
                 new CardSubtypePredicate(CardSubtype.SLIVER),
                 new AmassGoblinsEffect(2, CardSubtype.SLIVER));
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, sliverDeath);
-        addEffect(EffectSlot.ON_DEATH, sliverDeath);
+        addEffect(EffectSlot.ON_DEATH, new TriggeringCardConditionalEffect(
+                new CardAllOfPredicate(List.of(
+                        new CardSubtypePredicate(CardSubtype.SLIVER),
+                        new CardNotPredicate(new CardIsTokenPredicate()))),
+                new AmassGoblinsEffect(2, CardSubtype.SLIVER)));
     }
 }

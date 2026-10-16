@@ -30,6 +30,7 @@ class LordOfTheVoidTest extends BaseCardTest {
         harness.setLibrary(player2, library);
 
         resolveCombatAndTrigger();
+        harness.passUntil(player2, TurnStep.DRAW);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player2.getId()))

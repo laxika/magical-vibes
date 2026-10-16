@@ -44,7 +44,8 @@ public class RegisterDelayedReturnCurseAttachedToPlayerEffectHandler implements 
         }
         if (ownerId != null) {
             gameData.queueDelayedAction(new DelayedReturnCurseAttachedToPlayer(
-                    delayed.cardId(), ownerId, delayed.attachedPlayerId()));
+                    delayed.cardId(), ownerId, delayed.attachedPlayerId(),
+                    gameData.graveyardEntryVersion(delayed.cardId())));
         }
     }
 }

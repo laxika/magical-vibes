@@ -323,19 +323,27 @@ public final class LayerClassifier {
         map.put(SourceBecomesChosenBasicLandTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(EnchantedPermanentBecomesOnlyLandEffect.class, fixed(Layer.L4_TYPE));
         // Aura animates the enchanted permanent (Living Terrain): the creature type is added in
-        // layer 4; its base P/T is a timestamped 7b entry (Ensoul Artifact), while the colour (5)
-        // is still filled by the handler in the accumulator pass.
-        map.put(EnchantedPermanentBecomesCreatureEffect.class, fixed(Layer.L4_TYPE, Layer.L7B_SET_PT));
+        // layer 4; its base P/T is a timestamped 7b entry (Ensoul Artifact), and the colour (5) is
+        // harvested from the handler in timestamp order.
+        // A named colour (Living Terrain's green) is a colour-setting layer-5 contribution, so a later
+        // colour-setting effect replaces it (CR 613.1e).
+        map.put(EnchantedPermanentBecomesCreatureEffect.class,
+                new Entry(Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L7B_SET_PT), (effect, fromOwnStaticSlot) ->
+                        ((EnchantedPermanentBecomesCreatureEffect) effect).color() == null
+                                ? new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L7B_SET_PT), false, false)
+                                : new LayerClassification(
+                                        Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L7B_SET_PT), false, true)));
         map.put(EnchantedPermanentToughnessBecomesLoyaltyEffect.class, fixed(Layer.L7B_SET_PT));
         // All lands become creatures (Nature's Revolt): the creature type is added in layer 4;
         // the handler fills the fixed base P/T in the accumulator pass. When the effect also names
         // the colour the land becomes (Kormus Bell's "1/1 black creatures"), it is a colour-setting
         // layer-5 contribution as well, so a later-layer lord like Bad Moon sees the black.
         map.put(AllLandsAreCreaturesEffect.class,
-                new Entry(Set.of(Layer.L4_TYPE, Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
+                new Entry(Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L7B_SET_PT), (effect, fromOwnStaticSlot) ->
                         ((AllLandsAreCreaturesEffect) effect).color() == null
-                                ? new LayerClassification(Set.of(Layer.L4_TYPE), false, false)
-                                : new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L5_COLOR), false, true)));
+                                ? new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L7B_SET_PT), false, false)
+                                : new LayerClassification(
+                                        Set.of(Layer.L4_TYPE, Layer.L5_COLOR, Layer.L7B_SET_PT), false, true)));
         // "~ becomes a P/T creature" from an object's own STATIC slot, always behind a condition
         // today (Rusted Relic's metalcraft, Warden of the Wall's "not your turn"): the creature
         // type and the granted subtypes/card types are the layer-4 contribution. Base P/T (7b),

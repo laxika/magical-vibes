@@ -157,8 +157,11 @@ class LightningBlowTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
 
         gd.turnNumber++;
-        advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        // Stop in the upkeep so the delayed draw trigger waits on the stack instead of auto-resolving.
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        });
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
 

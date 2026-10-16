@@ -719,6 +719,7 @@ public class CastingPermissionService {
                         return true;
                     }
                     if (!pid.equals(castingPlayerId)
+                            && !gameQueryService.hasLostAllAbilities(gameData, perm)
                             && effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
                             && predicateEvaluationService.matchesCardPredicate(
                             card, restriction.predicate(), perm.getCard().getId(), gameData, castingPlayerId,
@@ -2838,6 +2839,8 @@ public class CastingPermissionService {
         if (gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.containsKey(cardId)
                 && gameData.exilePlayPermissionsDuringOwnersNextTurnOnly.contains(cardId)) return false;
         if (!gameData.hasExilePlayPermissionRemaining(cardId)) return false;
+        Integer expiryTurn = gameData.exilePlayPermissionsExpireAtTurnEnd.get(cardId);
+        if (expiryTurn != null && expiryTurn < gameData.turnNumber) return false;
         Condition condition = gameData.exilePlayPermissionConditions.get(cardId);
         return condition == null || conditionEvaluationService.isMet(
                 gameData, condition, ConditionContext.forCasting(playerId));

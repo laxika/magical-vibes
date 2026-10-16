@@ -16,7 +16,8 @@ public class LeyLine extends Card {
     public LeyLine() {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
-                "Target must be a creature."
+                "Target must be a creature.",
+                true
         )).addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new MayEffect(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 "Put a +1/+1 counter on target creature?",

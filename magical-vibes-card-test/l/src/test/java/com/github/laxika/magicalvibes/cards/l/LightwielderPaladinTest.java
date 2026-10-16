@@ -217,10 +217,10 @@ class LightwielderPaladinTest extends BaseCardTest {
         Permanent target = addReadyCreature(player2, new DrudgeSkeletons());
         addReadyCreature(player2, new ShivanDragon());
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
         dealUnblockedDamage();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handlePermanentChosen(player1, target.getId());
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
@@ -239,10 +239,10 @@ class LightwielderPaladinTest extends BaseCardTest {
         Permanent paladin = addReadyCreature(player1, new LightwielderPaladin());
         Permanent target = addReadyCreature(player2, new DrudgeSkeletons());
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(paladin)));
         dealUnblockedDamage();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.handlePermanentChosen(player1, target.getId());
         harness.castInstant(player1, 0, paladin.getId());
         harness.passBothPriorities();

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.DamagedPlayerControlsTargetEf
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandler;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -31,6 +33,10 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private EffectHandlerRegistry effectHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -64,6 +70,12 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no {} to discard for {}",
                     gameData.id, playerName, e.cardDescription(), entry.getCard().getName());
+            if (e.thenWithoutDiscard() && e.thenEffect() != null) {
+                EffectHandler thenHandler = effectHandlerRegistry.getHandler(e.thenEffect());
+                if (thenHandler != null) {
+                    thenHandler.resolve(gameData, entry, e.thenEffect());
+                }
+            }
             return;
         }
 

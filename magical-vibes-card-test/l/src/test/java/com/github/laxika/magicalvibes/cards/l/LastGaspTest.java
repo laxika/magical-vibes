@@ -116,7 +116,7 @@ class LastGaspTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SiegeWurm());
         harness.forceStep(TurnStep.END_STEP);
 
-        castLastGasp(target);
+        harness.withAutoStop(TurnStep.END_STEP, () -> castLastGasp(target));
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(target.getEffectivePower()).isEqualTo(2);

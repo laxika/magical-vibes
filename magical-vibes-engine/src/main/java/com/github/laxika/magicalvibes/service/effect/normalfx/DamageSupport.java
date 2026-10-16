@@ -1253,6 +1253,10 @@ public class DamageSupport {
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.textCardText(
                     playerName + " takes " + effectiveDamage + " damage from ", source, "."));
+        } else if (effectiveDamage > 0 && lifeSupport.replaceLifeLossWithShield(gameData, playerId)) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " takes " + effectiveDamage + " damage from ", source, "."));
         } else {
             int currentLife = gameData.getLife(playerId);
             int lifeAfterDamage = currentLife - effectiveDamage

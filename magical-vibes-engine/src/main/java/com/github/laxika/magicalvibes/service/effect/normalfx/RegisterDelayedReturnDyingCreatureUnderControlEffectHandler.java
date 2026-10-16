@@ -47,16 +47,21 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
             return;
         }
         UUID sourcePermanentId = entry.getSourcePermanentId();
+        // "Another creature" is any creature besides the one that died, which has left the battlefield by now.
         if (e.requireAnotherCreature() && !gameData.anyPermanentMatches(permanent ->
-                !permanent.getId().equals(sourcePermanentId) && gameQueryService.isCreature(gameData, permanent))) {
+                gameQueryService.isCreature(gameData, permanent))) {
             return;
         }
+        // The card must still be the graveyard object the trigger event happened to (CR 400.7).
+        long graveyardEntryVersion = entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                ? entry.getTriggeringCardGraveyardEntryVersion()
+                : gameData.graveyardEntryVersion(dyingCardId);
         if (e.returnUnderOwnersControl()) {
             var returnEffect = com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect.builder()
                     .destination(com.github.laxika.magicalvibes.model.GraveyardChoiceDestination.BATTLEFIELD)
                     .source(com.github.laxika.magicalvibes.model.GraveyardSearchScope.ALL_GRAVEYARDS)
                     .filter(new com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate(
-                            java.util.Set.of(dyingCardId), java.util.Map.of(dyingCardId, gameData.graveyardEntryVersion(dyingCardId))))
+                            java.util.Set.of(dyingCardId), java.util.Map.of(dyingCardId, graveyardEntryVersion)))
                     .returnAll(true).underOwnersControl(true)
                     .enterWithCounter(e.counterType()).enterWithCounterCount(e.counterAmount())
                     .grantColor(e.grantColor()).grantSubtype(e.grantSubtype()).build();
@@ -68,7 +73,7 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
                 dyingCardId, returnControllerId, sourcePermanentId,
                 e.sacrificeOnSourceControlLoss(), e.counterType(), e.counterAmount(),
                 e.grantColor(), e.grantSubtype(), e.returnUnderOwnersControl(), e.requireSourceOnBattlefield(),
-                gameData.graveyardEntryVersion(dyingCardId), entry.getControllerId()));
+                graveyardEntryVersion, entry.getControllerId()));
         log.info("Game {} - {} schedules a dying creature to return under control at the next end step",
                 gameData.id, entry.getCard().getName());
     }

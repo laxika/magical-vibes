@@ -30,7 +30,9 @@ public class LordOfShatterskullPass extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new SetBasePowerToughnessEffect(6, 6, GrantScope.SELF)));
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        // Level 6+ is a static ability that grants the attack trigger, not an intervening "if", so the
+        // level requirement is only checked when the attack happens (CR 711.2, CR 603.4).
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(6, CounterType.LEVEL),
                 new DealDamageToDefendingPlayerCreaturesEffect(6)));
     }

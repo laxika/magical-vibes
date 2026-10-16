@@ -79,7 +79,7 @@ class LoxodonPartisanTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new LeoninSkyhunter());
         addCreatureReady(player2, new LeoninSkyhunter());
         declareAttackers(List.of(0, 1));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
         assertThat(attacker.getPowerModifier()).isEqualTo(1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

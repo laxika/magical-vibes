@@ -24,7 +24,7 @@ public class IgnoreSourceAuraEffectsUntilEndOfTurnEffectHandler implements Norma
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source != null) {
-            source.setAuraEffectsIgnoredThisTurn(true);
+            source.ignoreAuraEffectsThisTurnFor(entry.getControllerId());
         }
     }
 }

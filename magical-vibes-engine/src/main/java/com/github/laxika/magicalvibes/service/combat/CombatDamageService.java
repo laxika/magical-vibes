@@ -4113,6 +4113,11 @@ public class CombatDamageService {
         }
         if (state.damageToDefendingPlayer > 0) {
             if (gameQueryService.canPlayerLifeChange(gameData, defenderId)
+                    && !gameQueryService.damageDoesNotCauseLifeLoss(gameData, defenderId)
+                    && lifeSupport.replaceLifeLossWithShield(gameData, defenderId)) {
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(defenderId)
+                        + " takes " + state.damageToDefendingPlayer + " combat damage."));
+            } else if (gameQueryService.canPlayerLifeChange(gameData, defenderId)
                     && !gameQueryService.damageDoesNotCauseLifeLoss(gameData, defenderId)) {
                 int currentLife = gameData.getLife(defenderId);
                 int lifeAfterDamage = currentLife - state.damageToDefendingPlayer;

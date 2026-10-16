@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class LostInTheMaze extends Card {
 
     public LostInTheMaze() {
-        targetWithDynamicCount(new XValue(), TargetFilters.creature(), 100)
+        targetWithDynamicCount(new XValue(), TargetFilters.creature(), Integer.MAX_VALUE)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
@@ -29,6 +30,7 @@ public class LostInTheMaze extends Card {
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
         addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_TAPPED_CREATURES));
+                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ALL_OWN_CREATURES,
+                        new PermanentIsTappedPredicate()));
     }
 }

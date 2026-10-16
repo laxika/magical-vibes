@@ -111,7 +111,8 @@ class FlickerEffectHandlerTest {
                 gameLogService, permanentRemovalService, battlefieldEntryService,
                 drawService, amountEvaluationService, graveyardReturnSupport, grantKeywordEffectHandler,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class),
-                cloneService, battlefieldEntryBatchSupport);
+                cloneService, battlefieldEntryBatchSupport,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.state.StateTriggerService.class));
     }
 
     private Card createCreatureCard(String name) {

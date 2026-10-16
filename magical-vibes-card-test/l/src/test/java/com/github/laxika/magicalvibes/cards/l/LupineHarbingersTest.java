@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,6 +25,7 @@ class LupineHarbingersTest extends BaseCardTest {
     void entersWithCountersForTurnsBegunSinceForetell() {
         LupineHarbingers lupine = new LupineHarbingers();
         harness.setHand(player1, List.of(lupine));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.foretell(player1, 0);
 
@@ -57,6 +59,7 @@ class LupineHarbingersTest extends BaseCardTest {
     void waitingThreeControllerTurnsGivesThreeCounters() {
         LupineHarbingers lupine = new LupineHarbingers();
         harness.setHand(player1, List.of(lupine));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new LupineHarbingers(), new LupineHarbingers(),
                 new LupineHarbingers()));
         harness.setLibrary(player2, List.of(new LupineHarbingers(), new LupineHarbingers(),
@@ -98,6 +101,7 @@ class LupineHarbingersTest extends BaseCardTest {
     void normalManaCostCannotPayForetellCost() {
         LupineHarbingers lupine = new LupineHarbingers();
         harness.setHand(player1, List.of(lupine));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.foretell(player1, 0);
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
@@ -116,6 +120,7 @@ class LupineHarbingersTest extends BaseCardTest {
     void redirectedEntryCountsNewControllersTurnsSinceForetell() {
         LupineHarbingers lupine = new LupineHarbingers();
         harness.setHand(player1, List.of(lupine));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.foretell(player1, 0);
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
@@ -141,11 +146,12 @@ class LupineHarbingersTest extends BaseCardTest {
     void foretoldCreatureHasHasteAndTramplesWithItsEntryCounter() {
         LupineHarbingers lupine = new LupineHarbingers();
         harness.setHand(player1, List.of(lupine));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.foretell(player1, 0);
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new LupineHarbingers());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new LupineHarbingers());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castFromExile(player1, lupine.getId());
@@ -154,6 +160,7 @@ class LupineHarbingersTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 4, player2.getId(), 1));
 
         harness.assertLife(player2, 19);
         harness.assertOnBattlefield(player1, "Lupine Harbingers");

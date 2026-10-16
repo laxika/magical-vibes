@@ -782,6 +782,8 @@ public class GameData {
     public final Set<UUID> playersWhoForetoldThisTurn = ConcurrentHashMap.newKeySet();
     /** Foretell costs assigned when cards were granted foretell dynamically. */
     public final Map<UUID, ManaCost> foretoldCardCosts = new ConcurrentHashMap<>();
+    /** Every player's turns-begun count when a card was foretold, so a later controller can count turns since. */
+    public final Map<UUID, Map<UUID, Integer>> foretoldCardTurnsTaken = new ConcurrentHashMap<>();
     /** Card IDs currently represented as cards in the ante zone. Ante is modelled through exile. */
     public final Set<UUID> antedCardIds = ConcurrentHashMap.newKeySet();
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
@@ -1495,12 +1497,9 @@ public class GameData {
     /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
     public final Set<UUID> creaturesPreventedFromDealingCombatDamage = ConcurrentHashMap.newKeySet();
     /**
-     * Creatures that assign no combat damage this turn (Carrion Wurm). Unlike prevention this
+     * Creatures that assign no combat damage this turn (Carrion Wurm, Laccolith Titan). Unlike prevention this
      * can't be overridden by "damage can't be prevented" effects.
      */
-    public final Set<UUID> creaturesAssigningNoCombatDamage = ConcurrentHashMap.newKeySet();
-
-    /** Creatures that assign no combat damage this turn, even if damage cannot be prevented. */
     public final Set<UUID> creaturesAssigningNoCombatDamageThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage dealt to them is prevented during the current combat. */
     public final Set<UUID> creaturesWithCombatDamagePreventedThisCombat = ConcurrentHashMap.newKeySet();
@@ -2269,6 +2268,18 @@ public class GameData {
 
     /** Permanents whose source subtype choice is temporary and expires during cleanup. */
     public final Set<UUID> temporaryChosenSubtypePermanentIds = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Until-end-of-turn delayed triggers created by choosing a subtype for a source: whenever the
+     * controller activates an ability of a planeswalker of that subtype, the ability is copied
+     * (Leori, Sparktouched Hunter). Each choice is its own delayed trigger and outlives its source.
+     */
+    public final List<ChosenSubtypeActivationCopy> chosenSubtypeActivationCopiesThisTurn =
+            new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /** One delayed "copy abilities of planeswalkers of this type" trigger and the object that created it. */
+    public record ChosenSubtypeActivationCopy(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
+                                              CardSubtype subtype) {}
 
     /** Pending one-shot non-mana exhaust-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextExhaustAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
@@ -6496,6 +6507,7 @@ public class GameData {
         exiledCards.add(new ExiledCardEntry(card, playerId, null, true, playerId, turnNumber,
                 turnsTakenByPlayer.getOrDefault(playerId, 0)));
         foretoldCardIds.add(card.getId());
+        foretoldCardTurnsTaken.put(card.getId(), Map.copyOf(turnsTakenByPlayer));
         if (foretellCost != null) {
             foretoldCardCosts.put(card.getId(), foretellCost);
         }
@@ -6515,6 +6527,7 @@ public class GameData {
                                 ? -1
                                 : turnsTakenByPlayer.getOrDefault(foretellingPlayerId, 0)));
                 foretoldCardIds.add(cardId);
+                foretoldCardTurnsTaken.put(cardId, Map.copyOf(turnsTakenByPlayer));
                 if (foretellCost != null) {
                     foretoldCardCosts.put(cardId, foretellCost);
                 }
@@ -6585,6 +6598,7 @@ public class GameData {
             hauntingCardToPermanentId.remove(cardId);
             foretoldCardIds.remove(cardId);
             foretoldCardCosts.remove(cardId);
+            foretoldCardTurnsTaken.remove(cardId);
             exilePlayPermissionSourceCards.entrySet().removeIf(entry -> cardId.equals(entry.getValue()));
             exilePlayPermissionSourcePermanents.remove(cardId);
             exileCastPermissionsUntilEndOfTurn.removeIf(permission -> permission.cardId().equals(cardId));
@@ -7668,7 +7682,6 @@ public class GameData {
                         .addAll(predicates));
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
-        copy.creaturesAssigningNoCombatDamage.addAll(this.creaturesAssigningNoCombatDamage);
         copy.creaturesAssigningNoCombatDamageThisTurn.addAll(this.creaturesAssigningNoCombatDamageThisTurn);
         copy.creaturesWithCombatDamagePreventedThisCombat.addAll(
                 this.creaturesWithCombatDamagePreventedThisCombat);
@@ -7818,6 +7831,7 @@ public class GameData {
         copy.exiledVoyageCounters.putAll(this.exiledVoyageCounters);
         copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);
         copy.foretoldCardCosts.putAll(this.foretoldCardCosts);
+        copy.foretoldCardTurnsTaken.putAll(this.foretoldCardTurnsTaken);
         this.pendingNextInstantSorceryCopyThisTurnMaxManaValues.forEach((playerId, maxManaValues) ->
                 copy.pendingNextInstantSorceryCopyThisTurnMaxManaValues.put(
                         playerId, new ArrayList<>(maxManaValues)));
@@ -8797,6 +8811,7 @@ public class GameData {
         copy.pendingNextXActivatedAbilityCopyThisTurnCount
                 .putAll(this.pendingNextXActivatedAbilityCopyThisTurnCount);
         copy.temporaryChosenSubtypePermanentIds.addAll(this.temporaryChosenSubtypePermanentIds);
+        copy.chosenSubtypeActivationCopiesThisTurn.addAll(this.chosenSubtypeActivationCopiesThisTurn);
         copy.pendingNextExhaustAbilityCopyThisTurnCount.putAll(this.pendingNextExhaustAbilityCopyThisTurnCount);
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));

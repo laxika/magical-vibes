@@ -96,8 +96,8 @@ class LorescaleCoatlTest extends BaseCardTest {
     void removedSourceDoesNotRedirectCounter() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new LorescaleCoatl());
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
         advanceToDraw(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castAndResolveInstant(player1, 0, source.getId());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new LorescaleCoatl());

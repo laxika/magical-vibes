@@ -35,9 +35,11 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(targetChoice.validPlayerIds()).containsExactly(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(countTokens(player2)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -57,9 +59,11 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(targetChoice.validPlayerIds()).containsExactly(player1.getId());
         harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(countTokens(player1)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -75,8 +79,10 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
         createTokens(player1);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         createTokens(player1);
         harness.passBothPriorities();
@@ -106,6 +112,7 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(countTokens(player2)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -121,10 +128,11 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
 
         createTokens(player1);
         harness.passBothPriorities();
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getId().equals(gd.stack.getLast().getTriggeringPermanentId()))
+                .findFirst().orElseThrow();
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -132,6 +140,7 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(countTokens(player2)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

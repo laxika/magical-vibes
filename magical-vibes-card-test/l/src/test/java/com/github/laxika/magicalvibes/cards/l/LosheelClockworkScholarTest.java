@@ -98,6 +98,7 @@ class LosheelClockworkScholarTest extends BaseCardTest {
     @Test
     void opposingArtifactCreatureDoesNotTriggerDraw() {
         harness.addToBattlefield(player1, new LosheelClockworkScholar());
+        harness.setHand(player1, List.of());
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Memnite()));
         harness.castArtifact(player2, 0);

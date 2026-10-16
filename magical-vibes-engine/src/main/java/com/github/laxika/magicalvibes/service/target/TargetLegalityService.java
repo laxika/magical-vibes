@@ -494,6 +494,9 @@ public class TargetLegalityService {
                         && targetCardIds.size() != graveyardEffect.count()) {
                     throw new IllegalStateException("Must select exactly " + graveyardEffect.count() + " target cards");
                 }
+                if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
+                    throw new IllegalStateException("Cannot target the same card twice");
+                }
                 UUID sharedGraveyardOwnerId = null;
                 for (UUID cardId : targetCardIds) {
                     Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
@@ -5044,6 +5047,12 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryHasSourceChosenSubtypePredicate) {
             if (source == null || source.getChosenSubtype() == null
                     || stackEntry.getSourcePermanentId() == null) {
+                return false;
+            }
+            // Each choice made through the source's trigger is a delayed trigger of its own that is
+            // collected separately, so the source's own chosen subtype no longer produces a copy.
+            if (gameData.chosenSubtypeActivationCopiesThisTurn.stream()
+                    .anyMatch(copy -> source.getId().equals(copy.sourcePermanentId()))) {
                 return false;
             }
             Permanent abilitySource = gameQueryService.findPermanentById(

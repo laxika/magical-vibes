@@ -31,7 +31,8 @@ public class BoostOwnCreaturesByManaSymbolEffectHandler implements StaticEffectH
         if (!support.isEffectivelyCreature(context.gameData(), target, hasAnimateArtifacts)) {
             return;
         }
-        ManaCost cost = target.getCard().getParsedManaCost();
+        // A face-down permanent has no mana cost (CR 708.2a).
+        ManaCost cost = target.isFaceDown() ? null : target.getCard().getParsedManaCost();
         if (cost == null) {
             return;
         }

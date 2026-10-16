@@ -460,7 +460,9 @@ public final class EffectResolution {
      * to an ETB ability, which chooses it as the ability is put on the stack (CR 603.3d).
      */
     public static boolean isTargetlessPermanentSpell(Card card) {
-        return !card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY) && !card.hasType(CardType.LAND)
+        boolean permanentSpell = card.hasType(CardType.CREATURE)
+                || !card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY);
+        return permanentSpell && !card.hasType(CardType.LAND)
                 && !card.isAura() && !card.getKeywords().contains(Keyword.MUTATE)
                 && !needsSpellCastTarget(card) && !needsSpellTarget(card);
     }

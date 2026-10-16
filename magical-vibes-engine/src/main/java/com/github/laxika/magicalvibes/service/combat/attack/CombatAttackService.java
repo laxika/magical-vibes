@@ -3045,6 +3045,9 @@ public class CombatAttackService {
                             playerAttackTrigger.setTriggeringPermanentControllerId(playerId);
                             playerAttackTrigger.setNonTargeting(true);
                             playerAttackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
+                            playerAttackTrigger.setAttackingPermanentSnapshots(attackerIndices.stream()
+                                    .map(battlefield::get)
+                                    .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
                             gameData.stack.add(playerAttackTrigger);
                             gameLogService.append(gameData,
                                     GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());

@@ -262,6 +262,9 @@ class LeoninArbiterTest extends BaseCardTest {
         assertThat(gd.paidSearchTaxPermanentIds.get(player2.getId())).isNotEmpty();
 
         // Advance through an actual turn boundary so the engine must expire the payment.
+        harness.setHand(player1, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         // Now player2 should need to pay again — no mana means prevented

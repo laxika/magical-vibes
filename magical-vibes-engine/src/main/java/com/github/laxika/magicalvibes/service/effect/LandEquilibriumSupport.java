@@ -27,6 +27,7 @@ public class LandEquilibriumSupport {
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
+    private final ThreadLocal<Boolean> putterIsNotEnteringController = ThreadLocal.withInitial(() -> false);
 
     public LandEquilibriumSupport(GameQueryService gameQueryService,
                                   PlayerInputService playerInputService,
@@ -36,8 +37,22 @@ public class LandEquilibriumSupport {
         this.destructionSupport = destructionSupport;
     }
 
+    /**
+     * Runs {@code entry} (a battlefield placement) for a land put onto the battlefield by a player other than its
+     * controller. The replacement then applies to the player putting the land, not to the entering controller.
+     */
+    public void runWithPutterOtherThanController(Runnable entry) {
+        boolean previous = putterIsNotEnteringController.get();
+        putterIsNotEnteringController.set(true);
+        try {
+            entry.run();
+        } finally {
+            putterIsNotEnteringController.set(previous);
+        }
+    }
+
     public ReplacementPlan findPlan(GameData gameData, UUID enteringControllerId, Permanent entering) {
-        if (!gameQueryService.isLand(gameData, entering)) {
+        if (putterIsNotEnteringController.get() || !gameQueryService.isLand(gameData, entering)) {
             return null;
         }
 

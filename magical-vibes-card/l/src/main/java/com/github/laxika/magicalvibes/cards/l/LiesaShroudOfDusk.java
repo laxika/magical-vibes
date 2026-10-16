@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.PayLifeInsteadOfCommanderTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 public class LiesaShroudOfDusk extends Card {
 
     public LiesaShroudOfDusk() {
+        addEffect(EffectSlot.STATIC, new PayLifeInsteadOfCommanderTaxEffect(2));
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null, List.of(new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER))));
     }

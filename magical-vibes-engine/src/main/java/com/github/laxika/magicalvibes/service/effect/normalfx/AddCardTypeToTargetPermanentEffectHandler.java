@@ -6,8 +6,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -38,6 +43,11 @@ public class AddCardTypeToTargetPermanentEffectHandler implements NormalEffectHa
         } else {
             target.getGrantedCardTypes().add(e.cardType());
         }
+        // Timestamped layer-4 grant (CR 613.7), so an earlier type-setting effect doesn't hide it.
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new GrantCardTypeEffect(e.cardType(), GrantScope.TARGET), target.getId(), null, null,
+                e.persistent() ? EffectDuration.PERMANENT : EffectDuration.UNTIL_END_OF_TURN, 0));
 
         String typeName = e.cardType().name().charAt(0) + e.cardType().name().substring(1).toLowerCase();
         String duration = e.persistent() ? "" : " until end of turn";

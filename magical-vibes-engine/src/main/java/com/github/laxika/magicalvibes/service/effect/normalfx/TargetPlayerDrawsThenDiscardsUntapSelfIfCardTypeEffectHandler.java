@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDrawsThenDiscardsUntapSelfIfCardTypeEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class TargetPlayerDrawsThenDiscardsUntapSelfIfCardTypeEffectHandler imple
 
     private final DrawService drawService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,14 +33,16 @@ public class TargetPlayerDrawsThenDiscardsUntapSelfIfCardTypeEffectHandler imple
 
         drawService.resolveDrawCard(gameData, targetPlayerId);
 
+        boolean opponentCaused = !entry.getControllerId().equals(targetPlayerId);
+        boolean discardPrevented = opponentCaused && gameQueryService.isDiscardPrevented(gameData, targetPlayerId);
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId != null && targetHand != null && !targetHand.isEmpty()) {
+        if (!discardPrevented && sourcePermanentId != null && targetHand != null && !targetHand.isEmpty()) {
             gameData.pendingUntapOnDiscardType =
                     new PendingUntapOnDiscardType(sourcePermanentId, e.untapIfType());
         }
 
-        gameData.discardCausedByOpponent = !entry.getControllerId().equals(targetPlayerId);
+        gameData.discardCausedByOpponent = opponentCaused;
         playerInteractionSupport.resolveDiscardCards(gameData, targetPlayerId, 1);
     }
 }

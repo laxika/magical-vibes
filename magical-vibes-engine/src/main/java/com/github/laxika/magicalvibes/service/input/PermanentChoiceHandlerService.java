@@ -145,6 +145,21 @@ public class PermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RedirectAllDamageToChosenCreatureUntilNextTurnEffectHandler
             redirectCreatureDamageHandler;
 
+    /** Declines a champion choice, so the permanent is sacrificed instead of exiling another one (CR 702.72a). */
+    public void handleChampionDeclined(GameData gameData, Player player, boolean accepted) {
+        PendingInteraction.PermanentChoice permanentChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (permanentChoice == null || !player.getId().equals(permanentChoice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (accepted || !(permanentChoice.context() instanceof PermanentChoiceContext.ChampionCreature champion)) {
+            throw new IllegalStateException("Choose the creature to exile");
+        }
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearPermanentChoiceContext();
+        battlefieldHandler.handleChampionDeclined(gameData, champion);
+    }
+
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
                 gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

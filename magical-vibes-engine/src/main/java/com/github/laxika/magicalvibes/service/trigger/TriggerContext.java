@@ -897,6 +897,9 @@ public sealed interface TriggerContext {
     /** Context for cards exiled from the controller's graveyard, including the event's card count. */
     record ControllerCardsExiledFromGraveyard(UUID graveyardOwnerId, int count) implements TriggerContext {}
 
+    /** Context for cards exiled from a player's library and/or graveyard as a single event. */
+    record ControllerCardsExiledFromLibraryOrGraveyard(UUID ownerId, int count) implements TriggerContext {}
+
     /** Context for Kaya's creature and creature-card exile trigger. */
     record ControllerCreaturesOrCreatureCardsExiled(UUID controllerId, int count,
                                                      List<Card> creatureCards) implements TriggerContext {

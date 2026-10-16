@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -65,7 +66,7 @@ class LighthouseChronologistTest extends BaseCardTest {
     void extraTurnTriggerSurvivesLosingLevelCounters() {
         Permanent chronologist = addCreatureReady(player1, new LighthouseChronologist());
         chronologist.setCounterCount(CounterType.LEVEL, 7);
-        advanceToEndStep(player2);
+        harness.withAutoStop(TurnStep.END_STEP, () -> advanceToEndStep(player2));
         assertThat(gd.stack).hasSize(1);
 
         chronologist.setCounterCount(CounterType.LEVEL, 0);
@@ -141,6 +142,8 @@ class LighthouseChronologistTest extends BaseCardTest {
     void regularTurnStillFollowsExtraTurn() {
         Permanent chronologist = addCreatureReady(player1, new LighthouseChronologist());
         chronologist.setCounterCount(CounterType.LEVEL, 7);
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of());
         advanceToEndStep(player2);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.currentTurnIsExtraTurn).isTrue();

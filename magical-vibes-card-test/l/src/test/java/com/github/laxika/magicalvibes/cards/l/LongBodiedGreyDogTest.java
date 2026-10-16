@@ -42,8 +42,10 @@ class LongBodiedGreyDogTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.ensurePriority(player1);
 
-        harness.castCreature(player1, 0);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castCreature(player1, 0);
+            resolveAllTriggers();
+        });
 
         assertThat(countPermanents(player1, "Long-Bodied Grey Dog")).isEqualTo(1);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1)

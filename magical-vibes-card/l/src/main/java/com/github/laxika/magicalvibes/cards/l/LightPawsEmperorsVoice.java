@@ -18,7 +18,7 @@ public class LightPawsEmperorsVoice extends Card {
     public LightPawsEmperorsVoice() {
         addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardIsAuraPredicate(),
-                        new ConditionalEffect(new WasCast(),
+                        new ConditionalEffect(new WasCast(true),
                                 new MayEffect(
                                         new SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect(true),
                                         "Search your library for an Aura card to put onto the battlefield attached to Light-Paws?"))));

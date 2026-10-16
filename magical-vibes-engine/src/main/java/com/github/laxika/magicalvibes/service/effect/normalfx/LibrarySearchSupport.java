@@ -545,6 +545,31 @@ public class LibrarySearchSupport {
     }
 
     /**
+     * Begins one search of {@code playerId}'s library for a card of each of {@code colors}, all put
+     * into {@code destination} together after the last pick (Lotuslight Dancers). The search is
+     * recorded once, and the cards it can find are fixed when it begins. A multicoloured card may fill
+     * any one colour but only one. Returns true if a pick was begun. Otherwise nothing can be found:
+     * the library is shuffled and false is returned.
+     */
+    public boolean startColorPicks(GameData gameData, UUID playerId, List<CardColor> colors,
+                                   LibrarySearchDestination destination) {
+        if (isSearchPrevented(gameData, playerId)) return false;
+        List<Card> deck = gameData.playerDecks.getOrDefault(playerId, List.of());
+        int limit = Math.min(opponentSearchTopCardsLimit(gameData, playerId), deck.size());
+        Set<UUID> searchableCardIds = deck.subList(0, limit).stream()
+                .map(Card::getId).collect(java.util.stream.Collectors.toSet());
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+        if (startNextSubtypeToBattlefieldPick(gameData, playerId,
+                LibrarySearchFollowUp.colorPicks(colors, destination, searchableCardIds))) {
+            return true;
+        }
+        LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+        gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
+                + " searches their library and finds no matching cards. Library is shuffled."));
+        return false;
+    }
+
+    /**
      * Offers the next pick of the follow-up's {@link LibrarySearchFollowUp.SubtypeToBattlefieldPickQueue},
      * skipping subtypes with no unselected matching card among the search's cards. Returns false
      * once no pick remains; the caller then puts the selected cards onto the battlefield and
@@ -580,6 +605,36 @@ public class LibrarySearchSupport {
                             .followUp(followUp.withSubtypeToBattlefieldPicks(queue.withRemainingSubtypes(remaining)))
                             .build(),
                     "Search your library for a " + descriptor + " card to put onto the battlefield.",
+                    true,
+                    playerName + " searches their library for a " + descriptor + " card.",
+                    queue.searchableCardIds());
+            return true;
+        }
+        List<CardColor> remainingColors = new ArrayList<>(queue.remainingColors());
+        while (!remainingColors.isEmpty()) {
+            CardColor color = remainingColors.removeFirst();
+            List<Card> matches = deck.stream()
+                    .filter(card -> queue.searchableCardIds().contains(card.getId()))
+                    .filter(card -> !selectedIds.contains(card.getId()))
+                    .filter(card -> card.getColors().contains(color))
+                    .filter(card -> queue.requiredType() == null || card.hasType(queue.requiredType()))
+                    .toList();
+            if (matches.isEmpty()) {
+                continue;
+            }
+            String descriptor = color.name().toLowerCase();
+            String playerName = gameData.playerIdToName.get(playerId);
+            String destinationText = queue.destination() == LibrarySearchDestination.GRAVEYARD
+                    ? "into your graveyard" : "onto the battlefield";
+            sendLibrarySearchToPlayer(gameData, playerId,
+                    LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
+                            .canFailToFind(true)
+                            .destination(queue.destination())
+                            .shuffleAfterSelection(false)
+                            .followUp(followUp.withSubtypeToBattlefieldPicks(
+                                    queue.withRemainingSubtypes(List.of()).withRemainingColors(remainingColors)))
+                            .build(),
+                    "Search your library for a " + descriptor + " card to put " + destinationText + ".",
                     true,
                     playerName + " searches their library for a " + descriptor + " card.",
                     queue.searchableCardIds());
@@ -829,7 +884,7 @@ public class LibrarySearchSupport {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (effect instanceof OpponentsCantSearchLibrariesAtAllEffect) {
                         if (pid.equals(searchingPlayerId)) {
                             continue;

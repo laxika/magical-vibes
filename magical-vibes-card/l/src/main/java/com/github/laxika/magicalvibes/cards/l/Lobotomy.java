@@ -19,6 +19,6 @@ public class Lobotomy extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addEffect(EffectSlot.SPELL, new RevealHandChooseCardFromItAndExileAllCopiesEffect(
-                new CardNotPredicate(CardPredicateUtils.basicLand())));
+                new CardNotPredicate(CardPredicateUtils.basicLand()), true));
     }
 }

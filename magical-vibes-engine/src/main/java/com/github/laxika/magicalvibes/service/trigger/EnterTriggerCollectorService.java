@@ -1217,7 +1217,7 @@ public class EnterTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                    null, match.permanent().getId());
+                    null, match.permanent().getId(), match.markSourceOncePerTurnOnAcceptance());
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for tokens entering (may effect)",

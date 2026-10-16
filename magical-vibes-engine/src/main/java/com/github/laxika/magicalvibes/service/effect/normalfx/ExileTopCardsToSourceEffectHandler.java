@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
     private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private TriggerCollectionService triggerCollectionService;
 
     @Autowired
     public ExileTopCardsToSourceEffectHandler(GameQueryService gameQueryService,
@@ -57,6 +59,11 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                                               GameLogService gameLogService,
                                               ExileService exileService) {
         this(gameQueryService, gameLogService, null, exileService, null);
+    }
+
+    @Autowired(required = false)
+    void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     @Override
@@ -188,8 +195,15 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                     UUID permittedPlayer = permission.accessScope() == ExileAccessScope.EXILER
                             ? playerId : sourceControllerId;
                     gameData.exilePlayPermissions.put(card.getId(), permittedPlayer);
+                    if (permission.thisTurnOnly()) {
+                        gameData.exilePlayPermissionsExpireAtTurnEnd.put(card.getId(), gameData.turnNumber);
+                    }
                     if (permission.anyManaType()) {
-                        gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                        if (permission.thisTurnOnly()) {
+                            gameData.exilePlayAnyManaType.add(card.getId());
+                        } else {
+                            gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                        }
                     }
                     break;
                 }
@@ -197,6 +211,10 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         }
 
         if (toExile > 0) {
+            if (triggerCollectionService != null) {
+                triggerCollectionService.checkControllerCardsExiledFromLibraryOrGraveyardTriggers(
+                        gameData, playerId, toExile);
+            }
             String playerName = gameData.playerIdToName.get(playerId);
             // Card names are never listed: for a face-down exile that would leak information
             // CR 406.3 keeps hidden.

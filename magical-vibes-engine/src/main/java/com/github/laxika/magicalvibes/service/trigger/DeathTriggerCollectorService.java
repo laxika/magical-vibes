@@ -2666,7 +2666,7 @@ public class DeathTriggerCollectorService {
     boolean handleAnyNontokenPermanentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard apg = (TriggerContext.AnyPermanentGraveyard) ctx;
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -2674,7 +2674,10 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 apg.graveyardOwnerId(),
                 match.permanent().getId()
-        ));
+        );
+        // The graveyard's owner is "that permanent's owner", not a target of the ability.
+        entry.setNonTargeting(true);
+        match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (nontoken permanent put into a graveyard from the battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -2728,6 +2731,8 @@ public class DeathTriggerCollectorService {
 
     @CollectsTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
             slot = EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleAllyCurseDelayedReturn(TriggerMatchContext match,
             RegisterDelayedReturnCurseAttachedToPlayerEffect effect, TriggerContext ctx) {
         TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
@@ -3385,6 +3390,8 @@ public class DeathTriggerCollectorService {
                 match.permanent().getId()
         );
         entry.setTriggeringCardId(death.dyingCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(death.dyingCard().getId()));
         match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
         return true;
@@ -3395,8 +3402,7 @@ public class DeathTriggerCollectorService {
         UUID sourcePermanentId = match.permanent().getId();
         UUID dyingPermanentId = death.dyingPermanentId();
         if (gameData.anyPermanentMatches(permanent ->
-                !permanent.getId().equals(sourcePermanentId)
-                        && !permanent.getId().equals(dyingPermanentId)
+                !permanent.getId().equals(dyingPermanentId)
                         && gameQueryService.isCreature(gameData, permanent))) {
             return true;
         }
@@ -3730,7 +3736,8 @@ public class DeathTriggerCollectorService {
             RegisterDelayedReturnCardFromGraveyardToHandEffect delayedReturn, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         CardEffect bound = delayedReturn.cardId() == null && cd.dyingCard() != null
-                ? new RegisterDelayedReturnCardFromGraveyardToHandEffect(cd.dyingCard().getId())
+                ? new RegisterDelayedReturnCardFromGraveyardToHandEffect(cd.dyingCard().getId(),
+                        match.gameData().graveyardEntryVersion(cd.dyingCard().getId()))
                 : delayedReturn;
         return handleAllyNontokenDefault(match, bound, ctx);
     }
@@ -3975,24 +3982,26 @@ public class DeathTriggerCollectorService {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         GameData gameData = match.gameData();
         Card dyingCard = cd.dyingCard();
-        // The dying card must still be in its owner's graveyard for the return to have a target.
-        List<Card> graveyard = dyingCard == null ? null : gameData.playerGraveyards.get(cd.dyingCreatureControllerId());
-        if (graveyard == null || graveyard.stream().noneMatch(c -> c.getId().equals(dyingCard.getId()))) {
+        // The dying card must still be in some graveyard (possibly the controller's own) for the return to have a target.
+        if (dyingCard == null || gameQueryService.findCardInGraveyardById(gameData, dyingCard.getId()) == null) {
             return false;
         }
         if (match.rawEffect() instanceof MayPayManaEffect rawMayPay) {
             ReturnDyingOpponentCreatureUnderYourControlEffect returnEffect =
                     new ReturnDyingOpponentCreatureUnderYourControlEffect(
                             dyingCard.getId(), effect.grantSubtype());
-            gameData.pendingMayAbilities.add(new PendingMayAbility(
+            // CR 603.5: the payment is decided on resolution, so the trigger goes on the stack first.
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
                     match.permanent().getCard(),
                     match.controllerId(),
-                    new ArrayList<>(List.of(returnEffect)),
-                    match.permanent().getCard().getName() + " — Pay " + rawMayPay.manaCost()
-                            + " to return " + dyingCard.getName() + " to the battlefield under your control?",
-                    dyingCard.getId(),
-                    rawMayPay.manaCost()
-            ));
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new MayPayManaEffect(rawMayPay.manaCost(), returnEffect,
+                            match.permanent().getCard().getName() + " — Pay " + rawMayPay.manaCost()
+                                    + " to return " + dyingCard.getName()
+                                    + " to the battlefield under your control?"))),
+                    null,
+                    match.permanent().getId()));
             logOpponentCreatureDeath(match);
             return true;
         }
@@ -4718,7 +4727,8 @@ public class DeathTriggerCollectorService {
         TriggerContext.AllyAuraOrEquipmentGraveyard aaeg = (TriggerContext.AllyAuraOrEquipmentGraveyard) ctx;
         Card dyingCard = aaeg.dyingCard();
         RegisterDelayedReturnCardFromGraveyardToHandEffect delayedEffect =
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect(dyingCard.getId());
+                new RegisterDelayedReturnCardFromGraveyardToHandEffect(dyingCard.getId(),
+                        match.gameData().graveyardEntryVersion(dyingCard.getId()));
         MayEffect may = new MayEffect(delayedEffect,
                 "Return " + dyingCard.getName() + " to its owner's hand at the beginning of the next end step?");
         match.gameData().queueMayAbility(match.permanent().getCard(), aaeg.controllerId(), may);

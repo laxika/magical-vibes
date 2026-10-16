@@ -47,17 +47,18 @@ public class ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEf
                 .filter(candidate -> triggeringCardId.equals(candidate.getTargetableId()))
                 .findFirst()
                 .orElse(null);
-        if (triggeringSpell == null) {
-            return;
+        // A countered spell can't be exiled, but the rest of the ability still happens: it uses the
+        // spell's last known mana value, which the trigger recorded as its event value.
+        UUID castingPlayerId = entry.getControllerId();
+        if (triggeringSpell != null) {
+            Card spellCard = triggeringSpell.getPhysicalCard();
+            UUID spellOwnerId = triggeringSpell.getOwnerId();
+            castingPlayerId = triggeringSpell.getControllerId();
+            gameData.stack.remove(triggeringSpell);
+            exileService.exileCard(gameData, spellOwnerId, spellCard);
+            gameLogService.append(gameData,
+                    GameLog.cardThen(spellCard, " is exiled by " + entry.getCard().getName() + "."));
         }
-
-        Card spellCard = triggeringSpell.getPhysicalCard();
-        UUID spellOwnerId = triggeringSpell.getOwnerId();
-        UUID castingPlayerId = triggeringSpell.getControllerId();
-        gameData.stack.remove(triggeringSpell);
-        exileService.exileCard(gameData, spellOwnerId, spellCard);
-        gameLogService.append(gameData,
-                GameLog.cardThen(spellCard, " is exiled by " + entry.getCard().getName() + "."));
 
         List<Card> deck = gameData.playerDecks.get(castingPlayerId);
         if (deck == null || deck.isEmpty()) {

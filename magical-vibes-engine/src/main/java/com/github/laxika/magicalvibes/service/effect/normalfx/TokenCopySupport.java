@@ -436,6 +436,20 @@ public class TokenCopySupport {
         List<UUID> createdIds = new ArrayList<>();
         int tokenIndex = 0;
         for (Permanent tokenPermanent : tokens) {
+            // "Enters with an additional counter" (CR 122.6): the counters are there as it enters, so
+            // entry triggers that read power or counters see them.
+            if (effect.initialCounters() != null && !effect.initialCounters().isEmpty()
+                    && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
+                for (var counterEntry : effect.initialCounters().entrySet()) {
+                    if (counterEntry.getValue() > 0) {
+                        int counters = gameQueryService.replaceCounters(gameData, tokenPermanent,
+                                tokenControllerId, counterEntry.getKey(), counterEntry.getValue(),
+                                tokenControllerId);
+                        tokenPermanent.setCounterCount(counterEntry.getKey(),
+                                tokenPermanent.getCounterCount(counterEntry.getKey()) + counters);
+                    }
+                }
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(
                 gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered,
                 entry.getTokenCopyXValue(), false);
@@ -494,15 +508,6 @@ public class TokenCopySupport {
                     gameData, tokenControllerId, sourceCard, null, false);
             if (sourceCard.isSaga()) {
                 sagaChapterService.initializeSaga(gameData, tokenPermanent, sourceCard, tokenControllerId);
-            }
-            if (effect.initialCounters() != null && !effect.initialCounters().isEmpty()
-                    && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
-                for (var counterEntry : effect.initialCounters().entrySet()) {
-                    if (counterEntry.getValue() > 0) {
-                        permanentCounterSupport.placeCounterOnPermanent(
-                                gameData, entry, tokenPermanent, counterEntry.getKey(), counterEntry.getValue());
-                    }
-                }
             }
         }
 

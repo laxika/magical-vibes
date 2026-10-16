@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.LichDuelMasteryLifeLossReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NefariousLichLifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnduringAngelLifeTotalReplacementEffect;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,7 +104,8 @@ public class LifeSupport {
             gameLogService.append(gameData, GameLog.text(playerName + " gains no life."));
             return;
         }
-        if (amount > 0 && hasNefariousLichLifeGainReplacement(gameData, controllerId)) {
+        if (amount > 0 && hasNefariousLichLifeGainReplacement(gameData, controllerId)
+                && !hasOtherLifeGainReplacement(gameData, controllerId)) {
             for (int i = 0; i < amount; i++) {
                 drawService.resolveDrawCard(gameData, controllerId);
             }
@@ -119,7 +121,7 @@ public class LifeSupport {
         // Life-gain replacement effects (Heron of Hope, Boon Reflection) replace the amount before it is
         // applied, in the order the gaining player chooses when that order matters (CR 616.1).
         ReplacementOrderService.Outcome<LifeGainEvent> outcome = replacementOrderService.run(gameData,
-                new LifeGainEvent(controllerId, amount, Set.of(), source, sourceCard, sourceEntryType));
+                new LifeGainEvent(controllerId, amount, Set.of(), source, sourceCard, sourceEntryType, false));
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<LifeGainEvent> completed) {
             completeGainLife(gameData, completed.event());
         }
@@ -132,6 +134,12 @@ public class LifeSupport {
         String source = event.source();
         Card sourceCard = event.sourceCard();
         StackEntryType sourceEntryType = event.sourceEntryType();
+        if (event.drawInstead()) {
+            for (int i = 0; i < amount; i++) {
+                drawService.resolveDrawCard(gameData, controllerId);
+            }
+            return;
+        }
         int currentLife = gameData.getLife(controllerId);
         amount = (int) Math.min((long) amount,
                 Math.max(0L, (long) gameData.getMaximumLifeTotal(controllerId) - currentLife));
@@ -363,17 +371,30 @@ public class LifeSupport {
     private boolean hasNefariousLichLifeGainReplacement(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         return battlefield != null && battlefield.stream().anyMatch(permanent ->
-                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                 .anyMatch(NefariousLichLifeGainReplacementEffect.class::isInstance));
     }
 
-    private boolean replaceLifeLossWithShield(GameData gameData, UUID playerId) {
+    private boolean hasOtherLifeGainReplacement(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        return battlefield != null && battlefield.stream().anyMatch(permanent ->
+                gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
+                .anyMatch(LifeGainReplacementEffect.class::isInstance));
+    }
+
+    /**
+     * Replaces a life loss the player would suffer with Lich's Duel Mastery's shield, if the player
+     * controls one that applies.
+     *
+     * @return true if the life loss was replaced
+     */
+    public boolean replaceLifeLossWithShield(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
 
         List<Permanent> masters = battlefield.stream()
-                .filter(source -> !source.isFaceDown() && !source.isLosesAllAbilitiesUntilEndOfTurn())
-                .filter(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(source -> !source.isFaceDown())
+                .filter(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
                         .anyMatch(LichDuelMasteryLifeLossReplacementEffect.class::isInstance))
                 .toList();
         for (Permanent source : masters) {

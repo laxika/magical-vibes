@@ -92,7 +92,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         assertThat(countSentinelsOnBattlefield()).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(entry -> entry.contains("library is shuffled"));
+                .anyMatch(entry -> entry.toLowerCase().contains("library is shuffled"));
     }
 
     @Test

@@ -16,9 +16,12 @@ import java.util.UUID;
  * @param source          the source description carried to the log, or {@code null}
  * @param sourceCard      the card that caused the gain, carried to the life-gain triggers, or {@code null}
  * @param sourceEntryType the kind of stack entry that caused the gain, or {@code null}
+ * @param drawInstead     {@code true} once a replacement (Nefarious Lich) has turned the gain into drawing
+ *                        {@code amount} cards, so no life is gained and no other life-gain replacement applies
  */
 public record LifeGainEvent(UUID playerId, int amount, Set<String> appliedKeys, String source,
-                            Card sourceCard, StackEntryType sourceEntryType) implements ReplacementEvent {
+                            Card sourceCard, StackEntryType sourceEntryType,
+                            boolean drawInstead) implements ReplacementEvent {
 
     public LifeGainEvent {
         appliedKeys = Set.copyOf(appliedKeys);
@@ -30,18 +33,22 @@ public record LifeGainEvent(UUID playerId, int amount, Set<String> appliedKeys, 
     }
 
     public LifeGainEvent withAmount(int newAmount) {
-        return new LifeGainEvent(playerId, newAmount, appliedKeys, source, sourceCard, sourceEntryType);
+        return new LifeGainEvent(playerId, newAmount, appliedKeys, source, sourceCard, sourceEntryType, drawInstead);
+    }
+
+    public LifeGainEvent withDrawInstead() {
+        return new LifeGainEvent(playerId, amount, appliedKeys, source, sourceCard, sourceEntryType, true);
     }
 
     @Override
     public LifeGainEvent withApplied(String key) {
         Set<String> keys = new HashSet<>(appliedKeys);
         keys.add(key);
-        return new LifeGainEvent(playerId, amount, keys, source, sourceCard, sourceEntryType);
+        return new LifeGainEvent(playerId, amount, keys, source, sourceCard, sourceEntryType, drawInstead);
     }
 
     @Override
     public LifeGainEvent withoutAppliedKeys() {
-        return new LifeGainEvent(playerId, amount, Set.of(), source, sourceCard, sourceEntryType);
+        return new LifeGainEvent(playerId, amount, Set.of(), source, sourceCard, sourceEntryType, drawInstead);
     }
 }

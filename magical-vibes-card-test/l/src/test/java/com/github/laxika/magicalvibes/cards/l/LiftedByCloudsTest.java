@@ -103,7 +103,7 @@ class LiftedByCloudsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castWithSplice(player1, 0, mossKami.getId(), List.of(1));
+        harness.castWithSpliceTargets(player1, 0, List.of(mossKami.getId(), mossKami.getId()), List.of(1));
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, mossKami, Keyword.FLYING)).isTrue();
@@ -122,7 +122,7 @@ class LiftedByCloudsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castWithSplice(player1, 0, target.getId(), List.of(1));
+        harness.castWithSpliceTargets(player1, 0, List.of(target.getId(), target.getId()), List.of(1));
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();

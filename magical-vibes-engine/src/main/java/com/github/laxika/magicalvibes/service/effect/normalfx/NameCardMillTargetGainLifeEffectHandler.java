@@ -30,7 +30,7 @@ public class NameCardMillTargetGainLifeEffectHandler implements NormalEffectHand
         var choiceContext = new ChoiceContext.NameCardMillGainLifeChoice(
                 entry.getControllerId(), entry.getTargetId());
 
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGameAndCatalog(gameData);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, cardNames, "Choose a card name."));
 

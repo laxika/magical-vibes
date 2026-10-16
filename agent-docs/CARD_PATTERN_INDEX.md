@@ -204,6 +204,7 @@
 | battlefield-or-graveyard activated five-face specialize creature with perpetual no-block and color-specific riders | `k/KarlachRagingTiefling.java` + `SpecializeKarlachEffect` + `SeekInstantOrSorceryAndMayCastFreeEffect` |
 | temporary-control ETB with mana-value restriction and five sacrifice-based specialize faces | `w/WyllPactBoundDuelist.java` + `SpecializeWyllEffect` + `DrawCardsUnlessTargetPaysLifeEffect` |
 | six-land five-face specialize creature with color-form static abilities and death-time unspecialization | `l/LukaminaMoonDruid.java` + `SpecializeLukaminaEffect` + `UnspecializeLukaminaEffect` |
+| one-time spell-cast boon plus five specialize faces with "attack with one or more other creatures with flying" triggers (`EventValue` count) | `l/LuluForgetfulHollyphant.java` + `SpecializeLuluEffect` + `BoostTriggeringAttackersEffect` |
 | conjure a random creature duplicate from an opponent's library with perpetual casting permission | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
 | face-up trigger that optionally pays X to conjure and cloak a random exact-mana-value creature with a hybrid turn-up ability | `r/RoaleskPrimeSpecimen.java` + `PayXManaConjureRandomCreatureWithManaValueAndCloakEffect` |
 | random creature with mana value X or less from a target opponent's library onto your battlefield with perpetual X/X and ward {1} | `b/BetterOffer.java` + `PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffect(new XValue())` |
@@ -448,7 +449,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | clone copy with an added subtype and a same-name global combat-damage trigger | `p/PiratedCopy.java` + `CopyPermanentOnEnterEffect` + `ON_CREATURE_WITH_SAME_NAME_COMBAT_DAMAGE_TO_PLAYER` |
 | combat damage → untap creatures + additional combat + repeat-player attack restriction | `p/PortRazer.java` |
 | cast trigger, takeover counter, enter as a copy of a marked exiled creature card | `t/TheMasterFormedAnew.java` and EFFECTS_QUICK_REFERENCE.md |
-| two target creatures get counters/keywords and only those creatures may attack in an added combat | `l/LastNightTogether.java` + target-bound untap/counter/keyword effects + `AdditionalCombatMainPhaseEffect(..., onlyTargetCreaturesCanAttack)` |
+| two target creatures get counters/keywords and only those creatures may attack in an added combat | `l/LastNightTogether.java` + target-bound untap/counter/keyword effects + `AdditionalCombatPhasesAfterMainEffect(1, true)` |
 | combat damage modal, goad damaged player's creature, exile top card and cast with any-color mana | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | combat damage by a creature or its equipped creature, goad every creature controlled by the damaged player | `k/KomainuBattleArmor.java` + `GoadCreaturesDamagedPlayerControlsUntilNextTurnEffect` |
 | ETB goads up to one creature per opponent and adds their total power as +1/+1 counters | `h/HavocEater.java` + `targetUpTo(PlayersInGame - 1, creatureAnOpponentControls)` + `AT_MOST_ONE_PER_CONTROLLER` + `TotalPowerOfTargetGroup` |
@@ -499,7 +500,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | each opponent digs to a nonland, then the controller may free-cast any number of those spells | `EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect(Integer.MAX_VALUE, false, LibraryScope.EACH_OPPONENT)` |
 | each opponent chooses a creature tied for greatest power to exile, then spell mastery deals each opponent damage equal to that creature's power | `o/OlRinsSearingLight.java` + `EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffect` |
 | chosen creature type, reveal until matching creature count, put matches onto battlefield | `RevealUntilChosenCreatureTypeCountToBattlefieldEffect` |
-| encore, graveyard self-exile and attacking token copies for each opponent | `ExileSelfFromGraveyardCost` + `CreateTokenCopiesOfSourceAttackingOpponentsEffect` in a sorcery-speed graveyard ability |
+| encore, graveyard self-exile and token copies that must attack each opponent | `ExileSelfFromGraveyardCost` + `CreateTokenCopiesOfSourceAttackingOpponentsEffect` in a sorcery-speed graveyard ability |
 | destroy target creature, then create two half-sized token copies | `DestroyTargetCreatureAndCreateTokenCopiesEffect` |
 | cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | hand exile + token copy | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |

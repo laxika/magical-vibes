@@ -44,8 +44,8 @@ class LokhustHeavyDestroyerTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Lokhust Heavy Destroyer").getGrantedKeywords())
-                .contains(com.github.laxika.magicalvibes.model.Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Lokhust Heavy Destroyer"),
+                com.github.laxika.magicalvibes.model.Keyword.HASTE)).isTrue();
 
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1,

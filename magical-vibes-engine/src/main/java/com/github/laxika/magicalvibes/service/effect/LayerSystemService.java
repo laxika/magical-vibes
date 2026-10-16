@@ -777,6 +777,8 @@ public class LayerSystemService {
         h = mix(h, gameData.perpetualCardPowerToughnessModifiers.size());
         h = mix(h, gameData.perpetualCardKeywords.hashCode());
         h = mix(h, gameData.perpetualCardKeywords.size());
+        h = mix(h, gameData.perpetualCardRemovedKeywords.hashCode());
+        h = mix(h, gameData.perpetualCardRemovedKeywords.size());
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
                 h = mix(h, System.identityHashCode(entry.card()));
@@ -1104,6 +1106,12 @@ public class LayerSystemService {
             }
             for (CardSubtype granted : permanent.getTransientSubtypes()) {
                 state.addSubtype(granted);
+            }
+            if (!permanent.isFaceDown() && permanent.getCounterCount(CounterType.AWAKENING) > 0) {
+                // An awakened land is an Elemental creature: its creature types are replaced,
+                // while its land types stay.
+                state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                state.addSubtype(CardSubtype.ELEMENTAL);
             }
             // Legacy one-shot color/keyword state is seeded before ANY layer runs so filter
             // leaves answering from the states never see less than the intrinsic values
@@ -3267,6 +3275,17 @@ public class LayerSystemService {
                     }
                 }
                 case ConditionalEffect ignored ->
+                        applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
+                                (target, harvested) -> {
+                                    if (harvested.isBasePTOverridden()) {
+                                        entries.add(new BasePtEntry(target.permanent().getId(),
+                                                harvested.getBasePowerOverride(),
+                                                harvested.getBaseToughnessOverride(),
+                                                instance.timestamp(), instance.position(),
+                                                provenanceSourceName(instance)));
+                                    }
+                                });
+                case AllLandsAreCreaturesEffect ignored ->
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {
                                     if (harvested.isBasePTOverridden()) {

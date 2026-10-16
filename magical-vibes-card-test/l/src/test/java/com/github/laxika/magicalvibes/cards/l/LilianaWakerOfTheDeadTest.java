@@ -203,8 +203,7 @@ class LilianaWakerOfTheDeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
-        harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.hasKeyword(gd, returned, com.github.laxika.magicalvibes.model.Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Grizzly Bears");

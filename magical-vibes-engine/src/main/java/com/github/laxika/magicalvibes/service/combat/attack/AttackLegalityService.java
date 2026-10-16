@@ -367,7 +367,8 @@ public class AttackLegalityService {
                     }
                     if (effect instanceof EnchantedCreatureAttackRestrictionEffect
                             && (targetIsPlayer || !(effect instanceof EnchantedCreatureCantAttackControllerEffect))
-                            && !source.isAuraEffectsIgnoredThisTurn()
+                            && !source.isAuraEffectsIgnoredFor(
+                                    gameQueryService.findPermanentController(gameData, attacker.getId()))
                             && source.isAttached()
                             && attacker.getId().equals(source.getAttachedTo())) {
                         return false;

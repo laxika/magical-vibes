@@ -1929,7 +1929,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                         UUID sourcePermanentId, TargetFilter targetFilter)
             implements PermanentChoiceContext {}
 
-    record PlayerWithLowestLifeChoice(Card sourceCard) implements PermanentChoiceContext {}
+    record PlayerWithLowestLifeChoice(Card sourceCard, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     /** The Black Gate's resolution-time choice of a player tied for most life. */
     record BlackGateMostLifeChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,

@@ -45,13 +45,18 @@ public class RegisterDrawCardsAtNextUpkeepEffectHandler implements NormalEffectH
     }
 
     /**
-     * Owner of the graveyard holding this entry's first still-present targeted card, or null when the
-     * entry has no graveyard targets left (Lodestone Bauble activated with no targets — nobody draws).
+     * Owner of the graveyard holding this entry's first still-present targeted card, or null when
+     * every chosen target has left its graveyard. With zero targets chosen a player is still chosen
+     * (Lodestone Bauble ruling), which defaults to the entry's player target or else its controller.
      */
     private UUID findTargetGraveyardOwnerId(GameData gameData, StackEntry entry) {
         List<UUID> targetCardIds = entry.getTargetCardIds();
         if (targetCardIds == null) {
             return null;
+        }
+        if (targetCardIds.isEmpty()) {
+            return entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
+                    ? entry.getTargetId() : entry.getControllerId();
         }
         for (UUID cardId : targetCardIds) {
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);

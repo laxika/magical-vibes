@@ -24,8 +24,7 @@ public class LegionLoyalist extends Card {
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new MinimumAttackers(3),
                 SequenceEffect.of(
-                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE), GrantScope.OWN_CREATURES),
-                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE), GrantScope.SELF),
+                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE), GrantScope.ALL_OWN_CREATURES),
                         new GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(
                                 null,
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()),

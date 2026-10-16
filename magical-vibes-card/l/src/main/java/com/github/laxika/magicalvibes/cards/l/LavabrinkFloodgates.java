@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
@@ -42,8 +42,6 @@ public class LavabrinkFloodgates extends Card {
                 putOrRemove,
                 new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.DOOM),
-                        SequenceEffect.of(
-                                new SacrificeSelfEffect(),
-                                new MassDamageEffect(6)))));
+                        SacrificeSelfThenEffect.reflexive(new MassDamageEffect(6)))));
     }
 }

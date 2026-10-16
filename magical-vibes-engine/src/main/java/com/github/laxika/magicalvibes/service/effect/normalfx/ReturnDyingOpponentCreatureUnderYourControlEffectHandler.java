@@ -18,10 +18,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link ReturnDyingOpponentCreatureUnderYourControlEffect}: steals the dying creature
- * card from its owner's graveyard and puts it onto the battlefield under the ability controller's
- * control, optionally granting a subtype, and tracks it as a stolen creature. Fizzles if it is no
- * longer in a graveyard.
+ * Resolves {@link ReturnDyingOpponentCreatureUnderYourControlEffect}: takes the dying creature
+ * card from the graveyard it is in (including the controller's own graveyard when the card is
+ * their own) and puts it onto the battlefield under the ability controller's control, optionally
+ * granting a subtype, and tracks it as a stolen creature. Fizzles if it is no longer in a graveyard.
  */
 @Component
 @RequiredArgsConstructor
@@ -47,7 +47,7 @@ public class ReturnDyingOpponentCreatureUnderYourControlEffectHandler implements
         // shared steal-from-graveyard helper via the entry.
         entry.setTargetId(e.dyingCardId());
         GraveyardReturnSupport.StolenCreatureResult result =
-                graveyardReturnSupport.stealFromOpponentGraveyard(gameData, entry, controllerId);
+                graveyardReturnSupport.stealFromGraveyard(gameData, entry, controllerId, false);
         if (result == null) return;
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);

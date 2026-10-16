@@ -13,13 +13,23 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Covers "each attacking creature" ({@link EachPermanentScope#ALL_PLAYERS} + an attacking-creature
  * predicate), "each creature target player controls" ({@link EachPermanentScope#TARGET_PLAYER}) and
  * filtered subsets such as "each attacking or blocking creature target player controls".</p>
+ *
+ * <p>With {@code onlyDeclaredAttackers} the creatures damaged are the ones the attack trigger
+ * recorded when it triggered ("each of those creatures", Lightmine Field), whether or not they are
+ * still attacking; the predicate then only feeds the amount.</p>
  */
 public record DealDamageToEachMatchingPermanentEffect(DynamicAmount damage, PermanentPredicate predicate,
-                                                      EachPermanentScope scope) implements CardEffect {
+                                                      EachPermanentScope scope, boolean onlyDeclaredAttackers)
+        implements CardEffect {
+
+    public DealDamageToEachMatchingPermanentEffect(DynamicAmount damage, PermanentPredicate predicate,
+                                                   EachPermanentScope scope) {
+        this(damage, predicate, scope, false);
+    }
 
     public DealDamageToEachMatchingPermanentEffect(int damage, PermanentPredicate predicate,
                                                    EachPermanentScope scope) {
-        this(new Fixed(damage), predicate, scope);
+        this(new Fixed(damage), predicate, scope, false);
     }
 
     @Override

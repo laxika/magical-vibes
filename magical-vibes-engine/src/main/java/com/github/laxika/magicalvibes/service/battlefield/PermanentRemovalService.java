@@ -2031,19 +2031,22 @@ public class PermanentRemovalService {
             return false;
         }
 
-        if (hasOwnSubtypeExileReplacement(dyingPermanent, dyingSubtypes)) {
+        if (!dyingPermanent.isLosesAllAbilitiesUntilEndOfTurn()
+                && hasOwnSubtypeExileReplacement(dyingPermanent, dyingSubtypes)) {
             return true;
         }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingControllerId);
         if (battlefield != null && battlefield.stream()
-                .anyMatch(source -> hasOwnSubtypeExileReplacement(source, dyingSubtypes))) {
+                .anyMatch(source -> !gameQueryService.hasLostPrintedAbilities(gameData, source)
+                        && hasOwnSubtypeExileReplacement(source, dyingSubtypes))) {
             return true;
         }
 
         for (Map.Entry<UUID, Permanent> entry : gameData.simultaneousDyingPermanents.entrySet()) {
             UUID sourceControllerId = gameData.simultaneousDyingPermanentControllers.get(entry.getKey());
             if (dyingControllerId.equals(sourceControllerId)
+                    && !entry.getValue().isLosesAllAbilitiesUntilEndOfTurn()
                     && hasOwnSubtypeExileReplacement(entry.getValue(), dyingSubtypes)) {
                 return true;
             }
@@ -2763,9 +2766,37 @@ public class PermanentRemovalService {
      */
     private void handleExileReturnOnLeave(GameData gameData, Permanent removedPermanent, UUID controllerId,
                                         boolean hadPrintedAbilities) {
-        gameData.hauntingCardToPermanentId.entrySet()
-                .removeIf(entry -> removedPermanent.getId().equals(entry.getValue()));
+        Set<UUID> stillHauntingCardIds = new java.util.HashSet<>();
+        gameData.hauntingCardToPermanentId.entrySet().removeIf(entry -> {
+            boolean haunted = removedPermanent.getId().equals(entry.getValue());
+            if (haunted) {
+                stillHauntingCardIds.add(entry.getKey());
+            }
+            return haunted;
+        });
         List<PendingExileReturn> pendingReturns = gameData.exileReturnOnPermanentLeave.remove(removedPermanent.getId());
+        if (pendingReturns != null) {
+            List<PendingExileReturn> hauntReturns = pendingReturns.stream()
+                    .filter(pending -> pending.card().getEffects(EffectSlot.ON_DEATH).stream()
+                            .anyMatch(com.github.laxika.magicalvibes.model.effect.ExileSourcePermanentHauntingTargetEffect.class::isInstance))
+                    .toList();
+            if (!hauntReturns.isEmpty()) {
+                // "When that creature leaves the battlefield, return this card from exile": a triggered ability
+                // that only finds the card if it has stayed in exile since it was linked (CR 400.7).
+                for (PendingExileReturn haunt : hauntReturns) {
+                    if (!stillHauntingCardIds.contains(haunt.card().getId())) {
+                        continue;
+                    }
+                    gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, haunt.card(),
+                            haunt.controllerId(), haunt.card().getName() + "'s leaves-the-battlefield ability",
+                            new ArrayList<>(List.of(new ResolvePendingExileReturnEffect(haunt,
+                                    gameData.exileEntryVersions.getOrDefault(haunt.card().getId(), 0L))))));
+                }
+                List<PendingExileReturn> remaining = new ArrayList<>(pendingReturns);
+                remaining.removeAll(hauntReturns);
+                pendingReturns = remaining.isEmpty() ? null : remaining;
+            }
+        }
         boolean returnsOnSourceLeavesTrigger = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
                 .stream()
                 .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
@@ -2819,6 +2850,7 @@ public class PermanentRemovalService {
         }
         boolean simultaneousReturn = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
                 .stream().anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsUntilSourceLeavesEffect
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileOwnNontokenCreaturesUntilSourceLeavesEffect
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect);
         if (simultaneousReturn) {
             List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> cards = new ArrayList<>();

@@ -83,7 +83,7 @@ class LilianasTriumphTest extends BaseCardTest {
         castTriumph();
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept, discarded);
-        harness.handleMultiplePermanentsChosen(player2, List.of(sacrificed.getId()));
+        harness.handlePermanentChosen(player2, sacrificed.getId());
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Giant Spider");
         harness.assertOnBattlefield(player1, "Grizzly Bears");

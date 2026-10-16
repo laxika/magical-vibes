@@ -11,6 +11,7 @@ import java.util.List;
 public class LumberingLaundry extends Card {
 
     public LumberingLaundry() {
+        addMorph("{5}");
         addActivatedAbility(new ActivatedAbility(false, "{2}",
                 List.of(new LookAtFaceDownCreaturesUntilEndOfTurnEffect()),
                 "{2}: Until end of turn, you may look at face-down creatures you don't control any time."));

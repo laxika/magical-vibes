@@ -14,7 +14,7 @@ import java.util.List;
 public class LightningDragon extends Card {
 
     public LightningDragon() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{2}{R}{R}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{2}{R}{R}"));
         addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),
                 "{R}: This creature gets +1/+0 until end of turn."));
     }

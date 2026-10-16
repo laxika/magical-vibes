@@ -147,7 +147,7 @@ public class InteractionHandlerRegistry {
             return false;
         }
         InteractionHandler<PendingInteraction> handler = handlerFor(active);
-        if (handler == null || !handler.answerType().isInstance(answer)) {
+        if (handler == null || !handler.acceptsAnswer(active, answer)) {
             return false;
         }
         handler.handleAnswer(gameData, player, active, answer);

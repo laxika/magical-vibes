@@ -14,6 +14,7 @@ package com.github.laxika.magicalvibes.model.amount;
 public sealed interface DynamicAmount permits
         ArtifactsPutIntoGraveyardFromBattlefieldThisTurn,
         AttachmentsOnSource,
+        StartingLifeTotal,
         AttachedPermanentColorCount,
         TimesSourceAbilityResolvedThisTurn,
         BasicLandTypesAmongControlledLands,

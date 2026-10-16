@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -53,8 +55,6 @@ public class RollD6EffectHandler implements NormalEffectHandlerBean {
             if (rollEffect.trackedResult() != null && result == rollEffect.trackedResult()) {
                 trackedResultCount++;
             }
-            triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
-                    gameData, entry.getControllerId(), 1, result);
             triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
                     gameData, entry.getControllerId(), 6, result);
             if (!rollEffect.branches().isEmpty()) {
@@ -64,6 +64,8 @@ public class RollD6EffectHandler implements NormalEffectHandlerBean {
                 }
             }
         }
+        triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+                gameData, entry.getControllerId(), diceCount, results.get(results.size() - 1));
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(entry.getControllerId())
                 + " rolls " + diceCount + " d6 for " + entry.getCard().getName() + ": " + results + "."));
         if (rollEffect.trackedResult() != null) {
@@ -88,8 +90,39 @@ public class RollD6EffectHandler implements NormalEffectHandlerBean {
         }
         if (effectIndex >= 0) {
             if (!branchEffects.isEmpty()) {
-                entry.insertEffectsToResolve(effectIndex + 1, branchEffects);
+                entry.insertEffectsToResolve(effectIndex + 1, combineTokenBranches(branchEffects));
             }
         }
+    }
+
+    /**
+     * Tokens created for several dice results by one roll instruction are created simultaneously, so
+     * the per-result token branches are folded into a single creation event.
+     */
+    private static List<CardEffect> combineTokenBranches(List<CardEffect> branchEffects) {
+        List<CreateTokenEffect> tokenBranches = branchEffects.stream()
+                .filter(RollD6EffectHandler::isCombinableTokenBranch)
+                .map(CreateTokenEffect.class::cast)
+                .toList();
+        if (tokenBranches.size() < 2) {
+            return branchEffects;
+        }
+        List<CardEffect> combined = new ArrayList<>();
+        boolean tokensAdded = false;
+        for (CardEffect branch : branchEffects) {
+            if (!isCombinableTokenBranch(branch)) {
+                combined.add(branch);
+            } else if (!tokensAdded) {
+                combined.add(tokenBranches.getFirst()
+                        .withSimultaneousTokens(tokenBranches.subList(1, tokenBranches.size())));
+                tokensAdded = true;
+            }
+        }
+        return combined;
+    }
+
+    private static boolean isCombinableTokenBranch(CardEffect branch) {
+        return branch instanceof CreateTokenEffect token
+                && token.amount() instanceof Fixed && token.simultaneousTokens().isEmpty();
     }
 }

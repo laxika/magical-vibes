@@ -154,10 +154,10 @@ class LightningSecuritySergeantTest extends BaseCardTest {
         Card topCard = new Island();
         harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player2, List.of(new LightningBolt()));
-        harness.addMana(player2, ManaColor.RED, 1);
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
 
+        harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, lightning.getId());
         resolveAllTriggers();
 
@@ -188,6 +188,7 @@ class LightningSecuritySergeantTest extends BaseCardTest {
         Card topCard = resolveCombatWithTopCard(new Island());
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island()));
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());

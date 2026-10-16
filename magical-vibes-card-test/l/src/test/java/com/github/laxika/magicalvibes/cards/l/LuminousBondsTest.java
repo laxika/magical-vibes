@@ -153,7 +153,7 @@ class LuminousBondsTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
-        gs.declareAttackers(gd, player1, List.of(1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player1, List.of(1)));
 
         assertThat(enchanted.isAttacking()).isFalse();
         assertThat(other.isAttacking()).isTrue();

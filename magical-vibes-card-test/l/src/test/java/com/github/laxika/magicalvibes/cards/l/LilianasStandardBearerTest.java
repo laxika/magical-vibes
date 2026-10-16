@@ -84,7 +84,7 @@ class LilianasStandardBearerTest extends BaseCardTest {
         harness.ensurePriority(player1);
 
         harness.castCreature(player1, 0);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         harness.assertOnBattlefield(player1, "Liliana's Standard Bearer");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

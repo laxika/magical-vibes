@@ -32,6 +32,7 @@ import java.util.Set;
 public class LoreholdCommand extends Card {
 
     public LoreholdCommand() {
+        setAllowSharedTargets(true);
         AnyTargetPredicateTargetFilter anyTarget = new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -61,7 +62,7 @@ public class LoreholdCommand extends Card {
                                 "Target must be a player."))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Sacrifice a permanent, then draw two cards",
-                        new SacrificePermanentThenEffect(
+                        SacrificePermanentThenEffect.thenRegardless(
                                 new PermanentTruePredicate(), new DrawCardEffect(2), "a permanent"))
         ), 2));
     }

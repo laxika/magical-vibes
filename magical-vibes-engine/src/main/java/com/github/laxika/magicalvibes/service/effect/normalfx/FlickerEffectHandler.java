@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -68,6 +69,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
     private final PlayerInputService playerInputService;
     private final CloneService cloneService;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    private final StateTriggerService stateTriggerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -434,6 +436,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
+        // CR 603.8: a state trigger triggers as soon as its condition is true, even when the state
+        // holds only while the exiled permanents are away.
+        stateTriggerService.checkStateTriggers(gameData);
         returnImmediateBatch(gameData, entry, e, exiled);
 
         if (e.addAdditionalEndStepIfFirst()

@@ -43,12 +43,13 @@ public class ExileTargetPermanentAndAllControlledTokensWithSameNameEffectHandler
         List<Permanent> toExile = new ArrayList<>();
         toExile.add(target);
 
-        if (targetControllerId != null) {
+        if (targetControllerId != null && !target.isFaceDown()) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(targetControllerId);
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
                     if (!permanent.getId().equals(target.getId())
                             && permanent.getCard().isToken()
+                            && !permanent.isFaceDown()
                             && targetName.equals(permanent.getCard().getName())) {
                         toExile.add(permanent);
                     }

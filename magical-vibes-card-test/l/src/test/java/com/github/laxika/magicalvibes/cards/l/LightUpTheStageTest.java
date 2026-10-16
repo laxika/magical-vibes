@@ -98,6 +98,7 @@ class LightUpTheStageTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThatThrownBy(() -> harness.castFromExile(player1, first.getId()))
@@ -232,6 +233,7 @@ class LightUpTheStageTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new LightUpTheStage()));

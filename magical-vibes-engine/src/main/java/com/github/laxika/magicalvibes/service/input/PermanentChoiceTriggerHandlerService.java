@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachTokenEnteredThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
@@ -1583,6 +1584,15 @@ public class PermanentChoiceTriggerHandlerService {
             if (ett.enteringPermanentId() != null) {
                 entry.setTriggeringPermanentControllerId(
                         gameQueryService.findPermanentController(gameData, ett.enteringPermanentId()));
+                Permanent enteringPermanent = gameQueryService.findPermanentById(gameData, ett.enteringPermanentId());
+                if (enteringPermanent != null) {
+                    entry.rememberLastKnownPermanentCard(ett.enteringPermanentId(), enteringPermanent.getCard());
+                }
+            }
+            if (ett.effects().stream().anyMatch(effect ->
+                    effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
+                            && may.wrapped() instanceof CreateTokenCopyOfEnteringTokenForTargetPlayerEffect)) {
+                entry.setMarkSourceOncePerTurnOnAcceptance(true);
             }
             if (ett.enteringPowerAtTrigger() != null) {
                 entry.setTriggeringPermanentPowerAtTrigger(ett.enteringPowerAtTrigger());
@@ -1790,7 +1800,9 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handlePlayerWithLowestLifeChoice(GameData gameData, UUID playerId,
                                                   PermanentChoiceContext.PlayerWithLowestLifeChoice context) {
-        Permanent source = findPermanentByCardId(gameData, context.sourceCard().getId());
+        Permanent source = context.sourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, context.sourcePermanentId())
+                : findPermanentByCardId(gameData, context.sourceCard().getId());
         if (source != null) {
             creatureControlService.applyControlEffect(gameData, playerId, source,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),

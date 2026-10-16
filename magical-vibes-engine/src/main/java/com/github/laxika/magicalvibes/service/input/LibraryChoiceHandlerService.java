@@ -333,6 +333,18 @@ public class LibraryChoiceHandlerService {
                     followUp.withSubtypeToBattlefieldPicks(queue))) {
                 return;
             }
+            if (queue.destination() == LibrarySearchDestination.GRAVEYARD) {
+                // The found cards enter the graveyard together, then the library is shuffled once.
+                Set<UUID> foundIds = queue.selectedCards().stream().map(Card::getId)
+                        .collect(java.util.stream.Collectors.toSet());
+                gameData.playerDecks.get(deckOwnerId).removeIf(card -> foundIds.contains(card.getId()));
+                graveyardService.addCardsFromLibraryToGraveyard(gameData, deckOwnerId, queue.selectedCards());
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + " puts "
+                        + queue.selectedCards().size() + " card(s) into their graveyard. Library is shuffled."));
+                finishSearchAndResume(gameData);
+                return;
+            }
             boolean enterTapped = queue.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
             battlefieldEntryBatchSupport.begin(gameData, queue.selectedCards().stream()
                             .map(selected -> new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
@@ -555,8 +567,14 @@ public class LibraryChoiceHandlerService {
                         perm.getGrantedKeywords().add(Keyword.HASTE);
                     }
                     if (toBattlefieldTapped) perm.tap();
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, battlefieldControllerId, perm,
+                    Runnable placeCard = () -> battlefieldEntryService.putPermanentOntoBattlefield(
+                            gameData, battlefieldControllerId, perm,
                             battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+                    if (playerId.equals(battlefieldControllerId)) {
+                        placeCard.run();
+                    } else {
+                        landEquilibriumSupport.runWithPutterOtherThanController(placeCard);
+                    }
                     landEquilibriumSupport.applyPlan(gameData, playerId, perm, landEquilibriumPlan, null);
                     placeBattlefieldCounter(gameData, perm, battlefieldCounter);
                     if (gameData.pendingEffectResolutionEntry != null) {
@@ -2733,8 +2751,13 @@ public class LibraryChoiceHandlerService {
                 perm.getGrantedKeywords().add(Keyword.HASTE);
             }
             if (tapped) perm.tap();
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes, batch,
-                    enterWithCounters);
+            Runnable placeCard = () -> battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, ownerId, perm, enterTappedTypes, batch, enterWithCounters);
+            if (puttingPlayerId.equals(ownerId)) {
+                placeCard.run();
+            } else {
+                landEquilibriumSupport.runWithPutterOtherThanController(placeCard);
+            }
             landEquilibriumSupport.applyPlan(gameData, puttingPlayerId, perm, landEquilibriumPlan, null);
             placeBattlefieldCounter(gameData, perm, battlefieldCounter);
             batch.add(perm);

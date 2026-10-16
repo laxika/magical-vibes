@@ -37,7 +37,7 @@ public class LenaSelflessChampion extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(true),
+                List.of(SacrificeSelfCost.trackingSignedPower(),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES,
                                 new PermanentPowerLessThanXPredicate())),
                 "Sacrifice this creature: Creatures you control with power less than this creature's "

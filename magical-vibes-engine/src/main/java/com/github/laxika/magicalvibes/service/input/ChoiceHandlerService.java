@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LegacyWordSupport;
@@ -129,6 +130,8 @@ public class ChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     @Autowired @Lazy
     private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.StackResolutionService stackResolutionService;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService;
     @Autowired @Lazy
@@ -336,6 +339,18 @@ public class ChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             abilityActivationService.completeForageCostChoice(gameData, player, choice,
                     "Sacrifice a Food".equals(colorName));
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.SpellReboundOrPlotChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid rebound or plot choice");
+            }
+            gameData.interaction.clearAwaitingInput();
+            stackResolutionService.resolveReboundOrPlotChoice(gameData, choice, "REBOUND".equals(colorName));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.GraveyardShuffleOrExileReplacementChoice choice) {
@@ -5692,6 +5707,11 @@ public class ChoiceHandlerService {
             source.setChosenSubtype(subtype);
             if (ctx.untilEndOfTurn()) {
                 gameData.temporaryChosenSubtypePermanentIds.add(source.getId());
+                if (source.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY).stream()
+                        .anyMatch(CopyControllerActivatedAbilityTriggerEffect.class::isInstance)) {
+                    gameData.chosenSubtypeActivationCopiesThisTurn.add(new GameData.ChosenSubtypeActivationCopy(
+                            player.getId(), source.getCard(), source.getId(), subtype));
+                }
             }
             log.info("Game {} - {} secretly chooses creature type {} for {}", gameData.id,
                     player.getUsername(), subtype, source.getCard().getName());
@@ -7089,9 +7109,10 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses card name \"{}\" (name/mill/gain life)",
                 gameData.id, player.getUsername(), cardName);
 
-        Card matched = millAndMatchingNamedCard(gameData, ctx.targetPlayerId(), cardName);
-        if (matched != null) {
-            int manaValue = matched.getManaValue();
+        List<Card> matchedCards = millAndMatchingNamedCards(gameData, ctx.targetPlayerId(), cardName);
+        if (!matchedCards.isEmpty()) {
+            Card matched = matchedCards.getFirst();
+            int manaValue = matchedCards.stream().mapToInt(Card::getManaValue).sum();
             lifeSupport.applyGainLife(gameData, ctx.controllerId(), manaValue);
             String controllerName = gameData.playerIdToName.get(ctx.controllerId());
             String lifeLog = controllerName + " gains " + manaValue + " life.";
@@ -7113,8 +7134,9 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} chooses card name \"{}\" (name/mill/draw)",
                 gameData.id, player.getUsername(), cardName);
 
-        Card matched = millAndMatchingNamedCard(gameData, ctx.targetPlayerId(), cardName);
-        if (matched != null) {
+        List<Card> matchedCards = millAndMatchingNamedCards(gameData, ctx.targetPlayerId(), cardName);
+        if (!matchedCards.isEmpty()) {
+            Card matched = matchedCards.getFirst();
             playerInteractionSupport.applyDrawCards(gameData, ctx.controllerId(), 1);
             String controllerName = gameData.playerIdToName.get(ctx.controllerId());
             log.info("Game {} - {} milled the named card {}, {} draws a card",
@@ -7177,26 +7199,28 @@ public class ChoiceHandlerService {
     }
 
     /**
-     * Mills one card from {@code targetPlayerId}. Returns the milled card if its name matches
-     * {@code cardName} and it actually reached the graveyard; otherwise {@code null}.
+     * Mills one card from {@code targetPlayerId} and returns every milled card whose name matches
+     * {@code cardName}. A replacement effect may mill several cards (Bruvac) or send a milled card to a
+     * public zone other than the graveyard (Leyline of the Void); the card still counts as milled, and an
+     * effect asking about "the milled card" gets one answer per milled card (CR 701.17c, CR 701.17d).
      */
-    private Card millAndMatchingNamedCard(GameData gameData, UUID targetPlayerId, String cardName) {
+    private List<Card> millAndMatchingNamedCards(GameData gameData, UUID targetPlayerId, String cardName) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        Card topCard = (deck != null && !deck.isEmpty()) ? deck.getFirst() : null;
+        List<Card> libraryBefore = deck == null ? List.of() : new ArrayList<>(deck);
 
         graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
 
-        // "If a card with the chosen name was milled this way" — the card must have both matched the
-        // chosen name and actually reached the graveyard (a replacement effect could redirect it).
-        if (topCard != null && topCard.getName().equals(cardName)) {
-            List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-            boolean reachedGraveyard = graveyard != null
-                    && graveyard.stream().anyMatch(c -> c.getId().equals(topCard.getId()));
-            if (reachedGraveyard) {
-                return topCard;
+        Set<UUID> libraryAfter = new LinkedHashSet<>();
+        if (deck != null) {
+            deck.forEach(card -> libraryAfter.add(card.getId()));
+        }
+        List<Card> matched = new ArrayList<>();
+        for (Card card : libraryBefore) {
+            if (!libraryAfter.contains(card.getId()) && card.getName().equals(cardName)) {
+                matched.add(card);
             }
         }
-        return null;
+        return matched;
     }
 
     private void handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(GameData gameData, Player player,
@@ -7734,15 +7758,13 @@ public class ChoiceHandlerService {
             List<Card> matchingCards = collectMatchingCards(gameData, targetPlayerId, cardName);
             if (!matchingCards.isEmpty()) {
                 playerInputService.beginMultiZoneExileChoice(
-                        gameData, controllerId, matchingCards, targetPlayerId, cardName);
+                        gameData, controllerId, matchingCards, targetPlayerId, cardName, false, (UUID) null, true);
                 inputCompletionService.publishStateAfterInput(gameData);
                 return;
             }
 
-            List<Card> library = gameData.playerDecks.get(targetPlayerId);
-            if (library != null) {
-                Collections.shuffle(library);
-            }
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+            gameLogService.append(gameData, GameLog.text(targetName + " shuffles their library."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -7960,21 +7982,19 @@ public class ChoiceHandlerService {
                 player.getUsername() + " guesses " + (guessedNameIsInHand ? "yes" : "no")
                         + " for whether the controller has a card named \"" + ctx.chosenName() + "\"."));
 
-        if (guessedWrong) {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    ctx.sourceCard(),
-                    ctx.controllerId(),
-                    List.of(new com.github.laxika.magicalvibes.model.effect.RevealTargetHandEffect(),
-                            new com.github.laxika.magicalvibes.model.effect.DrawCardEffect()),
-                    "Reveal your hand and draw a card?",
-                    ctx.controllerId(),
-                    null,
-                    ctx.sourcePermanentId()));
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        List<com.github.laxika.magicalvibes.model.effect.CardEffect> revealEffects = guessedWrong
+                ? List.of(new com.github.laxika.magicalvibes.model.effect.RevealTargetHandEffect(),
+                        new com.github.laxika.magicalvibes.model.effect.DrawCardEffect())
+                : List.of(new com.github.laxika.magicalvibes.model.effect.RevealTargetHandEffect());
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                ctx.sourceCard(),
+                ctx.controllerId(),
+                revealEffects,
+                guessedWrong ? "Reveal your hand and draw a card?" : "Reveal your hand?",
+                ctx.controllerId(),
+                null,
+                ctx.sourcePermanentId()));
+        playerInputService.processNextMayAbility(gameData);
     }
 
     private void handleSphinxAmbassadorNameChoice(GameData gameData, String cardName) {

@@ -82,7 +82,9 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                 if (amount <= 0) {
                     return;
                 }
-                int totalAmount = gameQueryService.getTokenCreationAmount(gameData, entry.getControllerId(), amount, tokenSubtypes, sourceCard.hasType(CardType.CREATURE));
+                boolean creatureToken = sourceCard.hasType(CardType.CREATURE)
+                        || (e.additionalTypes() != null && e.additionalTypes().contains(CardType.CREATURE));
+                int totalAmount = gameQueryService.getTokenCreationAmount(gameData, entry.getControllerId(), amount, tokenSubtypes, creatureToken);
                 Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
                 List<Permanent> simultaneouslyEntered = new ArrayList<>();
                 for (int copy = 0; copy < totalAmount; copy++) {
@@ -230,8 +232,10 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     }
 
                     if (e.exileAtEndStep()) {
+                        // One delayed trigger exiles every token this resolution created (CR 603.7).
                         gameData.queueDelayedAction(new DelayedPermanentAction(
-                                tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                                tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
+                                false, null, null, null, false, entry.getCard()));
                     }
                     if (e.exileAtEndOfCombat()) {
                         gameData.queueDelayedAction(new DelayedPermanentAction(

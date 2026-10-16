@@ -95,7 +95,10 @@ class LightFromWithinTest extends BaseCardTest {
         Permanent trapper = harness.addToBattlefieldAndReturn(player1, new BallynockTrapper());
 
         harness.castFromHand(player1, new LightFromWithin(), "{2}{W}{W}");
+        // Casting the white spell also triggers Ballynock Trapper, which resolves first and asks about untapping.
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, trapper)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, trapper)).isEqualTo(3);

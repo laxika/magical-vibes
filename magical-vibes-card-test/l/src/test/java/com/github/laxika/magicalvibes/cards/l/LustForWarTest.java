@@ -104,11 +104,11 @@ class LustForWarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player2, List.of(0)));
 
         assertThat(creature.isTapped()).isTrue();
         harness.assertLife(player2, 20);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
         harness.assertLife(player2, 17);
         harness.assertLife(player1, 20);
     }
@@ -155,7 +155,7 @@ class LustForWarTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
 
-        gs.declareAttackers(gd, player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player2, List.of(0)));
 
         assertThat(creature.isAttacking()).isTrue();
         assertThat(creature.isTapped()).isFalse();

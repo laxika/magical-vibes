@@ -88,8 +88,6 @@ class LictorTest extends BaseCardTest {
     void createsOnlyOneTokenAfterMultipleOpponentCreatureEntries() {
         harness.enterBattlefieldAndReturn(player2, new Lictor());
         harness.enterBattlefieldAndReturn(player2, new Lictor());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
 
         castAndResolveLictor();
 

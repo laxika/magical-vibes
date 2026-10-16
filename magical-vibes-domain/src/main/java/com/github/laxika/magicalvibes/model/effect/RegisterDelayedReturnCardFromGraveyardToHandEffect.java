@@ -14,10 +14,17 @@ import java.util.UUID;
  * falls back to the stack-entry source card. On creature-death slots, the trigger collector binds
  * the dying card through {@link DyingCreatureCardAwareEffect}.
  *
- * @param cardId the UUID of the card to return, or {@code null} to use the resolving source card
+ * @param cardId               the UUID of the card to return, or {@code null} to use the resolving source card
+ * @param graveyardEntryVersion the graveyard entry the trigger event happened to, or {@code null} to take
+ *                             the card's entry as the effect resolves; a card that left the graveyard and
+ *                             entered it again is a new object (CR 400.7) and is not returned
  */
-public record RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId)
+public record RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId, Long graveyardEntryVersion)
         implements CardEffect, DyingCreatureCardAwareEffect {
+
+    public RegisterDelayedReturnCardFromGraveyardToHandEffect(UUID cardId) {
+        this(cardId, null);
+    }
 
     @Override
     public CardEffect boundToDyingCard(UUID dyingCardId) {

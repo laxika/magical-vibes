@@ -66,7 +66,7 @@ public class GainControlOfPermanentDefendingPlayerControlsAndAssignNoCombatDamag
                 e.duration().isSourceLinked() ? sourcePermanentId : null, entry.getCard().getName());
         if (source != null) {
             gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermanentId);
-            gameData.creaturesAssigningNoCombatDamage.add(sourcePermanentId);
+            gameData.creaturesAssigningNoCombatDamageThisTurn.add(sourcePermanentId);
             gameLogService.append(gameData,
                     GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
         }

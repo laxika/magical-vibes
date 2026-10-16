@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * Causes the source permanent to become a copy of a target creature card in its controller's
  * graveyard whose mana value equals the activation's X value, with configurable copy exceptions.
- * The source's printed activated abilities are retained by the handler.
+ * The activated ability carrying this effect is retained by the handler, so a copy of a copy keeps it.
  */
 public record BecomeCopyOfTargetCreatureCardInGraveyardEffect(
         boolean retainSourceName,

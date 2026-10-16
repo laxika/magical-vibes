@@ -24,7 +24,7 @@ public class LeaveChance extends Card {
         target(new OwnedPermanentPredicateTargetFilter(
                 new PermanentTruePredicate(),
                 "Target must be a permanent you own"
-        ), 0, 99).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
+        ), 0, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
     }
 
     @Override

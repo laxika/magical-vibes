@@ -8,8 +8,13 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -209,9 +214,8 @@ class LivingTwisterTest extends BaseCardTest {
     @DisplayName("A tapped land controlled by Living Twister's controller returns to its owner")
     void returnAbilityReturnsBorrowedLandToOwner() {
         addLivingTwister();
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent forest = addForestControlledByPlayer1OwnedByPlayer2();
         forest.tap();
-        gd.stolenCreatures.put(forest.getId(), player2.getId());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -226,5 +230,17 @@ class LivingTwisterTest extends BaseCardTest {
     private void addLivingTwister() {
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, new LivingTwister());
         permanent.setSummoningSick(false);
+    }
+
+    private Permanent addForestControlledByPlayer1OwnedByPlayer2() {
+        Forest ownedByPlayer2 = new Forest();
+        ownedByPlayer2.setOwnerId(player2.getId());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, ownedByPlayer2);
+        gd.stolenCreatures.put(permanent.getId(), player2.getId());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), permanent,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
+        return permanent;
     }
 }

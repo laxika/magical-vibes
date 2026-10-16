@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUnti
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "MSC", collectorNumber = "87")
@@ -19,18 +18,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class LoveOnTheBattlefield extends Card {
 
     public LoveOnTheBattlefield() {
+        // The two attackers are fixed when the trigger fires: GrantScope.TARGETS carries the declared
+        // attackers, so a creature that left combat before resolution still gains first strike.
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(
                         new ExactlyAttackers(2),
-                        SequenceEffect.of(
-                                new GrantKeywordEffect(
-                                        Keyword.FIRST_STRIKE,
-                                        GrantScope.OWN_CREATURES,
-                                        new PermanentIsAttackingPredicate()),
-                                new DrawCardEffect(1),
-                                new GrantEffectToOwnCreaturesUntilEndOfCombatEffect(
-                                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                        new PutCountersOnSourceEffect(1, 1, 1),
-                                        new PermanentIsAttackingPredicate()))));
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGETS)));
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                new ConditionalEffect(new ExactlyAttackers(2), new DrawCardEffect(1)));
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+                new ConditionalEffect(
+                        new ExactlyAttackers(2),
+                        new GrantEffectToOwnCreaturesUntilEndOfCombatEffect(
+                                EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                                new PutCountersOnSourceEffect(1, 1, 1),
+                                new PermanentIsAttackingPredicate())));
     }
 }

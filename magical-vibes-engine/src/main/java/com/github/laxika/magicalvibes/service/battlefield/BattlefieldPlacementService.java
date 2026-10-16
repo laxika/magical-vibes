@@ -65,6 +65,8 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalC
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntryCostReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
@@ -1639,7 +1641,10 @@ public class BattlefieldPlacementService {
                     .filter(LosesAllNonManaAbilitiesEffect.class::isInstance)
                     .map(LosesAllNonManaAbilitiesEffect.class::cast)
                     .anyMatch(effect -> effect.scope() == GrantScope.ALL_LANDS
-                            || effect.scope() == GrantScope.ALL_LANDS_INCLUDING_SELF);
+                            || effect.scope() == GrantScope.ALL_LANDS_INCLUDING_SELF)
+                    || (!permanent.getCard().getSupertypes().contains(CardSupertype.BASIC)
+                    && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(NonbasicLandsBecomeTypeEffect.class::isInstance));
         });
         return losesAbilities[0];
     }
@@ -1654,7 +1659,7 @@ public class BattlefieldPlacementService {
      * {@link #completeSacrificePermanentsToEnter}.
      */
     private boolean applyEntryCostReplacement(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn() || losesNonManaAbilitiesAsLandEnters(gameData, permanent)) {
             return true;
         }
         if (permanent.isEntryCostPaid()) {

@@ -426,19 +426,28 @@ public class GameService {
                 throw new IllegalStateException("No unpaid search tax to pay");
             }
 
-            int totalCost = unpaidArbiterIds.size() * 2;
-            ManaCost cost = new ManaCost("{" + totalCost + "}");
+            // Each restriction is ignored separately, so a player who can't afford every unpaid one
+            // pays for as many as the pool covers.
             ManaPool pool = gameData.playerManaPools.get(player.getId());
-
-            if (pool == null || !cost.canPayForSpecialAction(pool)) {
+            int payableCount = 0;
+            if (pool != null) {
+                for (int count = unpaidArbiterIds.size(); count >= 1; count--) {
+                    if (new ManaCost("{" + (count * 2) + "}").canPayForSpecialAction(pool)) {
+                        payableCount = count;
+                        break;
+                    }
+                }
+            }
+            if (payableCount == 0) {
                 throw new IllegalStateException("Not enough mana to pay search tax");
             }
 
-            cost.payForSpecialAction(pool);
+            int totalCost = payableCount * 2;
+            new ManaCost("{" + totalCost + "}").payForSpecialAction(pool);
 
             Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds
                     .computeIfAbsent(player.getId(), k -> ConcurrentHashMap.newKeySet());
-            paidSet.addAll(unpaidArbiterIds);
+            paidSet.addAll(unpaidArbiterIds.subList(0, payableCount));
 
             String logEntry = player.getUsername() + " pays {" + totalCost + "} for Leonin Arbiter search tax.";
             gameLogService.append(gameData, GameLog.text(logEntry));

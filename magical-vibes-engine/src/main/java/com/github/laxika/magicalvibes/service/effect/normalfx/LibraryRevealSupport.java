@@ -33,6 +33,7 @@ public class LibraryRevealSupport {
     private CardCatalog cardCatalog;
     private volatile List<String> catalogCreatureNames;
     private volatile List<String> catalogNonBasicLandNames;
+    private volatile List<String> catalogAllNames;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -184,6 +185,29 @@ public class LibraryRevealSupport {
                     }
                 }
             }
+        }
+        return new ArrayList<>(names);
+    }
+
+    /** Every distinct card name in the game plus every implemented card name, since any card name may be named. */
+    public List<String> collectAllCardNamesInGameAndCatalog(GameData gameData) {
+        Set<String> names = new TreeSet<>(collectAllCardNamesInGame(gameData));
+        if (cardCatalog != null) {
+            List<String> cached = catalogAllNames;
+            if (cached == null) {
+                Set<String> catalogNames = new TreeSet<>();
+                for (CardSet set : CardSet.values()) {
+                    for (var printing : cardCatalog.getPrintings(set)) {
+                        Card card = printing.createCard();
+                        if (card.getName() != null) {
+                            catalogNames.add(card.getName());
+                        }
+                    }
+                }
+                cached = List.copyOf(catalogNames);
+                catalogAllNames = cached;
+            }
+            names.addAll(cached);
         }
         return new ArrayList<>(names);
     }

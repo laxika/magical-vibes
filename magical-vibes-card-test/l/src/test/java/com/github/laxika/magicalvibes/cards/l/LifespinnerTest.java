@@ -96,15 +96,13 @@ class LifespinnerTest extends BaseCardTest {
     @Test
     @DisplayName("Lifespinner can sacrifice itself and its ability still resolves")
     void canSacrificeItself() {
-        Permanent lifespinner = addCreatureReady(player1, new Lifespinner());
-        Permanent first = addSpirit();
-        Permanent second = addSpirit();
+        addCreatureReady(player1, new Lifespinner());
+        addSpirit();
+        addSpirit();
         harness.setLibrary(player1, List.of(new KodamaOfTheCenterTree()));
 
+        // Exactly three Spirits can pay the cost, so there is nothing to choose and they are all sacrificed.
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, lifespinner.getId());
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
 
         harness.assertInGraveyard(player1, "Lifespinner");
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);

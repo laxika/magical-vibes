@@ -101,7 +101,7 @@ class LilysplashMentorTest extends BaseCardTest {
     void returnsBorrowedCreatureToItsOwner() {
         addReadyMentor();
         Permanent target = addReadyMentor();
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
         addActivationMana(1);
 
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -144,9 +144,7 @@ class LilysplashMentorTest extends BaseCardTest {
         Permanent target = addReadyMentor();
         addActivationMana(1);
         harness.activateAbility(player1, 0, 0, null, target.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
 
         harness.passBothPriorities();
 

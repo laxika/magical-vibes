@@ -927,6 +927,16 @@ public class GraveyardReturnSupport {
             return;
         }
 
+        // CR 400.7: a trigger that returns its own card refers to one stay in the graveyard; once the card has
+        // left and re-entered it is a new object and the return does nothing.
+        if (effect.filter() instanceof com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate
+                && entry != null && entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && entry.getCard() != null && entry.getCard().getId().equals(entry.getTriggeringCardId())
+                && gameData.graveyardEntryVersion(entry.getCard().getId())
+                != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
+
         // Return all matching — collect from either controller's graveyard or all graveyards. A card returning
         // itself is searched for wherever it landed: its owner's graveyard, which isn't the controller's
         // when another player controlled the permanent it came from (Eye of Nidhogg on a stolen creature).
@@ -949,6 +959,7 @@ public class GraveyardReturnSupport {
         }
 
         List<Card> returnedCards = new ArrayList<>();
+        List<ReturnedPermanent> deferredEtbs = new ArrayList<>();
         boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
             gameData.collectingSimultaneousCreatureEntryTriggers = true;
@@ -998,7 +1009,15 @@ public class GraveyardReturnSupport {
                                     effect.enterAttacking(),
                                     entersWithPlusOneCounters ? CounterType.PLUS_ONE_PLUS_ONE : null, false,
                                     losesAllAbilitiesBeforeEntering(effect),
-                                    entersWithPlusOneCounters ? effect.plusOneCounterCount() : 0);
+                                    entersWithPlusOneCounters ? effect.plusOneCounterCount() : 0,
+                                    permanent -> { }, deferredEtbs);
+                        }
+                        if (returnedPermanent == null && !gyEntry.getKey().equals(targetPlayerId)) {
+                            List<Card> blockedIn = gameData.playerGraveyards.get(targetPlayerId);
+                            if (blockedIn != null && blockedIn.remove(card)) {
+                                gameData.playerGraveyards.computeIfAbsent(gyEntry.getKey(), k -> new ArrayList<>())
+                                        .add(card);
+                            }
                         }
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect, entry,
                                 gyEntry.getKey(), entersWithPlusOneCounters);
@@ -1011,6 +1030,9 @@ public class GraveyardReturnSupport {
                     }
                     returnedCards.add(card);
                 }
+            }
+            for (ReturnedPermanent returned : deferredEtbs) {
+                handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
@@ -1859,7 +1881,7 @@ public class GraveyardReturnSupport {
                                          boolean losesAllAbilities, int enterWithCounterAmount) {
         return putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype,
                 enterTapped, enterAttacking, enterWithCounter, grantIndestructible,
-                losesAllAbilities, enterWithCounterAmount, permanent -> { });
+                losesAllAbilities, enterWithCounterAmount, permanent -> { }, null);
     }
 
     private Permanent putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
@@ -1873,7 +1895,7 @@ public class GraveyardReturnSupport {
                     if (grantHaste) {
                         permanent.getGrantedKeywords().add(Keyword.HASTE);
                     }
-                });
+                }, null);
     }
 
     private Permanent putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
@@ -1882,10 +1904,22 @@ public class GraveyardReturnSupport {
                                          CounterType enterWithCounter, boolean grantIndestructible,
                                          boolean losesAllAbilities, int enterWithCounterAmount,
                                          Consumer<Permanent> beforeEntry) {
+        return putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype,
+                enterTapped, enterAttacking, enterWithCounter, grantIndestructible,
+                losesAllAbilities, enterWithCounterAmount, beforeEntry, null);
+    }
+
+    private Permanent putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype,
+                                         boolean enterTapped, boolean enterAttacking,
+                                         CounterType enterWithCounter, boolean grantIndestructible,
+                                         boolean losesAllAbilities, int enterWithCounterAmount,
+                                         Consumer<Permanent> beforeEntry, List<ReturnedPermanent> deferredEtbs) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         // The card stays in the graveyard it was being returned from (the caller already removed it).
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
-            gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
+            UUID graveyardOwnerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
+            gameData.playerGraveyards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(card);
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(controllerId) + " can't put ", card,
                     " onto the battlefield from a graveyard; it stays in the graveyard."));
@@ -1958,7 +1992,11 @@ public class GraveyardReturnSupport {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " puts ", card,
                 " onto the battlefield" + stateText + " from a graveyard."));
 
-        handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+        if (deferredEtbs != null) {
+            deferredEtbs.add(new ReturnedPermanent(controllerId, permanent, card));
+        } else {
+            handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+        }
         return permanent;
     }
 
@@ -2340,7 +2378,8 @@ public class GraveyardReturnSupport {
                     continue;
                 }
                 for (UUID pid : gameData.orderedPlayerIds) {
-                    if (gameData.playerIds.contains(entry.getTargetId()) && !pid.equals(entry.getTargetId())) {
+                    if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
+                            && !pid.equals(entry.getTargetId())) {
                         continue;
                     }
                     List<Card> graveyard = gameData.playerGraveyards.get(pid);
@@ -2446,6 +2485,17 @@ public class GraveyardReturnSupport {
     public record StolenCreatureResult(Permanent permanent, Card card, UUID originalOwnerId) {}
 
     public StolenCreatureResult stealFromOpponentGraveyard(GameData gameData, StackEntry entry, UUID controllerId) {
+        return stealFromGraveyard(gameData, entry, controllerId, true);
+    }
+
+    /**
+     * Takes the entry's targeted card out of a graveyard for {@code controllerId} to put onto the
+     * battlefield. With {@code opponentOnly} the card must sit in an opponent's graveyard and the
+     * entry fizzles otherwise; without it any graveyard qualifies, including the controller's own
+     * (Lim-Dul the Necromancer returns "that card" whoever owned it).
+     */
+    public StolenCreatureResult stealFromGraveyard(GameData gameData, StackEntry entry, UUID controllerId,
+                                                   boolean opponentOnly) {
         // SPELL-slot casts (Gruesome Encore) carry the target on targetId; ETB triggers
         // (Puppeteer Clique) choose it via a multi-graveyard choice, landing it on targetCardIds.
         UUID targetId = entry.getTargetId() != null ? entry.getTargetId()
@@ -2457,8 +2507,9 @@ public class GraveyardReturnSupport {
         }
 
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
-        if (graveyardOwnerId == null || graveyardOwnerId.equals(controllerId)) {
-            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target not in opponent's graveyard)."));
+        if (graveyardOwnerId == null || (opponentOnly && graveyardOwnerId.equals(controllerId))) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target not in "
+                    + (opponentOnly ? "opponent's" : "any") + " graveyard)."));
             return null;
         }
 

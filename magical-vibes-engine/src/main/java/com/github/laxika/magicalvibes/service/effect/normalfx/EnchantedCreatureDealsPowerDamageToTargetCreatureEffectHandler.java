@@ -39,6 +39,12 @@ public class EnchantedCreatureDealsPowerDamageToTargetCreatureEffectHandler impl
         }
 
         Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        boolean creatureGone = false;
+        if (creature == null && entry.getAttachedPermanentSnapshot() != null
+                && aura.getAttachedTo().equals(entry.getAttachedPermanentSnapshot().getId())) {
+            creature = entry.getAttachedPermanentSnapshot();
+            creatureGone = true;
+        }
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (creature == null || target == null) {
             return;
@@ -58,11 +64,18 @@ public class EnchantedCreatureDealsPowerDamageToTargetCreatureEffectHandler impl
         }
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null && creatureGone) {
+            controllerId = entry.getTriggeringPermanentControllerId();
+        }
         if (controllerId == null) {
             return;
         }
 
-        int power = gameQueryService.getPowerBasedDamage(gameData, creature);
+        // CR 608.2h: an enchanted creature that has already left the battlefield deals damage equal to the
+        // power it had last.
+        int power = creatureGone && creature.getLastKnownPower() != null
+                ? Math.max(0, creature.getLastKnownPower())
+                : gameQueryService.getPowerBasedDamage(gameData, creature);
         StackEntry damageEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 creature.getCard(),

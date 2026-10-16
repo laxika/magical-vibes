@@ -72,7 +72,7 @@ class LightningBerserkerTest extends BaseCardTest {
         Permanent berserker = findPermanent(player1, "Lightning Berserker");
         assertThat(berserker.hasKeyword(Keyword.HASTE)).isTrue();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Lightning Berserker");
         assertThat(gd.stack).hasSize(1);

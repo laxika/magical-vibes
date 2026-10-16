@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerScope;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceAtNextStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
@@ -28,17 +29,6 @@ public class LaezelsAcrobatics extends Card {
                 new PermanentControlledBySourceControllerPredicate(),
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())));
-        FlickerEffect returnAtNextEndStep = new FlickerEffect(
-                FlickerScope.CONTROLLERS_PERMANENTS,
-                nontokenCreaturesYouControl,
-                ReturnTiming.AT_STEP,
-                TurnStep.END_STEP,
-                false,
-                null,
-                null,
-                0,
-                false,
-                false);
         FlickerEffect reExileReturnedAtNextEndStep = new FlickerEffect(
                 FlickerScope.RETURNED_PERMANENTS,
                 null,
@@ -51,10 +41,10 @@ public class LaezelsAcrobatics extends Card {
                 false,
                 false);
 
+        addEffect(EffectSlot.SPELL, new ExileAllPermanentsEffect(nontokenCreaturesYouControl, true));
         addEffect(EffectSlot.SPELL, new RollD20Effect(
-                returnAtNextEndStep,
+                new ReturnAllCardsExiledWithSourceAtNextStepEffect(TurnStep.END_STEP),
                 SequenceEffect.of(
-                        new ExileAllPermanentsEffect(nontokenCreaturesYouControl, true),
                         new ReturnAllCardsExiledWithSourceEffect(false),
                         reExileReturnedAtNextEndStep)));
     }

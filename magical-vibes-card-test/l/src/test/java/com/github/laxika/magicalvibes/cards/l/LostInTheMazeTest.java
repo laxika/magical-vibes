@@ -131,10 +131,12 @@ class LostInTheMazeTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.forceStep(TurnStep.END_STEP);
 
-        castLostInTheMaze(1);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            castLostInTheMaze(1);
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, creature.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(1);

@@ -260,29 +260,45 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      * pick, offered in order, among the cards that have that subtype and (when non-null)
      * {@code requiredType}. {@code searchableCardIds} fixes the library cards the search can find when
      * it began. The {@code selectedCards} stay in the library until the last pick, then all of them
-     * enter the battlefield at the same time and the library is shuffled once.
+     * enter the battlefield (or, for a {@link LibrarySearchDestination#GRAVEYARD} destination, the
+     * graveyard) at the same time and the library is shuffled once. After the subtypes, each of
+     * {@code remainingColors} is one further pick among the cards of that colour (Lotuslight Dancers).
      */
     public record SubtypeToBattlefieldPickQueue(List<CardSubtype> remainingSubtypes, CardType requiredType,
                                                 LibrarySearchDestination destination,
                                                 java.util.Set<UUID> searchableCardIds,
-                                                List<Card> selectedCards) {
+                                                List<Card> selectedCards,
+                                                List<CardColor> remainingColors) {
 
         public SubtypeToBattlefieldPickQueue {
             remainingSubtypes = List.copyOf(remainingSubtypes);
             searchableCardIds = java.util.Set.copyOf(searchableCardIds);
             selectedCards = List.copyOf(selectedCards);
+            remainingColors = List.copyOf(remainingColors);
+        }
+
+        public SubtypeToBattlefieldPickQueue(List<CardSubtype> remainingSubtypes, CardType requiredType,
+                                             LibrarySearchDestination destination,
+                                             java.util.Set<UUID> searchableCardIds,
+                                             List<Card> selectedCards) {
+            this(remainingSubtypes, requiredType, destination, searchableCardIds, selectedCards, List.of());
         }
 
         public SubtypeToBattlefieldPickQueue withRemainingSubtypes(List<CardSubtype> remaining) {
             return new SubtypeToBattlefieldPickQueue(remaining, requiredType, destination,
-                    searchableCardIds, selectedCards);
+                    searchableCardIds, selectedCards, remainingColors);
+        }
+
+        public SubtypeToBattlefieldPickQueue withRemainingColors(List<CardColor> remaining) {
+            return new SubtypeToBattlefieldPickQueue(remainingSubtypes, requiredType, destination,
+                    searchableCardIds, selectedCards, remaining);
         }
 
         public SubtypeToBattlefieldPickQueue withSelectedCard(Card card) {
             var selected = new java.util.ArrayList<>(selectedCards);
             selected.add(card);
             return new SubtypeToBattlefieldPickQueue(remainingSubtypes, requiredType, destination,
-                    searchableCardIds, selected);
+                    searchableCardIds, selected, remainingColors);
         }
     }
 
@@ -847,6 +863,16 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                                                   java.util.Set<UUID> searchableCardIds) {
         return NONE.withSubtypeToBattlefieldPicks(new SubtypeToBattlefieldPickQueue(
                 subtypes, requiredType, destination, searchableCardIds, List.of()));
+    }
+
+    /**
+     * One search for a card of each listed colour whose found cards are put into {@code destination}
+     * together after the last pick (Lotuslight Dancers), limited to {@code searchableCardIds}.
+     */
+    public static LibrarySearchFollowUp colorPicks(List<CardColor> colors, LibrarySearchDestination destination,
+                                                   java.util.Set<UUID> searchableCardIds) {
+        return NONE.withSubtypeToBattlefieldPicks(new SubtypeToBattlefieldPickQueue(
+                List.of(), null, destination, searchableCardIds, List.of(), colors));
     }
 
     /**

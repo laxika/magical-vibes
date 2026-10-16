@@ -17,8 +17,8 @@ public class LeylineOfVitality extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Vitality on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new MayEffect(
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, GrantScope.ALL_OWN_CREATURES));
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, new MayEffect(
                 new GainLifeEffect(1),
                 "Gain 1 life?"
         ));

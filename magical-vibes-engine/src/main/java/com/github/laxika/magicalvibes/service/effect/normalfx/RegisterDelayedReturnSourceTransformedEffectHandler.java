@@ -43,7 +43,8 @@ public class RegisterDelayedReturnSourceTransformedEffectHandler implements Norm
 
         UUID returnControllerId = e.underOwnerControl() ? ownerId : entry.getControllerId();
         gameData.queueDelayedAction(
-                new DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, returnControllerId));
+                new DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, returnControllerId,
+                        gameData.graveyardEntryVersion(card.getId())));
         String playerName = gameData.playerIdToName.get(returnControllerId);
         gameLogService.append(gameData, GameLog.builder().card(card).text(" will return to the battlefield transformed under " + playerName + "'s control at the beginning of the next end step.").build());
         log.info("Game {} - Delayed transformed return registered for {} (owner {}, controller {})",

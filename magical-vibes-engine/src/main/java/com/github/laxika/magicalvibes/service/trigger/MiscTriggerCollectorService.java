@@ -3445,18 +3445,21 @@ public class MiscTriggerCollectorService {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
-        UUID controllerId = match.controllerId();
-        int amount = lg.lifeGainedAmount();
 
-        gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
-                " triggers — " + gameData.playerIdToName.get(controllerId)
-                        + " draws " + amount + " card" + (amount != 1 ? "s" : "") + "."));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(new DrawCardEffect(new EventValue()))),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(lg.lifeGainedAmount());
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain, drawing {} cards",
-                gameData.id, cardName, amount);
-
-        for (int i = 0; i < amount; i++) {
-            drawService.resolveDrawCard(gameData, controllerId);
-        }
+                gameData.id, cardName, lg.lifeGainedAmount());
         return true;
     }
 
@@ -3553,16 +3556,21 @@ public class MiscTriggerCollectorService {
         TriggerContext.LifeLoss ll = (TriggerContext.LifeLoss) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
-        UUID controllerId = match.controllerId();
-        int amount = ll.lifeLostAmount();
 
-        gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
-                " triggers — " + gameData.playerIdToName.get(controllerId)
-                        + " must exile " + amount + " card" + (amount != 1 ? "s" : "") + "/permanent" + (amount != 1 ? "s" : "") + "."));
-        log.info("Game {} - {} triggers on life loss, exiling {} cards/permanents",
-                gameData.id, cardName, amount);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setEventValue(ll.lifeLostAmount());
+        gameData.enqueueTrigger(entry);
 
-        performLichExile(gameData, controllerId, amount, match.permanent());
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers on life loss, exiling {} objects",
+                gameData.id, cardName, ll.lifeLostAmount());
         return true;
     }
 
@@ -3727,78 +3735,6 @@ public class MiscTriggerCollectorService {
      * then hand cards, then other battlefield permanents (avoiding the source enchantment
      * unless it's the last resort).
      */
-    private void performLichExile(GameData gameData, UUID controllerId, int count, Permanent source) {
-        int remaining = count;
-
-        // 1. Exile from graveyard first
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (graveyard != null) {
-            graveyardService.beginGraveyardLeaveBatch(gameData);
-            try {
-                while (remaining > 0 && !graveyard.isEmpty()) {
-                    Card card = graveyard.removeLast();
-                    graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, card);
-                    exileService.exileCard(gameData, controllerId, card);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            gameData.playerIdToName.get(controllerId) + " exiles ", card, " from their graveyard."));
-                    remaining--;
-                }
-            } finally {
-                graveyardService.endGraveyardLeaveBatch(gameData);
-            }
-        }
-
-        // 2. Exile from hand
-        List<Card> hand = gameData.playerHands.get(controllerId);
-        if (hand != null) {
-            while (remaining > 0 && !hand.isEmpty()) {
-                Card card = hand.removeLast();
-                exileService.exileCard(gameData, controllerId, card);
-                gameLogService.append(gameData, GameLog.textCardText(
-                        gameData.playerIdToName.get(controllerId) + " exiles ", card, " from their hand."));
-                remaining--;
-            }
-        }
-
-        // 3. Exile permanents (skip the source enchantment unless it's the only option)
-        if (remaining > 0) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield != null) {
-                // Exile non-source permanents first
-                while (remaining > 0) {
-                    Permanent toExile = null;
-                    for (Permanent perm : battlefield) {
-                        if (!perm.getId().equals(source.getId())) {
-                            toExile = perm;
-                            break;
-                        }
-                    }
-                    if (toExile == null) {
-                        // Only the source enchantment remains — exile it as last resort
-                        if (!battlefield.isEmpty()) {
-                            toExile = battlefield.getFirst();
-                        }
-                    }
-                    if (toExile == null) break;
-
-                    Card exiledCard = toExile.getCard();
-                    permanentRemovalService.removePermanentToExile(gameData, toExile);
-                    permanentRemovalService.removeOrphanedAuras(gameData);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            gameData.playerIdToName.get(controllerId) + " exiles ", exiledCard, " from the battlefield."));
-                    remaining--;
-                }
-            }
-        }
-
-        if (remaining > 0) {
-            String logEntry = gameData.playerIdToName.get(controllerId)
-                    + " has nothing left to exile (" + remaining + " remaining).";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} ran out of things to exile ({} remaining)",
-                    gameData.id, gameData.playerIdToName.get(controllerId), remaining);
-        }
-    }
 
     // ── ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD ────────────────────────────
 
@@ -3945,6 +3881,29 @@ public class MiscTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (instant or sorcery card left graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_LIBRARY_OR_GRAVEYARD)
+    boolean handleControllerCardsExiledFromLibraryOrGraveyard(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        if (!(ctx instanceof TriggerContext.ControllerCardsExiledFromLibraryOrGraveyard exiled)) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        );
+        entry.setEventValue(exiled.count());
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (cards exiled from library or graveyard)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

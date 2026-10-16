@@ -65,9 +65,11 @@ public class PutTargetPermanentIntoLibraryNFromTopOrBottomEffectHandler
     }
 
     private UUID findLibraryOwner(GameData gameData, Permanent target) {
-        UUID cardId = target.getCard().getId();
+        java.util.Set<UUID> cardIds = target.cardsLeavingBattlefield().stream()
+                .map(com.github.laxika.magicalvibes.model.Card::getId)
+                .collect(java.util.stream.Collectors.toSet());
         return gameData.playerDecks.entrySet().stream()
-                .filter(e -> e.getValue().stream().anyMatch(card -> card.getId().equals(cardId)))
+                .filter(e -> e.getValue().stream().anyMatch(card -> cardIds.contains(card.getId())))
                 .map(java.util.Map.Entry::getKey)
                 .findFirst()
                 .orElse(null);

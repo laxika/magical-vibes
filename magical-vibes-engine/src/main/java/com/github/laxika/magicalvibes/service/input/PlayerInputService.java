@@ -442,6 +442,18 @@ public class PlayerInputService {
                 maxCount, context, prompt));
     }
 
+    /** Asks the spell's controller whether rebound or plot replaces the spell going to the graveyard (CR 616.1). */
+    public void beginSpellReboundOrPlotChoice(GameData gameData, ChoiceContext.SpellReboundOrPlotChoice context) {
+        var choice = new PendingInteraction.ColorChoice(
+                context.controllerId(), null, null, context, List.of("REBOUND", "PLOT"),
+                "Choose whether " + context.card().getName() + " is exiled with rebound or becomes plotted.");
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.pendingInteractions.addLast(choice);
+        } else {
+            interactionHandlerRegistry.begin(gameData, choice);
+        }
+    }
+
     public void beginSagaChapterCounterAssignmentChoice(
             GameData gameData, UUID playerId, ChoiceContext.SagaChapterCounterAssignment context) {
         int assigned = context.assignments().values().stream().mapToInt(Integer::intValue).sum();

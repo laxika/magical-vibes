@@ -48,7 +48,10 @@ class LiberatedLivestockTest extends BaseCardTest {
         killLivestock(List.of(aura), List.of());
 
         assertTokenProfiles();
-        harness.handleMultipleCardsChosen(player1, List.of());
+        for (int token = 0; token < 3; token++) {
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.AttachAurasChoice.class)).isNotNull();
+            harness.handleMultipleCardsChosen(player1, List.of());
+        }
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInHand(player1, "Holy Strength");

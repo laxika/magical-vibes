@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -121,14 +122,18 @@ class LivingAirshipTest extends BaseCardTest {
 
         for (int shieldsRemaining = 1; shieldsRemaining >= 0; shieldsRemaining--) {
             airship.setMarkedDamage(1);
-            assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, airship)).isFalse();
+            AtomicBoolean destroyed = new AtomicBoolean();
+            harness.inMutationScope(() -> destroyed.set(harness.getPermanentRemovalService().tryDestroyPermanent(gd, airship)));
+            assertThat(destroyed).isFalse();
             harness.assertOnBattlefield(player1, "Living Airship");
             assertThat(airship.isTapped()).isTrue();
             assertThat(airship.getMarkedDamage()).isZero();
             assertThat(airship.getRegenerationShield()).isEqualTo(shieldsRemaining);
         }
 
-        assertThat(harness.getPermanentRemovalService().tryDestroyPermanent(gd, airship)).isTrue();
+        AtomicBoolean finalDestroyed = new AtomicBoolean();
+        harness.inMutationScope(() -> finalDestroyed.set(harness.getPermanentRemovalService().tryDestroyPermanent(gd, airship)));
+        assertThat(finalDestroyed).isTrue();
         harness.assertNotOnBattlefield(player1, "Living Airship");
         harness.assertInGraveyard(player1, "Living Airship");
     }

@@ -8,12 +8,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchHandAndOrLibraryForCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -45,11 +46,13 @@ public class SearchHandAndOrLibraryForCardToBattlefieldEffectHandler implements 
         UUID controllerId = entry.getControllerId();
         boolean librarySearchAllowed = !librarySearchSupport.isSearchPrevented(gameData, controllerId, false);
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
+        // Only a permanent card can be put onto the battlefield, so any other card is never offered.
+        CardPredicate battlefieldFilter = new CardAllOfPredicate(List.of(search.filter(), new CardIsPermanentPredicate()));
 
         List<Card> hand = gameData.playerHands.getOrDefault(controllerId, List.of());
         List<Card> handMatches = hand.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, search.filter(), sourceCardId, gameData, controllerId, null, null, entry.getXValue()))
+                        card, battlefieldFilter, sourceCardId, gameData, controllerId, null, null, entry.getXValue()))
                 .toList();
 
         List<Card> libraryMatches = List.of();
@@ -59,19 +62,16 @@ public class SearchHandAndOrLibraryForCardToBattlefieldEffectHandler implements 
             libraryMatches = deck.stream()
                     .limit(Math.min(topLimit, deck.size()))
                     .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                            card, search.filter(), sourceCardId, gameData, controllerId, null, null, entry.getXValue()))
+                            card, battlefieldFilter, sourceCardId, gameData, controllerId, null, null, entry.getXValue()))
                     .toList();
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String description = CardPredicateUtils.describeFilter(search.filter());
         if (handMatches.isEmpty() && libraryMatches.isEmpty()) {
-            if (librarySearchAllowed && deck != null) {
-                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
-                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-                gameLogService.append(gameData, GameLog.text(playerName
-                        + " searches their hand and library but finds no " + description + ". Library is shuffled."));
-            }
+            // The controller chooses whether to search; with nothing to find, the library is not searched.
+            gameLogService.append(gameData, GameLog.text(playerName
+                    + " has no " + description + " to put onto the battlefield."));
             return;
         }
 

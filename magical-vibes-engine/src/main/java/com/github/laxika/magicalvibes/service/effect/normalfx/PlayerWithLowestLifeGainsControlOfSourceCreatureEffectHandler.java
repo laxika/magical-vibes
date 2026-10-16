@@ -31,7 +31,7 @@ public class PlayerWithLowestLifeGainsControlOfSourceCreatureEffectHandler imple
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent source = findSource(gameData, entry.getCard().getId());
+        Permanent source = findSource(gameData, entry);
         if (source == null) {
             return;
         }
@@ -50,7 +50,7 @@ public class PlayerWithLowestLifeGainsControlOfSourceCreatureEffectHandler imple
         }
 
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.PlayerWithLowestLifeChoice(entry.getCard()));
+                new PermanentChoiceContext.PlayerWithLowestLifeChoice(entry.getCard(), entry.getSourcePermanentId()));
         playerInputService.beginPlayerChoice(gameData, entry.getControllerId(), tiedPlayers,
                 entry.getCard().getName() + " — Choose one of the players tied for lowest life total.");
     }
@@ -61,14 +61,18 @@ public class PlayerWithLowestLifeGainsControlOfSourceCreatureEffectHandler imple
                 EffectDuration.PERMANENT, null, entry.getCard().getName());
     }
 
-    private Permanent findSource(GameData gameData, UUID cardId) {
+    private Permanent findSource(GameData gameData, StackEntry entry) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        UUID cardId = entry.getCard().getId();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getId().equals(cardId)) {
+                if (sourcePermanentId != null
+                        ? permanent.getId().equals(sourcePermanentId)
+                        : permanent.getCard().getId().equals(cardId)) {
                     return permanent;
                 }
             }

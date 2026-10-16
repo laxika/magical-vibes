@@ -30,19 +30,13 @@ public class LimDulsVaultSupport {
 
     /**
      * Takes the top five cards (or the whole library, if smaller) off {@code controllerId}'s
-     * library and begins the repeat prompt over them. Returns {@code false} when the library is
-     * empty and there is nothing to look at, in which case nothing was held out or prompted.
+     * library and begins the repeat prompt over them. An empty library still gets the prompt: the
+     * player looks at no cards, may still pay life, and the process ends with the shuffle.
      */
     public boolean beginLook(GameData gameData, UUID controllerId) {
         List<Card> library = gameData.playerDecks.get(controllerId);
-        if (library == null || library.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(controllerId) + " has no cards in their library (Lim-Dûl's Vault)."));
-            return false;
-        }
-
         List<Card> lookedAt = new ArrayList<>();
-        int count = Math.min(LOOK_COUNT, library.size());
+        int count = library == null ? 0 : Math.min(LOOK_COUNT, library.size());
         for (int i = 0; i < count; i++) {
             lookedAt.add(library.removeFirst());
         }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostOtherControlledCreaturesAndHandCardsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ public class PerpetuallyBoostOtherControlledCreaturesAndHandCardsEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,7 +52,7 @@ public class PerpetuallyBoostOtherControlledCreaturesAndHandCardsEffectHandler
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (permanent.getId().equals(sourcePermanentId)
-                        || !permanent.getCard().hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE)) {
+                        || !gameQueryService.isCreature(gameData, permanent)) {
                     continue;
                 }
                 mergeBattlefieldModifier(gameData, permanent.getCard(), boost);

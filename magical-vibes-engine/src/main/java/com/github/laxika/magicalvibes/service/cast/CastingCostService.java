@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSym
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeSpellCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeInsteadOfCommanderTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
@@ -568,6 +569,7 @@ public class CastingCostService {
                 collectEvidenceCostPaid, kicked);
         UUID commanderId = playerId.equals(gameData.commandCastPlayerId) ? gameData.commandCastCardId : card.getId();
         int delta = (sourceZone == Zone.COMMAND || playerId.equals(gameData.commandCastPlayerId))
+                && card.getEffects(EffectSlot.STATIC).stream().noneMatch(PayLifeInsteadOfCommanderTaxEffect.class::isInstance)
                 ? gameData.commanderTaxByCardId.getOrDefault(commanderId, 0) : 0;
         delta -= PerpetualCardCastCostSupport.reductionFor(gameData, card);
         delta += PerpetualCardCastCostSupport.increaseFor(gameData, card);

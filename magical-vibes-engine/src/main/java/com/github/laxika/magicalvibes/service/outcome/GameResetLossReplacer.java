@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ReplaceControllerLossWithGameResetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.ZoneToLibraryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -47,14 +50,16 @@ public class GameResetLossReplacer implements LossReplacer {
     private final GameLogService gameLogService;
     private final ZoneToLibraryService zoneToLibraryService;
     private final LifeSupport lifeSupport;
+    @Autowired
+    @Lazy
+    private DrawService drawService;
 
     @Override
     public boolean tryReplace(GameData gameData, UUID losingPlayerId, LossReason reason) {
         if (losingPlayerId == null) {
             return false;
         }
-        Permanent mirror = gameQueryService.findControlledPermanentWithStaticEffect(
-                gameData, losingPlayerId, ReplaceControllerLossWithGameResetEffect.class);
+        Permanent mirror = findMirror(gameData, losingPlayerId);
         if (mirror == null) {
             return false;
         }
@@ -92,6 +97,16 @@ public class GameResetLossReplacer implements LossReplacer {
         return true;
     }
 
+    private Permanent findMirror(GameData gameData, UUID playerId) {
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+            if (gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
+                    .anyMatch(ReplaceControllerLossWithGameResetEffect.class::isInstance)) {
+                return permanent;
+            }
+        }
+        return null;
+    }
+
     /**
      * Draws up to seven cards, stopping at the first draw that can't be completed.
      *
@@ -110,7 +125,7 @@ public class GameResetLossReplacer implements LossReplacer {
                         gameData.playerIdToName.get(playerId) + " has no cards to draw."));
                 return drawn;
             }
-            gameData.addCardToHand(playerId, library.removeFirst());
+            drawService.resolveDrawCard(gameData, playerId);
         }
         return RESET_HAND_SIZE;
     }

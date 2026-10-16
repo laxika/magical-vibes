@@ -6,5 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * ("As this enchantment enters, choose odd or even."). The chosen parity is stored
  * on the source permanent via {@code Permanent.getChosenManaValueParity()}.
  */
-public record ChooseManaValueParityOnEnterEffect() implements CardEffect {
+public record ChooseManaValueParityOnEnterEffect() implements ReplacementEffect {
 }

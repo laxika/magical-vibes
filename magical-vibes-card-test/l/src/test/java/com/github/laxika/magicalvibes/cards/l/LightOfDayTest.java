@@ -160,8 +160,9 @@ class LightOfDayTest extends BaseCardTest {
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         declareAttackersAndPrepareBlockers(List.of(attackerIdx));
         gd.playerBattlefields.get(player1.getId()).remove(light);
+        int attackerIdxWithoutLight = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
 
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdxWithoutLight)));
 
         assertThat(gameLogContains("declares 1 blocker")).isTrue();
     }

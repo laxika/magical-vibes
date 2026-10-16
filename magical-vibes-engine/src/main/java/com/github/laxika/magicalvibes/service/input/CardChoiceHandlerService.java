@@ -1012,9 +1012,15 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield", gameData.id, player.getUsername(), card.getName());
             replacedByBattlefield = true;
         } else {
-            graveyardService.discardCard(gameData, playerId, card,
+            boolean enteredGraveyard = graveyardService.discardCard(gameData, playerId, card,
                     discardToLibraryDecision == null || discardToLibraryDecision);
-            gameLogService.append(gameData, GameLog.playerDiscards(player.getUsername(), card));
+            List<Card> library = gameData.playerDecks.get(playerId);
+            boolean putOnLibrary = !enteredGraveyard && library != null && !library.isEmpty()
+                    && library.getFirst() == card;
+            // A card put on top of the library instead of into the graveyard stays hidden.
+            gameLogService.append(gameData, putOnLibrary
+                    ? GameLog.text(player.getUsername() + " discards a card.")
+                    : GameLog.playerDiscards(player.getUsername(), card));
             log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
         }
 
@@ -1115,6 +1121,33 @@ public class CardChoiceHandlerService {
         gameData.pendingDiscardToLibraryDecision = accepted;
         interactionHandlerRegistry.begin(gameData, discardChoice);
         handleDiscardCardChosen(gameData, player, cardIndex);
+    }
+
+    /**
+     * Completes a random discard whose card stayed in hand while its owner decided whether to put
+     * it on top of their library instead of into their graveyard. A card put on top of the library
+     * stays hidden, so the log doesn't name it.
+     */
+    public void completeRandomDiscardToLibraryChoice(GameData gameData, Player player, boolean accepted,
+                                                     UUID cardId) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        Card card = hand == null ? null : hand.stream()
+                .filter(handCard -> handCard.getId().equals(cardId))
+                .findFirst()
+                .orElse(null);
+        if (card != null) {
+            hand.remove(card);
+            graveyardService.discardCard(gameData, playerId, card, accepted);
+            if (accepted) {
+                gameLogService.append(gameData, GameLog.text(player.getUsername() + " discards a card at random."));
+            } else {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " discards ", card, " at random."));
+            }
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handlePlaguecrafterDiscardCardChosen(GameData gameData, Player player, int cardIndex,

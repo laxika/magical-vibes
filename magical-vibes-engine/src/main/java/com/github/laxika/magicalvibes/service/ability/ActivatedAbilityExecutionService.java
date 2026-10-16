@@ -705,7 +705,8 @@ public class ActivatedAbilityExecutionService {
         if (sacrificeSelfCost.isPresent()) {
             // Snapshot power before leaving the battlefield (CR 608.2h last-known information).
             if (sacrificeSelfCost.get().trackPower()) {
-                effectiveXValue = Math.max(0, gameQueryService.getEffectivePower(gameData, permanent));
+                int snapshotPower = gameQueryService.getEffectivePower(gameData, permanent);
+                effectiveXValue = sacrificeSelfCost.get().signedPower() ? snapshotPower : Math.max(0, snapshotPower);
             }
         }
         sacrificeCostPermanents(gameData, player, permanent, sacrificeSelfCost.isPresent());

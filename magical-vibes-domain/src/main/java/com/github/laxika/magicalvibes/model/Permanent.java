@@ -318,11 +318,11 @@ public class Permanent {
      *  (Dazzling Beauty). CR 509.1h — it deals no combat damage, since a blocked creature with no
      *  blockers to assign damage to assigns none. Cleared at end of turn. */
     @Setter private boolean blockedWithoutBlockers;
-    /** When true, this Aura's static effects are ignored until end of turn — the enchanted
-     *  permanent's controller paid the Aura's "ignore this effect" cost (Volrath's Curse,
-     *  {@code IgnoreSourceAuraEffectsUntilEndOfTurnEffect}). Read by
+    /** Players who paid this Aura's "ignore this effect" cost this turn (Volrath's Curse, Lost in Thought;
+     *  {@code IgnoreSourceAuraEffectsUntilEndOfTurnEffect}). The Aura's effects are ignored only for the
+     *  player who paid, so a later controller of the enchanted creature is still restricted. Read by
      *  {@code GameQueryService.hasAuraWithEffect}. Cleared at end of turn. */
-    @Setter private boolean auraEffectsIgnoredThisTurn;
+    private final Set<UUID> auraEffectsIgnoredByPlayersThisTurn = new HashSet<>();
     /** Players who have paid to ignore this Damping Engine's restriction this turn. */
     private final Set<UUID> dampingEngineIgnoredByPlayersThisTurn = new HashSet<>();
     public boolean isDampingEngineEffectIgnoredThisTurn() {
@@ -700,8 +700,13 @@ public class Permanent {
     @Setter private boolean renowned;
     /** Whether this permanent has become monstrous. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean monstrous;
-    /** Whether this permanent has been motivated. Permanent state; never cleared by {@link #resetModifiers()}. */
-    @Setter private boolean motivated;
+    /** The player who paid this permanent's motivate cost, or null if it has not been motivated. Motivation belongs to that
+     *  player: after control changes it no longer applies to the new controller. Permanent state; never cleared by {@link #resetModifiers()}. */
+    @Setter private UUID motivatedByPlayerId;
+
+    public boolean isMotivated() {
+        return motivatedByPlayerId != null;
+    }
     /** Whether this permanent's Case has been solved. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean solved;
     /** Whether this permanent is harnessed. Permanent state; never cleared by {@link #resetModifiers()}. */
@@ -1124,7 +1129,7 @@ public class Permanent {
         this.castControllerId = source.castControllerId;
         this.manaSpentToCast = source.manaSpentToCast;
         this.monstrous = source.monstrous;
-        this.motivated = source.motivated;
+        this.motivatedByPlayerId = source.motivatedByPlayerId;
         this.solved = source.solved;
         this.harnessed = source.harnessed;
         this.timesMutated = source.timesMutated;
@@ -1720,7 +1725,7 @@ public class Permanent {
         if (faceDown) {
             return faceDownPower;
         }
-        if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
+        if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0) {
             return 8;
         }
         return card.getPower() != null ? card.getPower() : 0;
@@ -1746,7 +1751,7 @@ public class Permanent {
         if (faceDown) {
             return faceDownToughness;
         }
-        if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
+        if (!faceDown && getCounterCount(CounterType.AWAKENING) > 0) {
             return 8;
         }
         return card.getToughness() != null ? card.getToughness() : 0;
@@ -1989,7 +1994,7 @@ public class Permanent {
         this.mustBeBlockedByAllThisTurn = false;
         this.blockedWithoutBlockers = false;
         this.creaturesThatCrewedThisTurn.clear();
-        this.auraEffectsIgnoredThisTurn = false;
+        this.auraEffectsIgnoredByPlayersThisTurn.clear();
         this.dampingEngineIgnoredByPlayersThisTurn.clear();
         this.cantRegenerateThisTurn = false;
         this.damageCantBePreventedOrRedirectedThisTurn = false;
@@ -2191,5 +2196,17 @@ public class Permanent {
         this.copyUntilControllerNextTurn = false;
         this.untilNextTurnPreCopyCard = null;
         this.copyUntilNextTurnControllerId = null;
+    }
+
+    public void ignoreAuraEffectsThisTurnFor(UUID playerId) {
+        auraEffectsIgnoredByPlayersThisTurn.add(playerId);
+    }
+
+    public boolean isAuraEffectsIgnoredThisTurn() {
+        return !auraEffectsIgnoredByPlayersThisTurn.isEmpty();
+    }
+
+    public boolean isAuraEffectsIgnoredFor(UUID playerId) {
+        return auraEffectsIgnoredByPlayersThisTurn.contains(playerId);
     }
 }

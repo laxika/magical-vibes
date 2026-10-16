@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.Blossombind;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.cards.t.ThirstForKnowledge;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -141,7 +142,8 @@ class LumengridAugurTest extends BaseCardTest {
     @DisplayName("A prevented discard must not let a later unrelated discard untap the Augur")
     void preventedDiscardDoesNotUntapOnUnrelatedDiscard() {
         Permanent augur = addCreatureReady(player1, new LumengridAugur());
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player2, List.of(new Ornithopter()));
         harness.setLibrary(player2, List.of(new Annul()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

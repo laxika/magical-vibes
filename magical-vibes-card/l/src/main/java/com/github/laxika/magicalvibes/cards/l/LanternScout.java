@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class LanternScout extends Card {
 
     public LanternScout() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES)));
     }

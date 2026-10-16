@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -20,7 +20,7 @@ public class ConvergenceOfDominion extends Card {
         // As long as you control your commander, activated abilities of cards in your graveyard
         // cost {2} less to activate.
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
-                new ControllerControlsCommander(),
+                new ControllerControlsOwnCommander(),
                 new ReduceGraveyardCardActivatedAbilityCostEffect(new CardTruePredicate(), 2, 1)));
 
         // {3}, {T}: Mill three cards.

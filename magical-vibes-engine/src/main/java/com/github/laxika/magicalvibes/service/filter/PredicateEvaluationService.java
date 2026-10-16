@@ -1228,7 +1228,15 @@ public class PredicateEvaluationService {
                 if (gameData == null) {
                     yield permanent.hasKeyword(hasKeywordPredicate.keyword());
                 }
-                yield gameQueryService.hasKeyword(gameData, permanent, hasKeywordPredicate.keyword());
+                Keyword checkedKeyword = hasKeywordPredicate.keyword();
+                if (gameQueryService.hasKeyword(gameData, permanent, checkedKeyword)) {
+                    yield true;
+                }
+                // Last-known information of a permanent that already left the battlefield: the layered
+                // board no longer knows its keyword counters, so read them off the snapshot itself.
+                yield gameQueryService.findPermanentById(gameData, permanent.getId()) == null
+                        && permanent.hasKeyword(checkedKeyword)
+                        && !gameQueryService.computeStaticBonus(gameData, permanent).removedKeywords().contains(checkedKeyword);
             }
             case PermanentHasProtectionFromColorPredicate hasProtectionPredicate -> {
                 if (gameData == null) {

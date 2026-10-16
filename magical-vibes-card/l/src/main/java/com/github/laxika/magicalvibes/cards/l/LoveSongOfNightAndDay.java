@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -31,6 +32,8 @@ import java.util.Set;
 public class LoveSongOfNightAndDay extends Card {
 
     public LoveSongOfNightAndDay() {
+        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+
         // Chapter I: You and target opponent each draw two cards.
         addEffect(EffectSlot.SAGA_CHAPTER_I, new DrawCardEffect(2));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new DrawCardForTargetPlayerEffect(2, false, true));

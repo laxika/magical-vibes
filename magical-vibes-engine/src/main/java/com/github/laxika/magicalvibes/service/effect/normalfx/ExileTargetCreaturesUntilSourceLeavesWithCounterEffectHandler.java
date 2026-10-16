@@ -40,6 +40,10 @@ public class ExileTargetCreaturesUntilSourceLeavesWithCounterEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var exileEffect = (ExileTargetCreaturesUntilSourceLeavesWithCounterEffect) effect;
         UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry);
+        if (sourcePermanentId == null) {
+            // CR 610.3b: the source left the battlefield after the ability triggered, so nothing is exiled.
+            return;
+        }
         List<UUID> targetIds = entry.targetsForEffect(effect);
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
@@ -81,9 +85,9 @@ public class ExileTargetCreaturesUntilSourceLeavesWithCounterEffectHandler
     }
 
     private UUID resolveSourcePermanentId(GameData gameData, StackEntry entry) {
-        if (entry.getSourcePermanentId() != null
-                && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) != null) {
-            return entry.getSourcePermanentId();
+        if (entry.getSourcePermanentId() != null) {
+            return gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) != null
+                    ? entry.getSourcePermanentId() : null;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null) {

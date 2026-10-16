@@ -89,6 +89,14 @@ public sealed interface ChoiceContext {
     /** Chooses between a card's shuffle replacement and an applicable graveyard exile replacement. */
     record GraveyardShuffleOrExileReplacementChoice(UUID ownerId, Card card) implements ChoiceContext {}
 
+    /**
+     * A resolving instant or sorcery spell has two exile replacement effects (rebound and plot), so
+     * its controller picks which one applies (CR 616.1). {@code card} is the spell's card, {@code physicalCard}
+     * the card that actually leaves the stack.
+     */
+    record SpellReboundOrPlotChoice(UUID controllerId, UUID ownerId, Card card, Card physicalCard)
+            implements ChoiceContext {}
+
     /** Divides one source's shared combat-damage prevention among its recipients. */
     record CombatSharedDamagePreventionChoice(UUID preventionSourceId, UUID damageSourceId,
                                              UUID controllerId, int remaining,

@@ -122,7 +122,7 @@ class LadyEvangelaTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, attacker.getId());
         harness.passBothPriorities();
-        harness.activateAbility(player1, 1, null, evangela.getId());
+        harness.activateAbility(player1, 1, 1, null, evangela.getId());
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Lady Evangela");

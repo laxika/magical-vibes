@@ -14,7 +14,7 @@ public class LaeliaTheBladeReforged extends Card {
 
     public LaeliaTheBladeReforged() {
         addEffect(EffectSlot.ON_ATTACK, new ExileTopCardMayPlayThisTurnEffect(false));
-        addEffect(EffectSlot.ON_CONTROLLER_CARDS_EXILED_DURING_TURN,
+        addEffect(EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_LIBRARY_OR_GRAVEYARD,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

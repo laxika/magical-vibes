@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -27,8 +28,12 @@ public class TriggeringSpellControllerSacrificesPermanentsEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TriggeringSpellControllerSacrificesPermanentsEffect) effect;
-        StackEntry triggeringEntry = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
-        if (triggeringEntry == null || triggeringEntry.getControllerId() == null) {
+        UUID sacrificingPlayerId = entry.getTriggeringPermanentControllerId();
+        if (sacrificingPlayerId == null) {
+            StackEntry triggeringEntry = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
+            sacrificingPlayerId = triggeringEntry == null ? null : triggeringEntry.getControllerId();
+        }
+        if (sacrificingPlayerId == null) {
             return;
         }
 
@@ -36,6 +41,6 @@ public class TriggeringSpellControllerSacrificesPermanentsEffectHandler
                 gameData,
                 entry,
                 new SacrificePermanentsEffect(e.count(), e.filter(), SacrificeRecipient.CONTROLLER),
-                triggeringEntry.getControllerId());
+                sacrificingPlayerId);
     }
 }

@@ -23,7 +23,8 @@ class LilianasScornTest extends BaseCardTest {
     @DisplayName("Destroys a creature and finds Liliana from the graveyard")
     void destroysCreatureAndFindsLilianaFromGraveyard() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new LilianaDeathMage()));
+        Card liliana = new LilianaDeathMage();
+        harness.setGraveyard(player1, List.of(liliana));
 
         cast(creature);
         harness.passBothPriorities();
@@ -32,6 +33,7 @@ class LilianasScornTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(liliana.getId()));
 
         harness.assertInHand(player1, "Liliana, Death Mage");
         harness.assertNotInGraveyard(player1, "Liliana, Death Mage");
@@ -63,8 +65,8 @@ class LilianasScornTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(liliana.getId()));
 
         harness.assertInHand(player1, "Liliana, Death Mage");
     }

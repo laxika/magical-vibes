@@ -4,8 +4,13 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -129,8 +134,7 @@ class LivingTsunamiTest extends BaseCardTest {
     @DisplayName("A land controlled by the payer returns to its owner's hand")
     void returnsBorrowedLandToOwner() {
         addTsunami();
-        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        gd.stolenCreatures.put(island.getId(), player2.getId());
+        Permanent island = addIslandControlledByPlayer1OwnedByPlayer2();
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -145,6 +149,18 @@ class LivingTsunamiTest extends BaseCardTest {
     private Permanent addTsunami() {
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, new LivingTsunami());
         permanent.setSummoningSick(false);
+        return permanent;
+    }
+
+    private Permanent addIslandControlledByPlayer1OwnedByPlayer2() {
+        Island ownedByPlayer2 = new Island();
+        ownedByPlayer2.setOwnerId(player2.getId());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, ownedByPlayer2);
+        gd.stolenCreatures.put(permanent.getId(), player2.getId());
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), permanent,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
         return permanent;
     }
 }

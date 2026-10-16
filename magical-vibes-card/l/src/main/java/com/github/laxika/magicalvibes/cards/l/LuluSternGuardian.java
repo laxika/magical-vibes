@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 
@@ -17,7 +18,8 @@ import java.util.List;
 public class LuluSternGuardian extends Card {
 
     public LuluSternGuardian() {
-        target(TargetFilters.attackingCreature())
+        target(new PermanentPredicateTargetFilter(new PermanentIsAttackingSourceControllerPredicate(),
+                "Target must be a creature attacking you"))
                 .addEffect(EffectSlot.ON_CREATURES_ATTACK_YOU,
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN));
 

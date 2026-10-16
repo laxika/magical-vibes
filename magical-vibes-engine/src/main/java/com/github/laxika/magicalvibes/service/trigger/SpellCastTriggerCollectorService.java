@@ -192,6 +192,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -2942,6 +2943,19 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
+    private static boolean mentionsXInManaCost(CardPredicate predicate) {
+        return switch (predicate) {
+            case null -> false;
+            case CardHasXInManaCostPredicate ignored -> true;
+            case CardAllOfPredicate allOf -> allOf.predicates().stream()
+                    .anyMatch(SpellCastTriggerCollectorService::mentionsXInManaCost);
+            case CardAnyOfPredicate anyOf -> anyOf.predicates().stream()
+                    .anyMatch(SpellCastTriggerCollectorService::mentionsXInManaCost);
+            case CardNotPredicate not -> mentionsXInManaCost(not.predicate());
+            default -> false;
+        };
+    }
+
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
                                                     Card spellCard, UUID castingPlayerId) {
         return handleGenericSpellCastTrigger(match, trigger, spellCard, castingPlayerId, null);
@@ -3018,7 +3032,11 @@ public class SpellCastTriggerCollectorService {
 
         StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCard.getId());
         Integer spellXValue = triggeringSpell == null ? null : triggeringSpell.getXValue();
-        if (!predicateEvaluationService.matchesCardPredicate(spellOnStackWithChosenX(spellCard, spellXValue),
+        // A spell keeps the {X} in its mana cost on the stack (CR 107.3), so a filter asking for it
+        // reads the printed cost rather than the cost with the chosen X substituted.
+        Card evaluatedSpell = mentionsXInManaCost(trigger.spellFilter())
+                ? spellCard : spellOnStackWithChosenX(spellCard, spellXValue);
+        if (!predicateEvaluationService.matchesCardPredicate(evaluatedSpell,
                 trigger.spellFilter(), sourceOriginalCardId,
                 match.gameData(), castingPlayerId, null, null, spellXValue)) return false;
 
@@ -3141,6 +3159,15 @@ public class SpellCastTriggerCollectorService {
         if (optionalPaymentOnResolution) {
             optionalMay = null;
         }
+        // CR 603.3d / 603.5: a plain "you may" spell-cast trigger that targets chooses its target as it goes on
+        // the stack, and the "may" choice is made when it resolves, so the targeted effects are wrapped in a
+        // MayEffect after the targeting decision is made.
+        String mayChoicePromptOnResolution = null;
+        if (optionalMay != null && trigger.manaCost() == null && needsTargeting && !needsSpellManaSpentX
+                && !needsGraveyardTarget && !needsSpellTarget) {
+            mayChoicePromptOnResolution = optionalMay.prompt();
+            optionalMay = null;
+        }
         if (optionalMay != null) {
             PendingMayAbility pendingMayAbility = PendingMayAbility.forSpellCastTrigger(
                     sourceCard,
@@ -3203,6 +3230,10 @@ public class SpellCastTriggerCollectorService {
                     ? resolved
                     : resolved.stream().map(e -> (CardEffect) new MayPayManaEffect(
                             trigger.manaCost(), e, mayPayPrompt)).toList();
+            if (mayChoicePromptOnResolution != null) {
+                String prompt = mayChoicePromptOnResolution;
+                queued = queued.stream().map(e -> (CardEffect) new MayEffect(e, prompt)).toList();
+            }
             boolean multiTarget = sourceCard.getSpellTargets().size() > 1
                     || sourceCard.getSpellTargets().stream()
                     .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0);

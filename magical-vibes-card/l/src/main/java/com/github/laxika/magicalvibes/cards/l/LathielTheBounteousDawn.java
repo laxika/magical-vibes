@@ -34,7 +34,7 @@ public class LathielTheBounteousDawn extends Card {
                         otherCreature);
 
         targetUpTo(new LifeGainedThisTurn(CountScope.CONTROLLER),
-                new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 99)
+                new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), Integer.MAX_VALUE)
                 .addEffect(EffectSlot.END_STEP_TRIGGERED,
                         new ConditionalEffect(new GainedLifeThisTurn(), distribution));
     }

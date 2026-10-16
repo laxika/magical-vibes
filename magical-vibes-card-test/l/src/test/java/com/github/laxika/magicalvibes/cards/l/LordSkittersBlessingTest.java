@@ -79,6 +79,7 @@ class LordSkittersBlessingTest extends BaseCardTest {
     @Test
     void doesNotTriggerWithoutAnEnchantedCreatureAtBeginningOfDrawStep() {
         harness.addToBattlefield(player1, new LordSkittersBlessing());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2;

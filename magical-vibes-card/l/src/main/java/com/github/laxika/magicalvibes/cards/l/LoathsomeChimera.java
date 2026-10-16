@@ -19,7 +19,7 @@ public class LoathsomeChimera extends Card {
 
     public LoathsomeChimera() {
         addCastingOption(new GraveyardCast(null, "{4}{G}", List.of(
-                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3))));
+                new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)), null, false, false, true));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD),

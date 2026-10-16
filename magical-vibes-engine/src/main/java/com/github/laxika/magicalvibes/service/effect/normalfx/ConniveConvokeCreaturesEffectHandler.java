@@ -44,9 +44,6 @@ public class ConniveConvokeCreaturesEffectHandler implements NormalEffectHandler
         while (!remaining.isEmpty()) {
             UUID convokeCreatureId = remaining.removeFirst();
             entry.setConvokeConniveCreatureIdsToProcess(remaining);
-            if (gameQueryService.findPermanentById(gameData, convokeCreatureId) == null) {
-                continue;
-            }
 
             for (int i = 0; i < replacementDraws; i++) {
                 drawService.resolveDrawCard(gameData, controllerId);

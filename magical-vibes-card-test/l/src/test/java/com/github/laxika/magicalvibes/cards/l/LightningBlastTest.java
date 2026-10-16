@@ -156,9 +156,10 @@ class LightningBlastTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
         harness.setHand(player1, List.of(new LightningBlast(), new Unsummon()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, target.getId());
+        // Added after the first cast so the generic part of Lightning Blast's cost can't spend it.
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, target.getId());
         resolveAllTriggers();
 

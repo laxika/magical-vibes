@@ -314,6 +314,8 @@ public class StackEntry {
     @Setter private boolean castForForetell;
     /** The foreteller's turn count when this spell was exiled by foretell. */
     @Setter private int foretellControllerTurnsAtExile = -1;
+    /** Every player's turns-begun count when this spell was exiled by foretell; empty when unknown. */
+    @Setter private Map<UUID, Integer> foretellTurnsTakenAtExile = Map.of();
     @Setter private boolean alternateCost;
     /** Mana value of the creature returned to pay this spell's web-slinging cost, when applicable. */
     @Setter private Integer webSlingingReturnedCreatureManaValue;
@@ -949,6 +951,7 @@ public class StackEntry {
         this.sneak = source.sneak;
         this.castForForetell = source.castForForetell;
         this.foretellControllerTurnsAtExile = source.foretellControllerTurnsAtExile;
+        this.foretellTurnsTakenAtExile = source.foretellTurnsTakenAtExile;
         this.alternateCost = source.alternateCost;
         this.webSlingingReturnedCreatureManaValue = source.webSlingingReturnedCreatureManaValue;
         this.overloaded = source.overloaded;

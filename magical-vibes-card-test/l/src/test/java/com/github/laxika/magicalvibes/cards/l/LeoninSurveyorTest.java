@@ -50,6 +50,7 @@ class LeoninSurveyorTest extends BaseCardTest {
         LeoninSurveyor surveyor = new LeoninSurveyor();
         harness.setGraveyard(player1, List.of(surveyor));
         harness.setLibrary(player1, List.of(new LeoninSurveyor()));
+        harness.setHand(player1, List.of());
         gd.playerSpeeds.put(player1.getId(), 4);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -91,6 +92,7 @@ class LeoninSurveyorTest extends BaseCardTest {
         LeoninSurveyor drawnCard = new LeoninSurveyor();
         harness.setGraveyard(player1, List.of(surveyor));
         harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of());
         gd.playerSpeeds.put(player1.getId(), 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);

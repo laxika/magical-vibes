@@ -131,7 +131,7 @@ class LaezelsAcrobaticsTest extends BaseCardTest {
     void borrowedCreaturesReturnToTheirOwnerAfterBothRollOutcomes(int result) {
         setRoll(result);
         var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        setOwnerAndController(creature, player2, player1);
 
         castAcrobatics();
 

@@ -21,14 +21,14 @@ public class LootThePathfinder extends Card {
         ).withMaxActivationsPerGame(1).withExhaust());
 
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 "{U}",
                 List.of(new DrawCardEffect(3)),
                 "Exhaust — {U}, {T}: Draw three cards. (Activate each exhaust ability only once.)"
         ).withMaxActivationsPerGame(1).withExhaust());
 
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 "{R}",
                 List.of(new DealDamageToAnyTargetEffect(3)),
                 "Exhaust — {R}, {T}: Loot deals 3 damage to any target. (Activate each exhaust ability only once.)"

@@ -236,6 +236,12 @@ public class CopySupport {
         copy.setTargetFilters(source.getTargetFilters());
         copy.setOpponentChosenTargetPlayerId(source.getOpponentChosenTargetPlayerId());
         copy.getGrantedKeywordsOnEntry().addAll(source.getGrantedKeywordsOnEntry());
+        // Keywords the spell has through its own text (spliced cards, kicker-granted keywords) are
+        // copied with it. Split second from mana or a casting permission is an effect on the original
+        // spell, which a copy does not share (CR 707.2).
+        source.getGrantedKeywordsWhileOnStack().stream()
+                .filter(keyword -> keyword != Keyword.SPLIT_SECOND)
+                .forEach(copy.getGrantedKeywordsWhileOnStack()::add);
         return copy;
     }
 

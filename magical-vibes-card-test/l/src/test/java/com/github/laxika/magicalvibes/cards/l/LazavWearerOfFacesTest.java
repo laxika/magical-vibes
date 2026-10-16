@@ -119,6 +119,7 @@ class LazavWearerOfFacesTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, lazav)).isEqualTo(3);
         resolveAllTriggers();
+        harness.setHand(player1, List.of());
         harness.passUntil(player2, com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, lazav)).isEqualTo(2);

@@ -79,8 +79,8 @@ class LuminatePrimordialTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent still gains life for an illegal target when another target remains legal")
-    void gainsLifeForCreatureThatLeftBeforeResolution() {
+    @DisplayName("An opponent gains no life for an illegal target while another target remains legal")
+    void gainsNoLifeForCreatureThatLeftBeforeResolution() {
         Player player3 = addThirdPlayer();
         Permanent first = harness.addToBattlefieldAndReturn(player2, new ArmoredTransport());
         first.setPowerModifier(3);
@@ -91,7 +91,7 @@ class LuminatePrimordialTest extends BaseCardTest {
         passUntilStackSize(player3, 0);
 
         harness.assertNotOnBattlefield(player3, "Armored Transport");
-        harness.assertLife(player2, 25);
+        harness.assertLife(player2, 20);
         harness.assertLife(player3, 22);
     }
 
@@ -200,7 +200,7 @@ class LuminatePrimordialTest extends BaseCardTest {
         Player player = List.of(player1, player2, player3).stream()
                 .filter(candidate -> candidate.getId().equals(priorityHolder))
                 .findFirst().orElseThrow();
-        gs.passPriority(gd, player);
+        harness.passPriority(player);
     }
 
     private void castLuminatePrimordial(List<UUID> targetIds) {

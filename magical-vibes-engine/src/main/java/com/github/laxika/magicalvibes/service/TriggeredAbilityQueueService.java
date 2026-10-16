@@ -1692,6 +1692,7 @@ public class TriggeredAbilityQueueService {
                 || !gameData.pendingMayAbilities.isEmpty()) {
             return false;
         }
+        putNewTriggersInApnapOrder(gameData);
         for (UUID playerId : apnapOrder(gameData)) {
             List<StackEntry> batch = gameData.stack.stream()
                     .filter(entry -> isUnorderedTrigger(entry) && playerId.equals(entry.getControllerId()))
@@ -1712,6 +1713,33 @@ public class TriggeredAbilityQueueService {
         }
         markTriggersOrdered(gameData);
         return false;
+    }
+
+    /**
+     * CR 603.3b: triggers that went on the stack together are put there in APNAP order, so the active
+     * player's go first (resolving last). The sort is stable, so each controller's own triggers keep
+     * the order they were collected in until that player orders them.
+     */
+    private static void putNewTriggersInApnapOrder(GameData gameData) {
+        List<UUID> order = apnapOrder(gameData);
+        synchronized (gameData.stack) {
+            int size = gameData.stack.size();
+            int start = size;
+            while (start > 0 && isUnorderedTrigger(gameData.stack.get(start - 1))) {
+                start--;
+            }
+            if (size - start < 2) {
+                return;
+            }
+            List<StackEntry> sorted = new ArrayList<>(gameData.stack.subList(start, size));
+            sorted.sort(java.util.Comparator.comparingInt(entry -> {
+                int index = order.indexOf(entry.getControllerId());
+                return index < 0 ? order.size() : index;
+            }));
+            for (int i = 0; i < sorted.size(); i++) {
+                gameData.stack.set(start + i, sorted.get(i));
+            }
+        }
     }
 
     /** Marks every triggered ability already on the stack as ordered, once a player has had priority. */
@@ -3008,17 +3036,14 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             PermanentChoiceContext.ExploreTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class);
 
-            // Collect valid targets: only creatures controlled by opponents
-            List<UUID> validTargets = new ArrayList<>();
-            for (UUID pid : gameData.orderedPlayerIds) {
-                if (pid.equals(pending.controllerId())) continue; // skip controller — opponent only
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) continue;
-                for (Permanent p : battlefield) {
-                    if (!gameQueryService.isCreature(gameData, p)) continue;
-                    validTargets.add(p.getId());
-                }
-            }
+            // The source card's own target filter decides legality (hexproof, controller, type).
+            List<UUID> validTargets = triggerTargetCollector.collect(
+                    gameData,
+                    pending.effects(),
+                    pending.sourceCard().getTargetFilter(),
+                    pending.controllerId(),
+                    pending.sourceCard(),
+                    TriggerTargetCollector.Options.EXPLOIT).validTargets();
 
             if (validTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class);

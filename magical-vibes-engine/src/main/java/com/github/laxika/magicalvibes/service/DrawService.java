@@ -216,7 +216,11 @@ public class DrawService {
                         new PendingInteraction.DrawFromLibraryPositionChoice(drawingPlayerId, deck.size()));
                 return;
             }
-            performDrawCard(gameData, drawingPlayerId);
+            if (findDrawFromBottomSource(gameData, drawingPlayerId) != null) {
+                performDrawCardFromBottom(gameData, drawingPlayerId);
+            } else {
+                performDrawCard(gameData, drawingPlayerId);
+            }
         }
     }
 
@@ -417,6 +421,15 @@ public class DrawService {
         Permanent exileTopCardSource = findExileTopCardFaceDownInsteadOfDrawSource(gameData, playerId);
         if (exileTopCardSource != null) {
             exileReplacementSources.putIfAbsent(exileTopCardSource.getCard().getName(), exileTopCardSource);
+        }
+        if (!exileReplacementSources.isEmpty()) {
+            List<Card> libraryBeforeDraw = gameData.playerDecks.get(playerId);
+            Permanent winOnEmptyLibrarySource = libraryBeforeDraw == null || libraryBeforeDraw.isEmpty()
+                    ? findWinOnEmptyLibraryDrawSource(gameData, playerId) : null;
+            if (winOnEmptyLibrarySource != null) {
+                exileReplacementSources.putIfAbsent(
+                        winOnEmptyLibrarySource.getCard().getName(), winOnEmptyLibrarySource);
+            }
         }
         if (exileReplacementSources.size() > 1) {
             Map<String, UUID> sourceIds = new LinkedHashMap<>();
@@ -947,7 +960,7 @@ public class DrawService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
-                boolean prevents = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                boolean prevents = gameQueryService.getActiveStaticEffects(gameData, perm).stream()
                         .filter(DrawRestrictionEffect.class::isInstance)
                         .map(DrawRestrictionEffect.class::cast)
                         .anyMatch(effect -> effect.appliesTo(pid, playerId)
@@ -1091,6 +1104,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(DrawFromBottomOfLibraryReplacement.class::isInstance);
             if (hasEffect) {
@@ -1900,6 +1914,9 @@ public class DrawService {
 
     private void applyExileDrawReplacement(GameData gameData, UUID playerId, Permanent source) {
         if (source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(WinGameOnEmptyLibraryDrawEffect.class::isInstance)) {
+            performDrawCard(gameData, playerId);
+        } else if (source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(effect -> effect instanceof SharedFateDrawReplacement)) {
             resolveSharedFateDrawReplacement(gameData, playerId, source);
         } else if (gameQueryService.getActiveStaticEffects(gameData, source).stream()
@@ -2099,20 +2116,34 @@ public class DrawService {
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
             return;
         }
-        String miracleCost = drawn.getCastingOption(MiracleCast.class)
+        String nativeCost = drawn.getCastingOption(MiracleCast.class)
                 .map(MiracleCast::manaCostString)
-                .orElseGet(() -> gameQueryService.findGrantedMiracleCost(gameData, drawingPlayerId, drawn)
-                        .orElse(null));
-        if (miracleCost == null) {
+                .orElse(null);
+        String grantedCost = gameQueryService.findGrantedMiracleCost(gameData, drawingPlayerId, drawn)
+                .orElse(null);
+        if (grantedCost != null && grantedCost.equals(nativeCost)) {
+            grantedCost = null;
+        }
+        if (nativeCost == null && grantedCost == null) {
             return;
         }
 
+        // Each miracle ability is its own reveal choice; the native one is offered first.
+        if (grantedCost != null) {
+            offerMiracleReveal(gameData, drawingPlayerId, drawn, grantedCost,
+                    gameQueryService.findGrantedMiracleXReduction(gameData, drawingPlayerId, drawn));
+        }
+        if (nativeCost != null) {
+            offerMiracleReveal(gameData, drawingPlayerId, drawn, nativeCost, 0);
+        }
+    }
+
+    private void offerMiracleReveal(GameData gameData, UUID drawingPlayerId, Card drawn, String miracleCost,
+                                    int xReduction) {
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 drawn,
                 drawingPlayerId,
-                List.of(new MiracleRevealEffect(miracleCost,
-                        drawn.getCastingOption(MiracleCast.class).isPresent() ? 0
-                                : gameQueryService.findGrantedMiracleXReduction(gameData, drawingPlayerId, drawn))),
+                List.of(new MiracleRevealEffect(miracleCost, xReduction)),
                 "Reveal " + drawn.getName() + " for its miracle ability?"
         ));
         log.info("Game {} - offering miracle reveal for {}", gameData.id, drawn.getName());
@@ -2500,8 +2531,12 @@ public class DrawService {
     }
 
     private boolean hasWinOnEmptyLibraryDraw(GameData gameData, UUID playerId) {
+        return findWinOnEmptyLibraryDrawSource(gameData, playerId) != null;
+    }
+
+    private Permanent findWinOnEmptyLibraryDrawSource(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
+        if (battlefield == null) return null;
         for (Permanent perm : battlefield) {
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()
                     || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()) {
@@ -2509,9 +2544,9 @@ public class DrawService {
             }
             boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof WinGameOnEmptyLibraryDrawEffect);
-            if (hasEffect) return true;
+            if (hasEffect) return perm;
         }
-        return false;
+        return null;
     }
 
     public void checkOpponentDrawTriggers(GameData gameData, UUID drawingPlayerId) {

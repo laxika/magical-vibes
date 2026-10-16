@@ -48,7 +48,7 @@ public class ExileTargetCreatureThenRevealUntilHigherManaValueEffectHandler
             return;
         }
 
-        int targetManaValue = target.getCard().getManaValue();
+        int targetManaValue = gameQueryService.getPermanentManaValue(target);
         permanentRemovalService.removePermanentToExile(gameData, target);
         permanentRemovalService.removeOrphanedAuras(gameData);
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));

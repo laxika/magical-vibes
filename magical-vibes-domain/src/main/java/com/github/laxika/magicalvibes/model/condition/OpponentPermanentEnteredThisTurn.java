@@ -17,4 +17,9 @@ public record OpponentPermanentEnteredThisTurn(CardPredicate predicate, int minC
     public String conditionNotMetReason() {
         return "not enough permanents entered under an opponent's control this turn";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

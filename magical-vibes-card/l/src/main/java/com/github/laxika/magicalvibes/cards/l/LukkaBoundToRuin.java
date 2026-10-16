@@ -13,10 +13,9 @@ import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 
 import java.util.List;
 import java.util.Map;
@@ -50,8 +49,7 @@ public class LukkaBoundToRuin extends Card {
                         Set.of(),
                         false,
                         false,
-                        Map.of(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER)),
+                        Map.of(EffectSlot.STATIC, new ToxicEffect(1)),
                         List.of(),
                         false,
                         false,

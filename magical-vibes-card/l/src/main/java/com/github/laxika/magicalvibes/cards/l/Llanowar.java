@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -24,6 +25,6 @@ public class Llanowar extends Card {
                         "{T}: Add {G}{G}."),
                 GrantScope.ALL_CREATURES));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED));
+                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()));
     }
 }

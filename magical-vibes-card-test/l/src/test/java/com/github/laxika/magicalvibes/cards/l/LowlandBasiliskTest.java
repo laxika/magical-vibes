@@ -61,9 +61,8 @@ class LowlandBasiliskTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .anyMatch(action -> action.permanentId().equals(target.getId()));
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Wall of Blossoms");
     }
@@ -157,8 +156,10 @@ class LowlandBasiliskTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        resolveAllTriggers();
-        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.passBothPriorities();
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+        });
 
         assertThat(gd.stack).singleElement().satisfies(entry -> {
             assertThat(entry.getControllerId()).isEqualTo(player1.getId());
@@ -179,8 +180,10 @@ class LowlandBasiliskTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();
-        resolveAllTriggers();
-        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.passBothPriorities();
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+        });
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();

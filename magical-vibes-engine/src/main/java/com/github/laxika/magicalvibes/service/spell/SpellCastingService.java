@@ -55,6 +55,8 @@ import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.TargetType;
@@ -134,6 +136,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilities
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeInsteadOfCommanderTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToSpellManaValueCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeOrSacrificePermanentCost;
@@ -5227,8 +5230,14 @@ public class SpellCastingService {
         if (card.hasType(CardType.LAND) && !castingFaceDown) {
             payLandPlayCost(gameData, playerId, card);
         }
+        if (commandCast) {
+            validateCommanderTaxLifePayment(gameData, playerId, card);
+        }
         hand.remove(cardIndex);
         if (commandCast) gameData.pendingCommandCasts.put(card.getId(), gameData.commandCastCardId);
+        if (commandCast) {
+            payCommanderTaxWithLife(gameData, playerId, card);
+        }
         int stackBeforeCastingCosts = gameData.stack.size();
         if (buyback && buybackEffect != null && buybackEffect.hasDiscardCost()) {
             if (buybackEffect.hasRandomDiscardCost()) {
@@ -7737,6 +7746,33 @@ public class SpellCastingService {
         entry.setChosenObjectCard(chosenObject.card());
     }
 
+    /** The life a commander's {@link PayLifeInsteadOfCommanderTaxEffect} charges for this cast, or zero. */
+    private int commanderTaxLife(GameData gameData, Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof PayLifeInsteadOfCommanderTaxEffect replacement) {
+                return replacement.lifePerPreviousCast()
+                        * (gameData.commanderTaxByCardId.getOrDefault(gameData.commandCastCardId, 0) / 2);
+            }
+        }
+        return 0;
+    }
+
+    private void validateCommanderTaxLifePayment(GameData gameData, UUID playerId, Card card) {
+        int life = commanderTaxLife(gameData, card);
+        if (life > 0 && (gameData.getLife(playerId) < life
+                || !gameQueryService.canPlayerLifeChange(gameData, playerId)
+                || !gameQueryService.canPayLifeForCosts(gameData))) {
+            throw new IllegalStateException("Not enough life to pay for " + card.getName());
+        }
+    }
+
+    private void payCommanderTaxWithLife(GameData gameData, UUID playerId, Card card) {
+        int life = commanderTaxLife(gameData, card);
+        if (life > 0) {
+            lifeSupport.applyLifePayment(gameData, playerId, life, card.getName());
+        }
+    }
+
     /**
      * Pays the "pay X life" additional cast cost (Fire Covenant) for the announced X. Legality
      * (life total at least X, CR 119.4) is checked by
@@ -9476,6 +9512,19 @@ public class SpellCastingService {
                 flashbackOpt = Optional.empty();
             }
         }
+        // A flashback granted until end of turn (Lost in Memories) uses the card's mana cost, so it
+        // stands in for the printed flashback cost when that cost (mana or life) can't be paid.
+        if (flashbackOpt.isPresent() && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId())) {
+            Optional<ManaCastingCost> printedFlashbackManaCost = flashbackOpt.get().getCost(ManaCastingCost.class);
+            boolean printedManaUnpayable = printedFlashbackManaCost.isPresent()
+                    && !new ManaCost(printedFlashbackManaCost.get().manaCost())
+                    .canPayFlashbackFromGraveyard(gameData.playerManaPools.get(playerId), 0);
+            boolean printedLifeUnpayable = flashbackOpt.get().getCost(LifeCastingCost.class).isPresent()
+                    && !castingCostService.canPayFlashbackLifeCost(gameData, playerId, flashbackOpt.get());
+            if (printedManaUnpayable || printedLifeUnpayable) {
+                flashbackOpt = Optional.empty();
+            }
+        }
         Card castHalf = flashbackOpt.isPresent() ? card.graveyardCastHalf() : card;
         var disturbOpt = graveyardAbilitiesSuppressed
                 ? Optional.<DisturbCast>empty()
@@ -9553,7 +9602,9 @@ public class SpellCastingService {
                 && !isHarmonize
                 && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast
                 && !isGrantedGraveyardPlay
-                && castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, graveyardCastOpt.get());
+                && castingPermissionService.isGraveyardCastAvailable(gameData, playerId, card, graveyardCastOpt.get())
+                && !castsWithoutChoosingGraveyardExileCost(gameData, playerId, card, graveyardCastOpt.get(),
+                exileGraveyardCardIndices);
         boolean castWithWarp = isGraveyardCast && card.hasKeyword(Keyword.WARP);
         RemoveCountersFromControlledCreaturesCastingCost graveyardCounterCost = isGraveyardCast
                 ? graveyardCastOpt.get().getCost(RemoveCountersFromControlledCreaturesCastingCost.class).orElse(null)
@@ -9623,6 +9674,17 @@ public class SpellCastingService {
                 && filteredGraveyardPermission.get().permission().alternateCost() instanceof PayLifeEqualToSpellManaValueCost
                 && effectiveXValue != 0 && card.getManaCost() != null && new ManaCost(card.getManaCost()).hasX()) {
             throw new IllegalStateException("X must be 0 when paying life instead of the mana cost");
+        }
+        // CR 202.3e: on the stack the spell's mana value includes the announced X, so a permission filtered
+        // by mana value (Lurrus of the Dream-Den) is judged with X substituted into the mana cost.
+        if (isGrantedCyclingGraveyardCast && effectiveXValue > 0
+                && card.getManaCost() != null && new ManaCost(card.getManaCost()).hasX()) {
+            Card spellWithAnnouncedX = card.createRuntimeCopy();
+            spellWithAnnouncedX.setManaCost(card.getManaCost().replace("{X}", "{" + effectiveXValue + "}"));
+            if (!predicateEvaluationService.matchesCardPredicate(spellWithAnnouncedX,
+                    filteredGraveyardPermission.get().permission().filter(), null, gameData, playerId)) {
+                throw new IllegalStateException("The announced X makes the spell ineligible for this graveyard permission");
+            }
         }
 
         // Validate timing (aftermath / flashback half may differ in type from the parent split card)
@@ -10078,7 +10140,7 @@ public class SpellCastingService {
             }
             StackEntry stackEntry = new StackEntry(
                     entryType, card, playerId, card.getName(),
-                    List.of(), 0, targetId, null
+                    List.of(), effectiveXValue, targetId, null
             );
             stackEntry.setSourceZone(Zone.GRAVEYARD);
             stackEntry.setCastWithWarp(castWithWarp);
@@ -11167,6 +11229,10 @@ public class SpellCastingService {
                 .map(ManaCastingCost::manaCost)
                 .orElseThrow(() -> new IllegalStateException("Flashforward cost must contain mana"))
                 : null;
+        if (flashforwardManaCost == null && !waterbendCast && !playWithoutPaying && !useManaValueLifeAlternative
+                && !card.hasType(CardType.LAND)) {
+            flashforwardManaCost = spectacleManaCostFromExile(gameData, playerId, card);
+        }
         if (supportedAdditionalManaCost && !playWithoutPaying) {
             flashforwardManaCost = (flashforwardManaCost != null ? flashforwardManaCost
                     : card.getManaCost() != null ? card.getManaCost() : "{0}")
@@ -11457,6 +11523,8 @@ public class SpellCastingService {
         stackEntry.setCastForForetell(castForForetell);
         if (castForForetell && exiledEntry != null) {
             stackEntry.setForetellControllerTurnsAtExile(exiledEntry.controllerTurnsTakenAtExile());
+            stackEntry.setForetellTurnsTakenAtExile(
+                    gameData.foretoldCardTurnsTaken.getOrDefault(exileCardId, Map.of()));
         }
         if (!fromOutsideGame && !exiledEntry.ownerId().equals(playerId)) {
             stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
@@ -12712,6 +12780,24 @@ public class SpellCastingService {
                                                 boolean anyManaType, String replacementManaCost) {
         return paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue, sourceZone,
                 List.of(), anyManaType, replacementManaCost);
+    }
+
+    /**
+     * The spectacle cost (CR 702.137a) of a spell cast from exile, which can be paid whenever an
+     * opponent lost life this turn, whatever zone the spell is cast from. It is used when the printed
+     * mana cost can't be paid from the pool; {@code null} when spectacle doesn't apply.
+     */
+    private String spectacleManaCostFromExile(GameData gameData, UUID playerId, Card card) {
+        AlternateHandCast spectacle = card.getCastingOption(AlternateHandCast.class)
+                .filter(AlternateHandCast::spectacle).orElse(null);
+        if (spectacle == null || card.getParsedManaCost() == null
+                || (spectacle.availabilityCondition() != null
+                && !conditionEvaluationService.isMet(gameData, spectacle.availabilityCondition(),
+                com.github.laxika.magicalvibes.service.effect.ConditionContext.forCasting(playerId)))
+                || card.getParsedManaCost().canPay(gameData.playerManaPools.get(playerId))) {
+            return null;
+        }
+        return spectacle.getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
     }
 
     private int paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card,
@@ -14194,6 +14280,11 @@ public class SpellCastingService {
             splicedEffects.addAll(splice.splicedEffects());
             additionalSpellCostService.extractAndRemove(splicedEffects);
             hostSpell.appendSpellTargetingFrom(spliceCard);
+            if (!spliceCard.getSpellTargets().isEmpty()) {
+                // The spliced text has its own "target" words (CR 702.47c), so it may target an
+                // object the host spell also targets (CR 115.3).
+                hostSpell.setAllowSharedTargets(true);
+            }
             filteredSpellEffects.addAll(splicedEffects);
             costs.add(splice);
             splicedNames.add(spliceCard.getName());
@@ -14893,6 +14984,24 @@ public class SpellCastingService {
                 .text(".")
                 .build());
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+    }
+
+    /**
+     * Whether a card with an exile-N graveyard cast (escape) is instead being cast under a Muldrotha-style
+     * permission: the caster chose no cards to exile, so the escape cost is not being paid (CR 118.9a), and
+     * the permission still has an unused slot for the card's permanent type.
+     */
+    private boolean castsWithoutChoosingGraveyardExileCost(GameData gameData, UUID playerId, Card card,
+                                                           GraveyardCast graveyardCast,
+                                                           List<Integer> exileGraveyardCardIndices) {
+        if (graveyardCast.getCost(ExileNCardsFromGraveyardCastingCost.class).isEmpty()
+                || exileGraveyardCardIndices != null && !exileGraveyardCardIndices.isEmpty()) {
+            return false;
+        }
+        return castingPermissionService.findGraveyardCastSourcePermanentId(gameData, playerId)
+                .map(sourceId -> CastingPermissionService.hasUnusedPermanentTypeSlot(card,
+                        gameData.permanentTypesCastFromGraveyardThisTurn.getOrDefault(sourceId, Set.of())))
+                .orElse(false);
     }
 
     private void validateGraveyardCastAdditionalCosts(GameData gameData, UUID playerId, Card card,
@@ -16408,6 +16517,28 @@ public class SpellCastingService {
      * @param castModalBackFace the spell was cast as the back face of a modal double-faced card, so
      *                          its spell-cast triggers see the back face's characteristics
      */
+    /**
+     * CR 700.2e: when an opponent chooses the mode of a spell (Library of Lat-Nam), that choice is made as
+     * the spell is cast. The opponent answers through the may-ability prompt; the answer is recorded on the
+     * spell by {@code MayPenaltyChoiceHandlerService#handleLibraryOfLatNamChoice}.
+     */
+    private void queueOpponentModeChoice(GameData gameData, StackEntry castEntry, UUID controllerId) {
+        boolean needsChoice = castEntry.getEffectsToResolve().stream()
+                .anyMatch(effect -> effect instanceof LibraryOfLatNamEffect latNam && latNam.drawThree() == null);
+        if (!needsChoice) {
+            return;
+        }
+        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
+        if (opponentId == null) {
+            return;
+        }
+        String prompt = "Choose one for " + gameData.playerIdToName.get(controllerId) + " (Library of Lat-Nam)"
+                + " — Accept: they draw three cards at the beginning of the next turn's upkeep."
+                + " Decline: they search their library for a card and put it into their hand.";
+        gameData.pendingMayAbilities.add(new PendingMayAbility(castEntry.getCard(), opponentId,
+                List.of(new LibraryOfLatNamEffect()), prompt));
+    }
+
     private void finishSpellCast(GameData gameData, UUID playerId, Player player, List<Card> hand, Card card,
                                  boolean castFromHand, boolean castModalBackFace) {
         StackEntry castEntry = null;
@@ -16476,7 +16607,11 @@ public class SpellCastingService {
         }
 
         for (CardEffect staticEffect : castCharacteristics.getEffects(EffectSlot.STATIC)) {
-            if (staticEffect instanceof IncreaseOwnCastCostUnlessRevealSubtypeEffect revealCost) {
+            CardEffect unwrappedStatic = staticEffect instanceof ConditionalEffect conditional
+                    && conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    com.github.laxika.magicalvibes.service.effect.ConditionContext.forCasting(playerId))
+                    ? conditional.wrapped() : staticEffect;
+            if (unwrappedStatic instanceof IncreaseOwnCastCostUnlessRevealSubtypeEffect revealCost) {
                 Card revealed = revealCost.explicitSelection()
                         ? gameData.beholdCostRevealedCard
                         : gameData.playerHands.getOrDefault(playerId, List.of()).stream()
@@ -16518,6 +16653,7 @@ public class SpellCastingService {
                             .contains(CardSubtype.FAERIE));
             castEntry.setControlledFaerieAsCast(controlledFaerie);
             triggerCollectionService.checkCrimeTriggers(gameData, castEntry);
+            queueOpponentModeChoice(gameData, castEntry, playerId);
         }
         if (commandCast) {
             triggerCollectionService.checkSpellCastTriggers(

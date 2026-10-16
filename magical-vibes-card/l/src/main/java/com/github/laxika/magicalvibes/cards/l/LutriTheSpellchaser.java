@@ -22,7 +22,7 @@ public class LutriTheSpellchaser extends Card {
 
     public LutriTheSpellchaser() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new WasCast(),
+                new WasCast(true),
                 new CopySpellEffect(new StackEntryAllOfPredicate(List.of(
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                         new StackEntryControlledByPredicate()

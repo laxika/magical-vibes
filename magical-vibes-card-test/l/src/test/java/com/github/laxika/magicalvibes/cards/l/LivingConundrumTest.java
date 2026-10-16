@@ -87,7 +87,7 @@ class LivingConundrumTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new LivingConundrum()));
         harness.setHand(player1, List.of());
 
-        harness.getDrawService().resolveDrawCards(gd, player1.getId(), 3);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 3));
 
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -103,7 +103,7 @@ class LivingConundrumTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, conundrum)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, conundrum, Keyword.FLYING)).isFalse();
-        harness.getDrawService().resolveDrawCard(gd, player2.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());

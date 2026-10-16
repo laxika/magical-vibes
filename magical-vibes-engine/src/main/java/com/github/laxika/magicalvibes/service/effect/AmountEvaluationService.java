@@ -120,6 +120,7 @@ import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.StartingLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.FixedIfAllTargetsControlledByController;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlMoreCreaturesThanEachOtherPlayer;
@@ -350,6 +351,8 @@ public class AmountEvaluationService {
                     gameData.artifactsPutIntoGraveyardFromBattlefieldThisTurn;
             case Fixed f ->
                     f.value();
+            case StartingLifeTotal ignored ->
+                    gameData.startingLife();
             case DeterminedOnce d ->
                     determinedOnce(gameData, d, ctx);
             case FixedIfCondition a ->
@@ -652,7 +655,10 @@ public class AmountEvaluationService {
                     yield 0;
                 }
                 int turnsTaken = gameData.turnsTakenByPlayer.getOrDefault(ctx.controllerId(), 0);
-                yield Math.max(0, turnsTaken - entry.getForetellControllerTurnsAtExile());
+                var turnsTakenAtExile = entry.getForetellTurnsTakenAtExile();
+                yield Math.max(0, turnsTaken - (turnsTakenAtExile.isEmpty()
+                        ? entry.getForetellControllerTurnsAtExile()
+                        : turnsTakenAtExile.getOrDefault(ctx.controllerId(), 0)));
             }
             case ControllerSpeed ignored ->
                     ctx.controllerId() == null ? 0 : gameData.playerSpeeds.getOrDefault(ctx.controllerId(), 0);
@@ -1851,7 +1857,7 @@ public class AmountEvaluationService {
                 .filter(permanent -> GameQueryService.isStaticEvaluationActive()
                         ? !permanent.getCard().hasType(CardType.LAND)
                         : !gameQueryService.isLand(gameData, permanent))
-                .mapToInt(permanent -> permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue())
+                .mapToInt(gameQueryService::getPermanentManaValue)
                 .distinct()
                 .count();
     }
@@ -3008,9 +3014,13 @@ public class AmountEvaluationService {
         int total = 0;
         UUID sourceCardId = ctx.sourcePermanent() != null ? ctx.sourcePermanent().getCard().getId()
                 : ctx.stackEntry() != null ? ctx.stackEntry().getCard().getId() : null;
+        UUID resolvingCardId = ctx.stackEntry() != null && ctx.stackEntry().getCard() != null
+                ? ctx.stackEntry().getCard().getId() : null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
             total += (int) gameData.getSpellsCastThisTurn(playerId).stream()
+                    .filter(spell -> !count.excludeResolvingSpell() || resolvingCardId == null
+                            || !resolvingCardId.equals(spell.getId()))
                     .filter(spell -> count.filter() == null
                             || predicateEvaluationService.matchesCardPredicate(
                             spell, count.filter(), sourceCardId, gameData, playerId))

@@ -73,6 +73,7 @@ class LifebloodHydraTest extends BaseCardTest {
     void reducedToZeroPowerGainsAndDrawsNothing() {
         Permanent hydra = addCreatureReady(player1, new LifebloodHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new LifebloodHydra()));
 
         harness.setHand(player2, List.of(new TragicSlip()));
@@ -92,6 +93,7 @@ class LifebloodHydraTest extends BaseCardTest {
         Permanent hydra = addCreatureReady(player1, new LifebloodHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new LifebloodHydra()));
         harness.setHand(player2, List.of(new LightningBolt(), new TragicSlip()));
         harness.addMana(player2, ManaColor.RED, 1);

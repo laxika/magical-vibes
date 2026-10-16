@@ -9,8 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCre
 public class Lifeline extends Card {
 
     public Lifeline() {
-        addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
+        RegisterDelayedReturnDyingCreatureUnderControlEffect returnDyingCreature =
                 new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                        false, null, 0, null, null, false, true, true));
+                        false, null, 0, null, null, false, true, true);
+        // Other creatures dying, and Lifeline itself when it is an animated creature that dies.
+        addEffect(EffectSlot.ON_ANY_CREATURE_DIES, returnDyingCreature);
+        addEffect(EffectSlot.ON_DEATH, returnDyingCreature);
     }
 }

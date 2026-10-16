@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
@@ -18,8 +20,11 @@ import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffe
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -410,14 +415,30 @@ public class PlayerInteractionSupport {
         }
 
         triggerCollectionService.beginDiscardEvent(gameData, playerId);
+        Card replacementSource = graveyardService.findDiscardToLibraryReplacementSource(gameData, playerId);
+        List<Card> awaitingReplacementChoice = new ArrayList<>();
         for (int i = 0; i < amount; i++) {
             List<Card> currentHand = gameData.playerHands.get(playerId);
-            if (currentHand.isEmpty()) break;
-            int randomIndex = ThreadLocalRandom.current().nextInt(currentHand.size());
-            Card discarded = currentHand.remove(randomIndex);
+            List<Card> candidates = currentHand.stream()
+                    .filter(card -> !awaitingReplacementChoice.contains(card))
+                    .toList();
+            if (candidates.isEmpty()) break;
+            Card discarded = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
             boolean entersBattlefield = gameData.discardCausedByOpponent
                     && discarded.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).stream()
                     .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
+            if (replacementSource != null && !entersBattlefield && !discarded.isToken()) {
+                // The owner chooses whether each randomly chosen card goes on top of the library
+                // instead of into the graveyard; the card stays in hand until that choice is made.
+                awaitingReplacementChoice.add(discarded);
+                gameData.pendingMayAbilities.add(new PendingMayAbility(
+                        replacementSource, playerId,
+                        List.of(new DiscardToTopOfLibraryInsteadEffect()),
+                        "Put " + discarded.getName() + " on top of your library instead of into your graveyard?",
+                        discarded.getId(), (String) null, (UUID) null));
+                continue;
+            }
+            currentHand.remove(discarded);
             if (entersBattlefield) {
                 battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
                         gameData, playerId, new Permanent(discarded));
@@ -916,7 +937,7 @@ public class PlayerInteractionSupport {
         PendingInteraction.RevealedHandChoice interaction = new PendingInteraction.RevealedHandChoice(
                 casterId, targetPlayerId, validIndices, cardsToChoose, discardMode, exileMode,
                 List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
-                null, null, declineFallbackDiscardCount, filter, exileAllCopiesOfChosenNames,
+                null, null, declineFallbackDiscardCount, choosableFilterFor(filter, excludedTypes), exileAllCopiesOfChosenNames,
                 imprintOnSource, shuffleIntoLibraryMode, false, grantPlayPermission, returnAtNextEndStep,
                 exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect, 0,
                 keepInHand);
@@ -925,6 +946,19 @@ public class PlayerInteractionSupport {
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);
     
+    }
+
+    /**
+     * Restriction a revealed-hand choice keeps on every follow-up pick: the caller's filter plus an
+     * exclusion for each excluded card type, so "choose a nonland card" stays nonland across picks.
+     */
+    private static CardPredicate choosableFilterFor(CardPredicate filter, List<CardType> excludedTypes) {
+        CardPredicate result = filter;
+        for (CardType excludedType : excludedTypes) {
+            CardPredicate notType = new CardNotPredicate(new CardTypePredicate(excludedType));
+            result = result == null ? notType : new CardAllOfPredicate(List.of(result, notType));
+        }
+        return result;
     }
 
     private void insertDeclineEffect(StackEntry entry, CardEffect currentEffect, CardEffect declineEffect) {

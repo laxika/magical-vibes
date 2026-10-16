@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
@@ -29,7 +29,7 @@ public class LoyalApprentice extends Card {
         // create a 1/1 colorless Thopter artifact creature token with flying.
         // That token gains haste until end of turn.
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
-                new ControllerControlsCommander(),
+                new ControllerControlsOwnCommander(),
                 new CreateTokenEffect(
                         CardType.CREATURE,
                         1,

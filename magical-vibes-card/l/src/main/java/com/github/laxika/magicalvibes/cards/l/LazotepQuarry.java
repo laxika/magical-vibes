@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "M3C", collectorNumber = "79")
 @CardRegistration(set = "M3C", collectorNumber = "131")
@@ -56,7 +57,12 @@ public class LazotepQuarry extends Card {
                                 false,
                                 CardColor.BLACK,
                                 4,
-                                4)
+                                4,
+                                Set.of(),
+                                false,
+                                false,
+                                null,
+                                true)
                 ),
                 "{X}{2}, {T}, Sacrifice a Desert: Exile target creature card with mana value X from your graveyard. "
                         + "Create a token that's a copy of it, except it's a 4/4 black Zombie. Activate only as a sorcery.",

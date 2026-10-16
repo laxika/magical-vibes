@@ -292,6 +292,10 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             if (card == null) {
                 continue;
             }
+            Long targetedVersion = entry.getMixedZoneTargetGraveyardVersions().get(cardId);
+            if (targetedVersion != null && gameData.graveyardEntryVersion(cardId) != targetedVersion) {
+                continue;
+            }
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
             if (graveyardOwnerId == null || graveyardOwnerId.equals(entry.getControllerId())) {
                 continue;

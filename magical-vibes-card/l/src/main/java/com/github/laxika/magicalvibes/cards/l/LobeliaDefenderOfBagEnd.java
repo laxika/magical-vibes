@@ -45,6 +45,6 @@ public class LobeliaDefenderOfBagEnd extends Card {
                                                 new GainLifeEffect(2))))
                 )),
                 "{T}, Sacrifice an artifact: Choose one — Until end of turn, you may play a card exiled with Lobelia without paying its mana cost. Each opponent loses 2 life and you gain 2 life."
-        ));
+        ).withModalChoiceAtActivation());
     }
 }

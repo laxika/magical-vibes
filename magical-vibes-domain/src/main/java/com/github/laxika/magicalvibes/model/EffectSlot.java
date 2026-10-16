@@ -1144,6 +1144,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD,
     /** Triggers whenever one or more cards are exiled from the controller's graveyard. */
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD,
+    /** Triggers whenever one or more cards are put into exile from the controller's library and/or graveyard, on any turn. */
+    ON_CONTROLLER_CARDS_EXILED_FROM_LIBRARY_OR_GRAVEYARD,
     /** Triggers whenever one or more controlled creatures or creature cards in the controller's graveyard are exiled. */
     ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED,
     /** Triggers whenever one or more cards owned by an opponent are put into exile. */

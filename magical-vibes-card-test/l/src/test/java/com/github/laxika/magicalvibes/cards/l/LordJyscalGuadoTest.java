@@ -70,7 +70,7 @@ class LordJyscalGuadoTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
 
     @Test
@@ -145,6 +145,7 @@ class LordJyscalGuadoTest extends BaseCardTest {
     @DisplayName("Counter placement in the previous turn does not qualify in the next turn")
     void previousTurnCounterPlacementDoesNotQualify() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new LordJyscalGuado());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new TimberlandGuide()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0, 0, target.getId());

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class StormsurgeKraken extends Card {
 
     public StormsurgeKraken() {
-        var lieutenant = new ControllerControlsCommander();
+        var lieutenant = new ControllerControlsOwnCommander();
         addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,

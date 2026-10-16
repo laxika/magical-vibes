@@ -42,9 +42,11 @@ public class ExileTargetCreatureAndSameNameFromBattlefieldHandAndGraveyardEffect
             return;
         }
 
+        // A face-down creature has no name (CR 708.2), so it shares a name with no other card.
+        boolean targetHasName = !target.isFaceDown();
         String targetName = target.getCard().getName();
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        List<Permanent> sameNameCreatures = controllerId == null
+        List<Permanent> sameNameCreatures = controllerId == null || !targetHasName
                 ? List.of()
                 : collectSameNameCreatures(gameData, controllerId, target, targetName);
 
@@ -61,10 +63,10 @@ public class ExileTargetCreatureAndSameNameFromBattlefieldHandAndGraveyardEffect
         }
 
         playerInteractionSupport.resolveRevealHand(gameData, controllerId);
-        List<Card> exiledFromHand = exileMatching(gameData, controllerId,
-                gameData.playerHands.get(controllerId), targetName);
-        List<Card> exiledFromGraveyard = exileMatching(gameData, controllerId,
-                gameData.playerGraveyards.get(controllerId), targetName);
+        List<Card> exiledFromHand = targetHasName ? exileMatching(gameData, controllerId,
+                gameData.playerHands.get(controllerId), targetName) : List.of();
+        List<Card> exiledFromGraveyard = targetHasName ? exileMatching(gameData, controllerId,
+                gameData.playerGraveyards.get(controllerId), targetName) : List.of();
         if (!exiledFromGraveyard.isEmpty()) {
             graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, exiledFromGraveyard);
         }
@@ -87,6 +89,7 @@ public class ExileTargetCreatureAndSameNameFromBattlefieldHandAndGraveyardEffect
         List<Permanent> matches = new ArrayList<>();
         for (Permanent permanent : battlefield) {
             if (!permanent.getId().equals(target.getId())
+                    && !permanent.isFaceDown()
                     && gameQueryService.isCreature(gameData, permanent)
                     && permanent.getCard().getName().equals(targetName)) {
                 matches.add(permanent);

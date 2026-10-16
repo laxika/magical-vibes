@@ -225,6 +225,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEff
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.ReturnDelayedCurseAttachedToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDelayedGraveyardCardUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
@@ -676,11 +677,14 @@ public class StepTriggerService {
                             gameData.id, playerName, pending.count(), pending.sourceCard().getName());
                     continue;
                 }
+                boolean drawerIsNotTriggerController = !pending.controllerId().equals(pending.triggerControllerId());
                 StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, pending.sourceCard(), pending.controllerId(),
+                        StackEntryType.TRIGGERED_ABILITY, pending.sourceCard(), pending.triggerControllerId(),
                         pending.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(new DrawCardEffect(pending.count()))),
-                        (UUID) null, (UUID) null);
+                        new ArrayList<>(List.of(drawerIsNotTriggerController
+                                ? new DrawCardForTargetPlayerEffect(pending.count())
+                                : new DrawCardEffect(pending.count()))),
+                        drawerIsNotTriggerController ? pending.controllerId() : (UUID) null, (UUID) null);
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
@@ -1701,7 +1705,7 @@ public class StepTriggerService {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(), null,
                             activePlayerId));
-                } else if (effect instanceof MayEffect may) {
+                } else if (effect instanceof MayEffect may && !may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     if (may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER) {
                         gameData.queueMayAbility(
                                 perm.getCard(), playerId, may, null, perm.getId(), activePlayerId,
@@ -3162,6 +3166,11 @@ public class StepTriggerService {
                         // A delayed trigger of the lock's activator, collected below.
                         continue;
                     }
+                    if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()
+                            && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                    ConditionContext.forPermanent(perm, activePlayerId))) {
+                        continue;
+                    }
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
                     } else {
@@ -4318,7 +4327,7 @@ public class StepTriggerService {
             }
             perm.setEnteredFromExile(true);
             if (pending.grantHaste()) {
-                perm.getPersistentGrantedKeywords().add(Keyword.HASTE);
+                perm.getGrantedKeywords().add(Keyword.HASTE);
             }
             if (card.getId().equals(pending.card().getId())) {
                 primaryPermanent = perm;
@@ -5512,7 +5521,8 @@ public class StepTriggerService {
             for (DelayedGraveyardToBattlefieldTransformedReturn pending : pendingReturns) {
                 Card returningCard = gameData.playerGraveyards.getOrDefault(pending.ownerId(), List.of()).stream()
                         .filter(card -> card.getId().equals(pending.cardId())).findFirst().orElse(null);
-                if (returningCard == null) {
+                if (returningCard == null
+                        || gameData.graveyardEntryVersion(returningCard.getId()) != pending.graveyardEntryVersion()) {
                     continue;
                 }
                 StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
@@ -5554,26 +5564,16 @@ public class StepTriggerService {
                     gameData.drainDelayedActions(DelayedReturnCurseAttachedToPlayer.class);
             for (DelayedReturnCurseAttachedToPlayer pending : pendingReturns) {
                 Card curseCard = gameQueryService.findCardInGraveyardById(gameData, pending.cardId());
-                if (curseCard == null || !curseCard.isAura() || !curseCard.isEnchantPlayer()
-                        || !gameData.playerIds.contains(pending.attachedPlayerId())
-                        || gameQueryService.isCardBlockedFromEnteringFromZone(
-                        gameData, curseCard, Zone.GRAVEYARD)
-                        || !auraAttachmentService.canEnchantPlayer(
-                        gameData, curseCard, pending.ownerId(), pending.attachedPlayerId())) {
+                if (curseCard == null) {
                     continue;
                 }
-
-                permanentRemovalService.removeCardFromGraveyardById(gameData, pending.cardId());
-                Permanent cursePermanent = new Permanent(curseCard);
-                cursePermanent.setAttachedTo(pending.attachedPlayerId());
-                battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, pending.ownerId(), cursePermanent);
-                gameLogService.append(gameData, GameLog.builder()
-                        .card(curseCard)
-                        .text(" returns to the battlefield attached to ")
-                        .text(gameData.playerIdToName.get(pending.attachedPlayerId()))
-                        .text(" (delayed trigger).")
-                        .build());
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        curseCard, pending.attachedPlayerId(), curseCard.getName() + "'s delayed return ability",
+                        new ArrayList<>(List.of(new ReturnDelayedCurseAttachedToPlayerEffect(pending))));
+                entry.setNonTargeting(true);
+                entry.setTriggeringCardId(pending.cardId());
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData, GameLog.cardThen(curseCard, "'s delayed return ability triggers."));
             }
         }
 
@@ -5690,7 +5690,11 @@ public class StepTriggerService {
                                 gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
                         continue;
                     }
-                    if (effect instanceof MayEffect may) {
+                    // A "you may ... target X" trigger chooses its target as it is put on the stack
+                    // (CR 603.3d); the may decision is made on resolution.
+                    if (effect instanceof MayEffect may && !(may.targetSpec().declaredTarget() != null
+                            && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)))) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
                     } else if (effect instanceof DealDamageIfDidntCastSpellThisTurnEffect) {
                         // Intervening-if (CR 603.4): only trigger if the end-step player (the active

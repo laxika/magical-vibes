@@ -35,7 +35,7 @@ public class LoreholdApprentice extends Card {
         );
         List<CardEffect> magecraft = List.of(new GrantActivatedAbilityEffect(
                 damageAbility,
-                GrantScope.OWN_CREATURES,
+                GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),
                 EffectDuration.UNTIL_END_OF_TURN
         ));

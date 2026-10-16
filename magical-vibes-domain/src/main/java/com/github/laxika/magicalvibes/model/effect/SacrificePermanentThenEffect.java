@@ -23,6 +23,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *                              original ability before the optional sacrifice
  * @param reflexive whether {@code thenEffect} is a separate reflexive trigger; when false, the
  *                  follow-up is inserted into the resolving ability after a successful sacrifice
+ * @param excludeGrantingPermanent whether the permanent granting this ability cannot be sacrificed
+ * @param thenWithoutSacrifice whether a non-reflexive {@code thenEffect} still resolves when there is
+ *                  nothing to sacrifice ("Sacrifice a permanent, then draw two cards")
  */
 public record SacrificePermanentThenEffect(
         PermanentPredicate filter,
@@ -30,8 +33,23 @@ public record SacrificePermanentThenEffect(
         String permanentDescription,
         boolean targetBeforeSacrifice,
         boolean reflexive,
-        boolean excludeGrantingPermanent
+        boolean excludeGrantingPermanent,
+        boolean thenWithoutSacrifice
 ) implements GrantingPermanentAwareEffect {
+
+    public SacrificePermanentThenEffect(PermanentPredicate filter, CardEffect thenEffect,
+                                        String permanentDescription, boolean targetBeforeSacrifice,
+                                        boolean reflexive, boolean excludeGrantingPermanent) {
+        this(filter, thenEffect, permanentDescription, targetBeforeSacrifice, reflexive,
+                excludeGrantingPermanent, false);
+    }
+
+    /** "Sacrifice a [permanent], then [effect]": the effect resolves even if nothing was sacrificed. */
+    public static SacrificePermanentThenEffect thenRegardless(PermanentPredicate filter, CardEffect thenEffect,
+                                                              String permanentDescription) {
+        return new SacrificePermanentThenEffect(filter, thenEffect, permanentDescription, false, false,
+                false, true);
+    }
 
     public SacrificePermanentThenEffect(PermanentPredicate filter, CardEffect thenEffect,
                                         String permanentDescription, boolean targetBeforeSacrifice,

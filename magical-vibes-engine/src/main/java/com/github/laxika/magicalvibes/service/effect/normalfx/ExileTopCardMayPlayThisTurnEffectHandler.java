@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -70,7 +72,9 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
                 ? " (may play it without paying its mana cost this turn)"
                 : " (may play it this turn)";
 
+        int exiledCount = 0;
         for (int i = 0; i < count && !deck.isEmpty(); i++) {
+            exiledCount++;
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
 
@@ -90,5 +94,7 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             log.info("Game {} - {} exiles {} from library top (withoutPaying={})",
                     gameData.id, controllerName, topCard.getName(), withoutPaying);
         }
+        triggerCollectionService.checkControllerCardsExiledFromLibraryOrGraveyardTriggers(
+                gameData, controllerId, exiledCount);
     }
 }

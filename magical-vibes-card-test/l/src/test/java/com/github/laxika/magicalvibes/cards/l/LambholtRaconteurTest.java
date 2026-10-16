@@ -81,8 +81,8 @@ class LambholtRaconteurTest extends BaseCardTest {
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(raconteur.getCard()).isInstanceOf(LambholtRavager.class);
 
-        gd.recordSpellCast(player1.getId(), new Opt());
-        gd.recordSpellCast(player1.getId(), new Opt());
+        gd.recordSpellCast(player2.getId(), new Opt());
+        gd.recordSpellCast(player2.getId(), new Opt());
         advanceToNextTurn(player2);
 
         assertThat(raconteur.getCard()).isInstanceOf(LambholtRaconteur.class);

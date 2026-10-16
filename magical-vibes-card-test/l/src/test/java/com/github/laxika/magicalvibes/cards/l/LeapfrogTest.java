@@ -115,7 +115,7 @@ class LeapfrogTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gqs.hasKeyword(gd, leapfrog, Keyword.FLYING)).isTrue();
     }

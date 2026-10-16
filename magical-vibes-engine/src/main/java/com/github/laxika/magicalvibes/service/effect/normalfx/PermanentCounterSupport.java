@@ -550,7 +550,8 @@ public class PermanentCounterSupport {
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService));
     }
 
-    public void removeCountersAndTransform(GameData gameData, Permanent self, CounterType counterType, String counterName) {
+    public void removeCountersAndTransform(GameData gameData, Permanent self, CounterType counterType, String counterName,
+                                           boolean canTransform) {
         // Remove all counters of that type
         switch (counterType) {
             case CHARGE -> self.setCounterCount(CounterType.CHARGE, 0);
@@ -571,7 +572,10 @@ public class PermanentCounterSupport {
                 "All " + counterName + " counters removed from ", self.getCard(), "."));
         log.info("Game {} - All {} counters removed from {}", gameData.id, counterName, self.getCard().getName());
 
-        // Transform
+        if (!canTransform) {
+            return;
+        }
+
         Card originalCard = self.getOriginalCard();
         if (!self.isTransformed()) {
             Card backFace = originalCard.getBackFaceCard();

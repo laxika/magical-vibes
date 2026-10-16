@@ -117,6 +117,7 @@ class LavabellySliverTest extends BaseCardTest {
     void illegalPlaneswalkerTargetPreventsLifeGain() {
         harness.addToBattlefield(player1, new LavabellySliver());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         harness.castFromHand(player1, new MetallicSliver(), "{1}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, planeswalker.getId());

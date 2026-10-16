@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -73,6 +74,14 @@ public class ExileTargetCreatureCardThenConjureSkeletonDuplicateEffectHandler
         duplicate.setSubtypes(List.copyOf(subtypes));
         duplicate.setPower(3);
         duplicate.setToughness(1);
+        // Its base power and toughness are 3/1 (layer 7b), which overrides a characteristic-defining
+        // ability that sets them (layer 7a), so that ability no longer affects the duplicate.
+        for (EffectSlot slot : EffectSlot.values()) {
+            var registrations = duplicate.getEffectRegistrations(slot);
+            if (!registrations.isEmpty()) {
+                registrations.removeIf(registration -> registration.effect().isPowerToughnessDefining());
+            }
+        }
         duplicate.freeze();
 
         graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), duplicate);

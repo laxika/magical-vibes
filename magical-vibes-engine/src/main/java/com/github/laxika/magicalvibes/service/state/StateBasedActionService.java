@@ -186,6 +186,7 @@ public class StateBasedActionService {
             anyPerformed |= permanentRemovalService.removeOrphanedAuras(gameData);
             anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
             anyPerformed |= unpairNonCreatureSoulbondPairs(gameData);
+            anyPerformed |= removeNonCreaturesFromCombat(gameData);
             anyPerformed |= removeRedundantRoles(gameData);
 
             // Debt of Loyalty: a creature that just regenerated off its shield changes controller.
@@ -373,6 +374,53 @@ public class StateBasedActionService {
             performed = true;
         }
         return performed;
+    }
+
+    /**
+     * CR 506.4 — an attacking or blocking permanent that stops being a creature is removed from
+     * combat. A creature it was blocking stays blocked, but no longer has a blocker to be dealt
+     * damage by when this was its only one.
+     */
+    private boolean removeNonCreaturesFromCombat(GameData gameData) {
+        List<Permanent> toRemove = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if ((permanent.isAttacking() || permanent.isBlocking())
+                    && !gameQueryService.isCreature(gameData, permanent)) {
+                toRemove.add(permanent);
+            }
+        });
+        for (Permanent permanent : toRemove) {
+            if (permanent.isAttacking()) {
+                permanent.setAttacking(false);
+                permanent.setAttackTarget(null);
+            }
+            if (permanent.isBlocking()) {
+                List<UUID> blockedAttackerIds = List.copyOf(permanent.getBlockingTargetIds());
+                permanent.setBlocking(false);
+                permanent.getBlockingTargets().clear();
+                permanent.getBlockingTargetIds().clear();
+                for (UUID attackerId : blockedAttackerIds) {
+                    Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
+                    if (attacker != null && attacker.isAttacking()
+                            && !hasBlocker(gameData, attackerId)) {
+                        attacker.setBlockedWithoutBlockers(true);
+                    }
+                }
+            }
+            log.info("Game {} - {} stops being a creature and is removed from combat",
+                    gameData.id, permanent.getCard().getName());
+        }
+        return !toRemove.isEmpty();
+    }
+
+    private boolean hasBlocker(GameData gameData, UUID attackerId) {
+        boolean[] found = {false};
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(attackerId)) {
+                found[0] = true;
+            }
+        });
+        return found[0];
     }
 
     private boolean removeRedundantRoles(GameData gameData) {

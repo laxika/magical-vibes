@@ -33,7 +33,7 @@ class LimitlessRekindlingTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
         Card exiled = gd.getPlayerExiledCards(player1.getId()).getFirst();
-        assertThat(exiled.getName()).isNotIn("Aquatic Subtlety", "Craterous Stomp", "Limitless Rekindling",
+        assertThat(exiled.getName()).isIn("Aquatic Subtlety", "Craterous Stomp", "Limitless Rekindling",
                 "Circadian Struggle", "Elvish Elegy", "Rite of Flame", "Thoughtweft's Call");
         assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
         assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(exiled.getId());

@@ -108,8 +108,19 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
             return;
         }
 
-        // Move one counter of the requested type, or the first kind present when no type was
-        // specified.
+        // Move one counter of the requested type. Without a requested type the controller chooses
+        // the kind at resolution when the source holds several kinds (CR 608.2d).
+        if (moveEffect.counterType() == null) {
+            List<CounterType> kinds = source.getCounters().entrySet().stream()
+                    .filter(e -> e.getValue() > 0)
+                    .map(Map.Entry::getKey)
+                    .toList();
+            if (kinds.size() > 1) {
+                playerInputService.beginMoveOneCounterChoice(gameData, entry.getControllerId(), source.getId(),
+                        destination.getId(), entry.getCard().getName(), kinds);
+                return;
+            }
+        }
         CounterType toMove = moveEffect.counterType();
         if (toMove != null && source.getCounterCount(toMove) <= 0) {
             toMove = null;

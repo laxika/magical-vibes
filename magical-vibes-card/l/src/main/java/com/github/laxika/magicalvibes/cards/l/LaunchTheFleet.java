@@ -21,7 +21,7 @@ public class LaunchTheFleet extends Card {
 
         // Any number of target creatures each gain "Whenever this creature attacks, create a 1/1
         // white Soldier creature token that's tapped and attacking" until end of turn.
-        target(TargetFilters.creature(), 0, 99)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
                         EffectSlot.ON_ATTACK,
                         new CreateTokenEffect(1, "Soldier", 1, 1, CardColor.WHITE,

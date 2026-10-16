@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -29,7 +29,7 @@ public class SiegeGangLieutenant extends Card {
         // Lieutenant — At the beginning of combat on your turn, if you control your commander,
         // create two 1/1 red Goblin creature tokens. Those tokens gain haste until end of turn.
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
-                new ControllerControlsCommander(),
+                new ControllerControlsOwnCommander(),
                 new CreateTokenEffect(
                         CardType.CREATURE,
                         2,

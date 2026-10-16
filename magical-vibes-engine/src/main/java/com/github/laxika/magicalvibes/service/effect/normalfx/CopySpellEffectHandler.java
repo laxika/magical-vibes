@@ -110,7 +110,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
         }
 
         // Only the instant/sorcery-copy mode offers "you may choose new targets for the copy".
-        if (!copyEffect.tokenCopy() && !copyEffect.tokenWithHaste()
+        if (!copyEffect.tokenCopy() && !copyEffect.tokenWithHaste() && !copyEffect.permanentSpellToken()
                 && (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()
                 || !copyEntry.getTargetCardIds().isEmpty())) {
             PendingMayAbility retargetAbility = new PendingMayAbility(

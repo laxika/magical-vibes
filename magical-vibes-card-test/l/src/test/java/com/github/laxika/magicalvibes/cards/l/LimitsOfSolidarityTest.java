@@ -97,9 +97,9 @@ class LimitsOfSolidarityTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         harness.assertOnBattlefield(player1, "Dune Beetle");
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         assertThat(target.isAttacking()).isTrue();
     }
 

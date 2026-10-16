@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -130,10 +131,12 @@ class LotusBlossomTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(blossom.getCard());
 
-        harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player1, true);
-        }
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.passBothPriorities();
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+                harness.handleMayAbilityChosen(player1, true);
+            }
+        });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(blossom.getCounterCount(CounterType.PETAL)).isEqualTo(2);

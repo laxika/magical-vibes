@@ -10,6 +10,11 @@ import com.github.laxika.magicalvibes.cards.u.UnderworldDreams;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -286,10 +291,17 @@ class LichsMirrorTest extends BaseCardTest {
     @Test
     @DisplayName("The reset shuffles owned stolen permanents but leaves borrowed permanents alone")
     void resetUsesOwnershipRatherThanControl() {
-        var ownedBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.stolenCreatures.put(ownedBear.getId(), player1.getId());
-        var borrowedMirror = harness.addToBattlefieldAndReturn(player1, new LichsMirror());
-        gd.stolenCreatures.put(borrowedMirror.getId(), player2.getId());
+        var ownedBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        var borrowedMirror = harness.addToBattlefieldAndReturn(player2, new LichsMirror());
+        harness.inMutationScope(() -> {
+            CreatureControlService control = GameTestEngineContext.get().getBean(CreatureControlService.class);
+            control.applyControlEffect(gd, player2.getId(), ownedBear,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    EffectDuration.PERMANENT, null, "Test setup");
+            control.applyControlEffect(gd, player1.getId(), borrowedMirror,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    EffectDuration.PERMANENT, null, "Test setup");
+        });
         harness.setLibrary(player1, shocks(10));
         harness.setLife(player1, -4);
 

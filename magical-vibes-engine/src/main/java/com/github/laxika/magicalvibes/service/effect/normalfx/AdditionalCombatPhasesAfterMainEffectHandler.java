@@ -4,12 +4,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhasesAfterMainEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -38,6 +42,15 @@ public class AdditionalCombatPhasesAfterMainEffectHandler implements NormalEffec
                     gameData.currentStep == TurnStep.PRECOMBAT_MAIN
                             ? TurnStep.BEGINNING_OF_COMBAT
                             : TurnStep.END_STEP;
+        }
+
+        if (additionalCombats.onlyTargetCreaturesCanAttack()) {
+            for (int i = 0; i < additionalCombats.count(); i++) {
+                gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
+                        entry.getControllerId(), entry.getCard(),
+                        new OnlyTargetCreaturesCanAttackThisCombatEffect(Set.copyOf(entry.getTargetIds())),
+                        entry.getSourcePermanentId()));
+            }
         }
 
         String logEntry = additionalCombats.count() == 1

@@ -394,7 +394,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
 
         creature.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         // Creature power is 5 (2 + 3)
         // Player2 takes 5 damage: 20 - 5 = 15

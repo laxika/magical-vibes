@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhasesAfterMainEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -35,6 +35,6 @@ public class LastNightTogether extends Card {
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
                         Set.of(Keyword.VIGILANCE, Keyword.INDESTRUCTIBLE, Keyword.HASTE), GrantScope.TARGET));
 
-        addEffect(EffectSlot.SPELL, new AdditionalCombatMainPhaseEffect(1, null, true, true));
+        addEffect(EffectSlot.SPELL, new AdditionalCombatPhasesAfterMainEffect(1, true));
     }
 }

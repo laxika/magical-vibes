@@ -1746,16 +1746,11 @@ public class StackResolutionService {
         } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
             gameData.spellsWithDreamCounterOnResolution.remove(entry.getCard().getId());
             paradigmService.onParadigmSpellResolved(gameData, entry);
-        } else if (entry.getSourceZone() == Zone.HAND
-                && (entry.getCard().getKeywords().contains(Keyword.REBOUND)
-                || entry.getGrantedKeywordsOnEntry().contains(Keyword.REBOUND)
-                || gameQueryService.hasSpellCastingAbilityGrant(
-                gameData, entry.getControllerId(), entry.getCard(), Keyword.REBOUND))) {
-            gameData.spellsWithDreamCounterOnResolution.remove(entry.getCard().getId());
-            gameData.addToExile(ownerId, entry.getCard());
-            gameData.queueDelayedAction(new ReboundAtNextUpkeep(
-                    entry.getControllerId(), ownerId, entry.getCard()));
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled with rebound."));
+        } else if (plotOnResolution && hasReboundOnResolution(gameData, entry)) {
+            playerInputService.beginSpellReboundOrPlotChoice(gameData, new ChoiceContext.SpellReboundOrPlotChoice(
+                    entry.getControllerId(), ownerId, entry.getCard(), physicalCard));
+        } else if (hasReboundOnResolution(gameData, entry)) {
+            exileSpellWithRebound(gameData, entry.getControllerId(), ownerId, entry.getCard());
         } else if (entry.isPutOnBottomOfOwnersLibraryInsteadOfGraveyard()) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.playerDecks.get(ownerId).add(physicalCard);
@@ -1766,12 +1761,7 @@ public class StackResolutionService {
             if (gameData.findExiledCard(physicalCard.getId()) == null) gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (plotOnResolution) {
-            exileService.exileCard(gameData, ownerId, physicalCard);
-            gameData.plottedCardIds.add(physicalCard.getId());
-            gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
-            gameData.exilePlayWithoutPayingManaCost.add(physicalCard.getId());
-            triggerCollectionService.checkPlotTriggers(gameData, ownerId, physicalCard);
-            gameLogService.append(gameData, GameLog.cardThen(physicalCard, " becomes plotted."));
+            plotResolvedSpell(gameData, ownerId, physicalCard);
         } else if (gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId())) {
             gameData.addToExile(ownerId, physicalCard);
             gameData.exiledCardDreamCounters.put(physicalCard.getId(), 1);
@@ -1783,6 +1773,40 @@ public class StackResolutionService {
             if (enteredGraveyard) {
                 triggerCollectionService.collectSpellHauntTrigger(gameData, physicalCard, entry.getControllerId());
             }
+        }
+    }
+
+    private boolean hasReboundOnResolution(GameData gameData, StackEntry entry) {
+        return entry.getSourceZone() == Zone.HAND
+                && (entry.getCard().getKeywords().contains(Keyword.REBOUND)
+                || entry.getGrantedKeywordsOnEntry().contains(Keyword.REBOUND)
+                || gameQueryService.hasSpellCastingAbilityGrant(
+                gameData, entry.getControllerId(), entry.getCard(), Keyword.REBOUND));
+    }
+
+    private void exileSpellWithRebound(GameData gameData, UUID controllerId, UUID ownerId, Card card) {
+        gameData.spellsWithDreamCounterOnResolution.remove(card.getId());
+        gameData.addToExile(ownerId, card);
+        gameData.queueDelayedAction(new ReboundAtNextUpkeep(controllerId, ownerId, card));
+        gameLogService.append(gameData, GameLog.cardThen(card, " is exiled with rebound."));
+    }
+
+    private void plotResolvedSpell(GameData gameData, UUID ownerId, Card physicalCard) {
+        exileService.exileCard(gameData, ownerId, physicalCard);
+        gameData.plottedCardIds.add(physicalCard.getId());
+        gameData.exilePlayPermissions.put(physicalCard.getId(), ownerId);
+        gameData.exilePlayWithoutPayingManaCost.add(physicalCard.getId());
+        triggerCollectionService.checkPlotTriggers(gameData, ownerId, physicalCard);
+        gameLogService.append(gameData, GameLog.cardThen(physicalCard, " becomes plotted."));
+    }
+
+    /** Applies the exile replacement the spell's controller picked: rebound or plot (CR 616.1). */
+    public void resolveReboundOrPlotChoice(GameData gameData, ChoiceContext.SpellReboundOrPlotChoice choice,
+                                           boolean rebound) {
+        if (rebound) {
+            exileSpellWithRebound(gameData, choice.controllerId(), choice.ownerId(), choice.card());
+        } else {
+            plotResolvedSpell(gameData, choice.ownerId(), choice.physicalCard());
         }
     }
 

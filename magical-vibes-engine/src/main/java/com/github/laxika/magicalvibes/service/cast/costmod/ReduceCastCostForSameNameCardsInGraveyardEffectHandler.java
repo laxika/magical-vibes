@@ -21,7 +21,8 @@ public class ReduceCastCostForSameNameCardsInGraveyardEffectHandler implements C
 
     @Override
     public int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source) {
-        if (!source.controlledBy(context.castingPlayerId()) || context.spell() == null) {
+        if (!source.controlledBy(context.castingPlayerId()) || context.spell() == null
+                || context.castFaceDown()) {
             return 0;
         }
         List<Card> graveyard = context.gameData().playerGraveyards.get(context.castingPlayerId());

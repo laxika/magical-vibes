@@ -257,6 +257,7 @@ public class TurnProgressionService {
                 && gameData.additionalCombatPhasesAfterMain > 0) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatPhasesAfterMain--;
+            additionalCombatPhase = true;
         }
 
         // Finest Hour: an additional combat phase with no additional main phase — loop straight from
@@ -283,6 +284,7 @@ public class TurnProgressionService {
                 && gameData.additionalCombatPhasesAfterMain > 0) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatPhasesAfterMain--;
+            additionalCombatPhase = true;
         } else if (gameData.currentStep == TurnStep.END_OF_COMBAT
                 && gameData.additionalCombatPhasesAfterMain == 0
                 && gameData.additionalCombatPhasesAfterMainReturnStep != null) {

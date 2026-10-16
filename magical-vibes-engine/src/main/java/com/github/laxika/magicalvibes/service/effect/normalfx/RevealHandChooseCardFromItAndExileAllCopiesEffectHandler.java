@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealHandChooseCardFromItAnd
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.List;
@@ -23,6 +24,7 @@ public class RevealHandChooseCardFromItAndExileAllCopiesEffectHandler implements
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final CardRevealService cardRevealService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +34,7 @@ public class RevealHandChooseCardFromItAndExileAllCopiesEffectHandler implements
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RevealHandChooseCardFromItAndExileAllCopiesEffect) effect;
+        cardRevealService.revealHandToAllPlayers(gameData, entry.getTargetId());
         Predicate<Card> choosable = card -> predicateEvaluationService.matchesCardPredicate(
                 card, e.choosableFilter(), null);
         if (gameData.playerHands.getOrDefault(entry.getTargetId(), List.of()).stream().noneMatch(choosable)) {

@@ -41,9 +41,9 @@ class LouvaqTheAberrantTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         advanceToEndStep(player1);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, ownCreature.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -80,11 +80,11 @@ class LouvaqTheAberrantTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         advanceToEndStep(player2);
-        harness.handleMayAbilityChosen(player1, true);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, opposingCreature.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -97,6 +97,8 @@ class LouvaqTheAberrantTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         advanceToEndStep(player2);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

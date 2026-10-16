@@ -12,9 +12,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeLaezelEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +30,7 @@ import java.util.Set;
 public class SpecializeLaezelEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final GraveyardTargetingService graveyardTargetingService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -107,6 +110,14 @@ public class SpecializeLaezelEffectHandler implements NormalEffectHandlerBean {
 
     private void enqueueSpecializationTrigger(GameData gameData, StackEntry sourceEntry, Card sourceCard,
                                               CardEffect effect) {
+        if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect) {
+            graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData,
+                    sourceEntry.getControllerId(), sourceCard, List.of(effect), returnEffect,
+                    returnEffect.maxTargets(),
+                    returnEffect.hasTotalManaValueCap() ? returnEffect.maxTotalManaValue() : null,
+                    0, sourceEntry.getSourcePermanentId());
+            return;
+        }
         StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
                 sourceEntry.getControllerId(), sourceCard.getName() + "'s ability", List.of(effect), 0,
                 sourceEntry.getSourcePermanentId());

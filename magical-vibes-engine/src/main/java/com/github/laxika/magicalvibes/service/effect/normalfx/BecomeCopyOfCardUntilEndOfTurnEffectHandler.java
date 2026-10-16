@@ -72,6 +72,9 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
             source.getCard().setKeywords(keywords);
         }
         source.setCopyUntilEndOfTurn(true);
+        // The copy has a new set of abilities, so a once-each-turn ability it now has has not triggered yet.
+        gameData.oncePerTurnTriggersFiredThisTurn.remove(source.getId());
+        gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(source.getId());
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(),
                 entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), source.getId(),

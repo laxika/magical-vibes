@@ -49,6 +49,7 @@ class LeoninBattlemageTest extends BaseCardTest {
         assertThat(battlemage.isTapped()).isTrue();
 
         harness.castFromHand(player1, new CrazedGoblin(), "{R}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -68,6 +69,7 @@ class LeoninBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.castFromHand(player1, new CrazedGoblin(), "{R}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -86,6 +88,7 @@ class LeoninBattlemageTest extends BaseCardTest {
         assertThat(battlemage.isTapped()).isTrue();
 
         harness.castFromHand(player1, new Nourish(), "{G}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -179,6 +182,7 @@ class LeoninBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.castFromHand(player1, new Nourish(), "{G}{G}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

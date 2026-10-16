@@ -42,7 +42,7 @@ class LordOfThePitTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gameLogContains("Lord of the Pit deals 7 damage")).isTrue();
+        assertThat(gameLogContains("takes 7 damage from Lord of the Pit")).isTrue();
     }
 
     @Test
@@ -243,10 +243,10 @@ class LordOfThePitTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LordOfThePit());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setLife(player1, 20);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
@@ -260,10 +260,10 @@ class LordOfThePitTest extends BaseCardTest {
     void triggerResolvesAfterSourceLeaves() {
         Permanent lord = harness.addToBattlefieldAndReturn(player1, new LordOfThePit());
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setLife(player1, 20);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, lord.getId());
         harness.passBothPriorities();
 

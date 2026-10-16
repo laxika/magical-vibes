@@ -27,7 +27,7 @@ public class MotivateEffectHandler implements NormalEffectHandlerBean {
         }
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source != null) {
-            source.setMotivated(true);
+            source.setMotivatedByPlayerId(entry.getControllerId());
         }
     }
 }

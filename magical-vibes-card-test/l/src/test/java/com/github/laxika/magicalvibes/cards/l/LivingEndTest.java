@@ -51,9 +51,9 @@ class LivingEndTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Amrou Scout");
         harness.assertOnBattlefield(player2, "Amrou Seekers");

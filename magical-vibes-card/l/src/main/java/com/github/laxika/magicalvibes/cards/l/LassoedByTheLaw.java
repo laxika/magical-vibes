@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
@@ -22,8 +23,8 @@ public class LassoedByTheLaw extends Card {
 
     public LassoedByTheLaw() {
         target(TargetFilters.nonlandPermanentAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentUntilSourceLeavesEffect())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentUntilSourceLeavesEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                         CardType.CREATURE, 1, "Mercenary", 1, 1, CardColor.RED, null,
                         List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, Map.of(),
                         List.of(new ActivatedAbility(
@@ -36,6 +37,6 @@ public class LassoedByTheLaw extends Card {
                                 null,
                                 ActivationTimingRestriction.SORCERY_SPEED
                         )),
-                        false, false, false, 0, Set.of()));
+                        false, false, false, 0, Set.of()), TriggerMode.INDEPENDENT);
     }
 }

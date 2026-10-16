@@ -34,11 +34,14 @@ class LobotomyTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles every copy of the chosen card from the target's hand, graveyard, and library")
     void exilesAllCopiesFromAllZones() {
+        TrainedArmodon otherHandCopy = new TrainedArmodon();
+        TrainedArmodon libraryCopy = new TrainedArmodon();
         harness.setGraveyard(player2, List.of(new TrainedArmodon()));
-        castLobotomyAt(List.of(new TrainedArmodon(), new TrainedArmodon(), new Lobotomy()));
-        harness.setLibrary(player2, List.of(new TrainedArmodon()));
+        castLobotomyAt(List.of(new TrainedArmodon(), otherHandCopy, new Lobotomy()));
+        harness.setLibrary(player2, List.of(libraryCopy));
 
         harness.handleListChoice(player1, "Trained Armodon");
+        harness.handleMultipleCardsChosen(player1, List.of(otherHandCopy.getId(), libraryCopy.getId()));
 
         long exiled = gd.getPlayerExiledCards(player2.getId()).stream()
                 .filter(card -> card.getName().equals("Trained Armodon")).count();

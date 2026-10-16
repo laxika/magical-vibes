@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
+import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
@@ -29,7 +29,7 @@ public class IronwillForger extends Card {
                 "Target must be a nonlegendary creature you control"
         )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(
-                        new ControllerControlsCommander(),
+                        new ControllerControlsOwnCommander(),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 EffectSlot.ON_ATTACK,
                                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad())));

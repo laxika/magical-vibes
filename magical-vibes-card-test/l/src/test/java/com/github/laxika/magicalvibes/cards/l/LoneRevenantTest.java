@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +30,10 @@ class LoneRevenantTest extends BaseCardTest {
         Permanent revenant = harness.addToBattlefieldAndReturn(player1, new LoneRevenant());
         revenant.setSummoningSick(false);
         revenant.setAttacking(true);
+    }
+
+    private void resolveCombatKeepingTriggerOnStack() {
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
     }
 
     private List<Card> stackTopFour() {
@@ -100,7 +105,7 @@ class LoneRevenantTest extends BaseCardTest {
         List<Card> top = stackTopFour();
         attackWithRevenant();
 
-        resolveCombat();
+        resolveCombatKeepingTriggerOnStack();
         assertThat(gd.stack).hasSize(1);
         harness.addToBattlefield(player1, new BorderlandRanger());
         harness.passBothPriorities();
@@ -144,7 +149,7 @@ class LoneRevenantTest extends BaseCardTest {
         List<Card> top = stackTopFour();
         attackWithRevenant();
 
-        resolveCombat();
+        resolveCombatKeepingTriggerOnStack();
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
@@ -158,6 +163,7 @@ class LoneRevenantTest extends BaseCardTest {
     void oneCardLibraryPutsItsOnlyCardIntoHand() {
         Card onlyCard = new Forest();
         harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player1, List.of());
         attackWithRevenant();
 
         resolveCombat();

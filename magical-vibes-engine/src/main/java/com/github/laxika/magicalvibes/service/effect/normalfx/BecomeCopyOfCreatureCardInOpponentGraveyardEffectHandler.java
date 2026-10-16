@@ -11,10 +11,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCreatureCardInOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import lombok.RequiredArgsConstructor;
@@ -50,14 +52,20 @@ public class BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler implements
             return;
         }
 
-        Card printed = source.getOriginalCard();
+        // The ability and name belong to the card this ability is on now, which for a Clone copying
+        // this card is not its original card.
+        String retainedName = source.getCard().getName();
+        List<EffectRegistration> retainedRegistrations = source.getCard().getEffectRegistrations(SLOT).stream()
+                .filter(reg -> reg.effect() instanceof MayEffect may
+                        && may.wrapped() instanceof BecomeCopyOfCreatureCardInOpponentGraveyardEffect)
+                .toList();
         permanentCopierService.applyCloneCopy(source, e.graveyardCard(), null, null, Set.of());
 
         Card copy = source.getCard();
 
         // "except its name is Lazav, Dimir Mastermind, it's legendary in addition to its other types,
         // and it has hexproof and this ability"
-        copy.setName(printed.getName());
+        copy.setName(retainedName);
 
         Set<CardSupertype> supertypes = EnumSet.noneOf(CardSupertype.class);
         supertypes.addAll(copy.getSupertypes());
@@ -69,12 +77,12 @@ public class BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler implements
         keywords.add(Keyword.HEXPROOF);
         copy.setKeywords(keywords);
 
-        for (EffectRegistration reg : printed.getEffectRegistrations(SLOT)) {
+        for (EffectRegistration reg : retainedRegistrations) {
             copy.addEffect(SLOT, reg.effect(), reg.triggerMode());
         }
 
         gameLogService.append(gameData,
-                GameLog.textCardText(printed.getName() + " becomes a copy of ", e.graveyardCard(), "."));
-        log.info("Game {} - {} becomes a copy of {}", gameData.id, printed.getName(), e.graveyardCard().getName());
+                GameLog.textCardText(retainedName + " becomes a copy of ", e.graveyardCard(), "."));
+        log.info("Game {} - {} becomes a copy of {}", gameData.id, retainedName, e.graveyardCard().getName());
     }
 }

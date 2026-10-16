@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GatstafArsonists;
 import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +44,7 @@ class LambholtPacifistTest extends BaseCardTest {
         addCreatureReady(player1, new LambholtPacifist());
         addCreatureReady(player1, new GatstafArsonists());
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player1, List.of(0)));
 
         assertThat(findPermanent(player1, "Lambholt Pacifist").isAttacking()).isTrue();
     }
@@ -99,7 +100,7 @@ class LambholtPacifistTest extends BaseCardTest {
         Permanent pacifist = addCreatureReady(player1, new LambholtPacifist());
         pacifist.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player1, List.of(0)));
 
         assertThat(pacifist.isAttacking()).isTrue();
     }
@@ -139,7 +140,7 @@ class LambholtPacifistTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(pacifist.isTransformed()).isTrue();
 
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player1, List.of(0)));
 
         assertThat(pacifist.isAttacking()).isTrue();
     }

@@ -12,12 +12,12 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class LatullasOrders extends Card {
 
     public LatullasOrders() {
-        target(TargetFilters.creature())
-                // Whenever enchanted creature deals combat damage to defending player, you may
-                // destroy target artifact that player controls.
-                .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
-                        new DestroyPermanentDamagedPlayerControlsEffect(
-                                new PermanentIsArtifactPredicate(), 0),
-                        "You may destroy target artifact that player controls."));
+        target(TargetFilters.creature());
+        // Whenever enchanted creature deals combat damage to defending player, you may
+        // destroy target artifact that player controls.
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
+                new DestroyPermanentDamagedPlayerControlsEffect(
+                        new PermanentIsArtifactPredicate(), 0),
+                "You may destroy target artifact that player controls."));
     }
 }

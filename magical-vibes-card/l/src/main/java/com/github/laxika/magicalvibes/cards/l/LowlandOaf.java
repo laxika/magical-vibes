@@ -25,7 +25,7 @@ public class LowlandOaf extends Card {
                 List.of(
                         new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
-                        new SacrificeTargetPermanentAtEndStepEffect()
+                        new SacrificeTargetPermanentAtEndStepEffect(false, true)
                 ),
                 "{T}: Target Goblin creature you control gets +1/+0 and gains flying until end of turn. "
                         + "Sacrifice that creature at the beginning of the next end step.",

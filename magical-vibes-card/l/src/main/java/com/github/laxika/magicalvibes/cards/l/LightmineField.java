@@ -21,6 +21,7 @@ public class LightmineField extends Card {
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS, new DealDamageToEachMatchingPermanentEffect(
                 new PermanentCount(attacking, CountScope.ANY_PLAYER),
                 attacking,
-                EachPermanentScope.ALL_PLAYERS));
+                EachPermanentScope.ALL_PLAYERS,
+                true));
     }
 }

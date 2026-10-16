@@ -95,8 +95,10 @@ class LeeringOnlookerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
 
-        harness.activateGraveyardAbility(player1, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateGraveyardAbility(player1, 0);
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
                 .allSatisfy(bat -> assertThat(bat.isTapped()).isTrue());

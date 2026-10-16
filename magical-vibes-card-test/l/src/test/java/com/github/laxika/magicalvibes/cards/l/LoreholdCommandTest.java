@@ -185,7 +185,7 @@ class LoreholdCommandTest extends BaseCardTest {
         castCommand();
         harness.castModalInstantWithModes(player1, 0, 2, new int[]{0, 1}, null, List.of());
         harness.passBothPriorities();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);

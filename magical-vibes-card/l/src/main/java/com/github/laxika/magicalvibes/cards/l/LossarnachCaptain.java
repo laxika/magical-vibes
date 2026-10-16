@@ -22,8 +22,10 @@ public class LossarnachCaptain extends Card {
 
     public LossarnachCaptain() {
         // Whenever this creature or another Human you control enters, tap target creature an opponent controls.
+        // The self half is unconditional: it must still trigger when a type-replacing effect makes this creature a non-Human.
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                         new TriggeringCardConditionalEffect(
                                 new CardSubtypePredicate(CardSubtype.HUMAN),
                                 new TapPermanentsEffect(TapUntapScope.TARGET)));

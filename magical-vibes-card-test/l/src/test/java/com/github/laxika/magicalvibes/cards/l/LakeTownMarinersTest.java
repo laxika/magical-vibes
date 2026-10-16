@@ -143,7 +143,7 @@ class LakeTownMarinersTest extends BaseCardTest {
         LakeTownMariners borrowed = new LakeTownMariners();
         borrowed.setOwnerId(player2.getId());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, borrowed);
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        setOwnerAndController(creature, player2, player1);
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new LakeTownMariners()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -168,9 +168,7 @@ class LakeTownMarinersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castAdventure(player1, 0, List.of(creature.getId(), land.getId()));
-        gd.playerBattlefields.get(player1.getId()).remove(creature);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        setOwnerAndController(creature, player1, player2);
 
         harness.passBothPriorities();
 

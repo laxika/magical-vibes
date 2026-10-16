@@ -38,7 +38,7 @@ public class LighthouseChronologist extends Card {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(7, CounterType.LEVEL),
                 new SetBasePowerToughnessEffect(3, 5, GrantScope.SELF)));
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.END_STEP_TRIGGERED, ConditionalEffect.atTriggerTime(
                 new AllOf(List.of(
                         new NotControllerTurn(),
                         new SourceCounterThreshold(7, CounterType.LEVEL))),

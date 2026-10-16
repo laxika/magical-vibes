@@ -32,14 +32,12 @@ public class LochLarent extends Card {
                 "{1}{U}",
                 List.of(
                         new ScryEffect(3),
-                        new RegisterDelayedTargetPlayerSpellCastTriggerEffect(
+                        RegisterDelayedTargetPlayerSpellCastTriggerEffect.oneShotUntilConsumed(
                                 new CardTypePredicate(CardType.CREATURE),
                                 List.of(
                                         new GrantEntersTappedToTriggeringCreatureSpellEffect(),
                                         new GrantAdditionalCounterToTriggeringCreatureSpellEffect(
-                                                CounterType.STUN, 1)),
-                                true,
-                                false)),
+                                                CounterType.STUN, 1)))),
                 "{1}{U}, {T}: Scry 3. Target opponent gets a one-time boon with \"When you cast a creature spell, that creature enters tapped and with a stun counter on it.\" Activate only during your turn and only once.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

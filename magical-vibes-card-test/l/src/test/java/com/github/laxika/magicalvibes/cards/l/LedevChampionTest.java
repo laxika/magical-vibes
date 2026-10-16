@@ -124,7 +124,7 @@ class LedevChampionTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(2);
     }

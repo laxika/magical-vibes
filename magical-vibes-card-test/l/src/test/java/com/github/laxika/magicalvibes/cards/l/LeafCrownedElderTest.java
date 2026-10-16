@@ -126,9 +126,9 @@ class LeafCrownedElderTest extends BaseCardTest {
         Card top = new LeafCrownedElder();
         setLibraryTop(top);
         harness.setHand(player2, List.of(new VioletPall()));
-        harness.addMana(player2, ManaColor.BLACK, 5);
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.BLACK, 5);
         harness.castInstant(player2, 0, elder.getId());
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elder);
@@ -148,9 +148,9 @@ class LeafCrownedElderTest extends BaseCardTest {
         Card top = new LeafCrownedElder();
         setLibraryTop(top);
         harness.setHand(player2, List.of(new NamelessInversion()));
-        harness.addMana(player2, ManaColor.BLACK, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castInstant(player2, 0, elder.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

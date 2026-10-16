@@ -73,6 +73,9 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no {} to sacrifice for {}",
                     gameData.id, playerName, e.permanentDescription(), entry.getCard().getName());
+            if (e.thenWithoutSacrifice() && !e.reflexive() && e.thenEffect() != null) {
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(e.thenEffect()));
+            }
             return;
         }
 

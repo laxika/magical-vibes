@@ -220,6 +220,7 @@ public class CounterSupport {
                 return;
             }
             gameData.playerDecks.get(target.getOwnerId()).add(0, target.getPhysicalCard());
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
         }
 
         notifyCounteredSpell(gameData, source.getControllerId(), target);
@@ -249,6 +250,7 @@ public class CounterSupport {
                 return;
             }
             gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
         }
 
         notifyCounteredSpell(gameData, source.getControllerId(), target);

@@ -86,7 +86,7 @@ class LitaMechanicalEngineerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(zeppelin.isTapped()).isTrue();
     }
@@ -174,6 +174,6 @@ class LitaMechanicalEngineerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
     }
 }

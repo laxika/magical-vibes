@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KothOfTheHammer;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,12 +16,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LonelyEnd.class, GrizzlyBears.class, KothOfTheHammer.class})
+@CardUsed({LonelyEnd.class, GrizzlyBears.class, CrawWurm.class, KothOfTheHammer.class})
 class LonelyEndTest extends BaseCardTest {
 
     @Test
     void creatureModeGivesMinusThreeMinusThreeUntilEndOfTurn() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
         gd.startingPlayerId = player1.getId();
 
         cast(player1, 0, creature.getId());
@@ -73,7 +74,7 @@ class LonelyEndTest extends BaseCardTest {
     }
 
     private void cast(com.github.laxika.magicalvibes.model.Player caster, int mode, java.util.UUID targetId) {
-        harness.forceActivePlayer(caster);
+        gd.activePlayerId = caster.getId();
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new LonelyEnd()));

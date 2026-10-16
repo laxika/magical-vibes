@@ -310,6 +310,8 @@ public class MultiPermanentChoiceHandlerService {
             humanTimeLordMetaCrisisHandler;
     private final ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffectHandler
             chooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileForEachLifeLostEffectHandler
+            exileForEachLifeLostEffectHandler;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -372,6 +374,10 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
+        }
+        if (context instanceof MultiPermanentChoiceContext.ExileForEachLifeLost
+                && permanentIds.size() != maxCount) {
+            throw new IllegalStateException("Must choose exactly " + maxCount + " objects to exile");
         }
         if (context instanceof MultiPermanentChoiceContext.EquipoisePhaseOut
                 && permanentIds.size() != maxCount) {
@@ -1290,6 +1296,9 @@ public class MultiPermanentChoiceHandlerService {
             handleCreateTokenCopiesOfChosenDistinctControlledTokens(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAnyNumberUntilSourceLeaves ctx) {
             exileUntilSourceLeavesHandler.completeChoice(gameData, permanentIds, ctx.sourcePermanentId());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof MultiPermanentChoiceContext.ExileForEachLifeLost) {
+            exileForEachLifeLostEffectHandler.completeChoice(gameData, playerId, permanentIds);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyUpToOneAttachedPermanent ctx) {
             destroyUpToOneAttachedPermanentHandler.completeChoice(gameData, permanentIds, ctx);

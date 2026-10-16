@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessBlightsEffect;
@@ -1497,34 +1498,26 @@ public class MayPenaltyChoiceHandlerService {
      */
     public void handleLibraryOfLatNamChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         UUID opponentId = ability.controllerId(); // opponent is the decision maker
-        UUID controllerId = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (!pid.equals(opponentId)) {
-                controllerId = pid;
-                break;
+        StackEntry spell = gameData.stack.stream()
+                .filter(entry -> entry.getCard() != null
+                        && entry.getCard().getId().equals(ability.sourceCard().getId()))
+                .reduce((first, second) -> second)
+                .orElse(null);
+        if (spell != null) {
+            List<CardEffect> effects = spell.getEffectsToResolve();
+            for (int i = 0; i < effects.size(); i++) {
+                if (effects.get(i) instanceof LibraryOfLatNamEffect latNam && latNam.drawThree() == null) {
+                    spell.replaceEffectToResolve(i, new LibraryOfLatNamEffect(accepted));
+                    break;
+                }
             }
-        }
-        if (controllerId == null) {
-            throw new IllegalStateException("Cannot find Library of Lat-Nam controller");
-        }
-
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String opponentName = gameData.playerIdToName.get(opponentId);
-
-        if (accepted) {
-            gameData.queueDelayedAction(
-                    new com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep(controllerId, 3, ability.sourceCard()));
+            String controllerName = gameData.playerIdToName.get(spell.getControllerId());
+            String opponentName = gameData.playerIdToName.get(opponentId);
             gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + " draws three cards at the beginning of the next turn's upkeep."));
-            log.info("Game {} - {} chooses draw-three for {} (Library of Lat-Nam)", gameData.id, opponentName, controllerName);
-        } else {
-            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + " searches their library for a card."));
-            log.info("Game {} - {} chooses library search for {} (Library of Lat-Nam)", gameData.id, opponentName, controllerName);
-            StackEntry searchEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
-                    controllerId, ability.sourceCard().getName(),
-                    new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect())), 0);
-            gameData.stack.add(searchEntry);
+                    + (accepted ? " draws three cards at the beginning of the next turn's upkeep."
+                    : " searches their library for a card.")));
+            log.info("Game {} - {} chooses {} for {} (Library of Lat-Nam)", gameData.id, opponentName,
+                    accepted ? "draw-three" : "library search", controllerName);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

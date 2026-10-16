@@ -71,7 +71,7 @@ class LuminarchAspirantTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers again when another combat begins during the same turn")
     void triggersInEachCombatOfItsControllersTurn() {
-        Permanent aspirant = addCreatureReady(player1, new LuminarchAspirant());
+        Permanent aspirant = harness.addToBattlefieldAndReturn(player1, new LuminarchAspirant());
 
         for (int combat = 0; combat < 2; combat++) {
             advanceToBeginningOfCombat(player1);

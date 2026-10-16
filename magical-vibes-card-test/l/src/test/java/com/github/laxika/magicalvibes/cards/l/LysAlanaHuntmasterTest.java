@@ -41,6 +41,7 @@ class LysAlanaHuntmasterTest extends BaseCardTest {
         giveElfSpell(player1);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -53,6 +54,7 @@ class LysAlanaHuntmasterTest extends BaseCardTest {
         giveElfSpell(player1);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -71,6 +73,7 @@ class LysAlanaHuntmasterTest extends BaseCardTest {
         giveElfSpell(player1);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -113,6 +116,7 @@ class LysAlanaHuntmasterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);

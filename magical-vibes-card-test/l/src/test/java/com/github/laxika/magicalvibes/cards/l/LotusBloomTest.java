@@ -37,6 +37,7 @@ class LotusBloomTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -75,6 +76,7 @@ class LotusBloomTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -135,9 +137,11 @@ class LotusBloomTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LotusBloom());
         harness.forceStep(TurnStep.UPKEEP);
 
-        harness.activateAbility(player1, 0, null, null);
-        assertThat(gd.stack).isEmpty();
-        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            assertThat(gd.stack).isEmpty();
+            harness.handleListChoice(player1, ManaColor.GREEN.name());
+        });
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);

@@ -29,9 +29,17 @@ public class CreateTokenCopyOfSourceForEachOtherPlayerEffectHandler implements N
         CreateTokenCopyOfSourceForEachOtherPlayerEffect copyEffect =
                 (CreateTokenCopyOfSourceForEachOtherPlayerEffect) effect;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null || source.getCard().isToken() || !gameQueryService.isCreature(gameData, source)) return;
+        boolean sourceOnBattlefield = source != null;
+        if (!sourceOnBattlefield) {
+            // The source left before the trigger resolved: copy it as it last existed on the battlefield.
+            source = entry.getSourcePermanentSnapshot();
+        }
+        if (source == null || source.getCard().isToken()
+                || sourceOnBattlefield && !gameQueryService.isCreature(gameData, source)) return;
 
-        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
+        UUID sourceControllerId = sourceOnBattlefield
+                ? gameQueryService.findPermanentController(gameData, source.getId())
+                : entry.getControllerId();
         if (sourceControllerId == null) return;
 
         for (UUID playerId : gameData.orderedPlayerIds) {

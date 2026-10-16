@@ -1055,6 +1055,14 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * Lich's Mastery: the controller picked exactly as many permanents they control and cards from
+     * their hand or graveyard as the life they lost (or every one of them when there are fewer),
+     * and all are exiled.
+     */
+    record ExileForEachLifeLost() implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * "Sacrifice [source] unless you sacrifice any number of creatures with total power
      * {@code requiredPower} or greater" (Phyrexian Dreadnought). The chosen creatures are
      * sacrificed only when their total effective power reaches {@code requiredPower}; an empty
