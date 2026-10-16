@@ -628,6 +628,7 @@ Planar source note: `PutCountersOnSelfEffect` updates only the live face-up `Pla
 | `SetSelfBasePowerToughnessFromEnteringCreatureEffect` | `()` | non-targeting enter-trigger effect; reads the entering creature bound by the trigger and sets the source's base power and toughness to its current values until end of turn. Eldrazi Mimic (`OGW`) |
 
 | `ManaRestriction.RoomSpellsOrUnlocks` | `()` | restriction used by `AwardRestrictedManaEffect`; routes mana to a dedicated per-color bucket promoted only while casting a Room spell or unlocking a Room door (Smoky Lounge // Misty Salon, DSK) |
+| `ManaRestriction.NonartifactSpellsProhibited` | `()` | restriction used by `AwardRestrictedManaEffect` for colored "This mana can't be spent to cast a nonartifact spell" (Hydraulic Helper, MSH); stored in the artifact-spell-or-ability bucket with a tag, so it pays artifact spells and abilities like `ArtifactSpellsOrAbilities` and also resolution-time costs. Resolution-time payments must call `ManaCost.canPayResolutionCost`/`payResolutionCost` rather than plain `canPay(pool)`/`pay(pool)`. Colorless Powerstone mana still uses `ManaRestriction.Powerstone` |
 | `UnlockedRoomDoorsCount` | `(CountScope)` | dynamic amount counting every unlocked door among Rooms in the selected player scope, with both doors of one Room counted separately (Smoky Lounge // Misty Salon, DSK) |
 
 

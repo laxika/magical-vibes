@@ -55,7 +55,7 @@ public class DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler implemen
         UUID payerId = entry.getTargetId();
         ManaCost cost = new ManaCost(e.manaCost());
         ManaPool pool = gameData.playerManaPools.get(payerId);
-        boolean canPayMana = cost.canPay(pool);
+        boolean canPayMana = cost.canPayResolutionCost(pool);
         boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, payerId)
                 && gameData.getLife(payerId) >= e.lifeCost();
 

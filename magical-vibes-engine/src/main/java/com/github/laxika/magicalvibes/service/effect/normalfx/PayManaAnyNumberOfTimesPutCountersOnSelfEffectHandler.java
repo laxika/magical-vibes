@@ -69,7 +69,7 @@ public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements No
 
             ManaCost payment = new ManaCost(e.manaCost());
             for (int i = 0; i < chosenPayments; i++) {
-                payment.pay(pool);
+                payment.payResolutionCost(pool);
             }
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays " + e.manaCost() + " " + chosenPayments
@@ -142,8 +142,8 @@ public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements No
                 ? new VirtualManaPool(virtual) : new ManaPool(pool);
         ManaCost payment = new ManaCost(manaCost);
         int affordable = 0;
-        while (affordable < maximum && payment.canPay(remaining)) {
-            payment.pay(remaining);
+        while (affordable < maximum && payment.canPayResolutionCost(remaining)) {
+            payment.payResolutionCost(remaining);
             affordable++;
         }
         return affordable;

@@ -42,7 +42,7 @@ public class CounterUnlessDiscardsOrPaysEffectHandler implements NormalEffectHan
         List<Card> hand = gameData.playerHands.get(targetControllerId);
         boolean hasCards = hand != null && !hand.isEmpty();
         ManaPool pool = gameData.playerManaPools.get(targetControllerId);
-        boolean canPay = new ManaCost("{" + ransom.amount() + "}").canPay(pool);
+        boolean canPay = new ManaCost("{" + ransom.amount() + "}").canPayResolutionCost(pool);
 
         if (!hasCards && !canPay) {
             counterSupport.counterSpell(gameData, entry, targetEntry);

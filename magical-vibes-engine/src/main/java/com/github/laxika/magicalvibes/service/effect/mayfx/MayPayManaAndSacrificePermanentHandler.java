@@ -54,7 +54,7 @@ public class MayPayManaAndSacrificePermanentHandler implements MayEffectHandlerB
         List<UUID> matchingIds = matchingPermanentIds(gameData, ability, effect);
         ManaCost cost = new ManaCost(effect.manaCost());
         var pool = gameData.playerManaPools.get(controllerId);
-        if (matchingIds.isEmpty() || pool == null || !cost.canPay(pool)) {
+        if (matchingIds.isEmpty() || pool == null || !cost.canPayResolutionCost(pool)) {
             gameData.resolvedMayAccepted = false;
             if (matchingIds.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(
@@ -69,7 +69,7 @@ public class MayPayManaAndSacrificePermanentHandler implements MayEffectHandlerB
             return;
         }
 
-        cost.pay(pool);
+        cost.payResolutionCost(pool);
         gameData.resolvedMayAccepted = true;
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " pays " + effect.manaCost() + " and chooses a "

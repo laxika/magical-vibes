@@ -152,10 +152,10 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
     private List<String> availableOptions(GameData gameData, UUID playerId) {
         List<String> options = new ArrayList<>();
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        if (pool != null && new ManaCost("{2}").canPay(pool)) {
+        if (pool != null && new ManaCost("{2}").canPayResolutionCost(pool)) {
             options.add(ChoiceContext.WintersChillPaymentChoice.PAY_TWO);
         }
-        if (pool != null && new ManaCost("{1}").canPay(pool)) {
+        if (pool != null && new ManaCost("{1}").canPayResolutionCost(pool)) {
             options.add(ChoiceContext.WintersChillPaymentChoice.PAY_ONE);
         }
         options.add(ChoiceContext.WintersChillPaymentChoice.PAY_NOTHING);
@@ -165,10 +165,10 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
     private boolean pay(GameData gameData, UUID playerId, String costString) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         ManaCost cost = new ManaCost(costString);
-        if (pool == null || !cost.canPay(pool)) {
+        if (pool == null || !cost.canPayResolutionCost(pool)) {
             return false;
         }
-        cost.pay(pool);
+        cost.payResolutionCost(pool);
         return true;
     }
 }

@@ -54,7 +54,7 @@ public class DrawCardUnlessPaysEffectHandler implements NormalEffectHandlerBean 
         ManaCost cost = new ManaCost("{" + payAmount + "}");
         ManaPool pool = gameData.playerManaPools.get(castingPlayerId);
 
-        if (!cost.canPay(pool)) {
+        if (!cost.canPayResolutionCost(pool)) {
             // Can't pay — skip straight to the controller's draw.
             if (e.mandatoryDraw()) {
                 drawService.resolveDrawCards(gameData, drawingPlayerId, e.drawCount());

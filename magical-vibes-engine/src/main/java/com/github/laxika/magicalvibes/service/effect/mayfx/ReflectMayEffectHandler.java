@@ -56,10 +56,10 @@ public class ReflectMayEffectHandler implements MayEffectHandlerBean {
     private boolean pay(GameData gameData, Player player, String manaCost) {
         ManaCost cost = new ManaCost(manaCost);
         ManaPool pool = gameData.playerManaPools.get(player.getId());
-        if (!cost.canPay(pool)) {
+        if (!cost.canPayResolutionCost(pool)) {
             return false;
         }
-        cost.pay(pool);
+        cost.payResolutionCost(pool);
         return true;
     }
 }

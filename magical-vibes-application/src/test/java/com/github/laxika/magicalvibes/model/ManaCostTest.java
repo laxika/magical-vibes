@@ -59,6 +59,78 @@ class ManaCostTest {
     }
 
     @Nested
+    @DisplayName("Mana that can't be spent to cast nonartifact spells")
+    class NonartifactSpellProhibitedMana {
+
+        @Test
+        @DisplayName("Pays a resolution-time cost, which plain spell payment can't")
+        void paysResolutionCost() {
+            ManaPool pool = new ManaPool();
+            pool.addNonartifactSpellProhibitedMana(ManaColor.BLUE, 1);
+            pool.add(ManaColor.COLORLESS, 2);
+            ManaCost cost = new ManaCost("{3}");
+
+            assertThat(cost.canPay(pool)).isFalse();
+            assertThat(cost.canPayResolutionCost(pool)).isTrue();
+
+            cost.payResolutionCost(pool);
+
+            assertThat(pool.getTotalAllMana()).isZero();
+            assertThat(pool.getNonartifactSpellProhibitedMana(ManaColor.BLUE)).isZero();
+        }
+
+        @Test
+        @DisplayName("Unspent mana returns to its restricted bucket after a resolution-time payment")
+        void unspentManaStaysRestricted() {
+            ManaPool pool = new ManaPool();
+            pool.addNonartifactSpellProhibitedMana(ManaColor.BLUE, 2);
+
+            new ManaCost("{1}").payResolutionCost(pool);
+
+            assertThat(pool.get(ManaColor.BLUE)).isZero();
+            assertThat(pool.getArtifactSpellOrAbilityOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+            assertThat(pool.getNonartifactSpellProhibitedMana(ManaColor.BLUE)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Artifact-spell-or-ability-only mana can't pay a resolution-time cost")
+        void artifactSpellOrAbilityManaCannotPayResolutionCost() {
+            ManaPool pool = new ManaPool();
+            pool.addArtifactSpellOrAbilityOnlyMana(ManaColor.BLUE, 1);
+
+            assertThat(new ManaCost("{1}").canPayResolutionCost(pool)).isFalse();
+        }
+
+        @Test
+        @DisplayName("An artifact spell spends artifact-spell-or-ability-only mana before the broader mana")
+        void artifactSpellSpendsNarrowerManaFirst() {
+            ManaPool pool = new ManaPool();
+            pool.addArtifactSpellOrAbilityOnlyMana(ManaColor.BLUE, 1);
+            pool.addNonartifactSpellProhibitedMana(ManaColor.BLUE, 1);
+
+            new ManaCost("{1}").pay(pool, 0, true);
+
+            assertThat(pool.getArtifactSpellOrAbilityOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+            assertThat(pool.getNonartifactSpellProhibitedMana(ManaColor.BLUE)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("An ability payment keeps the broader mana when only part of the bucket is spent")
+        void abilityPaymentKeepsBroaderMana() {
+            ManaPool pool = new ManaPool();
+            pool.addArtifactSpellOrAbilityOnlyMana(ManaColor.BLUE, 1);
+            pool.addNonartifactSpellProhibitedMana(ManaColor.BLUE, 1);
+
+            pool.promoteAbilityOnlyMana();
+            new ManaCost("{1}").pay(pool);
+            pool.restorePromotedAbilityOnlyMana();
+
+            assertThat(pool.getArtifactSpellOrAbilityOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+            assertThat(pool.getNonartifactSpellProhibitedMana(ManaColor.BLUE)).isEqualTo(1);
+        }
+    }
+
+    @Nested
     @DisplayName("Snow mana color permission")
     class SnowManaColorPermission {
 

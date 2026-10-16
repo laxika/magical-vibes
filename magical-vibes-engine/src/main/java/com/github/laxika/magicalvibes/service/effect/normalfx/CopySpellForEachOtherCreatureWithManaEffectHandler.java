@@ -105,13 +105,13 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
             return;
         }
         for (int i = 0; i < chosenTargets.size(); i++) {
-            if (!cost.canPay(remaining)) {
+            if (!cost.canPayResolutionCost(remaining)) {
                 return;
             }
-            cost.pay(remaining);
+            cost.payResolutionCost(remaining);
         }
         for (int i = 0; i < chosenTargets.size(); i++) {
-            cost.pay(pool);
+            cost.payResolutionCost(pool);
         }
 
         for (Permanent target : chosenTargets) {
@@ -153,8 +153,8 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
         }
         ManaPool remaining = new ManaPool(pool);
         int affordable = 0;
-        while (affordable < candidateCount && perCreatureCost.canPay(remaining)) {
-            perCreatureCost.pay(remaining);
+        while (affordable < candidateCount && perCreatureCost.canPayResolutionCost(remaining)) {
+            perCreatureCost.payResolutionCost(remaining);
             affordable++;
         }
         return affordable;

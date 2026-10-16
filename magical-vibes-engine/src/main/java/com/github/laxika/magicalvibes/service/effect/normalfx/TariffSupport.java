@@ -94,7 +94,7 @@ public class TariffSupport {
         ManaCost cost = creature.getCard().getParsedManaCost();
         ManaPool pool = gameData.playerManaPools.get(playerId);
 
-        if (cost == null || !cost.canPay(pool)) {
+        if (cost == null || !cost.canPayResolutionCost(pool)) {
             destructionSupport.sacrificeAndLog(gameData, creature, playerId);
             log.info("Game {} - {} can't pay for {} — sacrificed ({})", gameData.id, playerName,
                     creature.getCard().getName(), sourceCard.getName());
@@ -140,8 +140,8 @@ public class TariffSupport {
         ManaCost cost = new ManaCost(ability.manaCost());
         ManaPool pool = gameData.playerManaPools.get(playerId);
 
-        if (accepted && cost.canPay(pool)) {
-            cost.pay(pool);
+        if (accepted && cost.canPayResolutionCost(pool)) {
+            cost.payResolutionCost(pool);
             
             gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " pays " + ability.manaCost() + " and keeps ").card(creature.getCard()).text(". (").card(sourceCard).text(")").build());
             log.info("Game {} - {} pays {} to keep {} ({})", gameData.id, player.getUsername(),

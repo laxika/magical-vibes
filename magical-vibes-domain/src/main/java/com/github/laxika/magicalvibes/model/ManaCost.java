@@ -1071,6 +1071,26 @@ public class ManaCost {
         return canPay(pool, 0);
     }
 
+    /**
+     * Checks a cost paid while a spell or ability resolves (Mana Leak's {3}). That payment isn't
+     * casting a spell, so mana that only can't be spent to cast nonartifact spells is usable too.
+     */
+    public boolean canPayResolutionCost(ManaPool pool) {
+        ManaPool paymentPool = copyManaPool(pool);
+        paymentPool.promoteNonartifactSpellProhibitedMana();
+        return canPay(paymentPool);
+    }
+
+    /** Pays a resolution-time cost; see {@link #canPayResolutionCost(ManaPool)}. */
+    public void payResolutionCost(ManaPool pool) {
+        pool.promoteNonartifactSpellProhibitedMana();
+        try {
+            pay(pool);
+        } finally {
+            pool.restorePromotedNonartifactSpellProhibitedMana();
+        }
+    }
+
     public boolean canPayForForetell(ManaPool pool) {
         return canPay(pool.copyForForetellPayment(), 0, false, false, false, false, true);
     }

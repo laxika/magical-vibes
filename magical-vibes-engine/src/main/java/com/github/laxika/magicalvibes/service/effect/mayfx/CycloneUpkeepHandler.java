@@ -45,8 +45,8 @@ public class CycloneUpkeepHandler implements MayEffectHandlerBean {
         if (source != null && accepted) {
             ManaCost cost = new ManaCost(ability.manaCost());
             ManaPool pool = gameData.playerManaPools.get(player.getId());
-            if (pool != null && cost.canPay(pool)) {
-                cost.pay(pool);
+            if (pool != null && cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + ability.manaCost() + ". (",
                         ability.sourceCard(), ")"));

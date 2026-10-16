@@ -51,8 +51,8 @@ public class ExileSourceFromGraveyardAndTargetCreatureUnlessPaysHandler implemen
         if (accepted) {
             ManaCost cost = new ManaCost(ability.manaCost());
             ManaPool pool = gameData.playerManaPools.get(payerId);
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + ability.manaCost() + ". (",
                         ability.sourceCard(), ")"));

@@ -281,6 +281,23 @@ public sealed interface ManaRestriction {
     }
 
     /**
+     * Mana that can't be spent to cast a nonartifact spell (Hydraulic Helper). Broader than
+     * {@link ArtifactSpellsOrAbilities}: besides artifact spells and abilities, it can pay costs that
+     * aren't spell costs, such as Mana Leak's during resolution.
+     */
+    record NonartifactSpellsProhibited() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addNonartifactSpellProhibitedMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "nonartifact spells prohibited";
+        }
+    }
+
+    /**
      * Mana spendable only to activate abilities of artifacts (Soldevi Machinist, Steelswarm Operator).
      * Narrower than {@link ArtifactSpells}: cannot pay artifact spell costs.
      */

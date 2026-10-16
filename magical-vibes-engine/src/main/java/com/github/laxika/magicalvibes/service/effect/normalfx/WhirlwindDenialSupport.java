@@ -70,8 +70,8 @@ public class WhirlwindDenialSupport {
         if (legalTarget != null && accepted) {
             ManaCost cost = new ManaCost(manaCost(state.amount));
             ManaPool pool = gameData.playerManaPools.get(player.getId());
-            if (pool != null && cost.canPay(pool)) {
-                cost.pay(pool);
+            if (pool != null && cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 paid = true;
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + manaCost(state.amount) + ". ",
@@ -99,7 +99,7 @@ public class WhirlwindDenialSupport {
 
             ManaCost cost = new ManaCost(manaCost(state.amount));
             ManaPool pool = gameData.playerManaPools.get(target.getControllerId());
-            if (pool == null || !cost.canPay(pool)) {
+            if (pool == null || !cost.canPayResolutionCost(pool)) {
                 state.unpaidTargetIds.add(targetId);
                 continue;
             }

@@ -350,10 +350,10 @@ public class MultiPermanentChoiceHandlerService {
             var pool = new com.github.laxika.magicalvibes.model.ManaPool(gameData.playerManaPools.get(playerId));
             var cost = new com.github.laxika.magicalvibes.model.ManaCost(keep.manaCost());
             for (int i = 0; i < permanentIds.size(); i++) {
-                if (!cost.canPay(pool)) {
+                if (!cost.canPayResolutionCost(pool)) {
                     throw new IllegalStateException("Not enough mana to pay for the selected creatures");
                 }
-                cost.pay(pool);
+                cost.payResolutionCost(pool);
             }
         }
 
@@ -3520,14 +3520,14 @@ public class MultiPermanentChoiceHandlerService {
             com.github.laxika.magicalvibes.model.ManaPool remaining = canPay
                     ? new com.github.laxika.magicalvibes.model.ManaPool(pool) : null;
             for (int i = 0; canPay && i < permanentIds.size(); i++) {
-                canPay = cost.canPay(remaining);
+                canPay = cost.canPayResolutionCost(remaining);
                 if (canPay) {
-                    cost.pay(remaining);
+                    cost.payResolutionCost(remaining);
                 }
             }
             if (canPay) {
                 for (int i = 0; i < permanentIds.size(); i++) {
-                    cost.pay(pool);
+                    cost.payResolutionCost(pool);
                 }
                 List<Card> untappedCards = new ArrayList<>();
                 for (UUID permId : permanentIds) {

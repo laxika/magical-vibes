@@ -5446,8 +5446,8 @@ public class ChoiceHandlerService {
         if (ctx.payManaOption().equals(chosen)) {
             ManaCost cost = new ManaCost(ctx.manaCost());
             ManaPool pool = gameData.playerManaPools.get(ctx.payerId());
-            if (pool != null && cost.canPay(pool)) {
-                cost.pay(pool);
+            if (pool != null && cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 paid = true;
             }
         } else if (ctx.payLifeOption().equals(chosen)
@@ -5478,8 +5478,8 @@ public class ChoiceHandlerService {
         if (ctx.payManaOption().equals(chosen)) {
             ManaCost cost = new ManaCost(ctx.manaCost());
             ManaPool pool = gameData.playerManaPools.get(ctx.affectedPlayerId());
-            if (pool != null && cost.canPay(pool)) {
-                cost.pay(pool);
+            if (pool != null && cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 paid = true;
             }
         } else if (ctx.payLifeOption().equals(chosen)

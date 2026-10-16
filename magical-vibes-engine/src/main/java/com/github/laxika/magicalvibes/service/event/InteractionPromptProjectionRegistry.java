@@ -529,7 +529,7 @@ public class InteractionPromptProjectionRegistry {
         if (interaction.manaCost() != null) {
             ManaCost cost = new ManaCost(interaction.manaCost());
             ManaPool pool = gameData.playerManaPools.get(interaction.playerId());
-            canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
+            canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPayResolutionCost(pool);
         }
         return InteractionPromptMessage.acceptDecline(
                 interaction.description(), canPay, interaction.manaCost());

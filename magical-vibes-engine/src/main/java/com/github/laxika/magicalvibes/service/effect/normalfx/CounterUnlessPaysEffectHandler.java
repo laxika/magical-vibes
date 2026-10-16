@@ -72,7 +72,7 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
                 || (gameQueryService.canPlayerLifeChange(gameData, targetControllerId)
                         && gameData.getLife(targetControllerId) >= lifeCost);
 
-        boolean canPayMana = cost.canPay(pool)
+        boolean canPayMana = cost.canPayResolutionCost(pool)
                 || (potentialManaService != null
                 && cost.canPay(potentialManaService.buildVirtualManaPool(gameData, targetControllerId)));
         if (!canPayMana || !canPayLife) {

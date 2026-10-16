@@ -63,7 +63,7 @@ public class ExileTargetPermanentUnlessControllerPaysEffectHandler implements No
         // choice resolves), so untapped mana sources count toward what the controller can pay.
         boolean canPayWithSources = potentialManaService
                 .buildVirtualManaPool(gameData, targetControllerId).getTotal() >= amount;
-        if (!cost.canPay(pool) && !canPayWithSources) {
+        if (!cost.canPayResolutionCost(pool) && !canPayWithSources) {
             exileTargetPermanent(gameData, entry.getCard(), entry.getControllerId(),
                     targetPermanentId, entry.getSourcePermanentId());
             return;

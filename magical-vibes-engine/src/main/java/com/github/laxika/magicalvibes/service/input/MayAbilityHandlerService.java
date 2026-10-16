@@ -354,7 +354,7 @@ public class MayAbilityHandlerService {
                 xValuePaid = maxX;
                 cost.pay(pool, maxX);
             } else {
-                if (!cost.canPay(pool)) {
+                if (!cost.canPayResolutionCost(pool)) {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " cannot pay " + ability.manaCost() + " for ", ability.sourceCard(), "'s ability."));
                     log.info("Game {} - {} can't pay {} for may ability", gameData.id, player.getUsername(), ability.manaCost());
@@ -362,7 +362,7 @@ public class MayAbilityHandlerService {
                     inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
-                cost.pay(pool);
+                cost.payResolutionCost(pool);
             }
         }
 
@@ -790,7 +790,7 @@ public class MayAbilityHandlerService {
                 ManaCost cost = new ManaCost(ability.manaCost());
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 boolean paidWithLife = false;
-                if (!cost.canPay(pool) && ability.lifeCost() > 0) {
+                if (!cost.canPayResolutionCost(pool) && ability.lifeCost() > 0) {
                     // "Pay {M} or N life" — mana that would empty at end of step is the cheaper
                     // resource, so life is only spent when the mana cost cannot be paid.
                     boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, player.getId())
@@ -806,7 +806,7 @@ public class MayAbilityHandlerService {
                 boolean canPayAdditionalLife = ability.additionalLifeCost() == 0
                         || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
                                 && gameData.getLife(player.getId()) >= ability.additionalLifeCost());
-                if (!paidWithLife && (!cost.canPay(pool) || !canPayAdditionalLife)) {
+                if (!paidWithLife && (!cost.canPayResolutionCost(pool) || !canPayAdditionalLife)) {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " cannot pay " + ability.manaCost()
                                     + (ability.additionalLifeCost() > 0 ? " and " + ability.additionalLifeCost() + " life" : "")
@@ -818,7 +818,7 @@ public class MayAbilityHandlerService {
                     return;
                 }
                 if (!paidWithLife) {
-                    cost.pay(pool);
+                    cost.payResolutionCost(pool);
                     if (ability.additionalLifeCost() > 0) {
                         lifeSupport.applyLifePayment(gameData, player.getId(), ability.additionalLifeCost(),
                                 ability.sourceCard().getName());
@@ -1070,8 +1070,8 @@ public class MayAbilityHandlerService {
         if (accepted && ability.manaCost() != null) {
             ManaCost cost = new ManaCost(ability.manaCost());
             ManaPool pool = gameData.playerManaPools.get(player.getId());
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
                 gameData.anyPlayerMayPayManaRemainingPlayers.clear();

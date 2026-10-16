@@ -17,7 +17,7 @@ public class HydraulicHelper extends Card {
                 true,
                 null,
                 List.of(new AwardRestrictedManaEffect(
-                        ManaColor.BLUE, 1, new ManaRestriction.ArtifactSpellsOrAbilities())),
+                        ManaColor.BLUE, 1, new ManaRestriction.NonartifactSpellsProhibited())),
                 "{T}: Add {U}. This mana can't be spent to cast a nonartifact spell."
         ));
     }

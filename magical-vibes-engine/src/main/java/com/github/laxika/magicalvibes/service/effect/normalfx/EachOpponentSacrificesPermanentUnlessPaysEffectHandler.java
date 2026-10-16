@@ -69,8 +69,8 @@ public class EachOpponentSacrificesPermanentUnlessPaysEffectHandler implements N
         if (accepted) {
             ManaCost cost = new ManaCost(effect.manaCost());
             ManaPool pool = gameData.playerManaPools.get(sacrificingPlayerId);
-            if (pool != null && cost.canPay(pool)) {
-                cost.pay(pool);
+            if (pool != null && cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 paid = true;
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + effect.manaCost() + ". (",

@@ -137,7 +137,7 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
             String repeatManaCost) {
         ManaPool pool = gameData.playerManaPools.get(controllerId);
         ManaCost repeatCost = new ManaCost(repeatManaCost);
-        boolean affordable = (pool != null && repeatCost.canPay(pool))
+        boolean affordable = (pool != null && repeatCost.canPayResolutionCost(pool))
                 || repeatCost.canPay(potentialManaService.buildVirtualManaPool(gameData, controllerId));
         if (!affordable) {
             finish(gameData, controllerId, sourceName);
@@ -182,10 +182,10 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
     private boolean pay(GameData gameData, UUID playerId, String repeatManaCost) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         ManaCost cost = new ManaCost(repeatManaCost);
-        if (pool == null || !cost.canPay(pool)) {
+        if (pool == null || !cost.canPayResolutionCost(pool)) {
             return false;
         }
-        cost.pay(pool);
+        cost.payResolutionCost(pool);
         return true;
     }
 }

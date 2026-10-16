@@ -86,8 +86,8 @@ public class PayManaPerTappedCreatureToUntapEffectHandler implements NormalEffec
 
         ManaPool remaining = new ManaPool(pool);
         int affordable = 0;
-        while (affordable < candidateCount && perCreatureCost.canPay(remaining)) {
-            perCreatureCost.pay(remaining);
+        while (affordable < candidateCount && perCreatureCost.canPayResolutionCost(remaining)) {
+            perCreatureCost.payResolutionCost(remaining);
             affordable++;
         }
         return affordable;

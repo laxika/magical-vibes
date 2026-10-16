@@ -37,7 +37,7 @@ public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean 
 
         com.github.laxika.magicalvibes.model.ManaCost cost = new com.github.laxika.magicalvibes.model.ManaCost("{" + e.payAmount() + "}");
         com.github.laxika.magicalvibes.model.ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
-        boolean canPay = cost.canPay(pool);
+        boolean canPay = cost.canPayResolutionCost(pool);
 
         if (!canPay) {
             // Can't pay — auto-apply life loss

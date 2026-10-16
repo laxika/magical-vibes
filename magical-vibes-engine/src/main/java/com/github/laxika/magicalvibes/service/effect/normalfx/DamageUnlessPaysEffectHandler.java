@@ -41,7 +41,7 @@ public class DamageUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         ManaCost cost = new ManaCost("{" + e.payAmount() + "}");
         ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
 
-        if (!cost.canPay(pool)) {
+        if (!cost.canPayResolutionCost(pool)) {
             // Can't pay — apply the damage now, reusing the real entry (correct source + target).
             DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(e.damage(), DamageRecipient.TARGET_PLAYER);
             dealDamageToPlayersEffectHandler.resolve(gameData, entry, damage);

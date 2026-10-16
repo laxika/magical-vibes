@@ -139,31 +139,67 @@ mayPayEscalateToChooseAnotherModeOfAFreeSpell. Don't run the full test suite; as
 
 ---
 
-## 28. "Can't be spent to cast nonartifact spells" mana
+## 29. Powerstone and Thran Turbine mana for resolution-time costs
 
-**Status:** open · **Found:** 2026-10-16, while fixing H-card tests
+**Status:** open · **Found:** 2026-10-16, while adding Hydraulic Helper's restriction
 
 **Failing tests:**
-- `HydraulicHelperTest` ("Hydraulic Helper mana can pay Mana Leak's cost during resolution")
+- None yet. Add one per card: Powerstone mana paying Mana Leak's {3}, and Thran Turbine mana paying it.
 
-**What the rules require.** Hydraulic Helper (`MSH`): "{T}: Add {U}. This mana can't be spent to cast a
-nonartifact spell." That mana may be spent on anything except casting a nonartifact spell: abilities,
-artifact spells, and costs paid while something resolves (Mana Leak's {3}). The card uses
-`ManaRestriction.ArtifactSpellsOrAbilities`, whose pool bucket only pays for artifact spells and
-activated abilities. Paying Mana Leak's cost is neither, so the mana can't be used.
+**What the rules require.** A Powerstone token's mana "can't be spent to cast a nonartifact spell" (Karn
+and Jetfire make the same mana), and Thran Turbine's mana "can't be spent to cast spells." Neither
+restriction covers a cost paid while something resolves, so both kinds of mana can pay Mana Leak's {3},
+Rhystic Study's tax and similar costs. Hydraulic Helper's mana already can, through
+`ManaCost.canPayResolutionCost`/`payResolutionCost`, which promote only
+`ManaPool.promoteNonartifactSpellProhibitedMana()`. Powerstone mana sits in its own colorless bucket
+(`powerstoneOnlyColorless`). Thran Turbine uses `ManaRestriction.Abilities`, whose bucket it shares with
+cards that really are "spend this mana only to activate abilities" (Cryptic Trilobite, Omen Hawker, Pit
+Automaton, The Enigma Jewel, James, Wandering Dad). So neither can pay a resolution-time cost.
 
-**Why it's large.** Each restriction is its own typed bucket in `ManaPool`, with spend logic in
-`ManaCost` and in the pool-choice contexts (`ChoiceContext`, `ManaChoiceNarrowingService`,
-`AnyColorManaChoiceSupport`). A new "not for nonartifact spells" bucket has to be wired into each
-payment context (spell cast, ability activation, resolution-time cost) and into the views.
+**Why it's large.** Powerstone mana has a persistent subset (Karn's mana lasts until end of turn), so
+promoting and restoring it has to keep that count right. Thran Turbine needs its own restriction and
+bucket, or a tag on the ability-only bucket like Hydraulic Helper's, because the shared bucket must
+keep refusing resolution-time costs for the narrower cards.
 
 **Prompt to start it:**
 
 ```
-Add a mana restriction for "this mana can't be spent to cast a nonartifact spell" (Hydraulic Helper) that
-can pay ability costs, artifact spells and resolution-time costs like Mana Leak's. Wire it through ManaPool,
-ManaCost and the mana-choice contexts. Start with HydraulicHelperTest. Don't run the full test suite; ask me.
-Don't commit until I say so.
+Let Powerstone mana (ManaRestriction.Powerstone, including Karn's persistent mana) and Thran Turbine's
+"can't be spent to cast spells" mana pay resolution-time costs like Mana Leak's, through
+ManaCost.canPayResolutionCost/payResolutionCost. Keep "spend this mana only to activate abilities" mana
+(ManaRestriction.Abilities) unable to pay them. Start by adding Mana Leak tests to ThranTurbineTest and a
+Powerstone card's test. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 30. Restricted mana that can pay special actions
+
+**Status:** open · **Found:** 2026-10-16, while adding Hydraulic Helper's restriction
+
+**Failing tests:**
+- None yet. Add one: Hydraulic Helper mana paying a foretell cost.
+
+**What the rules require.** Foretelling a card, unlocking a Room door and paying a search tax (Leonin
+Arbiter) are special actions, not spells. Mana that only can't be spent to cast spells, or only can't
+be spent to cast nonartifact spells (Hydraulic Helper, Powerstone, Thran Turbine), can pay them.
+`GameService.foretellCard`, `unlockRoomDoor` and `paySearchTax` use plain `ManaCost.canPay(pool)`/
+`pay(pool)`, so that mana can't be spent there. (`PotentialManaService` already counts Powerstone mana
+for special actions when it checks what's affordable.)
+
+**Why it's large.** Each special action has its own payment path. Some already admit other
+restrictions: Room-unlock mana and turn-face-up mana have their own buckets. Every path, and the
+playability checks that offer the action, has to accept the broader mana without letting
+spell-only restricted mana in.
+
+**Prompt to start it:**
+
+```
+Let mana that is only barred from casting (nonartifact) spells — Hydraulic Helper's tagged mana,
+Powerstone mana and Thran Turbine mana — pay special-action costs: foretell, unlocking a Room door and
+Leonin Arbiter's search tax (GameService.foretellCard, unlockRoomDoor, paySearchTax) and their
+availability checks. Start with a HydraulicHelperTest case that foretells a card with its mana. Don't run
+the full test suite; ask me. Don't commit until I say so.
 ```
 
 <!--

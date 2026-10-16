@@ -59,6 +59,14 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> artifactSpellOrAbilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Guidelight Optimizer mana temporarily promoted into the regular pool during ability payment. */
     private final EnumMap<ManaColor, Integer> promotedArtifactSpellOrAbilityOnlyMana = new EnumMap<>(ManaColor.class);
+    /**
+     * Tag on the subset of {@link #artifactSpellOrAbilityOnlyMana} that is only barred from casting
+     * nonartifact spells (Hydraulic Helper), so it can also pay costs that aren't spells, such as Mana
+     * Leak's. May transiently exceed the bucket while the bucket is promoted; reads clamp it.
+     */
+    private final EnumMap<ManaColor, Integer> nonartifactSpellProhibitedMana = new EnumMap<>(ManaColor.class);
+    /** Nonartifact-spell-prohibited mana temporarily promoted during a resolution-time cost payment. */
+    private final EnumMap<ManaColor, Integer> promotedNonartifactSpellProhibitedMana = new EnumMap<>(ManaColor.class);
     /** Mana that doesn't drain at step/phase transitions until end of turn (e.g. Grand Warlord Radha). */
     private final EnumMap<ManaColor, Integer> persistentMana = new EnumMap<>(ManaColor.class);
     /** Mana that remains in the pool through combat steps until the current combat ends. */
@@ -313,6 +321,8 @@ public class ManaPool {
             promotedLandAbilityOnlyMana.put(color, 0);
             artifactSpellOrAbilityOnlyMana.put(color, 0);
             promotedArtifactSpellOrAbilityOnlyMana.put(color, 0);
+            nonartifactSpellProhibitedMana.put(color, 0);
+            promotedNonartifactSpellProhibitedMana.put(color, 0);
             persistentMana.put(color, 0);
             combatMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
@@ -386,6 +396,8 @@ public class ManaPool {
         mergeMana(promotedLandAbilityOnlyMana, source.promotedLandAbilityOnlyMana);
         mergeMana(artifactSpellOrAbilityOnlyMana, source.artifactSpellOrAbilityOnlyMana);
         mergeMana(promotedArtifactSpellOrAbilityOnlyMana, source.promotedArtifactSpellOrAbilityOnlyMana);
+        mergeMana(nonartifactSpellProhibitedMana, source.nonartifactSpellProhibitedMana);
+        mergeMana(promotedNonartifactSpellProhibitedMana, source.promotedNonartifactSpellProhibitedMana);
         mergeMana(persistentMana, source.persistentMana);
         mergeMana(combatMana, source.combatMana);
         mergeMana(hasteGrantingMana, source.hasteGrantingMana);
@@ -513,6 +525,8 @@ public class ManaPool {
         promotedLandAbilityOnlyMana.putAll(source.promotedLandAbilityOnlyMana);
         artifactSpellOrAbilityOnlyMana.putAll(source.artifactSpellOrAbilityOnlyMana);
         promotedArtifactSpellOrAbilityOnlyMana.putAll(source.promotedArtifactSpellOrAbilityOnlyMana);
+        nonartifactSpellProhibitedMana.putAll(source.nonartifactSpellProhibitedMana);
+        promotedNonartifactSpellProhibitedMana.putAll(source.promotedNonartifactSpellProhibitedMana);
         persistentMana.putAll(source.persistentMana);
         combatMana.putAll(source.combatMana);
         hasteGrantingMana.putAll(source.hasteGrantingMana);
@@ -1110,6 +1124,8 @@ public class ManaPool {
             promotedLandAbilityOnlyMana.put(color, 0);
             artifactSpellOrAbilityOnlyMana.put(color, 0);
             promotedArtifactSpellOrAbilityOnlyMana.put(color, 0);
+            nonartifactSpellProhibitedMana.put(color, 0);
+            promotedNonartifactSpellProhibitedMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
             permanentHasteGrantingMana.put(color, 0);
             combatMana.put(color, 0);
@@ -1631,6 +1647,13 @@ public class ManaPool {
                                     int promotedArtifactSpellOrAbilityOnly = promotedArtifactSpellOrAbilityOnlyMana.getOrDefault(color, 0);
                                     if (promotedArtifactSpellOrAbilityOnly > 0) {
                                         promotedArtifactSpellOrAbilityOnlyMana.put(color, promotedArtifactSpellOrAbilityOnly - 1);
+                                    } else {
+                                        int promotedNonartifactSpellProhibited =
+                                                promotedNonartifactSpellProhibitedMana.getOrDefault(color, 0);
+                                        if (promotedNonartifactSpellProhibited > 0) {
+                                            promotedNonartifactSpellProhibitedMana.put(
+                                                    color, promotedNonartifactSpellProhibited - 1);
+                                        }
                                     }
                                 }
                             }
@@ -2097,6 +2120,7 @@ public class ManaPool {
                 artifactSpellOrAbilityOnlyMana.merge(color, returned, Integer::sum);
             }
             promotedArtifactSpellOrAbilityOnlyMana.put(color, 0);
+            clampNonartifactSpellProhibitedMana(color);
         }
     }
 
@@ -2167,9 +2191,68 @@ public class ManaPool {
         artifactSpellOrAbilityOnlyMana.merge(color, amount, Integer::sum);
     }
 
+    /**
+     * Removes artifact-spell-or-ability mana. Untagged mana goes first, so mana that could also pay
+     * a cost that isn't a spell (Hydraulic Helper) is kept for as long as possible.
+     */
     public void removeArtifactSpellOrAbilityOnlyMana(ManaColor color, int amount) {
         int current = artifactSpellOrAbilityOnlyMana.getOrDefault(color, 0);
         artifactSpellOrAbilityOnlyMana.put(color, Math.max(0, current - amount));
+        clampNonartifactSpellProhibitedMana(color);
+    }
+
+    /** Mana of {@code color} that only can't be spent to cast nonartifact spells (Hydraulic Helper). */
+    public int getNonartifactSpellProhibitedMana(ManaColor color) {
+        return Math.min(nonartifactSpellProhibitedMana.getOrDefault(color, 0),
+                artifactSpellOrAbilityOnlyMana.getOrDefault(color, 0));
+    }
+
+    /**
+     * Adds mana that can't be spent to cast nonartifact spells. It lives in the
+     * artifact-spell-or-ability bucket, which already covers artifact spells and abilities, and is
+     * tagged so a resolution-time cost can also spend it.
+     */
+    public void addNonartifactSpellProhibitedMana(ManaColor color, int amount) {
+        artifactSpellOrAbilityOnlyMana.merge(color, amount, Integer::sum);
+        nonartifactSpellProhibitedMana.merge(color, amount, Integer::sum);
+    }
+
+    /**
+     * Temporarily makes nonartifact-spell-prohibited mana visible to the ordinary payment code, for
+     * a cost paid while a spell or ability resolves (Mana Leak's {3}): that payment isn't casting a
+     * spell, so the restriction doesn't apply.
+     */
+    public int promoteNonartifactSpellProhibitedMana() {
+        int promoted = 0;
+        for (ManaColor color : ManaColor.values()) {
+            int amount = getNonartifactSpellProhibitedMana(color);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                artifactSpellOrAbilityOnlyMana.merge(color, -amount, Integer::sum);
+                nonartifactSpellProhibitedMana.merge(color, -amount, Integer::sum);
+                promotedNonartifactSpellProhibitedMana.merge(color, amount, Integer::sum);
+                promoted += amount;
+            }
+        }
+        return promoted;
+    }
+
+    /** Returns unused promoted nonartifact-spell-prohibited mana to its restricted bucket. */
+    public void restorePromotedNonartifactSpellProhibitedMana() {
+        for (ManaColor color : ManaColor.values()) {
+            int amount = promotedNonartifactSpellProhibitedMana.getOrDefault(color, 0);
+            if (amount > 0) {
+                int returned = Math.min(amount, pool.getOrDefault(color, 0));
+                pool.merge(color, -returned, Integer::sum);
+                artifactSpellOrAbilityOnlyMana.merge(color, returned, Integer::sum);
+                nonartifactSpellProhibitedMana.merge(color, returned, Integer::sum);
+            }
+            promotedNonartifactSpellProhibitedMana.put(color, 0);
+        }
+    }
+
+    private void clampNonartifactSpellProhibitedMana(ManaColor color) {
+        nonartifactSpellProhibitedMana.put(color, getNonartifactSpellProhibitedMana(color));
     }
 
     public void addCreatureMana(ManaColor color, int amount) {
@@ -4901,6 +4984,8 @@ public class ManaPool {
         moveManaTo(replacementColor, legendarySpellOnlyMana);
         moveManaTo(replacementColor, artifactSpellOrAbilityOnlyMana);
         moveManaTo(replacementColor, promotedArtifactSpellOrAbilityOnlyMana);
+        moveManaTo(replacementColor, nonartifactSpellProhibitedMana);
+        moveManaTo(replacementColor, promotedNonartifactSpellProhibitedMana);
         moveManaTo(replacementColor, instantSorceryOnlyColored);
         moveManaTo(replacementColor, kickedOrInstantSorceryOnlyColored);
         moveManaTo(replacementColor, foretellOrInstantSorceryOnlyColored);
@@ -5147,6 +5232,8 @@ public class ManaPool {
         drainColorBucket(artifactAbilityOnlyMana, protectedColors);
         drainColorBucket(artifactSpellOrAbilityOnlyMana, protectedColors);
         drainColorBucket(promotedArtifactSpellOrAbilityOnlyMana, protectedColors);
+        drainColorBucket(nonartifactSpellProhibitedMana, protectedColors);
+        drainColorBucket(promotedNonartifactSpellProhibitedMana, protectedColors);
         drainColorBucket(partySpellOrAbilityMana, protectedColors);
         drainColorBucket(creatureSpellOnlyMana, protectedColors);
         drainColorBucket(creatureSpellWithoutAbilitiesOnlyMana, protectedColors);

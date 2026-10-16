@@ -46,8 +46,8 @@ public class PreventCombatDamageFromAttackingCreaturesUnlessPaysHandler implemen
         if (accepted) {
             ManaCost cost = new ManaCost(effect.manaCost());
             ManaPool pool = gameData.playerManaPools.get(payingPlayerId);
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 paid = true;
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));

@@ -152,8 +152,8 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             ManaCost cost = new ManaCost(ability.manaCost());
             ManaPool pool = gameData.playerManaPools.get(payingPlayerId);
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} pays {} to avoid the must-attack penalty ({})", gameData.id,
@@ -213,8 +213,8 @@ public class MayPenaltyChoiceHandlerService {
             boolean canPayLife = lifeCost <= 0
                     || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
                             && gameData.getLife(player.getId()) >= lifeCost);
-            if (cost.canPay(pool) && canPayLife) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool) && canPayLife) {
+                cost.payResolutionCost(pool);
                 triggerCollectionService.checkTaxPaymentTriggers(
                         gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
                 if (lifeCost > 0) {
@@ -560,8 +560,8 @@ public class MayPenaltyChoiceHandlerService {
 
         ManaCost cost = new ManaCost("{" + effect.amount() + "}");
         ManaPool pool = gameData.playerManaPools.get(player.getId());
-        if (accepted && cost.canPay(pool)) {
-            cost.pay(pool);
+        if (accepted && cost.canPayResolutionCost(pool)) {
+            cost.payResolutionCost(pool);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays {" + effect.amount() + "}. ",
                     targetEntry.getCard(), " is not countered."));
@@ -941,8 +941,8 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             ManaCost cost = new ManaCost("{" + effect.payAmount() + "}");
             ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays {" + effect.payAmount() + "}. (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} pays {} to avoid life loss ({})", gameData.id, player.getUsername(), effect.payAmount(), ability.sourceCard().getName());
@@ -996,8 +996,8 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             ManaCost cost = new ManaCost(ability.manaCost());
             ManaPool pool = gameData.playerManaPools.get(payerId);
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + ability.manaCost() + ". (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} pays {} to save the enchanted permanent ({})",
@@ -1043,8 +1043,8 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             ManaCost cost = new ManaCost("{" + effect.payAmount() + "}");
             ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays {" + effect.payAmount() + "}. (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} pays {} to avoid damage ({})", gameData.id, player.getUsername(), effect.payAmount(), ability.sourceCard().getName());
@@ -1084,8 +1084,8 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             ManaCost cost = new ManaCost(effect.manaCost());
             ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 paid = true;
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));
@@ -1114,8 +1114,8 @@ public class MayPenaltyChoiceHandlerService {
             if (accepted) {
                 ManaCost cost = new ManaCost(ability.manaCost());
                 ManaPool pool = gameData.playerManaPools.get(ability.controllerId());
-                if (cost.canPay(pool)) {
-                    cost.pay(pool);
+                if (cost.canPayResolutionCost(pool)) {
+                    cost.payResolutionCost(pool);
                     UUID taxingPlayerId = ability.sourceControllerId();
                     if (taxingPlayerId == null) {
                         taxingPlayerId = gameQueryService.findPermanentController(
@@ -1295,8 +1295,8 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             ManaCost cost = new ManaCost(effect.manaCost());
             ManaPool pool = gameData.playerManaPools.get(payingPlayerId);
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 paid = true;
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));
@@ -1415,8 +1415,8 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             ManaCost cost = new ManaCost(effect.manaCost());
             ManaPool pool = gameData.playerManaPools.get(payingPlayerId);
-            if (cost.canPay(pool)) {
-                cost.pay(pool);
+            if (cost.canPayResolutionCost(pool)) {
+                cost.payResolutionCost(pool);
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " pays " + effect.manaCost() + ". (", ability.sourceCard(), ")"));
                 log.info("Game {} - {} pays {} to keep their creature on the battlefield ({})",
@@ -1995,12 +1995,12 @@ public class MayPenaltyChoiceHandlerService {
             boolean canPayLife = totalLifeAmount <= 0
                     || (gameQueryService.canPlayerLifeChange(gameData, decidingPlayerId)
                             && gameData.getLife(decidingPlayerId) >= totalLifeAmount);
-            if (cost.canPay(simulatedPool) && canPayLife) {
+            if (cost.canPayResolutionCost(simulatedPool) && canPayLife) {
                 var manaBefore = pool.getAllManaTotals();
                 if (cost.hasPhyrexianMana()) {
                     cost.payPhyrexianManaAuto(pool, 0);
                 }
-                cost.pay(pool);
+                cost.payResolutionCost(pool);
                 var manaSpent = ManaPool.coloredManaSpent(manaBefore, pool.getAllManaTotals(), null);
                 int blackOrRedSpent = manaSpent.getOrDefault(ManaColor.BLACK, 0)
                         + manaSpent.getOrDefault(ManaColor.RED, 0);

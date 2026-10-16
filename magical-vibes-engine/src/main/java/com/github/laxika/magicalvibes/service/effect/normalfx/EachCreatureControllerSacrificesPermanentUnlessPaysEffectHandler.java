@@ -156,8 +156,8 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
                     continue;
                 }
                 ManaCost cost = new ManaCost(manaCost);
-                if (cost.canPay(pool)) {
-                    cost.pay(pool);
+                if (cost.canPayResolutionCost(pool)) {
+                    cost.payResolutionCost(pool);
                     gameLogService.append(gameData, GameLog.text(
                             gameData.playerIdToName.get(playerId) + " pays " + manaCost + " for "
                                     + sourceName + "."));
@@ -183,10 +183,10 @@ public class EachCreatureControllerSacrificesPermanentUnlessPaysEffectHandler
         int keeps = 0;
         while (keeps < creatureCount) {
             ManaCost cost = new ManaCost(manaCost);
-            if (!cost.canPay(simulatedPool)) {
+            if (!cost.canPayResolutionCost(simulatedPool)) {
                 break;
             }
-            cost.pay(simulatedPool);
+            cost.payResolutionCost(simulatedPool);
             keeps++;
         }
         return keeps;
