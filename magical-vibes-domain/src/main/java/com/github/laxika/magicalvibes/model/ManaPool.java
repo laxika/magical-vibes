@@ -43,10 +43,16 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> spellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Mana spendable only to cast the activating player's commander (Jeweled Lotus). */
     private final EnumMap<ManaColor, Integer> commanderOnlyMana = new EnumMap<>(ManaColor.class);
-    /** Mana that may only be spent to pay ability costs, not to cast spells (e.g. Thran Turbine). */
+    /** Mana that may only be spent to pay ability costs, not to cast spells (e.g. Cryptic Trilobite). */
     private final EnumMap<ManaColor, Integer> abilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Ability-only mana temporarily promoted into the regular pool during ability payment. */
     private final EnumMap<ManaColor, Integer> promotedAbilityOnlyMana = new EnumMap<>(ManaColor.class);
+    /**
+     * Tag on the subset of {@link #abilityOnlyMana} that is only barred from casting spells (Thran
+     * Turbine), so it can also pay special actions. May transiently exceed the bucket while the bucket
+     * is promoted; reads clamp it.
+     */
+    private final EnumMap<ManaColor, Integer> spellProhibitedMana = new EnumMap<>(ManaColor.class);
     /** Mana that may only be spent to activate Power-up abilities. */
     private final EnumMap<ManaColor, Integer> powerUpAbilityOnlyMana = new EnumMap<>(ManaColor.class);
     /** Power-up-only mana temporarily promoted during Power-up ability payment. */
@@ -314,6 +320,7 @@ public class ManaPool {
             spellOnlyMana.put(color, 0);
             commanderOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
+            spellProhibitedMana.put(color, 0);
             promotedAbilityOnlyMana.put(color, 0);
             powerUpAbilityOnlyMana.put(color, 0);
             promotedPowerUpAbilityOnlyMana.put(color, 0);
@@ -389,6 +396,7 @@ public class ManaPool {
         mergeMana(spellOnlyMana, source.spellOnlyMana);
         mergeMana(commanderOnlyMana, source.commanderOnlyMana);
         mergeMana(abilityOnlyMana, source.abilityOnlyMana);
+        mergeMana(spellProhibitedMana, source.spellProhibitedMana);
         mergeMana(promotedAbilityOnlyMana, source.promotedAbilityOnlyMana);
         mergeMana(powerUpAbilityOnlyMana, source.powerUpAbilityOnlyMana);
         mergeMana(promotedPowerUpAbilityOnlyMana, source.promotedPowerUpAbilityOnlyMana);
@@ -518,6 +526,7 @@ public class ManaPool {
         spellOnlyMana.putAll(source.spellOnlyMana);
         commanderOnlyMana.putAll(source.commanderOnlyMana);
         abilityOnlyMana.putAll(source.abilityOnlyMana);
+        spellProhibitedMana.putAll(source.spellProhibitedMana);
         promotedAbilityOnlyMana.putAll(source.promotedAbilityOnlyMana);
         powerUpAbilityOnlyMana.putAll(source.powerUpAbilityOnlyMana);
         promotedPowerUpAbilityOnlyMana.putAll(source.promotedPowerUpAbilityOnlyMana);
@@ -1117,6 +1126,7 @@ public class ManaPool {
             spellOnlyMana.put(color, 0);
             commanderOnlyMana.put(color, 0);
             abilityOnlyMana.put(color, 0);
+            spellProhibitedMana.put(color, 0);
             promotedAbilityOnlyMana.put(color, 0);
             powerUpAbilityOnlyMana.put(color, 0);
             promotedPowerUpAbilityOnlyMana.put(color, 0);
@@ -2075,9 +2085,32 @@ public class ManaPool {
         abilityOnlyMana.merge(color, amount, Integer::sum);
     }
 
+    /**
+     * Removes ability-only mana. Untagged mana goes first, so mana that could also pay a special
+     * action (Thran Turbine) is kept for as long as possible.
+     */
     public void removeAbilityOnlyMana(ManaColor color, int amount) {
         int current = abilityOnlyMana.getOrDefault(color, 0);
         abilityOnlyMana.put(color, Math.max(0, current - amount));
+        clampSpellProhibitedMana(color);
+    }
+
+    /** Mana of {@code color} that only can't be spent to cast spells (Thran Turbine). */
+    public int getSpellProhibitedMana(ManaColor color) {
+        return Math.min(spellProhibitedMana.getOrDefault(color, 0), abilityOnlyMana.getOrDefault(color, 0));
+    }
+
+    /**
+     * Adds mana that can't be spent to cast spells. It lives in the ability-only bucket, which already
+     * covers abilities, and is tagged so a special action can also spend it.
+     */
+    public void addSpellProhibitedMana(ManaColor color, int amount) {
+        abilityOnlyMana.merge(color, amount, Integer::sum);
+        spellProhibitedMana.merge(color, amount, Integer::sum);
+    }
+
+    private void clampSpellProhibitedMana(ManaColor color) {
+        spellProhibitedMana.put(color, getSpellProhibitedMana(color));
     }
 
     /** Temporarily makes ability-only mana visible to the ordinary mana payment code. */
@@ -2112,6 +2145,7 @@ public class ManaPool {
                 abilityOnlyMana.merge(color, returned, Integer::sum);
             }
             promotedAbilityOnlyMana.put(color, 0);
+            clampSpellProhibitedMana(color);
 
             int artifactSpellOrAbilityAmount = promotedArtifactSpellOrAbilityOnlyMana.getOrDefault(color, 0);
             if (artifactSpellOrAbilityAmount > 0) {
@@ -2253,6 +2287,83 @@ public class ManaPool {
 
     private void clampNonartifactSpellProhibitedMana(ManaColor color) {
         nonartifactSpellProhibitedMana.put(color, getNonartifactSpellProhibitedMana(color));
+    }
+
+    /**
+     * Temporarily makes mana that is only barred from casting spells visible to the ordinary payment
+     * code, for a special action (CR 116.2), which isn't a spell: Hydraulic Helper's and Thran
+     * Turbine's tagged mana and Powerstone mana. Restore it with
+     * {@link #restorePromotedSpecialActionMana}, which counts this mana as spent before regular mana.
+     */
+    public SpecialActionManaState promoteSpecialActionMana() {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> nonartifactSpellProhibited = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> spellProhibited = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            regularBefore.put(color, pool.getOrDefault(color, 0));
+            int nonartifact = getNonartifactSpellProhibitedMana(color);
+            nonartifactSpellProhibited.put(color, nonartifact);
+            if (nonartifact > 0) {
+                pool.merge(color, nonartifact, Integer::sum);
+                artifactSpellOrAbilityOnlyMana.merge(color, -nonartifact, Integer::sum);
+                nonartifactSpellProhibitedMana.merge(color, -nonartifact, Integer::sum);
+            }
+            int anySpell = getSpellProhibitedMana(color);
+            spellProhibited.put(color, anySpell);
+            if (anySpell > 0) {
+                pool.merge(color, anySpell, Integer::sum);
+                abilityOnlyMana.merge(color, -anySpell, Integer::sum);
+                spellProhibitedMana.merge(color, -anySpell, Integer::sum);
+            }
+        }
+        SpecialActionManaState state = new SpecialActionManaState(regularBefore, nonartifactSpellProhibited,
+                spellProhibited, powerstoneOnlyColorless, persistentPowerstoneOnlyColorless);
+        pool.merge(ManaColor.COLORLESS, powerstoneOnlyColorless, Integer::sum);
+        powerstoneOnlyColorless = 0;
+        persistentPowerstoneOnlyColorless = 0;
+        return state;
+    }
+
+    /**
+     * Returns the unspent part of {@link #promoteSpecialActionMana}'s mana to its buckets. Thran
+     * Turbine's mana, which pays the fewest costs, counts as spent first and persistent Powerstone
+     * mana last.
+     */
+    public void restorePromotedSpecialActionMana(SpecialActionManaState state) {
+        for (ManaColor color : ManaColor.values()) {
+            int powerstone = color == ManaColor.COLORLESS ? state.powerstone() : 0;
+            int persistentPowerstone = color == ManaColor.COLORLESS ? state.persistentPowerstone() : 0;
+            int nonartifact = state.nonartifactSpellProhibited().getOrDefault(color, 0);
+            int anySpell = state.spellProhibited().getOrDefault(color, 0);
+            int promoted = powerstone + nonartifact + anySpell;
+            int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0)
+                    + promoted - pool.getOrDefault(color, 0));
+            int remaining = Math.max(0, promoted - spent);
+            pool.merge(color, -remaining, Integer::sum);
+
+            int keptPersistentPowerstone = Math.min(remaining, persistentPowerstone);
+            remaining -= keptPersistentPowerstone;
+            int keptNonartifact = Math.min(remaining, nonartifact);
+            remaining -= keptNonartifact;
+            int keptOtherPowerstone = Math.min(remaining, powerstone - persistentPowerstone);
+            remaining -= keptOtherPowerstone;
+            int keptAnySpell = Math.min(remaining, anySpell);
+
+            if (keptNonartifact > 0) {
+                addNonartifactSpellProhibitedMana(color, keptNonartifact);
+            }
+            if (keptAnySpell > 0) {
+                addSpellProhibitedMana(color, keptAnySpell);
+            }
+            powerstoneOnlyColorless += keptPersistentPowerstone + keptOtherPowerstone;
+            persistentPowerstoneOnlyColorless += keptPersistentPowerstone;
+        }
+    }
+
+    public record SpecialActionManaState(Map<ManaColor, Integer> regularBefore,
+                                         Map<ManaColor, Integer> nonartifactSpellProhibited,
+                                         Map<ManaColor, Integer> spellProhibited,
+                                         int powerstone, int persistentPowerstone) {
     }
 
     public void addCreatureMana(ManaColor color, int amount) {
@@ -4853,6 +4964,7 @@ public class ManaPool {
         moveColoredManaToColorless(nonOwnedSpellOnlyMana);
         moveColoredManaToColorless(outsideStartingDeckSpellOnlyMana);
         moveColoredManaToColorless(abilityOnlyMana);
+        moveColoredManaToColorless(spellProhibitedMana);
         moveColoredManaToColorless(landAbilityOnlyMana);
         moveColoredManaToColorlessBuckets(subtypeCreatureMana);
         moveColoredManaToColorlessBuckets(subtypeOrLegendaryCreatureMana);
@@ -4997,6 +5109,7 @@ public class ManaPool {
         moveManaTo(replacementColor, nonOwnedSpellOnlyMana);
         moveManaTo(replacementColor, outsideStartingDeckSpellOnlyMana);
         moveManaTo(replacementColor, abilityOnlyMana);
+        moveManaTo(replacementColor, spellProhibitedMana);
         moveManaToBuckets(replacementColor, subtypeCreatureMana);
         moveManaToBuckets(replacementColor, subtypeOrLegendaryCreatureMana);
         moveManaToBuckets(replacementColor, uncounterableSubtypeCreatureMana);
@@ -5204,6 +5317,7 @@ public class ManaPool {
         clampColorTag(pathOfAncestryMana, protectedColors);
         drainColorMap(spellCastTriggerMana, protectedColors);
         drainColorBucket(abilityOnlyMana, protectedColors);
+        drainColorBucket(spellProhibitedMana, protectedColors);
         drainColorBucket(promotedAbilityOnlyMana, protectedColors);
         drainColorBucket(powerUpAbilityOnlyMana, protectedColors);
         drainColorBucket(promotedPowerUpAbilityOnlyMana, protectedColors);

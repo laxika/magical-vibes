@@ -13,7 +13,7 @@ public class ThranTurbine extends Card {
 
     public ThranTurbine() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
-                new AwardRestrictedManaEffect(ManaColor.COLORLESS, 2, new ManaRestriction.Abilities()),
+                new AwardRestrictedManaEffect(ManaColor.COLORLESS, 2, new ManaRestriction.SpellsProhibited()),
                 "Add {C}{C}?")
         );
     }

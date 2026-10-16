@@ -963,10 +963,10 @@ public class AbilityActivationService {
 
         ManaPool pool = gameData.playerManaPools.get(playerId);
         ManaCost cost = new ManaCost("{1}");
-        if (pool == null || !cost.canPay(pool)) {
+        if (pool == null || !cost.canPayForSpecialAction(pool)) {
             throw new IllegalStateException("Not enough mana to pay for Guardian Angel prevention");
         }
-        cost.pay(pool);
+        cost.payForSpecialAction(pool);
 
         if (target != null) {
             target.setDamagePreventionShield(target.getDamagePreventionShield() + 1);
@@ -995,10 +995,10 @@ public class AbilityActivationService {
                 .orElseThrow(() -> new IllegalStateException("No unpaid draw-step life-loss obligation"));
         ManaPool pool = gameData.playerManaPools.get(playerId);
         ManaCost cost = new ManaCost("{" + obligation.payAmount() + "}");
-        if (pool == null || !cost.canPay(pool)) {
+        if (pool == null || !cost.canPayForSpecialAction(pool)) {
             throw new IllegalStateException("Not enough mana to pay for the draw-step life-loss obligation");
         }
-        cost.pay(pool);
+        cost.payForSpecialAction(pool);
         gameData.delayedActions.remove(obligation);
         gameData.revertableManaActivations.clear();
         gameLogService.append(gameData, GameLog.textCardText(

@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.AuguryRaven;
+import com.github.laxika.magicalvibes.cards.b.BottomlessPoolLockerRoom;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KillerWhale;
+import com.github.laxika.magicalvibes.cards.l.LeoninArbiter;
 import com.github.laxika.magicalvibes.cards.m.ManaLeak;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -113,6 +116,55 @@ class HydraulicHelperTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId())
                 .getArtifactSpellOrAbilityOnlyMana(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @CardUsed({HydraulicHelper.class, AuguryRaven.class})
+    @DisplayName("Hydraulic Helper mana can pay a foretell cost")
+    void paysForetellCost() {
+        addReadyHelper();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        AuguryRaven raven = new AuguryRaven();
+        harness.setHand(player1, List.of(raven));
+        harness.activateAbility(player1, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.foretell(player1, 0);
+
+        assertThat(gd.findExiledCard(raven.getId()).faceDown()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({HydraulicHelper.class, BottomlessPoolLockerRoom.class})
+    @DisplayName("Hydraulic Helper mana can pay a Room's unlock cost")
+    void paysRoomUnlockCost() {
+        addReadyHelper();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent room = harness.addToBattlefieldAndReturn(player1, new BottomlessPoolLockerRoom());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 0);
+
+        assertThat(room.isRoomDoorUnlocked(0)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({HydraulicHelper.class, LeoninArbiter.class})
+    @DisplayName("Hydraulic Helper mana can pay Leonin Arbiter's search tax")
+    void paysSearchTax() {
+        addReadyHelper();
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        harness.activateAbility(player1, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.paySearchTax(player1);
+
+        assertThat(gd.paidSearchTaxPermanentIds.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

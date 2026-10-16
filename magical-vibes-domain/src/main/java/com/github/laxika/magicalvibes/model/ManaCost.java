@@ -1091,8 +1091,32 @@ public class ManaCost {
         }
     }
 
+    /**
+     * Checks a special action's cost (CR 116.2), such as a Room's unlock cost or Leonin Arbiter's
+     * search tax. A special action isn't a spell, so mana that only can't be spent to cast spells or
+     * nonartifact spells is usable too (Hydraulic Helper, Powerstone, Thran Turbine).
+     */
+    public boolean canPayForSpecialAction(ManaPool pool) {
+        ManaPool paymentPool = copyManaPool(pool);
+        paymentPool.promoteSpecialActionMana();
+        return canPay(paymentPool);
+    }
+
+    /** Pays a special action's cost; see {@link #canPayForSpecialAction(ManaPool)}. */
+    public void payForSpecialAction(ManaPool pool) {
+        ManaPool.SpecialActionManaState state = pool.promoteSpecialActionMana();
+        try {
+            pay(pool);
+        } finally {
+            pool.restorePromotedSpecialActionMana(state);
+        }
+    }
+
+    /** Foretelling is a special action, so this also accepts {@link #canPayForSpecialAction} mana. */
     public boolean canPayForForetell(ManaPool pool) {
-        return canPay(pool.copyForForetellPayment(), 0, false, false, false, false, true);
+        ManaPool paymentPool = pool.copyForForetellPayment();
+        paymentPool.promoteSpecialActionMana();
+        return canPay(paymentPool, 0, false, false, false, false, true);
     }
 
     public boolean canPayForDisturb(ManaPool pool, int xValue, int additionalGenericCost) {
@@ -2668,9 +2692,11 @@ public class ManaCost {
 
     public void payForForetell(ManaPool pool) {
         ManaPool.ForetellPaymentState state = pool.beginForetellPayment();
+        ManaPool.SpecialActionManaState specialActionState = pool.promoteSpecialActionMana();
         try {
             pay(pool, 0, false, false, false, false, true);
         } finally {
+            pool.restorePromotedSpecialActionMana(specialActionState);
             pool.endForetellPayment(state);
         }
     }

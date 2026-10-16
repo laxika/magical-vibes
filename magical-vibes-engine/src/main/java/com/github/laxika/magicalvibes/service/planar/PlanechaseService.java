@@ -93,8 +93,7 @@ public class PlanechaseService {
     }
 
     public boolean canRoll(GameData game, UUID playerId, ManaPool pool) {
-        return canRollAtThisTime(game, playerId) && rollManaCost(game, playerId).canPay(pool, 0, false, false, false, false, false,
-                null, null, false, false, false, false, null, true);
+        return canRollAtThisTime(game, playerId) && rollManaCost(game, playerId).canPayForSpecialAction(pool);
     }
 
     public boolean canOfferRoll(GameData game, UUID playerId) {
@@ -122,8 +121,7 @@ public class PlanechaseService {
         if (pool == null || !canRoll(game, playerId, pool)) {
             throw new IllegalStateException("You cannot roll the planar die now");
         }
-        rollManaCost(game, playerId).pay(pool, 0, false, false, false, false, false,
-                null, null, false, false, false, false, null, true);
+        rollManaCost(game, playerId).payForSpecialAction(pool);
         game.planechase.recordSpecialAction(playerId, game.turnNumber);
         game.revertableManaActivations.clear();
         game.priorityPassedBy.clear();

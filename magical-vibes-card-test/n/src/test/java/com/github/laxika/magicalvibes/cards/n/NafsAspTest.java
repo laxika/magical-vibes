@@ -54,6 +54,24 @@ class NafsAspTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Powerstone mana can pay to avoid the draw-step life loss")
+    void powerstoneManaPaysToAvoidLifeLoss() {
+        Permanent asp = addReadyAsp();
+        asp.setAttacking(true);
+
+        dealCombatDamageToPlayer2();
+        resolveAllTriggers();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        gd.playerManaPools.get(player2.getId()).addPowerstoneOnlyColorless(1);
+        gs.payDrawStepLifeLoss(gd, player2, asp.getCard().getId());
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getPowerstoneOnlyColorless()).isZero();
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Paying during upkeep avoids the draw-step life loss")
     void payAvoidsLife() {
         Permanent asp = addReadyAsp();

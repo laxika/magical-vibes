@@ -343,7 +343,7 @@ public sealed interface ManaRestriction {
         }
     }
 
-    /** Mana spendable only to pay ability costs, not to cast spells (Thran Turbine). */
+    /** "Spend this mana only to activate abilities" (Cryptic Trilobite). */
     record Abilities() implements ManaRestriction {
         @Override
         public void applyTo(ManaPool pool, ManaColor color, int amount) {
@@ -353,6 +353,22 @@ public sealed interface ManaRestriction {
         @Override
         public String description() {
             return "abilities only";
+        }
+    }
+
+    /**
+     * "This mana can't be spent to cast spells" (Thran Turbine). Broader than {@link Abilities}:
+     * besides abilities, it can pay special actions such as foretelling a card.
+     */
+    record SpellsProhibited() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addSpellProhibitedMana(color, amount);
+        }
+
+        @Override
+        public String description() {
+            return "spells prohibited";
         }
     }
 

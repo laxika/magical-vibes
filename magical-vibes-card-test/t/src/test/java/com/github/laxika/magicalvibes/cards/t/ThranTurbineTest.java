@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AbzanGuide;
 import com.github.laxika.magicalvibes.cards.a.AlbinoTroll;
+import com.github.laxika.magicalvibes.cards.a.AuguryRaven;
 import com.github.laxika.magicalvibes.cards.c.ChimericStaff;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -107,6 +109,48 @@ class ThranTurbineTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({ThranTurbine.class, AuguryRaven.class})
+    @DisplayName("Turbine mana can pay a foretell cost, which is a special action rather than a spell")
+    void manaCanPayForetellCost() {
+        harness.addToBattlefield(player1, new ThranTurbine());
+        AuguryRaven raven = new AuguryRaven();
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            acceptTurbineMana();
+            harness.setHand(player1, List.of(raven));
+
+            harness.foretell(player1, 0);
+
+            assertThat(gd.findExiledCard(raven.getId()).faceDown()).isTrue();
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        });
+    }
+
+    @Test
+    @CardUsed({ThranTurbine.class, AbzanGuide.class})
+    @DisplayName("Turbine mana can pay a morph cost to turn a creature face up")
+    void manaCanPayMorphCost() {
+        harness.setHand(player1, List.of(new AbzanGuide()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent guide = findPermanent(player1, "Abzan Guide");
+        harness.addToBattlefield(player1, new ThranTurbine());
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            acceptTurbineMana();
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.addMana(player1, ManaColor.BLACK, 1);
+            harness.addMana(player1, ManaColor.GREEN, 1);
+
+            harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(guide));
+
+            assertThat(guide.isFaceDown()).isFalse();
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        });
+    }
+
+    @Test
     @DisplayName("Turbine mana can pay the generic portion of an echo cost")
     void manaCanPayEchoCost() {
         harness.setHand(player1, List.of(new AlbinoTroll()));
@@ -131,5 +175,12 @@ class ThranTurbineTest extends BaseCardTest {
             harness.assertOnBattlefield(player1, "Albino Troll");
             assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyManaTotal()).isEqualTo(1);
         });
+    }
+
+    private void acceptTurbineMana() {
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.COLORLESS)).isEqualTo(2);
     }
 }

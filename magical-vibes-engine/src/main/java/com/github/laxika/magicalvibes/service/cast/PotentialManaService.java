@@ -123,7 +123,10 @@ public class PotentialManaService {
         return buildVirtualManaPool(gameData, playerId, excludedPermanentId, false);
     }
 
-    /** Includes Powerstone mana, which may pay for a special action. */
+    /**
+     * Includes mana that is only barred from casting (nonartifact) spells, such as Powerstone mana,
+     * which may pay for a special action.
+     */
     public VirtualManaPool buildVirtualManaPoolForSpecialAction(GameData gameData, UUID playerId) {
         return buildVirtualManaPool(gameData, playerId, null, true);
     }
@@ -140,7 +143,12 @@ public class PotentialManaService {
                 virtual.addSnowManaTag(color, current.getSnowMana(color));
                 virtual.addBasicLandManaTag(color, current.getBasicLandMana(color));
                 virtual.addCreatureMana(color, current.getCreatureMana(color));
-                virtual.addAbilityOnlyMana(color, current.getAbilityOnlyMana(color));
+                int spellProhibited = current.getSpellProhibitedMana(color);
+                virtual.addAbilityOnlyMana(color, current.getAbilityOnlyMana(color) - spellProhibited);
+                virtual.addSpellProhibitedMana(color, spellProhibited);
+                if (specialAction) {
+                    virtual.addNonartifactSpellProhibitedMana(color, current.getNonartifactSpellProhibitedMana(color));
+                }
                 virtual.addLandAbilityOnlyMana(color, current.getLandAbilityOnlyMana(color));
                 virtual.addPowerUpAbilityOnlyMana(color, current.getPowerUpAbilityOnlyMana(color));
             }
@@ -591,7 +599,9 @@ public class PotentialManaService {
                     }
                 }
             } else if (specialAction && effect instanceof AwardRestrictedManaEffect restricted
-                    && restricted.restriction() instanceof ManaRestriction.Powerstone) {
+                    && (restricted.restriction() instanceof ManaRestriction.Powerstone
+                    || restricted.restriction() instanceof ManaRestriction.NonartifactSpellsProhibited
+                    || restricted.restriction() instanceof ManaRestriction.SpellsProhibited)) {
                 int amount = estimateManaAmount(restricted.amount(), permanent, gameData);
                 if (amount > 0) fixed.merge(restricted.color(), amount, Integer::sum);
             } else if (effect instanceof ManaProducingEffect mana

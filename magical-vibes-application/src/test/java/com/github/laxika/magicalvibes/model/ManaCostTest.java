@@ -131,6 +131,82 @@ class ManaCostTest {
     }
 
     @Nested
+    @DisplayName("Special-action payment")
+    class SpecialActionPayment {
+
+        @Test
+        @DisplayName("Mana barred only from casting (nonartifact) spells pays a special action")
+        void spellProhibitedManaPaysSpecialAction() {
+            ManaPool pool = new ManaPool();
+            pool.addNonartifactSpellProhibitedMana(ManaColor.BLUE, 1);
+            pool.addSpellProhibitedMana(ManaColor.COLORLESS, 1);
+            pool.addPowerstoneOnlyColorless(1);
+            ManaCost cost = new ManaCost("{3}");
+
+            assertThat(cost.canPay(pool)).isFalse();
+            assertThat(cost.canPayForSpecialAction(pool)).isTrue();
+
+            cost.payForSpecialAction(pool);
+
+            assertThat(pool.getTotalAllMana()).isZero();
+        }
+
+        @Test
+        @DisplayName("Spend-only-on-abilities and artifact-spell-or-ability mana can't pay a special action")
+        void narrowerRestrictedManaCannotPaySpecialAction() {
+            ManaPool pool = new ManaPool();
+            pool.addAbilityOnlyMana(ManaColor.COLORLESS, 1);
+            pool.addArtifactSpellOrAbilityOnlyMana(ManaColor.BLUE, 1);
+
+            assertThat(new ManaCost("{1}").canPayForSpecialAction(pool)).isFalse();
+            assertThat(new ManaCost("{2}").canPayForForetell(pool)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Restricted mana is spent before regular mana and the rest returns to its bucket")
+        void restrictedManaSpentFirst() {
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.COLORLESS, 1);
+            pool.addAbilityOnlyMana(ManaColor.COLORLESS, 1);
+            pool.addSpellProhibitedMana(ManaColor.COLORLESS, 2);
+
+            new ManaCost("{1}").payForSpecialAction(pool);
+
+            assertThat(pool.get(ManaColor.COLORLESS)).isEqualTo(1);
+            assertThat(pool.getAbilityOnlyMana(ManaColor.COLORLESS)).isEqualTo(2);
+            assertThat(pool.getSpellProhibitedMana(ManaColor.COLORLESS)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Persistent Powerstone mana is kept over Powerstone mana that drains")
+        void persistentPowerstoneManaKept() {
+            ManaPool pool = new ManaPool();
+            pool.addPowerstoneOnlyColorless(1, false);
+            pool.addPowerstoneOnlyColorless(1, true);
+
+            new ManaCost("{1}").payForSpecialAction(pool);
+
+            assertThat(pool.getPowerstoneOnlyColorless()).isEqualTo(1);
+            assertThat(pool.getPersistentPowerstoneOnlyColorless()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("An ability payment keeps the mana that could also pay a special action")
+        void abilityPaymentKeepsSpellProhibitedMana() {
+            ManaPool pool = new ManaPool();
+            pool.addAbilityOnlyMana(ManaColor.COLORLESS, 1);
+            pool.addSpellProhibitedMana(ManaColor.COLORLESS, 1);
+
+            pool.promoteAbilityOnlyMana();
+            new ManaCost("{1}").pay(pool);
+            pool.restorePromotedAbilityOnlyMana();
+
+            assertThat(pool.getAbilityOnlyMana(ManaColor.COLORLESS)).isEqualTo(1);
+            assertThat(pool.getSpellProhibitedMana(ManaColor.COLORLESS)).isEqualTo(1);
+        }
+    }
+
+    @Nested
     @DisplayName("Snow mana color permission")
     class SnowManaColorPermission {
 

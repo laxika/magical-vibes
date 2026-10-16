@@ -21,10 +21,41 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LeoninArbiter.class, DiabolicTutor.class, Forest.class, GrizzlyBears.class,
         Plains.class, Swamp.class, TerramorphicExpanse.class})
 class LeoninArbiterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Powerstone mana can pay the search tax, which is a special action rather than a spell")
+    void powerstoneManaPaysSearchTax() {
+        harness.addToBattlefield(player1, new LeoninArbiter());
+        gd.playerManaPools.get(player2.getId()).addPowerstoneOnlyColorless(2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.paySearchTax(player2);
+
+        assertThat(gd.paidSearchTaxPermanentIds.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getPowerstoneOnlyColorless()).isZero();
+    }
+
+    @Test
+    @DisplayName("Mana spendable only on abilities can't pay the search tax")
+    void abilityOnlyManaCannotPaySearchTax() {
+        harness.addToBattlefield(player1, new LeoninArbiter());
+        gd.playerManaPools.get(player2.getId()).addAbilityOnlyMana(ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.paySearchTax(player2))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.paidSearchTaxPermanentIds.get(player2.getId())).isNullOrEmpty();
+    }
 
     @Test
     @DisplayName("Opponent cannot search library when Leonin Arbiter is on the battlefield and they have no mana")

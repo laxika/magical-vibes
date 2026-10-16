@@ -152,14 +152,14 @@ restriction covers a cost paid while something resolves, so both kinds of mana c
 Rhystic Study's tax and similar costs. Hydraulic Helper's mana already can, through
 `ManaCost.canPayResolutionCost`/`payResolutionCost`, which promote only
 `ManaPool.promoteNonartifactSpellProhibitedMana()`. Powerstone mana sits in its own colorless bucket
-(`powerstoneOnlyColorless`). Thran Turbine uses `ManaRestriction.Abilities`, whose bucket it shares with
-cards that really are "spend this mana only to activate abilities" (Cryptic Trilobite, Omen Hawker, Pit
-Automaton, The Enigma Jewel, James, Wandering Dad). So neither can pay a resolution-time cost.
+(`powerstoneOnlyColorless`), and Thran Turbine's mana is tagged `spellProhibitedMana` inside the
+ability-only bucket (`ManaRestriction.SpellsProhibited`). Neither is promoted for a resolution-time cost.
 
-**Why it's large.** Powerstone mana has a persistent subset (Karn's mana lasts until end of turn), so
-promoting and restoring it has to keep that count right. Thran Turbine needs its own restriction and
-bucket, or a tag on the ability-only bucket like Hydraulic Helper's, because the shared bucket must
-keep refusing resolution-time costs for the narrower cards.
+**Why it's large.** Less than it was: `ManaPool.promoteSpecialActionMana()`/
+`restorePromotedSpecialActionMana()` already promote exactly these three kinds of mana for special
+actions, keeping Powerstone's persistent subset (Karn's mana lasts until end of turn) right. Switching
+`canPayResolutionCost`/`payResolutionCost` to it may be enough, but every "unless pays" / "may pay"
+handler that calls them needs a regression check, and plain ability-only mana must keep refusing them.
 
 **Prompt to start it:**
 
@@ -173,33 +173,32 @@ Powerstone card's test. Don't run the full test suite; ask me. Don't commit unti
 
 ---
 
-## 30. Restricted mana that can pay special actions
+## 31. Ability-style special actions and restricted mana
 
-**Status:** open · **Found:** 2026-10-16, while adding Hydraulic Helper's restriction
+**Status:** open · **Found:** 2026-10-16, while letting restricted mana pay special actions
 
 **Failing tests:**
-- None yet. Add one: Hydraulic Helper mana paying a foretell cost.
+- None yet. Add one: Powerstone mana paying a Licid's end cost, and Cryptic Trilobite mana refused there.
 
-**What the rules require.** Foretelling a card, unlocking a Room door and paying a search tax (Leonin
-Arbiter) are special actions, not spells. Mana that only can't be spent to cast spells, or only can't
-be spent to cast nonartifact spells (Hydraulic Helper, Powerstone, Thran Turbine), can pay them.
-`GameService.foretellCard`, `unlockRoomDoor` and `paySearchTax` use plain `ManaCost.canPay(pool)`/
-`pay(pool)`, so that mana can't be spent there. (`PotentialManaService` already counts Powerstone mana
-for special actions when it checks what's affordable.)
+**What the rules require.** Ending a Licid's effect (and other `ActivatedAbility.isSpecialAction()`
+actions, CR 116.2c) is a special action, not an activated ability. Powerstone mana can pay it; mana
+spendable "only to activate abilities" (Cryptic Trilobite) or "only to cast artifact spells or activate
+abilities" (Guidelight Optimizer) can't. `AbilityActivationService` checks and pays these with plain
+`ManaCost.canPay`/`pay` after `activateAbility` has already promoted every ability-only bucket, so
+Powerstone mana is refused and the narrower mana is accepted.
 
-**Why it's large.** Each special action has its own payment path. Some already admit other
-restrictions: Room-unlock mana and turn-face-up mana have their own buckets. Every path, and the
-playability checks that offer the action, has to accept the broader mana without letting
-spell-only restricted mana in.
+**Why it's large.** The special-action branch sits inside the normal activation flow, which promotes the
+ability-only buckets before it knows the ability is a special action. The promotion has to be skipped
+or undone for these, and cost-carrying special actions (Damping Engine's sacrifice) take a separate path.
 
 **Prompt to start it:**
 
 ```
-Let mana that is only barred from casting (nonartifact) spells — Hydraulic Helper's tagged mana,
-Powerstone mana and Thran Turbine mana — pay special-action costs: foretell, unlocking a Room door and
-Leonin Arbiter's search tax (GameService.foretellCard, unlockRoomDoor, paySearchTax) and their
-availability checks. Start with a HydraulicHelperTest case that foretells a card with its mana. Don't run
-the full test suite; ask me. Don't commit until I say so.
+Make ability-style special actions (ActivatedAbility.isSpecialAction(), e.g. a Licid's end cost) pay
+with ManaCost.canPayForSpecialAction/payForSpecialAction instead of the activated-ability mana: accept
+Powerstone mana, and refuse "spend only to activate abilities" mana (Cryptic Trilobite) and Guidelight
+Optimizer's mana. Start with tests in a Licid card's test. Don't run the full test suite; ask me. Don't
+commit until I say so.
 ```
 
 <!--

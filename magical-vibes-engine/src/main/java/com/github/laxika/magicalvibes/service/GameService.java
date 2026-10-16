@@ -430,11 +430,11 @@ public class GameService {
             ManaCost cost = new ManaCost("{" + totalCost + "}");
             ManaPool pool = gameData.playerManaPools.get(player.getId());
 
-            if (pool == null || !cost.canPay(pool)) {
+            if (pool == null || !cost.canPayForSpecialAction(pool)) {
                 throw new IllegalStateException("Not enough mana to pay search tax");
             }
 
-            cost.pay(pool);
+            cost.payForSpecialAction(pool);
 
             Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds
                     .computeIfAbsent(player.getId(), k -> ConcurrentHashMap.newKeySet());
@@ -544,6 +544,8 @@ public class GameService {
                     : castingCostService.getRoomUnlockCost(
                     gameData, player.getId(), room.getCard(), doorIndex);
             ManaPool pool = gameData.playerManaPools.get(player.getId());
+            ManaPool.SpecialActionManaState specialActionMana = pool != null
+                    ? pool.promoteSpecialActionMana() : null;
             ManaPool.EnchantmentOrRoomUnlockOrTurnFaceUpManaState restrictedMana = pool != null
                     ? pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana() : null;
             ManaPool.RoomSpellsOrUnlocksManaState roomMana = pool != null
@@ -560,6 +562,9 @@ public class GameService {
                 }
                 if (restrictedMana != null) {
                     pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(restrictedMana);
+                }
+                if (specialActionMana != null) {
+                    pool.restorePromotedSpecialActionMana(specialActionMana);
                 }
             }
 
@@ -1580,6 +1585,7 @@ public class GameService {
                 if (pool == null) {
                     pool = new ManaPool();
                 }
+                ManaPool.SpecialActionManaState specialActionMana = pool.promoteSpecialActionMana();
                 ManaPool.FaceDownSpellsOrTurnFaceUpManaState restrictedMana =
                         pool.promoteFaceDownSpellsOrTurnFaceUpMana();
                 ManaPool.EnchantmentOrRoomUnlockOrTurnFaceUpManaState enchantmentOrRoomUnlockOrTurnFaceUpMana =
@@ -1615,6 +1621,7 @@ public class GameService {
                     pool.restorePromotedEnchantmentOrRoomUnlockOrTurnFaceUpMana(
                             enchantmentOrRoomUnlockOrTurnFaceUpMana);
                     pool.restorePromotedFaceDownSpellsOrTurnFaceUpMana(restrictedMana);
+                    pool.restorePromotedSpecialActionMana(specialActionMana);
                 }
             }
             if (!manifestedOrCloaked && morphAdditionalCost != null) {
@@ -1671,6 +1678,7 @@ public class GameService {
         }
         ManaPool actualPool = gameData.playerManaPools.get(playerId);
         ManaPool pool = actualPool == null ? new ManaPool() : new ManaPool(actualPool);
+        pool.promoteSpecialActionMana();
         pool.promoteFaceDownSpellsOrTurnFaceUpMana();
         pool.promoteEnchantmentOrRoomUnlockOrTurnFaceUpMana();
         pool.promoteTurnPermanentsFaceUpMana();
