@@ -3738,10 +3738,14 @@ public class AbilityActivationService {
             pool.setAllManaSpendableAsAnyColor(gameQueryService.canSpendManaAsAnyColor(gameData, player.getId()));
         }
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
-        ManaPool.NonHandSpellOnlyManaState nonHandAbilityMana = pool != null
+        // A special action isn't an activated ability (CR 116.2), so mana spendable only on abilities
+        // stays out of its payment; the special-action payment adds Powerstone-style mana instead.
+        boolean abilityManaApplies = pool != null
+                && !isSpecialActionAbility(gameData, player.getId(), permanentIndex, abilityIndex, preResolvedSource);
+        ManaPool.NonHandSpellOnlyManaState nonHandAbilityMana = abilityManaApplies
                 ? pool.promoteNonHandSpellOnlyMana() : null;
-        boolean promotedAbilityOnlyMana = pool != null && pool.promoteAbilityOnlyMana() > 0;
-        boolean promotedLandAbilityOnlyMana = pool != null
+        boolean promotedAbilityOnlyMana = abilityManaApplies && pool.promoteAbilityOnlyMana() > 0;
+        boolean promotedLandAbilityOnlyMana = abilityManaApplies
                 && isLandAbilitySource(gameData, player.getId(), permanentIndex, preResolvedSource)
                 && pool.promoteLandAbilityOnlyMana() > 0;
         int pendingCostSacrificesBefore = gameData.pendingActivationCostSacrificeIds.size();
@@ -3778,6 +3782,18 @@ public class AbilityActivationService {
             if (pool != null && nonHandAbilityMana != null) {
                 pool.restorePromotedNonHandSpellOnlyMana(nonHandAbilityMana);
             }
+        }
+    }
+
+    private boolean isSpecialActionAbility(GameData gameData, UUID playerId, int permanentIndex,
+                                           Integer abilityIndex, Permanent preResolvedSource) {
+        try {
+            Permanent permanent = preResolvedSource != null
+                    ? preResolvedSource
+                    : resolveActivationSource(gameData, playerId, permanentIndex, abilityIndex);
+            return permanent != null && resolveAbility(gameData, permanent, abilityIndex).isSpecialAction();
+        } catch (IllegalStateException e) {
+            return false;
         }
     }
 
@@ -3841,10 +3857,13 @@ public class AbilityActivationService {
             if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
                 cost = cost.withBlackManaAsPhyrexian();
             }
-            if (!cost.canPay(activationPool)) {
+            ManaPool specialActionPool = activationPool != null ? activationPool : new ManaPool();
+            specialActionPool.setBlueSpendableAsAnyColorForActivatedAbilities(false);
+            specialActionPool.setAllManaSpendableAsAnyColorForActivatedAbilities(false);
+            if (!cost.canPayForSpecialAction(specialActionPool)) {
                 throw new IllegalStateException("Not enough mana to pay for this special action");
             }
-            cost.pay(activationPool);
+            cost.payForSpecialAction(specialActionPool);
             activatedAbilityExecutionService.performSpecialAction(gameData, player, permanent, ability);
             return;
         }
@@ -6564,7 +6583,7 @@ public class AbilityActivationService {
             if (specialActionCost != null && gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
                 specialActionCost = specialActionCost.withBlackManaAsPhyrexian();
             }
-            if (specialActionCost != null && !specialActionCost.canPay(manaPool)) {
+            if (specialActionCost != null && !specialActionCost.canPayForSpecialAction(manaPool != null ? manaPool : new ManaPool())) {
                 throw new IllegalStateException("Not enough mana to pay for this special action");
             }
             validateTimingRestrictions(gameData, playerId, permanent, ability);

@@ -173,34 +173,6 @@ Powerstone card's test. Don't run the full test suite; ask me. Don't commit unti
 
 ---
 
-## 31. Ability-style special actions and restricted mana
-
-**Status:** open · **Found:** 2026-10-16, while letting restricted mana pay special actions
-
-**Failing tests:**
-- None yet. Add one: Powerstone mana paying a Licid's end cost, and Cryptic Trilobite mana refused there.
-
-**What the rules require.** Ending a Licid's effect (and other `ActivatedAbility.isSpecialAction()`
-actions, CR 116.2c) is a special action, not an activated ability. Powerstone mana can pay it; mana
-spendable "only to activate abilities" (Cryptic Trilobite) or "only to cast artifact spells or activate
-abilities" (Guidelight Optimizer) can't. `AbilityActivationService` checks and pays these with plain
-`ManaCost.canPay`/`pay` after `activateAbility` has already promoted every ability-only bucket, so
-Powerstone mana is refused and the narrower mana is accepted.
-
-**Why it's large.** The special-action branch sits inside the normal activation flow, which promotes the
-ability-only buckets before it knows the ability is a special action. The promotion has to be skipped
-or undone for these, and cost-carrying special actions (Damping Engine's sacrifice) take a separate path.
-
-**Prompt to start it:**
-
-```
-Make ability-style special actions (ActivatedAbility.isSpecialAction(), e.g. a Licid's end cost) pay
-with ManaCost.canPayForSpecialAction/payForSpecialAction instead of the activated-ability mana: accept
-Powerstone mana, and refuse "spend only to activate abilities" mana (Cryptic Trilobite) and Guidelight
-Optimizer's mana. Start with tests in a Licid card's test. Don't run the full test suite; ask me. Don't
-commit until I say so.
-```
-
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

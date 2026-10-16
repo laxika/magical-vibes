@@ -170,6 +170,62 @@ class TransmogrifyingLicidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Powerstone mana can pay the end cost, since ending the effect is a special action")
+    void powerstoneManaPaysEndCost() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new ElvishBerserker());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+        gd.playerManaPools.get(player1.getId()).addPowerstoneOnlyColorless(1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(licid.getAttachedTo()).isNull();
+        assertThat(gqs.isCreature(gd, licid)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
+    }
+
+    @Test
+    @DisplayName("Mana spendable only to activate abilities can't pay the end cost")
+    void abilityOnlyManaCannotPayEndCost() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new ElvishBerserker());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+        gd.playerManaPools.get(player1.getId()).addAbilityOnlyMana(ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getAbilityOnlyMana(ManaColor.COLORLESS))
+                .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Mana spendable only on artifact spells or abilities can't pay the end cost")
+    void artifactSpellOrAbilityOnlyManaCannotPayEndCost() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new ElvishBerserker());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+        gd.playerManaPools.get(player1.getId()).addArtifactSpellOrAbilityOnlyMana(ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOrAbilityOnlyMana(ManaColor.GREEN))
+                .isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("The Licid goes to its owner's graveyard when the enchanted creature leaves")
     void hostLeavingPutsLicidInGraveyard() {
         addReadyLicid(player1);

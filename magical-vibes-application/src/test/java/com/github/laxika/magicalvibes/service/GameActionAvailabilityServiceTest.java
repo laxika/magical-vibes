@@ -595,6 +595,27 @@ class GameActionAvailabilityServiceTest {
         }
 
         @Test
+        @DisplayName("A special action counts Powerstone mana but not mana spendable only on abilities")
+        void specialActionUsesSpecialActionMana() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+
+            Permanent source = abilitySource("Transmogrifying Licid",
+                    new com.github.laxika.magicalvibes.model.ActivatedAbility(false, "{1}",
+                            List.of(new com.github.laxika.magicalvibes.model.effect.LicidEndEffect()),
+                            "{1}: End this effect."));
+            gd.playerBattlefields.get(player1Id).add(source);
+            ManaPool pool = gd.playerManaPools.get(player1Id);
+            pool.addAbilityOnlyMana(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
+            pool.addArtifactSpellOrAbilityOnlyMana(com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
+
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id)).isEmpty();
+
+            pool.addPowerstoneOnlyColorless(1);
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id))
+                    .containsExactly(java.util.Map.entry(source.getId(), List.of(0)));
+        }
+
+        @Test
         @DisplayName("Abilities without a mana cost are omitted")
         void abilitiesWithoutManaCostOmitted() {
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);

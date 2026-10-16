@@ -189,6 +189,7 @@ public class GameActionAvailabilityService {
             List<ActivatedAbility> abilities = perm.getCard().getActivatedAbilities();
             List<Integer> payable = new ArrayList<>();
             VirtualManaPool poolWithoutSource = null;
+            VirtualManaPool specialActionPool = null;
             for (int i = 0; i < abilities.size(); i++) {
                 ActivatedAbility ability = abilities.get(i);
                 if (castingPermissionService.isSplitSecondActive(gameData)
@@ -203,6 +204,22 @@ public class GameActionAvailabilityService {
                 if (castingCostService.hasFreeEquipAbilityCost(gameData, playerId, ability)
                         || castingCostService.hasFreePowerUpAbilityCost(gameData, playerId, ability)) {
                     payable.add(i);
+                    continue;
+                }
+                if (ability.isSpecialAction()) {
+                    if (specialActionPool == null) {
+                        specialActionPool = potentialManaService.buildVirtualManaPoolForSpecialAction(gameData, playerId);
+                        if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId)) {
+                            specialActionPool.setAllManaSpendableAsAnyColor(true);
+                        }
+                    }
+                    ManaCost specialActionCost = new ManaCost(abilityManaCost);
+                    if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+                        specialActionCost = specialActionCost.withBlackManaAsPhyrexian();
+                    }
+                    if (specialActionCost.canPayForSpecialAction(specialActionPool)) {
+                        payable.add(i);
+                    }
                     continue;
                 }
                 VirtualManaPool pool = fullPool;
