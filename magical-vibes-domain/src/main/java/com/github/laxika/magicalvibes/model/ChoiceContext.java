@@ -115,6 +115,37 @@ public sealed interface ChoiceContext {
     }
 
     /**
+     * A counter placement on an entering permanent that was applied with the default replacement
+     * order, although the order of {@code replacements} changes how many counters it enters with.
+     * {@code placedCount} is the number the default order put on it.
+     */
+    record EntryCounterPlacement(CounterType type, int count, int placedCount,
+                                 List<CounterReplacement> replacements) {
+        public EntryCounterPlacement {
+            replacements = List.copyOf(replacements);
+        }
+    }
+
+    /**
+     * Holds a permanent's battlefield entry, after its counters were placed but before it is on the
+     * battlefield, while its controller orders the counter replacements of {@code placements}' first
+     * placement (CR 616.1). {@code count} is that placement's count after the replacements already
+     * chosen, and {@code remaining} the replacements still to order.
+     */
+    record EntryCounterReplacementOrder(BattlefieldEntryRequest request, UUID controllerId,
+                                        Map<CounterType, Integer> countersBeforeEntry,
+                                        com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect revealEffect,
+                                        com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersWithCountersEffect revealWithCountersEffect,
+                                        List<EntryCounterPlacement> placements, int count,
+                                        List<CounterReplacement> remaining) implements ChoiceContext {
+        public EntryCounterReplacementOrder {
+            countersBeforeEntry = Map.copyOf(countersBeforeEntry);
+            placements = List.copyOf(placements);
+            remaining = List.copyOf(remaining);
+        }
+    }
+
+    /**
      * CR 616.1: the event's chooser picks which of {@code options} — the replacement and/or
      * prevention effects that currently apply to {@code event} — to apply next. {@code previews}
      * summarizes, per option, what choosing it can still lead to (empty when not computed).

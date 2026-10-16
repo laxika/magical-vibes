@@ -4294,8 +4294,8 @@ public class StepTriggerService {
                 }
             }
             if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
-                int loyalty = gameQueryService.replaceCounters(gameData, controllerId, CounterType.LOYALTY,
-                        card.getLoyalty() + pending.loyaltyCountersOnPlaneswalkers(), isCreature);
+                int loyalty = gameQueryService.replaceCounters(gameData, perm, controllerId, CounterType.LOYALTY,
+                        card.getLoyalty() + pending.loyaltyCountersOnPlaneswalkers());
                 perm.setCounterCount(CounterType.LOYALTY, loyalty);
             }
             if (pending.counterTypeOnReturn() != null && pending.counterAmountOnReturn() > 0) {

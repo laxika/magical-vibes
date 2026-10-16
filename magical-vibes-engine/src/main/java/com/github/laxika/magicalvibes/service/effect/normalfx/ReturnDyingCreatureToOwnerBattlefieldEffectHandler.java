@@ -65,9 +65,8 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
                 returnEffect.subtypeOverride().isEmpty() ? returnEffect.grantSubtype() : null);
         permanent.getPersistentGrantedKeywords().addAll(returnEffect.grantKeywords());
         if (returnEffect.enterWithCounter() != null && returnEffect.enterWithCounterCount() > 0) {
-            int counters = gameQueryService.replaceCounters(gameData, battlefieldControllerId,
-                    returnEffect.enterWithCounter(), returnEffect.enterWithCounterCount(),
-                    cardToReturn.hasType(CardType.CREATURE), cardToReturn.hasType(CardType.ARTIFACT));
+            int counters = gameQueryService.replaceCounters(gameData, permanent, battlefieldControllerId,
+                    returnEffect.enterWithCounter(), returnEffect.enterWithCounterCount());
             if (counters > 0) {
                 permanent.setCounterCount(returnEffect.enterWithCounter(),
                         permanent.getCounterCount(returnEffect.enterWithCounter()) + counters);

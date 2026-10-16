@@ -3007,9 +3007,9 @@ public class PermanentRemovalService {
         }
         if (permanent.getCard().hasType(CardType.PLANESWALKER)
                 && permanent.getCard().getLoyalty() != null) {
-            int loyalty = gameQueryService.replaceCounters(gameData, ownerId,
+            int loyalty = gameQueryService.replaceCounters(gameData, permanent, ownerId,
                     CounterType.LOYALTY, permanent.getCard().getLoyalty()
-                            + pending.loyaltyCountersOnPlaneswalkers(), permanent.getCard().hasType(CardType.CREATURE));
+                            + pending.loyaltyCountersOnPlaneswalkers());
             permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         }
         if (pending.counterTypeOnReturn() != null && pending.counterAmountOnReturn() > 0) {

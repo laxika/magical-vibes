@@ -81,36 +81,6 @@ Don't commit until I say so.
 
 ---
 
-## 26. Replacement-order prompt for counters a permanent enters with
-
-**Status:** open · **Found:** 2026-10-16, while fixing H-card tests
-
-**Failing tests:**
-- `HardenedScalesTest.controllerChoosesOrderWithCounterDoubler()`
-
-**What the rules require.** CR 616.1: when two or more replacement effects would modify how an event
-affects an object, its controller chooses which to apply first. Hardened Scales ("one additional") and
-Corpsejack Menace ("twice that many") give different totals depending on order (5 → 12 or 11). The
-engine already prompts for counters put on a permanent already on the battlefield
-(`ChoiceContext.CounterReplacementOrder`). Counters a permanent *enters with* go through
-`GameQueryService.replaceCounters` inline during placement (`BattlefieldPlacementService`,
-`GraveyardReturnSupport.putCardOntoBattlefield`, and others), which applies a fixed order and never asks.
-
-**Why it's large.** The prompt has to pause battlefield entry partway through. The permanent is built
-but hasn't entered yet, so ETB triggers, the legend rule and "as enters" choices all have to wait for
-the answer and then resume. There are many entry call sites.
-
-**Prompt to start it:**
-
-```
-Make counters a permanent enters with go through the CR 616.1 replacement-order prompt (Hardened Scales +
-Corpsejack Menace) instead of being applied inline by GameQueryService.replaceCounters during placement.
-Start with HardenedScalesTest.controllerChoosesOrderWithCounterDoubler, then check the other "enters with
-counters" paths. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 27. Escalate on spells cast without paying their mana cost
 
 **Status:** open · **Found:** 2026-10-16, while fixing H-card tests

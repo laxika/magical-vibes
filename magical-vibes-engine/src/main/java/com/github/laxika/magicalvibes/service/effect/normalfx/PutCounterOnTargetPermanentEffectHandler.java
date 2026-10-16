@@ -3,9 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.effect.CounterReplacementEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import java.util.ArrayList;
@@ -137,7 +135,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         if (!counterBlocked && !replacementsApplied && count > 0) {
             var modifiers = gameQueryService.counterReplacementsFor(gameData, target, e.counterType(),
                     entry.getControllerId(), false);
-            if (orderChangesResult(gameData, e.counterType(), count, modifiers)) {
+            if (gameQueryService.counterReplacementOrderMatters(gameData, e.counterType(), count, modifiers)) {
                 beginReplacementChoice(gameData, new ChoiceContext.CounterReplacementOrder(
                         entry, targetId, count, modifiers, e, subsequentTargets, count));
                 return true;
@@ -180,7 +178,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         }
         var modifiers = gameQueryService.counterReplacementsFor(gameData, target, counterType,
                 entry.getControllerId(), false);
-        if (!orderChangesResult(gameData, counterType, count, modifiers)) {
+        if (!gameQueryService.counterReplacementOrderMatters(gameData, counterType, count, modifiers)) {
             return false;
         }
         beginReplacementChoice(gameData, new ChoiceContext.CounterReplacementOrder(
@@ -197,27 +195,6 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
                 "Choose the counter replacement effect to apply next."));
     }
 
-    private int applyReplacement(GameData gameData, CounterType type, int count,
-                                 ChoiceContext.CounterReplacement replacement) {
-        return MaroGoneNutsSupport.apply(gameData, replacement.effect(),
-                ((CounterReplacementEffect) replacement.effect()).replace(type, count));
-    }
-
-    private boolean orderChangesResult(GameData gameData, CounterType type, int count,
-                                        List<ChoiceContext.CounterReplacement> replacements) {
-        for (int i = 0; i < replacements.size(); i++) {
-            for (int j = i + 1; j < replacements.size(); j++) {
-                var first = replacements.get(i);
-                var second = replacements.get(j);
-                if (applyReplacement(gameData, type, applyReplacement(gameData, type, count, first), second)
-                        != applyReplacement(gameData, type, applyReplacement(gameData, type, count, second), first)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     /** Applies the chosen replacement once and resumes the original placement and later targets. */
     public void resolveReplacementOrder(GameData gameData, ChoiceContext.CounterReplacementOrder order,
                                          String label) {
@@ -225,15 +202,16 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         var selected = remaining.stream().filter(replacement -> replacement.label().equals(label)).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Invalid counter replacement effect"));
         remaining.remove(selected);
-        int count = applyReplacement(gameData, order.effect().counterType(), order.count(), selected);
-        if (count > 0 && orderChangesResult(gameData, order.effect().counterType(), count, remaining)) {
+        CounterType type = order.effect().counterType();
+        int count = gameQueryService.applyCounterReplacement(gameData, type, order.count(), selected);
+        if (count > 0 && gameQueryService.counterReplacementOrderMatters(gameData, type, count, remaining)) {
             beginReplacementChoice(gameData, new ChoiceContext.CounterReplacementOrder(order.entry(),
                     order.targetId(), count, remaining, order.effect(), order.subsequentTargets(),
                     order.originalCount()));
             return;
         }
         for (var replacement : remaining) {
-            count = applyReplacement(gameData, order.effect().counterType(), count, replacement);
+            count = gameQueryService.applyCounterReplacement(gameData, type, count, replacement);
         }
         placeOnTarget(gameData, order.entry(), order.targetId(), order.effect(), count, List.of(), true);
         resolveTargets(gameData, order.entry(), order.subsequentTargets(), order.effect(), order.originalCount());

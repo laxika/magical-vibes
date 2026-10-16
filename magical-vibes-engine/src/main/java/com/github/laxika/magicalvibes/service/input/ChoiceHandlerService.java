@@ -544,6 +544,14 @@ public class ChoiceHandlerService {
             libraryChoiceHandlerService.completeTappedEntryStateChoice(gameData, request);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.EntryCounterReplacementOrder order) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid counter replacement effect");
+            }
+            gameData.interaction.clearAwaitingInput();
+            libraryChoiceHandlerService.completeEntryCounterReplacementOrder(gameData, order, colorName);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.CreaturePositionChoice ctx) {
             var request = creaturePositioningSupport.completeChoice(gameData, ctx, colorName);
             if (request != null) {

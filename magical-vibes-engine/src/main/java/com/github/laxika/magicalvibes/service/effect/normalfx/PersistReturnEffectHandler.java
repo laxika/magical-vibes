@@ -65,7 +65,8 @@ public class PersistReturnEffectHandler implements NormalEffectHandlerBean {
         Permanent permanent = new Permanent(card);
         // Vizier of Remedies replaces the persist -1/-1 counter (the creature isn't on the battlefield
         // yet, so use its owner as the entering controller); reduced to zero it re-persists.
-        int persistCounters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, ownerId, 1);
+        int persistCounters = gameQueryService.replaceCounters(gameData, permanent, ownerId,
+                CounterType.MINUS_ONE_MINUS_ONE, 1);
         permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, persistCounters);
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AmplifyEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsEnterUntappedEffect;
@@ -259,7 +260,6 @@ public class BattlefieldPlacementService {
         if (beginRiotChoices(gameData, request)) return;
         if (asEntersDiscardSupport.begin(gameData, request)) return;
         if (creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request)) return;
-        UUID puttingPlayerId = request.controllerId();
         UUID controllerId = request.controllerId();
         Permanent permanent = request.permanent();
         gameData.setImprintedCard(permanent.getOriginalCard(), null);
@@ -290,8 +290,6 @@ public class BattlefieldPlacementService {
         }
         ZoneChangeCounterSupport.restore(gameData, permanent);
         Map<CounterType, Integer> countersBeforeEntry = new EnumMap<>(permanent.getCounters());
-        int counterCountBeforeEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
-        int plusOnePlusOneCountersBeforeEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
         LandEquilibriumSupport.ReplacementPlan landEquilibriumPlan = null;
@@ -408,6 +406,29 @@ public class BattlefieldPlacementService {
         } finally {
             restoreHiddenBattlefields(gameData, hidden);
         }
+        if (beginEntryCounterReplacementOrder(gameData, request, controllerId, countersBeforeEntry,
+                conditionalRevealEffect, conditionalRevealWithCountersEffect)) {
+            return;
+        }
+        completePlacement(gameData, request, controllerId, countersBeforeEntry, landEquilibriumPlan,
+                conditionalRevealEffect, conditionalRevealWithCountersEffect);
+    }
+
+    /**
+     * Puts the prepared {@code request} permanent onto the battlefield once every replacement that
+     * modifies how it enters has been applied, then runs its entry bookkeeping and triggers.
+     * {@code countersBeforeEntry} are the counters it had before its entry replacements applied.
+     */
+    private void completePlacement(GameData gameData, BattlefieldEntryRequest request, UUID controllerId,
+                                   Map<CounterType, Integer> countersBeforeEntry,
+                                   LandEquilibriumSupport.ReplacementPlan landEquilibriumPlan,
+                                   RevealSubtypeOrEntersTappedEffect conditionalRevealEffect,
+                                   RevealSubtypeOrEntersWithCountersEffect conditionalRevealWithCountersEffect) {
+        UUID puttingPlayerId = request.controllerId();
+        Permanent permanent = request.permanent();
+        List<Permanent> simultaneouslyEntered = request.simultaneouslyEntered();
+        int counterCountBeforeEntry = countersBeforeEntry.values().stream().mapToInt(Integer::intValue).sum();
+        int plusOnePlusOneCountersBeforeEntry = countersBeforeEntry.getOrDefault(CounterType.PLUS_ONE_PLUS_ONE, 0);
         int counterCountAfterEntry = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum();
         int plusOnePlusOneCountersAfterEntry = permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (counterCountAfterEntry > counterCountBeforeEntry && gameQueryService.isCreature(gameData, permanent)) {
@@ -565,6 +586,83 @@ public class BattlefieldPlacementService {
             landEquilibriumSupport.applyPlan(gameData, controllerId, permanent,
                     landEquilibriumPlan, request.landPlayZone());
         }
+    }
+
+    /**
+     * CR 616.1: when replacement effects whose order changes the result modified the counters the
+     * permanent enters with, its controller orders them before it enters. Those counters were
+     * already placed in battlefield order; each answer corrects its placement, and the entry then
+     * completes. A permanent entering simultaneously with others keeps the battlefield order.
+     */
+    private boolean beginEntryCounterReplacementOrder(GameData gameData, BattlefieldEntryRequest request,
+                                                      UUID controllerId, Map<CounterType, Integer> countersBeforeEntry,
+                                                      RevealSubtypeOrEntersTappedEffect revealEffect,
+                                                      RevealSubtypeOrEntersWithCountersEffect revealWithCountersEffect) {
+        Permanent permanent = request.permanent();
+        List<ChoiceContext.EntryCounterPlacement> placements =
+                List.copyOf(permanent.getPendingEntryCounterPlacements());
+        permanent.getPendingEntryCounterPlacements().clear();
+        if (placements.isEmpty() || !request.simultaneouslyEntered().isEmpty()) {
+            return false;
+        }
+        var first = placements.getFirst();
+        beginEntryCounterChoice(gameData, new ChoiceContext.EntryCounterReplacementOrder(request, controllerId,
+                countersBeforeEntry, revealEffect, revealWithCountersEffect, placements, first.count(),
+                first.replacements()));
+        return true;
+    }
+
+    private void beginEntryCounterChoice(GameData gameData, ChoiceContext.EntryCounterReplacementOrder order) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                order.controllerId(), null, null, order,
+                order.remaining().stream().map(ChoiceContext.CounterReplacement::label).toList(),
+                "Choose the counter replacement effect to apply next to the counters "
+                        + order.request().permanent().getCard().getName() + " enters with."));
+    }
+
+    /**
+     * Applies the chosen replacement to the entering permanent's first unordered counter placement.
+     * Returns {@code true} once every placement is ordered and the permanent is on the battlefield;
+     * otherwise the next choice has begun.
+     */
+    public boolean resolveEntryCounterReplacementOrder(GameData gameData,
+                                                       ChoiceContext.EntryCounterReplacementOrder order,
+                                                       String label) {
+        var placement = order.placements().getFirst();
+        CounterType type = placement.type();
+        var remaining = new ArrayList<>(order.remaining());
+        var selected = remaining.stream().filter(replacement -> replacement.label().equals(label)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid counter replacement effect"));
+        remaining.remove(selected);
+        int count = gameQueryService.applyCounterReplacement(gameData, type, order.count(), selected);
+        if (count > 0 && gameQueryService.counterReplacementOrderMatters(gameData, type, count, remaining)) {
+            beginEntryCounterChoice(gameData, new ChoiceContext.EntryCounterReplacementOrder(order.request(),
+                    order.controllerId(), order.countersBeforeEntry(), order.revealEffect(),
+                    order.revealWithCountersEffect(), order.placements(), count, remaining));
+            return false;
+        }
+        for (var replacement : remaining) {
+            count = gameQueryService.applyCounterReplacement(gameData, type, count, replacement);
+        }
+        Permanent permanent = order.request().permanent();
+        int placed = gameQueryService.limitCounters(gameData, permanent, order.controllerId(), type, count);
+        permanent.setCounterCount(type,
+                Math.max(0, permanent.getCounterCount(type) + placed - placement.placedCount()));
+        log.info("Game {} - {} enters with {} {} counter(s) after its controller ordered the replacements",
+                gameData.id, permanent.getCard().getName(), placed, type);
+        var later = order.placements().subList(1, order.placements().size());
+        if (!later.isEmpty()) {
+            beginEntryCounterChoice(gameData, new ChoiceContext.EntryCounterReplacementOrder(order.request(),
+                    order.controllerId(), order.countersBeforeEntry(), order.revealEffect(),
+                    order.revealWithCountersEffect(), later, later.getFirst().count(),
+                    later.getFirst().replacements()));
+            return false;
+        }
+        completePlacement(gameData, order.request(), order.controllerId(), order.countersBeforeEntry(),
+                landEquilibriumSupport == null ? null
+                        : landEquilibriumSupport.findPlan(gameData, order.controllerId(), permanent),
+                order.revealEffect(), order.revealWithCountersEffect());
+        return true;
     }
 
     /** Determines native entry choices while the batch's physical cards remain in their old zones. */

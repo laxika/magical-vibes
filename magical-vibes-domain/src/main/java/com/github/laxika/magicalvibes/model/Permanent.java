@@ -67,6 +67,8 @@ public class Permanent {
     @Setter private boolean asEntersDiscardResolved;
     /** Whether this entry's "enter as a copy" replacement choice has already been offered and answered. */
     @Setter private boolean copyEntryResolved;
+    /** Counter placements on this entering permanent whose replacement order its controller must choose (CR 616.1). */
+    private final List<ChoiceContext.EntryCounterPlacement> pendingEntryCounterPlacements = new ArrayList<>();
     private boolean attacking;
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     private UUID attackTarget;
@@ -855,6 +857,7 @@ public class Permanent {
         this.nativeDevourResolved = source.nativeDevourResolved;
         this.asEntersDiscardResolved = source.asEntersDiscardResolved;
         this.copyEntryResolved = source.copyEntryResolved;
+        this.pendingEntryCounterPlacements.addAll(source.pendingEntryCounterPlacements);
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;

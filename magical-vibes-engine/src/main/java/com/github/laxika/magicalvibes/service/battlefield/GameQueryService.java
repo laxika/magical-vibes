@@ -4853,6 +4853,64 @@ public class GameQueryService {
         boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE && !creature
                 && hasEffectiveSubtype(gameData, permanent, CardSubtype.VEHICLE);
         boolean artifact = isArtifact(gameData, permanent);
+        return List.copyOf(collectCounterReplacements(gameData, permanent, affectedControllerId, creature,
+                artifact, nonCreatureVehicle, counterType, placingPlayerId, modularAbility));
+    }
+
+    /**
+     * The individually applicable replacements for counters {@code permanent} enters with under
+     * {@code controllerId}, including its own replacements for counters it enters with.
+     */
+    public List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> enteringCounterReplacementsFor(
+            GameData gameData, Permanent permanent, UUID controllerId, CounterType counterType,
+            UUID placingPlayerId, boolean modularAbility) {
+        boolean creature = permanent.getCard().hasType(CardType.CREATURE);
+        boolean nonCreatureVehicle = counterType == CounterType.PLUS_ONE_PLUS_ONE && !creature
+                && permanent.getCard().getSubtypes().contains(CardSubtype.VEHICLE);
+        boolean artifact = permanent.getCard().hasType(CardType.ARTIFACT);
+        List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> modifiers =
+                withQueryScope(gameData, () -> collectCounterReplacements(gameData, permanent, controllerId,
+                        creature, artifact, nonCreatureVehicle, counterType, placingPlayerId, modularAbility));
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CounterReplacementEffect replacement
+                    && replacement.appliesToWhenEntering(counterType, creature, artifact, permanent)) {
+                modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
+                        permanent.getCard().getName() + " (" + (modifiers.size() + 1) + ")", effect));
+            }
+        }
+        return List.copyOf(modifiers);
+    }
+
+    /** Whether applying {@code replacements} to {@code count} counters in different orders gives different totals. */
+    public boolean counterReplacementOrderMatters(
+            GameData gameData, CounterType counterType, int count,
+            List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> replacements) {
+        for (int i = 0; i < replacements.size(); i++) {
+            for (int j = i + 1; j < replacements.size(); j++) {
+                var first = replacements.get(i);
+                var second = replacements.get(j);
+                if (applyCounterReplacement(gameData, counterType,
+                        applyCounterReplacement(gameData, counterType, count, first), second)
+                        != applyCounterReplacement(gameData, counterType,
+                        applyCounterReplacement(gameData, counterType, count, second), first)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Applies one counter replacement to a placement of {@code count} counters. */
+    public int applyCounterReplacement(GameData gameData, CounterType counterType, int count,
+                                       com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement replacement) {
+        return MaroGoneNutsSupport.apply(gameData, replacement.effect(),
+                ((CounterReplacementEffect) replacement.effect()).replace(counterType, count));
+    }
+
+    private List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> collectCounterReplacements(
+            GameData gameData, Permanent permanent, UUID affectedControllerId, boolean creature,
+            boolean artifact, boolean nonCreatureVehicle, CounterType counterType,
+            UUID placingPlayerId, boolean modularAbility) {
         List<com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement> modifiers = new ArrayList<>();
         gameData.forEachBattlefield((sourceControllerId, battlefield) -> {
             boolean sourceControlsAffected = Objects.equals(sourceControllerId, affectedControllerId);
@@ -4898,7 +4956,7 @@ public class GameQueryService {
                 }
             }
         }
-        return List.copyOf(modifiers);
+        return modifiers;
     }
 
     /** Applies proliferate replacement effects controlled by {@code controllerId}. */
@@ -4950,11 +5008,14 @@ public class GameQueryService {
         boolean creature = permanent != null && permanent.getCard().hasType(CardType.CREATURE);
         if (counterType == CounterType.PLUS_ONE_PLUS_ONE && permanent != null && !creature
                 && permanent.getCard().getSubtypes().contains(CardSubtype.VEHICLE)) {
-            return replacePlusOnePlusOneCounters(gameData, controllerId, count, true, permanent, true);
+            return recordEntryCounterPlacement(gameData, permanent, controllerId, counterType, count,
+                    replacePlusOnePlusOneCounters(gameData, controllerId, count, true, permanent, true),
+                    controllerId, false);
         }
         boolean artifact = permanent != null && permanent.getCard().hasType(CardType.ARTIFACT);
-        return replaceCounters(gameData, controllerId, counterType, count, creature, artifact,
-                permanent, true);
+        return recordEntryCounterPlacement(gameData, permanent, controllerId, counterType, count,
+                replaceCounters(gameData, controllerId, counterType, count, creature, artifact,
+                        permanent, true), controllerId, false);
     }
 
     public int replaceCounters(GameData gameData, Permanent permanent, UUID controllerId,
@@ -5004,7 +5065,31 @@ public class GameQueryService {
         });
         result[0] = applyPlanarCounterReplacements(gameData, controllerId, counterType,
                 result[0], creature, artifact);
-        return limitCounters(gameData, permanent, controllerId, counterType, result[0]);
+        return recordEntryCounterPlacement(gameData, permanent, controllerId, counterType, count,
+                limitCounters(gameData, permanent, controllerId, counterType, result[0]),
+                placingPlayerId, modularAbility);
+    }
+
+    /**
+     * Notes on the entering {@code permanent} a placement whose counter replacements were applied in
+     * battlefield order although their order changes the result, so its controller can choose the
+     * order before it enters (CR 616.1). Returns {@code placed} unchanged.
+     */
+    private int recordEntryCounterPlacement(GameData gameData, Permanent permanent, UUID controllerId,
+                                            CounterType counterType, int count, int placed,
+                                            UUID placingPlayerId, boolean modularAbility) {
+        if (permanent == null || controllerId == null || count <= 0
+                || findPermanentById(gameData, permanent.getId()) != null) {
+            return placed;
+        }
+        var replacements = enteringCounterReplacementsFor(gameData, permanent, controllerId, counterType,
+                placingPlayerId, modularAbility);
+        if (counterReplacementOrderMatters(gameData, counterType, count, replacements)) {
+            permanent.getPendingEntryCounterPlacements().add(
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.EntryCounterPlacement(
+                            counterType, count, placed, replacements));
+        }
+        return placed;
     }
 
     /** Clamps a counter placement to any active static maximum on the affected permanent. */
@@ -5174,8 +5259,9 @@ public class GameQueryService {
         if (cantHavePlusOnePlusOneCountersForController(gameData, permanent, controllerId)) {
             return 0;
         }
-        return replacePlusOnePlusOneCounters(
-                gameData, controllerId, count, affectedPermanentIsNonCreatureVehicle, permanent, true);
+        return recordEntryCounterPlacement(gameData, permanent, controllerId, CounterType.PLUS_ONE_PLUS_ONE,
+                count, replacePlusOnePlusOneCounters(gameData, controllerId, count,
+                        affectedPermanentIsNonCreatureVehicle, permanent, true), controllerId, false);
     }
 
     /**

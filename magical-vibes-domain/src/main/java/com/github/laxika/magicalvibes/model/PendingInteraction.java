@@ -2911,6 +2911,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         new ChoiceContext.TappedEntryStateChoice(tapped.request().deepCopy()),
                         options, prompt, disabledOptions);
             }
+            if (context instanceof ChoiceContext.EntryCounterReplacementOrder order) {
+                return new ColorChoice(playerId, permanentId, etbTargetId,
+                        new ChoiceContext.EntryCounterReplacementOrder(order.request().deepCopy(),
+                                order.controllerId(), order.countersBeforeEntry(), order.revealEffect(),
+                                order.revealWithCountersEffect(), order.placements(), order.count(),
+                                order.remaining()),
+                        options, prompt, disabledOptions);
+            }
             if (context instanceof ChoiceContext.ReplacementEffectOrder order) {
                 return new ColorChoice(playerId, permanentId, etbTargetId,
                         new ChoiceContext.ReplacementEffectOrder(order.event().copyForSimulation(), order.options(),

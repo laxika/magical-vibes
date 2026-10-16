@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CorpsejackMenace;
 import com.github.laxika.magicalvibes.cards.p.Pentavus;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.StranglerootGeist;
 import com.github.laxika.magicalvibes.cards.t.TimberlandGuide;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HardenedScales.class, GrizzlyBears.class, TimberlandGuide.class, Pentavus.class,
-        CorpsejackMenace.class})
+        CorpsejackMenace.class, StranglerootGeist.class, Shock.class})
 class HardenedScalesTest extends BaseCardTest {
 
     @Test
@@ -145,5 +148,100 @@ class HardenedScalesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(findPermanents(player1, "Pentavus")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("applying Hardened Scales before the doubler makes the creature enter with twelve counters")
+    void scalesThenDoublerEntersWithTwelve() {
+        castPentavusWithScalesAndCorpsejack();
+
+        chooseReplacement("Hardened Scales");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Pentavus").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("applying the doubler before Hardened Scales makes the creature enter with eleven counters")
+    void doublerThenScalesEntersWithEleven() {
+        castPentavusWithScalesAndCorpsejack();
+
+        chooseReplacement("Corpsejack Menace");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Pentavus").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(11);
+    }
+
+    @Test
+    @DisplayName("the creature enters and can be used normally once the order is chosen")
+    void creatureIsUsableAfterOrderChosen() {
+        castPentavusWithScalesAndCorpsejack();
+        chooseReplacement("Hardened Scales");
+
+        Permanent pentavus = findPermanent(player1, "Pentavus");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(pentavus),
+                0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Pentavite")).hasSize(1);
+        assertThat(pentavus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(11);
+    }
+
+    @Test
+    @DisplayName("offers the replacement order for a creature returned to the battlefield with a counter")
+    void controllerChoosesOrderForUndyingReturn() {
+        harness.addToBattlefield(player1, new CorpsejackMenace());
+        harness.addToBattlefield(player1, new HardenedScales());
+        Permanent geist = harness.addToBattlefieldAndReturn(player1, new StranglerootGeist());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, geist.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(findPermanents(player1, "Strangleroot Geist")).isEmpty();
+
+        chooseReplacement("Hardened Scales");
+
+        assertThat(findPermanent(player1, "Strangleroot Geist").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("applying the doubler first to an undying return gives three counters")
+    void doublerFirstForUndyingReturn() {
+        harness.addToBattlefield(player1, new CorpsejackMenace());
+        harness.addToBattlefield(player1, new HardenedScales());
+        Permanent geist = harness.addToBattlefieldAndReturn(player1, new StranglerootGeist());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, geist.getId());
+        harness.passBothPriorities();
+        chooseReplacement("Corpsejack Menace");
+
+        assertThat(findPermanent(player1, "Strangleroot Geist").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(3);
+    }
+
+    private void castPentavusWithScalesAndCorpsejack() {
+        harness.addToBattlefield(player1, new CorpsejackMenace());
+        harness.addToBattlefield(player1, new HardenedScales());
+        harness.setHand(player1, List.of(new Pentavus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String sourceName) {
+        var choice = (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(sourceName))
+                .findFirst().orElseThrow());
     }
 }

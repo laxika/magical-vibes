@@ -2611,6 +2611,24 @@ public class LibraryChoiceHandlerService {
             return;
         }
         battlefieldPlacementService.place(gameData, request);
+        finishResumedEntry(gameData, request);
+    }
+
+    /**
+     * Applies the controller's choice of counter replacement order for an entering permanent and,
+     * once its entry completes, handles it as having entered the battlefield (CR 616.1).
+     */
+    public void completeEntryCounterReplacementOrder(GameData gameData,
+            com.github.laxika.magicalvibes.model.ChoiceContext.EntryCounterReplacementOrder order, String label) {
+        if (battlefieldPlacementService.resolveEntryCounterReplacementOrder(gameData, order, label)) {
+            finishResumedEntry(gameData, order.request());
+        } else {
+            inputCompletionService.publishStateAfterInput(gameData);
+        }
+    }
+
+    private void finishResumedEntry(GameData gameData,
+            com.github.laxika.magicalvibes.model.BattlefieldEntryRequest request) {
         StackEntry sourceEntry = request.sourceStackEntry();
         int etbMode = sourceEntry != null && sourceEntry.getEtbMode() != null
                 ? sourceEntry.getEtbMode() : request.xValue();
