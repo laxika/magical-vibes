@@ -1119,12 +1119,6 @@ public class ManaCost {
         return canPay(paymentPool, 0, false, false, false, false, true);
     }
 
-    public boolean canPayForDisturb(ManaPool pool, int xValue, int additionalGenericCost) {
-        ManaPool paymentPool = pool.copyForDisturbPayment();
-        return canPayWithAdditionalGenericCost(paymentPool, xValue, additionalGenericCost,
-                false, false, false, false, true);
-    }
-
     /** Checks payment for a spell cast from a graveyard, including graveyard-only mana. */
     public boolean canPayFromGraveyard(ManaPool pool, int xValue, int additionalGenericCost) {
         ManaPool paymentPool = copyManaPool(pool);
