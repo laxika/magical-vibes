@@ -24,6 +24,7 @@ public class HarnessedSnubhorn extends Card {
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.ENCHANTMENT))))
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 }

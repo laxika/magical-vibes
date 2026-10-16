@@ -97,7 +97,7 @@ class HeraldOfAnguishTest extends BaseCardTest {
         }
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castCreatureTappingPermanents(player1, 0,
+        harness.castCreatureWithConvoke(player1, 0,
                 artifacts.stream().map(Permanent::getId).toList());
 
         assertThat(artifacts).allMatch(Permanent::isTapped);
@@ -116,7 +116,7 @@ class HeraldOfAnguishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(player1, 0,
+        assertThatThrownBy(() -> harness.castCreatureWithConvoke(player1, 0,
                 artifacts.stream().map(Permanent::getId).toList()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
@@ -133,7 +133,7 @@ class HeraldOfAnguishTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
         gs.advanceStep(gd);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

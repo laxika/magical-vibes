@@ -40,7 +40,7 @@ class HeatShimmerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AxegrinderGiant());
         castHeatShimmer(harness.getPermanentId(player1, "Axegrinder Giant"));
 
-        assertThat(token(player1.getId()).getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(token(player1.getId()).hasKeyword(Keyword.HASTE)).isTrue();
     }
 
     @Test

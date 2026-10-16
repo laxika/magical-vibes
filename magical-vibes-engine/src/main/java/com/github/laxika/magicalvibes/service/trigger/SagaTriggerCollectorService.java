@@ -22,6 +22,7 @@ public class SagaTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES)
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS)
     private boolean handleFinalChapterResolution(TriggerMatchContext match, CardEffect trigger,
                                                   TriggerContext context) {
         if (!(context instanceof TriggerContext.SagaFinalChapterAbilityResolved resolved)

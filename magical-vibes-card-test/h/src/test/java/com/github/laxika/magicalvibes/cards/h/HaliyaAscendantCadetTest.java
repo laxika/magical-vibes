@@ -115,8 +115,8 @@ class HaliyaAscendantCadetTest extends BaseCardTest {
         attacker.setAttacking(true);
 
         resolveCombat(player2);
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

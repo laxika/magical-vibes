@@ -551,6 +551,8 @@ public class StackEntry {
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
     /** Suspend grants haste for as long as the same player controls the resulting permanent. */
     @Setter private boolean suspendHasteOnEntry;
+    /** Cast for a blitz cost granted by another source (Henzie): the permanent is sacrificed at the next end step. */
+    @Setter private boolean grantedBlitzOnEntry;
     /** Colors granted to the permanent as this spell enters the battlefield. */
     private final Set<CardColor> grantedColorsOnEntry = EnumSet.noneOf(CardColor.class);
     /** Creature subtypes granted to the permanent as this spell enters the battlefield. */
@@ -1047,6 +1049,7 @@ public class StackEntry {
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
         this.suspendHasteOnEntry = source.suspendHasteOnEntry;
+        this.grantedBlitzOnEntry = source.grantedBlitzOnEntry;
         this.grantedColorsOnEntry.addAll(source.grantedColorsOnEntry);
         this.grantedSubtypesOnEntry.addAll(source.grantedSubtypesOnEntry);
         this.basePowerOverrideOnEntry = source.basePowerOverrideOnEntry;
@@ -1892,6 +1895,9 @@ public class StackEntry {
         if (castModeManaCost != null) {
             ManaCost modeCost = new ManaCost(castModeManaCost);
             return modeCost.getManaValue() + xValue * modeCost.getXSymbolCount();
+        }
+        if (castWithAdventure && card != null && card.getBackFaceCard() != null) {
+            return spellManaValue(card.getBackFaceCard(), xValue);
         }
         return spellManaValue(card, xValue);
     }

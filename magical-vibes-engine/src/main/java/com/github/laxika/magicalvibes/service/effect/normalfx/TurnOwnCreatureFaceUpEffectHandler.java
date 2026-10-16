@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -65,8 +66,18 @@ public class TurnOwnCreatureFaceUpEffectHandler implements NormalEffectHandlerBe
     private List<UUID> eligibleIds(GameData gameData, UUID controllerId) {
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> permanent.isFaceDown() && gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !isCloakedInstantOrSorcery(permanent))
                 .map(Permanent::getId)
                 .toList();
+    }
+
+    /**
+     * A cloaked permanent represented by an instant or sorcery card is revealed and left face down
+     * when it would turn face up (CR 701.58g), so it is never a turn-face-up target.
+     */
+    private boolean isCloakedInstantOrSorcery(Permanent permanent) {
+        return permanent.isCloaked()
+                && (permanent.getCard().hasType(CardType.INSTANT) || permanent.getCard().hasType(CardType.SORCERY));
     }
 
     private void turnFaceUp(GameData gameData, UUID permanentId) {

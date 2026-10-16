@@ -16,12 +16,23 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param returnsOnSourceLeavesTrigger whether the return happens through the source's
  *                                     leaves-the-battlefield triggered ability (Faceless Devourer)
  *                                     rather than immediately when the source leaves
+ * @param controllerMayCastWithAnyMana whether the ability's controller may cast the exiled card for
+ *                                     as long as it remains exiled, spending mana of any type
+ *                                     (Hostage Taker); the permission belongs to that player, not
+ *                                     to whoever controls the source later
  */
 public record ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint,
                                                           PermanentPredicate targetPredicate,
                                                           boolean exileIfSourceAlreadyLeft,
-                                                          boolean returnsOnSourceLeavesTrigger)
+                                                          boolean returnsOnSourceLeavesTrigger,
+                                                          boolean controllerMayCastWithAnyMana)
         implements CardEffect {
+
+    public ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint, PermanentPredicate targetPredicate,
+                                                       boolean exileIfSourceAlreadyLeft,
+                                                       boolean returnsOnSourceLeavesTrigger) {
+        this(imprint, targetPredicate, exileIfSourceAlreadyLeft, returnsOnSourceLeavesTrigger, false);
+    }
 
     public ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint, PermanentPredicate targetPredicate,
                                                        boolean exileIfSourceAlreadyLeft) {
@@ -45,6 +56,11 @@ public record ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint,
     /** Models separate enter and leave triggers, where the enter trigger can resolve second. */
     public static ExileTargetPermanentUntilSourceLeavesEffect evenIfSourceAlreadyLeft() {
         return new ExileTargetPermanentUntilSourceLeavesEffect(false, null, true);
+    }
+
+    /** Hostage Taker: the ability's controller may cast the exiled card with mana of any type. */
+    public static ExileTargetPermanentUntilSourceLeavesEffect castableByControllerWithAnyMana() {
+        return new ExileTargetPermanentUntilSourceLeavesEffect(false, null, false, false, true);
     }
 
     @Override

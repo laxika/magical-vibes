@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -30,21 +29,10 @@ public class HowlersHeavy extends Card {
 
         // When you cycle this card, target creature or Vehicle an opponent controls gets -3/-0
         // until end of turn. The reflexive cycle trigger resolves before the cycling draw.
-        addHandActivatedAbility(new ActivatedAbility(
-                false,
-                "{1}{U}",
-                List.of(
-                        new BoostTargetPermanentEffect(-3, 0, opponentCreatureOrVehicle),
-                        new DrawCardEffect(1)),
-                "Cycling {1}{U} ({1}{U}, Discard this card: Draw a card.)",
-                new PermanentPredicateTargetFilter(
-                        opponentCreatureOrVehicle,
-                        "Target must be a creature or Vehicle an opponent controls"),
-                null,
-                null,
-                null,
-                List.of(),
-                0,
-                1));
+        target(new PermanentPredicateTargetFilter(
+                opponentCreatureOrVehicle,
+                "Target must be a creature or Vehicle an opponent controls"))
+                .addEffect(EffectSlot.ON_SELF_CYCLED, new BoostTargetPermanentEffect(-3, 0, opponentCreatureOrVehicle));
+        addCycling("{1}{U}");
     }
 }

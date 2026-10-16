@@ -54,6 +54,7 @@ class HamaPasharRuinSeekerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HamaPasharRuinSeeker());
         gd.playerDungeonProgress.put(player2.getId(),
                 new DungeonProgress(Dungeon.LOST_MINE_OF_PHANDELVER, 1));
+        harness.forceActivePlayer(player2);
 
         harness.castFromHand(player2, new VeteranDungeoneer(), "{3}{W}");
         resolveAllTriggers();

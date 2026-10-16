@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Component
@@ -48,11 +49,16 @@ public class GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect
             return;
         }
 
-        gameData.graveyardCardCastPermissionsUntilEndOfTurn.put(targetCard.getId(),
-                new GameData.GraveyardCardCastPermission(entry.getSourcePermanentId(), entry.getControllerId(),
-                        true, false));
+        GameData.GraveyardCardCastPermission grant = new GameData.GraveyardCardCastPermission(
+                entry.getSourcePermanentId(), entry.getControllerId(), true, false);
+        gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn
+                .computeIfAbsent(targetCard.getId(), ignored -> new CopyOnWriteArrayList<>()).add(grant);
+        GameData.GraveyardCardCastPermission existing =
+                gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(targetCard.getId());
+        if (existing == null || existing.castingPlayerId().equals(entry.getControllerId())) {
+            gameData.graveyardCardCastPermissionsUntilEndOfTurn.put(targetCard.getId(), grant);
+        }
 
-        
         gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " allows ", targetCard, " to be cast from a graveyard this turn."));
         log.info("Game {} - {} grants graveyard cast permission for {}", gameData.id, entry.getCard().getName(), targetCard.getName());
     }

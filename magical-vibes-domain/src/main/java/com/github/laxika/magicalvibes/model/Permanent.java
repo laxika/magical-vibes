@@ -32,6 +32,13 @@ public class Permanent {
     @Setter private Card fullTextCopySourceCard;
     /** Copiable characteristics before a layer-3 graveyard text change, including Clone effects. */
     @Setter private Card fullTextCopyBaseCard;
+    /**
+     * The card this permanent showed before a one-shot "becomes a creature" effect replaced it. That
+     * effect is not a copiable value (CR 707.2), so a copy of this permanent sees this card.
+     */
+    @Setter private Card becomeCreatureBaseCard;
+    /** The card that effect produced; once something else replaces it, {@link #becomeCreatureBaseCard} no longer applies. */
+    @Setter private Card becomeCreatureResultCard;
     /** The creature card exiled by Werewhat and linked to its dynamic back face. */
     @Setter private Card werewhatCompanionCard;
     private boolean tapped;
@@ -39,6 +46,8 @@ public class Permanent {
     private final Set<UUID> tapRestrictionEffectIds = new HashSet<>();
     /** Whether this permanent was untapped before its controller's most recent untap step. */
     @Setter private boolean untappedAtTurnStart;
+    /** Set while an ability's untap cost chose this untapped source: it is tapped for {T} first, then untapped. */
+    @Setter private boolean untapAfterTapCost;
     private int untapSequence;
     private int controlChangeSequence;
     /** True once the "sacrifice a [permanent] instead of entering" replacement (Balduvian Trading
@@ -823,6 +832,8 @@ public class Permanent {
         this.bestow = source.bestow;
         this.fullTextCopySourceCard = source.fullTextCopySourceCard;
         this.fullTextCopyBaseCard = source.fullTextCopyBaseCard;
+        this.becomeCreatureBaseCard = source.becomeCreatureBaseCard;
+        this.becomeCreatureResultCard = source.becomeCreatureResultCard;
         this.werewhatCompanionCard = source.werewhatCompanionCard;
         this.tapped = source.tapped;
         this.tapRestrictionEffectIds.addAll(source.tapRestrictionEffectIds);
@@ -985,6 +996,7 @@ public class Permanent {
         this.permanentlyAnimated = source.permanentlyAnimated;
         this.permanentAnimatedPower = source.permanentAnimatedPower;
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
+        this.untapAfterTapCost = source.untapAfterTapCost;
         this.counters.putAll(source.counters);
         this.lastCounterRemovalVersions.putAll(source.lastCounterRemovalVersions);
         this.countersRemovedSinceTriggerCheck = source.countersRemovedSinceTriggerCheck;

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -17,7 +18,7 @@ public class HeadOfTheHunt extends Card {
     public HeadOfTheHunt() {
         addEffect(EffectSlot.STATIC, new ExileOpponentCreaturesInsteadOfDyingEffect(
                 false,
-                new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
-                        List.of(CardSubtype.WOLF), Set.of(), Set.of())));
+                new QueueReflexiveAbilityEffect(new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
+                        List.of(CardSubtype.WOLF), Set.of(), Set.of()))));
     }
 }

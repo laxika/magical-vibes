@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -106,6 +107,10 @@ class HoldTheLineTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         castHoldTheLine();
 
+        harness.passUntil(TurnStep.COMBAT_DAMAGE);
+        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), gqs.getEffectivePower(gd, attacker)));
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(blocker.isBlocking()).isFalse();

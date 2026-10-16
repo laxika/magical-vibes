@@ -52,37 +52,46 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
         List<Card> candidates = graveyard == null ? List.of()
                 : graveyard.stream().filter(c -> c != sourceCard).toList();
 
+        if (e.exiled()) {
+            dealDamageToTargetControllerOf(gameData, entry, e.damage(), sourceName);
+            return;
+        }
+
         // "If you do" — with no card to exile, the exile can't happen, so no damage.
         if (candidates.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no cards in graveyard to exile (" + sourceName + ")."));
             return;
         }
 
-        // The exile is happening, so deal the damage to the target creature's controller.
-        // (Within a single spell resolution the target creature is still on the battlefield even
-        // if it took lethal damage earlier, so its controller is available via last-known info.)
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target != null) {
-            UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-            if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
-                gameLogService.append(gameData, GameLog.text(sourceName + "'s damage to " + gameData.playerIdToName.get(targetControllerId) + " is prevented."));
-            } else {
-                int rawDamage = e.damage();
-                damageSupport.dealDamageToPlayer(gameData, entry, targetControllerId, rawDamage);
-            }
-            gameOutcomeService.checkWinCondition(gameData);
-        }
-
-        // Exile a card from the controller's graveyard. Auto-exile when only one candidate,
-        // otherwise prompt the player to choose which card to exile.
+        // Exile a card from the controller's graveyard. Auto-exile when only one candidate;
+        // otherwise the player chooses which card to exile and the damage is queued behind that
+        // choice, so it is only dealt once a card has actually been exiled.
         if (candidates.size() == 1) {
             Card card = candidates.getFirst();
             graveyard.remove(card);
             graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, card);
             exileService.exileCard(gameData, controllerId, card);
             gameLogService.append(gameData, GameLog.builder().text(playerName + " exiles ").card(card).text(" from their graveyard (" + sourceName + ").").build());
+            dealDamageToTargetControllerOf(gameData, entry, e.damage(), sourceName);
         } else {
-            graveyardReturnSupport.beginGraveyardExileChoice(gameData, controllerId, 1, sourceCard);
+            graveyardReturnSupport.beginGraveyardExileChoice(gameData, controllerId, 1, sourceCard,
+                    List.of(new ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect(e.damage(), true)));
         }
+    }
+
+    private void dealDamageToTargetControllerOf(GameData gameData, StackEntry entry, int damage, String sourceName) {
+        // Within a single spell resolution the target creature is still on the battlefield even
+        // if it took lethal damage earlier, so its controller is available via last-known info.
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
+            gameLogService.append(gameData, GameLog.text(sourceName + "'s damage to " + gameData.playerIdToName.get(targetControllerId) + " is prevented."));
+        } else {
+            damageSupport.dealDamageToPlayer(gameData, entry, targetControllerId, damage);
+        }
+        gameOutcomeService.checkWinCondition(gameData);
     }
 }

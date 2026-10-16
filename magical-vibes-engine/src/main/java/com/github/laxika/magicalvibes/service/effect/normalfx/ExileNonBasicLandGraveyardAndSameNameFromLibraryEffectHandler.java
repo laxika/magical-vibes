@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +27,8 @@ public class ExileNonBasicLandGraveyardAndSameNameFromLibraryEffectHandler imple
 
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
+    private final LibrarySearchSupport librarySearchSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -83,30 +86,30 @@ public class ExileNonBasicLandGraveyardAndSameNameFromLibraryEffectHandler imple
             exiledNames.add(card.getName());
         }
 
-        // Search library for all cards with matching names and exile them
-        List<Card> libraryExiles = new ArrayList<>();
+        // The search is for cards with a stated quality, so the searching player isn't required to
+        // find all of them (CR 701.23b); the caster chooses which matching library cards to exile.
+        List<Card> libraryMatches = new ArrayList<>();
+        boolean librarySearchAllowed = !librarySearchSupport.isSearchPrevented(
+                gameData, controllerId, targetPlayerId, false, controllerId);
         for (Card card : library) {
-            if (exiledNames.contains(card.getName())) {
-                libraryExiles.add(card);
+            if (librarySearchAllowed && exiledNames.contains(card.getName())) {
+                libraryMatches.add(card);
             }
         }
-        library.removeAll(libraryExiles);
-        for (Card card : libraryExiles) {
-            gameData.addToExile(targetPlayerId, card);
+
+        String logEntry = controllerName + " resolves Haunting Echoes — exiles " + toExile.size()
+                + " card" + (toExile.size() != 1 ? "s" : "") + " from " + targetName + "'s graveyard.";
+        gameLogService.append(gameData, GameLog.text(logEntry));
+        log.info("Game {} - Haunting Echoes: exiled {} from graveyard of {}",
+                gameData.id, toExile.size(), targetName);
+
+        if (!libraryMatches.isEmpty()) {
+            playerInputService.beginMultiZoneExileChoice(gameData, controllerId, libraryMatches,
+                    targetPlayerId, String.join(", ", exiledNames));
+            return;
         }
 
-        // Shuffle library
         java.util.Collections.shuffle(library);
-
-        int totalExiled = toExile.size() + libraryExiles.size();
-        String logEntry = controllerName + " resolves Haunting Echoes — exiles " + toExile.size()
-                + " card" + (toExile.size() != 1 ? "s" : "") + " from " + targetName
-                + "'s graveyard and " + libraryExiles.size() + " card"
-                + (libraryExiles.size() != 1 ? "s" : "") + " from their library ("
-                + totalExiled + " total). " + targetName + " shuffles their library.";
-        gameLogService.append(gameData, GameLog.text(logEntry));
-
-        log.info("Game {} - Haunting Echoes: exiled {} from graveyard, {} from library of {}",
-                gameData.id, toExile.size(), libraryExiles.size(), targetName);
+        gameLogService.append(gameData, GameLog.text(targetName + " shuffles their library."));
     }
 }

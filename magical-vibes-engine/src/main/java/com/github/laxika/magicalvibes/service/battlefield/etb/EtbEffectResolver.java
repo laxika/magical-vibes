@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -129,7 +131,7 @@ public class EtbEffectResolver {
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(),
                     ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                     ctx.sourcePermanent(), ctx.card(), ctx.kicked(), false, ctx.prowl(), ctx.madness(), false, false,
-                    sourceZone, 0, null, null, false, false, false, null, null, null,
+                    sourceZone, 0, ctx.targetId(), null, false, false, false, null, null, null,
                     ctx.repeatedAdditionalCosts(), ctx.alternateCost(),
                     ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle(),
                     false, collectEvidenceCostPaid, false, 0, false);
@@ -174,6 +176,12 @@ public class EtbEffectResolver {
                                 ? effect : null;
                 case SnowManaSpentToCast snowManaSpent ->
                         conditionEvaluationService.isMet(ctx.gameData(), snowManaSpent, conditionContext)
+                                ? effect : null;
+                case TreasureManaSpentToCast treasureManaSpent ->
+                        conditionEvaluationService.isMet(ctx.gameData(), treasureManaSpent, conditionContext)
+                                ? effect : null;
+                case TargetPermanentMatches targetMatches when ctx.targetId() != null && ctx.card().isAura() ->
+                        conditionEvaluationService.isMet(ctx.gameData(), targetMatches, conditionContext)
                                 ? effect : null;
                 case ControllerMainPhase controllerMainPhase ->
                         conditionEvaluationService.isMet(ctx.gameData(), controllerMainPhase, conditionContext)

@@ -32,7 +32,7 @@ class HateMirageTest extends BaseCardTest {
         assertThat(tokenCopies(player1).stream().map(permanent -> permanent.getCard().getName()))
                 .containsExactlyInAnyOrder("Grizzly Bears", "Hill Giant");
         assertThat(tokenCopies(player1))
-                .allMatch(permanent -> permanent.getCard().getKeywords().contains(Keyword.HASTE));
+                .allMatch(permanent -> gqs.hasKeyword(gd, permanent, Keyword.HASTE));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .containsExactly(bears, giant);
     }
@@ -45,7 +45,7 @@ class HateMirageTest extends BaseCardTest {
         cast(List.of(bears.getId()));
         assertThat(tokenCopies(player1)).hasSize(1);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(tokenCopies(player1)).hasSize(1);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -82,7 +82,7 @@ class HateMirageTest extends BaseCardTest {
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         cast(List.of(bears.getId(), giant.getId()));
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(tokenCopies(player1)).hasSize(2);
         assertThat(gd.stack).hasSize(1);
@@ -122,7 +122,7 @@ class HateMirageTest extends BaseCardTest {
                 .filter(permanent -> !permanent.getId().equals(originalToken.getId()))
                 .findFirst().orElseThrow();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(tokenCopies(player1)).containsExactly(populatedToken);

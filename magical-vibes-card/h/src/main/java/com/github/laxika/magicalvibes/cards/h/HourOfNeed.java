@@ -22,7 +22,7 @@ public class HourOfNeed extends Card {
 
         // Exile any number of target creatures. For each creature exiled this way, its controller
         // creates a 4/4 blue Sphinx creature token with flying.
-        target(TargetFilters.creature(), 0, 99)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect(new CreateTokenEffect(
                         "Sphinx", 4, 4, CardColor.BLUE, List.of(CardSubtype.SPHINX),
                         Set.of(Keyword.FLYING), Set.of())));

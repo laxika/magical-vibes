@@ -58,7 +58,7 @@ public class HishOfTheSnakeCult extends Card {
         var snakes = new PermanentHasSubtypePredicate(CardSubtype.SNAKE);
 
         addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
-                CardSubtype.SNAKE, GrantScope.ALL_OWN_CREATURES, false, nagasOrSerpents));
+                CardSubtype.SNAKE, GrantScope.ALL_OWN_CREATURES, true, nagasOrSerpents));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Set.of(Keyword.DEATHTOUCH, Keyword.POISONOUS), GrantScope.ALL_OWN_CREATURES, snakes));
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(

@@ -1387,9 +1387,15 @@ public class CombatAttackService {
                                         .anyMatch(effect -> effect instanceof AttachTargetEquipmentToTriggeringPermanentEffect
                                                 || effect instanceof MayEffect may
                                                 && may.wrapped() instanceof AttachTargetEquipmentToTriggeringPermanentEffect);
-                                if (attackCard.getSpellTargets().size() > 1
+                                boolean declaredGroupsTargetOtherAbilities = !attackCard.getSpellTargets().isEmpty()
+                                        && attackCard.getSpellTargets().stream().allMatch(group ->
+                                        attackCard.bindsEffectToTargetGroup(group.getIndex())
+                                                && attackCard.getEffectsBoundToTargetGroup(group.getIndex()).stream()
+                                                .noneMatch(attackCard.getEffects(EffectSlot.ON_ATTACK)::contains));
+                                if (!declaredGroupsTargetOtherAbilities
+                                        && (attackCard.getSpellTargets().size() > 1
                                         || ((!staticSingleMultiTargetGroup || attachesEquipment)
-                                        && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard))) {
+                                        && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard)))) {
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                                     attackCard, playerId, abilityEffects, attacker.getId(),
@@ -1948,7 +1954,10 @@ public class CombatAttackService {
                         log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK graveyard trigger queued",
                                 gameData.id, perm.getCard().getName());
                     } else if (needsTarget) {
-                        if (perm.getCard().getSpellTargets().size() > 1) {
+                        Card allyAttackCard = perm.getCard();
+                        boolean singleBoundTargetGroup = filteredEffects.stream().allMatch(allyAttackCard::hasEffectTargetIndex)
+                                && filteredEffects.stream().map(allyAttackCard::getEffectTargetIndex).distinct().count() == 1;
+                        if (allyAttackCard.getSpellTargets().size() > 1 && !singleBoundTargetGroup) {
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                     perm.getCard(), playerId, filteredEffects, perm.getId(),
                                     List.of(), 0, 0, List.of(), attackerIndices.size()));

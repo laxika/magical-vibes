@@ -20,6 +20,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({HivespineWolverine.class, GrizzlyBears.class, Ornithopter.class, SealOfStrength.class})
 class HivespineWolverineTest extends BaseCardTest {
 
+    private static final List<String> MODES = List.of(
+            "Put a +1/+1 counter on target creature you control",
+            "This creature fights target creature token",
+            "Destroy target artifact or enchantment");
+
     @Test
     @CardUsed({HivespineWolverine.class})
     @DisplayName("Mode and target are chosen after entry, allowing Wolverine to target itself")
@@ -80,7 +85,6 @@ class HivespineWolverineTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, token(new GrizzlyBears()));
 
         castHivespine(1, target.getId());
-        harness.passBothPriorities();
         gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Hivespine Wolverine"));
         resolveAllTriggers();
 
@@ -94,7 +98,6 @@ class HivespineWolverineTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castHivespine(0, target.getId());
-        harness.passBothPriorities();
         gd.playerBattlefields.get(player1.getId()).remove(target);
         gd.playerBattlefields.get(player2.getId()).add(target);
         resolveAllTriggers();
@@ -169,7 +172,10 @@ class HivespineWolverineTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HivespineWolverine()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0, mode, targetId);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, MODES.get(mode));
+        harness.handlePermanentChosen(player1, targetId);
     }
 
     private void resolveCreatureAndEtb() {

@@ -22,6 +22,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.Set;
 
@@ -406,6 +407,12 @@ public class CharacteristicState {
     public void addActivatedAbility(ActivatedAbility ability) {
         if (abilityGainProhibited) return;
         grantedActivatedAbilities.add(ability);
+    }
+
+    /** Removes the abilities that {@code sourcePermanentId} granted with the given description. */
+    public void removeActivatedAbilitiesGrantedBy(UUID sourcePermanentId, String description) {
+        grantedActivatedAbilities.removeIf(ability -> sourcePermanentId.equals(ability.getGrantSourcePermanentId())
+                && description.equals(ability.getDescription()));
     }
 
     public void addStaticEffect(CardEffect effect) {

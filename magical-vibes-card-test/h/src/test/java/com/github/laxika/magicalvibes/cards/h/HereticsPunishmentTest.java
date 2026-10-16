@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -269,11 +271,11 @@ class HereticsPunishmentTest extends BaseCardTest {
     void dealsDamageToPlaneswalker() {
         addHereticsPunishment(player1);
         addActivationMana(player1);
-        harness.addToBattlefield(player2, new LilianaOfTheVeil());
+        Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaOfTheVeil());
+        liliana.setCounterCount(CounterType.LOYALTY, 3);
         harness.setLibrary(player1, List.of(new HillGiant(), new Forest(), new Shock()));
 
-        harness.activateAbility(player1, 0, null,
-                harness.getPermanentId(player2, "Liliana of the Veil"));
+        harness.activateAbility(player1, 0, null, liliana.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Liliana of the Veil");

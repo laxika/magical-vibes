@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -333,13 +334,7 @@ public class GraveyardReturnSupport {
 
         Permanent returnedPermanent = null;
         // Unconditional "+1/+1 counters" are put on the card as it enters, so entry triggers see them.
-        boolean entersWithPlusOneCounters = effect.plusOneCounterCount() > 0
-                && effect.plusOneCountersIfSubtype() == null
-                && effect.plusOneCountersIfCardType() == null
-                && effect.plusOneCountersIfCondition() == null
-                && effect.plusOneCountersIfExiledCostCardHasSubtype() == null
-                && !(effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
-                || effect.sacrificeAtEndStep());
+        boolean entersWithPlusOneCounters = entersWithPlusOneCounters(gameData, targetCard, targetOwnerId, effect);
         boolean entersWithEffectCounters = !entersWithPlusOneCounters
                 && effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
@@ -361,7 +356,7 @@ public class GraveyardReturnSupport {
                             permanent.setEnteredFromGraveyardOwnerId(targetOwnerId);
                             if (effect.battlefieldEffectGrants() != null) {
                                 for (CardEffect grant : effect.battlefieldEffectGrants()) {
-                                    if (grant instanceof GrantColorEffect) {
+                                    if (grant instanceof GrantColorEffect || grant instanceof SetCardTypesEffect) {
                                         gameData.addFloatingEffect(new FloatingContinuousEffect(
                                                 UUID.randomUUID(), entry.getCard().getName(),
                                                 entry.getSourcePermanentId(), entry.getControllerId(), grant,
@@ -493,6 +488,16 @@ public class GraveyardReturnSupport {
             return chosenSubtype != null
                     && (card.hasKeyword(Keyword.CHANGELING)
                     || gameQueryService.cardHasSubtype(card, chosenSubtype, gameData, cardOwnerId));
+        }
+        if (effect.filter() instanceof com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate
+                && entry.getDiscardedCardSnapshot() != null) {
+            // The card exiled by this activation, snapshotted at activation, so a later activation
+            // that re-imprints the source does not change what this one shares a type with.
+            Card exiledByActivation = entry.getDiscardedCardSnapshot();
+            return java.util.Arrays.stream(CardType.values())
+                    .anyMatch(type -> gameQueryService.cardHasType(card, type, gameData, cardOwnerId)
+                            && gameQueryService.cardHasType(exiledByActivation, type, gameData,
+                            exiledByActivation.getOwnerId()));
         }
         return effect.filter() == null
                 || predicateEvaluationService.matchesCardPredicate(
@@ -717,7 +722,7 @@ public class GraveyardReturnSupport {
                 String sourceCardName = entry == null ? card.getName() : entry.getCard().getName();
                 UUID sourcePermanentId = entry == null ? null : entry.getSourcePermanentId();
                 for (CardEffect grantedEffect : effect.battlefieldEffectGrants()) {
-                    if (grantedEffect instanceof GrantColorEffect
+                    if ((grantedEffect instanceof GrantColorEffect || grantedEffect instanceof SetCardTypesEffect)
                             && gameData.floatingEffects.stream().anyMatch(floating ->
                             grantedEffect.equals(floating.effect())
                                     && p.getId().equals(floating.affectedPermanentId())
@@ -767,6 +772,36 @@ public class GraveyardReturnSupport {
             boundEffect = new TargetPlayerLosesGameEffect(cardOwnerId);
         }
         permanent.addPersistentTriggeredEffect(EffectSlot.ON_DEATH, boundEffect);
+    }
+
+    /**
+     * Whether the returning card enters with its +1/+1 counters, so entry triggers see them. A
+     * subtype-gated rider ("if a Hero enters this way, it enters with ... counters") applies on
+     * entry whenever the card has that subtype, changeling included.
+     */
+    private boolean entersWithPlusOneCounters(GameData gameData, Card card, UUID cardOwnerId,
+                                              ReturnCardFromGraveyardEffect effect) {
+        if (effect.plusOneCountersIfSubtype() != null) {
+            return effect.plusOneCounterCount() > 0
+                    && effect.plusOneCountersIfCardType() == null
+                    && effect.plusOneCountersIfCondition() == null
+                    && effect.plusOneCountersIfExiledCostCardHasSubtype() == null
+                    && !(effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                    || effect.sacrificeAtEndStep())
+                    && gameQueryService.cardHasSubtype(
+                    card, effect.plusOneCountersIfSubtype(), gameData, cardOwnerId);
+        }
+        return entersWithUnconditionalPlusOneCounters(effect);
+    }
+
+    private boolean entersWithUnconditionalPlusOneCounters(ReturnCardFromGraveyardEffect effect) {
+        return effect.plusOneCounterCount() > 0
+                && effect.plusOneCountersIfSubtype() == null
+                && effect.plusOneCountersIfCardType() == null
+                && effect.plusOneCountersIfCondition() == null
+                && effect.plusOneCountersIfExiledCostCardHasSubtype() == null
+                && !(effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                || effect.sacrificeAtEndStep());
     }
 
     private boolean losesAllAbilitiesBeforeEntering(ReturnCardFromGraveyardEffect effect) {
@@ -950,6 +985,8 @@ public class GraveyardReturnSupport {
                         gameData.playerDecks.get(targetPlayerId).addLast(card);
                     } else {
                         Permanent returnedPermanent;
+                        boolean entersWithPlusOneCounters = entersWithPlusOneCounters(
+                                gameData, card, gyEntry.getKey(), effect);
                         if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
                                 || effect.sacrificeAtEndStep()) {
                             returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
@@ -959,10 +996,13 @@ public class GraveyardReturnSupport {
                         } else {
                             returnedPermanent = putCardOntoBattlefield(gameData, targetPlayerId, card,
                                     effect.grantColor(), effect.grantSubtype(), effect.enterTapped(),
-                                    effect.enterAttacking(), null, false,
-                                    losesAllAbilitiesBeforeEntering(effect));
+                                    effect.enterAttacking(),
+                                    entersWithPlusOneCounters ? CounterType.PLUS_ONE_PLUS_ONE : null, false,
+                                    losesAllAbilitiesBeforeEntering(effect),
+                                    entersWithPlusOneCounters ? effect.plusOneCounterCount() : 0);
                         }
-                        applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect, entry, gyEntry.getKey());
+                        applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect, entry,
+                                gyEntry.getKey(), entersWithPlusOneCounters);
                         queueNextUpkeepExile(gameData, entry, effect, targetPlayerId, returnedPermanent);
                     }
                     returnedCards.add(card);
@@ -2882,16 +2922,28 @@ public class GraveyardReturnSupport {
      * card is not actually in the graveyard yet per the rules and must not be a valid choice.
      */
     public void beginGraveyardExileChoice(GameData gameData, UUID playerId, int remainingCount, Card excludedCard) {
+        beginGraveyardExileChoice(gameData, playerId, remainingCount, excludedCard, List.of());
+    }
+
+    /**
+     * Variant that queues {@code afterExileEffects} into the paused resolution once the card has
+     * actually been exiled ("exile a card from your graveyard. If you do, ...").
+     */
+    public void beginGraveyardExileChoice(GameData gameData, UUID playerId, int remainingCount, Card excludedCard,
+                                          List<CardEffect> afterExileEffects) {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         List<Integer> validIndices = IntStream.range(0, graveyard.size())
                 .filter(i -> excludedCard == null || graveyard.get(i) != excludedCard)
                 .boxed().toList();
 
-        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+        PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(playerId, validIndices, GraveyardChoiceDestination.EXILE,
                         "Choose a card to exile from your graveyard.")
-                .exileRemainingCount(remainingCount)
-                .build());
+                .exileRemainingCount(remainingCount);
+        if (!afterExileEffects.isEmpty()) {
+            choice.mayAbilityContext(null, playerId, afterExileEffects, null);
+        }
+        interactionHandlerRegistry.begin(gameData, choice.build());
     }
 
     /**
@@ -3555,6 +3607,26 @@ public class GraveyardReturnSupport {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
         permanent.setEnteredFromExile(true);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , card, " onto the battlefield."));
+
+        handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+        return permanent;
+    }
+
+    /** Puts a card that was removed from exile onto the battlefield with {@code amount} counters of one kind. */
+    public Permanent putCardOntoBattlefieldFromExileWithCounters(GameData gameData, UUID controllerId, Card card,
+                                                                 CounterType counterType, int amount) {
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        Permanent permanent = new Permanent(card);
+        permanent.setEnteredFromExile(true);
+        if (counterType != null && amount > 0) {
+            int counters = gameQueryService.replaceCounters(gameData, permanent, controllerId,
+                    counterType, amount, controllerId);
+            permanent.setCounterCount(counterType, counters);
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(controllerId);

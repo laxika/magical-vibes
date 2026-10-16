@@ -147,7 +147,7 @@ class HornedLochWhaleTest extends BaseCardTest {
     @Test
     void theOwnerChoosesEvenWhenTheAttackerIsControlledByTheOpponent() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player2, new MerfolkCoralsmith());
-        gd.stolenCreatures.put(attacker.getId(), player1.getId());
+        setOwnerAndController(attacker, player1, player2);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         Card topCard = new Island();

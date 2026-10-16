@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.cards.b.BishopsSoldier;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +39,7 @@ class HuatlisSpurringTest extends BaseCardTest {
     @DisplayName("Gives +4/+0 to target creature when controller controls a Huatli planeswalker")
     void givesPlus4Plus0WithHuatli() {
         harness.addToBattlefield(player1, new BishopsSoldier());
-        harness.addToBattlefield(player1, new HuatliDinosaurKnight());
+        addHuatli(player1);
         harness.setHand(player1, List.of(new HuatlisSpurring()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -53,7 +55,7 @@ class HuatlisSpurringTest extends BaseCardTest {
     @DisplayName("Gives only +2/+0 if Huatli leaves the battlefield before resolution")
     void givesPlus2Plus0IfHuatliLostBeforeResolution() {
         harness.addToBattlefield(player1, new BishopsSoldier());
-        harness.addToBattlefield(player1, new HuatliDinosaurKnight());
+        addHuatli(player1);
         harness.setHand(player1, List.of(new HuatlisSpurring()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -75,7 +77,7 @@ class HuatlisSpurringTest extends BaseCardTest {
     @DisplayName("Opponent's Huatli planeswalker does not grant the upgrade")
     void opponentHuatliDoesNotCount() {
         harness.addToBattlefield(player1, new BishopsSoldier());
-        harness.addToBattlefield(player2, new HuatliDinosaurKnight());
+        addHuatli(player2);
         harness.setHand(player1, List.of(new HuatlisSpurring()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -131,7 +133,7 @@ class HuatlisSpurringTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player1, "Bishop's Soldier");
         harness.castInstant(player1, 0, targetId);
-        harness.addToBattlefield(player1, new HuatliDinosaurKnight());
+        addHuatli(player1);
         harness.passBothPriorities();
 
         Permanent target = findPermanent("Bishop's Soldier");
@@ -143,7 +145,7 @@ class HuatlisSpurringTest extends BaseCardTest {
     @DisplayName("An opponent's creature receives the upgrade based on the spell controller's Huatli")
     void canUpgradeOpponentsCreature() {
         harness.addToBattlefield(player2, new BishopsSoldier());
-        harness.addToBattlefield(player1, new HuatliDinosaurKnight());
+        addHuatli(player1);
         harness.setHand(player1, List.of(new HuatlisSpurring()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -159,7 +161,7 @@ class HuatlisSpurringTest extends BaseCardTest {
     @DisplayName("The upgraded boost persists after Huatli leaves and expires at cleanup")
     void upgradedBoostIsFixedAtResolutionAndExpiresAtCleanup() {
         harness.addToBattlefield(player1, new BishopsSoldier());
-        harness.addToBattlefield(player1, new HuatliDinosaurKnight());
+        addHuatli(player1);
         harness.setHand(player1, List.of(new HuatlisSpurring()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -182,5 +184,10 @@ class HuatlisSpurringTest extends BaseCardTest {
 
     private Permanent findPermanent(String cardName) {
         return findPermanent(player1, cardName);
+    }
+
+    private void addHuatli(Player player) {
+        Permanent huatli = harness.addToBattlefieldAndReturn(player, new HuatliDinosaurKnight());
+        huatli.setCounterCount(CounterType.LOYALTY, 4);
     }
 }

@@ -985,6 +985,15 @@ public class CardChoiceHandlerService {
             }
         }
         gameData.pendingDiscardToLibraryDecision = null;
+        if (discardChoice.followUp().targetOpponentsDiscardThenDraw()) {
+            // Every chosen opponent picks before any card is discarded (CR 701.9a: the discards
+            // happen together), so only record the pick; finishDiscardChoice discards them all.
+            gameData.interaction.clearAwaitingInput();
+            gameData.eachPlayerDiscardSelections.add(new EachPlayerRummageState.SelectedDiscard(
+                    playerId, card.getId(), discardToLibraryDecision == null || discardToLibraryDecision));
+            finishDiscardChoice(gameData, player, playerId, discardChoice.followUp(), card);
+            return;
+        }
         hand.remove(cardIndex);
         DiscardFollowUp followUp = discardChoice.followUp();
 
@@ -1027,11 +1036,6 @@ public class CardChoiceHandlerService {
 
         checkPendingConniveOnDiscard(gameData, card);
 
-        if (followUp.targetOpponentsDiscardThenDraw()) {
-            gameData.targetOpponentsDiscardThenDraw.selectedDiscards.add(
-                    new TargetOpponentsDiscardThenDrawState.SelectedDiscard(
-                            playerId, card.getId(), card.getManaValue(), true));
-        }
         if (followUp.enteringPermanent() != null) {
             gameData.interaction.clearAwaitingInput();
             battlefieldEntryService.completeDiscardCardToEnter(
@@ -1215,6 +1219,40 @@ public class CardChoiceHandlerService {
         finishDiscardChoice(gameData, player, playerId, followUp, null);
     }
 
+    /**
+     * Discards the cards every chosen opponent picked for {@code TargetOpponentsDiscardThenDrawEffect}
+     * together, then records, for each pick, the mana value the effect compares. A card put into the
+     * library without being revealed (Library of Leng) has only undefined characteristics, so it is
+     * never a card with a given mana value (CR 701.9c).
+     */
+    private void discardTargetOpponentsChosenCards(GameData gameData) {
+        List<EachPlayerRummageState.SelectedDiscard> selected =
+                List.copyOf(gameData.eachPlayerDiscardSelections);
+        gameData.eachPlayerDiscardSelections.clear();
+        Map<UUID, Card> pickedCards = new HashMap<>();
+        for (EachPlayerRummageState.SelectedDiscard selection : selected) {
+            for (Card handCard : gameData.playerHands.getOrDefault(selection.playerId(), List.of())) {
+                if (handCard.getId().equals(selection.cardId())) {
+                    pickedCards.put(handCard.getId(), handCard);
+                    break;
+                }
+            }
+        }
+        discardCollectedCards(gameData, selected, gameData.targetOpponentsDiscardThenDraw.controllerId);
+        for (EachPlayerRummageState.SelectedDiscard selection : selected) {
+            Card card = pickedCards.get(selection.cardId());
+            if (card == null) {
+                continue;
+            }
+            List<Card> library = gameData.playerDecks.get(selection.playerId());
+            boolean putIntoHiddenLibrary = library != null && !library.isEmpty() && library.getFirst() == card;
+            gameData.targetOpponentsDiscardThenDraw.selectedDiscards.add(
+                    new TargetOpponentsDiscardThenDrawState.SelectedDiscard(
+                            selection.playerId(), card.getId(),
+                            putIntoHiddenLibrary ? 0 : card.getManaValue(), true));
+        }
+    }
+
     private void discardCollectedPlaguecrafterCards(GameData gameData) {
         PlaguecrafterState state = gameData.plaguecrafter;
         List<EachPlayerRummageState.SelectedDiscard> selected = state.selectedDiscards.stream()
@@ -1326,6 +1364,9 @@ public class CardChoiceHandlerService {
                     List.copyOf(gameData.eachPlayerDiscardSelections);
             gameData.eachPlayerDiscardSelections.clear();
             discardCollectedCards(gameData, selected, followUp.eachPlayerControllerId());
+        }
+        if (followUp.targetOpponentsDiscardThenDraw() && !gameData.eachPlayerDiscardSelections.isEmpty()) {
+            discardTargetOpponentsChosenCards(gameData);
         }
 
         // Apply counters before drawing for combined filtered-discard follow-ups. This preserves

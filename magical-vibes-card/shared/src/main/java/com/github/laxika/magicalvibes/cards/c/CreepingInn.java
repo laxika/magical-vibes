@@ -21,7 +21,7 @@ public class CreepingInn extends Card {
 
     public CreepingInn() {
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
-                new ExileOwnGraveyardCardThenEffect(
+                ExileOwnGraveyardCardThenEffect.ifYouDo(
                         new CardTypePredicate(CardType.CREATURE),
                         SequenceEffect.of(
                                 new LoseLifeEffect(new CreatureCardsExiledWithSource(), LoseLifeRecipient.EACH_OPPONENT),

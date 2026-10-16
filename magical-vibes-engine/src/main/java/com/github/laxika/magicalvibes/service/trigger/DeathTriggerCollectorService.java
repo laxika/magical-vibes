@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSharingDyi
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -111,6 +112,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingCreatureT
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
@@ -1130,6 +1132,10 @@ public class DeathTriggerCollectorService {
         if (effect instanceof MayEffect may) {
             CardEffect wrapped = snapshotDynamicMaxManaValue(match, may.wrapped(), death);
             return wrapped == may.wrapped() ? may : new MayEffect(wrapped, may.prompt(), may.elseEffect());
+        }
+        if (effect instanceof PutImprintedCardIntoOwnersHandEffect put && put.boundCardId() == null) {
+            Card imprinted = match.gameData().getImprintedCard(death.dyingCard());
+            return imprinted == null ? effect : new PutImprintedCardIntoOwnersHandEffect(imprinted.getId());
         }
         if (!(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
                 || returnEffect.dynamicMaxManaValue() == null) {
@@ -2960,7 +2966,8 @@ public class DeathTriggerCollectorService {
         // to target player") needs its target chosen when the trigger is put on the stack.
         if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(may))
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(may)),
+                    null, match.permanent()
             ));
         } else {
             // Pass the source permanent id so wrapped source-referencing effects (e.g.
@@ -3733,9 +3740,14 @@ public class DeathTriggerCollectorService {
     boolean handleAllyNontokenConditional(TriggerMatchContext match,
             TriggeringCardConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.CreatureDeath death = (TriggerContext.CreatureDeath) ctx;
-        if (death.dyingCard() == null || !predicateEvaluationService.matchesCardPredicate(
-                death.dyingCard(), conditional.predicate(), match.permanent().getCard().getId(),
-                match.gameData(), death.dyingCreatureControllerId())) {
+        boolean predicateMatched = conditional.predicate() instanceof CardSubtypePredicate subtypePredicate
+                && death.dyingPermanent() != null
+                ? gameQueryService.hasEffectiveSubtype(
+                        match.gameData(), death.dyingPermanent(), subtypePredicate.subtype())
+                : death.dyingCard() != null && predicateEvaluationService.matchesCardPredicate(
+                        death.dyingCard(), conditional.predicate(), match.permanent().getCard().getId(),
+                        match.gameData(), death.dyingCreatureControllerId());
+        if (death.dyingCard() == null || !predicateMatched) {
             return true;
         }
         if (conditional.wrapped() instanceof MayPayManaEffect mayPay) {

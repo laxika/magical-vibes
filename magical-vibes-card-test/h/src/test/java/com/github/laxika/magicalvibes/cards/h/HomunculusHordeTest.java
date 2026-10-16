@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,6 +109,7 @@ class HomunculusHordeTest extends BaseCardTest {
     @Test
     @DisplayName("The copy retains its ability and both Hordes trigger next turn")
     void tokenCopiesCanCreateFurtherCopies() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefieldAndReturn(player1, new HomunculusHorde());
         addCardsToDeck(4);
         draw();

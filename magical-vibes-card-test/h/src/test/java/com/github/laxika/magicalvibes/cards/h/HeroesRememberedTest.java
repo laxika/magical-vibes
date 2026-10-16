@@ -121,7 +121,7 @@ class HeroesRememberedTest extends BaseCardTest {
     private void advanceThroughSuspendCountdown() {
         for (int i = 0; i < 10; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
     }
 }

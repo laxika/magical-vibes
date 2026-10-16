@@ -103,7 +103,7 @@ class HedronCrabTest extends BaseCardTest {
         List<Card> library = libraryWithFiveCards();
         harness.setLibrary(player2, library);
 
-        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterLandBattlefieldAndReturn(player1, new Forest());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

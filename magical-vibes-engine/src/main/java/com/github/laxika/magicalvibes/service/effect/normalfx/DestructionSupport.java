@@ -275,10 +275,14 @@ public class DestructionSupport {
             }
         }
 
+        List<Permanent> died = new ArrayList<>();
         try {
             beginSimultaneousCreatureDeaths(gameData, actuallyDying);
             for (Permanent perm : actuallyDying) {
-                permanentRemovalService.destroyPermanentToGraveyard(gameData, perm);
+                boolean removed = permanentRemovalService.destroyPermanentToGraveyard(gameData, perm);
+                if (removed && diedFromBattlefield(gameData, perm)) {
+                    died.add(perm);
+                }
                 gameLogService.append(gameData, GameLog.isDestroyed(perm.getCard()));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
             }
@@ -287,7 +291,24 @@ public class DestructionSupport {
         } finally {
             endSimultaneousCreatureDeaths(gameData);
         }
-        return actuallyDying;
+        return died;
+    }
+
+    /**
+     * Per CR 700.4 a creature dies only when it is put into a graveyard from the battlefield, so a permanent
+     * whose removal was replaced by exile or by a return to hand does not count. A token leaves no card in
+     * a graveyard, so it counts unless it was exiled instead.
+     */
+    private boolean diedFromBattlefield(GameData gameData, Permanent perm) {
+        UUID cardId = perm.getCard().getId();
+        for (List<Card> graveyard : gameData.playerGraveyards.values()) {
+            if (graveyard.stream().anyMatch(card -> card.getId().equals(cardId))) {
+                return true;
+            }
+        }
+        return perm.getCard().isToken() && gameData.playerIds.stream()
+                .noneMatch(playerId -> gameData.getPlayerExiledCards(playerId).stream()
+                        .anyMatch(card -> card.getId().equals(cardId)));
     }
 
     private void beginSimultaneousCreatureDeaths(GameData gameData, List<Permanent> dying) {
@@ -379,9 +400,7 @@ public class DestructionSupport {
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
                 .toList();
         if (matching.size() <= count) {
-            for (Permanent perm : matching) {
-                sacrificeAndLog(gameData, perm, playerId);
-            }
+            performSimultaneousSacrifice(gameData, matching.stream().map(Permanent::getId).toList());
         } else {
             List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
             playerInputService.beginMultiPermanentChoice(gameData, playerId, matchingIds, count,

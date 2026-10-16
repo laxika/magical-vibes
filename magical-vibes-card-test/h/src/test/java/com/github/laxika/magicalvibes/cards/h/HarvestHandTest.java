@@ -124,7 +124,7 @@ class HarvestHandTest extends BaseCardTest {
     @DisplayName("A stolen Harvest Hand returns under its controller's control")
     void returnsUnderControllerRatherThanOwner() {
         Permanent hand = harness.addToBattlefieldAndReturn(player2, new HarvestHand());
-        gd.stolenCreatures.put(hand.getId(), player1.getId());
+        setOwnerAndController(hand, player1, player2);
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -436,10 +436,7 @@ public record CreateTokenEffect(
     public static CreateTokenEffect blackZombieWithDecayed(int amount) {
         return new CreateTokenEffect(CardType.CREATURE, amount, "Zombie", 2, 2, CardColor.BLACK, null,
                 List.of(CardSubtype.ZOMBIE), Set.of(Keyword.DECAYED), Set.of(), false, false,
-                Map.of(
-                        EffectSlot.STATIC, new CantBlockEffect(),
-                        EffectSlot.ON_ATTACK, new SacrificeAtEndOfCombatEffect()
-                ),
+                Map.of(EffectSlot.STATIC, new CantBlockEffect()),
                 List.of(), false, false, false, 0, Set.of());
     }
 

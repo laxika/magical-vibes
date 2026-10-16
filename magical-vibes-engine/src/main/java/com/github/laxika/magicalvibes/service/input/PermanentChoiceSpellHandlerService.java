@@ -701,6 +701,7 @@ public class PermanentChoiceSpellHandlerService {
             entry.setExileInsteadOfGraveyard(gct.exileInsteadOfGraveyard());
             entry.setOwnerIdOverride(gct.ownerId());
             entry.setSourceZone(Zone.GRAVEYARD);
+            if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
             gameData.stack.add(entry);
 
             copySupport.copyGraveyardCastSpell(gameData, entry, gct.cardToCast(), gct.controllerId(),

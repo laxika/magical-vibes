@@ -85,6 +85,7 @@ class HewedStoneRetainersTest extends BaseCardTest {
     void spellCastOnPreviousTurnDoesNotSatisfyRestriction() {
         harness.setHand(player1, List.of(new RenownedWeaponsmith(), new HewedStoneRetainers()));
         harness.setLibrary(player1, List.of(new RenownedWeaponsmith(), new RenownedWeaponsmith()));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new RenownedWeaponsmith(), new RenownedWeaponsmith()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

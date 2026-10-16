@@ -118,7 +118,9 @@ class HellkiteCourserTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(findPermanentByCardIdOrNull(commander.getId())).isNotNull();
         assertThat(gqs.hasKeyword(gd, findPermanentByCardId(commander.getId()), Keyword.HASTE)).isTrue();
 

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -35,8 +34,7 @@ public class HinterlandChef extends Card {
             "Moldgraf Millipede");
 
     public HinterlandChef() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
-                new DraftCardFromSpellbookEffect(SPELLBOOK),
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(
                 new PerpetuallyGrantCardCharacteristicsEffect(
                         CardType.ARTIFACT,
                         CardSubtype.FOOD,
@@ -45,6 +43,6 @@ public class HinterlandChef extends Card {
                                 "{2}",
                                 List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
                                 "{2}, {T}, Sacrifice this creature: You gain 3 life."
-                        ))));
+                        )))));
     }
 }

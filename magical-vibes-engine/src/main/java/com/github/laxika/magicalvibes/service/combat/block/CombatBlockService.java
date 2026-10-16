@@ -444,6 +444,11 @@ public class CombatBlockService {
             int attackerIdx = assignment.attackerIndex();
 
             if (!blockable.contains(blockerIdx)) {
+                if (blockerIdx >= 0 && blockerIdx < defenderBattlefield.size()
+                        && defenderBattlefield.get(blockerIdx).isTapped()) {
+                    throw new IllegalStateException("Invalid blocker index: " + blockerIdx + " ("
+                            + defenderBattlefield.get(blockerIdx).getCard().getName() + " can't block)");
+                }
                 throw new IllegalStateException("Invalid blocker index: " + blockerIdx);
             }
             int usageCount = blockerUsageCount.merge(blockerIdx, 1, Integer::sum);
@@ -646,7 +651,8 @@ public class CombatBlockService {
         // Check for "when this creature blocks" triggers (defending player's / NAP's)
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
-            List<CardEffect> blockEffects = new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
+            List<CardEffect> blockEffects = blocker.isFaceDown()
+                    ? new ArrayList<>() : new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
             if (!blockersWithBushidoTrigger.add(blocker.getId())) {
@@ -1004,7 +1010,8 @@ public class CombatBlockService {
 
     private void collectEffectBlockTrigger(GameData gameData, Permanent blocker, Permanent attacker,
                                            UUID defenderId) {
-        List<CardEffect> blockEffects = new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
+        List<CardEffect> blockEffects = blocker.isFaceDown()
+            ? new ArrayList<>() : new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
         blockEffects.addAll(blocker.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
         blockEffects.addAll(blocker.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
         if (blockEffects.isEmpty()) {

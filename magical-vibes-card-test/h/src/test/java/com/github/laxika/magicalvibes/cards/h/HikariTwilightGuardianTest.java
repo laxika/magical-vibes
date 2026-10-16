@@ -25,6 +25,7 @@ class HikariTwilightGuardianTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Hikari, Twilight Guardian"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
@@ -47,6 +48,7 @@ class HikariTwilightGuardianTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
@@ -75,6 +77,7 @@ class HikariTwilightGuardianTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
@@ -114,6 +117,7 @@ class HikariTwilightGuardianTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player2, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
@@ -133,10 +137,11 @@ class HikariTwilightGuardianTest extends BaseCardTest {
     void exilingDuringEndStepWaitsForNextTurnsEndStep() {
         harness.addToBattlefield(player1, new HikariTwilightGuardian());
         harness.setHand(player1, List.of(new BlessedBreath()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.passUntil(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Hikari, Twilight Guardian"));
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Hikari, Twilight Guardian");
@@ -159,6 +164,7 @@ class HikariTwilightGuardianTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Hikari, Twilight Guardian");

@@ -176,7 +176,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
         }
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                 continue;
             }
             count += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -193,7 +193,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                 case 1 -> List.of(creatureToken("Goblin", 1, 1, 1,
                         com.github.laxika.magicalvibes.model.CardColor.RED, List.of(CardSubtype.GOBLIN), java.util.Set.of(), false));
                 case 2 -> List.of(CreateTokenEffect.ofTreasureToken(1));
-                case 3 -> List.of(new PutCounterOnTargetPermanentEffect(
+                case 3 -> List.of(PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
                 case 4 -> List.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
@@ -254,7 +254,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
             return switch (progress.roomIndex()) {
                 case 0 -> List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.HAND));
-                case 1 -> List.of(new PutCounterOnTargetPermanentEffect(
+                case 1 -> List.of(PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate()));
                 case 2 -> List.of(new ScryEffect(2));
                 case 3 -> List.of(new LoseLifeEffect(5, LoseLifeRecipient.TARGET_PLAYER));

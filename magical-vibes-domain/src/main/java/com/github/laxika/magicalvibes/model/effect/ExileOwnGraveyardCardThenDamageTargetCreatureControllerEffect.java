@@ -6,8 +6,16 @@ package com.github.laxika.magicalvibes.model.effect;
  * wrapped in a {@link MayEffect} so the exile is optional ("You may exile a card from your
  * graveyard. If you do, ... deals N damage to that creature's controller."). If the controller's
  * graveyard is empty, nothing happens and no damage is dealt. Used by Heated Argument.
+ *
+ * <p>{@code exiled} marks the damage-only remainder the engine queues once the player has chosen and
+ * exiled a card from a graveyard with several candidates.</p>
  */
-public record ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect(int damage) implements CardEffect {
+public record ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect(int damage, boolean exiled)
+        implements CardEffect {
+
+    public ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect(int damage) {
+        this(damage, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

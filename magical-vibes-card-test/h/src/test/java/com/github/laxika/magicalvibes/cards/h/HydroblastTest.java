@@ -154,11 +154,11 @@ class HydroblastTest extends BaseCardTest {
         HillGiant giant = new HillGiant();
         harness.setHand(player1, List.of(giant, new Thoughtlace()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setHand(player2, List.of(new Hydroblast()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 0, giant.getId());
         harness.castAndResolveInstant(player1, 0, giant.getId());

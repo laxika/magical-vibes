@@ -858,6 +858,13 @@ public class CombatDamageService {
             triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
         }
 
+        // "Whenever this creature is dealt damage" triggers with a target choose it as they are put on
+        // the stack (CR 603.3d), still in the damage step rather than after the step has advanced.
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+        }
+
         if (gameData.interaction.isAwaitingInput()) {
             return CombatResult.DONE;
         }
@@ -1845,9 +1852,11 @@ public class CombatDamageService {
             }
 
             List<CardEffect> allDamageEffects = new ArrayList<>();
-            boolean hasPrintedAbilities = !creature.isFaceDown()
-                    && !creature.isLosesAllAbilitiesUntilEndOfTurn()
-                    && !gameQueryService.computeStaticBonus(gameData, creature).losesAllAbilities();
+            // A creature that has lost all abilities also loses the abilities it was permanently granted
+            // earlier (e.g. an encoded cipher spell's trigger).
+            boolean lostAllAbilities = creature.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.computeStaticBonus(gameData, creature).losesAllAbilities();
+            boolean hasPrintedAbilities = !creature.isFaceDown() && !lostAllAbilities;
             if (hasPrintedAbilities) {
                 allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
                 allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
@@ -1857,15 +1866,19 @@ public class CombatDamageService {
                     allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
                 }
                 allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
-                allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                if (!lostAllAbilities) {
+                    allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_OPPONENT));
+                }
                 allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                         gameData, creature, EffectSlot.ON_DAMAGE_TO_OPPONENT));
             }
             // Combat-damage-to-player triggers granted until end of turn by one-shot effects
             // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
             allDamageEffects.addAll(creature.getTemporaryTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
-            allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
-            allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            if (!lostAllAbilities) {
+                allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                allDamageEffects.addAll(creature.getPersistentTriggeredEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+            }
             // Combat-damage-to-player triggers granted continuously by a static ability
             // (e.g. Tandem Lookout's soulbond grant), recomputed by the layer system.
             allDamageEffects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(
@@ -1878,7 +1891,11 @@ public class CombatDamageService {
                     + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                     gameData, attackerId, creature, false, combatDamageContext));
             try {
-            for (CardEffect rawEffect : allDamageEffects) {
+            for (CardEffect candidateEffect : allDamageEffects) {
+                if (candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect onlyDamagedPlayer
+                        && !defenderId.equals(onlyDamagedPlayer.playerId())) continue;
+                CardEffect rawEffect = candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect onlyDamagedPlayer
+                        ? onlyDamagedPlayer.wrapped() : candidateEffect;
                 if (rawEffect instanceof com.github.laxika.magicalvibes.model.effect.RenownEffect
                         && creature.isRenowned()) continue;
                 CardEffect effect = rawEffect instanceof CombatDamageAmountAwareEffect amountAware
@@ -2331,6 +2348,14 @@ public class CombatDamageService {
                         if (active != null) {
                             effects.add(active);
                         }
+                    } else if ((effect instanceof MayEffect may ? may.wrapped() : effect)
+                            instanceof DamagedPlayerControlsTargetEffect damagedPlayerEffect) {
+                        if (damageDealt >= damagedPlayerEffect.minimumDamage()) {
+                            CardEffect targeted = damagedPlayerEffect.forDamagedPlayer(defenderId);
+                            effects.add(effect instanceof MayEffect may
+                                    ? new MayEffect(targeted, may.prompt(), may.elseEffect(), may.choicePlayer())
+                                    : targeted);
+                        }
                     } else {
                         effects.add(effect);
                     }
@@ -2585,11 +2610,12 @@ public class CombatDamageService {
                         firedEffect = conditional.wrapped();
                     }
                     if (trigger.oncePerDamageStep() && firedEffect instanceof CombatDamageDealerAwareEffect aware) {
-                        List<UUID> dealerIds = combatDamageDealtToPlayer.keySet().stream()
-                                .filter(dealer -> trigger.dealerPredicate() == null
+                        List<UUID> dealerIds = combatDamageDealtToPlayer.entrySet().stream()
+                                .filter(dealer -> dealer.getValue() > 0
+                                        && (trigger.dealerPredicate() == null
                                         || predicateEvaluationService.matchesPermanentPredicate(
-                                        dealer, trigger.dealerPredicate(), triggerContext))
-                                .map(Permanent::getId)
+                                        dealer.getKey(), trigger.dealerPredicate(), triggerContext)))
+                                .map(dealer -> dealer.getKey().getId())
                                 .toList();
                         firedEffect = aware.withCombatDamageDealerIds(dealerIds);
                     }
@@ -3096,10 +3122,12 @@ public class CombatDamageService {
                         attacker.getCard(),
                         reflection.protectedPlayerId(),
                         reflection.sourceCard().getName() + "'s reflected combat damage",
-                        List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER)),
+                        List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)),
                         attackerId,
                         attacker.getId());
                 se.setNonTargeting(true);
+                se.setTriggeringPermanentId(attacker.getId());
+                se.setTriggeringPermanentControllerId(attackerId);
                 gameData.stack.add(se);
                 gameLogService.append(gameData, GameLog.cardTextCard(reflection.sourceCard(),
                         " reflects " + damage + " combat damage from ", attacker.getCard(),
@@ -3560,7 +3588,11 @@ public class CombatDamageService {
 
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {
         for (DealtDamageTriggerData data : triggerData) {
-            for (CardEffect effect : data.dealtDamageEffects()) {
+            for (CardEffect authoredEffect : data.dealtDamageEffects()) {
+                CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(
+                        gameData, data.sourceSnapshot(), authoredEffect);
+                if (effect == null) continue;
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, data.sourceSnapshot(), authoredEffect);
                 CardEffect effectToAdd = effect;
                 if (effect instanceof PerDamageSourceTriggerEffect perSource) {
                     effectToAdd = perSource.effect();

@@ -108,7 +108,8 @@ class HeartPiercerBowTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(2));
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(victim.getMarkedDamage()).isZero();
     }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class HeliodsPunishment extends Card {
                                 true,
                                 null,
                                 List.of(
-                                        new RemoveCounterFromGrantingPermanentCost(1, CounterType.TASK),
+                                        new RemoveCounterFromGrantingPermanentEffect(CounterType.TASK),
                                         new DestroyGrantingPermanentIfNoCountersEffect(CounterType.TASK)
                                 ),
                                 "{T}: Remove a task counter from Heliod's Punishment. Then if it has no task counters on it, destroy Heliod's Punishment."

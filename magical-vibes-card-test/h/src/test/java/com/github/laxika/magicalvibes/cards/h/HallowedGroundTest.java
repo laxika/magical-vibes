@@ -198,9 +198,7 @@ class HallowedGroundTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, land.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(land);
-        gd.playerBattlefields.get(player2.getId()).add(land);
-        gd.stolenCreatures.put(land.getId(), player1.getId());
+        setOwnerAndController(land, player1, player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Plains");

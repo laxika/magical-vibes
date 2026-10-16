@@ -73,7 +73,7 @@ class HexmarkDestroyerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent destroyer = findPermanent(player1, "Hexmark Destroyer");
-        assertThat(destroyer.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(destroyer.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

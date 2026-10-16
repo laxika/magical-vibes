@@ -195,6 +195,7 @@ class HaraldUnitesTheElvesTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
+        gs.declareBlockers(gd, player2, List.of());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -204,7 +205,8 @@ class HaraldUnitesTheElvesTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
         declareAttackers(List.of(0));
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
     }

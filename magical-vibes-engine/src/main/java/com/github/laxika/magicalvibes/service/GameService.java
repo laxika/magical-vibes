@@ -1747,11 +1747,19 @@ public class GameService {
         List<CardEffect> effects = new java.util.ArrayList<>(
                 permanent.getCard().getEffects(EffectSlot.ON_TURNED_FACE_UP));
         effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
-        effects.addAll(permanent.getPersistentTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
+        List<CardEffect> grantedEffects = new java.util.ArrayList<>(
+                permanent.getPersistentTriggeredEffects(EffectSlot.ON_TURNED_FACE_UP));
+        effects.addAll(grantedEffects);
+        if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+            effects.clear();
+            grantedEffects.clear();
+        }
         effects = effects.stream()
                 .filter(effect -> !(effect instanceof com.github.laxika.magicalvibes.model.effect.ReplacementEffect))
                 .filter(effect -> turnedFaceUpTriggerConditionIsMet(gameData, permanent, controllerId, effect))
                 .toList();
+        List<CardEffect> triggeringEffects = effects;
+        grantedEffects.removeIf(effect -> !triggeringEffects.contains(effect));
         if (!effects.isEmpty()) {
             int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                     gameData, controllerId, permanent, false,
@@ -1832,11 +1840,20 @@ public class GameService {
                     }
                 }
             } else {
-                for (int copy = 0; copy < triggerCopies; copy++) {
-                    gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
-                            com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                            permanent.getCard(), controllerId, permanent.getCard().getName() + "'s ability",
-                            effects, xValue != null ? xValue : 0, permanent.getId()));
+                List<List<CardEffect>> abilities = new java.util.ArrayList<>();
+                List<CardEffect> ownEffects = new java.util.ArrayList<>(effects);
+                grantedEffects.forEach(ownEffects::remove);
+                if (!ownEffects.isEmpty()) {
+                    abilities.add(ownEffects);
+                }
+                grantedEffects.forEach(granted -> abilities.add(List.of(granted)));
+                for (List<CardEffect> ability : abilities) {
+                    for (int copy = 0; copy < triggerCopies; copy++) {
+                        gameData.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
+                                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                                permanent.getCard(), controllerId, permanent.getCard().getName() + "'s ability",
+                                ability, xValue != null ? xValue : 0, permanent.getId()));
+                    }
                 }
             }
         }

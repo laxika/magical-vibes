@@ -82,10 +82,12 @@ class HammerheadTyrantTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SolRing());
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new Opt(), "{U}");
+
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Sol Ring");
     }
 

@@ -127,9 +127,11 @@ class HuntersInsightTest extends BaseCardTest {
         int creatureControllerHand = gd.playerHands.get(player2.getId()).size();
 
         bear.setAttacking(true);
-        resolveCombat(player2);
+        harness.withAutoStop(TurnStep.END_STEP, () -> resolveCombat(player2));
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
-        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(originalControllerHand + 2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(creatureControllerHand);

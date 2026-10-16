@@ -162,8 +162,8 @@ class HighScoreTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
 
         advanceToEndStep(player2);
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

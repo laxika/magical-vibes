@@ -58,7 +58,7 @@ class HardbristleBanditTest extends BaseCardTest {
     void crimeTriggerResetsOnNextTurn() {
         Permanent bandit = addReadyBandit();
         commitCrime();
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         tapForMana(bandit, ManaColor.GREEN);
 
         commitCrime();

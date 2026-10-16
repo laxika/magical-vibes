@@ -560,6 +560,15 @@ public class EffectResolutionService {
             }
             return lastController != null && lastController.equals(context.controllerId());
         }
+        // "If you controlled it" after an earlier step of this ability moved the target away judges
+        // its last known controller (CR 608.2h).
+        if (condition instanceof TargetPermanentMatches matches
+                && matches.filter() instanceof PermanentControlledBySourceControllerPredicate
+                && context.targetId() != null
+                && gameQueryService.findPermanentById(gameData, context.targetId()) == null
+                && entry.getRemovedPermanentControllers().containsKey(context.targetId())) {
+            return entry.getRemovedPermanentControllers().get(context.targetId()).equals(context.controllerId());
+        }
         return conditionEvaluationService.isMet(gameData, condition, context, entry.getEventValue());
     }
 }

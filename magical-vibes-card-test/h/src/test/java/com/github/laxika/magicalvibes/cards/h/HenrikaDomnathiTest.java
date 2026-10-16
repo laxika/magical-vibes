@@ -75,6 +75,7 @@ class HenrikaDomnathiTest extends BaseCardTest {
         harness.handleListChoice(player1, DRAW);
         harness.passBothPriorities();
 
+        harness.setHand(player1, List.of());
         beginNextTurnCombat();
         assertThatThrownBy(() -> harness.handleListChoice(player1, DRAW))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -192,6 +193,7 @@ class HenrikaDomnathiTest extends BaseCardTest {
     }
 
     private void beginNextTurnCombat() {
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.BEGINNING_OF_COMBAT);
     }
 }

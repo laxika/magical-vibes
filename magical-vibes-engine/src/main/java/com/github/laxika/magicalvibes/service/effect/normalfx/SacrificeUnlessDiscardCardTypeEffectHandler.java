@@ -102,7 +102,7 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
             prompt = sourceCard.getName() + " is no longer on the battlefield. Discard " + discardDescription + " anyway?";
         }
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                sourceCard, controllerId, List.of(e), prompt
+                sourceCard, controllerId, List.of(e), prompt, null, null, sourcePermanentId, null, 0, 0, null
         ));
     
     }

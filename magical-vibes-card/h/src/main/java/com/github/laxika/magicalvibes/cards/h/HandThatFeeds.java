@@ -15,7 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class HandThatFeeds extends Card {
 
     public HandThatFeeds() {
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        // "attacks while there are four or more card types" qualifies the event and is not an
+        // intervening "if", so delirium is checked only when the creature attacks.
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
                 new Delirium(), SequenceEffect.of(
                         new BoostSelfEffect(2, 0),
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF))));

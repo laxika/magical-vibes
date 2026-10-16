@@ -69,6 +69,8 @@ class HypnoxTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(hypnox.getId()));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Hypnox");
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCard);

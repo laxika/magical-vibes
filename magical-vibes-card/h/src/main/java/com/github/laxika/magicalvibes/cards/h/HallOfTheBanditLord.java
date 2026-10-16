@@ -23,9 +23,9 @@ public class HallOfTheBanditLord extends Card {
                 null,
                 List.of(
                         new PayLifeCost(3),
-                        new AwardHasteGrantingManaEffect(ManaColor.COLORLESS, 1)
+                        AwardHasteGrantingManaEffect.withPermanentHaste(ManaColor.COLORLESS, 1)
                 ),
-                "{T}, Pay 3 life: Add {C}. If that mana is spent on a creature spell, it gains haste until end of turn."
+                "{T}, Pay 3 life: Add {C}. If that mana is spent on a creature spell, it gains haste."
         ));
     }
 }

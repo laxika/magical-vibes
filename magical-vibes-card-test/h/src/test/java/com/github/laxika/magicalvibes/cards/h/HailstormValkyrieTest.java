@@ -51,7 +51,7 @@ class HailstormValkyrieTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, valkyrie)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, valkyrie)).isEqualTo(2);

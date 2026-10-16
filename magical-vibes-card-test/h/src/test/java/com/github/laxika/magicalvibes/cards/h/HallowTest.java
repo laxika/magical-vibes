@@ -148,10 +148,10 @@ class HallowTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 4);
 
-        harness.castModalInstant(player2, 0, 1, List.of(player1.getId()));
+        harness.castModalInstantWithModes(player2, 0, 1, 2, new int[]{1}, List.of(player1.getId()));
         harness.castAndResolveInstant(player1, 0, protectedSpell.getId());
         harness.assertLife(player1, 20);
-        harness.castModalInstant(player2, 0, 1, List.of(player1.getId()));
+        harness.castModalInstantWithModes(player2, 0, 1, 2, new int[]{1}, List.of(player1.getId()));
         harness.passBothPriorities();
         harness.assertLife(player1, 17);
         harness.passBothPriorities();

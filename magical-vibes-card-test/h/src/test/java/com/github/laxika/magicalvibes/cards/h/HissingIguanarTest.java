@@ -99,8 +99,8 @@ class HissingIguanarTest extends BaseCardTest {
     void damagesPlaneswalker() {
         harness.addToBattlefield(player1, new HissingIguanar());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new SarkhanVol());
-        var planeswalker = gd.playerBattlefields.get(player2.getId()).getFirst();
+        var planeswalker = harness.addToBattlefieldAndReturn(player2, new SarkhanVol());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
         int loyaltyBefore = planeswalker.getCounterCount(CounterType.LOYALTY);
         int lifeBefore = gd.getLife(player2.getId());
 

@@ -22,6 +22,10 @@ public class HeliodsEmissary extends Card {
     public HeliodsEmissary() {
         addCastingOption(new BestowCast("{6}{W}"));
 
+        // The attack trigger is the Aura's own ability, so its controller is the Aura's controller even
+        // when the enchanted creature is an opponent's.
+        setAttackTriggerOwnedByAura(true);
+
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ATTACK, new TapPermanentsEffect(

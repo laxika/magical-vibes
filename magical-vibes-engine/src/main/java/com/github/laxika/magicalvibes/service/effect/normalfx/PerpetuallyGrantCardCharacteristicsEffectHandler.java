@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -34,16 +35,30 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PerpetuallyGrantCardCharacteristicsEffect perpetual =
                 (PerpetuallyGrantCardCharacteristicsEffect) effect;
-        Permanent source = entry.getSourcePermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Card card = source == null || source.getOriginalCard() == null
-                ? entry.getCard() : source.getOriginalCard();
-        if (card == null) {
-            return;
+        Permanent source = perpetual.cardId() == null && entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) : null;
+        UUID cardId;
+        if (perpetual.cardId() != null) {
+            cardId = perpetual.cardId();
+        } else {
+            Card card = source == null || source.getOriginalCard() == null
+                    ? entry.getCard() : source.getOriginalCard();
+            if (card == null) {
+                return;
+            }
+            cardId = card.getId();
         }
 
-        UUID cardId = card.getId();
         mergeCardTypes(gameData, cardId, perpetual.cardTypes());
+        if (perpetual.replacesCreatureTypes()) {
+            gameData.perpetualCreatureTypeReplacedCardIds.add(cardId);
+            gameData.perpetualCardSubtypes.computeIfPresent(cardId, (ignored, existing) -> {
+                Set<CardSubtype> kept = EnumSet.noneOf(CardSubtype.class);
+                existing.stream().filter(subtype -> !StaticEffectSupport.isCreatureSubtype(subtype))
+                        .forEach(kept::add);
+                return Set.copyOf(kept);
+            });
+        }
         mergeSubtypes(gameData, cardId, perpetual.subtypes());
         gameData.perpetualActivatedAbilities.compute(cardId, (ignored, existing) -> {
             List<com.github.laxika.magicalvibes.model.ActivatedAbility> updated =
@@ -57,6 +72,9 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
         });
 
         if (source != null) {
+            if (perpetual.replacesCreatureTypes()) {
+                source.getGrantedSubtypes().removeIf(StaticEffectSupport::isCreatureSubtype);
+            }
             source.getPersistentGrantedCardTypes().addAll(perpetual.cardTypes());
             perpetual.subtypes().forEach(subtype -> {
                 if (!source.getGrantedSubtypes().contains(subtype)) {

@@ -154,7 +154,7 @@ class HallOfStormGiantsTest extends BaseCardTest {
     void animationExpiresAtEndOfTurn() {
         Permanent hall = animateHall();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, hall)).isFalse();
         assertThat(gqs.isLand(gd, hall)).isTrue();

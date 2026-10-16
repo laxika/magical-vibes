@@ -21,7 +21,7 @@ public class HenzieToolboxTorre extends Card {
         addEffect(EffectSlot.STATIC, new GrantBlitzToSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
-                        new CardMinManaValuePredicate(4))),
+                        new CardMinManaValuePredicate(4, true))),
                 new CommanderCastsFromCommandZoneThisGame()));
     }
 }

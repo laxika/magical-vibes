@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
+import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementEvent;
 import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1861,6 +1863,10 @@ public class ChoiceHandlerService {
                             List.of(color.name()));
                 }
             }
+            case LifeGainEvent gain -> {
+                lifeSupport.completeGainLife(gameData, gain);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
             case DamageEvent damage -> throw new IllegalStateException("Damage finishes in DamageSupport");
         }
     }
@@ -3607,14 +3613,25 @@ public class ChoiceHandlerService {
         removeCounters(gameData, ctx.targetId(), counterKind, requested);
 
         int remaining = ctx.remaining() - requested;
+        int removedTotal = ctx.removedSoFar() + requested;
         int nextIndex = ctx.index() + 1;
         if (remaining > 0 && nextIndex < ctx.counterKinds().size()) {
             int nextMax = Math.min(remaining,
                     counterCount(gameData, ctx.targetId(), ctx.counterKinds().get(nextIndex)));
             playerInputService.beginRemoveCountersOfKindChoice(gameData, ctx.controllerId(), ctx.targetId(),
-                    ctx.sourceCardName(), ctx.counterKinds(), nextIndex, remaining, nextMax);
+                    ctx.sourceCardName(), ctx.counterKinds(), nextIndex, remaining, nextMax,
+                    ctx.boostSourcePermanentId(), removedTotal);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
+        }
+
+        if (ctx.boostSourcePermanentId() != null && removedTotal > 0) {
+            Permanent boosted = gameQueryService.findPermanentById(gameData, ctx.boostSourcePermanentId());
+            if (boosted != null) {
+                boosted.setPowerModifier(boosted.getPowerModifier() + removedTotal);
+                gameLogService.append(gameData, GameLog.builder().card(boosted.getCard())
+                        .text(" gets +" + removedTotal + "/+0 until end of turn.").build());
+            }
         }
 
         stateBasedActionService.performStateBasedActions(gameData);
@@ -6069,7 +6086,20 @@ public class ChoiceHandlerService {
             }
 
             int mana = removed * ctx.manaMultiplier();
-            if (ctx.colors().size() == 1) {
+            LandManaReplacementService.Resolution landResolution = ctx.colors().size() == 1
+                    && removed > 0 && gameQueryService.isLand(gameData, perm)
+                    ? landManaReplacementService.produce(gameData, ctx.playerId(), perm,
+                            Set.of(ctx.colors().getFirst()), removed,
+                            new ChoiceContext.ManaColorChoice(ctx.playerId(), ctx.fromCreature(), 0))
+                    : new LandManaReplacementService.Resolution.Unchanged();
+            if (!(landResolution instanceof LandManaReplacementService.Resolution.Unchanged)) {
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " removes " + removed + " "
+                        + ctx.counterType().name().toLowerCase() + " counter(s) from ", perm.getCard(), "."));
+                if (gameData.interaction.isAwaitingInput()) {
+                    inputCompletionService.publishStateAfterInput(gameData);
+                    return;
+                }
+            } else if (ctx.colors().size() == 1) {
                 ManaColor color = ManaProductionSupport.effectiveColor(
                         gameData, ctx.playerId(), ctx.colors().getFirst());
                 ManaPool pool = gameData.playerManaPools.get(ctx.playerId());
@@ -6518,6 +6548,11 @@ public class ChoiceHandlerService {
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
+            synchronized (gameData.floatingEffects) {
+                gameData.floatingEffects.removeIf(floating -> target.getId().equals(floating.affectedPermanentId())
+                        && floating.effect() instanceof LandwalkIgnoredForBlockingEffect landwalkEffect
+                        && landwalkEffect.ignoresAllLandwalk());
+            }
             target.getUnblockableIfDefenderControlsUntilEndOfTurn().add(new PermanentAllOfPredicate(List.of(
                     new PermanentHasSubtypePredicate(subtype),
                     new PermanentHasSupertypePredicate(CardSupertype.SNOW))));

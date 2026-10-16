@@ -168,6 +168,7 @@ class HeroicDefianceTest extends BaseCardTest {
         Permanent panther = addCreatureReady(player1, new FleetfootPanther());
         addCreatureReady(player2, new KavuRecluse());
         addCreatureReady(player2, new KavuRecluse());
+        addCreatureReady(player2, new KavuRecluse());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new HeroicDefiance());
         aura.setAttachedTo(panther.getId());
 

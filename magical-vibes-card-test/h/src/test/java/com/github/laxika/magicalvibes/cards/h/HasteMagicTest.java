@@ -54,7 +54,7 @@ class HasteMagicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
@@ -84,7 +84,7 @@ class HasteMagicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
         assertThat(creature.getPowerModifier()).isEqualTo(3);
@@ -132,13 +132,13 @@ class HasteMagicTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
     }
 
@@ -182,7 +182,7 @@ class HasteMagicTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HasteMagic()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, creature.getId());
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId(), creature.getId()))
@@ -216,11 +216,13 @@ class HasteMagicTest extends BaseCardTest {
         Card topCard = putOnTop();
         harness.setHand(player1, List.of(new HasteMagic()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.withAutoStop(TurnStep.END_STEP,
+                () -> harness.castAndResolveInstant(player1, 0, creature.getId()));
+        harness.setHand(player2, List.of());
 
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
         harness.castFromExile(player1, topCard.getId());
         harness.assertOnBattlefield(player1, "Mountain");
@@ -233,10 +235,11 @@ class HasteMagicTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new IronGiant());
         Card topCard = putOnTop();
         harness.setHand(player1, List.of(new HasteMagic()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
         harness.castFromExile(player1, topCard.getId());

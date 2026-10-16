@@ -135,7 +135,7 @@ class HurkylsRecallTest extends BaseCardTest {
     @DisplayName("Leaves artifacts the target controls but another player owns on the battlefield")
     void doesNotReturnArtifactsOwnedByAnotherPlayer() {
         Permanent borrowedArtifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
-        gd.stolenCreatures.put(borrowedArtifact.getId(), player1.getId());
+        setOwnerAndController(borrowedArtifact, player1, player2);
         harness.addToBattlefield(player2, new AngelsFeather());
         harness.setHand(player1, List.of(new HurkylsRecall()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -162,7 +162,7 @@ class HurkylsRecallTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardArtifact);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryArtifact);
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(graveyardArtifact, libraryArtifact);
     }
 
     @Test

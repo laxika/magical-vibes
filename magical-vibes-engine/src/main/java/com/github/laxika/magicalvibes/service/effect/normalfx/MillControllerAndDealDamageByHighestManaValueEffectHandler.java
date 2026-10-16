@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.UUID;
-import java.util.ArrayList;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.Card;
 import lombok.RequiredArgsConstructor;
@@ -49,16 +48,15 @@ public class MillControllerAndDealDamageByHighestManaValueEffectHandler implemen
             return;
         }
 
-        // Snapshot the cards before milling to compute highest mana value
-        List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
+        // Replacement effects (e.g. an opponent's mill doubler) can mill more cards than the count,
+        // and every card milled in the event counts toward the greatest mana value.
+        List<Card> milledCards = graveyardService.resolveMillPlayerAndReturnAllMilledCards(
+                gameData, controllerId, e.count());
 
         int highestManaValue = milledCards.stream()
                 .mapToInt(Card::getManaValue)
                 .max()
                 .orElse(0);
-
-        // Perform the actual mill
-        graveyardService.resolveMillPlayer(gameData, controllerId, e.count());
 
         if (highestManaValue == 0) {
             String logEntry = cardName + " deals 0 damage (greatest mana value among milled cards is 0).";

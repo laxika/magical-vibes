@@ -44,7 +44,7 @@ public class CommanderBattlefieldChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
-        effectHandler.completeChoice(gameData, interaction.playerId(), chosen.getFirst());
+        effectHandler.completeChoice(gameData, interaction.playerId(), chosen.getFirst(), interaction.sourceCard());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

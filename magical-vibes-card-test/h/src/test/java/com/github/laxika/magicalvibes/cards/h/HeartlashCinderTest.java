@@ -93,7 +93,7 @@ class HeartlashCinderTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareAttackers(gd, player1, List.of(0)));
 
         assertThat(cinder.isAttacking()).isTrue();
     }

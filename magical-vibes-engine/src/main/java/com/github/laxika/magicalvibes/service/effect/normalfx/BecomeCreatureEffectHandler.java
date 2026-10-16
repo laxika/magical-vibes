@@ -65,7 +65,12 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
         keywords.addAll(becomeCreature.keywords());
         copy.setKeywords(keywords);
         copy.freeze();
+        Card copiableBase = source.getBecomeCreatureResultCard() == source.getCard()
+                && source.getBecomeCreatureBaseCard() != null
+                ? source.getBecomeCreatureBaseCard() : source.getCard();
         source.setCard(copy);
+        source.setBecomeCreatureBaseCard(copiableBase);
+        source.setBecomeCreatureResultCard(copy);
 
         if (losesAttachmentSubtype) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, source, oldAttachedTo);

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEff
 public class HotshotMechanic extends Card {
 
     public HotshotMechanic() {
-        addEffect(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2));
+        // This creature crews Vehicles as though its power were 2 greater.
+        addEffect(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2, true));
     }
 }

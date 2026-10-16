@@ -97,16 +97,17 @@ class HonoredHierarchTest extends BaseCardTest {
         Permanent hierarch = addCreatureReady(player1, new HonoredHierarch());
         hierarch.setRenowned(true);
 
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> declareAttackers(List.of(0)));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
 
-        assertThat(hierarch.isTapped()).isFalse();
-        assertThat(hierarch.isAttacking()).isTrue();
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, "GREEN");
+            assertThat(hierarch.isTapped()).isFalse();
+            assertThat(hierarch.isAttacking()).isTrue();
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleListChoice(player1, "GREEN");
 
-        assertThat(hierarch.isTapped()).isTrue();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(hierarch.isTapped()).isTrue();
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        });
         assertThat(gd.stack).isEmpty();
     }
 

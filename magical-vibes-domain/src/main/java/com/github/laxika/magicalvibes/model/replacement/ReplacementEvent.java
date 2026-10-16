@@ -8,7 +8,7 @@ import java.util.UUID;
  * them apply, {@link #chooserId()} picks the one to apply next (CR 616.1); every effect already
  * applied is remembered in {@link #appliedKeys()} so it never affects the event again (CR 614.5).
  */
-public sealed interface ReplacementEvent permits DamageEvent, LandManaEvent {
+public sealed interface ReplacementEvent permits DamageEvent, LandManaEvent, LifeGainEvent {
 
     /** The affected player, or the affected object's controller, who orders the effects. */
     UUID chooserId();

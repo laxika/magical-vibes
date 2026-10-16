@@ -161,6 +161,13 @@ public class LayerSystemService {
     /** Land types represented in the {@code CardSubtype} enum. */
     private static final Set<CardSubtype> LAND_SUBTYPES = EnumSet.copyOf(CardSubtype.landTypes());
 
+    /** Artifact types represented in the {@code CardSubtype} enum (CR 205.3g). */
+    private static final Set<CardSubtype> ARTIFACT_SUBTYPES = EnumSet.of(
+            CardSubtype.BLOOD, CardSubtype.BOBBLEHEAD, CardSubtype.BOOK, CardSubtype.CLUE, CardSubtype.EQUIPMENT,
+            CardSubtype.FOOD, CardSubtype.FORTIFICATION, CardSubtype.GOLD, CardSubtype.INCUBATOR, CardSubtype.JUNK,
+            CardSubtype.LANDER, CardSubtype.MAP, CardSubtype.MUTAGEN, CardSubtype.POWERSTONE, CardSubtype.SPACECRAFT,
+            CardSubtype.TREASURE, CardSubtype.VEHICLE, CardSubtype.VIBRANIUM);
+
     private static final ThreadLocal<Pass> ACTIVE_PASS = new ThreadLocal<>();
 
     /**
@@ -1073,6 +1080,13 @@ public class LayerSystemService {
         for (PermanentSlot slot : slots) {
             Permanent permanent = slot.permanent();
             CharacteristicState state = new CharacteristicState(permanent.getCard(), permanent);
+            if (permanent.getOriginalCard() != null && !permanent.isFaceDown()
+                    && gameData.perpetualCreatureTypeReplacedCardIds.contains(permanent.getOriginalCard().getId())) {
+                // Perpetually "becomes a [creature type]": the printed creature types are replaced;
+                // the perpetual types stay as persistent grants on the permanent.
+                state.removeSubtypesIf(subtype -> StaticEffectSupport.isCreatureSubtype(subtype)
+                        && !permanent.getGrantedSubtypes().contains(subtype));
+            }
             if (permanent.isFaceDown() && (permanent.isCloaked() || permanent.isFaceDownWard())) {
                 state.addKeyword(Keyword.WARD);
             }
@@ -1142,6 +1156,7 @@ public class LayerSystemService {
         // timestamp order.
         applyLayer5(gameData, slots, slotsById, board);
         applyLayer6(gameData, slots, slotsById, board);
+        removeAbilitiesGrantedByLaterAbilityLoss(gameData, board);
 
         // Sublayer 7b (base P/T setting): every setter — static aura, one-shot floating,
         // animation, permanent exchange — ordered by one timestamp sequence.
@@ -1797,6 +1812,9 @@ public class LayerSystemService {
                     if (!state.hasCardType(CardType.CREATURE)) {
                         state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
                     }
+                    if (!state.hasCardType(CardType.ARTIFACT)) {
+                        state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
+                    }
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
                             List.copyOf(set.cardTypes())));
@@ -2034,7 +2052,6 @@ public class LayerSystemService {
             case NonbasicLandsBecomeTypeEffect becomes -> {
                 manage(board, instance);
                 for (PermanentSlot target : slots) {
-                    if (isSource(instance, target)) continue;
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (state.hasCardType(CardType.LAND)
                             && !state.getSupertypes().contains(CardSupertype.BASIC)) {
@@ -2768,6 +2785,33 @@ public class LayerSystemService {
                              Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L6_ABILITIES),
                 slots, slotsById, board, this::applyL6Instance);
+    }
+
+    /**
+     * A source that gained "creatures you control have [ability]" (a Saga's chapter) only carries that
+     * ability while it still has it: if a later-timestamp effect made the source lose all abilities
+     * (CR 613.7, 613.1f), the creatures it was granting lose the ability too.
+     */
+    private void removeAbilitiesGrantedByLaterAbilityLoss(GameData gameData, LayeredBoardState board) {
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (!(floating.effect() instanceof GrantActivatedAbilityEffect grant)
+                        || floating.affectedPermanentId() != null
+                        || floating.sourcePermanentId() == null
+                        || grant.duration() != EffectDuration.WHILE_SOURCE_REMAINS) {
+                    continue;
+                }
+                CharacteristicState sourceState = board.states().get(floating.sourcePermanentId());
+                if (sourceState == null || !sourceState.isLosesAllAbilities()
+                        || sourceState.getLosesAllAbilitiesTimestamp() <= floating.timestamp()) {
+                    continue;
+                }
+                for (CharacteristicState state : board.states().values()) {
+                    state.removeActivatedAbilitiesGrantedBy(floating.sourcePermanentId(),
+                            grant.ability().getDescription());
+                }
+            }
+        }
     }
 
     private void applyL6Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,

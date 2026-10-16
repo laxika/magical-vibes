@@ -28,6 +28,6 @@ public class HomicidalSeclusion extends Card {
                         new AllOf(List.of(
                                 new ControlsPermanentCount(1, new PermanentIsCreaturePredicate()),
                                 new ControlsPermanentCountAtMost(1, new PermanentIsCreaturePredicate()))),
-                        new StaticBoostEffect(3, 1, Set.of(Keyword.LIFELINK), GrantScope.OWN_CREATURES)));
+                        new StaticBoostEffect(3, 1, Set.of(Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES)));
     }
 }

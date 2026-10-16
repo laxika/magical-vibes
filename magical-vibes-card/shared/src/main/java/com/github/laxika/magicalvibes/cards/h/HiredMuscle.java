@@ -38,7 +38,7 @@ public class HiredMuscle extends Card {
         addEffect(EffectSlot.END_STEP_TRIGGERED,
                 new ConditionalEffect(
                         new SourceCounterThreshold(2, CounterType.KI),
-                        new MayEffect(new TransformToBackFaceEffect(), "Flip Hired Muscle?")));
+                        new MayEffect(new TransformToBackFaceEffect(true), "Flip Hired Muscle?")));
     }
 
     @Override

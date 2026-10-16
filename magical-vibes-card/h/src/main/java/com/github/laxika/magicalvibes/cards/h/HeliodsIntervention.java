@@ -37,7 +37,7 @@ public class HeliodsIntervention extends Card {
                         "Destroy X target artifacts and/or enchantments",
                         new DestroyEachTargetPermanentEffect(),
                         artifactOrEnchantment,
-                        100
+                        1000
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player gains twice X life",

@@ -219,7 +219,8 @@ public class ExileFreeCastSupport {
         List<CardEffect> spellEffects = chosenEffects != null ? chosenEffects
                 : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
 
-        if (EffectResolution.needsTarget(card) && (card.getMinTargets() > 0
+        // A spell with no declared target groups (auto-derived targeting) cannot be cast without a target.
+        if (EffectResolution.needsTarget(card) && (card.getMinTargets() > 0 || card.getMaxTargets() == 0
                 || !exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId).isEmpty())) {
             List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId);
             boolean multiTarget = card.getMaxTargets() > 1;

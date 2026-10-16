@@ -89,10 +89,10 @@ class HollowhengeScavengerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new HollowhengeScavenger(), new Geistflame()));
         harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.addToBattlefield(player2, new TyphoidRats());
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Typhoid Rats"));
@@ -110,10 +110,10 @@ class HollowhengeScavengerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new HollowhengeScavenger(), new Geistflame()));
         harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.addToBattlefield(player1, new TyphoidRats());
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Typhoid Rats"));
         harness.assertInGraveyard(player1, "Typhoid Rats");
         harness.passBothPriorities();

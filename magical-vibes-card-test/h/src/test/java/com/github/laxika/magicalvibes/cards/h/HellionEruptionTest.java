@@ -110,6 +110,7 @@ class HellionEruptionTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
                 .allSatisfy(permanent -> assertThat(permanent.getCard().getName()).isEqualTo("Hellion"));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

@@ -22,6 +22,7 @@ class HauntingApparitionTest extends BaseCardTest {
     @DisplayName("Power is 1 with empty graveyards; toughness stays 2")
     void powerIsOneWithEmptyGraveyards() {
         Permanent apparition = addCreatureReady(player1, new HauntingApparition());
+        apparition.setRememberedTargetPlayerId(player2.getId());
 
         assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(2);
@@ -31,6 +32,7 @@ class HauntingApparitionTest extends BaseCardTest {
     @DisplayName("Power is 1 plus green creature cards in the chosen opponent's graveyard")
     void powerCountsOpponentGreenCreatures() {
         Permanent apparition = addCreatureReady(player1, new HauntingApparition());
+        apparition.setRememberedTargetPlayerId(player2.getId());
         harness.setGraveyard(player2, List.of(new Brushwagg(), new Brushwagg()));
 
         assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(3);
@@ -41,6 +43,7 @@ class HauntingApparitionTest extends BaseCardTest {
     @DisplayName("Green noncreature cards and nongreen creature cards do not count")
     void onlyGreenCreatureCardsCount() {
         Permanent apparition = addCreatureReady(player1, new HauntingApparition());
+        apparition.setRememberedTargetPlayerId(player2.getId());
         harness.setGraveyard(player2, List.of(new Brushwagg(), new EarlyHarvest(), new MerfolkRaiders()));
 
         assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(2);
@@ -50,6 +53,7 @@ class HauntingApparitionTest extends BaseCardTest {
     @DisplayName("Green creature cards in the controller's own graveyard do not count")
     void ownGraveyardDoesNotCount() {
         Permanent apparition = addCreatureReady(player1, new HauntingApparition());
+        apparition.setRememberedTargetPlayerId(player2.getId());
         harness.setGraveyard(player1, List.of(new Brushwagg(), new Brushwagg()));
 
         assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(1);
@@ -59,6 +63,7 @@ class HauntingApparitionTest extends BaseCardTest {
     @DisplayName("Power updates as green creature cards enter the opponent's graveyard")
     void powerUpdatesDynamically() {
         Permanent apparition = addCreatureReady(player1, new HauntingApparition());
+        apparition.setRememberedTargetPlayerId(player2.getId());
         harness.setGraveyard(player2, List.of(new Brushwagg()));
 
         assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(2);
@@ -71,6 +76,7 @@ class HauntingApparitionTest extends BaseCardTest {
     @DisplayName("Power decreases when green creature cards leave the chosen graveyard")
     void powerDecreasesWhenCardsLeaveGraveyard() {
         Permanent apparition = addCreatureReady(player1, new HauntingApparition());
+        apparition.setRememberedTargetPlayerId(player2.getId());
         harness.setGraveyard(player2, List.of(new Brushwagg(), new Brushwagg()));
 
         assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(3);

@@ -2058,20 +2058,40 @@ public class EnterTriggerCollectorService {
     private boolean handleAnyCreaturePutCountersEqualToPower(TriggerMatchContext match,
             PutCountersOnSourceEqualToEnteringPowerEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        int power = Math.max(0, pe.enteringCard().getPower());
         Card sourceCard = match.permanent().getCard();
-        var counters = new PutCountersOnSourceEffect(effect.powerModifier(), effect.toughnessModifier(), power);
-        if (effect.optional()) {
-            var may = new MayEffect(counters, "Put " + power + " counter(s) on " + sourceCard.getName() + "?");
-            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-                match.gameData().queueMayAbility(sourceCard, match.controllerId(), may, null, match.permanent().getId());
-            }
-        } else {
-            enqueue(match, counters, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
+        // X is the entering creature's power as the ability resolves, or its last known power if it
+        // has left the battlefield by then (CR 608.2h).
+        int power = enteringPermanent == null
+                ? Math.max(0, pe.enteringCard().getPower())
+                : Math.max(0, gameQueryService.getEffectivePower(match.gameData(), enteringPermanent));
+        CounterType counterType = effect.powerModifier() < 0 ? CounterType.MINUS_ONE_MINUS_ONE : CounterType.PLUS_ONE_PLUS_ONE;
+        CardEffect counters = new PutCountersOnSelfEffect(counterType, new ChosenPermanentPower());
+        CardEffect resolved = effect.optional()
+                ? new MayEffect(counters, "Put counters on " + sourceCard.getName()
+                        + " equal to " + pe.enteringCard().getName() + "'s power?")
+                : counters;
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(resolved)),
+                    null,
+                    match.permanent().getId());
+            entry.setNonTargeting(true);
+            entry.setChosenPermanentId(enteringPermanentId);
+            entry.setChosenPermanentPowerAtLastKnown(power);
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            match.gameData().stack.add(entry);
         }
         logTriggered(match);
-        log.info("Game {} - {} triggers for {} entering (put {} +1/+1 counter(s))",
-                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), power);
+        log.info("Game {} - {} triggers for {} entering (counters equal to its power)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }
 

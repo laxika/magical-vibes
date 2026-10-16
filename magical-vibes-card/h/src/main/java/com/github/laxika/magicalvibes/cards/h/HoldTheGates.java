@@ -20,7 +20,7 @@ public class HoldTheGates extends Card {
         PermanentCount gates = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.GATE), CountScope.CONTROLLER);
         addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
-                new Fixed(0), gates, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
+                new Fixed(0), gates, GrantScope.ALL_OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
     }
 }

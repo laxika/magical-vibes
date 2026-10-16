@@ -104,7 +104,7 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
 
         harness.passUntil(TurnStep.END_STEP);
         harness.assertOnBattlefield(player1, "Haliya, Guided by Light");
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.findExiledCard(haliya.getId())).isNotNull();
     }
@@ -115,10 +115,10 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HaliyaGuidedByLight());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new HaliyaGuidedByLight()));
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2));
 
         harness.passUntil(player1, TurnStep.END_STEP);
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Haliya, Guided by Light");
@@ -144,11 +144,11 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new HaliyaGuidedByLight()));
         harness.forceActivePlayer(player2);
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
 
         harness.passUntil(player2, TurnStep.END_STEP);
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         harness.assertNotInHand(player1, "Haliya, Guided by Light");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
@@ -159,8 +159,8 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HaliyaGuidedByLight());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new HaliyaGuidedByLight()));
-        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "life loss");
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "life loss"));
 
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
@@ -177,6 +177,7 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.setHand(player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(haliya.getId())).isNotNull();

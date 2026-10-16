@@ -17,6 +17,6 @@ public class HollowbornBarghest extends Card {
                 new ActivePlayerHandEmpty(), new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)));
         // "At the beginning of each opponent's upkeep, if that player has no cards in hand, they lose 2 life."
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new ConditionalEffect(
-                new ActivePlayerHandEmpty(), new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER)));
+                new ActivePlayerHandEmpty(), new LoseLifeEffect(2, LoseLifeRecipient.ACTIVE_PLAYER)));
     }
 }

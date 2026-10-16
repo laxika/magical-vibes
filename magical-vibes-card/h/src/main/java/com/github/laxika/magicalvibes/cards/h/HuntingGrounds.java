@@ -24,12 +24,12 @@ public class HuntingGrounds extends Card {
                 new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_OPPONENT_CASTS_SPELL,
-                        new MayEffect(
-                                new SpellCastTriggerEffect(
-                                        null,
-                                        List.of(new PutCardToBattlefieldEffect(
-                                                new CardTypePredicate(CardType.CREATURE), "creature"))),
-                                "Put a creature card from your hand onto the battlefield?"),
+                        new SpellCastTriggerEffect(
+                                null,
+                                List.of(new MayEffect(
+                                        new PutCardToBattlefieldEffect(
+                                                new CardTypePredicate(CardType.CREATURE), "creature"),
+                                        "Put a creature card from your hand onto the battlefield?"))),
                         GrantScope.SELF)));
     }
 }

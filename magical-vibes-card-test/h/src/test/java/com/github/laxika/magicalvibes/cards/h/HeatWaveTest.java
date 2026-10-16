@@ -188,7 +188,7 @@ class HeatWaveTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(blocker.isBlocking()).isFalse();
-        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
     }
 
     @Test

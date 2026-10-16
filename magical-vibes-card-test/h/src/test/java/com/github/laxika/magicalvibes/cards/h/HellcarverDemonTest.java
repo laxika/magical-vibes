@@ -147,10 +147,13 @@ class HellcarverDemonTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.ImprovisationCapstoneCastChoice.class);
-        assertThat(gd.pendingMayAbilities).hasSize(2);
         harness.handleMultipleCardsChosen(player1, List.of());
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        for (int i = 0; i < 2; i++) {
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            harness.handleMayAbilityChosen(player1, true);
+        }
         harness.passBothPriorities();
         harness.passBothPriorities();
 

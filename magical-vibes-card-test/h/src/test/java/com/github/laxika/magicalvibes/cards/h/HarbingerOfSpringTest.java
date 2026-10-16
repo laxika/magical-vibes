@@ -95,6 +95,7 @@ class HarbingerOfSpringTest extends BaseCardTest {
         killHarbinger();
         harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Lifespinner");
         harness.assertNotInGraveyard(player1, "Lifespinner");
@@ -120,6 +121,7 @@ class HarbingerOfSpringTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Kami of False Hope");
         harness.assertInGraveyard(player1, "Frost Ogre");

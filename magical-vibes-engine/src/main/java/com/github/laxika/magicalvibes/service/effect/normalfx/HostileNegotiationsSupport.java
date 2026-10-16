@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingHostileNegotiations;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
@@ -21,6 +23,7 @@ public class HostileNegotiationsSupport {
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
+    private final GraveyardService graveyardService;
 
     /** Prompts the opponent after the controller has selected the pile to turn face up. */
     public void revealPileAndPromptOpponent(
@@ -58,8 +61,7 @@ public class HostileNegotiationsSupport {
         }
         for (Card card : otherPile) {
             if (gameData.removeFromExile(card.getId())) {
-                gameData.playerGraveyards.computeIfAbsent(controllerId, ignored -> new java.util.ArrayList<>())
-                        .add(card);
+                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.EXILE);
             }
         }
 

@@ -22,7 +22,7 @@ class HollowhengeOverlordTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()))

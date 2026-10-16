@@ -11,6 +11,6 @@ public class HawkeyeYoungAvenger extends Card {
 
     public HawkeyeYoungAvenger() {
         addEffect(EffectSlot.STATIC,
-                new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(new SourcePower(), true));
+                new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(new SourcePower(true), true));
     }
 }

@@ -105,7 +105,7 @@ class HallOfTheBanditLordTest extends BaseCardTest {
         Permanent budoka = findPermanent(player1, "Humble Budoka");
         assertThat(budoka.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(budoka.hasKeyword(Keyword.HASTE)).isTrue();
     }

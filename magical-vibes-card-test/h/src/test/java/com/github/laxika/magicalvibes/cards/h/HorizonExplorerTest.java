@@ -25,6 +25,7 @@ class HorizonExplorerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.playLand(player1, 0);
+        harness.handleListChoice(player1, "Untapped");
 
         Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isFalse();

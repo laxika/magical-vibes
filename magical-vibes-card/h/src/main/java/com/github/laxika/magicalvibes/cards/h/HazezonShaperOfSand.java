@@ -28,6 +28,6 @@ public class HazezonShaperOfSand extends Card {
                         new CreateTokenEffect(2, "Sand Warrior", 1, 1,
                                 CardColor.RED,
                                 Set.of(CardColor.RED, CardColor.GREEN, CardColor.WHITE),
-                                List.of(CardSubtype.WARRIOR))));
+                                List.of(CardSubtype.SAND, CardSubtype.WARRIOR))));
     }
 }

@@ -23,7 +23,7 @@ public class HarvesterTroll extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsLandPredicate())),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                        "a creature or land"),
+                        "a creature or land", false, false),
                 "Sacrifice a creature or land?"));
     }
 }

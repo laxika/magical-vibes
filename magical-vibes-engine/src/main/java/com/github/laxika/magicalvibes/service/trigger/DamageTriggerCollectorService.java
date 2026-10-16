@@ -1254,13 +1254,17 @@ public class DamageTriggerCollectorService {
         GameData gameData = match.gameData();
         Permanent aura = match.permanent();
 
-        // Mortal Wound: bake the Aura's permanent id so resolution re-derives the enchanted creature.
+        // "Destroy it" names the creature that was dealt damage when the trigger fired, even if the
+        // Equipment is moved to another creature before the trigger resolves (Hot Soup, Mortal Wound).
+        CardEffect boundEffect = effect.reference() == PermanentReference.ATTACHED
+                ? new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, effect.cannotBeRegenerated())
+                : effect;
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 aura.getCard(),
                 match.controllerId(),
                 aura.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                new ArrayList<>(List.of(boundEffect)),
                 null,
                 aura.getId()
         );

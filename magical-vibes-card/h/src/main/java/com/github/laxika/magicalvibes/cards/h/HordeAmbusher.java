@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class HordeAmbusher extends Card {
 
     public HordeAmbusher() {
-        addMorph("{1}{R}", new CardColorPredicate(CardColor.RED), "red");
+        addMorphWithRevealCost(new CardColorPredicate(CardColor.RED), "red");
         addEffect(EffectSlot.ON_BLOCK, new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
         target(TargetFilters.creature()).addEffect(
                 EffectSlot.ON_TURNED_FACE_UP,

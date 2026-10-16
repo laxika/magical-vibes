@@ -11,7 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 public class HomicideInvestigator extends Card {
 
     public HomicideInvestigator() {
+        // "Whenever one or more nontoken creatures you control die" includes this creature itself;
+        // the once-per-turn wrapper keeps simultaneous deaths to a single investigate.
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
+                new OncePerTurnTriggerEffect(CreateTokenEffect.ofClueToken(1)));
+        addEffect(EffectSlot.ON_DEATH,
                 new OncePerTurnTriggerEffect(CreateTokenEffect.ofClueToken(1)));
     }
 }

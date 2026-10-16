@@ -124,9 +124,9 @@ class HellishRebukeTest extends BaseCardTest {
         Permanent pinger = addCreatureReady(player2, new ProdigalSorcerer());
         harness.setHand(player1, List.of(new HellishRebuke(), new Unsummon()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
@@ -153,7 +153,8 @@ class HellishRebukeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Prodigal Sorcerer");
         pinger.setSummoningSick(false);
 
-        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(pinger), null,
+                player1.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Prodigal Sorcerer");

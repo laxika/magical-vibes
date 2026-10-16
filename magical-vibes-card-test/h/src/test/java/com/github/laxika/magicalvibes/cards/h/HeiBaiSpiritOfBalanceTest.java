@@ -95,6 +95,7 @@ class HeiBaiSpiritOfBalanceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
 
         assertThat(heiBai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
@@ -109,6 +110,7 @@ class HeiBaiSpiritOfBalanceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
 
         assertThat(heiBai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();

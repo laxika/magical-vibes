@@ -31,7 +31,7 @@ public class HunterSliver extends Card {
                                                 new PermanentIsCreaturePredicate(),
                                                 new PermanentControlledByDefendingPlayerPredicate()))),
                                 new MustBlockSourceEffect(null,
-                                        new PermanentControlledByDefendingPlayerPredicate())),
+                                        new PermanentControlledByDefendingPlayerPredicate(), true)),
                         "Have target creature defending player controls untap and block it if able?"),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));

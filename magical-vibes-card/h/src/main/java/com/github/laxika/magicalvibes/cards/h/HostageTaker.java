@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -26,7 +25,8 @@ public class HostageTaker extends Card {
 
     public HostageTaker() {
         // When Hostage Taker enters the battlefield, exile another target creature or artifact
-        // until Hostage Taker leaves the battlefield.
+        // until Hostage Taker leaves the battlefield. You may cast that card for as long as it
+        // remains exiled, and mana of any type can be spent to cast that spell.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentAnyOfPredicate(List.of(
@@ -36,10 +36,6 @@ public class HostageTaker extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another creature or artifact"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentUntilSourceLeavesEffect());
-
-        // You may cast that card for as long as it remains exiled,
-        // and mana of any type can be spent to cast that spell.
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(true));
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ExileTargetPermanentUntilSourceLeavesEffect.castableByControllerWithAnyMana());
     }
 }

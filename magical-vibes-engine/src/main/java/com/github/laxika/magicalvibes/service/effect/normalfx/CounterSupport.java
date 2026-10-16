@@ -290,6 +290,7 @@ public class CounterSupport {
         }
 
         gameData.playerDecks.get(target.getOwnerId()).add(0, target.getPhysicalCard());
+        triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
         notifyCounteredSpell(gameData, source.getControllerId(), target);
         return target.getPhysicalCard();
     }

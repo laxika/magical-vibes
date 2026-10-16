@@ -34,7 +34,7 @@ public class HazoretsFavor extends Card {
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
-                        new SacrificeTargetPermanentAtEndStepEffect()
+                        new SacrificeTargetPermanentAtEndStepEffect(false, true)
                 ),
                 "You may have target creature you control get +2/+0 and gain haste until end of turn. "
                         + "If you do, sacrifice it at the beginning of the next end step."

@@ -6,8 +6,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * its owner's hand."
  * <p>
  * Placed via {@link SpellCastTriggerEffect} in {@code ON_CONTROLLER_CASTS_SPELL}. The engine has no
- * cast-time modal machinery for triggered abilities, so mode (+ target) are chosen as the ability
- * resolves (same pattern as {@link RelicBindTapEffect}). A "do nothing" mode covers "up to one".
+ * cast-time modal machinery for triggered abilities, so the mode (+ target) are announced by
+ * {@code StackedModalTriggerService} as the ability goes on the stack (CR 603.3c). A "do nothing"
+ * mode covers "up to one": choosing it removes the ability from the stack.
  */
 public record HullbreakerHorrorTriggerEffect() implements CardEffect {
 }

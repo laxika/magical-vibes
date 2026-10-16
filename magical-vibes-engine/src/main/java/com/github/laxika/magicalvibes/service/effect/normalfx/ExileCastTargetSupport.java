@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,6 +47,9 @@ public class ExileCastTargetSupport {
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
     private final SchemeAbandonSupport schemeAbandonSupport;
+    @Autowired
+    @Lazy
+    private PutCountersOnSourceEffectHandler putCountersOnSourceEffectHandler;
 
     public StackEntryType mapCardTypeToSpellType(Card card) {
         return switch (card.getType()) {
@@ -73,6 +79,21 @@ public class ExileCastTargetSupport {
             return;
         }
         Card sourceCard = sourcePermanent == null ? fallbackSourceCard : sourcePermanent.getCard();
+        if (afterCastEffect instanceof PutCountersOnSourceEffect && sourcePermanent != null) {
+            // "If you cast a spell this way, put a +1/+1 counter on [source]" is part of the resolving
+            // ability, so the counter is placed before anyone can respond to the spell.
+            StackEntry resolving = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    controllerId,
+                    sourceCard.getName() + "'s ability",
+                    List.of(afterCastEffect),
+                    null,
+                    sourcePermanentId);
+            resolving.setNonTargeting(true);
+            putCountersOnSourceEffectHandler.resolve(gameData, resolving, afterCastEffect);
+            return;
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,

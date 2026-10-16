@@ -107,11 +107,17 @@ public class EachPlayerMayPutCardFromHandToBattlefieldSupport {
         UUID attachmentId = null;
         if (chosenCard.isAura() && !chosenCard.isEnchantZone()) {
             List<UUID> hosts = auraHostIds(gameData, playerId, chosenCard);
-            if (hosts.size() != 1) {
-                // An Aura with no legal host stays in its current zone (CR 303.4g). Several legal hosts
-                // would need the host choice of CR 303.4f, which this sequential path does not offer yet.
-                log.info("Game {} - {} stays in hand: {} legal hosts", gameData.id, chosenCard.getName(), hosts.size());
+            if (hosts.isEmpty()) {
+                // An Aura with no legal host stays in its current zone (CR 303.4g).
+                log.info("Game {} - {} stays in hand: no legal host", gameData.id, chosenCard.getName());
                 return false;
+            }
+            if (hosts.size() > 1) {
+                // CR 303.4f: the entering player chooses what the Aura enchants; the batch asks for the
+                // host and then places the Aura, and the process continues once that choice is answered.
+                battlefieldEntryBatchSupport.begin(gameData, List.of(
+                        new BattlefieldEntryCard(playerId, playerId, chosenCard, Zone.HAND, null)));
+                return true;
             }
             attachmentId = hosts.getFirst();
         }
@@ -122,7 +128,7 @@ public class EachPlayerMayPutCardFromHandToBattlefieldSupport {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent,
                 battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of());
         if (gameQueryService.findPermanentController(gameData, permanent.getId()) != null) {
-            battlefieldEntryService.processCreatureETBEffects(gameData, playerId, chosenCard, null, false);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
         }
         gameLogService.append(gameData, GameLog.builder()
                 .text(gameData.playerIdToName.get(playerId) + " puts ")

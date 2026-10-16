@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.k.KozilekButcherOfTruth;
 import com.github.laxika.magicalvibes.cards.o.OakenSiren;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.q.QuintoriusKand;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -90,7 +91,8 @@ class HitTheMotherLodeTest extends BaseCardTest {
 
     @Test
     void discoveredSpellTriggersCastingFromExileAbilities() {
-        harness.addToBattlefield(player1, new QuintoriusKand());
+        harness.addToBattlefieldAndReturn(player1, new QuintoriusKand())
+                .setCounterCount(CounterType.LOYALTY, 5);
         harness.setLibrary(player1, List.of(new OakenSiren()));
 
         castHitTheMotherLode();

@@ -26,23 +26,33 @@ import java.util.List;
  * @param madness         whether the spell was cast for its madness cost
  * @param sourcePermanent the permanent that just entered, when available
  * @param repeatedAdditionalCosts the repeatable additional mana payments made to cast the source spell
+ * @param targetId        the entering permanent's chosen target (an Aura's enchant target), when any;
+ *                        read by target-relative intervening-if gates such as "if enchanted creature …"
  */
 public record EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                                boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
                                boolean prowl, boolean madness, boolean alternateCost, Permanent sourcePermanent,
-                               List<String> repeatedAdditionalCosts) {
+                               List<String> repeatedAdditionalCosts, UUID targetId) {
+
+    public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
+                            boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
+                            boolean prowl, boolean madness, boolean alternateCost, Permanent sourcePermanent,
+                            List<String> repeatedAdditionalCosts) {
+        this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl,
+                madness, alternateCost, sourcePermanent, repeatedAdditionalCosts, null);
+    }
 
     public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                             boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
                             boolean prowl) {
         this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl,
-                false, false, null, List.of());
+                false, false, null, List.of(), null);
     }
 
     public EtbEffectContext(GameData gameData, Card card, UUID controllerId,
                             boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
                             boolean prowl, Permanent sourcePermanent) {
         this(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl,
-                false, false, sourcePermanent, List.of());
+                false, false, sourcePermanent, List.of(), null);
     }
 }

@@ -408,8 +408,11 @@ public class GameData {
     /** Perpetual power/toughness modifiers granted to physical cards, keyed by stable card id. */
     public final Map<UUID, CardPowerToughnessModifier> perpetualCardPowerToughnessModifiers =
             new ConcurrentHashMap<>();
-    /** A perpetual base-power/base-toughness setter, retaining its effect timestamp across zones. */
-    public record PerpetualBasePowerToughness(int power, int toughness, long timestamp) {
+    /**
+     * A perpetual base-power/base-toughness setter, retaining its effect timestamp across zones. A
+     * {@code null} component is left to the card's own value (a power-only exchange).
+     */
+    public record PerpetualBasePowerToughness(Integer power, Integer toughness, long timestamp) {
     }
     /** Perpetual base-power/base-toughness setters keyed by physical card identity. */
     public final Map<UUID, PerpetualBasePowerToughness> perpetualCardBasePowerToughness =
@@ -453,6 +456,8 @@ public class GameData {
     public final Map<UUID, Set<CardType>> perpetualCardTypes = new ConcurrentHashMap<>();
     /** Perpetual card subtypes keyed by the affected card's identity. */
     public final Map<UUID, Set<CardSubtype>> perpetualCardSubtypes = new ConcurrentHashMap<>();
+    /** Cards that perpetually became a creature type, so their printed creature types no longer apply. */
+    public final Set<UUID> perpetualCreatureTypeReplacedCardIds = ConcurrentHashMap.newKeySet();
     /** Perpetual activated abilities keyed by the affected card's identity. */
     public final Map<UUID, List<ActivatedAbility>> perpetualActivatedAbilities = new ConcurrentHashMap<>();
     /** Perpetual Evoke alternate costs keyed by the affected card's identity. */
@@ -940,6 +945,8 @@ public class GameData {
 
     /** Remaining individual draws after an interactive replacement, in resolution order. */
     public final Deque<UUID> pendingCardDraws = new ArrayDeque<>();
+    /** Draws produced by a draw replacement (e.g. "draw two cards instead") still to be performed. */
+    public final Deque<UUID> pendingReplacementCardDraws = new ArrayDeque<>();
     /** Optional replacement sources declined for the draw currently being resolved. */
     public final Map<UUID, Set<UUID>> declinedDrawReplacementSources = new ConcurrentHashMap<>();
     /** Preserves the turn-based draw exemption while an optional replacement is answered. */
@@ -1653,6 +1660,8 @@ public class GameData {
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** Draw count before the current optional draw instruction, retained across replacement choices. */
     public Integer pendingEachPlayerDrawUpToInitialCount;
+    /** Hypergenesis-style put-from-hand process paused behind the prompt opened by the card just put. */
+    public PendingEachPlayerPutContinuation pendingEachPlayerPutContinuation;
     /** Chosen count for the current optional draw instruction, retained across replacement choices. */
     public Integer pendingEachPlayerMayDrawChosenCount;
     /** APNAP-ordered players choosing for "each player may draw, then drawers gain life" effects. */
@@ -1970,6 +1979,8 @@ public class GameData {
      *  permanent they become enters with haste until end of turn. Consumed by
      *  {@code BattlefieldEntryService} and cleared at end of turn. */
     public final Set<UUID> spellsGrantedHasteOnEntry = ConcurrentHashMap.newKeySet();
+    /** The subset of {@link #spellsGrantedHasteOnEntry} whose haste has no duration (Hall of the Bandit Lord). */
+    public final Set<UUID> spellsGrantedPermanentHasteOnEntry = ConcurrentHashMap.newKeySet();
     /** Native suspend haste awaiting the completion of an exile-cast target choice. */
     public final Set<UUID> spellsGrantedSuspendHasteOnEntry = ConcurrentHashMap.newKeySet();
 
@@ -2145,6 +2156,13 @@ public class GameData {
      *  Maps graveyard card UUID -> source permanent and casting player (e.g. Havengul Lich).
      *  Cleared at end of turn. */
     public final Map<UUID, GraveyardCardCastPermission> graveyardCardCastPermissionsUntilEndOfTurn = new ConcurrentHashMap<>();
+
+    /** Every cast-permission grant (Havengul Lich) made for a graveyard card this turn, one entry per
+     *  activation. {@link #graveyardCardCastPermissionsUntilEndOfTurn} holds a single permission per
+     *  card, so this keeps each grant's own "when you cast it" rider and each player's permission.
+     *  Cleared at end of turn. */
+    public final Map<UUID, List<GraveyardCardCastPermission>> graveyardCardCastPermissionGrantsUntilEndOfTurn =
+            new ConcurrentHashMap<>();
 
     /** Players whose instant/sorcery spells are automatically copied until end of turn
      *  (e.g. The Mirari Conjecture chapter III). Cleared at end of turn. */
@@ -4633,6 +4651,15 @@ public class GameData {
     /** Whether the spell with this card id was an artifact spell when it was cast this turn. */
     public boolean wasArtifactSpellWhenCastThisTurn(UUID cardId) {
         return artifactSpellsCastThisTurn.contains(cardId);
+    }
+
+    /**
+     * Notes that a spell the player just cast targets a permanent that is currently a creature, for
+     * creature types the card alone cannot show (an animated land).
+     */
+    public void recordSpellCastTargetingCreature(UUID playerId, UUID cardId) {
+        spellsCastTargetingCreatureThisTurn.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(cardId);
     }
 
     public void recordSpellCast(UUID playerId, Card card, boolean castWithWarp) {
@@ -7462,6 +7489,7 @@ public class GameData {
         copy.graveyardReturnQueueLeaveBatchOpen = this.graveyardReturnQueueLeaveBatchOpen;
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
+        copy.pendingEachPlayerPutContinuation = this.pendingEachPlayerPutContinuation;
         copy.pendingEachPlayerMayDrawChosenCount = this.pendingEachPlayerMayDrawChosenCount;
         copy.pendingEachPlayerMayDrawThenGainLifeQueue.addAll(this.pendingEachPlayerMayDrawThenGainLifeQueue);
         copy.pendingEachPlayerMayDrawThenGainLifeDrawers.addAll(this.pendingEachPlayerMayDrawThenGainLifeDrawers);
@@ -7689,6 +7717,7 @@ public class GameData {
                 copy.perpetualCardTypes.put(cardId, Set.copyOf(types)));
         this.perpetualCardSubtypes.forEach((cardId, subtypes) ->
                 copy.perpetualCardSubtypes.put(cardId, Set.copyOf(subtypes)));
+        copy.perpetualCreatureTypeReplacedCardIds.addAll(this.perpetualCreatureTypeReplacedCardIds);
         this.perpetualActivatedAbilities.forEach((cardId, abilities) ->
                 copy.perpetualActivatedAbilities.put(cardId, List.copyOf(abilities)));
         this.perpetualEvokeAlternateCasts.forEach((cardId, alternateCasts) ->
@@ -8239,6 +8268,7 @@ public class GameData {
         copy.whirlwindDenial.copyFrom(this.whirlwindDenial);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
         copy.pendingCardDraws.addAll(this.pendingCardDraws);
+        copy.pendingReplacementCardDraws.addAll(this.pendingReplacementCardDraws);
         this.declinedDrawReplacementSources.forEach((playerId, sources) ->
                 copy.declinedDrawReplacementSources.put(playerId, new java.util.HashSet<>(sources)));
         copy.pendingDrawFirstDrawStepFlags.putAll(this.pendingDrawFirstDrawStepFlags);
@@ -8928,6 +8958,7 @@ public class GameData {
             copy.spellGrantedSubtypesOnEntry.put(cardId, copied);
         });
         copy.spellsGrantedHasteOnEntry.addAll(this.spellsGrantedHasteOnEntry);
+        copy.spellsGrantedPermanentHasteOnEntry.addAll(this.spellsGrantedPermanentHasteOnEntry);
         copy.spellsGrantedSuspendHasteOnEntry.addAll(this.spellsGrantedSuspendHasteOnEntry);
         copy.spellsGrantedRiotOnEntry.addAll(this.spellsGrantedRiotOnEntry);
         copy.mayTapLandsForSpellsUntilEndOfTurn.addAll(this.mayTapLandsForSpellsUntilEndOfTurn);
@@ -8940,6 +8971,8 @@ public class GameData {
         copy.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn
                 .addAll(this.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn);
         copy.graveyardCardCastPermissionsUntilEndOfTurn.putAll(this.graveyardCardCastPermissionsUntilEndOfTurn);
+        this.graveyardCardCastPermissionGrantsUntilEndOfTurn.forEach((cardId, grants) ->
+                copy.graveyardCardCastPermissionGrantsUntilEndOfTurn.put(cardId, new ArrayList<>(grants)));
         copy.graveyardAdventureCastPermissions.putAll(this.graveyardAdventureCastPermissions);
 
         // --- Damage prevention / redirection still pending ---

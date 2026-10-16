@@ -12,15 +12,13 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsMustAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DFT", collectorNumber = "134")
@@ -38,11 +36,12 @@ public class HowlsquadHeavy extends Card {
                 1,
                 1,
                 CardColor.RED,
+                null,
                 List.of(CardSubtype.GOBLIN),
                 Set.of(),
-                Set.of(),
-                Map.of(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK, GrantScope.SELF))));
+                Set.of()));
+        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
+                new MakeCreatedPermanentsMustAttackThisCombatEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

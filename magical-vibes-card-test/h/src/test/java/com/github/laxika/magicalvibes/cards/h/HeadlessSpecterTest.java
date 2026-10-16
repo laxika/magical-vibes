@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -50,7 +51,7 @@ class HeadlessSpecterTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HeadlessSpecter()));
         addCreatureReady(player1, new HeadlessSpecter()).setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         harness.setHand(player1, List.of(new HeadlessSpecter()));
         resolveAllTriggers();

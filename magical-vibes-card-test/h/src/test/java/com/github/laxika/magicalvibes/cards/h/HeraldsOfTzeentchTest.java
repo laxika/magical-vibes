@@ -76,8 +76,8 @@ class HeraldsOfTzeentchTest extends BaseCardTest {
 
         castHeralds();
         harness.passBothPriorities();
-        assertThat(gd.findExiledCard(skipped.getId())).isSameAs(skipped);
-        assertThat(gd.findExiledCard(hit.getId())).isSameAs(hit);
+        assertThat(gd.findExiledCard(skipped.getId()).card()).isSameAs(skipped);
+        assertThat(gd.findExiledCard(hit.getId()).card()).isSameAs(hit);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
 
         harness.handleCardChosen(player1, -1);

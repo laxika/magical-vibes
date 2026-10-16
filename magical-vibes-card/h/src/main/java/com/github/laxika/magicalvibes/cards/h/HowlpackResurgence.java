@@ -19,7 +19,7 @@ public class HowlpackResurgence extends Card {
     public HowlpackResurgence() {
         // Flash is auto-loaded from Scryfall.
         // Each creature you control that's a Wolf or a Werewolf gets +1/+1 and has trample.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WOLF, CardSubtype.WEREWOLF))));
     }
 }

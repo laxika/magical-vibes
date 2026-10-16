@@ -1517,8 +1517,15 @@ public class AbilityActivationService {
             }
             payManaCostForSourceCard(gameData, playerId, card, abilityCost, xValue, false, false,
                     additionalGenericCost);
+        } else if (maxSpeedFreeUnearth) {
+            int activationTax = castingCostService.getActivatedAbilityActivationTax(
+                    gameData, playerId, new Permanent(card), ability, isManaAbility(ability));
+            if (activationTax > 0) {
+                payManaCostForSourceCard(gameData, playerId, card, "{0}", xValue, false, false,
+                        activationTax);
+            }
         }
-        if (maxSpeedFreeUnearth) {
+        if (ability.isUnearthAbility()) {
             gameData.playersWhoUsedMaxSpeedFreeUnearthThisTurn.add(playerId);
         }
 
@@ -5460,7 +5467,8 @@ public class AbilityActivationService {
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, tapCostSupport.requiredCount(gameData, c, sourcePermanentId, xValue), predicateEvaluationService, gameLogService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(
-                c, predicateEvaluationService, gameLogService, gameQueryService, sourcePermanentId);
+                c, predicateEvaluationService, gameLogService, gameQueryService, sourcePermanentId,
+                abilityWithCostRequiresTap(gameData, sourcePermanentId, c), chosenSoFar);
         if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(
                 c, xValue, predicateEvaluationService, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameLogService, triggerCollectionService, chosenSoFar);
@@ -5475,6 +5483,26 @@ public class AbilityActivationService {
         if (effect instanceof UnattachEquipmentFromSourceCost c) return new UnattachEquipmentFromSourceCostHandler(
                 c, sourcePermanentId, gameQueryService, equipSupport, gameLogService);
         return null;
+    }
+
+    /** Whether the source's ability that has {@code cost} also has {T} in its cost. */
+    private boolean abilityWithCostRequiresTap(GameData gameData, UUID sourcePermanentId, CardEffect cost) {
+        Permanent source = sourcePermanentId == null ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return source != null && getEffectiveActivatedAbilities(gameData, source).stream()
+                .anyMatch(candidate -> candidate.isRequiresTap() && candidate.getEffects().contains(cost));
+    }
+
+    /**
+     * Whether a tapped source can still pay its own {T} cost: another cost of the same ability untaps it
+     * first (CR 601.2h lets the costs be paid in any order).
+     */
+    private boolean canUntapSourceToPayTapCost(GameData gameData, Permanent source, ActivatedAbility ability) {
+        return ability.getEffects().stream()
+                .filter(UntapMultiplePermanentsCost.class::isInstance)
+                .map(UntapMultiplePermanentsCost.class::cast)
+                .anyMatch(untap -> !untap.excludeSource() && !untap.opponentControlled()
+                        && !gameQueryService.cantBecomeUntapped(gameData, source)
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, source, untap.filter()));
     }
 
     /**
@@ -6567,7 +6595,7 @@ public class AbilityActivationService {
             if (gameQueryService.isLockedFromActivatingTapAbilities(gameData, permanent)) {
                 throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated");
             }
-            if (permanent.isTapped()) {
+            if (permanent.isTapped() && !canUntapSourceToPayTapCost(gameData, permanent, ability)) {
                 throw new IllegalStateException("Permanent is already tapped");
             }
             if (permanent.isTapRestrictedUnlessAttacking()) {
@@ -9019,8 +9047,16 @@ public class AbilityActivationService {
             return new PaidHandCard(paid.getName(), manaValue);
         }
 
-        graveyardService.addCardToGraveyard(gameData, player.getId(), paid, Zone.HAND);
         gameData.discardCausedByOpponent = false;
+        // A discard replacement or madness (the card goes to exile and its trigger is queued) applies to
+        // the cost like any other discard; triggers it creates wait until the ability is on the stack.
+        int stackBeforeDiscard = gameData.stack.size();
+        graveyardService.discardCard(gameData, player.getId(), paid);
+        if (gameData.stack.size() > stackBeforeDiscard) {
+            gameData.pendingActivatedAbilityCostTriggers.addAll(
+                    new ArrayList<>(gameData.stack.subList(stackBeforeDiscard, gameData.stack.size())));
+            gameData.stack.subList(stackBeforeDiscard, gameData.stack.size()).clear();
+        }
         collectDiscardTriggersAsAbilityCost(gameData, player.getId(), paid);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " discards " , paid, " as an activation cost."));

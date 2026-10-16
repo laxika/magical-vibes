@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.CardTypesAmongControlledPermanentsAndGraveyardAtLeast;
@@ -30,7 +29,7 @@ public class HappilyEverAfter extends Card {
                 new AllOf(List.of(
                         new ColorsAmongControlledPermanentsAtLeast(5),
                         new CardTypesAmongControlledPermanentsAndGraveyardAtLeast(6),
-                        new ControllerLifeAtLeast(GameData.STARTING_LIFE_TOTAL))),
+                        new ControllerLifeAtLeast(0, true))),
                 new WinGameEffect()));
     }
 }

@@ -37,7 +37,11 @@ public class DefendingPlayerMayDrawCardEffectHandler implements NormalEffectHand
         UUID attackedId = entry.getAttackedTargetId();
         if (attackedId == null) return;
         UUID defendingPlayerId = attackedId;
-        if (!gameData.playerIds.contains(attackedId)) {
+        if (entry.getDefendingPlayerId() != null) {
+            // Recorded when the attack trigger was created, so it survives the attacked planeswalker
+            // or battle leaving the battlefield before the trigger resolves.
+            defendingPlayerId = entry.getDefendingPlayerId();
+        } else if (!gameData.playerIds.contains(attackedId)) {
             Permanent attacked = gameQueryService.findPermanentById(gameData, attackedId);
             if (attacked == null) return;
             defendingPlayerId = gameQueryService.isBattle(gameData, attacked)

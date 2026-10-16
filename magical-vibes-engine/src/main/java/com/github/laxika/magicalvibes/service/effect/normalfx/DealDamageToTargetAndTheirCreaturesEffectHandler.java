@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
@@ -48,6 +49,9 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
 
         // Determine the affected player: if target is a player, use directly;
         // if target is a planeswalker, use its controller
+        List<SourceNextDamageToAnyTargetShield> shieldsAtStart =
+                List.copyOf(gameData.sourceNextDamageToAnyTargetShields);
+        List<SourceNextDamageToAnyTargetShield> restoredShields = new ArrayList<>();
         UUID affectedPlayerId;
         boolean targetIsPlayer = gameData.playerIds.contains(targetId);
         if (targetIsPlayer) {
@@ -77,11 +81,28 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
                     gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", creature.getCard(), " is prevented."));
                     continue;
                 }
+                restoreSimultaneousShields(gameData, shieldsAtStart, restoredShields);
                 damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);
             }
         }
+        gameData.sourceNextDamageToAnyTargetShields.removeAll(restoredShields);
 
         gameOutcomeService.checkWinCondition(gameData);
     
+    }
+
+    /**
+     * All damage this effect deals is one simultaneous event, so a "next time a source would deal
+     * damage" shield consumed by an earlier recipient must still apply to the remaining recipients.
+     */
+    private void restoreSimultaneousShields(GameData gameData, List<SourceNextDamageToAnyTargetShield> shieldsAtStart,
+                                            List<SourceNextDamageToAnyTargetShield> restoredShields) {
+        for (SourceNextDamageToAnyTargetShield shield : shieldsAtStart) {
+            if (shield.remainingDamage() == Integer.MAX_VALUE
+                    && !gameData.sourceNextDamageToAnyTargetShields.contains(shield)) {
+                gameData.sourceNextDamageToAnyTargetShields.addFirst(shield);
+                restoredShields.add(shield);
+            }
+        }
     }
 }

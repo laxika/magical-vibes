@@ -16,8 +16,8 @@ import java.util.List;
 public class HomurasEssence extends Card {
 
     public HomurasEssence() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
@@ -25,7 +25,7 @@ public class HomurasEssence extends Card {
                         List.of(new BoostSelfEffect(1, 0)),
                         "{R}: This creature gets +1/+0 until end of turn."
                 ),
-                GrantScope.OWN_CREATURES
+                GrantScope.ALL_OWN_CREATURES
         ));
     }
 }

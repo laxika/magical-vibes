@@ -55,6 +55,20 @@ public class PutMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler implements
             }
         });
 
+        // Owners choose their order in APNAP order (CR 101.4).
+        List<UUID> apnapOrder = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = apnapOrder.indexOf(gameData.activePlayerId);
+        if (activeIndex > 0) {
+            List<UUID> rotated = new ArrayList<>(apnapOrder.subList(activeIndex, apnapOrder.size()));
+            rotated.addAll(apnapOrder.subList(0, activeIndex));
+            apnapOrder = rotated;
+        }
+        List<UUID> apnap = apnapOrder;
+        matchingPermanentIds.sort(java.util.Comparator.comparingInt(permanentId -> {
+            int index = apnap.indexOf(ownerId(gameData, gameQueryService.findPermanentById(gameData, permanentId)));
+            return index < 0 ? Integer.MAX_VALUE : index;
+        }));
+
         beginNextChoice(gameData, entry.getCard().getName(), matchingPermanentIds, List.of(), false);
     }
 

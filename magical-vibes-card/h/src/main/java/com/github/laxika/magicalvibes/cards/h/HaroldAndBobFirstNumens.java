@@ -27,13 +27,15 @@ public class HaroldAndBobFirstNumens extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),
                 "Target must be a Forest you control");
 
-        addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(
-                ReturnSourceAsAuraEffect.losingOtherAbilities(forestYouControl)));
-
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        GrantActivatedAbilityEffect forestMana = new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(new AwardAnyColorManaEffect(3), new GiveControllerRadCountersEffect(2)),
                         "{T}: Add three mana of any one color. You get two rad counters."),
-                GrantScope.ENCHANTED_PERMANENT));
+                GrantScope.ENCHANTED_PERMANENT);
+
+        addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(
+                ReturnSourceAsAuraEffect.losingOtherAbilities(forestYouControl, forestMana)));
+
+        addEffect(EffectSlot.STATIC, forestMana);
     }
 }

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
@@ -352,6 +353,8 @@ public class EtbTriggerService {
                 // "As enters, choose a creature type" is a replacement-style choice made during entry
                 // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
                 .filter(e -> !(e instanceof SubtypeChoiceOnEnterEffect))
+                // "As enters, choose a number at random" is applied while the permanent enters (Haktos).
+                .filter(e -> !(e instanceof ChooseRandomNumberOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseModeOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseIndependentModesOnEnterEffect))
                 .filter(e -> !isEntryReplacementEffect(e))
@@ -413,7 +416,8 @@ public class EtbTriggerService {
             // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
             // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
             EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode,
-                    kicked, evoked, prowl, madness, alternateCost, enteringPermanent, repeatedAdditionalCosts);
+                    kicked, evoked, prowl, madness, alternateCost, enteringPermanent, repeatedAdditionalCosts,
+                    targetId);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
                     .filter(e -> !(e instanceof ChooseOneAtTriggerTimeEffect))

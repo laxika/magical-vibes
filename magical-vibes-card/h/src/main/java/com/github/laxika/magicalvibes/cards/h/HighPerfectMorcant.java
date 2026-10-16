@@ -19,7 +19,8 @@ import java.util.List;
 public class HighPerfectMorcant extends Card {
 
     public HighPerfectMorcant() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EachOpponentBlightsEffect(1));
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.ELF),
                         new EachOpponentBlightsEffect(1)));

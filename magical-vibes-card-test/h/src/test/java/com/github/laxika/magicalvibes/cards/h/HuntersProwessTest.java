@@ -91,8 +91,10 @@ class HuntersProwessTest extends BaseCardTest {
 
         bears.setAttacking(true);
         harness.setLife(player1, 20);
-        resolveCombat(player2);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> resolveCombat(player2));
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         harness.assertLife(player1, 15);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(5);

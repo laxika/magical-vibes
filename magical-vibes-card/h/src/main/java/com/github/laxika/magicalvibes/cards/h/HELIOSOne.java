@@ -30,9 +30,9 @@ public class HELIOSOne extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 true,
-                null,
+                "{1}",
                 List.of(new EnergyCountersEffect(1)),
-                "{T}: You get {E}."
+                "{1}, {T}: You get {E}."
         ));
 
         PermanentPredicate nonlandPermanentWithManaValueX = new PermanentAllOfPredicate(List.of(

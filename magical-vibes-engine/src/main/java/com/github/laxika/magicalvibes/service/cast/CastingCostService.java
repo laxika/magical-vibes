@@ -969,6 +969,9 @@ public class CastingCostService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
             if (battlefield == null) continue;
             for (Permanent source : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, source)) {
+                    continue;
+                }
                 List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(EffectSlot.STATIC));
                 effects.addAll(gameQueryService.getGrantedEffects(gameData, source));
                 for (CardEffect effect : effects) {
@@ -1007,7 +1010,7 @@ public class CastingCostService {
 
     private static int targetCount(UUID targetId, List<UUID> targetIds) {
         return targetIds != null && !targetIds.isEmpty()
-                ? targetIds.size() : targetId == null ? 0 : 1;
+                ? (int) targetIds.stream().distinct().count() : targetId == null ? 0 : 1;
     }
 
     private int getOwnTargetingCastCostIncrease(GameData gameData, Card card, UUID targetId,
@@ -1981,6 +1984,26 @@ public class CastingCostService {
         return false;
     }
 
+    /**
+     * The mana a flash-granting {@link AlternateHandCast} charges. Such a cast models "cast as though
+     * it had flash if you pay {N} more" as an alternate cost of the printed cost plus {N}; when an
+     * unlimited zero-cost permission (Omniscience) applies to the hand cast, the printed cost is
+     * waived but the {N} surcharge is still paid (CR 118.8: an additional cost is paid on top of
+     * whatever cost is chosen). Any other alternate cost keeps its printed mana.
+     */
+    public String alternateHandCastManaCost(GameData gameData, UUID playerId, Card card,
+                                            AlternateHandCast altCast, String printedManaCost) {
+        if (!altCast.grantsFlash() || altCast.flashAdditionalGenericCost() == null) {
+            return printedManaCost;
+        }
+        FreeCastSource source = findFreeCastSource(gameData, playerId, card, Zone.HAND);
+        if (source == null || source.nextSpellPredicate() != null
+                || (source.effect() != null && source.effect().oncePerTurn())) {
+            return printedManaCost;
+        }
+        return "{" + altCast.flashAdditionalGenericCost() + "}";
+    }
+
     private boolean matchesAlternativeCostPredicate(GameData gameData, UUID playerId, Card card,
                                                     CardPredicate predicate) {
         return predicateEvaluationService.matchesCardPredicate(card, predicate, null, gameData, playerId);
@@ -2400,7 +2423,8 @@ public class CastingCostService {
         var manaCost = altCast.getCost(ManaCastingCost.class);
         if (manaCost.isPresent()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            ManaCost printedAlternativeCost = new ManaCost(manaCost.get().manaCost());
+            ManaCost printedAlternativeCost = new ManaCost(alternateHandCastManaCost(
+                    gameData, playerId, card, altCast, manaCost.get().manaCost()));
             ManaCost cost = card.getKeywords().contains(Keyword.PLOT)
                     ? printedAlternativeCost
                     : applyColoredManaCostReductions(gameData, playerId, card, printedAlternativeCost);
@@ -2511,13 +2535,13 @@ public class CastingCostService {
         int targetCountReduction = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(TargetCountCastCostReductionEffect.class::isInstance)
                 .map(TargetCountCastCostReductionEffect.class::cast)
-                .mapToInt(effect -> targetIds.size() * effect.amount())
+                .mapToInt(effect -> (int) targetIds.stream().distinct().count() * effect.amount())
                 .sum();
         targetCountReduction += gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                 .filter(TargetCountCastCostReductionEffect.class::isInstance)
                 .map(TargetCountCastCostReductionEffect.class::cast)
-                .mapToInt(effect -> targetIds.size() * effect.amount())
+                .mapToInt(effect -> (int) targetIds.stream().distinct().count() * effect.amount())
                 .sum();
 
         int attachedPermanentReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
@@ -2690,7 +2714,7 @@ public class CastingCostService {
     }
 
     public int getMinimumPerTargetCastCostIncrease(GameData gameData, UUID playerId, int minimumTargetCount) {
-        return getOpponentCastCostPerTarget(gameData, playerId, minimumTargetCount);
+        return getOpponentCastCostPerTarget(gameData, playerId, Math.min(minimumTargetCount, 1));
     }
 
     public boolean hasTargetCountCastCostReduction(GameData gameData, UUID playerId, Card card) {

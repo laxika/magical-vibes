@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.b.BitterTriumph;
 import com.github.laxika.magicalvibes.cards.c.CavernStomper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.q.QuintoriusKand;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -166,7 +167,7 @@ class HiddenNurseryTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         addReadyNursery();
-        harness.addToBattlefield(player1, new QuintoriusKand());
+        harness.addToBattlefieldAndReturn(player1, new QuintoriusKand()).setCounterCount(CounterType.LOYALTY, 4);
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.activateAbility(player1, 0, 1, null, null);

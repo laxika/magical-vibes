@@ -28,9 +28,9 @@ class HydromorphGullTest extends BaseCardTest {
         CripplingFatigue fatigue = new CripplingFatigue();
         harness.setHand(player1, List.of(fatigue));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.forceActivePlayer(player1);
         harness.castSorcery(player1, 0, rootwalla.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 1, null, fatigue.getId());
 

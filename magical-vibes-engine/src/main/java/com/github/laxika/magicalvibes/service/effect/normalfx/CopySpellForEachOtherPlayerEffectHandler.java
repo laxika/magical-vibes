@@ -36,7 +36,14 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
         var e = (CopySpellForEachOtherPlayerEffect) effect;
         if (e.spellSnapshot() == null) return;
 
-        StackEntry spellSnapshot = e.spellSnapshot();
+        // The copy is of the spell as it exists when this ability resolves, so targets changed in the
+        // meantime carry over; the cast-time snapshot only stands in once the spell has left the stack.
+        UUID snapshotCardId = e.spellSnapshot().getCard().getId();
+        StackEntry liveSpell = gameData.stack.stream()
+                .filter(candidate -> candidate.getTargetableId().equals(snapshotCardId))
+                .findFirst()
+                .orElse(null);
+        StackEntry spellSnapshot = liveSpell != null ? new StackEntry(liveSpell) : e.spellSnapshot();
         UUID castingPlayerId = e.castingPlayerId();
         Card spellCard = spellSnapshot.getCard();
 
@@ -80,7 +87,8 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
             
             gameLogService.append(gameData, GameLog.builder().text("A copy of ").card(spellCard).text(" is created for " + gameData.playerIdToName.get(playerId) + ".").build());
 
-            if (copyEntry.getTargetId() != null) {
+            if (copyEntry.getTargetId() != null || !copyEntry.getDeclaredTargetIds().isEmpty()
+                    || !copyEntry.getTargetCardIds().isEmpty()) {
                 PendingMayAbility retargetAbility = new PendingMayAbility(
                         entry.getCard(),
                         playerId,

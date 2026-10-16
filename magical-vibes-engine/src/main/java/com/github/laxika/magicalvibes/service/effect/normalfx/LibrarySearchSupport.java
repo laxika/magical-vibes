@@ -219,17 +219,38 @@ public class LibrarySearchSupport {
         List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerLandToBattlefieldSearches());
         while (!remaining.isEmpty()) {
             UUID nextPlayerId = remaining.remove(0);
-            boolean started = performLibrarySearch(
-                    gameData,
-                    nextPlayerId,
-                    card -> card.hasType(CardType.LAND),
-                    "land cards",
-                    "You may search your library for a land card and put it onto the battlefield.",
-                    false,
-                    true,
-                    LibrarySearchDestination.BATTLEFIELD,
-                    followUp.withRemainingEachPlayerLandToBattlefieldSearches(remaining)
-            );
+            LibrarySearchFollowUp nextFollowUp = followUp.withRemainingEachPlayerLandToBattlefieldSearches(remaining);
+            String prompt = "You may search your library for a land card and put it onto the battlefield.";
+            List<Card> deck = gameData.playerDecks.get(nextPlayerId);
+            boolean started;
+            if (deck != null && !deck.isEmpty() && !isSearchPrevented(gameData, nextPlayerId)
+                    && opponentSearchTopCardsLimit(gameData, nextPlayerId) == Integer.MAX_VALUE) {
+                // The search is optional even when the library holds no land card: the player may
+                // decline, in which case they never searched and do not shuffle.
+                sendLibrarySearchToPlayer(gameData, nextPlayerId,
+                        LibrarySearchParams.builder(nextPlayerId,
+                                        deck.stream().filter(card -> card.hasType(CardType.LAND)).toList())
+                                .canFailToFind(true)
+                                .prompt(prompt)
+                                .destination(LibrarySearchDestination.BATTLEFIELD)
+                                .followUp(nextFollowUp)
+                                .declineSkipsShuffle(true)
+                                .build(),
+                        prompt, true);
+                started = true;
+            } else {
+                started = performLibrarySearch(
+                        gameData,
+                        nextPlayerId,
+                        card -> card.hasType(CardType.LAND),
+                        "land cards",
+                        prompt,
+                        false,
+                        true,
+                        LibrarySearchDestination.BATTLEFIELD,
+                        nextFollowUp
+                );
+            }
             if (started) {
                 return true;
             }

@@ -24,6 +24,9 @@ import java.util.Set;
 public class HideousTaskmaster extends Card {
 
     public HideousTaskmaster() {
+        // Annihilator 1 (printed).
+        addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
+                1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
                 .addEffect(EffectSlot.ON_SELF_CAST,

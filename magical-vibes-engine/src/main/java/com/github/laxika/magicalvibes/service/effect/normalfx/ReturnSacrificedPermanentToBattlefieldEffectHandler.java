@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -37,6 +38,15 @@ public class ReturnSacrificedPermanentToBattlefieldEffectHandler implements Norm
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
         if (card == null || ownerId == null) {
+            // CR 400.7j: an effect can find the object it moved to a public zone, so a sacrificed
+            // card that a replacement effect exiled instead can still be returned.
+            ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+            if (exiled != null && gameData.removeFromExile(cardId)) {
+                ReturnSacrificedPermanentToBattlefieldEffect fromExile =
+                        (ReturnSacrificedPermanentToBattlefieldEffect) effect;
+                graveyardReturnSupport.putCardOntoBattlefieldFromExileWithCounters(
+                        gameData, exiled.ownerId(), exiled.card(), fromExile.counterType(), fromExile.counterAmount());
+            }
             return;
         }
 

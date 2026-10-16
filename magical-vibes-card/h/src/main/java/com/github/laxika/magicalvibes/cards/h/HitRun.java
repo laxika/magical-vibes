@@ -39,7 +39,7 @@ public class HitRun extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Run — Attacking creatures you control get +1/+0 until end of turn for each other attacking creature.",
                         new BoostAllOwnCreaturesEffect(
-                                new Sum(new PermanentCount(attacking, CountScope.CONTROLLER), new Fixed(-1)),
+                                new Sum(new PermanentCount(attacking, CountScope.ANY_PLAYER), new Fixed(-1)),
                                 new Fixed(0), attacking)).withManaCost("{3}{R}{G}")
         )));
     }

@@ -21,7 +21,7 @@ public class HelmutZemoMastermind extends Card {
     public HelmutZemoMastermind() {
         addEffect(EffectSlot.ON_ATTACK, new CastTargetInstantOrSorceryFromGraveyardEffect(
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                true,
+                false,
                 true,
                 new CardAllOfPredicate(List.of(
                         new CardAnyOfPredicate(List.of(

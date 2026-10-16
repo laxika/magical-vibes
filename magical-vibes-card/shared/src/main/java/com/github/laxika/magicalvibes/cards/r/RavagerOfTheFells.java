@@ -13,7 +13,7 @@ public class RavagerOfTheFells extends Card {
         // Whenever this creature transforms into Ravager of the Fells, it deals 2 damage
         // to target opponent and 2 damage to up to one target creature that player controls.
         addEffect(EffectSlot.ON_TRANSFORM_TO_BACK_FACE,
-                new DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect(2, 2, 1));
+                new DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect(2, 2, 1, false, false));
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn,
         // transform Ravager of the Fells.

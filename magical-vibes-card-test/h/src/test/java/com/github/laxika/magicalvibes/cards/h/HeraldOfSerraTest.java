@@ -33,7 +33,7 @@ class HeraldOfSerraTest extends BaseCardTest {
     void vigilanceKeepsHeraldUntappedWhenAttacking() {
         Permanent herald = addCreatureReady(player1, new HeraldOfSerra());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(herald.isAttacking()).isTrue();
         assertThat(herald.isTapped()).isFalse();

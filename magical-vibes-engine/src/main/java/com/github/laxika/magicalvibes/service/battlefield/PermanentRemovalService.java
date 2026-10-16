@@ -1347,8 +1347,11 @@ public class PermanentRemovalService {
                 continue;
             }
             // One delayed trigger from one source covers every permanent it scheduled together
-            // ("sacrifice those tokens at the beginning of your next upkeep" is a single trigger).
-            List<Object> batchKey = kind == DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP
+            // ("sacrifice those tokens at the beginning of your next upkeep" and "exile them at the
+            // beginning of the next end step" are each a single trigger).
+            List<Object> batchKey = (kind == DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP
+                    || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
+                    || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
                     && action.sourceCard() != null
                     ? List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), "")
                             , Objects.requireNonNullElse(action.sacrificingPlayerId(), ""))
@@ -1367,7 +1370,8 @@ public class PermanentRemovalService {
                 }
                 if (firstPermanent == null) {
                     firstPermanent = permanent;
-                    controllerId = action.sacrificingPlayerId() != null ? action.sacrificingPlayerId()
+                    controllerId = action.triggerControllerId() != null ? action.triggerControllerId()
+                            : action.sacrificingPlayerId() != null ? action.sacrificingPlayerId()
                             : action.controllerId() != null ? action.controllerId()
                             : gameQueryService.findPermanentController(gameData, permanent.getId());
                     sourceCard = action.sourceCard() != null ? action.sourceCard() : permanent.getCard();
@@ -1377,12 +1381,38 @@ public class PermanentRemovalService {
             if (firstPermanent == null) {
                 continue;
             }
+            UUID triggerSourcePermanentId = firstPermanent.getId();
+            Permanent triggerSnapshotSource = firstPermanent;
+            UUID abilitySourcePermanentId = batch.getFirst().triggerSourcePermanentId();
+            if (abilitySourcePermanentId != null) {
+                Permanent abilitySource = gameQueryService.findPermanentById(gameData, abilitySourcePermanentId);
+                if (abilitySource != null) {
+                    triggerSourcePermanentId = abilitySourcePermanentId;
+                    triggerSnapshotSource = abilitySource;
+                }
+            }
+            if (kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT
+                    && batch.getFirst().sourceCard() != null) {
+                // The delayed trigger belongs to the ability's source (e.g. the original Myriad creature),
+                // not to the tokens it exiles.
+                UUID sourceCardId = batch.getFirst().sourceCard().getId();
+                Set<UUID> batchPermanentIds = batch.stream()
+                        .map(DelayedPermanentAction::permanentId).collect(java.util.stream.Collectors.toSet());
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    for (Permanent candidate : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                        if (candidate.getCard().getId().equals(sourceCardId)
+                                && !batchPermanentIds.contains(candidate.getId())) {
+                            triggerSourcePermanentId = candidate.getId();
+                        }
+                    }
+                }
+            }
             StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                     sourceCard, controllerId,
                     sourceCard.getName() + "'s delayed ability",
                     effects,
-                    null, firstPermanent.getId());
-            trigger.setSourcePermanentSnapshot(new Permanent(firstPermanent));
+                    null, triggerSourcePermanentId);
+            trigger.setSourcePermanentSnapshot(new Permanent(triggerSnapshotSource));
             gameData.stack.add(trigger);
         }
     }

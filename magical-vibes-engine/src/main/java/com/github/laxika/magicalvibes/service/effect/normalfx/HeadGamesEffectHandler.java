@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
@@ -13,7 +14,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +29,10 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
+    @Autowired
+    @Lazy
+    private InteractionHandlerRegistry interactionHandlerRegistry;
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return HeadGamesEffect.class;
@@ -32,10 +40,10 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry);
+        doResolve(gameData, entry, ((HeadGamesEffect) effect).cardsToFind());
     }
 
-    private void doResolve(GameData gameData, StackEntry entry) {
+    private void doResolve(GameData gameData, StackEntry entry, int cardsToFind) {
         UUID casterId = entry.getControllerId();
         UUID targetPlayerId = entry.getTargetId();
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
@@ -54,7 +62,7 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        int handSize = targetHand.size();
+        int handSize = cardsToFind > 0 ? cardsToFind : targetHand.size();
 
         // Step 1: Target opponent puts hand on top of library
         if (handSize == 0) {
@@ -64,7 +72,26 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        librarySearchSupport.putHandOnTopOfLibrary(gameData, targetHand, targetDeck, targetName);
+        if (cardsToFind > 0) {
+            log.info("Game {} - Head Games continues after {} ordered their hand",
+                    gameData.id, targetName);
+        } else if (handSize > 1 && handSize + targetDeck.size()
+                > librarySearchSupport.opponentSearchTopCardsLimit(gameData, casterId)) {
+            // The caster can only search the top of the library, so the order the opponent puts
+            // their hand on top matters (CR 401.4): they order it, then the search follows.
+            List<Card> toOrder = new ArrayList<>(targetHand);
+            targetHand.clear();
+            gameLogService.append(gameData, GameLog.text(targetName + " puts " + handSize
+                    + " cards from their hand on top of their library."));
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new HeadGamesEffect(handSize)));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    targetPlayerId, toOrder, false, targetPlayerId,
+                    "Put your hand on top of your library in any order."));
+            return;
+        } else {
+            librarySearchSupport.putHandOnTopOfLibrary(gameData, targetHand, targetDeck, targetName);
+        }
 
         // Step 2: Caster searches target's library for that many cards
         List<Card> allCards = new ArrayList<>(targetDeck);

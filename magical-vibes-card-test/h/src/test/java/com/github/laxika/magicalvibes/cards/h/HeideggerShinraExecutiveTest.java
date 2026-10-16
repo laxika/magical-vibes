@@ -106,7 +106,7 @@ class HeideggerShinraExecutiveTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, heidegger)).isEqualTo(3);
     }
@@ -172,7 +172,7 @@ class HeideggerShinraExecutiveTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private void advanceToEndStep(Player activePlayer) {

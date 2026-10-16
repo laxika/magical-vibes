@@ -23,7 +23,7 @@ public class HedronDetonator extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
+        )).addEffect(EffectSlot.ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
                 new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(

@@ -6,8 +6,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaUpToNTimesEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -25,7 +28,9 @@ public class HawkeyeMasterMarksman extends Card {
         CantBlockThisTurnEffect net = new CantBlockThisTurnEffect(TapUntapScope.TARGET);
         DealDamageToTargetPlayerOrPlaneswalkerEffect explosive =
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
-        DiscardAndDrawCardEffect boomerang = new DiscardAndDrawCardEffect();
+        SequenceEffect boomerang = SequenceEffect.of(
+                new DiscardEffect(1, DiscardRecipient.CONTROLLER),
+                new DrawCardEffect(1));
 
         target(TargetFilters.creature(), 0, 1);
         target(new PlayerPredicateTargetFilter(

@@ -486,6 +486,7 @@ import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.TargetGraveyardCardManaValueAtMostControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasUniqueGreatestPowerAmongAllCreatures;
+import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -2703,7 +2704,9 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().hasType(CardType.LAND)) {
+            if (GameQueryService.isStaticEvaluationActive()
+                    ? permanent.getCard().hasType(CardType.LAND)
+                    : gameQueryService.isLand(gameData, permanent)) {
                 basicLandTypes.addAll(GameQueryService.isStaticEvaluationActive()
                         ? gameQueryService.basicLandTypesForStaticEvaluation(gameData, permanent)
                         : gameQueryService.effectiveBasicLandTypes(gameData, permanent));
@@ -3458,7 +3461,7 @@ public class ConditionEvaluationService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().isToken()
+                if (permanent.getCard().isToken() || permanent.isFaceDown()
                         || !isMatchingCard(gameData, ctx, permanent.getCard(), filter)) {
                     continue;
                 }
@@ -4175,7 +4178,7 @@ public class ConditionEvaluationService {
         if (sourceCard == null) return false;
         return gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
                 .flatMap(List::stream)
-                .anyMatch(card -> card == sourceCard);
+                .anyMatch(card -> card.getId().equals(sourceCard.getId()));
     }
 
     private long countPermanentsEnteredThisTurn(GameData gameData, ConditionContext ctx, PermanentEnteredThisTurn c) {
@@ -4354,6 +4357,7 @@ public class ConditionEvaluationService {
         int count = 0;
         for (var entry : gameData.exiledCards) {
             if (!ownerId.equals(entry.ownerId()) || entry.card().isToken()) continue;
+            if (entry.faceDown() && filter instanceof CardHasAdventurePredicate) continue;
             boolean matches = GameQueryService.isStaticEvaluationActive()
                     ? predicateEvaluationService.matchesCardPredicate(entry.card(), filter, null)
                     : filter == null || predicateEvaluationService.matchesCardPredicate(

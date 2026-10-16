@@ -128,8 +128,8 @@ class HaloForagerTest extends BaseCardTest {
         HaloForager second = new HaloForager();
         harness.setLibrary(player1, List.of(first, second));
         harness.setGraveyard(player1, List.of(spell));
-        castHaloForager();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        castHaloForager();
 
         harness.handleXValueChosen(player1, 2);
         harness.passBothPriorities();
@@ -162,8 +162,8 @@ class HaloForagerTest extends BaseCardTest {
     @Test
     void matchingManaValueCreatureIsNotAValidTarget() {
         harness.setGraveyard(player1, List.of(new HaloForager()));
-        castHaloForager();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        castHaloForager();
 
         harness.handleXValueChosen(player1, 3);
 
@@ -189,8 +189,8 @@ class HaloForagerTest extends BaseCardTest {
     void freeSorceryCannotBeCastWhenSpellTaxCannotBePaid() {
         harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
         harness.setGraveyard(player1, List.of(new WrennsResolve()));
-        castHaloForager();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        castHaloForager();
 
         harness.handleXValueChosen(player1, 2);
         harness.passBothPriorities();

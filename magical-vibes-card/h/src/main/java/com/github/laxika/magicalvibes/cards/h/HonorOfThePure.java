@@ -17,7 +17,7 @@ import java.util.Set;
 public class HonorOfThePure extends Card {
 
     public HonorOfThePure() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
     }
 }

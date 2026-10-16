@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,13 +16,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HanweirGarrison.class, HanweirTheWrithingTownship.class, InvasionOfInnistrad.class})
+@CardUsed({HanweirGarrison.class, HanweirTheWrithingTownship.class, InvasionOfInnistrad.class, GrizzlyBears.class})
 class HanweirGarrisonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking creates two 1/1 Human tokens tapped and attacking")
     void attackCreatesTokensTappedAndAttacking() {
         addCreatureReady(player1, new HanweirGarrison());
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
 
@@ -62,6 +64,7 @@ class HanweirGarrisonTest extends BaseCardTest {
     @DisplayName("The melded face creates two colorless 3/2 Eldrazi Horror tokens attacking")
     void townshipAttackCreatesTokens() {
         addCreatureReady(player1, new HanweirTheWrithingTownship());
+        addCreatureReady(player2, new GrizzlyBears());
         declareAttackers(List.of(0));
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();

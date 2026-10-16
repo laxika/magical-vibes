@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /** Goads the source creature for as long as its current controller controls it. */
 public record GoadSourceCreatureWhileControllerControlsItEffect()
-        implements CombatAttackRequirementEffect {
+        implements CombatAttackRequirementEffect, GoadStatusEffect {
 
     @Override
     public PermanentPredicate affectedPredicate() {
@@ -19,6 +19,11 @@ public record GoadSourceCreatureWhileControllerControlsItEffect()
 
     @Override
     public boolean requiresAttackAtOtherPlayerIfAble() {
+        return true;
+    }
+
+    @Override
+    public boolean makesGoaded() {
         return true;
     }
 }

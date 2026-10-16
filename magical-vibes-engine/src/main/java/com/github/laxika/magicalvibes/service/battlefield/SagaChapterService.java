@@ -250,6 +250,10 @@ public class SagaChapterService {
             gameData.stack.add(chapterEntry);
             appendChapterTrigger(gameData, card, chapterName, null);
         }
+        if (!copied && loreCount == card.getSagaFinalChapter()) {
+            triggerCollectionService.checkSagaFinalChapterAbilityTriggers(gameData, controllerId,
+                    card.getManaValue());
+        }
     }
 
     private void appendChapterTrigger(GameData gameData, Card card, String chapterName, String detail) {

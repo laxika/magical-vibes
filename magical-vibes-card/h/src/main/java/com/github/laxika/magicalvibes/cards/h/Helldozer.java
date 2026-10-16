@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -23,13 +23,11 @@ public class Helldozer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}{B}{B}",
-                List.of(
-                        new ConditionalEffect(
-                                new TargetPermanentMatches(
-                                        new PermanentNotPredicate(
-                                                new PermanentHasSupertypePredicate(CardSupertype.BASIC))),
-                                new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT)),
-                        new DestroyTargetPermanentEffect()),
+                List.of(new DestroyTargetPermanentThenEffect(
+                        EventStat.NONE,
+                        new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),
+                        ThenEffectRecipient.CONTROLLER,
+                        new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC)))),
                 "{B}{B}{B}, {T}: Destroy target land. If that land was nonbasic, untap this creature.",
                 TargetFilters.land()
         ));

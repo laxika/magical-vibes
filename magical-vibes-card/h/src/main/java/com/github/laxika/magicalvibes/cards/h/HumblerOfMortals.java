@@ -12,12 +12,8 @@ public class HumblerOfMortals extends Card {
 
     public HumblerOfMortals() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
-        addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
     }
 }

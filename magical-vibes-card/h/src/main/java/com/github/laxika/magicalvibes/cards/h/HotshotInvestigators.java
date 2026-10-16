@@ -27,9 +27,9 @@ public class HotshotInvestigators extends Card {
         ));
 
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentControlledBySourceControllerPredicate()),
-                        CreateTokenEffect.ofClueToken(1)))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target());
+                        CreateTokenEffect.ofClueToken(1)));
     }
 }

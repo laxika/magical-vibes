@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -18,7 +20,8 @@ public class HedgeShredder extends Card {
 
     public HedgeShredder() {
         addEffect(EffectSlot.ON_ATTACK,
-                new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?"));
+                new ConditionalEffect(new CardsInLibraryAtLeast(2),
+                        new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?"), false));
         addEffect(EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
                 new ReturnTriggeringLandFromGraveyardToBattlefieldEffect(null, true));
 

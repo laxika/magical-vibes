@@ -28,7 +28,7 @@ public class HemlockVial extends Card {
                 "{B}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_CREATURES,
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES,
                                 new PermanentIsEquippedPredicate()),
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_PERMANENTS,
                                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT))

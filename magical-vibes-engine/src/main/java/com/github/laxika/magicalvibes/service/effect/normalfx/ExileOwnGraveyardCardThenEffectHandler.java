@@ -18,7 +18,10 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -37,6 +40,9 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInputService playerInputService;
+    @Autowired
+    @Lazy
+    private EffectResolutionService effectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,7 +67,11 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
             Card chosen = findMatchingCard(gameData, entry, exileThen, chosenCardId);
             if (chosen != null) {
                 exileCard(gameData, entry, chosen, exileThen);
-                queueReflexiveAbility(gameData, entry, exileThen.thenEffect());
+                if (exileThen.resolvesInline()) {
+                    resolveInline(gameData, entry, exileThen.thenEffect());
+                } else {
+                    queueReflexiveAbility(gameData, entry, exileThen.thenEffect());
+                }
             }
             return;
         }
@@ -116,6 +126,21 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
         gameLogService.append(gameData,
                 GameLog.textCardText(entry.getCard().getName() + " exiles ", card,
                         " from its controller's graveyard."));
+    }
+
+    private void resolveInline(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        StackEntry inlineAbility = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                entry.getCard(),
+                entry.getControllerId(),
+                entry.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(thenEffect)),
+                thenEffect.targetSpec() == TargetSpec.NONE ? null : entry.getTargetId(),
+                entry.getSourcePermanentId()
+        );
+        inlineAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        inlineAbility.setNonTargeting(true);
+        effectResolutionService.resolveEffects(gameData, inlineAbility);
     }
 
     private void queueReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {

@@ -32,6 +32,7 @@ class HowlsquadHeavyTest extends BaseCardTest {
     @Test
     void enteringStartsSpeedAtOne() {
         harness.enterBattlefieldAndReturn(player1, new HowlsquadHeavy());
+        harness.runStateBasedActions();
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
     }

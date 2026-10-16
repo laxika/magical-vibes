@@ -29,5 +29,6 @@ public class HuntedBonebrute extends Card {
                         List.of(CardSubtype.DOG), Set.of(), Set.of())
         ));
         addEffect(EffectSlot.ON_DEATH, new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT));
+        addMorph("{1}{B}");
     }
 }

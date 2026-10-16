@@ -30,6 +30,7 @@ class HibernationsEndTest extends BaseCardTest {
         assertThat(enchantment.getCounterCount(CounterType.AGE)).isEqualTo(1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
@@ -53,6 +54,7 @@ class HibernationsEndTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(findPermanent(player1, "Hibernation's End")).isSameAs(enchantment);
@@ -72,6 +74,7 @@ class HibernationsEndTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, -1);
 
@@ -92,6 +95,7 @@ class HibernationsEndTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
@@ -118,6 +122,7 @@ class HibernationsEndTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, false);

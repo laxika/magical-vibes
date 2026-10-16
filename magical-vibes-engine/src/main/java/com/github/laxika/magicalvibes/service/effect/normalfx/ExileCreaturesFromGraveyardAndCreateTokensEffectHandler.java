@@ -76,7 +76,8 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             }
         }
 
-        // Hour of Eternity: create a token that's a copy of each exiled card, except it's a 4/4 black Zombie.
+        // Hour of Eternity: create a token that's a copy of each exiled card, except it's a 4/4 black Zombie
+        // (no "in addition to its other types", so the copy's creature types are replaced).
         if (e.copyExiledCards()) {
             List<CardSubtype> addedSubtypes = e.addedSubtype() != null ? List.of(e.addedSubtype()) : List.of();
             // Hour of Eternity creates every token copy at once, so a copy carrying an
@@ -85,7 +86,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             for (Card exiledCard : exiledCards) {
                 graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, exiledCard, addedSubtypes,
                         false, false, e.colorOverride(), e.powerOverride(), e.toughnessOverride(),
-                        false, false, copyBatch, Set.of());
+                        true, false, copyBatch, Set.of());
             }
             return;
         }

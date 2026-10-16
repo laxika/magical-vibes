@@ -52,10 +52,10 @@ class HydromorphGuardianTest extends BaseCardTest {
         FieryTemper fieryTemper = new FieryTemper();
         harness.setHand(player1, List.of(fieryTemper));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.forceActivePlayer(player1);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 1, null, fieryTemper.getId());
 
         harness.assertInGraveyard(player1, "Hydromorph Guardian");

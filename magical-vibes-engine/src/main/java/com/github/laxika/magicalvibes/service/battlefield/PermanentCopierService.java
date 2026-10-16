@@ -42,7 +42,9 @@ public class PermanentCopierService {
             visible.setToughness(permanent.getBaseToughness());
             return visible;
         }
-        Card original = permanent.getCard();
+        Card original = permanent.getBecomeCreatureBaseCard() != null
+                && permanent.getBecomeCreatureResultCard() == permanent.getCard()
+                ? permanent.getBecomeCreatureBaseCard() : permanent.getCard();
         if (original.getActivatedAbilities().stream().anyMatch(ability -> ability.getEffects().stream()
                 .anyMatch(LicidEndEffect.class::isInstance))) {
             // A Licid that became an Aura: that is the effect of its ability, not a copiable value, so a

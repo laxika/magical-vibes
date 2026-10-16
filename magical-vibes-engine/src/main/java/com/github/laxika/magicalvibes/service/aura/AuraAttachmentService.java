@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -294,6 +295,12 @@ public class AuraAttachmentService {
         }
         if (!auraCard.isAura()
                 || gameQueryService.hasProtectionFromSource(gameData, host, auraCard, auraControllerId)) {
+            return false;
+        }
+        if (gameQueryService.cantBeEnchantedByOtherAuras(gameData, host)
+                && auraCard.getEffects(EffectSlot.STATIC).stream().noneMatch(effect ->
+                effect instanceof GrantEffectEffect grant
+                        && grant.effect() instanceof CantBeEnchantedByOtherAurasEffect)) {
             return false;
         }
         TargetFilter filter = auraCard.getDeclaredTargetFilter();

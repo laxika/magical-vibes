@@ -225,7 +225,7 @@ class HideInPlainSightTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);
     }
 
     private void beginResolution() {

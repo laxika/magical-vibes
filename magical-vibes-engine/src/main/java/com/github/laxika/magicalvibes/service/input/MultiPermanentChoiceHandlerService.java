@@ -381,7 +381,11 @@ public class MultiPermanentChoiceHandlerService {
         boolean mandatoryCounterChoice = context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacement own
                 && own.mandatory()
                 || context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference reference
-                && reference.mandatory();
+                && reference.mandatory()
+                || context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayer byPlayer
+                && byPlayer.mandatory()
+                || context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayerWithChosenReference byPlayerReference
+                && byPlayerReference.mandatory();
         if (mandatoryCounterChoice && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
@@ -3062,7 +3066,7 @@ public class MultiPermanentChoiceHandlerService {
         List<Card> tappedCards = new ArrayList<>();
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-            if (perm != null && !perm.isTapped()) {
+            if (perm != null && !perm.isTapped() && !perm.isTapRestrictedUnlessAttacking()) {
                 perm.tap();
                 triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm, playerId);
                 tappedCards.add(perm.getCard());

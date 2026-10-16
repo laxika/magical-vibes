@@ -22,6 +22,6 @@ public class HeartlessSummoning extends Card {
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.CREATURE), new Fixed(2), CostModificationScope.SELF));
         // Creatures you control get -1/-1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.ALL_OWN_CREATURES));
     }
 }

@@ -29,7 +29,8 @@ public class RegisterDrawCardsAtNextEndStepEffectHandler implements NormalEffect
         if (drawerId == null) {
             return;
         }
-        gameData.queueDelayedAction(new DrawCardsAtNextEndStep(drawerId, e.count(), entry.getCard()));
+        gameData.queueDelayedAction(new DrawCardsAtNextEndStep(
+                entry.getControllerId(), e.count(), entry.getCard(), drawerId));
         log.info("Game {} - {} registers delayed draw of {} at next end step",
                 gameData.id, gameData.playerIdToName.get(drawerId), e.count());
     }

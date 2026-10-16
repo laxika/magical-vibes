@@ -183,7 +183,7 @@ class HorobisWhisperTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
 
-        assertThat(findPermanent(player1, "Grizzly Bears")).isNull();
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
         assertThat(findPermanent(player1, "Swamp")).isNotNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)

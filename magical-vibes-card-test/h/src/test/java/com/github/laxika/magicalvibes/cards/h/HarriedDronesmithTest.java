@@ -60,7 +60,7 @@ class HarriedDronesmithTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Thopter")).hasSize(1);
 
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
         assertThat(findPermanents(player1, "Thopter")).hasSize(1);
 
         harness.passUntil(player1, TurnStep.END_STEP);
@@ -74,12 +74,12 @@ class HarriedDronesmithTest extends BaseCardTest {
     void triggerSurvivesSourceRemoval() {
         Permanent dronesmith = harness.addToBattlefieldAndReturn(player1, new HarriedDronesmith());
         harness.setHand(player2, List.of(new Murder()));
-        harness.addMana(player2, ManaColor.BLACK, 3);
 
         advanceToCombat(player1);
+        harness.addMana(player2, ManaColor.BLACK, 3);
         harness.ensurePriority(player2);
         harness.castAndResolveInstant(player2, 0, dronesmith.getId());
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Harried Dronesmith");
         assertThat(findPermanents(player1, "Thopter")).hasSize(1);
@@ -95,7 +95,7 @@ class HarriedDronesmithTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HarriedDronesmith());
 
         advanceToCombat(player1);
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(findPermanents(player1, "Thopter")).hasSize(2);
         harness.passUntil(player1, TurnStep.END_STEP);

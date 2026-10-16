@@ -4,7 +4,15 @@ import com.github.laxika.magicalvibes.model.Card;
 
 import java.util.UUID;
 
-/** Delayed trigger that makes a player draw cards at the beginning of the next end step. */
-public record DrawCardsAtNextEndStep(UUID controllerId, int count, Card sourceCard)
+/**
+ * Delayed trigger that makes a player draw cards at the beginning of the next end step.
+ * {@code controllerId} controls the delayed trigger (the controller of the ability that created
+ * it); {@code drawingPlayerId} is the player who draws.
+ */
+public record DrawCardsAtNextEndStep(UUID controllerId, int count, Card sourceCard, UUID drawingPlayerId)
         implements DelayedAction {
+
+    public DrawCardsAtNextEndStep(UUID controllerId, int count, Card sourceCard) {
+        this(controllerId, count, sourceCard, controllerId);
+    }
 }

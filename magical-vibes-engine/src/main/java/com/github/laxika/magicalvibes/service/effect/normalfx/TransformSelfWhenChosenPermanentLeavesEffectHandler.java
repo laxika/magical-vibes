@@ -32,6 +32,12 @@ public class TransformSelfWhenChosenPermanentLeavesEffectHandler implements Norm
             return;
         }
 
+        Permanent snapshot = entry.getSourcePermanentSnapshot();
+        if (snapshot != null && snapshot.getId().equals(source.getId())
+                && snapshot.getTransformationSequence() != source.getTransformationSequence()) {
+            return;
+        }
+
         if (gameQueryService.isTransformPrevented(gameData, source)) {
             return;
         }

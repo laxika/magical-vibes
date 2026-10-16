@@ -35,7 +35,7 @@ class HiredClawTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
     }
 
     @Test
@@ -91,7 +91,7 @@ class HiredClawTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         addActivationMana();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -119,7 +119,8 @@ class HiredClawTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HiredClaw());
         addCreatureReady(player2, new FlamecacheGecko());
 
-        declareAttackers(player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

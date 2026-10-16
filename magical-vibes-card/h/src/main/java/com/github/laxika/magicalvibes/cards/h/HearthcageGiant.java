@@ -27,16 +27,13 @@ public class HearthcageGiant extends Card {
                         List.of(CardSubtype.ELEMENTAL, CardSubtype.SHAMAN), Set.of(), Set.of()));
 
         // Sacrifice an Elemental: Target Giant creature gets +3/+1 until end of turn.
-        // Hearthcage Giant is a Giant Warrior (not an Elemental), so it can only sacrifice the tokens.
+        // Any Elemental permanent works, including noncreature ones; Hearthcage Giant itself is not an Elemental.
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
                         new SacrificePermanentCost(
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL)
-                                )),
+                                new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
                                 "Sacrifice an Elemental",
                                 false
                         ),

@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
+import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
@@ -73,6 +74,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -252,6 +254,10 @@ public class LibraryChoiceHandlerService {
             } else {
                 LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
             }
+        }
+
+        if (cardIndex == -1 && librarySearch.declineSkipsShuffle()) {
+            shuffleAfterSelection = false;
         }
 
         if (cardIndex >= 0
@@ -1441,7 +1447,13 @@ public class LibraryChoiceHandlerService {
         if (destination == LibrarySearchDestination.EXILE_FACE_DOWN_PILE) {
             // Mangara's Tome: exile each found card face down into a pile tracked with the source.
             UUID pileSourceId = librarySearch.sourcePermanentId();
-            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, pileSourceId);
+            exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, pileSourceId, playerId);
+            Permanent pileSource = gameQueryService.findPermanentById(gameData, pileSourceId);
+            if (pileSource != null && pileSource.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(cardEffect -> cardEffect instanceof AllowCastFromCardsExiledWithSourceEffect pilePermission
+                            && pilePermission.persistsAfterSourceLeaves())) {
+                gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+            }
 
             // Repeat until the requested count is spent or the library runs out; only the final pick
             // shuffles the pile ("shuffle that pile") and then the library ("then shuffle your library").
@@ -3292,13 +3304,15 @@ public class LibraryChoiceHandlerService {
         }
 
         // Put selected cards onto the battlefield
-        if (!libraryRevealChoice.selectedToBattlefieldCloaked()) {
-            List<Card> blockedCards = selectedCards.stream()
-                    .filter(card -> gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY))
-                    .toList();
-            selectedCards.removeAll(blockedCards);
-            remainingCards.addAll(blockedCards);
-        }
+        // A cloaked card is a 2/2 face-down creature card as it enters (CR 701.58a), so creature-only
+        // prohibitions such as Grafdigger's Cage stop it even when the card itself is not a creature.
+        List<Card> blockedCards = selectedCards.stream()
+                .filter(card -> libraryRevealChoice.selectedToBattlefieldCloaked()
+                        ? gameQueryService.isManifestBlockedFromZone(gameData, card, Zone.LIBRARY)
+                        : gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY))
+                .toList();
+        selectedCards.removeAll(blockedCards);
+        remainingCards.addAll(blockedCards);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         List<UUID> selectedPermanentIds = new ArrayList<>();
@@ -3457,7 +3471,7 @@ public class LibraryChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.text(logEntry));
             } else {
                 gameLogService.append(gameData,
-                        appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                        placedRevealedCardsLog(libraryRevealChoice, playerName, selectedCards)
                                 .text(" onto the battlefield. The rest are put into their graveyard.").build());
             }
         } else if (libraryRevealChoice.remainingToExile()) {
@@ -3469,7 +3483,7 @@ public class LibraryChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.text(playerName + " puts no cards onto the battlefield. The rest are exiled."));
             } else {
                 gameLogService.append(gameData,
-                        appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                        placedRevealedCardsLog(libraryRevealChoice, playerName, selectedCards)
                                 .text(" onto the battlefield. The rest are exiled.").build());
             }
         } else if (libraryRevealChoice.remainingToHand()) {
@@ -3482,7 +3496,7 @@ public class LibraryChoiceHandlerService {
                         playerName + " puts the cards into their hand."));
             } else {
                 gameLogService.append(gameData,
-                        appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                        placedRevealedCardsLog(libraryRevealChoice, playerName, selectedCards)
                                 .text(" onto the battlefield and the rest into their hand.").build());
             }
         } else if (libraryRevealChoice.randomRemainingToBottom()) {
@@ -3496,7 +3510,7 @@ public class LibraryChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.text(logEntry));
             } else {
                 gameLogService.append(gameData,
-                        appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                        placedRevealedCardsLog(libraryRevealChoice, playerName, selectedCards)
                                 .text(" onto the battlefield. The rest are put on the bottom of their library in a random order.").build());
             }
         } else if (libraryRevealChoice.reorderRemainingToBottom()) {
@@ -3511,7 +3525,7 @@ public class LibraryChoiceHandlerService {
             }
             deck.addAll(remainingCards);
             gameLogService.append(gameData,
-                    appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                    placedRevealedCardsLog(libraryRevealChoice, playerName, selectedCards)
                             .text(" onto the battlefield. The rest are put on the bottom of their library.").build());
         } else {
             List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -3523,7 +3537,7 @@ public class LibraryChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.text(logEntry));
             } else {
                 gameLogService.append(gameData,
-                        appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
+                        placedRevealedCardsLog(libraryRevealChoice, playerName, selectedCards)
                                 .text(" onto the battlefield. Library is shuffled.").build());
             }
         }
@@ -3543,6 +3557,20 @@ public class LibraryChoiceHandlerService {
 
         performStateBasedActionsIfResolutionComplete(gameData);
         finishSearchAndResume(gameData);
+    }
+
+
+    /**
+     * Opening of the "puts … onto the battlefield" log line. A cloaked selection enters face down, so the
+     * cards' identities stay out of the public log.
+     */
+    private GameLog.Builder placedRevealedCardsLog(PendingInteraction.LibraryRevealChoice libraryRevealChoice,
+                                                   String playerName, List<Card> selectedCards) {
+        if (libraryRevealChoice.selectedToBattlefieldCloaked()) {
+            return GameLog.builder().text(playerName + " puts "
+                    + LibraryRevealSupport.pluralCards(selectedCards.size()) + " face down");
+        }
+        return appendCards(GameLog.builder().text(playerName + " puts "), selectedCards);
     }
 
     private void resolveRevealChoiceSplitByType(GameData gameData, UUID controllerId, String playerName,

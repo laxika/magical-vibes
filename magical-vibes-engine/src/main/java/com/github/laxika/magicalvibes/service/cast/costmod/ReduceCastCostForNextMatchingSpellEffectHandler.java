@@ -29,4 +29,11 @@ public class ReduceCastCostForNextMatchingSpellEffectHandler implements CostModi
                         reduction.predicate(), reduction.amount(), CostModificationScope.SELF,
                         java.util.Set.of(), false, reduction.faceDownOnly()), source);
     }
+
+    /** The reduction applies to the spell's total cost, so it also lowers an alternate cost such as dash. */
+    @Override
+    public int modifyAlternateCost(CostModificationContext context, CardEffect effect,
+                                   CostModificationSource source) {
+        return modifyCost(context, effect, source);
+    }
 }

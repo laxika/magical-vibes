@@ -87,7 +87,8 @@ class HostileTakeoverTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HostileTakeover()));
         addMana();
 
-        harness.castAndResolveSorcery(player1, 0, weakened.getId());
+        harness.castSorcery(player1, 0, List.of(weakened.getId()));
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Wrecking Crew");
         harness.assertNotOnBattlefield(player2, "Wrecking Crew");

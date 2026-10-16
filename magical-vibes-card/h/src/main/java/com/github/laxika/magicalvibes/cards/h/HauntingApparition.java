@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -20,12 +21,14 @@ import java.util.List;
 public class HauntingApparition extends Card {
 
     public HauntingApparition() {
-        // Power is 1 plus the number of green creature cards in the chosen opponent's graveyard
-        // (single-opponent model: the chosen player is the controller's opponent). Toughness stays 2.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
+
+        // Power is 1 plus the number of green creature cards in the chosen player's graveyard.
+        // Toughness stays 2.
         CardsInGraveyard greenCreatures = new CardsInGraveyard(new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
                 new CardColorPredicate(CardColor.GREEN)
-        )), CountScope.OPPONENTS);
+        )), CountScope.CHOSEN_PLAYER);
         addEffect(EffectSlot.STATIC,
                 new SetPowerToughnessToAmountEffect(new Sum(new Fixed(1), greenCreatures), new Fixed(2)));
     }

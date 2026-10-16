@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -27,7 +28,7 @@ public class HyldaOfTheIcyCrown extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
-                        new MayPayManaEffect("{1}", new ChooseOneEffect(List.of(
+                        new MayPayManaEffect("{1}", new QueueReflexiveAbilityEffect(new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Create a 4/4 white and blue Elemental creature token",
                                         new CreateTokenEffect("Elemental", 4, 4, CardColor.WHITE,
@@ -41,7 +42,7 @@ public class HyldaOfTheIcyCrown extends Card {
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Scry 2, then draw a card",
                                         SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(1)))
-                        )), "Pay {1}?")
+                        ))), "Pay {1}?")
                 ));
     }
 }

@@ -124,6 +124,8 @@ class HugsGrislyGuardianTest extends BaseCardTest {
         Card topCard = new Shock();
         harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest()));
         castHugs(1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());

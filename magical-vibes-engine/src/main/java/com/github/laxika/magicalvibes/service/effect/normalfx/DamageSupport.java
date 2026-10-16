@@ -669,6 +669,27 @@ public class DamageSupport {
         return Math.max(0, damageDealt - lethalNeeded);
     }
 
+    /**
+     * Excess damage dealt to a permanent targeted as a creature. A creature planeswalker has both excess
+     * over its toughness and excess over its loyalty; the greater of the two is the excess dealt.
+     */
+    public int computeExcessDamageToTargetedPermanent(GameData gameData, Permanent target, int damageDealt,
+                                                      int markedDamageBefore, int loyaltyBefore,
+                                                      boolean sourceHasDeathtouch) {
+        int excess = gameQueryService.isCreature(gameData, target)
+                ? computeExcessDamageToCreature(gameData, target, damageDealt, markedDamageBefore,
+                sourceHasDeathtouch)
+                : 0;
+        if (gameQueryService.isPlaneswalker(gameData, target)) {
+            boolean toughnessAsLoyalty = gameQueryService.isToughnessAsLoyaltyPermanent(gameData, target);
+            int loyaltyExcess = Math.max(0, damageDealt - (toughnessAsLoyalty
+                    ? gameQueryService.getEffectiveToughness(gameData, target)
+                    : loyaltyBefore));
+            excess = Math.max(excess, loyaltyExcess);
+        }
+        return excess;
+    }
+
     private void recordExcessDamageToCreatureIfAny(GameData gameData, StackEntry entry,
                                                     Permanent target, Permanent damageSource, int damage) {
         if (damage <= 0 || !gameQueryService.isCreature(gameData, target)) {
@@ -1163,7 +1184,8 @@ public class DamageSupport {
     public UUID findHarshJudgmentRedirectTarget(GameData gameData, StackEntry entry, UUID damagedPlayerId) {
         if (entry == null || damagedPlayerId == null
                 || (entry.getEntryType() != StackEntryType.INSTANT_SPELL
-                && entry.getEntryType() != StackEntryType.SORCERY_SPELL)
+                && entry.getEntryType() != StackEntryType.SORCERY_SPELL
+                && !entry.isSpellDamageContinuation())
                 || damagedPlayerId.equals(entry.getControllerId())) {
             return null;
         }

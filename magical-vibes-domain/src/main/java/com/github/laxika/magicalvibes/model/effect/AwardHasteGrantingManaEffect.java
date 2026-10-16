@@ -14,17 +14,31 @@ import com.github.laxika.magicalvibes.model.ManaPool;
  * @param color  the color of mana produced
  * @param amount how much mana is produced
  * @param creatureSubtype if non-null, only creature spells with this subtype get haste
+ * @param permanentHaste whether the haste has no duration ("it gains haste", Hall of the Bandit Lord)
+ *                       instead of lasting until end of turn
  */
-public record AwardHasteGrantingManaEffect(ManaColor color, int amount, CardSubtype creatureSubtype)
+public record AwardHasteGrantingManaEffect(ManaColor color, int amount, CardSubtype creatureSubtype,
+                                           boolean permanentHaste)
         implements ManaProducingEffect {
 
+    public AwardHasteGrantingManaEffect(ManaColor color, int amount, CardSubtype creatureSubtype) {
+        this(color, amount, creatureSubtype, false);
+    }
+
     public AwardHasteGrantingManaEffect(ManaColor color, int amount) {
-        this(color, amount, null);
+        this(color, amount, null, false);
+    }
+
+    /** Mana whose haste rider has no duration: the creature keeps haste while it stays on the battlefield. */
+    public static AwardHasteGrantingManaEffect withPermanentHaste(ManaColor color, int amount) {
+        return new AwardHasteGrantingManaEffect(color, amount, null, true);
     }
 
     public void applyTo(ManaPool pool) {
         pool.add(color, amount);
-        if (creatureSubtype == null) {
+        if (permanentHaste) {
+            pool.addPermanentHasteGrantingMana(color, amount);
+        } else if (creatureSubtype == null) {
             pool.addHasteGrantingMana(color, amount);
         } else {
             pool.addSubtypeHasteGrantingMana(creatureSubtype, color, amount);

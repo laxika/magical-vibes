@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -33,5 +35,8 @@ public class HighwayRobbery extends Card {
                 )),
                 "Discard a card or sacrifice a land to draw two cards?"
         ));
+
+        // Plot {1}{R}
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{R}"))));
     }
 }

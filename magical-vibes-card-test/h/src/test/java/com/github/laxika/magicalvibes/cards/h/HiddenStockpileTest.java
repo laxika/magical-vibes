@@ -72,9 +72,9 @@ class HiddenStockpileTest extends BaseCardTest {
         Permanent stockpile = harness.addToBattlefieldAndReturn(player1, new HiddenStockpile());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         assertThat(gd.stack).isEmpty();
         sacrificeCreatureWithStockpile(stockpile, bears);
         resolveScryKeepingTopCard();

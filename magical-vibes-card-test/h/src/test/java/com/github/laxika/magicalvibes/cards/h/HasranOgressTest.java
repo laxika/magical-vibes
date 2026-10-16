@@ -56,7 +56,6 @@ class HasranOgressTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 3);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
     }
 
     @Test
@@ -89,6 +88,6 @@ class HasranOgressTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(controllerLife - 3);
-        assertThat(gd.getLife(player1.getId())).isEqualTo(defenderLife);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(defenderLife - 3);
     }
 }

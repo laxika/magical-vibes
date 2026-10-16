@@ -866,8 +866,10 @@ public class AttackLegalityService {
                         .filter(e -> e instanceof MustAttackEffect mae && mae.scope() == null)
                         .count();
             }
-            // "Creatures you control attack each combat if able" (e.g. Hellraiser Goblin)
-            if (creatureControllerId != null && creatureControllerId.equals(playerId)) {
+            // "Creatures you control attack each combat if able" (e.g. Hellraiser Goblin). A source that has
+            // lost its printed abilities no longer imposes it.
+            if (creatureControllerId != null && creatureControllerId.equals(playerId)
+                    && !permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(e -> e instanceof MustAttackEffect mae
                                 && (mae.scope() == GrantScope.ALL_OWN_CREATURES

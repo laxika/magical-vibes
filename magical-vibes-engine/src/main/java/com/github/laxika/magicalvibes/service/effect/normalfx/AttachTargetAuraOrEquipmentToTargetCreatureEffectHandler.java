@@ -46,6 +46,10 @@ public class AttachTargetAuraOrEquipmentToTargetCreatureEffectHandler implements
                 || !entry.getControllerId().equals(gameData.findControllerOf(destination))) {
             return;
         }
+        if (destination.getId().equals(attachment.getAttachedTo())) {
+            // CR 701.3b: attaching to the object it's already attached to does nothing.
+            return;
+        }
 
         if (attachment.getCard().isAura()) {
             UUID auraControllerId = gameQueryService.findPermanentController(gameData, attachment.getId());

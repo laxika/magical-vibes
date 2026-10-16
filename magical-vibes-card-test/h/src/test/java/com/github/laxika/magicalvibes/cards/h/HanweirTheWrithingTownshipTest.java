@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -13,12 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HanweirTheWrithingTownship.class, HanweirBattlements.class, HanweirGarrison.class, InvasionOfInnistrad.class})
+@CardUsed({HanweirTheWrithingTownship.class, HanweirBattlements.class, HanweirGarrison.class, InvasionOfInnistrad.class, GrizzlyBears.class})
 class HanweirTheWrithingTownshipTest extends BaseCardTest {
 
     @Test
     void canAttackImmediatelyAfterMeldingAndCreatesTappedAttackingHorrors() {
         meldTownship();
+        addCreatureReady(player2, new GrizzlyBears());
         declareAttackers(List.of(0));
 
         assertThat(gd.stack).hasSize(1);
@@ -31,6 +33,7 @@ class HanweirTheWrithingTownshipTest extends BaseCardTest {
     @Test
     void attackTriggerStillCreatesTokensAfterTownshipLeaves() {
         Permanent township = meldTownship();
+        addCreatureReady(player2, new GrizzlyBears());
         declareAttackers(List.of(0));
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToExile(gd, township));
@@ -71,6 +74,7 @@ class HanweirTheWrithingTownshipTest extends BaseCardTest {
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfInnistrad());
         battle.setProtectorPlayerId(player2.getId());
         battle.setCounterCount(CounterType.DEFENSE, 5);
+        addCreatureReady(player2, new GrizzlyBears());
         declareAttackers(List.of(0));
 
         harness.passBothPriorities();

@@ -129,6 +129,7 @@ class HeroesHangoutTest extends BaseCardTest {
     void dateNightPermissionLastsThroughNextTurnThenExpires() {
         Card chosen = new Forest();
         harness.setLibrary(player1, List.of(chosen, new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
         cast(0, List.of());
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));

@@ -11,10 +11,26 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>When {@code mandatory} is true, the choice must contain one card whenever a matching card
  * is available.</p>
+ *
+ * <p>When {@code resolvesInline} is true the follow-up is an "if you do" part of the same ability
+ * rather than a "when you do" reflexive trigger, so it resolves immediately after the exile
+ * instead of being put onto the stack.</p>
  */
 public record ExileOwnGraveyardCardThenEffect(CardPredicate exileFilter, CardEffect thenEffect,
-                                               boolean trackWithSource, boolean mandatory)
+                                               boolean trackWithSource, boolean mandatory,
+                                               boolean resolvesInline)
         implements CardEffect {
+
+    public ExileOwnGraveyardCardThenEffect(CardPredicate exileFilter, CardEffect thenEffect,
+                                           boolean trackWithSource, boolean mandatory) {
+        this(exileFilter, thenEffect, trackWithSource, mandatory, false);
+    }
+
+    /** "Exile a card from your graveyard. If you do, [effect]" — the follow-up resolves inline. */
+    public static ExileOwnGraveyardCardThenEffect ifYouDo(CardPredicate exileFilter, CardEffect thenEffect,
+                                                          boolean trackWithSource) {
+        return new ExileOwnGraveyardCardThenEffect(exileFilter, thenEffect, trackWithSource, false, true);
+    }
 
     public ExileOwnGraveyardCardThenEffect(CardPredicate exileFilter, CardEffect thenEffect) {
         this(exileFilter, thenEffect, false, false);

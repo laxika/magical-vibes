@@ -183,9 +183,7 @@ class HomaridWarriorTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.setHand(player1, List.of(new BindingGrasp()));
         harness.addMana(player1, ManaColor.BLUE, 4);

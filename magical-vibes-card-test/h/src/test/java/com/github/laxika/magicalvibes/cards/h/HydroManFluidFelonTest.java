@@ -52,8 +52,9 @@ class HydroManFluidFelonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
 
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.isLand(gd, hydroMan)).isFalse();
         assertThat(gqs.isCreature(gd, hydroMan)).isTrue();
@@ -129,8 +130,9 @@ class HydroManFluidFelonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(hydroMan);
 
         // Isolate the existing duration by skipping the new controller's end-step trigger.
+        harness.setHand(player1, List.of());
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, hydroMan)).isTrue();
         assertThat(gqs.isLand(gd, hydroMan)).isFalse();

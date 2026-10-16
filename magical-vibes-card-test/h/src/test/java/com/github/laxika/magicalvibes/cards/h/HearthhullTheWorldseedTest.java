@@ -51,7 +51,7 @@ class HearthhullTheWorldseedTest extends BaseCardTest {
     @DisplayName("The charge-gated ability sacrifices a land, draws two cards, and grants an extra land play")
     void sacrificeLandDrawsAndGrantsLandPlay() {
         Permanent hearthhull = harness.addToBattlefieldAndReturn(player1, new HearthhullTheWorldseed());
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         hearthhull.setCounterCount(CounterType.CHARGE, 2);
         harness.setHand(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
@@ -59,7 +59,7 @@ class HearthhullTheWorldseedTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, battlefieldIndex(hearthhull), 1, null, null);
-        harness.handlePermanentChosen(player1, land.getId());
+        harness.assertNotOnBattlefield(player1, "Forest");
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);

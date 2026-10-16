@@ -39,15 +39,8 @@ public class PerpetuallyBoostTargetCreatureEffectHandler implements NormalEffect
                 continue;
             }
 
-            var copy = target.getCard().createRuntimeCopy();
-            if (copy.getPower() != null) {
-                copy.setPower(copy.getPower() + boost.powerBoost());
-            }
-            if (copy.getToughness() != null) {
-                copy.setToughness(copy.getToughness() + boost.toughnessBoost());
-            }
-            copy.freeze();
-            target.exchangeCard(copy);
+            PerpetualCardPowerToughnessSupport.remember(
+                    gameData, target.getCard(), boost.powerBoost(), boost.toughnessBoost());
         }
     }
 }

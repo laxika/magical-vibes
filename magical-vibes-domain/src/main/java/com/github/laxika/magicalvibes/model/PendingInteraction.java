@@ -853,7 +853,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /** Chooses one commander to put onto the battlefield from the command zone. */
-    record CommanderBattlefieldChoice(UUID playerId, java.util.List<Card> commanders)
+    record CommanderBattlefieldChoice(UUID playerId, java.util.List<Card> commanders, Card sourceCard)
             implements PendingInteraction {
 
         public CommanderBattlefieldChoice {

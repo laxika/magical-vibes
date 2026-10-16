@@ -164,7 +164,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent's lone Warrior does not trigger Heiko")
     void opponentsLoneWarriorDoesNotTrigger() {
-        addCreatureReady(player1, new HeikoYamazakiTheGeneral());
+        addCreatureReady(player1, new HeikoYamazakiTheGeneral()).tap();
         addCreatureReady(player2, new UnstoppableOgre());
         harness.setGraveyard(player1, List.of(new IronApprentice()));
 

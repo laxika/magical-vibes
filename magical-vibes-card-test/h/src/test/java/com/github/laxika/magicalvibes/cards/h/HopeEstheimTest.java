@@ -23,7 +23,7 @@ class HopeEstheimTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
     }
 
     @Test
@@ -92,7 +92,7 @@ class HopeEstheimTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 1, null, null);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -104,7 +104,8 @@ class HopeEstheimTest extends BaseCardTest {
         harness.setLife(player1, 20);
         gainThreeLifeWithRamen();
         gainThreeLifeWithRamen();
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 8, "test life loss");
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player1.getId(), 8, "test life loss"));
         harness.setLibrary(player2, List.of(new HopeEstheim(), new HopeEstheim(),
                 new HopeEstheim(), new HopeEstheim(), new HopeEstheim(),
                 new HopeEstheim(), new HopeEstheim()));

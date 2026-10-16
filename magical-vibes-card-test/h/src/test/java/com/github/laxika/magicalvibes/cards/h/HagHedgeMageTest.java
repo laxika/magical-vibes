@@ -127,8 +127,8 @@ class HagHedgeMageTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castHag();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
         chooseForestTarget();
+        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.stack).hasSize(2);
     }

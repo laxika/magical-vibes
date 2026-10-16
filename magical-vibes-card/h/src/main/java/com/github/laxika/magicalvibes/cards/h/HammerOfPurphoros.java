@@ -21,7 +21,7 @@ import java.util.Set;
 public class HammerOfPurphoros extends Card {
 
     public HammerOfPurphoros() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}{R}",
                 List.of(

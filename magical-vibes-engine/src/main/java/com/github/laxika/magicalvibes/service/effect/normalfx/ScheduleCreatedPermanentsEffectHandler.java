@@ -27,7 +27,9 @@ public class ScheduleCreatedPermanentsEffectHandler implements NormalEffectHandl
                     scheduledController,
                     scheduledController,
                     false,
-                    entry.getCard()));
+                    entry.getCard(),
+                    entry.getControllerId(),
+                    entry.getSourcePermanentId()));
         }
     }
 }

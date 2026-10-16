@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class HuntDown extends Card {
 
     public HuntDown() {
+        setAllowSharedTargets(true);
+
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature"

@@ -51,6 +51,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, targetPerm.getId());
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
 
         // Target should have 1 +1/+1 counter left (3 - 2)
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -67,6 +68,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 3, targetPerm.getId());
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 3);
 
         // Target should have 1 charge counter left (4 - 3)
         assertThat(targetPerm.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
@@ -83,6 +85,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 5, targetPerm.getId());
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
 
         // Target had only 2 +1/+1 counters, all removed
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
@@ -150,6 +153,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, targetPerm.getId());
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
 
         // Paid 2 life for Phyrexian mana
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -168,6 +172,7 @@ class HexParasiteTest extends BaseCardTest {
         // First activation: X=1
         harness.activateAbility(player1, 0, 1, targetPerm.getId());
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
 
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(hexPerm.getPowerModifier()).isEqualTo(1);
@@ -175,6 +180,7 @@ class HexParasiteTest extends BaseCardTest {
         // Second activation: X=1
         harness.activateAbility(player1, 0, 1, targetPerm.getId());
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
 
         assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(hexPerm.getPowerModifier()).isEqualTo(2);
@@ -244,6 +250,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(source);
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
@@ -256,6 +263,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.activateAbility(player1, 0, 2, target.getId());
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
         assertThat(source.getPowerModifier()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -275,6 +283,7 @@ class HexParasiteTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, source.getId());
         harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
 
         assertThat(source.getCounterCount(CounterType.CHARGE)).isZero();
         assertThat(source.getPowerModifier()).isEqualTo(2);

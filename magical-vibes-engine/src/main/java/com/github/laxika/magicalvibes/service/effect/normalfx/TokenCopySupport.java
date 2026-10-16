@@ -410,8 +410,11 @@ public class TokenCopySupport {
                         false, null, null, entry.getControllerId(), false, entry.getCard()));
             }
             if (effect.exileAtEndOfCombat()) {
+                // One resolution's tokens share a single "exile them at end of combat" delayed trigger;
+                // the source card is the batching key, needed only when several tokens are created.
                 gameData.queueDelayedAction(new DelayedPermanentAction(
-                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT,
+                        false, null, null, null, false, tokens.size() > 1 ? entry.getCard() : null));
             }
             if (effect.sacrificeAtEndStep()) {
                 // Only the player who created the token sacrifices it, and only while they control it

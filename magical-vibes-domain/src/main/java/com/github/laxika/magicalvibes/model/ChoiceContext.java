@@ -1988,11 +1988,21 @@ public sealed interface ChoiceContext {
 
     /** Price of Betrayal's per-counter-kind removal choice. */
     record RemoveCountersOfKindChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                      List<String> counterKinds, int index, int remaining)
+                                      List<String> counterKinds, int index, int remaining,
+                                      UUID boostSourcePermanentId, int removedSoFar)
             implements ChoiceContext {
 
         public RemoveCountersOfKindChoice {
             counterKinds = List.copyOf(counterKinds);
+        }
+
+        /**
+         * A plain removal choice. A non-null {@code boostSourcePermanentId} makes the permanent get
+         * +1/+0 until end of turn for each counter removed over the whole choice (Hex Parasite).
+         */
+        public RemoveCountersOfKindChoice(UUID targetId, UUID controllerId, String sourceCardName,
+                                          List<String> counterKinds, int index, int remaining) {
+            this(targetId, controllerId, sourceCardName, counterKinds, index, remaining, null, 0);
         }
 
         public static String counterLabel(String counterKind) {

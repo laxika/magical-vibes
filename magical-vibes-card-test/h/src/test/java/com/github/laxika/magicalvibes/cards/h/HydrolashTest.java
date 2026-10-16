@@ -98,13 +98,13 @@ class HydrolashTest extends BaseCardTest {
 
         giveSpell();
         harness.setLibrary(player2, List.of(new RunedServitor(), new RunedServitor()));
-        harness.castAndResolveInstant(player2, 0);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.castAndResolveInstant(player2, 0));
 
         assertThat(gqs.getEffectivePower(gd, first)).isZero();
         assertThat(gqs.getEffectivePower(gd, second)).isZero();
 
         giveSpell();
-        harness.castAndResolveInstant(player2, 0);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.castAndResolveInstant(player2, 0));
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(-2);
         assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(-2);

@@ -122,6 +122,8 @@ class HearthbornBattlerTest extends BaseCardTest {
         resolveAllTriggers();
         harness.assertLife(player2, 18);
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.forceStep(TurnStep.END_STEP);

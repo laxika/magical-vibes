@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.b.BurnishedHart;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -159,12 +158,6 @@ class HideousTaskmasterTest extends BaseCardTest {
     private void castHideousTaskmaster(List<UUID> targetIds) {
         prepareCast();
         harness.castCreature(player1, 0, targetIds);
-        if (!targetIds.isEmpty()) {
-            harness.handlePermanentChosen(player1, targetIds.getFirst());
-        }
-        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
-            harness.handlePermanentChosen(player1, player1.getId());
-        }
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

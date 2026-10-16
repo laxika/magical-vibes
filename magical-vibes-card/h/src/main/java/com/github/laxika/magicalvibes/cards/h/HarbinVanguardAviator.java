@@ -20,7 +20,6 @@ public class HarbinVanguardAviator extends Card {
                 new MinimumAttackingCreaturesOfSubtype(5, CardSubtype.SOLDIER),
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF))));
+                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES))));
     }
 }

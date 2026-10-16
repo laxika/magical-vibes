@@ -280,7 +280,7 @@ class HypergenesisTest extends BaseCardTest {
     private void resolveSuspendedHypergenesis() {
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

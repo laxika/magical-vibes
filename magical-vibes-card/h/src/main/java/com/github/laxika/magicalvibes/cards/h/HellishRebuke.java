@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -16,8 +17,9 @@ public class HellishRebuke extends Card {
     public HellishRebuke() {
         addEffect(EffectSlot.SPELL, new GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect(
                 new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_DAMAGE_TO_OPPONENT,
-                        SequenceEffect.of(new SacrificeSelfEffect(), new LoseLifeEffect(2)),
+                        EffectSlot.ON_DAMAGE_TO_PLAYER,
+                        new DamagedPlayerOnlyEffect(null,
+                                SequenceEffect.of(new SacrificeSelfEffect(), new LoseLifeEffect(2))),
                         GrantScope.SELF)));
     }
 }

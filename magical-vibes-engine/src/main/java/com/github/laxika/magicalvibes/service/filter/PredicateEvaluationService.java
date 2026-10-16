@@ -708,7 +708,8 @@ public class PredicateEvaluationService {
                     (gameData != null ? gameQueryService.getEffectiveCardColors(gameData, card)
                             : card.getColors()).size() >= 2;
             case CardIsColorlessPredicate ignored ->
-                    card.getColors().isEmpty();
+                    (gameData != null ? gameQueryService.getEffectiveCardColors(gameData, card)
+                            : card.getColors()).isEmpty();
             case CardIsDoubleFacedPredicate ignored ->
                     card.getBackFaceCard() != null
                             && (card.isModalDoubleFaced()
@@ -1289,7 +1290,8 @@ public class PredicateEvaluationService {
                             .filter(st -> !permanent.getTransientRemovedSubtypes().contains(st))
                             .collect(java.util.stream.Collectors.toSet());
                 }
-                boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(wanted::contains)
+                boolean hasSubtype = (!permanent.isFaceDown()
+                        && permanent.getCard().getSubtypes().stream().anyMatch(wanted::contains))
                         || permanent.getTransientSubtypes().stream().anyMatch(wanted::contains)
                         || permanent.getGrantedSubtypes().stream().anyMatch(wanted::contains);
                 if (!hasSubtype && gameData != null && !GameQueryService.isStaticEvaluationActive()) {
@@ -1455,8 +1457,8 @@ public class PredicateEvaluationService {
                         || !permanent.getCard().isAura() || !permanent.isAttached()) {
                     yield false;
                 }
-                Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
-                yield sourcePermanent != null && permanent.getAttachedTo().equals(sourcePermanent.getId());
+                UUID sourceObjectId = sourceObjectIdForAttachment(gameData, sourceCardId, filterContext);
+                yield sourceObjectId != null && permanent.getAttachedTo().equals(sourceObjectId);
             }
             case PermanentIsHostOfSourceAuraPredicate ignored -> {
                 Permanent sourceAura = null;
@@ -3731,10 +3733,13 @@ public class PredicateEvaluationService {
             return false;
         }
         Card originalCard = permanent.getOriginalCard();
+        GameData gameData = context.gameData();
+        if (gameData.stolenCreatures.containsKey(permanent.getId())) {
+            return gameData.stolenCreatures.get(permanent.getId()).equals(context.sourceControllerId());
+        }
         if (originalCard.getOwnerId() != null) {
             return originalCard.getOwnerId().equals(context.sourceControllerId());
         }
-        GameData gameData = context.gameData();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(permanent)) {
@@ -3957,6 +3962,20 @@ public class PredicateEvaluationService {
         }
         if (equipment == null || !equipment.isAttached()) return null;
         return gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+    }
+
+    /**
+     * The object an "attached to this" filter refers to. An ability whose source has changed zones
+     * (blinked, died) keeps referring to that source's last known object (CR 113.7a), so a new object
+     * of the same card does not match; otherwise the source is found by its card.
+     */
+    private UUID sourceObjectIdForAttachment(GameData gameData, UUID sourceCardId, FilterContext filterContext) {
+        UUID sourcePermanentId = filterContext == null ? null : filterContext.sourcePermanentId();
+        if (sourcePermanentId != null && gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
+            return sourcePermanentId;
+        }
+        Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
+        return sourcePermanent == null ? null : sourcePermanent.getId();
     }
 
     private Permanent enchantedCreatureOfSource(GameData gameData, UUID sourceCardId,

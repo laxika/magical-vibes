@@ -49,7 +49,9 @@ class HowlersHeavyTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new HowlersHeavy()));
         addCyclingMana();
 
-        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, ownCreature.getId()))
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -87,7 +89,8 @@ class HowlersHeavyTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new VoyagerGlidecar()));
         addCyclingMana();
 
-        harness.activateHandAbility(player1, 0, creature.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, creature.getId());
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(creature.getPowerModifier()).isEqualTo(-3);
@@ -107,7 +110,8 @@ class HowlersHeavyTest extends BaseCardTest {
         addCyclingMana();
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        harness.activateHandAbility(player1, 0, creature.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, creature.getId());
         harness.castInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Howler's Heavy");
@@ -145,7 +149,10 @@ class HowlersHeavyTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new HowlersHeavy()));
         addCyclingMana();
 
-        harness.activateHandAbility(player1, 0, targets.isEmpty() ? null : targets.getFirst().getId());
+        harness.activateHandAbility(player1, 0, null);
+        if (!targets.isEmpty()) {
+            harness.handlePermanentChosen(player1, targets.getFirst().getId());
+        }
         harness.passBothPriorities();
         if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerEndStepTrigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderControlEffect;
@@ -67,18 +67,18 @@ public class ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndS
                 Card enchantment = leavingCard.createRuntimeCopy();
                 enchantment.setType(CardType.ENCHANTMENT);
                 enchantment.setAdditionalTypes(Set.of());
+                enchantment.setSubtypes(List.of());
                 enchantment.freeze();
                 replaceExiledCard(gameData, exiled, enchantment);
 
-                gameData.queueDelayedAction(new DelayedEndStepTrigger(
+                gameData.queueDelayedAction(new DelayedControllerEndStepTrigger(
                         entry.getControllerId(),
                         entry.getCard(),
                         entry.getSourcePermanentId(),
-                        null,
                         new ReturnExiledCardToBattlefieldUnderControlEffect(enchantment.getId())));
                 gameLogService.append(gameData, GameLog.cardThen(enchantment,
                         " is exiled and perpetually becomes an enchantment. It will return at the beginning "
-                                + "of the next end step under "
+                                + "of its controller's next end step under "
                                 + gameData.playerIdToName.get(entry.getControllerId()) + "'s control."));
                 log.info("Game {} - {} is exiled by {} and scheduled to return under controller's control",
                         gameData.id, enchantment.getName(), entry.getCard().getName());

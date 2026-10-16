@@ -198,6 +198,24 @@ public class DrawService {
     /** Resolves a draw after the controller chose its one-based position in the library. */
     public void resolveDrawCardFromLibraryPosition(GameData gameData, UUID playerId, int position) {
         performDrawCardAtPosition(gameData, playerId, position - 1);
+        performPendingReplacementDraws(gameData);
+    }
+
+    /**
+     * Performs the draws a replacement effect substituted for one draw. Each is still a draw, so a
+     * "draw from anywhere in your library" effect lets its controller choose separately for each.
+     */
+    private void performPendingReplacementDraws(GameData gameData) {
+        while (!gameData.pendingReplacementCardDraws.isEmpty() && gameData.status != GameStatus.FINISHED) {
+            UUID drawingPlayerId = gameData.pendingReplacementCardDraws.removeFirst();
+            List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
+            if (findDrawFromAnywhereSource(gameData, drawingPlayerId) != null && deck != null && !deck.isEmpty()) {
+                interactionHandlerRegistry.begin(gameData,
+                        new PendingInteraction.DrawFromLibraryPositionChoice(drawingPlayerId, deck.size()));
+                return;
+            }
+            performDrawCard(gameData, drawingPlayerId);
+        }
     }
 
     public void resolveCyclingDrawCard(GameData gameData, UUID playerId, Card cycledCard) {
@@ -719,8 +737,9 @@ public class DrawService {
                     + drawCount + " cards instead."));
             log.info("Game {} - {}'s draw doubled", gameData.id, playerName);
             for (int i = 0; i < drawCount; i++) {
-                performDrawCard(gameData, playerId);
+                gameData.pendingReplacementCardDraws.addLast(playerId);
             }
+            performPendingReplacementDraws(gameData);
             return;
         }
 
@@ -1287,6 +1306,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof OpponentExtraDrawsRedirectedEffect);
             if (hasEffect) {
@@ -1308,6 +1328,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof OpponentExtraDrawsCreateTreasureEffect);
             if (hasEffect) {
@@ -2274,7 +2295,7 @@ public class DrawService {
                         gameData, drawingPlayerId, perm);
                 if (effect instanceof MayEffect may) {
                     for (int copy = 0; copy < triggerCopies; copy++) {
-                        gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
+                        gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may, null, perm.getId());
                     }
                 } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {

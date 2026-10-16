@@ -15,5 +15,8 @@ public class HorrorOfTheBrokenLands extends Card {
         // discard (CR 702.29e), so a single "controller discards" trigger covers both wordings; the
         // BoostSelfEffect is enqueued as a triggered ability by DiscardTriggerCollectorService.
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new BoostSelfEffect(2, 1));
+
+        // Cycling {B} ({B}, Discard this card: Draw a card.)
+        addCycling("{B}");
     }
 }

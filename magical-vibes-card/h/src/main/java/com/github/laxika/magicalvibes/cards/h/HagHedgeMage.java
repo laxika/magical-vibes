@@ -26,13 +26,13 @@ public class HagHedgeMage extends Card {
                         "Have target player discard a card?")));
 
         // When this creature enters, if you control two or more Forests, you may put target card
-        // from your graveyard on top of your library. Modelled as a resolution-time choose from the
-        // controller's own graveyard (the ETB pipeline has no graveyard-target selector for this
-        // effect) — functionally identical since it only ever draws from your own graveyard.
+        // from your graveyard on top of your library. The graveyard card is chosen as the trigger
+        // goes on the stack (CR 603.3d); the may choice is made on resolution.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
                 new MayEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)
+                        .targetGraveyard(true)
                         .build(),
                         "Put target card from your graveyard on top of your library?")));
     }

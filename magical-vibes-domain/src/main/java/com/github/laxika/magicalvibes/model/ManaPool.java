@@ -71,6 +71,8 @@ public class ManaPool {
      * when the pool holds both tagged and untagged mana of that color.
      */
     private final EnumMap<ManaColor, Integer> hasteGrantingMana = new EnumMap<>(ManaColor.class);
+    /** Mana carrying a haste rider that lasts as long as the creature stays on the battlefield (Hall of the Bandit Lord). */
+    private final EnumMap<ManaColor, Integer> permanentHasteGrantingMana = new EnumMap<>(ManaColor.class);
     /** Mana carrying a haste rider limited to creature spells of a specific subtype. */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeHasteGrantingMana =
             new EnumMap<>(CardSubtype.class);
@@ -314,6 +316,7 @@ public class ManaPool {
             persistentMana.put(color, 0);
             combatMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
+            permanentHasteGrantingMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
             creatureAdditionalCounterGrantingMana.put(color, 0);
@@ -386,6 +389,7 @@ public class ManaPool {
         mergeMana(persistentMana, source.persistentMana);
         mergeMana(combatMana, source.combatMana);
         mergeMana(hasteGrantingMana, source.hasteGrantingMana);
+        mergeMana(permanentHasteGrantingMana, source.permanentHasteGrantingMana);
         mergeMana(uncounterableGrantingMana, source.uncounterableGrantingMana);
         mergeMana(additionalCounterGrantingMana, source.additionalCounterGrantingMana);
         mergeMana(nonHumanAdditionalCounterGrantingMana, source.nonHumanAdditionalCounterGrantingMana);
@@ -512,6 +516,7 @@ public class ManaPool {
         persistentMana.putAll(source.persistentMana);
         combatMana.putAll(source.combatMana);
         hasteGrantingMana.putAll(source.hasteGrantingMana);
+        permanentHasteGrantingMana.putAll(source.permanentHasteGrantingMana);
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry
                 : source.subtypeHasteGrantingMana.entrySet()) {
             subtypeHasteGrantingMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
@@ -1106,6 +1111,7 @@ public class ManaPool {
             artifactSpellOrAbilityOnlyMana.put(color, 0);
             promotedArtifactSpellOrAbilityOnlyMana.put(color, 0);
             hasteGrantingMana.put(color, 0);
+            permanentHasteGrantingMana.put(color, 0);
             combatMana.put(color, 0);
             uncounterableGrantingMana.put(color, 0);
             additionalCounterGrantingMana.put(color, 0);
@@ -1638,6 +1644,10 @@ public class ManaPool {
         if (hasteGranting > 0) {
             hasteGrantingMana.put(color, hasteGranting - 1);
         }
+        int permanentHasteGranting = permanentHasteGrantingMana.getOrDefault(color, 0);
+        if (permanentHasteGranting > 0) {
+            permanentHasteGrantingMana.put(color, permanentHasteGranting - 1);
+        }
         removeTaggedMana(subtypeHasteGrantingMana, color);
         // Uncounterable-granting mana (Boseiju, Who Shelters All) likewise goes first.
         int uncounterableGranting = uncounterableGrantingMana.getOrDefault(color, 0);
@@ -1684,6 +1694,9 @@ public class ManaPool {
         if (hasteGrantingMana.getOrDefault(color, 0) > total) {
             hasteGrantingMana.put(color, total);
         }
+        if (permanentHasteGrantingMana.getOrDefault(color, 0) > total) {
+            permanentHasteGrantingMana.put(color, total);
+        }
         if (uncounterableGrantingMana.getOrDefault(color, 0) > total) {
             uncounterableGrantingMana.put(color, total);
         }
@@ -1720,6 +1733,23 @@ public class ManaPool {
      */
     public void addHasteGrantingMana(ManaColor color, int amount) {
         hasteGrantingMana.merge(color, amount, Integer::sum);
+    }
+
+    /**
+     * Adds mana carrying the "spent on a creature spell → it gains haste" rider with no duration
+     * (Hall of the Bandit Lord). The caller must also add the same amount via {@link #add(ManaColor, int)}.
+     */
+    public void addPermanentHasteGrantingMana(ManaColor color, int amount) {
+        permanentHasteGrantingMana.merge(color, amount, Integer::sum);
+    }
+
+    /** Total tagged mana whose haste rider lasts while the creature stays on the battlefield. */
+    public int getPermanentHasteGrantingManaTotal() {
+        int total = 0;
+        for (int value : permanentHasteGrantingMana.values()) {
+            total += value;
+        }
+        return total;
     }
 
     /** Adds mana whose haste rider applies only to creature spells of {@code subtype}. */
@@ -4702,6 +4732,7 @@ public class ManaPool {
             moveTaggedManaToColorless(promotedNonOwnedSpellOnlyMana, color, amount);
             moveTaggedManaToColorless(promotedOutsideStartingDeckSpellOnlyMana, color, amount);
             moveTaggedManaToColorless(hasteGrantingMana, color, amount);
+            moveTaggedManaToColorless(permanentHasteGrantingMana, color, amount);
             moveTaggedManaToColorlessBuckets(subtypeHasteGrantingMana, color, amount);
             moveTaggedManaToColorless(uncounterableGrantingMana, color, amount);
             moveTaggedManaToColorless(additionalCounterGrantingMana, color, amount);
@@ -4807,6 +4838,7 @@ public class ManaPool {
             moveTaggedMana(promotedNonOwnedSpellOnlyMana, color, replacementColor, amount);
             moveTaggedMana(promotedOutsideStartingDeckSpellOnlyMana, color, replacementColor, amount);
             moveTaggedMana(hasteGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(permanentHasteGrantingMana, color, replacementColor, amount);
             moveTaggedManaBuckets(subtypeHasteGrantingMana, color, replacementColor, amount);
             moveTaggedMana(uncounterableGrantingMana, color, replacementColor, amount);
             moveTaggedMana(additionalCounterGrantingMana, color, replacementColor, amount);
@@ -5076,6 +5108,7 @@ public class ManaPool {
         clampColorTag(spellOnlyMana, protectedColors);
         drainColorBucket(commanderOnlyMana, protectedColors);
         clampColorTag(hasteGrantingMana, protectedColors);
+        clampColorTag(permanentHasteGrantingMana, protectedColors);
         clampColorTagBuckets(subtypeHasteGrantingMana, protectedColors);
         clampColorTag(uncounterableGrantingMana, protectedColors);
         clampColorTag(additionalCounterGrantingMana, protectedColors);

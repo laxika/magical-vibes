@@ -15,5 +15,8 @@ public class HannasCustody extends Card {
         // All artifacts have shroud — every artifact on any battlefield, creature or not.
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_PERMANENTS,
                 new PermanentIsArtifactPredicate()));
+        // ALL_PERMANENTS skips the source, so the Custody itself gets shroud through this grant if it is an artifact.
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF,
+                new PermanentIsArtifactPredicate()));
     }
 }

@@ -40,6 +40,11 @@ public class SacrificeGrantingPermanentAndControllerDrawsEffectHandler implement
 
         Permanent grantingPermanent = gameQueryService.findPermanentById(gameData, grantingPermanentId);
         if (grantingPermanent == null) {
+            // Nothing is sacrificed, but the draw is not contingent on it: the controller of the
+            // granting permanent as of activation still draws.
+            if (e.grantingControllerId() != null) {
+                playerInteractionSupport.applyDrawCards(gameData, e.grantingControllerId(), e.cards());
+            }
             return;
         }
 

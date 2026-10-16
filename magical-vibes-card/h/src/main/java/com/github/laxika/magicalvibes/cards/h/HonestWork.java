@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -22,8 +22,8 @@ public class HonestWork extends Card {
 
     public HonestWork() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RemoveAllCountersFromTargetPermanentEffect())
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RemoveAllCountersFromEnchantedCreatureEffect())
                 .addEffect(EffectSlot.STATIC,
                         new SetNameEffect("Humble Merchant", GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC,

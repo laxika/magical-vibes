@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class HypnoticPattern extends Card {
 
     public HypnoticPattern() {
+        setAllowSharedTargets(true);
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new PerpetuallyBoostTargetCreatureEffect(-2, 0));
         target(TargetFilters.creature())

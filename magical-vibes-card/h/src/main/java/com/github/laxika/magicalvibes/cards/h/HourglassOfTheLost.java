@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -45,7 +45,7 @@ public class HourglassOfTheLost extends Card {
                                 new CardAllOfPredicate(List.of(
                                         new CardIsPermanentPredicate(),
                                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)))),
-                                new XValue(),
+                                new Fixed(Integer.MAX_VALUE),
                                 true, null, true, false)
                 ),
                 "{T}, Remove X time counters from this artifact and exile it: Return each nonland permanent card "

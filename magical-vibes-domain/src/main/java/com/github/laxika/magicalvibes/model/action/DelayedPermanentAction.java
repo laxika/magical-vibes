@@ -15,11 +15,24 @@ import java.util.UUID;
  * (e.g. "destroy it at end of combat, it can't be regenerated" triggers).
  * A non-null {@code sourceCard} is the card whose ability created the delayed trigger (a spell
  * that creates one is its source); when null the permanent's own card is used as the source.
+ * A non-null {@code triggerControllerId} is the controller of the delayed trigger itself (the
+ * controller of the ability that created it), and a non-null {@code triggerSourcePermanentId} is the
+ * permanent that ability came from; both default to the scheduled permanent's own data when null.
  */
 public record DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                      boolean cannotBeRegenerated, UUID returnExiledCardId,
                                      UUID controllerId, UUID sacrificingPlayerId,
-                                     boolean followsPermanentController, Card sourceCard) implements DelayedAction {
+                                     boolean followsPermanentController, Card sourceCard,
+                                     UUID triggerControllerId, UUID triggerSourcePermanentId)
+        implements DelayedAction {
+
+    public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
+                                  boolean cannotBeRegenerated, UUID returnExiledCardId,
+                                  UUID controllerId, UUID sacrificingPlayerId,
+                                  boolean followsPermanentController, Card sourceCard) {
+        this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, controllerId, sacrificingPlayerId,
+                followsPermanentController, sourceCard, null, null);
+    }
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                   boolean cannotBeRegenerated, UUID returnExiledCardId,

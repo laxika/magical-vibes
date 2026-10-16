@@ -81,6 +81,60 @@ Don't commit until I say so.
 
 ---
 
+## 24. Players don't choose the order of simultaneous attack (and most other) triggers
+
+**Status:** open · **Found:** 2026-10-16, while fixing H-card tests
+
+**Failing tests:**
+- `HeroOfBladeholdTest` "Controller can choose the order of the simultaneous attack triggers"
+
+**What the rules require.** CR 603.3b: when several abilities trigger since a player last received
+priority, each player in APNAP order puts the triggered abilities they control on the stack in any
+order they choose. The engine only asks for an order for spell-cast triggers
+(`beginSpellCastTriggerOrder`). Attack triggers (and other batches) go on the stack in collection order.
+
+**Why it's large.** Adding the prompt to attack triggers changes the flow of every test that declares
+attackers with two or more triggers and then calls `passBothPriorities()` without answering a prompt
+(many classes across all letters). It needs a general trigger-ordering interaction plus either a
+harness auto-answer for "default order" or rewriting those tests.
+
+**Prompt to start it:**
+
+```
+Implement CR 603.3b trigger ordering for simultaneous triggered abilities beyond spell-cast triggers,
+starting with attack triggers (HeroOfBladeholdTest.controllerChoosesAttackTriggerOrder). Generalise the
+existing beginSpellCastTriggerOrder flow into one ordering interaction used whenever a player controls
+two or more non-equivalent triggers put on the stack together. Add a harness default so existing tests
+that don't care about order keep passing, verify the CR text with the rules MCP, and add tests.
+```
+
+## 25. Remaining H-card failures
+
+**Status:** open · **Found:** 2026-10-16, while fixing H-card tests
+
+These H-card test classes still fail after three Haiku rounds and two Sonnet rounds. Most are one-card
+engine gaps. Each needs its own investigation.
+
+**Diagnosed, need engine work:**
+- `HardenedScalesTest.controllerChoosesOrderWithCounterDoubler` — counters a creature enters with go
+  through `GameQueryService.replaceCounters` inline in `BattlefieldPlacementService`, so there is no
+  CR 616.1 order prompt when Hardened Scales and Corpsejack Menace both apply.
+- `HydraulicHelperTest` — "can't be spent to cast a nonartifact spell" mana is modeled as
+  artifact-spells-or-abilities-only mana, so it can't pay Mana Leak's cost. Needs its own mana restriction.
+- `HitTheMotherLodeTest.freeCasting…AdditionalCosts…` — discover free casts skip `TapMultiplePermanentsCost`.
+- `HiveOfTheEyeTyrantTest.repeatedAnimationGrantsTwoSeparateExileTriggers` — `CombatAttackService` bundles
+  all graveyard-target ON_ATTACK effects into one trigger.
+- `HopelessNightmareTest` — the scry runs twice in one resolution after the sacrifice ability.
+
+**Remaining (undiagnosed or partly fixed):** `HaktosTheUnscarredTest`, `HaliyaGuidedByLightTest` (warp on a
+later turn), `HammerheadTyrantTest`, `HammerOfBogardanTest`, `HarmsWayTest`, `HarvesterOfSoulsTest`,
+`HazoretsUndyingFuryTest` (escalate on a free spell; lands-don't-untap scope), `HellcatUndyingVigilanteTest`,
+`HellkiteCourserTest`, `HerculesOlympianHeroTest`, `HildibrandMandervilleTest`, `HinderTest`,
+`HollowMarauderTest`, `HomaridWarriorTest` (next-untap restriction vs control change),
+`HornOfPlentyTest`, `HostOfTheHereafterTest`, `HotPursuitTest`, `HousemeldTest`,
+`HulklingYoungAvengerTest`, `HuntersTalentTest` (spell target arity counts the attack target group),
+`HuntmasterOfTheFellsTest`, `HurkylsRecallTest`, `HydroManFluidFelonTest`.
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

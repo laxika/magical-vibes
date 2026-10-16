@@ -150,8 +150,10 @@ class HarmoniousEmergenceTest extends BaseCardTest {
     void sacrificingLandDoesNotApplyDestructionReplacement() {
         Permanent forest = addEnchantedForest();
 
-        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, forest);
-        harness.getPermanentRemovalService().removeOrphanedAuras(gd);
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, forest);
+            harness.getPermanentRemovalService().removeOrphanedAuras(gd);
+        });
 
         harness.assertInGraveyard(player1, "Forest");
         harness.assertInGraveyard(player1, "Harmonious Emergence");

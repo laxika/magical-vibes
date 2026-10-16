@@ -118,6 +118,8 @@ class HeWhoHungersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Lantern Kami");
     }
@@ -218,6 +220,7 @@ class HeWhoHungersTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(boundarySpirit.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Kami of Old Stone");
         harness.assertInGraveyard(player1, "Forest");

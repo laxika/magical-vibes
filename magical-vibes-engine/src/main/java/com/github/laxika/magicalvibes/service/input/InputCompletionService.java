@@ -38,6 +38,9 @@ public class InputCompletionService {
     private com.github.laxika.magicalvibes.service.battlefield.CloneService cloneService;
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayPutCardFromHandToBattlefieldSupport
+            eachPlayerMayPutSupport;
 
 
     private final PlayerInputService playerInputService;
@@ -115,6 +118,14 @@ public class InputCompletionService {
         if (pendingDrain != null) {
             landManaDrainHandler.continueDrain(gameData, pendingDrain.entry(), pendingDrain.remainingLandIds(),
                     pendingDrain.delayedColorless());
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
+        var putContinuation = gameData.pendingEachPlayerPutContinuation;
+        if (putContinuation != null) {
+            gameData.pendingEachPlayerPutContinuation = null;
+            eachPlayerMayPutSupport.beginNextChoice(gameData, putContinuation.remainingPlayerIds(),
+                    putContinuation.chosenCardIds(), putContinuation.effect(), putContinuation.cardName(),
+                    putContinuation.cardPutThisRound(), putContinuation.startingPlayerId());
             if (gameData.interaction.isAwaitingInput()) return;
         }
         if (gameData.pendingInteractions.stream().anyMatch(pending ->

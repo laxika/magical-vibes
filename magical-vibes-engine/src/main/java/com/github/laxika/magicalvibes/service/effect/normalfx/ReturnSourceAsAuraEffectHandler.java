@@ -46,7 +46,7 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ReturnSourceAsAuraEffect returnEffect = (ReturnSourceAsAuraEffect) effect;
-        UUID cardId = entry.getCard().getId();
+        UUID cardId = returnEffect.dyingCardId() != null ? returnEffect.dyingCardId() : entry.getCard().getId();
         UUID controllerId = entry.getControllerId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (sourceCard == null) {
@@ -56,7 +56,7 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
         }
 
         Card auraCard = auraForm(sourceCard, returnEffect.enchantFilter(), returnEffect.retainedAbility(),
-                returnEffect.losesOtherAbilities());
+                returnEffect.losesOtherAbilities(), returnEffect.auraStaticEffect());
         List<UUID> validTargetIds = new ArrayList<>();
         List<Permanent> controlledPermanents = gameData.playerBattlefields.get(controllerId);
         if (controlledPermanents != null) {
@@ -89,7 +89,7 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
     private Card auraForm(Card sourceCard,
                           com.github.laxika.magicalvibes.model.filter.TargetFilter enchantFilter,
                           ActivatedAbility retainedAbility,
-                          boolean losesOtherAbilities) {
+                          boolean losesOtherAbilities, CardEffect auraStaticEffect) {
         Card copy = sourceCard.createRuntimeCopy();
         copy.setType(CardType.ENCHANTMENT);
         copy.setAdditionalTypes(Set.of());
@@ -98,7 +98,7 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
         copy.setToughness(null);
         if (retainedAbility != null || losesOtherAbilities) {
             for (EffectSlot slot : EffectSlot.values()) {
-                if (retainedAbility == null && slot == EffectSlot.STATIC) {
+                if (retainedAbility == null && auraStaticEffect == null && slot == EffectSlot.STATIC) {
                     continue;
                 }
                 var registrations = copy.getEffectRegistrations(slot);
@@ -113,6 +113,9 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
             copy.setKeywords(Set.of());
             if (retainedAbility != null) {
                 copy.addActivatedAbility(retainedAbility);
+            }
+            if (auraStaticEffect != null) {
+                copy.addEffect(EffectSlot.STATIC, auraStaticEffect);
             }
         }
         copy.clearRuntimeSpellTargets();

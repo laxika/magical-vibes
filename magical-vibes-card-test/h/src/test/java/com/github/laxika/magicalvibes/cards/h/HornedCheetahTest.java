@@ -134,7 +134,7 @@ class HornedCheetahTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, cheetah.getId());
 
         harness.assertLife(player2, 18);
-        cheetah.getCard().setPower(5);
+        cheetah.setPowerModifier(cheetah.getPowerModifier() + 3);
         resolveAllTriggers();
 
         harness.assertLife(player2, 20);

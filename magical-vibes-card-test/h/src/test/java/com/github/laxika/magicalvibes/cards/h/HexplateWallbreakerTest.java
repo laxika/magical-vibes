@@ -65,7 +65,7 @@ class HexplateWallbreakerTest extends BaseCardTest {
         wallbreaker.setAttachedTo(creature.getId());
 
         declareAttackers(player1, List.of(0), 2);
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);

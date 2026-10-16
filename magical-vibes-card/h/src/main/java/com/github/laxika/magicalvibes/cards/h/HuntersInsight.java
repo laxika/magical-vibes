@@ -18,10 +18,11 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class HuntersInsight extends Card {
 
     public HuntersInsight() {
-        // Grants the chosen creature a combat-damage trigger until end of turn; EventValue reads the
-        // damage dealt so the controller draws that many cards.
+        // Delayed trigger watching the chosen creature (controlled by the spell's controller even if the
+        // creature changes controller); EventValue reads the damage dealt so that many cards are drawn.
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.SPELL, new GrantEffectToTargetUntilEndOfTurnEffect(
-                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(new EventValue())));
+                        EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+                        new DrawCardEffect(new EventValue()), true));
     }
 }

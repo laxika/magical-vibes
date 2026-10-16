@@ -144,5 +144,6 @@ class HollowsageTest extends BaseCardTest {
         harness.passUntil(opponent, TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // CLEANUP -> next turn: untaps and enqueues the trigger
+        harness.passUntil(untappingPlayer, TurnStep.UPKEEP); // the target prompt is raised once upkeep gets priority
     }
 }

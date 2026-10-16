@@ -184,12 +184,7 @@ class HollowMarauderTest extends BaseCardTest {
         addMana();
 
         harness.castCreature(player1, 0, List.of(player2.getId(), player3.getId()));
-        List<Player> players = List.of(player1, player2, player3);
-        for (int passes = 0; passes < 12 && !gd.interaction.isAwaitingInput() && !gd.stack.isEmpty(); passes++) {
-            UUID priorityId = gqs.getPriorityPlayerId(gd);
-            Player priorityPlayer = players.stream().filter(p -> p.getId().equals(priorityId)).findFirst().orElseThrow();
-            gs.passPriority(gd, priorityPlayer);
-        }
+        resolveAllTriggers();
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(firstDiscard);

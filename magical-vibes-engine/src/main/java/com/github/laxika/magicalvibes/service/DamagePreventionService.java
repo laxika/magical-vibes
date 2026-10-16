@@ -1145,7 +1145,9 @@ public class DamagePreventionService {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(
                         gameData, source, controllerId, effect);
-                if (resolved instanceof FilteredCreaturesDamagePreventionEffect prevention
+                if (resolved instanceof ControllerAndCreaturesDamagePreventionEffect prevention) {
+                    reduction += prevention.amount();
+                } else if (resolved instanceof FilteredCreaturesDamagePreventionEffect prevention
                         && protectedCreature != null
                         && (prevention.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
                         protectedCreature,
@@ -1803,7 +1805,7 @@ public class DamagePreventionService {
         var it = gameData.sourceNextDamageToAnyTargetShields.iterator();
         while (it.hasNext()) {
             var shield = it.next();
-            if (!shield.sourceId().equals(sourcePermanentId)) {
+            if (!chosenSourceMatches(gameData, shield.sourceId(), sourcePermanentId)) {
                 continue;
             }
             if (shield.combatOnly() && !combatDamage) {
@@ -1842,8 +1844,9 @@ public class DamagePreventionService {
                         && gameQueryService.getEffectiveColors(gameData, source).contains(CardColor.RED);
                 if (source == null) {
                     StackEntry matchingEntry = sourceEntry != null
-                            && sourceEntry.getEffectiveDamageSourceCard() != null
-                            && sourcePermanentId.equals(sourceEntry.getEffectiveDamageSourceCard().getId())
+                            && (sourcePermanentId.equals(sourceEntry.getSourcePermanentId())
+                            || sourceEntry.getEffectiveDamageSourceCard() != null
+                            && sourcePermanentId.equals(sourceEntry.getEffectiveDamageSourceCard().getId()))
                             ? sourceEntry
                             : gameData.stack.stream()
                             .filter(stackEntry -> stackEntry.getCard() != null
@@ -2948,6 +2951,7 @@ public class DamagePreventionService {
                                                   Predicate<AllButOneDamagePreventionEffect> applies) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         boolean hasPrevention = battlefield != null && battlefield.stream()
+                .filter(p -> !gameQueryService.hasLostAllAbilities(gameData, p))
                 .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(effect -> effect instanceof AllButOneDamagePreventionEffect prevention
                         && applies.test(prevention));
@@ -3031,6 +3035,7 @@ public class DamagePreventionService {
         if (battlefield == null) return null;
 
         return battlefield.stream()
+                .filter(p -> !gameQueryService.hasLostAllAbilities(gameData, p))
                 .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
                 .filter(e -> e instanceof PreventSpellDamageToOpponentAndCreateTokensEffect)
                 .map(e -> (PreventSpellDamageToOpponentAndCreateTokensEffect) e)
@@ -3175,6 +3180,18 @@ public class DamagePreventionService {
     }
 
     /**
+     * A chosen permanent spell is also the source of damage dealt by the permanent it becomes
+     * (CR 609.7a), so a shield keyed to the spell's card id matches that permanent.
+     */
+    private boolean chosenSourceMatches(GameData gameData, UUID shieldSourceId, UUID sourcePermanentId) {
+        if (shieldSourceId.equals(sourcePermanentId)) {
+            return true;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return source != null && shieldSourceId.equals(source.getCard().getId());
+    }
+
+    /**
      * Whether {@link #applyChosenSourceNextDamageToAnyTargetShield(GameData, UUID, int, UUID, StackEntry)}
      * would use a shield for this damage: one that multiplies it, or one that prevents it while damage
      * can be prevented.
@@ -3184,7 +3201,7 @@ public class DamagePreventionService {
         if (sourcePermanentId == null) return false;
         boolean preventable = gameQueryService.isDamagePreventable(gameData, combatDamage);
         return gameData.sourceNextDamageToAnyTargetShields.stream()
-                .anyMatch(shield -> shield.sourceId().equals(sourcePermanentId)
+                .anyMatch(shield -> chosenSourceMatches(gameData, shield.sourceId(), sourcePermanentId)
                         && (!shield.combatOnly() || combatDamage)
                         && (!shield.playersOnly() || gameData.playerIdToName.containsKey(recipientId))
                         && (shield.combatPhase() == null || shield.combatPhase().equals(gameData.combatPhasesThisTurn))

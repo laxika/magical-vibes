@@ -28,9 +28,6 @@ class HandOfJusticeTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new RiverMerfolk());
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
-        harness.handlePermanentChosen(player1, third.getId());
         harness.passBothPriorities();
 
         assertThat(first.isTapped()).isTrue();
@@ -69,9 +66,6 @@ class HandOfJusticeTest extends BaseCardTest {
         Permanent third = addCreatureReady(player1, new IcatianInfantry());
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, second.getId());
-        harness.handlePermanentChosen(player1, third.getId());
         assertThat(target.isTapped()).isTrue();
         harness.passBothPriorities();
 

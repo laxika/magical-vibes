@@ -47,7 +47,9 @@ public class HavenOfTheSpiritDragon extends Card {
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
                                 .filter(new CardAnyOfPredicate(List.of(
-                                        new CardSubtypePredicate(CardSubtype.DRAGON),
+                                        new CardAllOfPredicate(List.of(
+                                                new CardTypePredicate(CardType.CREATURE),
+                                                new CardSubtypePredicate(CardSubtype.DRAGON))),
                                         new CardAllOfPredicate(List.of(
                                                 new CardTypePredicate(CardType.PLANESWALKER),
                                                 new CardSubtypePredicate(CardSubtype.UGIN))))))

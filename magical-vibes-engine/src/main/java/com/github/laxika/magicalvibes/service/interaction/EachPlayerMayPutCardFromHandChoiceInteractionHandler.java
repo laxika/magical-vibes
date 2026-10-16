@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingEachPlayerPutContinuation;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutCardFromHandToBattlefieldEffect;
@@ -51,6 +52,7 @@ public class EachPlayerMayPutCardFromHandChoiceInteractionHandler
 
         boolean cardPutThisRound = interaction.cardPutThisRound();
         List<UUID> accumulated = new ArrayList<>(interaction.chosenCardIds());
+        gameData.interaction.clearAwaitingInput();
         if (interaction.repeatUntilNoOne()) {
             if (!chosen.isEmpty()) {
                 cardPutThisRound = support.putCardOntoBattlefield(
@@ -65,12 +67,20 @@ public class EachPlayerMayPutCardFromHandChoiceInteractionHandler
         } else {
             accumulated.addAll(chosen);
         }
-        gameData.interaction.clearAwaitingInput();
 
         EachPlayerMayPutCardFromHandToBattlefieldEffect effect =
                 new EachPlayerMayPutCardFromHandToBattlefieldEffect(interaction.predicate(), interaction.label(),
                         false, interaction.repeatUntilNoOne(), interaction.startingPlayerId() != null,
                         interaction.anyNumber());
+        if (gameData.interaction.isAwaitingInput()) {
+            // The card just put opened a prompt of its own (an as-enters choice or an Aura's host);
+            // the next choice waits until it has been answered.
+            gameData.pendingEachPlayerPutContinuation = new PendingEachPlayerPutContinuation(
+                    interaction.remainingPlayerIds(), accumulated, effect, interaction.cardName(),
+                    cardPutThisRound, interaction.startingPlayerId());
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
         boolean begunNext = support.beginNextChoice(gameData, interaction.remainingPlayerIds(), accumulated,
                 effect, interaction.cardName(), cardPutThisRound, interaction.startingPlayerId());
         inputCompletionService.publishStateAfterInput(gameData);

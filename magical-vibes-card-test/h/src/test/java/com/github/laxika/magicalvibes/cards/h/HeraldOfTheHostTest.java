@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GenerousGift;
 import com.github.laxika.magicalvibes.cards.t.TeferiTemporalArchmage;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,10 +29,11 @@ class HeraldOfTheHostTest extends BaseCardTest {
         Player player3 = addOpponent("Charlie");
         addCreatureReady(player1, new HeraldOfTheHost());
 
-        declareAttackersAt(player2);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackersAt(player2);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        });
         assertThat(gd.stack).as("stack after accepting myriad").extracting(e -> e.getDescription()).isEmpty();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
@@ -42,9 +44,8 @@ class HeraldOfTheHostTest extends BaseCardTest {
         assertThat(token.isAttacking()).isTrue();
         assertThat(token.getAttackTarget()).isEqualTo(player3.getId());
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, harness::passBothPriorities);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
     }
@@ -104,6 +105,7 @@ class HeraldOfTheHostTest extends BaseCardTest {
     void myriadCopyMayAttackTheOtherOpponentsPlaneswalker() {
         Player player3 = addOpponent("Charlie");
         Permanent teferi = harness.addToBattlefieldAndReturn(player3, new TeferiTemporalArchmage());
+        teferi.setCounterCount(CounterType.LOYALTY, 5);
         addCreatureReady(player1, new HeraldOfTheHost());
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {

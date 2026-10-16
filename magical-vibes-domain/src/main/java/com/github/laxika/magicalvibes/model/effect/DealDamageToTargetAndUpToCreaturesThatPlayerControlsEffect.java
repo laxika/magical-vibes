@@ -8,9 +8,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * and, if chosen, targetIds[1..N] = creature permanent IDs. A creature that is no longer controlled
  * by the affected player on resolution is skipped.
  *
- * <p>{@code opponentOnly} restricts the first target to an opponent and forbids planeswalkers
- * (Ravager of the Fells); {@code creaturesCantBlock} adds the "that creature can't block this turn"
- * rider (Chandra, Pyromaster).
+ * <p>{@code opponentOnly} restricts the first target to an opponent and forbids planeswalkers;
+ * {@code creaturesCantBlock} adds the "that creature can't block this turn" rider (Chandra,
+ * Pyromaster).
  *
  * @param playerDamage       damage dealt to the player or planeswalker
  * @param creatureDamage     damage dealt to each chosen creature

@@ -130,7 +130,7 @@ class HyperionsAtomicVisionTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard, topCard);
         harness.assertInGraveyard(player2, "Hyperion, Supreme Hero");
     }
 

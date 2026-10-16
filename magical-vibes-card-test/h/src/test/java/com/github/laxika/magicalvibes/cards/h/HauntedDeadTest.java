@@ -131,8 +131,10 @@ class HauntedDeadTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
 
         assertThat(findPermanent(player1, "Haunted Dead").isTapped()).isTrue();
         assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);

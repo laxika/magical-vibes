@@ -178,7 +178,7 @@ class HigureTheStillWindTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
-                List.of(new BlockerAssignment(0, 1))))
+                List.of(new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
     }

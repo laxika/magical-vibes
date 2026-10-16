@@ -69,6 +69,7 @@ class HighwayReaverTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.ensurePriority(player1);
+        resolveAllTriggers();
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);

@@ -62,7 +62,7 @@ public class CompleteAmassGoblinsEffectHandler implements NormalEffectHandlerBea
                     armyIds,
                     1,
                     new MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayerWithChosenReference(
-                            CounterType.PLUS_ONE_PLUS_ONE, amass.count(), amass.playerId()),
+                            CounterType.PLUS_ONE_PLUS_ONE, amass.count(), amass.playerId(), true),
                     "Choose an Army creature to put " + amass.count() + " +1/+1 counter(s) on.");
             insertFollowUps(entry, effect, amass.subtype(), true, amass.drawCard());
             return;

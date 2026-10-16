@@ -74,6 +74,7 @@ class HanabiBlastTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
@@ -95,7 +96,7 @@ class HanabiBlastTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(blast, new Twincast()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 4);
         harness.setLife(player2, 20);
 
         harness.castInstant(player1, 0, player2.getId());

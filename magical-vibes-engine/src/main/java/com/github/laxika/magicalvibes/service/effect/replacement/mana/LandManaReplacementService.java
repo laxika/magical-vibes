@@ -152,7 +152,13 @@ public class LandManaReplacementService {
         ManaColor color = event.colors().iterator().next();
         int amount = event.amount();
         ManaPool pool = gameData.playerManaPools.get(event.playerId());
-        if (production.fromSnowSource()) {
+        if (production.creatureSpellOnly()) {
+            if (production.fromCreature()) {
+                pool.addCreatureSourceCreatureSpellOnlyMana(color, amount);
+            } else {
+                pool.addCreatureSpellOnlyMana(color, amount);
+            }
+        } else if (production.fromSnowSource()) {
             pool.addSnowMana(color, amount);
         } else {
             pool.add(color, amount);
@@ -166,7 +172,7 @@ public class LandManaReplacementService {
         if (production.fromBasicLandSource()) {
             pool.addBasicLandManaTag(color, amount);
         }
-        if (production.fromCreature()) {
+        if (production.fromCreature() && !production.creatureSpellOnly()) {
             pool.addCreatureMana(color, amount);
         }
         if (event.spellOnly()) {

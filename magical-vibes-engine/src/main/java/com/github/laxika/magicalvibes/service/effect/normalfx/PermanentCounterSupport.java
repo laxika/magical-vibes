@@ -1165,6 +1165,9 @@ public class PermanentCounterSupport {
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             boolean placedByThisController = controllerId.equals(placingPlayerId);
             for (Permanent source : new ArrayList<>(battlefield)) {
+                if (source.isLosesAllAbilitiesUntilEndOfTurn()) {
+                    continue;
+                }
                 Card card = source.getCard();
 
                 // Per-counter watchers: global (Flourishing Defenses) + you-put (Nest of Scarabs).

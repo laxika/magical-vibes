@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
@@ -20,9 +19,8 @@ public class HildibrandManderville extends Card {
         addCastingOption(new AdventureCast("{2}{B}"));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentIsTokenPredicate()));
-        addEffect(EffectSlot.ON_DEATH,
-                new MayEffect(new AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffect(),
-                        "Cast it from your graveyard as an Adventure until the end of your next turn?"));
+        // The "may" is the later cast; the permission itself is granted when the trigger resolves.
+        addEffect(EffectSlot.ON_DEATH, new AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffect());
     }
 
     @Override

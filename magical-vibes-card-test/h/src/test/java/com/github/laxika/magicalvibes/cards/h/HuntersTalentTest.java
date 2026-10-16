@@ -126,6 +126,7 @@ class HuntersTalentTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new ThreeTreeMascot());
         Permanent victim = addCreatureReady(player2, new TreetopSentries());
         castTalent(attacker, victim);
+        victim.tap();
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 

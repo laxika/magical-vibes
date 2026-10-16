@@ -86,6 +86,7 @@ class HauntedHellrideTest extends BaseCardTest {
         assertThat(choice.validIds()).contains(target.getId()).doesNotContain(vehicle.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower + 1);

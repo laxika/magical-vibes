@@ -118,7 +118,7 @@ class HauntingFigmentTest extends BaseCardTest {
         assertThat(gqs.hasCantBeBlocked(gd, figment)).isTrue();
         harness.setLibrary(player2, List.of(new HauntingFigment()));
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasCantBeBlocked(gd, figment)).isFalse();
     }

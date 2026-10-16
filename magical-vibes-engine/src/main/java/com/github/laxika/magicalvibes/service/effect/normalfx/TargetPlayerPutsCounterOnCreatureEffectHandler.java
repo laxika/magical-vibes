@@ -62,7 +62,7 @@ public class TargetPlayerPutsCounterOnCreatureEffectHandler implements NormalEff
 
         playerInputService.beginMultiPermanentChoice(gameData, targetPlayerId, creatureIds, 1,
                 new MultiPermanentChoiceContext.OwnPermanentCounterPlacementByPlayer(
-                        counterEffect.counterType(), counterEffect.count(), targetPlayerId),
+                        counterEffect.counterType(), counterEffect.count(), targetPlayerId, true),
                 entry.getCard().getName() + " - Choose a creature to put a counter on.");
     }
 }

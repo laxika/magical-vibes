@@ -1597,7 +1597,10 @@ public class AmountEvaluationService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (!permanent.getCard().hasType(CardType.LAND)) continue;
+                boolean isLand = GameQueryService.isStaticEvaluationActive()
+                        ? permanent.getCard().hasType(CardType.LAND)
+                        : gameQueryService.isLand(gameData, permanent);
+                if (!isLand) continue;
                 found.addAll(GameQueryService.isStaticEvaluationActive()
                         ? gameQueryService.basicLandTypesForStaticEvaluation(gameData, permanent)
                         : gameQueryService.effectiveBasicLandTypes(gameData, permanent));
@@ -1897,7 +1900,7 @@ public class AmountEvaluationService {
 
     private int countColorManaSymbolsAmongControlledPermanents(
             GameData gameData, ColorManaSymbolsAmongControlledPermanents amount, AmountContext ctx) {
-        return gameQueryService.getDevotionToColor(gameData, ctx.controllerId(), amount.color());
+        return gameQueryService.countColorManaSymbolsAmongPermanents(gameData, ctx.controllerId(), amount.color());
     }
 
     private int colorManaPairsSpentToCast(

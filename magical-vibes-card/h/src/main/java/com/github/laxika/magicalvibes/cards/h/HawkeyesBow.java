@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -22,7 +22,7 @@ public class HawkeyesBow extends Card {
 
         TriggeringPermanentConditionalEffect damageTrigger = new TriggeringPermanentConditionalEffect(
                 new PermanentIsHostOfSourceAuraPredicate(),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
+                new EnchantedCreatureDealsDamageToEachOpponentEffect(new Fixed(1)));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, damageTrigger);
         addEffect(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED, damageTrigger);
 

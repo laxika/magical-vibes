@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
     private final PotentialManaService potentialManaService;
     private final ETBTokenTargetService etbTokenTargetService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -104,6 +106,13 @@ public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
 
     private void queueReflexiveTargetedAbility(GameData gameData, StackEntry entry,
                                                CardEffect thenEffect, int paymentCount) {
+        if (thenEffect instanceof ChooseOneEffect modal) {
+            // A modal reflexive ability has its modes, and then their targets, chosen as it is
+            // put on the stack (CR 700.2b), before anyone receives priority.
+            playerInputService.beginTriggeredModalChoice(gameData, entry.getControllerId(), entry.getCard(),
+                    modal, entry.getSourcePermanentId());
+            return;
+        }
         if (thenEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(thenEffect), null, 0, 0, paymentCount));

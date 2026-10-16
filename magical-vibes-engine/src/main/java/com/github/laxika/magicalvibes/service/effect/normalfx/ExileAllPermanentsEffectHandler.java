@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,32 +64,35 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
         try {
             permanentRemovalService.performSimultaneousRemovals(gameData, toExile, () -> {
             for (Permanent perm : toExile) {
+                List<Card> leavingCards = new ArrayList<>(perm.cardsLeavingBattlefield());
                 boolean removed;
                 if (sourcePermanentId != null) {
                     removed = permanentRemovalService.removePermanentToExile(gameData, perm, sourcePermanentId);
                 } else {
                     removed = permanentRemovalService.removePermanentToExile(gameData, perm);
                 }
-                if (e.perpetualCastCostIncrease() != 0) {
-                    gameData.perpetualGenericCastCostIncreases.merge(
-                            perm.getOriginalCard().getId(), e.perpetualCastCostIncrease(), Integer::sum);
-                }
-                if (e.perpetualEnterTapped()) {
-                    gameData.perpetualEnterTappedCardIds.add(perm.getOriginalCard().getId());
-                }
-                if (e.ownerMayPlayWhileExiled()) {
-                    UUID ownerId = gameQueryService.findExileOwnerById(gameData, perm.getOriginalCard().getId());
-                    if (ownerId != null) {
-                        exileSupport.grantPlayWhileExiled(gameData, perm.getOriginalCard().getId(), ownerId);
+                for (Card exiledCard : leavingCards) {
+                    UUID exiledCardId = exiledCard.getId();
+                    if (e.perpetualCastCostIncrease() != 0) {
+                        gameData.perpetualGenericCastCostIncreases.merge(
+                                exiledCardId, e.perpetualCastCostIncrease(), Integer::sum);
                     }
-                }
-                if (e.controllerMayPlayWhileExiled()
-                        && removed
-                        && gameData.findExiledCard(perm.getOriginalCard().getId()) != null) {
-                    exileSupport.grantPlayWhileExiled(
-                            gameData, perm.getOriginalCard().getId(), entry.getControllerId());
-                    if (e.controllerMaySpendAnyManaType()) {
-                        gameData.exilePlayAnyManaTypeWhileExiled.add(perm.getOriginalCard().getId());
+                    if (e.perpetualEnterTapped()) {
+                        gameData.perpetualEnterTappedCardIds.add(exiledCardId);
+                    }
+                    if (e.ownerMayPlayWhileExiled()) {
+                        UUID ownerId = gameQueryService.findExileOwnerById(gameData, exiledCardId);
+                        if (ownerId != null) {
+                            exileSupport.grantPlayWhileExiled(gameData, exiledCardId, ownerId);
+                        }
+                    }
+                    if (e.controllerMayPlayWhileExiled()
+                            && removed
+                            && gameData.findExiledCard(exiledCardId) != null) {
+                        exileSupport.grantPlayWhileExiled(gameData, exiledCardId, entry.getControllerId());
+                        if (e.controllerMaySpendAnyManaType()) {
+                            gameData.exilePlayAnyManaTypeWhileExiled.add(exiledCardId);
+                        }
                     }
                 }
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " is exiled."));

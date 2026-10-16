@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDrawAndMayPutPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
@@ -576,6 +577,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                                  int powerBoost, int toughnessBoost)
             implements PermanentChoiceContext {}
 
+    /** The controller chooses which of several eligible partners a meld effect melds the source with. */
+    record MeldPartnerChoice(UUID controllerId, UUID sourcePermanentId, MeldWithNamedCreatureEffect effect)
+            implements PermanentChoiceContext {}
+
     /** Balduvian Warlord's controller chooses an attacking creature for the removed blocker to block. */
     record BalduvianWarlordChoosesAttacker(UUID blockerId, String sourceCardName)
             implements PermanentChoiceContext {}
@@ -843,8 +848,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record AnimateChosenOwnPermanent(AnimatePermanentsEffect animation, UUID controllerId)
             implements PermanentChoiceContext {}
 
+    /**
+     * Several permanents are instructed to explore at the same time (Hakbal of the Surging Soul): the
+     * controller chooses which of {@code candidateIds} explores next (CR 701.44d).
+     */
+    record ExploreOrderChoice(StackEntry resolvingEntry, java.util.List<UUID> candidateIds)
+            implements PermanentChoiceContext {}
+
     /** Mister Hyde: choose a creature you control from which to remove a counter, then draw a card. */
     record RemoveCounterFromControlledCreatureThenDraw(StackEntry resolvingEntry)
+            implements PermanentChoiceContext {}
+
+    /**
+     * Hand of Vecna: the controller chooses between the equipped creature and a creature they control
+     * with the matching name; the chosen creature gets the boost.
+     */
+    record BoostEquippedOrMatchingCreatureChoice(StackEntry resolvingEntry,
+                                                 com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect effect)
             implements PermanentChoiceContext {}
 
     /** Awaken the Maelstrom: choose a creature for the next counter allocation. */

@@ -130,7 +130,8 @@ class HedronFieldPuristsTest extends BaseCardTest {
         Permanent purists = addCreatureReady(player1, new HedronFieldPurists());
         levelUp(player1, purists);
         addCreatureReady(player2, new GrizzlyBears());
-        declareAttackers(player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
     }

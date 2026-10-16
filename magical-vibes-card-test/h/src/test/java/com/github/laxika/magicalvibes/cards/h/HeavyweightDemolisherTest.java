@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.r.RazeToTheGround;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeavyweightDemolisher.class, RazeToTheGround.class})
+@CardUsed({HeavyweightDemolisher.class, Murder.class})
 class HeavyweightDemolisherTest extends BaseCardTest {
 
     @Test
@@ -83,9 +83,9 @@ class HeavyweightDemolisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent demolisher = findPermanent(player1, "Heavyweight Demolisher");
-        assertThat(demolisher.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(demolisher.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
         harness.assertNotOnBattlefield(player1, "Heavyweight Demolisher");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -144,13 +144,14 @@ class HeavyweightDemolisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent demolisher = findPermanent(player1, "Heavyweight Demolisher");
-        harness.setHand(player1, List.of(new RazeToTheGround()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castAndResolveSorcery(player1, 0, demolisher.getId());
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, demolisher.getId());
 
         harness.assertNotOnBattlefield(player1, "Heavyweight Demolisher");
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Heavyweight Demolisher"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Heavyweight Demolisher"));
     }

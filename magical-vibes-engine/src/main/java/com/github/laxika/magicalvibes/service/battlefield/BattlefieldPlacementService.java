@@ -447,7 +447,7 @@ public class BattlefieldPlacementService {
         }
         synchronized (gameData.targetSpellDamagePreventionShields) {
             gameData.targetSpellDamagePreventionShields.replaceAll(shield ->
-                    shield.sourcePermanentId() == null && !shield.requiredColors().isEmpty()
+                    shield.sourcePermanentId() == null
                             && permanent.getCard().getId().equals(shield.spellCardId())
                             ? new TargetSpellDamagePreventionShield(null, shield.lifeGainPlayerId(),
                                     permanent.getId(), shield.requiredColors())
@@ -1127,7 +1127,7 @@ public class BattlefieldPlacementService {
             return;
         }
 
-        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, controllerId)
+        boolean canPay = gameQueryService.canPlayerLoseLife(gameData, controllerId)
                 && gameData.getLife(controllerId) >= effect.lifeCost();
         if (!canPay) {
             permanent.tap();
@@ -2002,7 +2002,11 @@ public class BattlefieldPlacementService {
      */
     private void applySpellGrantedHaste(GameData gameData, Permanent permanent) {
         if (gameData.spellsGrantedHasteOnEntry.remove(permanent.getCard().getId())) {
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            if (gameData.spellsGrantedPermanentHasteOnEntry.remove(permanent.getCard().getId())) {
+                permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+            } else {
+                permanent.getGrantedKeywords().add(Keyword.HASTE);
+            }
             log.info("Game {} - {} enters with haste (paid for with haste-granting mana)",
                     gameData.id, permanent.getCard().getName());
         }

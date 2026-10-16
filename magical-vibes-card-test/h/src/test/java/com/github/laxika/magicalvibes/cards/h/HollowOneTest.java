@@ -167,6 +167,7 @@ class HollowOneTest extends BaseCardTest {
             harness.setHand(player1, List.of(new RampagingHippo()));
             harness.setLibrary(player1, List.of(new FrilledSandwalla(), new FrilledSandwalla()));
             harness.setLibrary(player2, List.of(new FrilledSandwalla(), new FrilledSandwalla()));
+            harness.setHand(player2, List.of());
             cycleFromHand(1);
 
             harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);

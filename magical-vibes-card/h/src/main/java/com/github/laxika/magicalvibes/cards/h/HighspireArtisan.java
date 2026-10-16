@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 import java.util.List;
@@ -17,16 +17,11 @@ import java.util.Set;
 public class HighspireArtisan extends Card {
 
     public HighspireArtisan() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption(
-                        "Put a +1/+1 counter on Highspire Artisan",
-                        new PutCountersOnSourceEffect(1, 1, 1)
-                ),
-                new ChooseOneEffect.ChooseOneOption(
-                        "Create a 1/1 colorless Servo artifact creature token",
-                        new CreateTokenEffect(1, "Servo", 1, 1, null,
-                                List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT))
-                )
-        )));
+        // Fabricate 1 (CR 702.123a): the choice is made as the trigger resolves.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+                new PutCountersOnSourceEffect(1, 1, 1),
+                "Put a +1/+1 counter on Highspire Artisan?",
+                new CreateTokenEffect(1, "Servo", 1, 1, null,
+                        List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT))));
     }
 }

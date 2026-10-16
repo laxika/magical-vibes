@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
@@ -27,7 +27,7 @@ public class HopelessNightmare extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{B}",
-                List.of(new SacrificeSelfCost()),
+                List.of(new SacrificeSelfEffect()),
                 "{2}{B}: Sacrifice this enchantment."
         ));
     }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
@@ -30,16 +31,18 @@ public class HangarScrounger extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
 
+        CardEffect rummage = new TriggeringPermanentConditionalEffect(
+                new PermanentIsSourceCardPredicate(),
+                new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"));
+
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, rummage);
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
-                                new TriggeringPermanentConditionalEffect(
-                                        new PermanentIsSourceCardPredicate(),
-                                        new MayEffect(new DiscardAndDrawCardEffect(),
-                                                "Discard a card to draw a card?"))))
+                                rummage))
         ));
     }
 }

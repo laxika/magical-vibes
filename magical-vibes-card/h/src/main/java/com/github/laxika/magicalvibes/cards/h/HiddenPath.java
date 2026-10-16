@@ -15,7 +15,7 @@ import java.util.Set;
 public class HiddenPath extends Card {
 
     public HiddenPath() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FORESTWALK, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FORESTWALK, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
     }
 }

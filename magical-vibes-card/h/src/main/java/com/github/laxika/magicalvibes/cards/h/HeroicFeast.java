@@ -20,7 +20,7 @@ public class HeroicFeast extends Card {
 
     public HeroicFeast() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodToken());
-        targetUpTo(new EventValue(), TargetFilters.creatureYouControl(), 100)
+        targetUpTo(new EventValue(), TargetFilters.creatureYouControl(), 1000)
                 .addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }

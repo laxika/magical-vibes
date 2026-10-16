@@ -73,11 +73,12 @@ class HullbreacherTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        harness.setHand(player2, List.of(new Peek()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.withAutoStop(TurnStep.DRAW, () -> {
+            harness.passBothPriorities();
+            harness.setHand(player2, List.of(new Peek()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.castAndResolveInstant(player2, 0, player1.getId());
+        });
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.DRAW);
         harness.assertNotInHand(player2, "Grizzly Bears");

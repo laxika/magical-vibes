@@ -46,24 +46,24 @@ public class PutCommanderFromCommandZoneOntoBattlefieldEffectHandler implements 
         if (commandZone.size() > 1) {
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.CommanderBattlefieldChoice(
-                            controllerId, new ArrayList<>(commandZone)));
+                            controllerId, new ArrayList<>(commandZone), entry.getCard()));
             return;
         }
-        putOntoBattlefield(gameData, controllerId, commandZone.getFirst());
+        putOntoBattlefield(gameData, controllerId, commandZone.getFirst(), entry.getCard());
     }
 
-    public void completeChoice(GameData gameData, UUID playerId, UUID cardId) {
+    public void completeChoice(GameData gameData, UUID playerId, UUID cardId, Card sourceCard) {
         List<Card> commandZone = gameData.playerCommandZones.getOrDefault(playerId, List.of());
         Card commander = commandZone.stream()
                 .filter(card -> card.getId().equals(cardId))
                 .findFirst()
                 .orElse(null);
         if (commander != null) {
-            putOntoBattlefield(gameData, playerId, commander);
+            putOntoBattlefield(gameData, playerId, commander, sourceCard);
         }
     }
 
-    private void putOntoBattlefield(GameData gameData, UUID controllerId, Card commander) {
+    private void putOntoBattlefield(GameData gameData, UUID controllerId, Card commander, Card sourceCard) {
         List<Card> commandZone = gameData.playerCommandZones.get(controllerId);
         if (commandZone == null || !commandZone.remove(commander)) {
             return;
@@ -75,7 +75,8 @@ public class PutCommanderFromCommandZoneOntoBattlefieldEffectHandler implements 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent);
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, commander);
         gameData.queueDelayedAction(new DelayedPermanentAction(
-                permanent.getId(), DelayedPermanentActionKind.RETURN_TO_COMMAND_ZONE_AT_END_STEP));
+                permanent.getId(), DelayedPermanentActionKind.RETURN_TO_COMMAND_ZONE_AT_END_STEP,
+                false, null, null, null, false, sourceCard));
         gameLogService.append(gameData, GameLog.entersBattlefieldUnder(
                 commander, gameData.playerIdToName.get(controllerId)));
     }

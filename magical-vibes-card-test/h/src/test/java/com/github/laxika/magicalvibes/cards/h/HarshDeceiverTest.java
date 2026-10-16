@@ -187,7 +187,7 @@ class HarshDeceiverTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(5);
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(4);

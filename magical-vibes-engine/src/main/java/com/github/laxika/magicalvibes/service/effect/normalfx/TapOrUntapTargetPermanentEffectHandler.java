@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
     private final TapUntapSupport tapUntapSupport;
     private final PlayerInputService playerInputService;
 
@@ -70,12 +68,10 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
 
     private void tapOrUntap(GameData gameData, StackEntry entry, Permanent target) {
         if (target.isTapped()) {
-            if (gameQueryService.cantBecomeUntapped(gameData, target)) {
+            if (!tapUntapSupport.untapPermanent(gameData, target)) {
                 return;
             }
-            target.untap();
-            triggerCollectionService.checkBecomesUntappedTriggers(gameData, target);
-            
+
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " untaps ", target.getCard(), "."));
             log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         } else {

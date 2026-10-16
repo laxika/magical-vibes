@@ -28,7 +28,8 @@ public class HeritageReclamation extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile up to one target card from a graveyard. Draw a card",
                         List.of(
-                                new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD),
+                                new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, null, null,
+                                        false, false, false, null, false, true),
                                 new DrawCardEffect()))
         )));
     }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -83,5 +84,19 @@ public class CreateTokenCopyOfChosenCreatureEffectHandler implements NormalEffec
         tokenCopyHandler.resolve(gameData, copyEntry,
                 new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)));
         resolvingEntry.getCreatedPermanentIds().addAll(copyEntry.getCreatedPermanentIds());
+
+        int effectIndex = resolvingEntry.getResolvingEffectIndex();
+        List<CardEffect> resolvingEffects = resolvingEntry.getEffectsToResolve();
+        if (effectIndex >= 0 && effectIndex < resolvingEffects.size()
+                && resolvingEffects.get(effectIndex) instanceof CreateTokenEffect replaced
+                && replaced.grantedKeywordsUntilEndOfTurn() != null
+                && !replaced.grantedKeywordsUntilEndOfTurn().isEmpty()) {
+            for (UUID createdId : copyEntry.getCreatedPermanentIds()) {
+                Permanent created = gameQueryService.findPermanentById(gameData, createdId);
+                if (created != null) {
+                    created.getGrantedKeywords().addAll(replaced.grantedKeywordsUntilEndOfTurn());
+                }
+            }
+        }
     }
 }

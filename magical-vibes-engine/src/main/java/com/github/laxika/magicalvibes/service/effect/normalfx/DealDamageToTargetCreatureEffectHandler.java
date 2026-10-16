@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -84,6 +85,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
                 ? gameQueryService.findPermanentById(gameData, entry.getTargetId())
                 : null;
         int markedBefore = target == null ? 0 : target.getMarkedDamage();
+        int loyaltyBefore = target == null ? 0 : target.getCounterCount(CounterType.LOYALTY);
         boolean deathtouch = tracksExcess
                 && gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH);
 
@@ -100,8 +102,8 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         }
 
         if (tracksExcess) {
-            entry.setEventValue(target == null ? 0 : damageSupport.computeExcessDamageToCreature(
-                    gameData, target, damageDealt, markedBefore, deathtouch));
+            entry.setEventValue(target == null ? 0 : damageSupport.computeExcessDamageToTargetedPermanent(
+                    gameData, target, damageDealt, markedBefore, loyaltyBefore, deathtouch));
         }
 
     }

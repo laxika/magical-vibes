@@ -145,6 +145,7 @@ public class CombatTapCostService {
                 && !permanent.isTapped()
                 && !permanent.isAttacking()
                 && !permanent.isBlocking()
+                && !gameData.declaredAttackerIdsThisCombat.contains(permanent.getId())
                 && !declaredIds.contains(permanent.getId())
                 && !usedIds.contains(permanent.getId());
     }

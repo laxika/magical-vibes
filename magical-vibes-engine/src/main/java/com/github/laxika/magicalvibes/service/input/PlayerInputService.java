@@ -1841,8 +1841,17 @@ public class PlayerInputService {
     public void beginRemoveCountersOfKindChoice(GameData gameData, UUID playerId, UUID targetId,
                                                 String sourceCardName, List<String> counterKinds,
                                                 int index, int remaining, int maxForCurrentKind) {
+        beginRemoveCountersOfKindChoice(gameData, playerId, targetId, sourceCardName, counterKinds,
+                index, remaining, maxForCurrentKind, null, 0);
+    }
+
+    public void beginRemoveCountersOfKindChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                String sourceCardName, List<String> counterKinds,
+                                                int index, int remaining, int maxForCurrentKind,
+                                                UUID boostSourcePermanentId, int removedSoFar) {
         ChoiceContext.RemoveCountersOfKindChoice context = new ChoiceContext.RemoveCountersOfKindChoice(
-                targetId, playerId, sourceCardName, counterKinds, index, remaining);
+                targetId, playerId, sourceCardName, counterKinds, index, remaining,
+                boostSourcePermanentId, removedSoFar);
         String counterKind = counterKinds.get(index);
         int max = Math.max(0, Math.min(remaining, maxForCurrentKind));
         List<String> options = IntStream.rangeClosed(0, max).mapToObj(Integer::toString).toList();

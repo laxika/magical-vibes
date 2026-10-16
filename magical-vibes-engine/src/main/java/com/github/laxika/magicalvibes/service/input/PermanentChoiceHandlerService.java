@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffec
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RiskyMoveEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BoostEquippedCreatureUntilEndOfTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExploreEachControlledCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromControlledCreatureThenDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetOpponentChoosesPlayerForRestrictionEffectHandler;
@@ -103,6 +105,8 @@ public class PermanentChoiceHandlerService {
     private final TurnOwnCreatureFaceUpEffectHandler turnOwnCreatureFaceUpEffectHandler;
     private final RemoveCounterFromControlledCreatureThenDrawEffectHandler
             removeCounterFromControlledCreatureThenDrawEffectHandler;
+    private final ExploreEachControlledCreatureEffectHandler exploreEachControlledCreatureEffectHandler;
+    private final BoostEquippedCreatureUntilEndOfTurnEffectHandler boostEquippedCreatureUntilEndOfTurnEffectHandler;
     private final InputCompletionService inputCompletionService;
     private final EarthbendTargetLandThenFightEffectHandler earthbendThenFightHandler;
     private final ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
@@ -298,6 +302,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleDefendingPlayerChoosesCreatureToBlock(gameData, permanentId, chooseBlocker);
         } else if (context instanceof PermanentChoiceContext.AttackingPlayerChoosesCreatureToBoost chooseBoost) {
             battlefieldHandler.handleAttackingPlayerChoosesCreatureToBoost(gameData, permanentId, chooseBoost);
+        } else if (context instanceof PermanentChoiceContext.MeldPartnerChoice meldChoice) {
+            battlefieldHandler.handleMeldPartnerChoice(gameData, permanentId, meldChoice);
         } else if (context instanceof PermanentChoiceContext.BalduvianWarlordChoosesAttacker chooseAttacker) {
             battlefieldHandler.handleBalduvianWarlordChoosesAttacker(gameData, permanentId, chooseAttacker);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureYouGainControl richesChoice) {
@@ -403,9 +409,15 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAwakenTheMaelstromPermanentCopyChoice(gameData, permanentId, copyChoice);
         } else if (context instanceof PermanentChoiceContext.ChosenPermanentCopyChoice copyChoice) {
             battlefieldHandler.handleChosenPermanentCopyChoice(gameData, permanentId, copyChoice);
+        } else if (context instanceof PermanentChoiceContext.ExploreOrderChoice exploreOrder) {
+            exploreEachControlledCreatureEffectHandler.completeChoice(gameData, permanentId, exploreOrder);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.RemoveCounterFromControlledCreatureThenDraw removeCounter) {
             removeCounterFromControlledCreatureThenDrawEffectHandler.completeChoice(
                     gameData, permanentId, removeCounter);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.BoostEquippedOrMatchingCreatureChoice boostChoice) {
+            boostEquippedCreatureUntilEndOfTurnEffectHandler.completeChoice(gameData, permanentId, boostChoice);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.AwakenTheMaelstromCounterCreatureChoice) {
             battlefieldHandler.handleAwakenTheMaelstromCounterCreatureChoice(gameData, permanentId);

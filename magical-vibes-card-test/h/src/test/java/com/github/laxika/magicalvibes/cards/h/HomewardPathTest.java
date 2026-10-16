@@ -53,7 +53,7 @@ class HomewardPathTest extends BaseCardTest {
     void controlAbilityUsesTheStackAndSurvivesItsSourceLeaving() {
         Permanent path = addReadyPath();
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        gd.stolenCreatures.put(creature.getId(), player1.getId());
+        setOwnerAndController(creature, player1, player2);
 
         harness.activateAbility(player1, battlefieldIndex(path), 1, null, null);
 

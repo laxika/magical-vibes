@@ -25,6 +25,6 @@ public class HammerheimDeadeye extends Card {
                 )),
                 "Target must be a creature with flying"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{5}{R}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{5}{R}"));
     }
 }

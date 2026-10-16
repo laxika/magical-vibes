@@ -725,9 +725,11 @@ public class GraveyardService {
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone,
                 battlefieldSnapshot, creatureDeathTriggersSuppressed);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card, sourceZone);
-        collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        if (!creatureDeathTriggersSuppressed) {
+            collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        }
         collectEmblemPutIntoGraveyardTriggers(gameData, ownerId, card);
-        if (!isToken(gameData, card)) {
+        if (!isToken(gameData, card) && !creatureDeathTriggersSuppressed) {
             collectOpponentGraveyardLifeLossTriggers(gameData, ownerId);
         }
         if (sourceZone == Zone.HAND) {
@@ -2112,6 +2114,7 @@ public class GraveyardService {
 
     private void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId, int count, List<Card> cards) {
         cards.forEach(card -> gameData.graveyardCardCastPermissionsUntilEndOfTurn.remove(card.getId()));
+        cards.forEach(card -> gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.cardsGrantedJumpStartUntilEndOfTurn.remove(card.getId()));
         cards.forEach(card -> gameData.markGraveyardExit(card.getId()));
         // Record that one or more cards left this player's graveyard this turn (regardless of

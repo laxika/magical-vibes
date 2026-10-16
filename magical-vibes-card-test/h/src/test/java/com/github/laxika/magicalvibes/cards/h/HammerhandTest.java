@@ -92,8 +92,8 @@ class HammerhandTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Hammerhand()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0,
-                List.of(host.getId(), blocker.getId())))
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(host.getId(), blocker.getId()), List.of()))
                 .isInstanceOf(RuntimeException.class);
         assertThat(gd.stack).isEmpty();
     }

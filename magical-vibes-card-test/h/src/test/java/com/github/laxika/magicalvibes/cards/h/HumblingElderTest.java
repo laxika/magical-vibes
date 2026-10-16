@@ -34,7 +34,8 @@ class HumblingElderTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
-        assertThat(entry.getTargetId()).isEqualTo(target.getId());
+        assertThat(entry.getCard().getName()).isEqualTo("Humbling Elder");
+        assertThat(entry.getTargetId()).isNull();
     }
 
     @Test

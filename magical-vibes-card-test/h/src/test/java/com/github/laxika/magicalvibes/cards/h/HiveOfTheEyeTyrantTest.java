@@ -122,7 +122,7 @@ class HiveOfTheEyeTyrantTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         resolveAllTriggers();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(card);
     }
@@ -147,7 +147,7 @@ class HiveOfTheEyeTyrantTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         resolveAllTriggers();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
     }

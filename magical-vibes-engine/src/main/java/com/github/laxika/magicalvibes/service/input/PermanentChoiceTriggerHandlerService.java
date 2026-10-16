@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -348,7 +349,20 @@ public class PermanentChoiceTriggerHandlerService {
         var target = card.getSpellTargets().getFirst();
         return target.getMinTargets() == 0
                 && target.getMaxTargets() == 1
-                && effects.stream().anyMatch(effect -> card.getEffectTargetIndex(effect) == target.getIndex());
+                && effects.stream().anyMatch(effect -> isBoundToTargetGroup(card, effect, target.getIndex()));
+    }
+
+    /**
+     * Whether the effect belongs to the card's target group. A death-trigger effect carrying a
+     * snapshot of the dying creature's counters is a copy of the effect declared on the card, so it
+     * is matched through its unbound form.
+     */
+    private static boolean isBoundToTargetGroup(Card card, CardEffect effect, int targetIndex) {
+        if (card.getEffectTargetIndex(effect) == targetIndex) {
+            return true;
+        }
+        return effect instanceof com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect aware
+                && card.getEffectTargetIndex(aware.boundToDyingCreatureCounters(java.util.Map.of())) == targetIndex;
     }
 
     public void handleSelfTriggeredAbility(GameData gameData, UUID targetId,
@@ -753,7 +767,11 @@ public class PermanentChoiceTriggerHandlerService {
     private boolean promptNextTransformCreatureTarget(GameData gameData,
                                                       PermanentChoiceContext.TransformCreatureTarget context) {
         List<UUID> validCreatureTargets = new ArrayList<>();
-        List<Permanent> opponentBattlefield = gameData.playerBattlefields.get(context.opponentId());
+        UUID affectedPlayerId = gameData.playerIds.contains(context.opponentId())
+                ? context.opponentId()
+                : gameQueryService.findPermanentController(gameData, context.opponentId());
+        List<Permanent> opponentBattlefield = affectedPlayerId == null
+                ? null : gameData.playerBattlefields.get(affectedPlayerId);
         if (opponentBattlefield != null) {
             for (Permanent permanent : opponentBattlefield) {
                 if (context.creatureIds().contains(permanent.getId())) {
@@ -1079,11 +1097,13 @@ public class PermanentChoiceTriggerHandlerService {
         boolean isExiledCardTarget = target == null
                 && gameQueryService.findCardInExileById(gameData, permanentId) != null;
         boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);
+        boolean isGraveyardCardTarget = target == null && !isExiledCardTarget && !isPlayerTarget
+                && gameQueryService.findCardInGraveyardById(gameData, permanentId) != null;
         boolean declined = hasOptionalSingleTarget(att.sourceCard(), att.effects())
                 && isPlayerTarget
                 && permanentId.equals(att.controllerId());
-        if ((target != null || isPlayerTarget || isExiledCardTarget) && !declined) {
-            StackEntry entry = isExiledCardTarget
+        if ((target != null || isPlayerTarget || isExiledCardTarget || isGraveyardCardTarget) && !declined) {
+            StackEntry entry = isExiledCardTarget || isGraveyardCardTarget
                     ? new StackEntry(
                       StackEntryType.TRIGGERED_ABILITY,
                     att.sourceCard(),
@@ -1091,7 +1111,7 @@ public class PermanentChoiceTriggerHandlerService {
                     att.sourceCard().getName() + "'s ability",
                     new ArrayList<>(att.effects()),
                     permanentId,
-                    Zone.EXILE,
+                    isGraveyardCardTarget ? Zone.GRAVEYARD : Zone.EXILE,
                     att.sourcePermanentId())
                     : new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -1102,8 +1122,13 @@ public class PermanentChoiceTriggerHandlerService {
                     null,
                     att.sourcePermanentId()
             );
-              if (!isExiledCardTarget) {
+              if (!isExiledCardTarget && !isGraveyardCardTarget) {
                   entry.setTargetId(permanentId);
+                  TargetFilter attackTargetFilter = triggerCollectionService.targetFilterForTriggeredEffects(
+                          att.sourceCard(), att.effects());
+                  if (attackTargetFilter != null) {
+                      entry.setTargetFilter(attackTargetFilter);
+                  }
               }
             if (att.xValue() != null) {
                 entry.setXValue(att.xValue());

@@ -33,6 +33,7 @@ class HakbalOfTheSurgingSoulTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(landBeforeNonland, nonland));
 
         advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, hakbal.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
@@ -127,9 +128,11 @@ class HakbalOfTheSurgingSoulTest extends BaseCardTest {
     @Test
     @DisplayName("Exploring an empty library still puts a counter on the creature")
     void emptyLibraryStillGivesCounter() {
-        Permanent hakbal = addCreatureReady(player1, new HakbalOfTheSurgingSoul());
+        Permanent hakbal = new Permanent(new HakbalOfTheSurgingSoul());
+        gd.playerBattlefields.get(player1.getId()).add(hakbal);
         Permanent opponentMerfolk = addCreatureReady(player2, new MerfolkOfThePearlTrident());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bear = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).add(bear);
         harness.setLibrary(player1, List.of());
 
         advanceToCombat(player1);

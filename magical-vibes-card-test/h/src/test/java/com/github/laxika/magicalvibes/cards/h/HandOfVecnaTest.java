@@ -231,9 +231,10 @@ class HandOfVecnaTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
 
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);

@@ -588,6 +588,14 @@ public class GraveyardChoiceHandlerService {
                         lifeSupport.applyGainLife(gameData, gainLifeIfCreaturePlayerId, gainLifeIfCreatureAmount);
                     }
 
+                    // "If you do" riders of the exile are queued into the paused resolution now that
+                    // a card has actually been exiled.
+                    if (mayAbilityEffects != null && !mayAbilityEffects.isEmpty()
+                            && gameData.pendingEffectResolutionEntry != null) {
+                        gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                                gameData.pendingEffectResolutionIndex, mayAbilityEffects);
+                    }
+
                     // Check if more exiles are needed
                     int remaining = exileRemainingCount - 1;
                     if (remaining > 0) {

@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class DestroyRandomOpponentPermanentWithCounterEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,9 +61,15 @@ public class DestroyRandomOpponentPermanentWithCounterEffectHandler implements N
                     return;
                 }
 
-                // Destroy one at random
-                int randomIndex = ThreadLocalRandom.current().nextInt(candidates.size());
-                Permanent chosen = candidates.get(randomIndex);
+                // Destroy one at random among those that can be destroyed (indestructible ones still count above)
+                List<Permanent> destroyable = candidates.stream()
+                        .filter(perm -> !gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE))
+                        .toList();
+                if (destroyable.isEmpty()) {
+                    return;
+                }
+                int randomIndex = ThreadLocalRandom.current().nextInt(destroyable.size());
+                Permanent chosen = destroyable.get(randomIndex);
                 destructionSupport.tryDestroyAndLog(gameData, chosen, entry.getCard().getName(), false);
     }
 }

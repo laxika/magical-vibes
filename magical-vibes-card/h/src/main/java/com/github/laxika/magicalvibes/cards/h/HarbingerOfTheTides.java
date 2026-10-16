@@ -24,7 +24,8 @@ public class HarbingerOfTheTides extends Card {
     public HarbingerOfTheTides() {
         // "You may cast this spell as though it had flash if you pay {2} more to cast it."
         // Modelled as a flash-granting alternate hand cast of {U}{U} plus {2}.
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{U}{U}")), null, true));
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{U}{U}")), null, true)
+                .withFlashAdditionalGenericCost(2));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

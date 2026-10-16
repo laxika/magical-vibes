@@ -101,7 +101,6 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
     }
 
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless()
-                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
+        return pool.getTotal();
     }
 }

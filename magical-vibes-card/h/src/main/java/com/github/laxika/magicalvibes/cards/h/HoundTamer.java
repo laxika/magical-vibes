@@ -5,11 +5,7 @@ import com.github.laxika.magicalvibes.cards.u.UntamedPup;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -28,9 +24,6 @@ public class HoundTamer extends Card {
                 "{3}{G}: Put a +1/+1 counter on target creature.",
                 TargetFilters.creature()
         ));
-
-        addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 
     @Override

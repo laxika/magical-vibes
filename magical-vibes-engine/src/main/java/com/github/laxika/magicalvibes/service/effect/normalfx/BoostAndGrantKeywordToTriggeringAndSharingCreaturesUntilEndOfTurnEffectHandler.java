@@ -35,10 +35,15 @@ public class BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEf
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect) effect;
-        Permanent triggeringPermanent = entry.getTriggeringPermanentId() == null
+        Permanent livePermanent = entry.getTriggeringPermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-        if (triggeringPermanent == null || !gameQueryService.isCreature(gameData, triggeringPermanent)) {
+        Permanent lastKnownPermanent = entry.getAttachedPermanentSnapshot() != null
+                && entry.getAttachedPermanentSnapshot().getId().equals(entry.getTriggeringPermanentId())
+                ? entry.getAttachedPermanentSnapshot() : null;
+        Permanent triggeringPermanent = livePermanent != null ? livePermanent : lastKnownPermanent;
+        if (triggeringPermanent == null
+                || (livePermanent != null && !gameQueryService.isCreature(gameData, livePermanent))) {
             return;
         }
 
@@ -48,9 +53,9 @@ public class BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEf
         }
 
         List<Permanent> affectedPermanents = new ArrayList<>(battlefield);
-        if (affectedPermanents.stream().noneMatch(
-                permanent -> permanent.getId().equals(triggeringPermanent.getId()))) {
-            affectedPermanents.add(triggeringPermanent);
+        if (livePermanent != null && affectedPermanents.stream().noneMatch(
+                permanent -> permanent.getId().equals(livePermanent.getId()))) {
+            affectedPermanents.add(livePermanent);
         }
 
         for (Permanent permanent : affectedPermanents) {

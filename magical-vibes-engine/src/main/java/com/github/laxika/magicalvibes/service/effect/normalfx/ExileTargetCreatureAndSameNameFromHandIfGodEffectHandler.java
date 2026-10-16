@@ -42,7 +42,7 @@ public class ExileTargetCreatureAndSameNameFromHandIfGodEffectHandler implements
 
         // Capture the creature's last-known characteristics before it leaves the battlefield.
         String targetName = target.getCard().getName();
-        boolean wasGod = target.getCard().getSubtypes().contains(CardSubtype.GOD);
+        boolean wasGod = gameQueryService.hasEffectiveSubtype(gameData, target, CardSubtype.GOD);
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
 
         permanentRemovalService.removePermanentToExile(gameData, target);

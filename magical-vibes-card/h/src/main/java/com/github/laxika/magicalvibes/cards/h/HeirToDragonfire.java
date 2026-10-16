@@ -27,8 +27,8 @@ public class HeirToDragonfire extends Card {
                 false,
                 "{2}{R}",
                 List.of(
-                        new PerpetuallyGrantCardCharacteristicsEffect(
-                                Set.of(), Set.of(CardSubtype.DRAGON), List.of()),
+                        PerpetuallyGrantCardCharacteristicsEffect.becomingCreatureTypes(
+                                Set.of(CardSubtype.DRAGON)),
                         new PerpetuallyBoostCardEffect(this, 3, 3),
                         new PerpetuallyGrantKeywordToSourceEffect(Keyword.FLYING)
                 ),

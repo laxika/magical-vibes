@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.n.NarsetParterOfVeils;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -52,7 +53,8 @@ class HeartwarmingRedemptionTest extends BaseCardTest {
     @Test
     @DisplayName("Gains life for only the card actually drawn under an opponent's Narset")
     void restrictedDrawsReduceLifeGain() {
-        harness.addToBattlefield(player2, new NarsetParterOfVeils());
+        harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils())
+                .setCounterCount(CounterType.LOYALTY, 5);
         gd.cardsDrawnThisTurn.put(player1.getId(), 0);
         Island drawn = new Island();
         Island remaining = new Island();
@@ -76,9 +78,10 @@ class HeartwarmingRedemptionTest extends BaseCardTest {
     @Test
     @DisplayName("Still discards the hand but gains no life when Narset prevents every draw")
     void preventedDrawsLeaveNoCardsAndNoLifeGain() {
-        harness.addToBattlefield(player2, new NarsetParterOfVeils());
+        harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils())
+                .setCounterCount(CounterType.LOYALTY, 5);
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
-        harness.getDrawService().resolveDrawCard(gd, player1.getId());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         Island discarded = new Island();
         harness.setHand(player1, List.of(new HeartwarmingRedemption(), discarded));
         harness.addMana(player1, ManaColor.RED, 1);

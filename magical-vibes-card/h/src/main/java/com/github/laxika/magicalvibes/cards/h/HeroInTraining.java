@@ -16,7 +16,7 @@ public class HeroInTraining extends Card {
 
     public HeroInTraining() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HERO)),
                 new GainLifeEffect(2)));
     }

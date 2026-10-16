@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
+import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -44,6 +47,9 @@ public class LifeSupport {
     @Autowired
     @Lazy
     private AnimationSupport animationSupport;
+    @Autowired
+    @Lazy
+    private ReplacementOrderService replacementOrderService;
 
     public LifeSupport(GameQueryService gameQueryService,
                        GameLogService gameLogService,
@@ -110,11 +116,22 @@ public class LifeSupport {
             applyLifeLoss(gameData, controllerId, amount, source != null ? source : "replaced life gain");
             return;
         }
-        if (amount > 0) {
-            amount += gameQueryService.additionalLifeGain(gameData, controllerId);
+        // Life-gain replacement effects (Heron of Hope, Boon Reflection) replace the amount before it is
+        // applied, in the order the gaining player chooses when that order matters (CR 616.1).
+        ReplacementOrderService.Outcome<LifeGainEvent> outcome = replacementOrderService.run(gameData,
+                new LifeGainEvent(controllerId, amount, Set.of(), source, sourceCard, sourceEntryType));
+        if (outcome instanceof ReplacementOrderService.Outcome.Completed<LifeGainEvent> completed) {
+            completeGainLife(gameData, completed.event());
         }
-        // Life-gain replacement effects (e.g. Boon Reflection) replace the amount before it is applied.
-        amount *= gameQueryService.lifeGainMultiplier(gameData, controllerId);
+    }
+
+    /** Gains the life of an event whose replacement effects have all been applied. */
+    public void completeGainLife(GameData gameData, LifeGainEvent event) {
+        UUID controllerId = event.playerId();
+        int amount = event.amount();
+        String source = event.source();
+        Card sourceCard = event.sourceCard();
+        StackEntryType sourceEntryType = event.sourceEntryType();
         int currentLife = gameData.getLife(controllerId);
         amount = (int) Math.min((long) amount,
                 Math.max(0L, (long) gameData.getMaximumLifeTotal(controllerId) - currentLife));

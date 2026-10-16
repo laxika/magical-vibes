@@ -125,7 +125,7 @@ class HarshJusticeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HarshJustice(), new RayOfCommand()));
         harness.addMana(player2, ManaColor.WHITE, 3);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.castAndResolveInstant(player2, 0);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.castAndResolveInstant(player2, 0));
 
         harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.resolveCombatDamage();

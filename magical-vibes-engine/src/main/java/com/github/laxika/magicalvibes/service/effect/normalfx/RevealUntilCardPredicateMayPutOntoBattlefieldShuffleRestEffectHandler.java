@@ -52,6 +52,10 @@ public class RevealUntilCardPredicateMayPutOntoBattlefieldShuffleRestEffectHandl
         if (deck == null || deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library is empty — no cards are revealed."));
+            // CR 701.24e: shuffling a library with zero cards still triggers "whenever a library is shuffled".
+            if (deck != null) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
             return;
         }
 

@@ -105,6 +105,7 @@ class HulklingYoungAvengerTest extends BaseCardTest {
 
         assertThat(gqs.hasEffectiveSubtype(gd, hulkling, CardSubtype.BEAR)).isFalse();
         assertThat(gqs.hasKeyword(gd, hulkling, Keyword.FLYING)).isTrue();
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         castDivination();

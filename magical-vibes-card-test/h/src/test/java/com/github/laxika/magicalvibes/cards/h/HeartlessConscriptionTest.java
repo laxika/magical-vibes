@@ -152,6 +152,8 @@ class HeartlessConscriptionTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new HumbleDefector(), new HumbleDefector()));
         harness.castFromHand(player1, new HeartlessConscription(), "{6}{B}{B}");
         harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

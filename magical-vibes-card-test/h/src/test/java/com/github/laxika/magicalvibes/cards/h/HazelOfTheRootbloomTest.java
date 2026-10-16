@@ -98,6 +98,7 @@ class HazelOfTheRootbloomTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(target.getId());
         harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
     }
 
     private void advanceToEndStep() {

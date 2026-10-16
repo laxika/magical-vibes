@@ -96,7 +96,6 @@ class HoodedAssassinTest extends BaseCardTest {
         damageTarget(target);
 
         harness.enterBattlefieldAndReturn(player1, new HoodedAssassin());
-        harness.passPriority(player1);
         chooseMode(1, target.getId());
         harness.passBothPriorities();
 

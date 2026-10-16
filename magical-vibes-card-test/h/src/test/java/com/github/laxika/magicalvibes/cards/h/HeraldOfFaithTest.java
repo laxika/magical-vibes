@@ -71,7 +71,7 @@ class HeraldOfFaithTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.assertLife(player1, 20);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         harness.assertLife(player1, 22);
         harness.assertLife(player2, 20);
@@ -109,7 +109,7 @@ class HeraldOfFaithTest extends BaseCardTest {
         harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player2, List.of(0));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 22);

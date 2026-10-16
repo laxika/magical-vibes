@@ -56,6 +56,13 @@ class HauntingEchoesTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerDecks.get(player2.getId()))
                 .contains(firstLibraryImp, secondLibraryImp);
+
+        harness.handleMultipleCardsChosen(player1, List.of(firstLibraryImp.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(firstLibraryImp);
+        assertThat(gd.playerDecks.get(player2.getId())).contains(secondLibraryImp)
+                .doesNotContain(firstLibraryImp);
+        assertThat(gameLogContains("shuffles their library")).isTrue();
     }
 
     @Test
@@ -166,6 +173,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(imp2.getId()));
 
         // Both should be exiled
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -259,6 +267,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(imp2.getId(), pit2.getId()));
 
         // Both names are exiled from the graveyard and library.
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -286,6 +295,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(pit2.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Cabal Pit"))
@@ -358,9 +368,10 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(imp2.getId()));
 
         // Should log exile counts from graveyard and library
         assertThat(gameLogContains("exiles 1 card from")).isTrue();
-        assertThat(gameLogContains("and 1 card from their library")).isTrue();
+        assertThat(gameLogContains("exiles 1 card named \"Dusk Imp\" from")).isTrue();
     }
 }

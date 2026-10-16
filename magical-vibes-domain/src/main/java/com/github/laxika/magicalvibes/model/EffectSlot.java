@@ -776,6 +776,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     SAGA_CHAPTER_VI,
     /** Triggers when the final chapter ability of a Saga finishes resolving. */
     ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES,
+    /** Triggers when the final chapter ability of a Saga triggers, i.e. is put on the stack (Historian's Boon). */
+    ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS,
     /** Triggers at the beginning of combat on the controller's turn.
      *  Checked in {@code StepTriggerService.handleBeginningOfCombatTriggers}. */
     BEGINNING_OF_COMBAT_TRIGGERED,

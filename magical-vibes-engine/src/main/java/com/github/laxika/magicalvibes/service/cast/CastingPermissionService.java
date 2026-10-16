@@ -557,7 +557,8 @@ public class CastingPermissionService {
     private boolean controlsStatic(GameData gameData, UUID playerId, Class<? extends CardEffect> effectType) {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
-        return bf.stream().anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+        return bf.stream().filter(perm -> !gameQueryService.hasLostAllAbilities(gameData, perm))
+                .anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, perm, playerId, effect))
                 .anyMatch(effectType::isInstance));
     }
@@ -1936,7 +1937,21 @@ public class CastingPermissionService {
     public boolean hasGrantedGraveyardCardCastPermission(GameData gameData, Card card, UUID playerId) {
         GameData.GraveyardCardCastPermission permission =
                 gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(card.getId());
-        return permission != null && playerId.equals(permission.castingPlayerId());
+        if (permission != null && playerId.equals(permission.castingPlayerId())) {
+            return true;
+        }
+        List<GameData.GraveyardCardCastPermission> grants =
+                gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.get(card.getId());
+        if (grants == null) {
+            return false;
+        }
+        for (GameData.GraveyardCardCastPermission grant : grants) {
+            if (playerId.equals(grant.castingPlayerId())) {
+                gameData.graveyardCardCastPermissionsUntilEndOfTurn.put(card.getId(), grant);
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasGrantedGraveyardAdventureCastPermission(GameData gameData, Card card, UUID playerId) {
@@ -3154,6 +3169,7 @@ public class CastingPermissionService {
         if (permission.oneShot()
                 && (gameData.oneShotExileCastPermissionsUsed.contains(source.getId())
                 || source.getControlChangeSequence() > 0)) return false;
+        if (permission.waterbendManaValue() && source.getControlChangeSequence() > 0) return false;
         if (permission.filter() != null
                 && !predicateEvaluationService.matchesCardPredicate(entry.card(), permission.filter(), null)) {
             return false;
@@ -3168,6 +3184,9 @@ public class CastingPermissionService {
 
     private Stream<AllowCastFromCardsExiledWithSourceEffect> activeExileCastPermissions(
             GameData gameData, Permanent source, UUID sourceControllerId) {
+        if (source.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, source)) {
+            return Stream.empty();
+        }
         return source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .flatMap(effect -> activeExileCastPermissions(
                         gameData, source, sourceControllerId, effect));

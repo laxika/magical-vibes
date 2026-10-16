@@ -46,7 +46,7 @@ class HornOfPlentyTest extends BaseCardTest {
         int handBeforeDraw = gd.playerHands.get(player2.getId()).size();
         assertThat(gd.getDelayedActions(DrawCardsAtNextEndStep.class))
                 .singleElement()
-                .extracting(DrawCardsAtNextEndStep::controllerId)
+                .extracting(DrawCardsAtNextEndStep::drawingPlayerId)
                 .isEqualTo(player2.getId());
 
         harness.forceActivePlayer(player2);
@@ -196,13 +196,15 @@ class HornOfPlentyTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.castFromHand(player2, new DarkRitual(), "{B}");
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castFromHand(player2, new DarkRitual(), "{B}");
+            harness.addMana(player2, ManaColor.COLORLESS, 1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, true);
+            harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+            assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        });
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getDelayedActions(DrawCardsAtNextEndStep.class)).hasSize(1);
 

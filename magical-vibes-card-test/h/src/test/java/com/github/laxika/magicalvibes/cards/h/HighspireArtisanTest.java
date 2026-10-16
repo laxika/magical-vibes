@@ -25,6 +25,7 @@ class HighspireArtisanTest extends BaseCardTest {
     void fabricateCountersMode() {
         castArtisan(0);
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent artisan = findPermanent(player1, "Highspire Artisan");
         assertThat(artisan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -37,6 +38,7 @@ class HighspireArtisanTest extends BaseCardTest {
     void fabricateServoMode() {
         castArtisan(1);
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))

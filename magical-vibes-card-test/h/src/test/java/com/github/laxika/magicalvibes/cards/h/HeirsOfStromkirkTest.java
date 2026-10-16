@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.r.RiotRingleader;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -95,6 +96,8 @@ class HeirsOfStromkirkTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage adds exactly one counter to its source after the trigger resolves")
     void addsOneCounterRegardlessOfDamageAmount() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
+        gd.playerAutoStopSteps.put(player2.getId(), java.util.Set.of(TurnStep.COMBAT_DAMAGE));
         Permanent heirs = addCreatureReady(player1, new HeirsOfStromkirk());
         Permanent otherHeirs = addCreatureReady(player1, new HeirsOfStromkirk());
         heirs.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);

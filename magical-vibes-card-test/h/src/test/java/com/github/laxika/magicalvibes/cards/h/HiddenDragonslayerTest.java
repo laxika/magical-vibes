@@ -59,7 +59,10 @@ class HiddenDragonslayerTest extends BaseCardTest {
         target.setPowerModifier(1);
         Permanent dragonslayer = castFaceDown();
 
-        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, dragonslayer);
+        harness.inMutationScope(() -> {
+            gs.turnPermanentFaceUpWithoutPayingManaCost(gd, dragonslayer);
+            harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd);
+        });
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(target.getId());

@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 public class Hivestone extends Card {
 
     public Hivestone() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.SLIVER, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.SLIVER, GrantScope.ALL_OWN_CREATURES));
     }
 }

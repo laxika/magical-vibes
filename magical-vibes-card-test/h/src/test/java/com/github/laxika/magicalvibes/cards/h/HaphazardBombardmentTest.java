@@ -258,13 +258,12 @@ class HaphazardBombardmentTest extends BaseCardTest {
         Permanent protectedCreature = addCreature(player2, new BalothGorger());
         protectedCreature.setCounterCount(CounterType.AIM, 1);
         addBombardmentToBattlefield(player1);
-        harness.setHand(player2, List.of(new AdamantWill()));
-        harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.castAndResolveInstant(player2, 0, protectedCreature.getId());
 
-        // Repeating within the same turn makes an incorrectly random choice overwhelmingly
-        // unlikely to pass, while Adamant Will remains in effect throughout.
-        for (int i = 0; i < 32; i++) {
+        // Repeating makes an incorrectly random choice overwhelmingly unlikely to pass. Resolving the
+        // end step trigger lets the turn run on to cleanup, so Adamant Will is cast again each round
+        // to keep the creature indestructible while the trigger resolves.
+        for (int i = 0; i < 16; i++) {
+            grantIndestructible(protectedCreature);
             Permanent vulnerable = addCreature(player2, new BalothGorger());
             vulnerable.setCounterCount(CounterType.AIM, 1);
             advanceToEndStep(player1);
@@ -274,6 +273,15 @@ class HaphazardBombardmentTest extends BaseCardTest {
             assertThat(gd.playerBattlefields.get(player2.getId()))
                     .contains(protectedCreature).doesNotContain(vulnerable);
         }
+    }
+
+    private void grantIndestructible(Permanent creature) {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new AdamantWill()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
     }
 
     private void castHaphazardBombardment(Player player) {

@@ -125,6 +125,7 @@ class HardenedBerserkerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.setHand(player1, List.of(new DragonFodder()));
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.addMana(player1, ManaColor.RED, 1);

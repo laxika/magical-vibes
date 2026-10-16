@@ -31,10 +31,10 @@ class HondenOfSeeingWindsTest extends BaseCardTest {
     void drawsNothingWhenNoShrinesRemain() {
         var source = harness.addToBattlefieldAndReturn(player1, new HondenOfSeeingWinds());
         harness.setHand(player2, List.of(new WearAway()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player2, 0, source.getId());
         resolveAllTriggers();
 
@@ -48,10 +48,10 @@ class HondenOfSeeingWindsTest extends BaseCardTest {
         var source = harness.addToBattlefieldAndReturn(player1, new HondenOfSeeingWinds());
         harness.addToBattlefield(player1, new HondenOfLifesWeb());
         harness.setHand(player2, List.of(new WearAway()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player2, 0, source.getId());
         resolveAllTriggers();
 

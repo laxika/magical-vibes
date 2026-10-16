@@ -99,6 +99,10 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
                     gameData.removeFromExile(card.getId());
                     gameData.addToExile(ownerId, card, sourcePermanentId);
                 }
+                if (e.controllerMayCastWithAnyMana() && gameData.findExiledCard(card.getId()) != null) {
+                    gameData.exilePlayPermissions.put(card.getId(), entry.getControllerId());
+                    gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                }
             }
         }
 

@@ -25,12 +25,23 @@ class HixusPrisonWardenTest extends BaseCardTest {
         return hixus;
     }
 
+    /** Runs combat with the defender declining to block if it is asked, so damage is dealt. */
+    private void resolveCombatWithoutBlocks() {
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            resolveCombat();
+            if (gd.interaction.isAwaitingInput()) {
+                gs.declareBlockers(gd, player2, List.of());
+                resolveCombat();
+            }
+        });
+    }
+
     /** Attacks player2 with a Grizzly Bears and lets combat damage resolve. */
     private void attackWithBears() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        resolveCombat();
+        resolveCombatWithoutBlocks();
         harness.passBothPriorities(); // exile trigger resolves
     }
 
@@ -79,7 +90,7 @@ class HixusPrisonWardenTest extends BaseCardTest {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        resolveCombat();
+        resolveCombatWithoutBlocks();
         assertThat(gd.stack).hasSize(1);
 
         hixus.setMarkedDamage(4);
@@ -94,10 +105,10 @@ class HixusPrisonWardenTest extends BaseCardTest {
     void stolenCreatureReturnsImmediatelyToItsOwner() {
         Permanent hixus = putHixus(true);
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(attacker.getId(), player2.getId());
+        setOwnerAndController(attacker, player2, player1);
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        resolveCombat();
+        resolveCombatWithoutBlocks();
         resolveAllTriggers();
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -118,7 +129,7 @@ class HixusPrisonWardenTest extends BaseCardTest {
             attacker.setSummoningSick(false);
             attacker.setAttacking(true);
         }
-        resolveCombat();
+        resolveCombatWithoutBlocks();
         resolveAllTriggers();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
@@ -147,7 +158,7 @@ class HixusPrisonWardenTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Hixus, Prison Warden");
 
-        resolveCombat();
+        resolveCombatWithoutBlocks();
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");

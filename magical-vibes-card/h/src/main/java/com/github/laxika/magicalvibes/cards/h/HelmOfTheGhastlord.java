@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,24 +19,20 @@ import java.util.Set;
 public class HelmOfTheGhastlord extends Card {
 
     public HelmOfTheGhastlord() {
+        PermanentColorInPredicate blue = new PermanentColorInPredicate(Set.of(CardColor.BLUE));
+        PermanentColorInPredicate black = new PermanentColorInPredicate(Set.of(CardColor.BLACK));
         target(TargetFilters.creature())
                 // As long as enchanted creature is blue, it gets +1/+1 and has
                 // "Whenever this creature deals damage to an opponent, draw a card."
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
-                        1, 1, GrantScope.ENCHANTED_CREATURE,
-                        new PermanentColorInPredicate(Set.of(CardColor.BLUE))))
-                .addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new EnchantedPermanentConditionalEffect(
-                        new PermanentColorInPredicate(Set.of(CardColor.BLUE)),
-                        new DrawCardEffect(),
-                        null))
+                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE, blue))
+                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                        EffectSlot.ON_DAMAGE_TO_OPPONENT, new DrawCardEffect(), GrantScope.ENCHANTED_CREATURE, blue))
                 // As long as enchanted creature is black, it gets +1/+1 and has
                 // "Whenever this creature deals damage to an opponent, that player discards a card."
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
-                        1, 1, GrantScope.ENCHANTED_CREATURE,
-                        new PermanentColorInPredicate(Set.of(CardColor.BLACK))))
-                .addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER, new EnchantedPermanentConditionalEffect(
-                        new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
+                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE, black))
+                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                        EffectSlot.ON_DAMAGE_TO_OPPONENT,
                         new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false),
-                        null));
+                        GrantScope.ENCHANTED_CREATURE, black));
     }
 }

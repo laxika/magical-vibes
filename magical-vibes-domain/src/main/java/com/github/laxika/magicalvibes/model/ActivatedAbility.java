@@ -183,6 +183,8 @@ public class ActivatedAbility {
     private boolean exhaustAbility;
     /** Whether this is a Power-up ability whose cost is discounted on its source's entry turn. */
     private boolean powerUpAbility;
+    /** Whether this is an Outlast ability, so triggers can single out outlast activations. */
+    private boolean outlastAbility;
     /**
      * When true this hand-activated ability's intrinsic cost exiles the source card instead of
      * discarding it ("Exile this card from your hand: Add {G}" — Elvish Spirit Guide). No discard
@@ -358,6 +360,7 @@ public class ActivatedAbility {
         copy.boast = this.boast;
         copy.exhaustAbility = this.exhaustAbility;
         copy.powerUpAbility = this.powerUpAbility;
+        copy.outlastAbility = this.outlastAbility;
         copy.exilesSourceFromHand = this.exilesSourceFromHand;
         copy.discardSourceAsSpecialAction = this.discardSourceAsSpecialAction;
         copy.revealsSourceFromHand = this.revealsSourceFromHand;
@@ -439,6 +442,12 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withMaxActivationsPerGame(int maxActivations) {
         this.maxActivationsPerGame = maxActivations;
+        return this;
+    }
+
+    /** Marks this ability as an Outlast ability. */
+    public ActivatedAbility withOutlast() {
+        this.outlastAbility = true;
         return this;
     }
 

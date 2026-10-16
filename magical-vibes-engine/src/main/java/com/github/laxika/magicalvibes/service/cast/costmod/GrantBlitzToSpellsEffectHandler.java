@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSource;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GrantBlitzToSpellsEffectHandler implements CostModificationHandlerBean {
 
-    private final PredicateEvaluationService predicateEvaluationService;
     private final AmountEvaluationService amountEvaluationService;
 
     @Override
@@ -34,10 +32,7 @@ public class GrantBlitzToSpellsEffectHandler implements CostModificationHandlerB
                                    CostModificationSource source) {
         if (!context.blitzCost() || !source.controlledBy(context.castingPlayerId())
                 || !(effect instanceof BlitzGrantingEffect grant)
-                || grant.blitzCostReduction() == null
-                || !predicateEvaluationService.matchesCardPredicate(
-                context.spell(), grant.blitzGrantFilter(), source.sourceCardId(),
-                context.gameData(), context.castingPlayerId())) {
+                || grant.blitzCostReduction() == null) {
             return 0;
         }
         return -amountEvaluationService.evaluate(context.gameData(), grant.blitzCostReduction(),

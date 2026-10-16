@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.Clone;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HanweirBattlements.class, HanweirGarrison.class, HanweirTheWrithingTownship.class, Clone.class})
+@CardUsed({HanweirBattlements.class, HanweirGarrison.class, HanweirTheWrithingTownship.class, Clone.class, GrizzlyBears.class})
 class HanweirBattlementsTest extends BaseCardTest {
 
     @Test
@@ -79,7 +80,7 @@ class HanweirBattlementsTest extends BaseCardTest {
     void addsColorlessMana() {
         Permanent battlements = harness.addToBattlefieldAndReturn(player1, new HanweirBattlements());
 
-        harness.tapPermanent(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(battlements.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -102,7 +103,7 @@ class HanweirBattlementsTest extends BaseCardTest {
     void doesNotMeldWithAPartnerOwnedByTheOpponent() {
         harness.addToBattlefield(player1, new HanweirBattlements());
         Permanent garrison = harness.addToBattlefieldAndReturn(player1, new HanweirGarrison());
-        gd.stolenCreatures.put(garrison.getId(), player2.getId());
+        setOwnerAndController(garrison, player2, player1);
         addMeldMana();
 
         harness.activateAbility(player1, 0, 2, null, null);
@@ -117,10 +118,10 @@ class HanweirBattlementsTest extends BaseCardTest {
     void doesNotMeldWhenBattlementsIsOwnedByTheOpponent() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new HanweirBattlements());
         harness.addToBattlefield(player1, new HanweirGarrison());
-        gd.stolenCreatures.put(land.getId(), player2.getId());
+        setOwnerAndController(land, player2, player1);
         addMeldMana();
 
-        harness.activateAbility(player1, 0, 2, null, null);
+        harness.activateAbility(player1, 1, 2, null, null);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Hanweir Battlements");
@@ -174,6 +175,7 @@ class HanweirBattlementsTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent township = findPermanent(player1, "Hanweir, the Writhing Township");
         assertThat(township.isTapped()).isFalse();
+        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -199,7 +201,7 @@ class HanweirBattlementsTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, garrison, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, garrison, Keyword.HASTE)).isFalse();
     }

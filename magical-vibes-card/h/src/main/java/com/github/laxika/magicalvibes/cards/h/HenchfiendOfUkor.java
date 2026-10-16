@@ -14,7 +14,7 @@ import java.util.List;
 public class HenchfiendOfUkor extends Card {
 
     public HenchfiendOfUkor() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{1}{B}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{1}{B}"));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B/R}",

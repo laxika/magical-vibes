@@ -9,11 +9,15 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "29")
 public class HalimarExcavator extends Card {
@@ -24,7 +28,8 @@ public class HalimarExcavator extends Card {
                 "Target must be a player"
         )).addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.ALLY),
+                        new CardAnyOfPredicate(List.of(new CardIsSelfPredicate(),
+                                new CardSubtypePredicate(CardSubtype.ALLY))),
                         new MillEffect(new PermanentCount(
                                 new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER),
                                 MillRecipient.TARGET_PLAYER)));

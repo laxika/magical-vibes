@@ -602,12 +602,10 @@ public class StepTriggerService {
                     action -> action.anyPlayerNextUpkeep()
                             || action.controllerId().equals(gameData.activePlayerId));
             for (DelayedCreateTokenAtNextUpkeep action : pendingTokens) {
-                int amount = amountEvaluationService.evaluate(gameData, action.tokenEffect().amount(),
-                        new AmountContext(action.controllerId(), null, null, 0, 0));
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(action.tokenEffect().withAmount(amount))));
+                        new ArrayList<>(List.of(action.tokenEffect())));
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
@@ -2209,6 +2207,13 @@ public class StepTriggerService {
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
             triggerCollectionService.processNextEmblemTriggerTarget(gameData);
             return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
         }
 
         triggerCollectionService.processNextDayNightTriggerTarget(gameData);
@@ -4050,6 +4055,10 @@ public class StepTriggerService {
                         GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
                 log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
             }
+            if (newLoreCount == card.getSagaFinalChapter()) {
+                triggerCollectionService.checkSagaFinalChapterAbilityTriggers(gameData, activePlayerId,
+                        card.getManaValue());
+            }
         }
 
         // Process any queued saga chapter target selections
@@ -4639,13 +4648,22 @@ public class StepTriggerService {
             List<DrawCardsAtNextEndStep> pendingDraws =
                     gameData.drainDelayedActions(DrawCardsAtNextEndStep.class);
             for (DrawCardsAtNextEndStep pending : pendingDraws) {
-                gameData.stack.add(new StackEntry(
+                boolean drawerIsController = pending.drawingPlayerId().equals(pending.controllerId());
+                StackEntry drawEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(new DrawCardEffect(pending.count())))
-                ));
+                        new ArrayList<>(List.of(drawerIsController
+                                ? new DrawCardEffect(pending.count())
+                                : new com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect(
+                                        pending.count())))
+                );
+                if (!drawerIsController) {
+                    drawEntry.setTargetId(pending.drawingPlayerId());
+                    drawEntry.setNonTargeting(true);
+                }
+                gameData.stack.add(drawEntry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s delayed ability triggers — draw " + pending.count() + " card(s)."));
                 log.info("Game {} - {} delayed draw trigger pushed onto stack for {} card(s)",
@@ -6449,7 +6467,7 @@ public class StepTriggerService {
                                     perm.getCard(),
                                     activePlayerId,
                                     perm.getCard().getName() + "'s end step ability",
-                                    new ArrayList<>(List.of(wrapped)),
+                                    new ArrayList<>(List.of(conditional.interveningIf() ? wrapped : effect)),
                                     null,
                                     perm.getId()
                             ));

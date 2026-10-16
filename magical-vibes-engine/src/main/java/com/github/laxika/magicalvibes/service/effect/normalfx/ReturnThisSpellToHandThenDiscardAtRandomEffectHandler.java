@@ -55,8 +55,9 @@ public class ReturnThisSpellToHandThenDiscardAtRandomEffectHandler implements No
         int handSize = hand == null ? 0 : hand.size();
 
         // The extra slot is the spell card itself, which has just returned to the same hand. A
-        // controller who is not the owner discards from their own hand, which the spell never joins.
-        boolean spellJoinsHand = ownerId.equals(controllerId);
+        // controller who is not the owner discards from their own hand, which the spell never joins,
+        // and a copy of the spell is not a card, so it never joins either.
+        boolean spellJoinsHand = !entry.isCopy() && ownerId.equals(controllerId);
         int candidates = handSize + (spellJoinsHand ? 1 : 0);
         if (candidates == 0) {
             entry.setReturnToHandAfterResolving(true);

@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpel
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
@@ -521,6 +522,10 @@ public class ActivatedAbilityExecutionService {
             triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
             deferredTapTriggers = new ArrayList<>(gameData.stack.subList(stackBefore, gameData.stack.size()));
             gameData.stack.subList(stackBefore, gameData.stack.size()).clear();
+            if (permanent.isUntapAfterTapCost()) {
+                permanent.setUntapAfterTapCost(false);
+                permanent.untap();
+            }
         } else if (ability.isRequiresUntap()) {
             // {Q} untap symbol: paying the cost untaps the source permanent.
             permanent.untap();
@@ -1102,6 +1107,9 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof DestroyGrantingPermanentIfNoCountersEffect destroy) {
                 snapshotEffects.add(new DestroyGrantingPermanentIfNoCountersEffect(
                         destroy.counterType(), ability.getGrantSourcePermanentId()));
+            } else if (effect instanceof RemoveCounterFromGrantingPermanentEffect remove) {
+                snapshotEffects.add(new RemoveCounterFromGrantingPermanentEffect(
+                        remove.counterType(), remove.count(), ability.getGrantSourcePermanentId()));
             } else if (effect instanceof CantBlockSourceEffect) {
                 snapshotEffects.add(new CantBlockSourceEffect(permanent.getId()));
             } else if (effect instanceof SourcePermanentControllerLosesLifeEffect lifeLoss) {
@@ -1135,8 +1143,11 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof ExileEnchantedCreatureEffect) {
                 snapshotEffects.add(effect);
             } else if (effect instanceof SacrificeGrantingPermanentAndControllerDrawsEffect sacrifice) {
+                UUID grantSourceId = ability.getGrantSourcePermanentId();
                 snapshotEffects.add(new SacrificeGrantingPermanentAndControllerDrawsEffect(
-                        sacrifice.cards(), ability.getGrantSourcePermanentId()));
+                        sacrifice.cards(), grantSourceId,
+                        grantSourceId == null ? null
+                                : gameQueryService.findPermanentController(gameData, grantSourceId)));
             } else if (effect instanceof GrantKeywordToChosenCreatureUntilEndOfTurnEffect gk) {
                 snapshotEffects.add(new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(gk.keyword(), permanent.getChosenPermanentId()));
             } else if (effect instanceof DealDamageToAnyTargetEffect dd
@@ -1215,10 +1226,17 @@ public class ActivatedAbilityExecutionService {
 
         boolean landManaReplaced = false;
         if (gameQueryService.isLand(gameData, permanent)) {
+            boolean creatureSpellOnlyMana = snapshotEffects.stream().anyMatch(effect ->
+                    effect instanceof AwardAnyColorManaEffect anyColor
+                            && anyColor.restriction() == ManaSpendRestriction.CREATURE_SPELL_ONLY
+                            && !anyColor.anyColorCombination());
+            ChoiceContext.ManaColorChoice productionContext = creatureSpellOnlyMana
+                    ? ChoiceContext.ManaColorChoice.creatureSpellOnly(playerId, isCreatureSource, 0)
+                    : new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, 0);
             LandManaReplacementService.Resolution resolution = landManaReplacementService.produce(gameData, playerId,
                     permanent, baseManaColors(snapshotEffects),
                     calculateTotalManaProduction(gameData, playerId, permanent, snapshotEffects, xValue),
-                    new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, 0)
+                    productionContext
                             .withSnowSource(snowSource)
                             .withCaveSource(caveSource)
                             .withDesertSource(desertSource)
@@ -1481,7 +1499,7 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardHasteGrantingManaEffect ahg) {
                 new AwardHasteGrantingManaEffect(
                         ManaProductionSupport.effectiveColor(gameData, playerId, permanent, ahg.color()),
-                        ahg.amount() * manaMultiplier, ahg.creatureSubtype())
+                        ahg.amount() * manaMultiplier, ahg.creatureSubtype(), ahg.permanentHaste())
                         .applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AwardUncounterableGrantingManaEffect aug) {
                 new AwardUncounterableGrantingManaEffect(

@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.service.cast.costmod;
 
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForFirstSpellTargetingCreatureEachTurnEffect;
 import com.github.laxika.magicalvibes.service.cast.CostModificationContext;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationSource;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,6 +18,10 @@ import java.util.UUID;
 @Component
 public class ReduceColoredCastCostForFirstSpellTargetingCreatureEachTurnEffectHandler
         implements CostModificationHandlerBean {
+
+    @Autowired
+    @Lazy
+    private GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,6 +52,8 @@ public class ReduceColoredCastCostForFirstSpellTargetingCreatureEachTurnEffectHa
         return targetId != null && context.gameData().playerBattlefields.values().stream()
                 .flatMap(List::stream)
                 .anyMatch(permanent -> permanent.getId().equals(targetId)
-                        && permanent.getCard().hasType(CardType.CREATURE));
+                        && (gameQueryService == null
+                        ? permanent.getCard().hasType(CardType.CREATURE)
+                        : gameQueryService.isCreature(context.gameData(), permanent)));
     }
 }

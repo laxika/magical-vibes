@@ -173,8 +173,9 @@ class HarvesttideSentryTest extends BaseCardTest {
         advanceToCombat(player1);
         resolveAllTriggers();
         bears.setPersistentPowerModifier(1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

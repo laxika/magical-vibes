@@ -241,12 +241,14 @@ public class ExileSupport {
         boolean ownerIsActive = ownerId.equals(gameData.activePlayerId);
         boolean currentEndStepHasBegun = gameData.currentStep != null
                 && gameData.currentStep.ordinal() >= TurnStep.END_STEP.ordinal();
-        int expireTurn = gameData.turnNumber + (ownerIsActive
-                ? currentEndStepHasBegun ? 2 : 0
-                : 1);
         gameData.exilePlayPermissions.put(cardId, ownerId);
-        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
         gameData.exilePlayPermissionsExpireAtEndStep.add(cardId);
+        if (!ownerIsActive || currentEndStepHasBegun) {
+            gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, Integer.MAX_VALUE);
+            gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.put(cardId, ownerId);
+            return;
+        }
+        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, gameData.turnNumber);
     }
 
     /** Grants {@code permissionPlayerId} permission until {@code endStepPlayerId}'s next end step. */
@@ -258,12 +260,14 @@ public class ExileSupport {
         boolean endStepPlayerIsActive = endStepPlayerId.equals(gameData.activePlayerId);
         boolean currentEndStepHasBegun = gameData.currentStep != null
                 && gameData.currentStep.ordinal() >= TurnStep.END_STEP.ordinal();
-        int expireTurn = gameData.turnNumber + (endStepPlayerIsActive
-                ? currentEndStepHasBegun ? 2 : 0
-                : 1);
         gameData.exilePlayPermissions.put(cardId, permissionPlayerId);
-        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
         gameData.exilePlayPermissionsExpireAtEndStep.add(cardId);
+        if (!endStepPlayerIsActive || currentEndStepHasBegun) {
+            gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, Integer.MAX_VALUE);
+            gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.put(cardId, endStepPlayerId);
+            return;
+        }
+        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, gameData.turnNumber);
     }
 
     public StackEntryType mapCardTypeToSpellType(Card card) {

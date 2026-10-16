@@ -9,9 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves Hullbreaker Horror's spell-cast modal trigger. Mode is picked as the ability resolves
- * ({@code ChoiceContext.HullbreakerHorrorModeChoice}); the chosen mode's targeted bounce then routes
- * through {@code MayAbilityTriggerTarget}.
+ * Fallback for Hullbreaker Horror's spell-cast modal trigger when its mode was never announced as it
+ * went on the stack (normally done by {@code StackedModalTriggerService}, CR 603.3c). Picks the mode
+ * as the ability resolves ({@code ChoiceContext.HullbreakerHorrorModeChoice}); the chosen mode's
+ * targeted bounce then routes through {@code MayAbilityTriggerTarget}.
  */
 @Component
 @RequiredArgsConstructor

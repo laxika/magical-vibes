@@ -286,6 +286,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenPermanentYouControlEffectHandler createTokenCopyOfChosenPermanentYouControlEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.AttackingPlayerChoosesCreatureToBoostEffectHandler attackingPlayerChoosesCreatureToBoostEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.MeldWithNamedCreatureEffectHandler meldWithNamedCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler balduvianWarlordEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler;
 
@@ -944,6 +945,12 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleAttackingPlayerChoosesCreatureToBoost(GameData gameData, UUID permanentId,
                                                             PermanentChoiceContext.AttackingPlayerChoosesCreatureToBoost context) {
         attackingPlayerChoosesCreatureToBoostEffectHandler.completeChoice(gameData, permanentId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleMeldPartnerChoice(GameData gameData, UUID permanentId,
+                                        PermanentChoiceContext.MeldPartnerChoice context) {
+        meldWithNamedCreatureEffectHandler.completeMeldPartnerChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -2115,9 +2122,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleRedirectDamageSourceChoice(GameData gameData, UUID permanentId,
                                                   PermanentChoiceContext.RedirectDamageSourceChoice redirectSource) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
+        Card chosenSource = findDamageSourceCard(gameData, permanentId);
+        if (chosenSource == null) {
+            throw new IllegalStateException("Chosen damage source no longer exists");
         }
 
         UUID controllerId = redirectSource.controllerId();
@@ -2126,10 +2133,10 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText("The next " + redirectSource.amount() + " damage ",
-                chosenPermanent.getCard(),
+                chosenSource,
                 " would deal to " + playerName + " or permanents " + playerName + " controls is dealt to another target instead."));
         log.info("Game {} - {} chose {} as redirect damage source (up to {} damage redirected)",
-                gameData.id, playerName, chosenPermanent.getCard().getName(), redirectSource.amount());
+                gameData.id, playerName, chosenSource.getName(), redirectSource.amount());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -2648,7 +2655,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen creature no longer exists");
         }
 
-        Card exploitedCard = toSacrifice.getCard();
+        Card exploitedCard = permanentRemovalService.snapshotEffectivePermanentCard(gameData, toSacrifice);
         Permanent sacrificedSnapshot = new Permanent(toSacrifice);
         int sacrificedPower = gameQueryService.getEffectivePower(gameData, toSacrifice);
         int sacrificedColorCount = gameQueryService.getEffectiveColors(gameData, toSacrifice).size();

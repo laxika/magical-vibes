@@ -35,7 +35,13 @@ class HelicaGliderTest extends BaseCardTest {
 
     @Test
     void controllerChoosesCounterWhenEnteringWithoutBeingCast() {
-        Permanent glider = harness.enterBattlefieldAndReturn(player2, new HelicaGlider());
+        HelicaGlider card = new HelicaGlider();
+        Permanent glider = new Permanent(card);
+        harness.inMutationScope(() -> {
+            harness.getBattlefieldEntryService().putPermanentOntoBattlefield(gd, player2.getId(), glider);
+            harness.getBattlefieldEntryService().handleCreatureEnteredBattlefield(
+                    gd, player2.getId(), card, null, false);
+        });
 
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);

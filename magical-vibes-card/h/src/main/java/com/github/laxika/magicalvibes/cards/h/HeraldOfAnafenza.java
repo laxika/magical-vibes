@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringOutlastAbilityConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 
@@ -26,11 +27,12 @@ public class HeraldOfAnafenza extends Card {
                 List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 "Outlast {2}{W} ({2}{W}, {T}: Put a +1/+1 counter on this creature. Outlast only as a sorcery.)",
                 ActivationTimingRestriction.SORCERY_SPEED
-        ));
+        ).withOutlast());
 
-        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY, new TriggeringPermanentConditionalEffect(
-                new PermanentIsSourceCardPredicate(),
-                new CreateTokenEffect("Warrior", 1, 1, CardColor.WHITE,
-                        List.of(CardSubtype.WARRIOR), Set.of(), Set.of())));
+        addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY, new TriggeringOutlastAbilityConditionalEffect(
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentIsSourceCardPredicate(),
+                        new CreateTokenEffect("Warrior", 1, 1, CardColor.WHITE,
+                                List.of(CardSubtype.WARRIOR), Set.of(), Set.of()))));
     }
 }

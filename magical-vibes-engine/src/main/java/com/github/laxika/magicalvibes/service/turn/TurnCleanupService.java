@@ -511,12 +511,14 @@ public class TurnCleanupService {
         gameData.spellEntryCounters.clear();
         gameData.spellGrantedSubtypesOnEntry.clear();
         gameData.spellsGrantedHasteOnEntry.clear();
+        gameData.spellsGrantedPermanentHasteOnEntry.clear();
         gameData.spellsGrantedRiotOnEntry.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.mayPayLifeForColorlessManaUntilEndOfTurn.clear();
         gameData.guardianAngelTargetsUntilEndOfTurn.clear();
         gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.clear();
         gameData.graveyardCardCastPermissionsUntilEndOfTurn.clear();
+        gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.clear();
         for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {
             gameData.graveyardPlayPermissions.remove(cardId);
             gameData.graveyardCardsEnterTapped.remove(cardId);

@@ -112,7 +112,7 @@ class HedgeShredderTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }

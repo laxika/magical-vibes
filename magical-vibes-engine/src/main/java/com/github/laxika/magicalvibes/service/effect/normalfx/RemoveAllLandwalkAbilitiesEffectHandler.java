@@ -47,6 +47,7 @@ public class RemoveAllLandwalkAbilitiesEffectHandler implements NormalEffectHand
             return;
         }
 
+        target.getUnblockableIfDefenderControlsUntilEndOfTurn().clear();
         for (Keyword landwalk : Keyword.LANDWALK_MAP.keySet()) {
             target.getRemovedKeywords().add(landwalk);
             gameData.addFloatingEffect(new FloatingContinuousEffect(

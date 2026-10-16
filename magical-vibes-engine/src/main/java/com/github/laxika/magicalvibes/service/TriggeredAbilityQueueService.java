@@ -338,7 +338,20 @@ public class TriggeredAbilityQueueService {
         var target = card.getSpellTargets().getFirst();
         return target.getMinTargets() == 0
                 && target.getMaxTargets() == 1
-                && effects.stream().anyMatch(effect -> card.getEffectTargetIndex(effect) == target.getIndex());
+                && effects.stream().anyMatch(effect -> isBoundToTargetGroup(card, effect, target.getIndex()));
+    }
+
+    /**
+     * Whether the effect belongs to the card's target group. A death-trigger effect carrying a
+     * snapshot of the dying creature's counters is a copy of the effect declared on the card, so it
+     * is matched through its unbound form.
+     */
+    private static boolean isBoundToTargetGroup(Card card, CardEffect effect, int targetIndex) {
+        if (card.getEffectTargetIndex(effect) == targetIndex) {
+            return true;
+        }
+        return effect instanceof com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect aware
+                && card.getEffectTargetIndex(aware.boundToDyingCreatureCounters(Map.of())) == targetIndex;
     }
 
     /**
@@ -357,9 +370,10 @@ public class TriggeredAbilityQueueService {
                 ? pending.dyingCard().getId() : pending.excludedGraveyardCardId();
 
         List<Card> matchingCards = new ArrayList<>();
+        boolean graveyardCardsTargetable = gameQueryService.canGraveyardCardsBeTargeted(gameData);
         for (UUID playerId : target.scope().graveyardOwners(gameData.orderedPlayerIds, pending.controllerId())) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
+            if (graveyard == null || !graveyardCardsTargetable) continue;
             for (Card graveyardCard : graveyard) {
                 if (pending.excludedGraveyardCardId() != null
                         && graveyardCard.getId().equals(pending.excludedGraveyardCardId())) {
@@ -696,7 +710,7 @@ public class TriggeredAbilityQueueService {
                 "'s " + pending.eventDescription() + " trigger has no targets."));
     }
 
-    private TargetFilter targetFilterForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
+    public TargetFilter targetFilterForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
         int targetGroupIndex = effects.stream()
                 .mapToInt(sourceCard::getEffectTargetIndex)
                 .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
@@ -722,6 +736,16 @@ public class TriggeredAbilityQueueService {
             // An Aura's declared target is its enchantment target, not the target of an
             // unbound granted trigger. Let the trigger's own target specification decide
             // whether it can target players or permanents.
+            return null;
+        }
+        if (targetGroupIndex < 0 && !sourceCard.getSpellTargets().isEmpty()
+                && sourceCard.getSpellTargets().stream().allMatch(group ->
+                sourceCard.bindsEffectToTargetGroup(group.getIndex())
+                && sourceCard.getEffectsBoundToTargetGroup(group.getIndex()).stream()
+                .allMatch(bound -> TargetSpec.NONE.equals(bound.targetSpec())))
+                && effects.stream().anyMatch(effect -> !TargetSpec.NONE.equals(effect.targetSpec()))) {
+            // Every declared group belongs to some other ability of the card (a temporary copy that kept
+            // Hulkling's own cast trigger): the queued ability's own target specification decides.
             return null;
         }
         return targetGroupIndex >= 0
@@ -890,8 +914,10 @@ public class TriggeredAbilityQueueService {
                     sourcePermanent,
                     defendingPlayerId(gameData, pending.attackedTargetId()));
             boolean optionalTarget = hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
+            List<UUID> candidateTargets = new ArrayList<>(result.validTargets());
+            candidateTargets.addAll(result.validGraveyardCardIds());
 
-            if (result.validTargets().isEmpty()) {
+            if (candidateTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
                 if (optionalTarget) {
                     gameData.stack.add(new StackEntry(
@@ -919,29 +945,31 @@ public class TriggeredAbilityQueueService {
                     : result.canTargetPlayers()
                             ? (result.opponentOnly() ? "target opponent" : "target player")
                             : result.canTargetExiledCards() ? "target face-up card in exile"
+                            : !result.validGraveyardCardIds().isEmpty() && !result.canTargetPermanents()
+                                    ? "target card in a graveyard"
                             : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             SpellTarget targetGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
             if (targetGroup != null && targetGroup.getMaxTargets() > 1) {
                 int minTargets = targetGroup.getMinTargets();
-                int maxTargets = Math.min(targetGroup.getMaxTargets(), result.validTargets().size());
-                if (result.validTargets().size() < minTargets) {
+                int maxTargets = Math.min(targetGroup.getMaxTargets(), candidateTargets.size());
+                if (candidateTargets.size() < minTargets) {
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             "'s triggered ability has too few valid targets."));
                     continue;
                 }
                 playerInputService.beginMultiPermanentChoice(gameData, choosingPlayerId,
-                        result.validTargets(), maxTargets,
+                        candidateTargets, maxTargets,
                         new MultiPermanentChoiceContext.AttackTriggerTargets(pending, minTargets),
                         pending.sourceCard().getName() + "'s ability - Choose up to " + maxTargets
                                 + " target permanents.");
             } else if (optionalTarget) {
-                playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId, result.validTargets(),
+                playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId, candidateTargets,
                         List.of(pending.controllerId()),
                         pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
             } else {
-                playerInputService.beginPermanentChoice(gameData, choosingPlayerId, result.validTargets(),
+                playerInputService.beginPermanentChoice(gameData, choosingPlayerId, candidateTargets,
                         pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
             }
 

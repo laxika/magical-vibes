@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
@@ -20,16 +21,18 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Resolves {@link MeldWithNamedCreatureEffect}: exile the source and a matching named partner,
- * then put the source's back-face meld result onto the battlefield (CR 701.37).
+ * then put the source's back-face meld result onto the battlefield (CR 701.42a).
  */
 @Slf4j
 @Component
@@ -41,6 +44,7 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameLogService gameLogService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -71,7 +75,7 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
                 e.partnerPredicate(),
                 new PermanentOwnedBySourceControllerPredicate()));
 
-        Permanent partner = null;
+        List<Permanent> partners = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
@@ -79,29 +83,54 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
                     continue;
                 }
                 if (predicateEvaluationService.matchesPermanentPredicate(p, partnerFilter, filterContext)) {
-                    partner = p;
-                    break;
+                    partners.add(p);
                 }
             }
         }
-        if (partner == null) {
+        if (partners.isEmpty()) {
             log.info("Game {} - meld skipped: no owned/controlled permanent named {}",
                     gameData.id, e.partnerName());
             return;
         }
-
-        // CR 701.42b/701.42c: tokens can't be melded. The exile still happens, a token ceases to
-        // exist in exile, and the card that is not a token stays exiled.
-        if (source.getCard().isToken() || partner.getCard().isToken()) {
-            permanentRemovalService.removePermanentToExile(gameData, source);
-            permanentRemovalService.removePermanentToExile(gameData, partner);
-            log.info("Game {} - meld skipped: a token can't be melded", gameData.id);
+        if (partners.size() > 1) {
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MeldPartnerChoice(
+                    controllerId, source.getId(), e));
+            playerInputService.beginPermanentChoice(gameData, controllerId,
+                    partners.stream().map(Permanent::getId).toList(),
+                    "Choose a creature to meld with " + source.getCard().getName() + ".");
             return;
         }
+        meld(gameData, source, partners.getFirst(), controllerId, e);
+    }
 
+    /**
+     * Completes a meld whose partner the controller chose from several eligible permanents.
+     */
+    public void completeMeldPartnerChoice(GameData gameData, UUID partnerId,
+                                          PermanentChoiceContext.MeldPartnerChoice context) {
+        Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        Permanent partner = gameQueryService.findPermanentById(gameData, partnerId);
+        if (partner == null) {
+            throw new IllegalStateException("Chosen meld partner no longer exists");
+        }
+        meld(gameData, source, partner, context.controllerId(), context.effect());
+    }
+
+    private void meld(GameData gameData, Permanent source, Permanent partner, UUID controllerId,
+                      MeldWithNamedCreatureEffect e) {
+        // CR 701.42b/701.42c: tokens, and permanents that are only copies of a meld card (their
+        // card is not the named partner), can't be melded. The exile still happens, a token ceases
+        // to exist in exile, and the card that is not a token stays exiled.
         Card meldResultTemplate = source.getOriginalCard().getBackFaceCard();
-        if (meldResultTemplate == null) {
-            log.warn("Game {} - {} has no meld result (back face)", gameData.id, source.getCard().getName());
+        if (source.getCard().isToken() || partner.getCard().isToken()
+                || meldResultTemplate == null
+                || !e.partnerName().equals(partner.getOriginalCard().getName())) {
+            permanentRemovalService.removePermanentToExile(gameData, source);
+            permanentRemovalService.removePermanentToExile(gameData, partner);
+            log.info("Game {} - meld skipped: the exiled objects can't be melded", gameData.id);
             return;
         }
 
@@ -132,7 +161,7 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, melded);
-        // Melded permanent enters the battlefield (CR 701.37c) — fire its ETB triggers.
+        // Melded permanent enters the battlefield (CR 701.42a) — fire its ETB triggers.
         battlefieldEntryService.handleCreatureEnteredBattlefield(
                 gameData, controllerId, meldResult, null, false);
 

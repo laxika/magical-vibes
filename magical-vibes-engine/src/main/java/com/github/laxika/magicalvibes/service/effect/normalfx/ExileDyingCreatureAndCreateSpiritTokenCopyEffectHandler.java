@@ -54,20 +54,31 @@ public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements 
             return;
         }
 
-        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
-        Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
+        // The token copies the creature as it last existed on the battlefield (its copy values, e.g. a
+        // Clone's copied creature), not the card it left in the graveyard.
+        Permanent departed = gameData.departedPermanentSnapshots.get(dyingCardId);
+
+        // A copy's battlefield card is not the physical card that went to the graveyard.
+        UUID graveyardCardId = dyingCardId;
+        Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, graveyardCardId);
+        if (dyingCard == null && departed != null && departed.getOriginalCard() != null) {
+            graveyardCardId = departed.getOriginalCard().getId();
+            dyingCard = gameQueryService.findCardInGraveyardById(gameData, graveyardCardId);
+        }
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, graveyardCardId);
         if (ownerId == null || dyingCard == null) {
             return;
         }
+        Card copySource = departed != null && departed.getCard() != null ? departed.getCard() : dyingCard;
 
-        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, dyingCardId);
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, graveyardCardId);
         exileService.exileCard(gameData, ownerId, dyingCard);
 
         var copyOptions = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(CardSubtype.SPIRIT), Set.of(), null, null, Map.of());
-        List<CardSubtype> tokenSubtypes = dyingCard.getSubtypes() == null
+        List<CardSubtype> tokenSubtypes = copySource.getSubtypes() == null
                 ? new ArrayList<>()
-                : new ArrayList<>(dyingCard.getSubtypes());
+                : new ArrayList<>(copySource.getSubtypes());
         if (!tokenSubtypes.contains(CardSubtype.SPIRIT)) {
             tokenSubtypes.add(CardSubtype.SPIRIT);
         }
@@ -76,12 +87,12 @@ public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> batch = new ArrayList<>();
         for (int i = 0; i < tokenCount; i++) {
-            Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(dyingCard, copyOptions);
+            Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(copySource, copyOptions);
             tokenCard.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                     new ReturnLinkedCardToOwnerGraveyardEffect());
 
             Permanent tokenPermanent = new Permanent(tokenCard);
-            tokenPermanent.setChosenPermanentId(dyingCardId);
+            tokenPermanent.setChosenPermanentId(graveyardCardId);
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, entry.getControllerId(), tokenPermanent,
                     enterTappedTypes, batch);
@@ -96,6 +107,6 @@ public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements 
         gameLogService.append(gameData, GameLog.textCardText(
                 "A Spirit token copy of ", dyingCard, " is created."));
         log.info("Game {} - {} creates a Spirit token copy of {}",
-                gameData.id, entry.getCard().getName(), dyingCard.getName());
+                gameData.id, entry.getCard().getName(), copySource.getName());
     }
 }

@@ -22,13 +22,13 @@ class HuntingGroundsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HuntingGrounds());
         harness.setHand(player1, List.of(new GiantWarthog()));
         castOpponentSpell(new GiantWarthog(), "{5}{G}");
+        harness.passBothPriorities();
 
         PendingInteraction.MayAbilityChoice mayChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(mayChoice).isNotNull();
         assertThat(mayChoice.playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         PendingInteraction.HandCardChoice handChoice =
                 gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class);
         assertThat(handChoice).isNotNull();
@@ -59,6 +59,7 @@ class HuntingGroundsTest extends BaseCardTest {
         Card creature = new GiantWarthog();
         harness.setHand(player1, List.of(creature));
         castOpponentSpell(new GiantWarthog(), "{5}{G}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
@@ -74,6 +75,7 @@ class HuntingGroundsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HuntingGrounds());
         harness.setHand(player1, List.of(new GiantWarthog()));
         castOpponentSpell(new MentalNote(), "{U}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
@@ -91,9 +93,9 @@ class HuntingGroundsTest extends BaseCardTest {
         Card creature = new GiantWarthog();
         harness.setHand(player1, List.of(noncreature, creature));
         castOpponentSpell(new GiantWarthog(), "{5}{G}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         PendingInteraction.HandCardChoice handChoice =
                 gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class);
         assertThat(handChoice).isNotNull();
@@ -123,10 +125,10 @@ class HuntingGroundsTest extends BaseCardTest {
         addHuntingGroundsForJudReview(7);
         harness.setHand(player1, List.of(new MentalNote()));
         castOpponentCreatureSpellForJudReview();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Mental Note");
@@ -146,10 +148,10 @@ class HuntingGroundsTest extends BaseCardTest {
         addHuntingGroundsForJudReview(7);
         harness.setHand(player1, List.of(new GiantWarthog()));
         castOpponentCreatureSpellForJudReview();
-
-        harness.handleMayAbilityChosen(player1, true);
         harness.setGraveyard(player1, graveyardWithCards(6));
         harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
         harness.handleCardChosen(player1, 0);
 
@@ -183,10 +185,10 @@ class HuntingGroundsTest extends BaseCardTest {
         addHuntingGroundsForJudReview(7);
         harness.setHand(player1, List.of());
         castOpponentCreatureSpellForJudReview();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Giant Warthog");

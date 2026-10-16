@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -979,15 +980,27 @@ public class AnimationSupport {
                 gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
                 log.info("Game {} - {} transform trigger queued (may ability)", gameData.id, triggerCard.getName());
-            } else if (e instanceof DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect) {
+            } else if (e instanceof DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect splitDamage) {
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.TransformOpponentThenCreatureTarget(
                                 triggerCard, controllerId, effects, self.getId()));
                 List<UUID> opponents = gameData.orderedPlayerIds.stream()
                         .filter(pid -> !pid.equals(controllerId))
                         .toList();
-                playerInputService.beginAnyTargetChoice(gameData, controllerId, List.of(), opponents,
-                        triggerCard.getName() + "'s ability - Choose target opponent.");
+                List<UUID> planeswalkers = splitDamage.opponentOnly() ? List.of()
+                        : triggerTargetCollector.collect(gameData,
+                                List.of(new DealDamageToAnyTargetEffect(splitDamage.playerDamage())), null,
+                                controllerId, triggerCard, TriggerTargetCollector.Options.ATTACK, self)
+                        .validTargets().stream()
+                        .filter(id -> {
+                            Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                            return candidate != null && gameQueryService.isPlaneswalker(gameData, candidate);
+                        })
+                        .toList();
+                playerInputService.beginAnyTargetChoice(gameData, controllerId, planeswalkers, opponents,
+                        triggerCard.getName() + (splitDamage.opponentOnly()
+                                ? "'s ability - Choose target opponent."
+                                : "'s ability - Choose target opponent or planeswalker."));
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard,
                         "'s transform ability triggers - choose target opponent."));
                 log.info("Game {} - {} transform trigger awaiting opponent target", gameData.id, triggerCard.getName());

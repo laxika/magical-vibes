@@ -44,10 +44,14 @@ public class RevealUntilBasicLandToHandRestToGraveyardEffectHandler implements N
         List<Card> revealed = new ArrayList<>();
         Card basicLand = null;
         while (!deck.isEmpty()) {
-            Card card = deck.removeFirst();
+            Card card = deck.getFirst();
+            // Checked while the card is still in the library, since library-land supertype grants
+            // (Rootpath Purifier) only apply to cards that are in the library.
+            boolean basic = card.hasType(CardType.LAND)
+                    && gameQueryService.cardHasSupertype(card, CardSupertype.BASIC, gameData, controllerId);
+            deck.removeFirst();
             revealed.add(card);
-            if (card.hasType(CardType.LAND)
-                    && gameQueryService.cardHasSupertype(card, CardSupertype.BASIC, gameData, controllerId)) {
+            if (basic) {
                 basicLand = card;
                 break;
             }

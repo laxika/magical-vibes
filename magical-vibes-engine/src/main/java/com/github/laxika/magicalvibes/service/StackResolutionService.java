@@ -497,6 +497,11 @@ public class StackResolutionService {
                             com.github.laxika.magicalvibes.model.effect.GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
                     permanent.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
+        if (entry.isGrantedBlitzOnEntry()) {
+            gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedPermanentAction(
+                    permanent.getId(), com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                    false, null, null, controllerId));
+        }
         if (entry.isAlternateCost() && entry.getCard().getKeywords().contains(Keyword.DASH)) {
             gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger(
                     entry.getControllerId(), entry.getCard(), permanent.getId(), permanent.getId(),

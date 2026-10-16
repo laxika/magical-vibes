@@ -85,7 +85,7 @@ class HenzieToolboxTorreTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Riveteers Requisitioner").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Riveteers Requisitioner"), Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -98,7 +98,7 @@ class HenzieToolboxTorreTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         resolveAllTriggers();
 
-        assertThat(findPermanent(player1, "Workshop Warchief").hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Workshop Warchief"), Keyword.HASTE)).isTrue();
     }
 
     @Test

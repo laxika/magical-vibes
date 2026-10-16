@@ -55,6 +55,7 @@ class HitMonkeyTest extends BaseCardTest {
 
         assertThat(monkey.isAttacking()).isTrue();
         assertThat(monkey.isTapped()).isFalse();
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         harness.assertLife(player2, 17);
     }
@@ -96,6 +97,7 @@ class HitMonkeyTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, monkey.getId());
         declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
         harness.assertLife(player2, 14);

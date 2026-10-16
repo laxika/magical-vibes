@@ -132,6 +132,7 @@ class HollowScavengerTest extends BaseCardTest {
         assertThat(gd.findExiledCard(adventure.getId())).isNotNull();
         assertThat(gd.exilePlayPermissions.get(adventure.getId())).isEqualTo(player1.getId());
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         castAdventure();
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);

@@ -881,6 +881,11 @@ public class MayCastHandlerService {
                             // No valid targets — card goes to owner's graveyard
                             gameLogService.append(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
                             log.info("Game {} - {} cast-from-graveyard has no valid targets", gameData.id, cardToCast.getName());
+                        } else if (withoutPayingManaCost && !payGraveyardPlayCostIncrease(gameData, player, cardToCast)) {
+                            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                                    " can't be cast: its cost increase can't be paid."));
+                            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                            return;
                         } else {
                             permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
                             gameData.interaction.setPermanentChoiceContext(
@@ -901,6 +906,12 @@ public class MayCastHandlerService {
                         }
                     } else {
                         // Non-targeted spell — put directly on stack
+                        if (withoutPayingManaCost && !payGraveyardPlayCostIncrease(gameData, player, cardToCast)) {
+                            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                                    " can't be cast: its cost increase can't be paid."));
+                            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                            return;
+                        }
                         if (!withoutPayingManaCost) {
                             try {
                                 spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), cardToCast, 0,
@@ -1100,6 +1111,9 @@ public class MayCastHandlerService {
         stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         stackEntry.setOwnerIdOverride(graveyardOwnerId);
         stackEntry.setSourceZone(Zone.GRAVEYARD);
+        if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, stackEntry)) {
+            return;
+        }
         gameData.stack.add(stackEntry);
         exileCastTargetSupport.queueAfterSuccessfulCast(gameData, cardToCast, player.getId(),
                 ability.sourcePermanentId(), castEffect.afterSuccessfulCastEffect());
@@ -1272,6 +1286,26 @@ public class MayCastHandlerService {
                 player.getId(), effect.exileInsteadOfGraveyard(), true);
     }
 
+    /**
+     * Pays the generic cost increases that apply to a spell cast from a graveyard without paying its
+     * mana cost (CR 601.2f): the total cost is the increase alone, so the increase must still be paid
+     * from the pool. Returns {@code false} without paying when the pool cannot cover it.
+     */
+    private boolean payGraveyardPlayCostIncrease(GameData gameData, Player player, Card cardToPlay) {
+        int increase = castingCostService.getCastCostModifier(
+                gameData, player.getId(), cardToPlay, 0, Zone.GRAVEYARD);
+        if (increase <= 0) {
+            return true;
+        }
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        ManaCost increaseCost = new ManaCost("{0}");
+        if (!increaseCost.canPayWithAdditionalGenericCost(pool, 0, increase)) {
+            return false;
+        }
+        increaseCost.payWithAdditionalGenericCost(pool, 0, increase);
+        return true;
+    }
+
     public void handleCastFromNoncreatureGraveyardChoice(
             GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
             CastTargetNoncreatureCardFromGraveyardEffect effect) {
@@ -1405,6 +1439,13 @@ public class MayCastHandlerService {
                 return;
             }
 
+            if (!payGraveyardPlayCostIncrease(gameData, player, cardToPlay)) {
+                graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, cardToPlay);
+                gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " can't be cast: its cost increase can't be paid."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.GraveyardCastSpellTarget(cardToPlay, player.getId(), spellEffects,
                             spellType, exileInsteadOfGraveyard, true, graveyardOwnerId));
@@ -1415,6 +1456,13 @@ public class MayCastHandlerService {
                     " from their graveyard without paying its mana cost — choosing target."));
             log.info("Game {} - {} casts {} from graveyard, choosing target", gameData.id, playerName, cardToPlay.getName());
             return; // Wait for target choice
+        }
+
+        if (!payGraveyardPlayCostIncrease(gameData, player, cardToPlay)) {
+            graveyardService.addCardToGraveyard(gameData, graveyardOwnerId, cardToPlay);
+            gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " can't be cast: its cost increase can't be paid."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
         StackEntry stackEntry = new StackEntry(
@@ -1475,17 +1523,10 @@ public class MayCastHandlerService {
             return;
         }
 
-        // The card leaves exile as it's played — clear the source's imprint pointer.
-        if (ability.sourcePermanentId() != null) {
-            Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
-            if (source != null) {
-                gameData.setImprintedCard(source.getCard(), null);
-            }
-        }
-
         gameLogService.append(gameData, GameLog.textCardText(playerName + " turns the exiled card face up: ", cardToPlay, "."));
 
         if (cardToPlay.hasType(CardType.LAND)) {
+            clearImprintPointer(gameData, ability);
             gameData.removeFromExile(cardToPlay.getId());
             gameData.recordCardPlayedFromExile(player.getId());
             Permanent permanent = new Permanent(cardToPlay);
@@ -1505,6 +1546,19 @@ public class MayCastHandlerService {
 
         // Non-land: cast from exile without paying (handles targeting, the stack, and cast triggers).
         exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, cardToPlay.getId());
+        // The card stays linked to the source while it is still exiled (e.g. it could not be cast).
+        if (gameData.findExiledCard(cardToPlay.getId()) == null) {
+            clearImprintPointer(gameData, ability);
+        }
+    }
+
+    private void clearImprintPointer(GameData gameData, PendingMayAbility ability) {
+        if (ability.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+            if (source != null) {
+                gameData.setImprintedCard(source.getCard(), null);
+            }
+        }
     }
 
     /**

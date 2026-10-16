@@ -61,10 +61,14 @@ public class ReturnTargetAndAttachedMatchingToHandEffectHandler implements Norma
             }
         });
 
-        for (Permanent attached : matchingAttached) {
-            bounceToHand(gameData, entry, attached);
-        }
-        bounceToHand(gameData, entry, target);
+        List<Permanent> leavingTogether = new ArrayList<>(matchingAttached);
+        leavingTogether.add(target);
+        permanentRemovalService.performSimultaneousRemovals(gameData, leavingTogether, () -> {
+            for (Permanent attached : matchingAttached) {
+                bounceToHand(gameData, entry, attached);
+            }
+            bounceToHand(gameData, entry, target);
+        });
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
