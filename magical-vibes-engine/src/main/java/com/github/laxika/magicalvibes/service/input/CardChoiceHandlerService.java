@@ -1365,7 +1365,10 @@ public class CardChoiceHandlerService {
             gameData.eachPlayerDiscardSelections.clear();
             discardCollectedCards(gameData, selected, followUp.eachPlayerControllerId());
         }
-        if (followUp.targetOpponentsDiscardThenDraw() && !gameData.eachPlayerDiscardSelections.isEmpty()) {
+        // The picks are discarded together once the last chosen opponent with cards in hand has picked.
+        if (followUp.targetOpponentsDiscardThenDraw() && !gameData.eachPlayerDiscardSelections.isEmpty()
+                && followUp.remainingEachPlayerDiscards().stream()
+                .allMatch(id -> gameData.playerHands.getOrDefault(id, List.of()).isEmpty())) {
             discardTargetOpponentsChosenCards(gameData);
         }
 

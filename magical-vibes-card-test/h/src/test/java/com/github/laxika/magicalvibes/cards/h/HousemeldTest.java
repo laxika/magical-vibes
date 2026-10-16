@@ -70,7 +70,8 @@ class HousemeldTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.setLibrary(player1, List.of(new Forest()));
+        // Quicken's delayed draw and the draw step both draw before the caster's end step.
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setHand(player1, List.of(new Quicken()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0);
@@ -82,7 +83,6 @@ class HousemeldTest extends BaseCardTest {
         assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
 
-        harness.setLibrary(player1, List.of(new Forest()));
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Grizzly Bears");

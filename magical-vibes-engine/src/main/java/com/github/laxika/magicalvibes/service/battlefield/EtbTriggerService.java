@@ -265,7 +265,11 @@ public class EtbTriggerService {
                 targetId = null;
             }
         }
-        ChooseIndependentModesOnEnterEffect independentModeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        // A permanent that lost its printed abilities as it entered makes none of its own as-enters choices.
+        boolean printedAbilitiesRemoved = enteringPermanent != null
+                && gameQueryService.hasLostPrintedAbilities(gameData, enteringPermanent);
+        ChooseIndependentModesOnEnterEffect independentModeChoice = printedAbilitiesRemoved ? null
+                : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseIndependentModesOnEnterEffect.class::isInstance)
                 .map(ChooseIndependentModesOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -276,7 +280,8 @@ public class EtbTriggerService {
                     enteringPermanent.getChosenModeLabels().size());
             return;
         }
-        ChooseModeOnEnterEffect modeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        ChooseModeOnEnterEffect modeChoice = printedAbilitiesRemoved ? null
+                : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(ChooseModeOnEnterEffect.class::isInstance)
                 .map(ChooseModeOnEnterEffect.class::cast)
                 .findFirst().orElse(null);
@@ -292,7 +297,8 @@ public class EtbTriggerService {
                 return;
             }
         }
-        SubtypeChoiceOnEnterEffect subtypeChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        SubtypeChoiceOnEnterEffect subtypeChoice = printedAbilitiesRemoved ? null
+                : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(SubtypeChoiceOnEnterEffect.class::isInstance)
                 .map(SubtypeChoiceOnEnterEffect.class::cast)
                 .findFirst()
@@ -315,8 +321,6 @@ public class EtbTriggerService {
                 .areOpponentPermanentETBTriggersSuppressed(gameData, controllerId);
         int extraEtbTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, card);
 
-        boolean printedAbilitiesRemoved = enteringPermanent != null
-                && gameQueryService.hasLostPrintedAbilities(gameData, enteringPermanent);
         List<CardEffect> triggeredEffects = enteringPermanentTriggersSuppressed || printedAbilitiesRemoved
                 ? new ArrayList<>()
                 : new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));

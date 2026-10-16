@@ -68,8 +68,8 @@ class SongOfFreyaliseTest extends BaseCardTest {
         // Baloth Gorger should have an "until next turn" activated ability
         Permanent bears = findPermanent(player1, "Baloth Gorger");
         assertThat(bears).isNotNull();
-        assertThat(bears.getUntilNextTurnActivatedAbilities()).hasSize(1);
-        assertThat(bears.getUntilNextTurnActivatedAbilities().getFirst().getDescription())
+        assertThat(grantedAbilities(bears)).hasSize(1);
+        assertThat(grantedAbilities(bears).getFirst().getDescription())
                 .isEqualTo("{T}: Add one mana of any color.");
     }
 
@@ -97,7 +97,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Ability should still be present after end-of-turn cleanup.
-        assertThat(bears.getUntilNextTurnActivatedAbilities()).hasSize(1);
+        assertThat(grantedAbilities(bears)).hasSize(1);
     }
 
     @Test
@@ -107,7 +107,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BalothGorger());
         resolveChapter(1);
         Permanent bears = findPermanent(player1, "Baloth Gorger");
-        assertThat(bears.getUntilNextTurnActivatedAbilities()).hasSize(1);
+        assertThat(grantedAbilities(bears)).hasSize(1);
 
         // Advance to player1's next turn — this should clear the abilities
         harness.forceActivePlayer(player2);
@@ -118,7 +118,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
         // Abilities should be cleared because it's now player1's turn
         bears = findPermanent(player1, "Baloth Gorger");
         assertThat(bears).isNotNull();
-        assertThat(bears.getUntilNextTurnActivatedAbilities()).isEmpty();
+        assertThat(grantedAbilities(bears)).isEmpty();
     }
 
     @Test
@@ -150,7 +150,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
         }
 
         // Enchantments should not have any granted abilities
-        findPermanents(player1, "Song of Freyalise").forEach(p -> assertThat(p.getUntilNextTurnActivatedAbilities()).isEmpty());
+        findPermanents(player1, "Song of Freyalise").forEach(p -> assertThat(grantedAbilities(p)).isEmpty());
     }
 
     @Test
@@ -280,9 +280,9 @@ class SongOfFreyaliseTest extends BaseCardTest {
         harness.addToBattlefield(player2, new BalothGorger());
         resolveChapter(2);
         harness.addToBattlefield(player1, new LlanowarElves());
-        assertThat(findPermanent(player1, "Baloth Gorger").getUntilNextTurnActivatedAbilities()).hasSize(1);
-        assertThat(findPermanent(player2, "Baloth Gorger").getUntilNextTurnActivatedAbilities()).isEmpty();
-        assertThat(findPermanent(player1, "Llanowar Elves").getUntilNextTurnActivatedAbilities()).isEmpty();
+        assertThat(grantedAbilities(findPermanent(player1, "Baloth Gorger"))).hasSize(1);
+        assertThat(grantedAbilities(findPermanent(player2, "Baloth Gorger"))).isEmpty();
+        assertThat(grantedAbilities(findPermanent(player1, "Llanowar Elves"))).isEmpty();
     }
 
     @Test
@@ -304,7 +304,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
     void animatedSagaReceivesItsOwnChapterIManaAbility() {
         Permanent saga = addAnimatedSaga();
         resolveChapter(1);
-        assertThat(saga.getUntilNextTurnActivatedAbilities()).hasSize(1);
+        assertThat(grantedAbilities(saga)).hasSize(1);
     }
 
     @Test
@@ -323,7 +323,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(creature.getUntilNextTurnActivatedAbilities()).isEmpty();
+        assertThat(grantedAbilities(creature)).isEmpty();
     }
 
     @ParameterizedTest
@@ -369,5 +369,9 @@ class SongOfFreyaliseTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    private java.util.List<com.github.laxika.magicalvibes.model.ActivatedAbility> grantedAbilities(Permanent permanent) {
+        return gqs.computeStaticBonus(gd, permanent).grantedActivatedAbilities();
     }
 }

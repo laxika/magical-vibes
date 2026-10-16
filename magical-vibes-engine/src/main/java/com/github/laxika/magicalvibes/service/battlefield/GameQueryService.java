@@ -7424,7 +7424,8 @@ public class GameQueryService {
         sourceCard = withSpellManaValue(gameData, sourceCard);
         int chosenNumber = target.getChosenNumber();
         var chosenParity = target.getChosenManaValueParity();
-        if (hasProtectionFromSourceManaValue(
+        if (!computeStaticBonus(gameData, target).losesAllAbilities()
+                && hasProtectionFromSourceManaValue(
                 target.getCard().getEffects(EffectSlot.STATIC), sourceCard, chosenNumber, chosenParity)) {
             return true;
         }

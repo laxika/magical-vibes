@@ -185,7 +185,10 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
         if (duration == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
                 || duration == EffectDuration.WHILE_SOURCE_REMAINS
                 || duration == EffectDuration.PERMANENT
-                || duration == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE) {
+                || duration == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
+                // "Until your next turn" ends on the turn of the effect's controller, even if the
+                // permanent has changed control since (Hydro-Man, Fluid Felon).
+                || duration == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
                     entry.getCard().getName(),
@@ -207,11 +210,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
             ));
             return;
         }
-        if (duration == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
-            permanent.getUntilNextTurnActivatedAbilities().add(grantedAbility(grant.ability(), entry));
-        } else {
-            permanent.getTemporaryActivatedAbilities().add(grantedAbility(grant.ability(), entry));
-        }
+        permanent.getTemporaryActivatedAbilities().add(grantedAbility(grant.ability(), entry));
     }
 
     private static ActivatedAbility grantedAbility(ActivatedAbility ability, StackEntry entry) {

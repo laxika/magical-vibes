@@ -102,6 +102,7 @@ class HarvesterOfSoulsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HarvesterOfSouls());
         harness.addToBattlefield(player2, new AngelicWall());
         harness.addToBattlefield(player2, new AngelicWall());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new AngelicWall(), new AngelicWall()));
         harness.addMana(player2, ManaColor.BLACK, 4);
         harness.forceActivePlayer(player2);

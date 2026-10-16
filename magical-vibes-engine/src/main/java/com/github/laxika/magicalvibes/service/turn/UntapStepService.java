@@ -170,6 +170,8 @@ public class UntapStepService {
                     p.setExtraLoyaltyActivationsThisTurn(0);
                 });
             }
+            // Nor does it count as that player's untap step for "your next untap step" restrictions.
+            gameData.untapStepPlayerId = null;
             String skipLog = activePlayerName + " skips their untap step.";
             gameLogService.append(gameData, GameLog.text(skipLog));
             log.info("Game {} - {} skips their untap step", gameData.id, activePlayerName);
@@ -436,8 +438,8 @@ public class UntapStepService {
 
     /** Queues the batched untap-step triggers after all untap choices are complete. */
     public void finishUntapStep(GameData gameData, UUID activePlayerId) {
-        expireControllerStepUntapRestrictions(gameData, activePlayerId);
         if (activePlayerId.equals(gameData.untapStepPlayerId)) {
+            expireControllerStepUntapRestrictions(gameData, activePlayerId);
             triggerCollectionService.checkControllerUntapsDuringUntapStepTriggers(
                     gameData, activePlayerId, gameData.untapStepUntappedPermanentCount);
         }

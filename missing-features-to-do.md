@@ -81,32 +81,90 @@ Don't commit until I say so.
 
 ---
 
-## 25. Remaining H-card failures
+## 26. Replacement-order prompt for counters a permanent enters with
 
 **Status:** open · **Found:** 2026-10-16, while fixing H-card tests
 
-These H-card test classes still fail after three Haiku rounds and two Sonnet rounds. Most are one-card
-engine gaps. Each needs its own investigation.
+**Failing tests:**
+- `HardenedScalesTest.controllerChoosesOrderWithCounterDoubler()`
 
-**Diagnosed, need engine work:**
-- `HardenedScalesTest.controllerChoosesOrderWithCounterDoubler` — counters a creature enters with go
-  through `GameQueryService.replaceCounters` inline in `BattlefieldPlacementService`, so there is no
-  CR 616.1 order prompt when Hardened Scales and Corpsejack Menace both apply.
-- `HydraulicHelperTest` — "can't be spent to cast a nonartifact spell" mana is modeled as
-  artifact-spells-or-abilities-only mana, so it can't pay Mana Leak's cost. Needs its own mana restriction.
-- `HitTheMotherLodeTest.freeCasting…AdditionalCosts…` — discover free casts skip `TapMultiplePermanentsCost`.
-- `HiveOfTheEyeTyrantTest.repeatedAnimationGrantsTwoSeparateExileTriggers` — `CombatAttackService` bundles
-  all graveyard-target ON_ATTACK effects into one trigger.
-- `HopelessNightmareTest` — the scry runs twice in one resolution after the sacrifice ability.
+**What the rules require.** CR 616.1: when two or more replacement effects would modify how an event
+affects an object, its controller chooses which to apply first. Hardened Scales ("one additional") and
+Corpsejack Menace ("twice that many") give different totals depending on order (5 → 12 or 11). The
+engine already prompts for counters put on a permanent already on the battlefield
+(`ChoiceContext.CounterReplacementOrder`). Counters a permanent *enters with* go through
+`GameQueryService.replaceCounters` inline during placement (`BattlefieldPlacementService`,
+`GraveyardReturnSupport.putCardOntoBattlefield`, and others), which applies a fixed order and never asks.
 
-**Remaining (undiagnosed or partly fixed):** `HaktosTheUnscarredTest`, `HaliyaGuidedByLightTest` (warp on a
-later turn), `HammerheadTyrantTest`, `HammerOfBogardanTest`, `HarmsWayTest`, `HarvesterOfSoulsTest`,
-`HazoretsUndyingFuryTest` (escalate on a free spell; lands-don't-untap scope), `HellcatUndyingVigilanteTest`,
-`HellkiteCourserTest`, `HerculesOlympianHeroTest`, `HildibrandMandervilleTest`, `HinderTest`,
-`HollowMarauderTest`, `HomaridWarriorTest` (next-untap restriction vs control change),
-`HornOfPlentyTest`, `HostOfTheHereafterTest`, `HotPursuitTest`, `HousemeldTest`,
-`HulklingYoungAvengerTest`, `HuntersTalentTest` (spell target arity counts the attack target group),
-`HuntmasterOfTheFellsTest`, `HurkylsRecallTest`, `HydroManFluidFelonTest`.
+**Why it's large.** The prompt has to pause battlefield entry partway through. The permanent is built
+but hasn't entered yet, so ETB triggers, the legend rule and "as enters" choices all have to wait for
+the answer and then resume. There are many entry call sites.
+
+**Prompt to start it:**
+
+```
+Make counters a permanent enters with go through the CR 616.1 replacement-order prompt (Hardened Scales +
+Corpsejack Menace) instead of being applied inline by GameQueryService.replaceCounters during placement.
+Start with HardenedScalesTest.controllerChoosesOrderWithCounterDoubler, then check the other "enters with
+counters" paths. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 27. Escalate on spells cast without paying their mana cost
+
+**Status:** open · **Found:** 2026-10-16, while fixing H-card tests
+
+**Failing tests:**
+- `HazoretsUndyingFuryTest$ExileAndCast.mayPayEscalateToChooseAnotherModeOfAFreeSpell()`
+
+**What the rules require.** Escalate is an additional cost, so it can still be paid when a spell is cast
+without paying its mana cost (Hazoret's Undying Fury ruling 2017-07-14: "You can, however, pay additional
+costs"). `ExileFreeCastQueueSupport.castNextFromQueue` caps an escalate spell at one mode
+(`maximumChoices = min(1, …)`), so the caster can never choose more modes and pay for them.
+
+**Why it's large.** The free-cast queue has no interactive payment for a variable additional cost.
+Choosing N modes has to be followed by paying N−1 escalate costs (discard, sacrifice, tap or mana) as
+part of 601.2h, after targets are chosen. The target step (`ExileCastSpellTarget`) currently puts the
+spell straight on the stack, so it would need a cost-payment step in between.
+
+**Prompt to start it:**
+
+```
+Let spells cast without paying their mana cost from the free-cast queue (ExileFreeCastQueueSupport) choose
+extra escalate modes and pay the escalate cost for each (Collective Brutality via Hazoret's Undying Fury).
+Pay the cost after targets are chosen (CR 601.2h). Start with HazoretsUndyingFuryTest
+mayPayEscalateToChooseAnotherModeOfAFreeSpell. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 28. "Can't be spent to cast nonartifact spells" mana
+
+**Status:** open · **Found:** 2026-10-16, while fixing H-card tests
+
+**Failing tests:**
+- `HydraulicHelperTest` ("Hydraulic Helper mana can pay Mana Leak's cost during resolution")
+
+**What the rules require.** Hydraulic Helper (`MSH`): "{T}: Add {U}. This mana can't be spent to cast a
+nonartifact spell." That mana may be spent on anything except casting a nonartifact spell: abilities,
+artifact spells, and costs paid while something resolves (Mana Leak's {3}). The card uses
+`ManaRestriction.ArtifactSpellsOrAbilities`, whose pool bucket only pays for artifact spells and
+activated abilities. Paying Mana Leak's cost is neither, so the mana can't be used.
+
+**Why it's large.** Each restriction is its own typed bucket in `ManaPool`, with spend logic in
+`ManaCost` and in the pool-choice contexts (`ChoiceContext`, `ManaChoiceNarrowingService`,
+`AnyColorManaChoiceSupport`). A new "not for nonartifact spells" bucket has to be wired into each
+payment context (spell cast, ability activation, resolution-time cost) and into the views.
+
+**Prompt to start it:**
+
+```
+Add a mana restriction for "this mana can't be spent to cast a nonartifact spell" (Hydraulic Helper) that
+can pay ability costs, artifact spells and resolution-time costs like Mana Leak's. Wire it through ManaPool,
+ManaCost and the mana-choice contexts. Start with HydraulicHelperTest. Don't run the full test suite; ask me.
+Don't commit until I say so.
+```
 
 <!--
 Template — copy everything between the lines, give it the next number, and append above.

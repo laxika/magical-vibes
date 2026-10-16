@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -350,8 +351,16 @@ public class TriggeredAbilityQueueService {
         if (card.getEffectTargetIndex(effect) == targetIndex) {
             return true;
         }
-        return effect instanceof com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect aware
-                && card.getEffectTargetIndex(aware.boundToDyingCreatureCounters(Map.of())) == targetIndex;
+        if (!(effect instanceof com.github.laxika.magicalvibes.model.effect.DyingCreatureCountersAwareEffect aware)) {
+            return false;
+        }
+        // The rebuilt record is a new instance, so compare it by value with the declared effects
+        // (unwrapping a "whenever a creature with counters dies" condition).
+        CardEffect unbound = aware.boundToDyingCreatureCounters(Map.of());
+        return card.getEffectsBoundToTargetGroup(targetIndex).stream()
+                .map(declared -> declared instanceof TriggeringPermanentConditionalEffect conditional
+                        ? conditional.wrapped() : declared)
+                .anyMatch(unbound::equals);
     }
 
     /**
@@ -742,7 +751,8 @@ public class TriggeredAbilityQueueService {
                 && sourceCard.getSpellTargets().stream().allMatch(group ->
                 sourceCard.bindsEffectToTargetGroup(group.getIndex())
                 && sourceCard.getEffectsBoundToTargetGroup(group.getIndex()).stream()
-                .allMatch(bound -> TargetSpec.NONE.equals(bound.targetSpec())))
+                .allMatch(bound -> TargetSpec.NONE.equals(bound.targetSpec())
+                        || effects.stream().noneMatch(queued -> queued.getClass().equals(bound.getClass()))))
                 && effects.stream().anyMatch(effect -> !TargetSpec.NONE.equals(effect.targetSpec()))) {
             // Every declared group belongs to some other ability of the card (a temporary copy that kept
             // Hulkling's own cast trigger): the queued ability's own target specification decides.

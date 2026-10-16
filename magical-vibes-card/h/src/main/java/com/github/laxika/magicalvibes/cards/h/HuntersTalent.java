@@ -29,7 +29,7 @@ public class HuntersTalent extends Card {
 
     public HuntersTalent() {
         target(TargetFilters.creatureYouControl());
-        target(TargetFilters.creatureAnOpponentControls(), 0, 1)
+        target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetDealsPowerDamageToTargetEffect());
 
         addActivatedAbility(new ActivatedAbility(

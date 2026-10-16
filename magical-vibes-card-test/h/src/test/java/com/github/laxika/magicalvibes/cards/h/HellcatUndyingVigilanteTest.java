@@ -80,6 +80,9 @@ class HellcatUndyingVigilanteTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Hellcat, Undying Vigilante")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard()).isInstanceOf(GarruksPackleader.class));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack).isEmpty();

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -159,6 +160,8 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HuntmasterOfTheFells());
         Permanent ownSorin = harness.addToBattlefieldAndReturn(player1, new SorinLordOfInnistrad());
         Permanent opponentSorin = harness.addToBattlefieldAndReturn(player2, new SorinLordOfInnistrad());
+        ownSorin.setCounterCount(CounterType.LOYALTY, 3);
+        opponentSorin.setCounterCount(CounterType.LOYALTY, 3);
 
         gd.spellsCastLastTurn.clear();
         advanceToUpkeepAndResolveTransform(player1);

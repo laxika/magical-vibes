@@ -2392,9 +2392,9 @@ public class GraveyardReturnSupport {
     }
 
     public void handleCreatureEtbAndLegendRule(GameData gameData, UUID controllerId, Permanent permanent, Card card) {
-        if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
-        }
+        // Runs even when the creature lost its abilities: only its own enter abilities are suppressed
+        // (by the ETB service), while other permanents still see a creature enter.
+        battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
         }

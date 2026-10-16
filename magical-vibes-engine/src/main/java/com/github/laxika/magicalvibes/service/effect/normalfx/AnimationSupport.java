@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -72,6 +72,7 @@ public class AnimationSupport {
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final TriggerTargetCollector triggerTargetCollector;
+    private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerCollectionService triggerCollectionService;
     private final UnattachTriggerSupport unattachTriggerSupport;
@@ -987,16 +988,17 @@ public class AnimationSupport {
                 List<UUID> opponents = gameData.orderedPlayerIds.stream()
                         .filter(pid -> !pid.equals(controllerId))
                         .toList();
-                List<UUID> planeswalkers = splitDamage.opponentOnly() ? List.of()
-                        : triggerTargetCollector.collect(gameData,
-                                List.of(new DealDamageToAnyTargetEffect(splitDamage.playerDamage())), null,
-                                controllerId, triggerCard, TriggerTargetCollector.Options.ATTACK, self)
-                        .validTargets().stream()
-                        .filter(id -> {
-                            Permanent candidate = gameQueryService.findPermanentById(gameData, id);
-                            return candidate != null && gameQueryService.isPlaneswalker(gameData, candidate);
-                        })
-                        .toList();
+                // "target opponent or planeswalker": any planeswalker, including your own.
+                List<UUID> planeswalkers = new ArrayList<>();
+                if (!splitDamage.opponentOnly()) {
+                    gameData.forEachPermanent((playerId, candidate) -> {
+                        if (gameQueryService.isPlaneswalker(gameData, candidate)
+                                && validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, triggerCard,
+                                List.of(splitDamage), TargetFilters.permanent(), candidate, controllerId)) {
+                            planeswalkers.add(candidate.getId());
+                        }
+                    });
+                }
                 playerInputService.beginAnyTargetChoice(gameData, controllerId, planeswalkers, opponents,
                         triggerCard.getName() + (splitDamage.opponentOnly()
                                 ? "'s ability - Choose target opponent."

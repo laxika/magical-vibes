@@ -90,6 +90,9 @@ public class MultiPermanentChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService stackedDividedDamageTriggerService;
 
     private final InputCompletionService inputCompletionService;
@@ -690,6 +693,10 @@ public class MultiPermanentChoiceHandlerService {
                 throw new IllegalStateException("A selected permanent is no longer controlled by the chooser");
             }
         }
+        if (context instanceof MultiPermanentChoiceContext.FreeCastTapCost tapCost
+                && permanentIds.size() != tapCost.requiredCount()) {
+            throw new IllegalStateException("Must select exactly " + tapCost.requiredCount() + " permanents");
+        }
         if (context instanceof MultiPermanentChoiceContext.TapPermanentsForAmount tapCtx) {
             if (permanentIds.size() != tapCtx.requiredCount()) {
                 throw new IllegalStateException("Must select exactly " + tapCtx.requiredCount()
@@ -1153,6 +1160,8 @@ public class MultiPermanentChoiceHandlerService {
             handleTapPermanentsThenQueueReflexiveAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.NihiloorTapChoice ctx) {
             nihiloorTapAndStealEffectHandler.completeChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.FreeCastTapCost tapCost) {
+            exileFreeCastQueueSupport.completeTapCost(gameData, permanentIds, tapCost);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsDrawPerTapped) {
             handleTapPermanentsDrawPerTapped(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.TapPermanentsAndPutCounters ctx) {

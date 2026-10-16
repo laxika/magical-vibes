@@ -102,6 +102,7 @@ class HinderTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castCreature(player1, 1);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 
         harness.castAndResolveInstant(player1, 0, retainer.getId());

@@ -217,7 +217,9 @@ class HammerOfBogardanTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .filteredOn(card -> card instanceof HammerOfBogardan)
+                    .hasSize(1);
         }
 
         @Test

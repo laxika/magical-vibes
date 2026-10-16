@@ -2076,7 +2076,7 @@ public class GameData {
         }
     }
 
-    /** A temporary permission to cast a specific card from its controller's graveyard as an Adventure. */
+    /** A temporary permission to cast a specific card from its controller's graveyard as an Adventure, through {@code expireTurn}. */
     public record GraveyardAdventureCastPermission(UUID castingPlayerId, int expireTurn) {}
 
     /** Card UUIDs that may be cast as an Adventure from the controller's graveyard until a turn ends. */

@@ -365,6 +365,13 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
+     * The caster chooses which permanents to tap for a "tap N untapped permanents" additional cost
+     * of a spell cast without paying its mana cost; {@code entry} is put on the stack once they are tapped.
+     */
+    record FreeCastTapCost(StackEntry entry, int requiredCount) implements MultiPermanentChoiceContext {
+    }
+
+    /**
      * The controller untaps the chosen permanents (Rewind's "Untap up to four lands").
      * {@code sourceName} names the source in the game log.
      */

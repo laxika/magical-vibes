@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -87,7 +88,19 @@ final class DeclaredEtbTargets {
         if (etbTargets.isEmpty()) {
             return new CastTargets(null, List.of(), List.of());
         }
-        if (!listed.isEmpty() && card.getMaxTargets() > 0) {
+        List<SpellTarget> etbGroups = etbTargetGroups(card);
+        if (!listed.isEmpty() && etbGroups.size() < card.getSpellTargets().size()
+                && etbGroups.stream().allMatch(group -> group.getMinTargets() == group.getMaxTargets())
+                && etbGroups.stream().mapToInt(SpellTarget::getMaxTargets).sum() == etbTargets.size()) {
+            // Other groups belong to the card's other triggered abilities (Hunter's Talent's attack
+            // trigger), so only the ETB ability's groups are checked against the declared targets.
+            int offset = 0;
+            for (SpellTarget group : etbGroups) {
+                targetLegalityService.validateSpellTargetGroup(gameData, card, group.getIndex(),
+                        etbTargets.subList(offset, offset + group.getMaxTargets()), player.getId(), xValue, kicked);
+                offset += group.getMaxTargets();
+            }
+        } else if (!listed.isEmpty() && card.getMaxTargets() > 0) {
             targetLegalityService.validateMultiSpellTargets(gameData, card, etbTargets, player.getId(), xValue, kicked);
         } else {
             for (UUID etbTarget : etbTargets) {
@@ -96,6 +109,15 @@ final class DeclaredEtbTargets {
             }
         }
         return new CastTargets(null, List.of(), List.copyOf(etbTargets));
+    }
+
+    /** The card's target groups that belong to its enter-the-battlefield ability (or to no ability). */
+    private static List<SpellTarget> etbTargetGroups(Card card) {
+        List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
+        return card.getSpellTargets().stream()
+                .filter(group -> card.getEffectsBoundToTargetGroup(group.getIndex()).stream()
+                        .allMatch(effect -> etbEffects.stream().anyMatch(etb -> etb == effect)))
+                .toList();
     }
 
     /** Remembers the ETB targets {@link #prepare} took off a cast the engine then accepted. */

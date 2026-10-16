@@ -49,6 +49,7 @@ class HopelessNightmareTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {2}{B} sacrifices it and triggers scry 2")
     void sacrificeAbilitySacrificesItAndScries() {
+        harness.setHand(player2, new ArrayList<>());
         castAndResolve();
         Card first = new RatOut();
         Card second = new HopelessNightmare();

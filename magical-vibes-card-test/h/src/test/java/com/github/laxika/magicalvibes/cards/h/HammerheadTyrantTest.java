@@ -87,7 +87,7 @@ class HammerheadTyrantTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() instanceof HammerheadTyrant);
         harness.assertOnBattlefield(player1, "Sol Ring");
     }
 

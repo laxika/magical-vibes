@@ -69,7 +69,6 @@ class HerculesOlympianHeroTest extends BaseCardTest {
         Permanent hercules = addCreatureReady(player1, new HerculesOlympianHero());
         addCreatureReady(player2, new HerculesOlympianHero());
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         resolveAllTriggers();
@@ -79,6 +78,7 @@ class HerculesOlympianHeroTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(hercules.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, hercules.getId());
         resolveAllTriggers();
         assertThat(hercules.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);

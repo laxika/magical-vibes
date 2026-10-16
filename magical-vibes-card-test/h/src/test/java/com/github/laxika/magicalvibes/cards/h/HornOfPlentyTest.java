@@ -120,6 +120,7 @@ class HornOfPlentyTest extends BaseCardTest {
     @DisplayName("The delayed ability retains Horn's controller when an opponent pays")
     void delayedAbilityRetainsOriginalController() {
         harness.addToBattlefield(player1, new HornOfPlenty());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player2, List.of(new FreshVolunteers()));
         prepareMainPhase(player2);
         harness.castFromHand(player2, new FreshVolunteers(), "{1}{W}");
@@ -133,7 +134,7 @@ class HornOfPlentyTest extends BaseCardTest {
 
         assertThat(gd.stack).singleElement()
                 .satisfies(entry -> assertThat(entry.getControllerId()).isEqualTo(player1.getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }

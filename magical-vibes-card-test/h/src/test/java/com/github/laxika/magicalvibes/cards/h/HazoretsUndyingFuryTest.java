@@ -165,8 +165,9 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
             plains.tap();
 
             cast(List.of(new Forest(), new Forest()));
+            harness.performUntapStep(player1);
 
-            assertThat(plains.getSkipUntapCount()).isEqualTo(1);
+            assertThat(plains.isTapped()).isTrue();
         }
 
         @Test
@@ -179,7 +180,7 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
 
             assertThat(gd.interaction.activeInteraction())
                     .isInstanceOf(PendingInteraction.ImprovisationCapstoneCastChoice.class);
-            assertThat(plains.getSkipUntapCount()).isEqualTo(1);
+            assertThat(gd.matchingPermanentUntapRestrictions.get(player1.getId())).hasSize(1);
         }
 
         @Test
@@ -206,8 +207,9 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
             opponentPlains.tap();
 
             cast(List.of(new Forest(), new Forest()));
+            harness.performUntapStep(player2);
 
-            assertThat(opponentPlains.getSkipUntapCount()).isZero();
+            assertThat(opponentPlains.isTapped()).isFalse();
         }
 
         @Test

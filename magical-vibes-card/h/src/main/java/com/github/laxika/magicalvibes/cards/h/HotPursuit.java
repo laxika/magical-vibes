@@ -40,17 +40,15 @@ public class HotPursuit extends Card {
                         new PermanentIsGoadedPredicate(),
                         new PermanentIsSuspectedPredicate()))));
         AtLeastPlayersLostGame condition = new AtLeastPlayersLostGame(2);
+        // "Untap them. They gain haste" refers to the creatures gained this way, which are no longer
+        // goaded once you control them.
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(condition,
                         new GainControlOfAllPermanentsMatchingEffect(
                                 goadedOrSuspectedCreature,
-                                ControlDuration.END_OF_TURN)));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                new ConditionalEffect(condition,
-                        new UntapPermanentsEffect(TapUntapScope.CONTROLLED, goadedOrSuspectedCreature)));
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                new ConditionalEffect(condition,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,
-                                goadedOrSuspectedCreature)));
+                                ControlDuration.END_OF_TURN,
+                                List.of(
+                                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))));
     }
 }

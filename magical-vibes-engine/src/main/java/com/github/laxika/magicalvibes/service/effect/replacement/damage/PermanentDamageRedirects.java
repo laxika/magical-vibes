@@ -60,11 +60,12 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                         ctx -> prevention.applySourceNextCombatDamageToControllerShield(
                                 ctx.gameData(), ctx.sourcePermanentId(), ctx.amount())),
                 redirect("SourceRedirectShield", "Redirect damage from the chosen source (Harm's Way)",
-                        ctx -> ctx.targetControllerId() != null && ctx.sourcePermanentId() != null
+                        ctx -> ctx.targetControllerId() != null
+                                && (ctx.sourcePermanentId() != null || ctx.entry() != null)
                                 && prevention.hasSourceRedirectShield(
-                                ctx.gameData(), ctx.targetControllerId(), ctx.sourcePermanentId()),
+                                ctx.gameData(), ctx.targetControllerId(), chosenSourceId(ctx)),
                         ctx -> prevention.applySourceRedirectShields(ctx.gameData(), ctx.targetControllerId(),
-                                ctx.sourcePermanentId(), ctx.amount())),
+                                chosenSourceId(ctx), ctx.amount())),
                 effect("ReflectDamage", REDIRECT,
                         ctx -> redirectable(ctx)
                                 && prevention.hasReflectDamageToSourceControllerShield(ctx.gameData(), chosenSourceId(ctx)),

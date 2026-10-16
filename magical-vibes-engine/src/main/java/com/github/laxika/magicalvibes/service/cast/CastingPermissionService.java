@@ -1959,7 +1959,7 @@ public class CastingPermissionService {
                 gameData.graveyardAdventureCastPermissions.get(card.getId());
         return permission != null
                 && playerId.equals(permission.castingPlayerId())
-                && permission.expireTurn() > gameData.turnNumber;
+                && permission.expireTurn() >= gameData.turnNumber;
     }
 
     public boolean hasGraveyardPlayPermission(GameData gameData, Card card, UUID playerId) {

@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class HazoretsUndyingFury extends Card {
 
     public HazoretsUndyingFury() {
-        // "Lands you control don't untap during your next untap step." Resolved first: the set of
-        // lands you control is unchanged by the exile/free-cast below (no permanent enters this
-        // resolution), so this ordering is game-state-identical to the printed order while keeping
-        // the non-pausing effect ahead of the exile-and-cast effect that begins a player interaction.
-        addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
+        // "Lands you control don't untap during your next untap step." Matched at that untap step, so
+        // lands that enter or come under your control later are also affected (2017-07-14 ruling).
+        // Resolved first because it can't change what the exile-and-cast effect below sees.
+        addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(
+                TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 1, true));
 
         // "Shuffle your library, then exile the top four cards. You may cast any number of spells with
         // mana value 5 or less from among them without paying their mana costs."

@@ -1328,9 +1328,26 @@ public class CombatAttackService {
                                 graveyardTargetingService.handleAttackGraveyardCastTargeting(
                                         gameData, playerId, attacker.getCard(), otherEffects, attacker.getId());
                             } else {
+                                // Each separately granted ability is its own trigger with its own target.
+                                List<CardEffect> bundledEffects = new ArrayList<>(otherEffects);
+                                List<CardEffect> separateAbilities = new ArrayList<>();
+                                for (CardEffect granted : grantedAttackEffects) {
+                                    if (bundledEffects.remove(granted)) separateAbilities.add(granted);
+                                }
+                                for (CardEffect granted : temporaryAttackEffects) {
+                                    if (bundledEffects.remove(granted)) separateAbilities.add(granted);
+                                }
+                                if (bundledEffects.isEmpty()) {
+                                    bundledEffects.add(separateAbilities.removeFirst());
+                                }
                                 graveyardTargetingService.handleAttackGraveyardTargeting(
-                                        gameData, playerId, attacker.getCard(), otherEffects,
+                                        gameData, playerId, attacker.getCard(), bundledEffects,
                                         attacker.getId(), defendingPlayerId);
+                                for (CardEffect separateAbility : separateAbilities) {
+                                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                            attacker.getCard(), playerId, List.of(separateAbility),
+                                            defendingPlayerId, 1, 0, 1, null, false, null, attacker.getId()));
+                                }
                             }
                         } else if (needsTarget) {
                             List<CardEffect> bundledEffects = new ArrayList<>(otherEffects);

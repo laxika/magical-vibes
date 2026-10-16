@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -286,6 +288,12 @@ public class ExileFreeCastQueueSupport {
             if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
                     && additionalCosts.discardCardOrPayLifeCost() != null
                     && additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, cardToCast)) {
+                castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
+                return;
+            }
+            if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
+                    && additionalCosts.tapMultipleCost() != null
+                    && additionalSpellCostService.satisfiable(gameData, playerId, cardToCast)) {
                 castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
                 return;
             }
@@ -604,6 +612,25 @@ public class ExileFreeCastQueueSupport {
                     AdditionalSpellCostService.CostSelection.none());
             return false;
         }
+        if (costs.size() == 1 && costs.getFirst() instanceof TapMultiplePermanentsCost tapCost) {
+            List<UUID> candidates = gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of())
+                    .stream()
+                    .filter(permanent -> !permanent.isTapped()
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, permanent, tapCost.filter()))
+                    .map(com.github.laxika.magicalvibes.model.Permanent::getId).toList();
+            // A spell cast without paying its mana cost announces X = 0.
+            int required = tapCost.count() instanceof com.github.laxika.magicalvibes.model.amount.Fixed fixed
+                    ? fixed.value() : 0;
+            if (candidates.size() < required) {
+                throw new IllegalStateException("Not enough untapped permanents to pay the tap cost");
+            }
+            playerInputService.beginMultiPermanentChoice(gameData, entry.getControllerId(), candidates,
+                    required, new MultiPermanentChoiceContext.FreeCastTapCost(entry, required),
+                    "Choose " + required + " untapped permanents to tap to cast "
+                            + entry.getCard().getName() + ".");
+            return true;
+        }
         if (costs.size() == 1 && costs.getFirst() instanceof SacrificePermanentOrDiscardCardCost sacrificeOrDiscard) {
             List<Integer> discardCandidates = additionalSpellCostService.validDiscardCostIndices(
                     gameData, entry.getControllerId(), entry.getCard());
@@ -715,6 +742,15 @@ public class ExileFreeCastQueueSupport {
     public void completeSacrificeCost(GameData gameData, UUID permanentId,
                                       PermanentChoiceContext.FreeCastSacrificeCost context) {
         spellCastingService.paySacrificeCreatureCostForFreeCast(gameData, context.entry(), permanentId);
+        completeCastAfterDiscard(gameData, context.entry());
+        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+    }
+
+    public void completeTapCost(GameData gameData, List<UUID> permanentIds,
+                                MultiPermanentChoiceContext.FreeCastTapCost context) {
+        spellCastingService.payAdditionalCostsForFreeCast(gameData, context.entry(),
+                new AdditionalSpellCostService.CostSelection(null, null, null, null, null, 0, -1,
+                        List.copyOf(permanentIds), null, null, List.of(), List.of()));
         completeCastAfterDiscard(gameData, context.entry());
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
     }

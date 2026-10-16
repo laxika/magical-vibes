@@ -179,7 +179,7 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.setHand(player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.findExiledCard(haliya.getId())).isNotNull();
 
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);

@@ -146,6 +146,28 @@ class HitTheMotherLodeTest extends BaseCardTest {
     }
 
     @Test
+    void freeCastPaysTapCostWithChosenPermanents() {
+        List<Permanent> lands = List.of(
+                harness.addToBattlefieldAndReturn(player1, new Plains()),
+                harness.addToBattlefieldAndReturn(player1, new Plains()),
+                harness.addToBattlefieldAndReturn(player1, new Plains()),
+                harness.addToBattlefieldAndReturn(player1, new Plains()),
+                harness.addToBattlefieldAndReturn(player1, new Plains()));
+        GuardianOfTheGreatDoor discovered = new GuardianOfTheGreatDoor();
+        harness.setLibrary(player1, List.of(discovered));
+
+        castHitTheMotherLode();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, lands.subList(0, 4).stream().map(Permanent::getId).toList());
+
+        assertThat(lands.subList(0, 4)).allSatisfy(land -> assertThat(land.isTapped()).isTrue());
+        assertThat(lands.get(4).isTapped()).isFalse();
+        assertThat(gd.stack).anySatisfy(entry -> assertThat(entry.getCard()).isSameAs(discovered));
+    }
+
+    @Test
     void emptyLibraryCreatesNoTreasures() {
         harness.setLibrary(player1, List.of());
 
