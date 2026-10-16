@@ -4520,6 +4520,53 @@ public class ManaPool {
         }
     }
 
+    public record InstantSorceryOnlyManaState(Map<ManaColor, Integer> regularBefore,
+                                              Map<ManaColor, Integer> promoted) {
+    }
+
+    /**
+     * Temporarily exposes instant/sorcery-only mana as ordinary mana so a graveyard cast of an instant
+     * or sorcery can pay with it; pair with {@link #restorePromotedInstantSorceryOnlyMana}.
+     */
+    public InstantSorceryOnlyManaState promoteInstantSorceryOnlyMana() {
+        EnumMap<ManaColor, Integer> regularBefore = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> promoted = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            regularBefore.put(color, get(color));
+            int amount = color == ManaColor.COLORLESS
+                    ? instantSorceryOnlyColorless
+                    : instantSorceryOnlyColored.getOrDefault(color, 0);
+            promoted.put(color, amount);
+            if (amount > 0) {
+                pool.merge(color, amount, Integer::sum);
+                if (color == ManaColor.COLORLESS) {
+                    instantSorceryOnlyColorless = 0;
+                } else {
+                    instantSorceryOnlyColored.put(color, 0);
+                }
+            }
+        }
+        return new InstantSorceryOnlyManaState(regularBefore, promoted);
+    }
+
+    /** Restores the unspent portion of mana promoted by {@link #promoteInstantSorceryOnlyMana()}. */
+    public void restorePromotedInstantSorceryOnlyMana(InstantSorceryOnlyManaState state) {
+        for (ManaColor color : ManaColor.values()) {
+            int promotedAmount = state.promoted().getOrDefault(color, 0);
+            int spent = Math.max(0, state.regularBefore().getOrDefault(color, 0) + promotedAmount - get(color));
+            int remaining = Math.max(0, promotedAmount - spent);
+            if (remaining <= 0) {
+                continue;
+            }
+            pool.put(color, get(color) - remaining);
+            if (color == ManaColor.COLORLESS) {
+                instantSorceryOnlyColorless += remaining;
+            } else {
+                instantSorceryOnlyColored.merge(color, remaining, Integer::sum);
+            }
+        }
+    }
+
     /** Adds mana spendable only to activate abilities of creature sources. */
     public void addCreatureAbilityOnlyMana(ManaColor color, int amount) {
         creatureAbilityOnlyMana.merge(color, amount, Integer::sum);

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ public class MayCastCopyWithoutPayingHandler implements MayEffectHandlerBean {
     private final GameLogService gameLogService;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final InputCompletionService inputCompletionService;
+    private final ExileService exileService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +41,11 @@ public class MayCastCopyWithoutPayingHandler implements MayEffectHandlerBean {
             return;
         }
 
+        // Copies offered by some effects are already in exile; a copy that was not yet placed there is
+        // exiled now, so it is only held in exile once it is actually going to be cast.
+        if (gameData.findExiledCard(copy.getId()) == null) {
+            exileService.exileCard(gameData, player.getId(), copy);
+        }
         exileFreeCastQueueSupport.queueCopiesForFreeCast(gameData, player.getId(), List.of(copy.getId()));
     }
 }

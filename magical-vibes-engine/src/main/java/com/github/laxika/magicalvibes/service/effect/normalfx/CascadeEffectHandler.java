@@ -113,11 +113,15 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
         // Reuse the shared cast-without-paying flow: cast the hit card for free (or decline), then put
         // the other exiled cards on the bottom of the library in a random order.
         String prompt = "Cascade — you may cast " + hit.getName() + " without paying its mana cost.";
+        Card hitCard = hit;
+        List<Card> remainingExiled = cascade.declinedCardStaysExiled()
+                ? exiled.stream().filter(card -> card != hitCard).toList()
+                : exiled;
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                 LibrarySearchParams.builder(controllerId, List.of(hit))
                         .reveals(true)
                         .canFailToFind(true)
-                        .sourceCards(new ArrayList<>(exiled))
+                        .sourceCards(new ArrayList<>(remainingExiled))
                         .reorderRemainingToBottom(true)
                         .shuffleAfterSelection(false)
                         .prompt(prompt)

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.c.ConcordiaPegasus;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JusticiarsPortal.class, ConcordiaPegasus.class})
+@CardUsed({JusticiarsPortal.class, ConcordiaPegasus.class, ControlMagic.class})
 class JusticiarsPortalTest extends BaseCardTest {
 
     @Test
@@ -68,8 +69,11 @@ class JusticiarsPortalTest extends BaseCardTest {
     @Test
     @DisplayName("A borrowed creature returns to its owner and still gains first strike")
     void borrowedCreatureReturnsToOwner() {
-        Permanent original = harness.addToBattlefieldAndReturn(player1, new ConcordiaPegasus());
-        gd.stolenCreatures.put(original.getId(), player2.getId());
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new ConcordiaPegasus());
+        harness.setHand(player1, List.of(new ControlMagic()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, original.getId());
+        resolveAllTriggers();
         harness.setHand(player1, List.of(new JusticiarsPortal()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 

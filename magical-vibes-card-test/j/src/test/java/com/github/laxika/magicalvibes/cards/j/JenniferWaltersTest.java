@@ -84,10 +84,10 @@ class JenniferWaltersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         harness.castAndResolveInstant(player2, 0, sheHulk.getId());
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
         harness.castAndResolveInstant(player2, 0, sheHulk.getId());
@@ -108,15 +108,16 @@ class JenniferWaltersTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castAndResolveInstant(player2, 0, sheHulk.getId());
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         harness.castAndResolveInstant(player2, 0, sheHulk.getId());
-        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -165,8 +166,9 @@ class JenniferWaltersTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, bear.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);

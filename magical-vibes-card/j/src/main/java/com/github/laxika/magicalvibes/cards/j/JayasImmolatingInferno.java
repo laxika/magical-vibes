@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 public class JayasImmolatingInferno extends Card {
 
     public JayasImmolatingInferno() {
-        target(1, 3)
+        target(0, 3)
                 .addEffect(EffectSlot.SPELL, new DealDamageToEachTargetEffect(new XValue()));
     }
 }

@@ -278,6 +278,15 @@ public class AutoPassService {
                 }
             }
 
+            // A draw queued by the draw step's turn-based action puts its targeted trigger on the stack
+            // before the next priority window (CR 603.3), so its target is chosen before anyone receives priority.
+            if (!gameData.interaction.isAwaitingInput()
+                    && (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
+                    || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class))) {
+                triggerCollectionService.processNextDrawTriggerTarget(gameData);
+                continue;
+            }
+
             // When stack is non-empty, never auto-pass — players must explicitly pass
             if (!gameData.stack.isEmpty()) {
                 invalidateForAllPlayers(gameData);

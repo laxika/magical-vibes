@@ -54,9 +54,7 @@ public class EachPlayerDiscardsHandThenDrawsGreatestDiscardedEffectHandler imple
         }
 
         for (UUID playerId : order) {
-            for (int i = 0; i < greatest; i++) {
-                drawService.resolveDrawCard(gameData, playerId);
-            }
+            drawService.resolveDrawCards(gameData, playerId, greatest);
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + " draws " + greatest
                     + " card" + (greatest != 1 ? "s" : "") + " (" + cardName + ")."));

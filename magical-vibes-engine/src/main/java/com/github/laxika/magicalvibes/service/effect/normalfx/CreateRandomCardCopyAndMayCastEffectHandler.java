@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateRandomCardCopyAndMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCopyWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +21,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class CreateRandomCardCopyAndMayCastEffectHandler implements NormalEffectHandlerBean {
 
     private final CopySupport copySupport;
-    private final ExileService exileService;
     private final GameLogService gameLogService;
 
     @Override
@@ -37,8 +35,9 @@ public class CreateRandomCardCopyAndMayCastEffectHandler implements NormalEffect
         Card selectedCard = randomEffect.cardFactories()
                 .get(ThreadLocalRandom.current().nextInt(randomEffect.cardFactories().size()))
                 .get();
+        // The copy is not put into exile here: it is exiled only once its controller accepts the free cast
+        // (MayCastCopyWithoutPayingHandler), so a declined copy never appears in any zone.
         Card copy = copySupport.createCopyCard(selectedCard);
-        exileService.exileCard(gameData, entry.getControllerId(), copy);
         gameLogService.append(gameData, GameLog.cardTextCard(
                 entry.getCard(), " creates a copy of ", copy, "."));
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(

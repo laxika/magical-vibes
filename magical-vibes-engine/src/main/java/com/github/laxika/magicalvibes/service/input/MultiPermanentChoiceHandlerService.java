@@ -3311,6 +3311,20 @@ public class MultiPermanentChoiceHandlerService {
             return;
         }
 
+        if (entering != null) {
+            entering.setDevourInstancesResolved(entering.getDevourInstancesResolved() + 1);
+            // CR 702.82a: a granted devour is a separate instance from a printed one; ask for its
+            // sacrifice before the entry continues.
+            int devourInstances = (context.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance) ? 1 : 0)
+                    + (entering.getGrantedDevour() > 0 ? 1 : 0);
+            if (entering.getDevourInstancesResolved() < devourInstances) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, context.controllerId(),
+                        context.card(), context.targetId(), context.wasCastFromHand(), context.etbMode(),
+                        context.kicked());
+                return;
+            }
+        }
         // Resume the entry: run ETB triggers now that the devour counters/count are set.
         battlefieldEntryService.processCreatureETBEffects(gameData, context.controllerId(), context.card(),
                 context.targetId(), context.wasCastFromHand(), context.etbMode(), context.kicked());

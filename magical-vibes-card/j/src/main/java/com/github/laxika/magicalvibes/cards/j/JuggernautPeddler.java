@@ -18,10 +18,12 @@ public class JuggernautPeddler extends Card {
 
     public JuggernautPeddler() {
         target(new PlayerPredicateTargetFilter(
-                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                "Target must be an opponent"
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player."
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE)
+                        .withRevealMatchingOnly()
+                        .withUpTo(true)
                         .withChosenCardThen(null,
                                 new ConjureCardIntoTargetPlayerHandEffect(new Juggernaut())));
     }

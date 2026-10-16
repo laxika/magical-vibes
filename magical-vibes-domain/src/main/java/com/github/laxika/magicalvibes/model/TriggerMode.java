@@ -8,6 +8,7 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #PER_COUNTER} — fires once for each counter put on the source in a placement event</li>
  *   <li>{@link #ONCE_PER_BLOCK} — fires once for a block declaration, even when the source blocks multiple creatures</li>
  *   <li>{@link #ONCE_PER_BATCH} — fires once when several matching objects are processed as one event</li>
+ *   <li>{@link #PER_TOKEN} — fires separately for each token entering in a token-creation event</li>
  * </ul>
  */
 public enum TriggerMode {
@@ -18,5 +19,7 @@ public enum TriggerMode {
     /** This registration is its own triggered ability instead of another instruction in a shared ability. */
     INDEPENDENT,
     /** Fires separately for each individual counter placed in a counter-placement event. */
-    PER_COUNTER
+    PER_COUNTER,
+    /** Fires separately for each token entering in a token-creation event (e.g. "whenever a token enters"). */
+    PER_TOKEN
 }

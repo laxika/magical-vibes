@@ -21,7 +21,7 @@ public class JourneyToTheOracle extends Card {
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new ControlsPermanentCount(8, new PermanentIsLandPredicate()),
                 new MayEffect(
-                        new DiscardCardThenEffect(
+                        DiscardCardThenEffect.continuing(
                                 new CardTruePredicate(),
                                 ReturnToHandEffect.selfSpell(),
                                 "a card"),

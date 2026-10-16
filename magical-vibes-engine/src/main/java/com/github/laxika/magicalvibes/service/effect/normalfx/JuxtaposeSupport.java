@@ -113,6 +113,11 @@ public class JuxtaposeSupport {
         if (controllerPerm == null || targetPerm == null) {
             return;
         }
+        // CR 701.12a: if the entire exchange can't be completed, no part of it occurs.
+        if (gameQueryService.cantBeControlledByOtherPlayers(gameData, controllerPerm)
+                || gameQueryService.cantBeControlledByOtherPlayers(gameData, targetPerm)) {
+            return;
+        }
 
         GainControlOfTargetEffect control = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         creatureControlService.applyControlEffect(gameData, targetPlayerId, controllerPerm, control,

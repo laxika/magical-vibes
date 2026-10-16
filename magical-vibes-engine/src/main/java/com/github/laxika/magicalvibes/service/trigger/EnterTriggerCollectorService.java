@@ -2681,6 +2681,9 @@ public class EnterTriggerCollectorService {
                         gameQueryService.getEffectivePower(match.gameData(), enteringPermanent));
                 entry.setTriggeringPermanentToughnessAtTrigger(
                         gameQueryService.getEffectiveToughness(match.gameData(), enteringPermanent));
+                if (usesTriggeringPermanentManaValue(effect)) {
+                    entry.setEventValue(enteringPermanent.getCard().getManaValue());
+                }
             }
             match.gameData().stack.add(entry);
         }

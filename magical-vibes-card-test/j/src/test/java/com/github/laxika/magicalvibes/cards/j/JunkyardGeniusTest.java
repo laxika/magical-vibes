@@ -138,7 +138,6 @@ class JunkyardGeniusTest extends BaseCardTest {
         addActivationMana();
 
         harness.activateAbility(player1, battlefieldIndex(genius), null, null);
-        harness.handlePermanentChosen(player1, artifact.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
         Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new ArgothianSprite());
         harness.passBothPriorities();

@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.CastAnyNumberOfSpellsFromHand
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerScope;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -24,9 +25,9 @@ import java.util.List;
 public class TheGreatSynthesis extends Card {
 
     public TheGreatSynthesis() {
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
-        addEffect(EffectSlot.SAGA_CHAPTER_I,
-                new DrawCardEffect(new CardsInHand(CountScope.CONTROLLER)));
+        addEffect(EffectSlot.SAGA_CHAPTER_I, SequenceEffect.of(
+                new DrawCardEffect(new CardsInHand(CountScope.CONTROLLER)),
+                new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.WHILE_SOURCE_ON_BATTLEFIELD)));
         addEffect(EffectSlot.SAGA_CHAPTER_II, ReturnToHandEffect.allPermanentsMatching(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

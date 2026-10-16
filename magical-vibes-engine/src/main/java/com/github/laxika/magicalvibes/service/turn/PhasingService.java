@@ -334,6 +334,7 @@ public class PhasingService {
                 permanent.rollOverCombatAttackRecord();
             }
             permanent.clearCombatState();
+            permanent.clearUntilEndOfCombatAnimation();
             gameData.playerBattlefields.get(controllerId).remove(permanent);
             phasedOutList(gameData, controllerId).add(permanent);
         });

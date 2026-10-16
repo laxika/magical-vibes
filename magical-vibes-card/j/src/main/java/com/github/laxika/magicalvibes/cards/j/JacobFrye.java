@@ -20,6 +20,9 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
 
@@ -32,7 +35,10 @@ public class JacobFrye extends Card {
             new CardKeywordPredicate(Keyword.FREERUNNING)));
 
     public JacobFrye() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player"
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 new SearchLibraryEffect(
                         new Fixed(1),
                         new CardNamedPredicate("Evie Frye"),
@@ -43,13 +49,13 @@ public class JacobFrye extends Card {
                 MayChoicePlayer.TARGET_PLAYER));
 
         GraveyardSearchScope ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
-        target(new GraveyardCardPredicateTargetFilter(ASSASSIN_OR_FREERUNNING, ownGraveyard), 0, 1);
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),
-                        new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                                ASSASSIN_OR_FREERUNNING, ownGraveyard),
-                        false,
-                        true));
+        target(new GraveyardCardPredicateTargetFilter(ASSASSIN_OR_FREERUNNING, ownGraveyard), 0, 1)
+                .addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+                        new AllyCombatDamageTriggerEffect(
+                                new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN),
+                                new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
+                                        ASSASSIN_OR_FREERUNNING, ownGraveyard, false),
+                                false,
+                                true));
     }
 }

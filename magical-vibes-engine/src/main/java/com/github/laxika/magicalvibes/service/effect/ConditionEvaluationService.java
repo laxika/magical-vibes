@@ -106,6 +106,7 @@ import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
+import com.github.laxika.magicalvibes.model.condition.ChosenPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCommonAmongOpponentNontokens;
 import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
 import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPermanents;
@@ -353,6 +354,7 @@ import com.github.laxika.magicalvibes.model.condition.PermanentPutIntoYourHandFr
 import com.github.laxika.magicalvibes.model.condition.PermanentTurnedFaceUpThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentTypesInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOrMoreOfYourOpponents;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnControlledPermanentThisTurn;
@@ -496,6 +498,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
@@ -882,6 +885,8 @@ public class ConditionEvaluationService {
                     countUnlockedRoomDoors(gameData, ctx.controllerId()) >= c.minCount();
             case OpponentControlsPermanent c ->
                     opponentControlsMatchingPermanent(gameData, ctx, c.filter());
+            case ChosenPlayerControlsPermanent c ->
+                    chosenPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case AnyPlayerControlsPermanent c ->
                     anyPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case AnyPlayerControlsPermanentCount c ->
@@ -1256,6 +1261,8 @@ public class ConditionEvaluationService {
             case OpponentAttacksAnotherOpponent ignored ->
                     opponentAttacksAnotherOpponent(gameData, ctx);
               case PlayerAttacksOneOfYourOpponents ignored ->
+                      playerAttacksOneOfYourOpponents(gameData, ctx);
+              case PlayerAttacksOneOrMoreOfYourOpponents ignored ->
                       playerAttacksOneOfYourOpponents(gameData, ctx);
               case PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber ignored ->
                       playerAttacksOneOfYourOpponentsWithMatchingStats(gameData, ctx);
@@ -1641,7 +1648,14 @@ public class ConditionEvaluationService {
                                 .filter(se -> se.getTargetableId().equals(ctx.targetId()))
                                 .findFirst().orElse(null);
                 if (targetSpell == null) {
-                    yield false;
+                    // A spell countered earlier in this resolution is judged by the card it left behind, as
+                    // "counter target spell. If it was ..." reads it after the counter has removed it.
+                    Card lastKnown = ctx.targetId() == null ? null
+                            : gameQueryService.findCardById(gameData, ctx.targetId());
+                    if (lastKnown == null || !(c.filter() instanceof StackEntrySubtypeInPredicate subtypeIn)) {
+                        yield false;
+                    }
+                    yield lastKnown.getSubtypes().stream().anyMatch(subtypeIn.subtypes()::contains);
                 }
                 if (c.filter() instanceof com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate) {
                     // A card paid from exile is no longer linked to its source; the cost snapshot survives it.
@@ -3045,6 +3059,25 @@ public class ConditionEvaluationService {
         if (battlefield == null) return false;
         return battlefield.stream()
                 .anyMatch(p -> !isSource(p, ctx) && matchesPermanent(gameData, p, filter, ctx));
+    }
+
+    /**
+     * The source's chosen player (the remembered target player, falling back to the first other player
+     * when none was recorded) controls a matching permanent.
+     */
+    private boolean chosenPlayerControlsMatchingPermanent(GameData gameData, ConditionContext ctx,
+                                                          PermanentPredicate filter) {
+        Permanent source = sourcePermanent(gameData, ctx);
+        UUID chosenPlayerId = source == null ? null : source.getRememberedTargetPlayerId();
+        if (chosenPlayerId == null) {
+            chosenPlayerId = gameData.orderedPlayerIds.stream()
+                    .filter(playerId -> !playerId.equals(ctx.controllerId()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (chosenPlayerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(chosenPlayerId);
+        return battlefield != null && battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx));
     }
 
     private boolean opponentControlsMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {

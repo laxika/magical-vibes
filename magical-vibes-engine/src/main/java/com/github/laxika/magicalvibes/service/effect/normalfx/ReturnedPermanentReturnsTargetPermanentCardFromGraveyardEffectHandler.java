@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ public class ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffectHandl
         implements NormalEffectHandlerBean {
 
     private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +43,8 @@ public class ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffectHandl
         }
 
         Permanent returnedPermanent = findPermanentByCardId(gameData, returnedCardId);
-        if (returnedPermanent == null) {
+        if (returnedPermanent == null
+                || gameQueryService.areCreatureETBTriggersSuppressed(gameData, returnedPermanent.getCard())) {
             return;
         }
 

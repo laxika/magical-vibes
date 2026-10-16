@@ -35,7 +35,7 @@ public class JunkJet extends Card {
                         new SacrificePermanentCost(
                                 new PermanentIsArtifactPredicate(), "Sacrifice another artifact"),
                         new BoostReferencedPermanentEffect(
-                                PermanentReference.ATTACHED, new EnchantedPermanentPower(), new Fixed(0))
+                                PermanentReference.ATTACHED, new EnchantedPermanentPower(true), new Fixed(0))
                 ),
                 "{3}, Sacrifice another artifact: Double equipped creature's power until end of turn."
         ));

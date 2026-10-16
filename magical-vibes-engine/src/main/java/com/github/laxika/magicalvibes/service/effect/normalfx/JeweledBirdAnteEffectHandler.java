@@ -49,6 +49,10 @@ public class JeweledBirdAnteEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             return;
         }
+        UUID sourceOwnerId = source.getCard().getOwnerId();
+        if (sourceOwnerId != null && !sourceOwnerId.equals(entry.getControllerId())) {
+            return;
+        }
 
         List<Card> sourceCards = source.cardsLeavingBattlefield();
         Set<UUID> sourceCardIds = new HashSet<>();

@@ -20,6 +20,6 @@ public class JovensFerrets extends Card {
         // during their controller's next untap step.
         addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(new SourceWasBlockedThisTurn(),
-                        new TapCombatOpponentAtEndOfCombatEffect()));
+                        new TapCombatOpponentAtEndOfCombatEffect(), false));
     }
 }

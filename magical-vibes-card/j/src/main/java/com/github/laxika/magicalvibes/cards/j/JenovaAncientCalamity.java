@@ -42,8 +42,11 @@ public class JenovaAncientCalamity extends Card {
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.MUTANT));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        // "Whenever a Mutant you control dies during your turn" — Jenova herself counts while she is a Mutant.
+        TriggeringPermanentConditionalEffect drawForDyingMutant = new TriggeringPermanentConditionalEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.MUTANT),
-                new ConditionalEffect(new ControllerTurn(), new DrawCardEffect(new EventValue()))));
+                new ConditionalEffect(new ControllerTurn(), new DrawCardEffect(new EventValue())));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drawForDyingMutant);
+        addEffect(EffectSlot.ON_DEATH, drawForDyingMutant);
     }
 }

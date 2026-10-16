@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
@@ -160,6 +161,8 @@ public class EtbEffectResolver {
                 // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
                 case CastForProwlCost ignored -> ctx.prowl() ? conditional.wrapped() : null;
                 case CastForMadnessCost ignored -> ctx.madness() ? conditional.wrapped() : null;
+                // CR 702.152a: blitz's end-step sacrifice is a delayed trigger queued by StackResolutionService.
+                case CastForAlternateCost ignored when conditional.wrapped() instanceof SacrificeSelfAtEndStepEffect -> null;
                 case CastForAlternateCost ignored -> ctx.alternateCost() ? conditional.wrapped() : null;
                 // Spectacle branch selection is fixed when the permanent enters.
                 case CastForSpectacleCost ignored ->

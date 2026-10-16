@@ -400,15 +400,28 @@ public class ExileFreeCastQueueSupport {
         }
         PreparedModalCast prepared = prepareModalCast(
                 gameData, context.cardToCast(), context.controllerId(), context.effect(), chosenModeIndices);
-        spendManaValueBudget(gameData, prepared.card().getManaValue());
+        Card castCard = prepared.card();
+        List<CardEffect> castEffects = prepared.effects();
+        StackEntryType castSpellType = context.spellType();
+        int castXValue = prepared.effectiveXValue();
+        // A modal double-faced card whose back-face option was chosen is cast as that face (encoded as 1,
+        // as in the library-search cast path), so the back face's spell and permanent are the ones created.
+        Card backFace = context.cardToCast().getBackFaceCard();
+        if (context.cardToCast().isModalDoubleFaced() && backFace != null && castXValue == 1) {
+            castCard = backFace;
+            castEffects = new ArrayList<>(backFace.getEffects(EffectSlot.SPELL));
+            castSpellType = exileCastTargetSupport.mapCardTypeToSpellType(backFace);
+            castXValue = 0;
+        }
+        spendManaValueBudget(gameData, castCard.getManaValue());
         List<String> labels = chosenModeIndices.stream()
                 .map(context.effect().options()::get)
                 .map(ChooseOneEffect.ChooseOneOption::label)
                 .toList();
         gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " chooses " + labels + " for ", prepared.card(), "."));
-        castPreparedSpell(gameData, context.controllerId(), context.cardToCast(), prepared.card(),
-                prepared.effects(), context.spellType(), context.copy(), prepared.effectiveXValue());
+                player.getUsername() + " chooses " + labels + " for ", castCard, "."));
+        castPreparedSpell(gameData, context.controllerId(), context.cardToCast(), castCard,
+                castEffects, castSpellType, context.copy(), castXValue);
     }
 
     private List<Integer> legalNextModeIndices(GameData gameData, Card card, UUID controllerId,
@@ -519,6 +532,11 @@ public class ExileFreeCastQueueSupport {
                 return;
             }
 
+            if (asCopy) {
+                // A copy exists only as the spell being cast, so it leaves exile as casting begins; it is
+                // carried by the target-choice context from here on.
+                gameData.removeFromExile(physicalCard.getId());
+            }
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.ExileCastSpellTarget(
                             cardToCast, playerId, spellEffects, spellType, asCopy));

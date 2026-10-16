@@ -2702,17 +2702,19 @@ public class DamagePreventionService {
         boolean creatureSource = sourcePermanent != null
                 ? gameQueryService.isCreature(gameData, sourcePermanent)
                 : sourceCard != null && sourceCard.hasType(CardType.CREATURE);
-        if (!creatureSource) return damage;
-
         for (JudgmentOfAlexanderDamagePreventionShield shield
                 : gameData.judgmentOfAlexanderDamagePreventionShields) {
             if (!protectedPlayerId.equals(shield.protectedPlayerId())) continue;
 
             gameLogService.append(gameData, GameLog.cardThen(shield.sourceCard(),
                     " prevents " + damage + " damage to " + gameData.playerIdToName.get(protectedPlayerId) + "."));
-            triggerCollectionService.checkCommanderDamagePreventedTriggers(
-                    gameData, protectedPlayerId, sourcePermanent == null ? null : sourcePermanent.getId(),
-                    shield.sourceCard());
+            // Only damage from a creature is prevented with retaliation; other opponent sources are
+            // prevented without triggering the commanders.
+            if (creatureSource) {
+                triggerCollectionService.checkCommanderDamagePreventedTriggers(
+                        gameData, protectedPlayerId, sourcePermanent == null ? null : sourcePermanent.getId(),
+                        shield.sourceCard());
+            }
             return 0;
         }
         return damage;
@@ -3229,7 +3231,7 @@ public class DamagePreventionService {
                 .anyMatch(shield -> protectedPlayerId.equals(shield.protectedPlayerId()));
     }
 
-    /** Whether Judgment of Alexander would prevent damage from this source. */
+    /** Whether Judgment of Alexander would prevent damage from this source (any opponent source). */
     public boolean hasJudgmentOfAlexanderShield(GameData gameData, UUID protectedPlayerId, Card sourceCard,
                                                 Permanent sourcePermanent, UUID sourceControllerId,
                                                 boolean combatDamage) {
@@ -3238,10 +3240,7 @@ public class DamagePreventionService {
                 || sourceControllerId.equals(protectedPlayerId)) {
             return false;
         }
-        boolean creatureSource = sourcePermanent != null
-                ? gameQueryService.isCreature(gameData, sourcePermanent)
-                : sourceCard != null && sourceCard.hasType(CardType.CREATURE);
-        return creatureSource && gameData.judgmentOfAlexanderDamagePreventionShields.stream()
+        return gameData.judgmentOfAlexanderDamagePreventionShields.stream()
                 .anyMatch(shield -> protectedPlayerId.equals(shield.protectedPlayerId()));
     }
 

@@ -92,7 +92,7 @@ class JeskaiAscendancyTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice).isFalse();
         assertThat(gd.stack).hasSize(3);
     }
 

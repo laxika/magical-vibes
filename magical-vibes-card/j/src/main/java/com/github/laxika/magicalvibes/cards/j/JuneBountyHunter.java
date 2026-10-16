@@ -28,7 +28,7 @@ public class JuneBountyHunter extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        CreateTokenEffect.ofClueToken(1)
+                        CreateTokenEffect.ofClueToken(1).withInvestigate(false)
                 ),
                 "{1}, Sacrifice another creature: Create a Clue token. Activate only during your turn.",
                 ActivationTimingRestriction.ONLY_DURING_YOUR_TURN

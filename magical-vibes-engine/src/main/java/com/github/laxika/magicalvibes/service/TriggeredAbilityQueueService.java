@@ -994,9 +994,15 @@ public class TriggeredAbilityQueueService {
         if (attackedTargetId == null) {
             return null;
         }
-        return gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        if (gameData.playerIds.contains(attackedTargetId)) {
+            return attackedTargetId;
+        }
+        // CR 310.9d: for a battle being attacked, "defending player" refers to its protector.
+        Permanent attacked = gameQueryService.findPermanentById(gameData, attackedTargetId);
+        if (attacked != null && gameQueryService.isBattle(gameData, attacked)) {
+            return attacked.getProtectorPlayerId();
+        }
+        return gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 
     /**

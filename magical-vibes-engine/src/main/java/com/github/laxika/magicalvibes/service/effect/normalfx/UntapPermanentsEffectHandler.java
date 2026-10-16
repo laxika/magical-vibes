@@ -276,7 +276,11 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private void resolveAllCreatures(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {
         UUID attackedTargetId = entry.getAttackedTargetId();
-        UUID defendingPlayerId = attackedTargetId == null ? null
+        // Recorded when the attack trigger was created, so it survives the attacked battle leaving
+        // the battlefield before the trigger resolves (CR 310.9d: a battle's protector is the
+        // defending player).
+        UUID defendingPlayerId = entry.getDefendingPlayerId() != null ? entry.getDefendingPlayerId()
+                : attackedTargetId == null ? null
                 : gameData.playerIds.contains(attackedTargetId) ? attackedTargetId
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
         FilterContext filterContext = FilterContext.of(gameData)

@@ -16,7 +16,7 @@ public class TheSensationalSheHulk extends Card {
         addEffect(EffectSlot.STATIC, new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
         addEffect(EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE, new TriggeringPermanentConditionalEffect(
                 new PermanentControlledBySourceControllerPredicate(),
-                new OncePerTurnTriggerEffect(new MayEffect(
+                OncePerTurnTriggerEffect.markOnAcceptance(new MayEffect(
                         new DealDamageToAnyTargetEffect(new EventValue()),
                         "Have The Sensational She-Hulk deal that much damage to any target?"))));
     }

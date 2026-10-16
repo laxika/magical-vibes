@@ -99,7 +99,8 @@ class JewelMineOverseerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.exilePlayPermissions).isEmpty();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
+        // CR 117.4: once the trigger has resolved and all players pass in succession, the upkeep step ends.
+        assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 

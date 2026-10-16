@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
@@ -114,6 +115,12 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
+        boolean markOnAcceptance = stt.effects().size() == 1
+                && stt.effects().getFirst() instanceof OncePerTurnTriggerEffect once
+                && once.markOnAcceptance();
+        List<CardEffect> effects = markOnAcceptance
+                ? List.of(((OncePerTurnTriggerEffect) stt.effects().getFirst()).wrapped())
+                : stt.effects();
         boolean declined = stt.optionalTarget()
                 && stt.targetFilter() != null
                 && permanentId.equals(stt.controllerId())
@@ -126,7 +133,7 @@ public class PermanentChoiceTriggerHandlerService {
                             stt.sourceCard(),
                             stt.controllerId(),
                             stt.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(stt.effects()),
+                            new ArrayList<>(effects),
                             stt.spellManaSpentX(),
                             stt.sourcePermanentId())
                     : new StackEntry(
@@ -134,7 +141,7 @@ public class PermanentChoiceTriggerHandlerService {
                             stt.sourceCard(),
                             stt.controllerId(),
                             stt.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(stt.effects()),
+                            new ArrayList<>(effects),
                             declined ? (UUID) null : permanentId,
                             stt.sourcePermanentId());
             if (stt.spellManaSpentX() > 0 && !declined) {
@@ -147,14 +154,14 @@ public class PermanentChoiceTriggerHandlerService {
                             stt.sourceCard(),
                             stt.controllerId(),
                             stt.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(stt.effects()),
+                            new ArrayList<>(effects),
                             stt.spellManaSpentX())
                     : new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             stt.sourceCard(),
                             stt.controllerId(),
                             stt.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(stt.effects()));
+                            new ArrayList<>(effects));
             if (!declined) {
                 entry.setTargetId(permanentId);
             }
@@ -162,6 +169,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (stt.triggeringCardId() != null) {
             entry.setTriggeringCardId(stt.triggeringCardId());
         }
+        entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
         if (stt.permanentTargetControllerId() != null) {
             entry.setTriggeringPlayerId(stt.permanentTargetControllerId());

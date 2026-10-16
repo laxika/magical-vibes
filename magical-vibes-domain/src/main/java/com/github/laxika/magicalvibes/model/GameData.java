@@ -295,6 +295,8 @@ public class GameData {
     public final Map<UUID, Integer> spellCastDesertManaSpent = new ConcurrentHashMap<>();
     /** Producing permanents whose tagged mana was spent to cast each spell. */
     public final Map<UUID, Set<UUID>> spellCastManaSourceIds = new ConcurrentHashMap<>();
+    /** How much mana each producing permanent contributed to each spell, for per-mana spell-cast riders (CR 106.6). */
+    public final Map<UUID, Map<UUID, Integer>> spellCastManaSourceAmounts = new ConcurrentHashMap<>();
     /** Whether mana produced by a Treasure was spent to cast each spell. */
     public final Map<UUID, Boolean> spellCastUsedTreasureMana = new ConcurrentHashMap<>();
     /**
@@ -2249,6 +2251,16 @@ public class GameData {
     /** Pending one-shot loyalty-ability copy triggers for the current turn. */
     public final Map<UUID, Integer> pendingNextLoyaltyAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
 
+    /**
+     * The source of each pending loyalty-ability copy in {@link #pendingNextLoyaltyAbilityCopyThisTurnCount},
+     * in the order the copies were granted, so each copy trigger keeps the object that created it.
+     */
+    public final Map<UUID, List<PendingCopySource>> pendingNextLoyaltyAbilityCopySourcesThisTurn =
+            new ConcurrentHashMap<>();
+
+    /** The card and permanent (null for a non-permanent source) that granted a pending copy. */
+    public record PendingCopySource(Card card, UUID sourcePermanentId) {}
+
     /** Permanents whose source subtype choice is temporary and expires during cleanup. */
     public final Set<UUID> temporaryChosenSubtypePermanentIds = ConcurrentHashMap.newKeySet();
 
@@ -3137,6 +3149,11 @@ public class GameData {
     public final Map<UUID, Permanent> simultaneousDyingPermanents = new ConcurrentHashMap<>();
     /** Last departure snapshots by card identity, retained for sacrifice-event collection this turn. */
     public final Map<UUID, Permanent> departedPermanentSnapshots = new ConcurrentHashMap<>();
+    /**
+     * Cards chosen as the damage source of a waiting redirect effect, keyed by the permanent id the shield
+     * stores, so the source can be chosen again after it has left the battlefield (CR 609.7a). Cleared at cleanup.
+     */
+    public final Map<UUID, Card> waitingRedirectDamageSourceCards = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> simultaneousDyingPermanentControllers = new ConcurrentHashMap<>();
     /** Last-known effective powers of creatures in the current simultaneous death event. */
     public final Map<UUID, Integer> simultaneousDyingPowers = new ConcurrentHashMap<>();
@@ -5333,12 +5350,24 @@ public class GameData {
         }
     }
 
+    public void addSpellCastManaSourceAmount(UUID spellCardId, UUID sourcePermanentId, int amount) {
+        if (sourcePermanentId != null && amount > 0) {
+            spellCastManaSourceAmounts.computeIfAbsent(spellCardId, ignored -> new ConcurrentHashMap<>())
+                    .merge(sourcePermanentId, amount, Integer::sum);
+        }
+    }
+
+    public int getSpellCastManaSourceAmount(UUID spellCardId, UUID sourcePermanentId) {
+        return spellCastManaSourceAmounts.getOrDefault(spellCardId, Map.of()).getOrDefault(sourcePermanentId, 0);
+    }
+
     public boolean spellCastUsedManaFromSource(UUID spellCardId, UUID sourcePermanentId) {
         return spellCastManaSourceIds.getOrDefault(spellCardId, Set.of()).contains(sourcePermanentId);
     }
 
     public void clearSpellCastManaSources(UUID spellCardId) {
         spellCastManaSourceIds.remove(spellCardId);
+        spellCastManaSourceAmounts.remove(spellCardId);
     }
 
     public void setSpellCastCreatureManaSpent(UUID spellCardId, int manaSpent) {
@@ -5908,6 +5937,12 @@ public class GameData {
         cardsRevealedInHandUntilUpkeepEnd.remove(card.getId());
         cardsCantBePlayedInHandUntilOwnerNextTurn.remove(card.getId());
         countersPreservedAcrossZoneChanges.remove(card.getId());
+        // Returning from the graveyard makes the card a new object (CR 400.7), so graveyard permissions
+        // and the exile-instead-of-graveyard replacement granted to the old object no longer apply.
+        graveyardPlayPermissions.remove(card.getId());
+        graveyardPlayPermissionsExpireEndOfTurn.remove(card.getId());
+        graveyardCardsEnterTapped.remove(card.getId());
+        exileInsteadOfGraveyard.remove(card.getId());
         playerHands.get(playerId).add(card);
     }
 
@@ -5917,6 +5952,12 @@ public class GameData {
         if (previousCommanders != null) {
             previousCommanders.forEach(previous -> commanderTaxByCardId.remove(previous.getId()));
         }
+        commanderTaxByCardId.put(card.getId(), 0);
+    }
+
+    /** Designates an additional commander for the player (e.g. a second commander alongside the first). */
+    public void addCommander(UUID playerId, Card card) {
+        playerCommanders.computeIfAbsent(playerId, ignored -> new ArrayList<>()).add(card);
         commanderTaxByCardId.put(card.getId(), 0);
     }
 
@@ -8064,6 +8105,7 @@ public class GameData {
         copy.simultaneousDyingPermanents.putAll(this.simultaneousDyingPermanents);
         this.departedPermanentSnapshots.forEach((cardId, permanent) ->
                 copy.departedPermanentSnapshots.put(cardId, new Permanent(permanent)));
+        copy.waitingRedirectDamageSourceCards.putAll(this.waitingRedirectDamageSourceCards);
         copy.simultaneousDyingPermanentControllers.putAll(this.simultaneousDyingPermanentControllers);
         copy.simultaneousDyingPowers.putAll(this.simultaneousDyingPowers);
         copy.simultaneousDyingTriggerKeywordInstances.putAll(this.simultaneousDyingTriggerKeywordInstances);
@@ -8726,6 +8768,8 @@ public class GameData {
         copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
                 this.pendingNextInstantSorceryUncounterableThisTurnCount);
         copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
+        this.pendingNextLoyaltyAbilityCopySourcesThisTurn.forEach((playerId, sources) ->
+                copy.pendingNextLoyaltyAbilityCopySourcesThisTurn.put(playerId, new ArrayList<>(sources)));
         copy.pendingNextXActivatedAbilityCopyThisTurnCount
                 .putAll(this.pendingNextXActivatedAbilityCopyThisTurnCount);
         copy.temporaryChosenSubtypePermanentIds.addAll(this.temporaryChosenSubtypePermanentIds);
@@ -8925,6 +8969,8 @@ public class GameData {
         copy.spellCastCaveManaSpent.putAll(this.spellCastCaveManaSpent);
         copy.spellCastDesertManaSpent.putAll(this.spellCastDesertManaSpent);
         copy.spellCastUsedTreasureMana.putAll(this.spellCastUsedTreasureMana);
+        this.spellCastManaSourceAmounts.forEach((k, v) ->
+                copy.spellCastManaSourceAmounts.put(k, new ConcurrentHashMap<>(v)));
         this.spellCastManaSourceIds.forEach((k, v) -> {
             Set<UUID> sourceIds = ConcurrentHashMap.newKeySet();
             sourceIds.addAll(v);

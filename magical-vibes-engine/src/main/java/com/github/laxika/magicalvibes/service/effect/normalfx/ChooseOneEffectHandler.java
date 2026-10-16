@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -29,7 +30,10 @@ public class ChooseOneEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        java.util.UUID choicePlayerId = entry.getActivePlayerId() != null
+        // The controller of a modal activated ability chooses its mode (CR 700.2a), even when the
+        // activation happens during another player's turn.
+        java.util.UUID choicePlayerId = entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getActivePlayerId() != null
                 ? entry.getActivePlayerId() : entry.getControllerId();
         playerInputService.beginChooseModeChoice(gameData, choicePlayerId, entry.getCard(),
                 (ChooseOneEffect) effect, false, entry.getSourcePermanentId());

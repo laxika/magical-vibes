@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,12 @@ public class GrantKeywordsToCastSpellEffectHandler implements NormalEffectHandle
                 continue;
             }
 
+            if (grant.duration() == GrantDuration.UNTIL_YOUR_NEXT_TURN) {
+                spellEntry.getUntilNextTurnKeywordsOnEntry().addAll(grant.keywords());
+                gameLogService.append(gameData, GameLog.cardThen(spellEntry.getCard(),
+                        " gains " + grant.keywords() + " until your next turn."));
+                return;
+            }
             spellEntry.getGrantedKeywordsOnEntry().addAll(grant.keywords());
             gameLogService.append(gameData, GameLog.cardThen(spellEntry.getCard(),
                     " gains " + grant.keywords() + " until end of turn."));

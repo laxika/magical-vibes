@@ -45,7 +45,11 @@ public class SuspectTargetCreatureEffectHandler implements NormalEffectHandlerBe
         if (target == null || !gameQueryService.isCreature(gameData, target)) {
             return;
         }
+        if (gameQueryService.cantBecomeSuspected(gameData, target)) {
+            return;
+        }
 
+        target.setSuspected(true);
         synchronized (gameData.floatingEffects) {
             boolean alreadySuspected = gameData.floatingEffects.stream()
                     .anyMatch(floating -> targetId.equals(floating.affectedPermanentId())

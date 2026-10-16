@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 
 import java.util.List;
@@ -26,7 +28,9 @@ public class JeditOjanenMercenary extends Card {
                 Set.of(Keyword.FORESTWALK), Set.of());
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardSupertypePredicate(CardSupertype.LEGENDARY),
+                        new CardAnyOfPredicate(List.of(
+                                new CardSupertypePredicate(CardSupertype.LEGENDARY),
+                                new CardIsSelfPredicate())),
                         new MayPayManaEffect("{G}", catWarriorToken,
                                 "Pay {G} to create a 2/2 green Cat Warrior creature token with forestwalk?")));
     }

@@ -16,7 +16,7 @@ public class JessicaJonesPrivateEye extends Card {
     public JessicaJonesPrivateEye() {
         addActivatedAbility(new ActivatedAbility(
                 true,
-                "{R}",
+                null,
                 List.of(
                         new PutTypedCounterOnSourceCost(CounterType.STUN),
                         new ExileTopCardMayPlayThisTurnEffect(new SourcePower(), false)

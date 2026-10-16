@@ -66,11 +66,14 @@ public class SearchLibraryAndOrGraveyardForCardToHandEffectHandler implements No
         if (libraryMatches.isEmpty() && graveyardMatches.isEmpty()) {
             if (librarySearchAllowed) {
                 LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
-                if (deck != null) {
-                    LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-                }
+            }
+            boolean shuffled = deck != null && search.shuffleAfterSearch();
+            if (shuffled) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            }
+            if (librarySearchAllowed) {
                 gameLogService.append(gameData, GameLog.text(playerName + " searches their library and graveyard but finds no "
-                        + cardLabel + "." + (deck == null ? "" : " Library is shuffled.")));
+                        + cardLabel + "." + (shuffled ? " Library is shuffled." : "")));
             }
             return;
         }
@@ -79,7 +82,7 @@ public class SearchLibraryAndOrGraveyardForCardToHandEffectHandler implements No
         pool.addAll(graveyardMatches);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
                 playerId, pool, new HashSet<>(libraryMatches.stream().map(Card::getId).toList()),
-                librarySearchAllowed, cardLabel));
+                librarySearchAllowed, cardLabel, search.shuffleAfterSearch()));
         gameLogService.append(gameData, GameLog.text(playerName + " searches their library and/or graveyard."));
     }
 }

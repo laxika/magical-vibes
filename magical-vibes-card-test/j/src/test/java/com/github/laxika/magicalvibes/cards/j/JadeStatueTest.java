@@ -125,13 +125,16 @@ class JadeStatueTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
-        harness.activateAbility(player1, indexOf(statue), 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            harness.activateAbility(player1, indexOf(statue), 0, null, null);
+            harness.passBothPriorities();
+        });
 
         harness.setHand(player2, List.of(new RayOfCommand()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castAndResolveInstant(player2, 0, statue.getId());
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT,
+                () -> harness.castAndResolveInstant(player2, 0, statue.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(statue);
         assertThat(gqs.isCreature(gd, statue)).isTrue();
@@ -151,8 +154,10 @@ class JadeStatueTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
 
-        harness.activateAbility(player1, indexOf(statue), 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.activateAbility(player1, indexOf(statue), 0, null, null);
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.isCreature(gd, statue)).isTrue();
         assertThat(gqs.getEffectivePower(gd, statue)).isEqualTo(3);

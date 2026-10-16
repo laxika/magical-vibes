@@ -432,6 +432,8 @@ public class StackResolutionService {
         perm.setControlledDragonAsCast(entry.isControlledDragonAsCast());
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         perm.getGrantedKeywords().addAll(entry.getGrantedKeywordsOnEntry());
+        // Keywords granted until the controller's next turn while the spell was on the stack (Jade Orb's hexproof).
+        perm.getUntilNextTurnKeywords().addAll(entry.getUntilNextTurnKeywordsOnEntry());
         // Bloodthirst granted while the spell was on the stack (Bloodlord of Vaasgoth).
         perm.setGrantedBloodthirst(entry.getGrantedBloodthirst());
         // Devour granted while the spell was on the stack (Jund).
@@ -499,7 +501,14 @@ public class StackResolutionService {
                             com.github.laxika.magicalvibes.model.effect.GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
                     permanent.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
-        if (entry.isGrantedBlitzOnEntry()) {
+        boolean printedBlitzSacrifice = entry.isAlternateCost()
+                && entry.getCard().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect c
+                        && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.CastForAlternateCost
+                        && c.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect);
+        // CR 702.152a: the blitz end-step sacrifice is a delayed triggered ability created as the spell
+        // resolves, not an enters-the-battlefield trigger (see EtbEffectResolver).
+        if (entry.isGrantedBlitzOnEntry() || printedBlitzSacrifice) {
             gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedPermanentAction(
                     permanent.getId(), com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
                     false, null, null, controllerId));

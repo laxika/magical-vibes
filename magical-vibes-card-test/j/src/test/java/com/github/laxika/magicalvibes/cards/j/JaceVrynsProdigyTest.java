@@ -77,8 +77,12 @@ class JaceVrynsProdigyTest extends BaseCardTest {
 
     @Test
     void stolenJaceReturnsAsNewPermanentUnderOwnersControl() {
-        Permanent jace = addJace(player1);
-        jace.getCard().setOwnerId(player2.getId());
+        JaceVrynsProdigy stolenCard = new JaceVrynsProdigy();
+        stolenCard.setOwnerId(player2.getId());
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, stolenCard);
+        jace.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setLibrary(player1, List.of(new Shock()));
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.setGraveyard(player1, filler(4));

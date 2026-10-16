@@ -864,6 +864,10 @@ public class LibraryChoiceHandlerService {
             if (!canFailToFind) {
                 throw new IllegalStateException("Cannot fail to find with an unrestricted search");
             }
+            if (destination == LibrarySearchDestination.EXILE_FOR_FREE_CAST) {
+                resolveEachPlayerNonlandExilePick(gameData, player, deckOwnerId, null);
+                return;
+            }
             // Gifts Ungiven stopped short of four cards: the pool found so far still goes to the
             // opponent for the two-card disposal choice.
             if (destination == LibrarySearchDestination.GIFTS_UNGIVEN_POOL
@@ -1353,25 +1357,7 @@ public class LibraryChoiceHandlerService {
         }
 
         if (destination == LibrarySearchDestination.EXILE_FOR_FREE_CAST) {
-            // Jace, Architect of Thought −8: the found nonland card is exiled face up (it may be cast
-            // later), its owner shuffles, and the queue moves on to the next player's library. The
-            // exiled cards are only offered for casting once every library has been searched.
-            gameData.addToExile(deckOwnerId, chosenCard);
-            LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
-            String exileOwnerName = gameData.playerIdToName.get(deckOwnerId);
-            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles ", chosenCard,
-                    " from " + exileOwnerName + "'s library. Library is shuffled."));
-
-            PendingEachPlayerLibraryExile state =
-                    gameData.pollPendingInteraction(PendingEachPlayerLibraryExile.class);
-            if (state != null) {
-                List<UUID> exiled = new ArrayList<>(state.exiledCardIds());
-                exiled.add(chosenCard.getId());
-                gameData.queueInteraction(new PendingEachPlayerLibraryExile(
-                        state.searcherId(), state.remainingPlayerIds(), exiled));
-                if (librarySearchSupport.advanceEachPlayerNonlandExile(gameData)) return;
-            }
-            finishSearchAndResume(gameData);
+            resolveEachPlayerNonlandExilePick(gameData, player, deckOwnerId, chosenCard);
             return;
         }
 
@@ -2512,6 +2498,39 @@ public class LibraryChoiceHandlerService {
         gameData.playerDecks.get(controllerId).addFirst(remainingCard);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetLibraryDestinationChoice(
                 controllerId, remainingCard.getId(), remainingCard.getName()));
+    }
+
+    /**
+     * Jace, Architect of Thought −8: the found nonland card (or nothing, on a failed find) is
+     * exiled face up, the owner's library shuffles, and the queue moves on to the next player's
+     * library. The exiled cards are only offered for casting once every library has been searched.
+     * CR 701.23b: failing to find still shuffles the library and moves the queue on.
+     */
+    private void resolveEachPlayerNonlandExilePick(GameData gameData, Player player, UUID deckOwnerId,
+                                                   Card chosenCard) {
+        String exileOwnerName = gameData.playerIdToName.get(deckOwnerId);
+        if (chosenCard == null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            gameLogService.append(gameData, GameLog.text(player.getUsername() + " fails to find a card in "
+                    + exileOwnerName + "'s library. Library is shuffled."));
+        } else {
+            gameData.addToExile(deckOwnerId, chosenCard);
+            LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " exiles ", chosenCard,
+                    " from " + exileOwnerName + "'s library. Library is shuffled."));
+        }
+
+        PendingEachPlayerLibraryExile state = gameData.pollPendingInteraction(PendingEachPlayerLibraryExile.class);
+        if (state != null) {
+            List<UUID> exiled = new ArrayList<>(state.exiledCardIds());
+            if (chosenCard != null) {
+                exiled.add(chosenCard.getId());
+            }
+            gameData.queueInteraction(new PendingEachPlayerLibraryExile(
+                    state.searcherId(), state.remainingPlayerIds(), exiled));
+            if (librarySearchSupport.advanceEachPlayerNonlandExile(gameData)) return;
+        }
+        finishSearchAndResume(gameData);
     }
 
     private void finishSearchAndResume(GameData gameData) {
@@ -4478,11 +4497,14 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        if (exiledSourceIds.contains(chosenCard.getId())) {
+        // A hit that stays exiled when declined (Jodah's cascade) is not in sourceCards but is still exiled.
+        boolean castFromExile = exiledSourceIds.contains(chosenCard.getId())
+                || gameData.findExiledCard(chosenCard.getId()) != null;
+        if (castFromExile) {
             gameData.removeFromExile(chosenCard.getId());
         }
         castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep,
-                exiledSourceIds.contains(chosenCard.getId()) ? Zone.EXILE : Zone.LIBRARY, spellManaValueLimit);
+                castFromExile ? Zone.EXILE : Zone.LIBRARY, spellManaValueLimit);
     }
 
     private void handleCastWithoutPayingAndShuffleLibraryChoice(
@@ -4986,6 +5008,15 @@ public class LibraryChoiceHandlerService {
         Card card = ctx.cardToCast();
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         int effectiveXValue = spellCastingService.prepareModalSpellCast(card, spellEffects, modeIndex);
+        StackEntryType spellType = ctx.spellType();
+        // A modal double-faced card cast by its back face (encoded as 1, as in the hand cast path) is
+        // cast as that face, so the back face's spell and permanent are the ones that get created.
+        if (card.isModalDoubleFaced() && card.getBackFaceCard() != null && effectiveXValue == 1) {
+            card = card.getBackFaceCard();
+            spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            spellType = mapCardTypeToSpellType(card);
+            effectiveXValue = 0;
+        }
         gameData.interaction.clearAwaitingInput();
 
         gameLogService.append(gameData, GameLog.textCardText(
@@ -5003,7 +5034,7 @@ public class LibraryChoiceHandlerService {
 
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(card, ctx.controllerId(), spellEffects,
-                            ctx.spellType(), null, ctx.discoverValue(), null, ctx.sourceZone()));
+                            spellType, null, ctx.discoverValue(), null, ctx.sourceZone()));
             playerInputService.beginPermanentChoice(gameData, ctx.controllerId(), validTargets,
                     "Choose a target for " + card.getName() + ".");
 
@@ -5015,7 +5046,7 @@ public class LibraryChoiceHandlerService {
         }
 
         StackEntry modalSpell = new StackEntry(
-                ctx.spellType(), card, ctx.controllerId(), card.getName(),
+                spellType, card, ctx.controllerId(), card.getName(),
                 spellEffects, effectiveXValue, (UUID) null, null
         );
         modalSpell.setSourceZone(ctx.sourceZone());

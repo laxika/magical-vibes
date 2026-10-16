@@ -52,13 +52,13 @@ class JoinedResearchersTest extends BaseCardTest {
         Permanent researchers = harness.addToBattlefieldAndReturn(player1, new JoinedResearchers());
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Island()));
-        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
 
         advanceToEndStep(player2);
         harness.passBothPriorities();
 
         UUID spellId = researchers.getPreparedSpellCardId();
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

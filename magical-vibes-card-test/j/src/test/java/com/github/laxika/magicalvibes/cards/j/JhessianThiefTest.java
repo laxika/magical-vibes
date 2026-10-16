@@ -139,7 +139,7 @@ class JhessianThiefTest extends BaseCardTest {
         int controllerHandSize = gd.playerHands.get(player2.getId()).size();
         int defenderHandSize = gd.playerHands.get(player1.getId()).size();
 
-        resolveCombat(player2);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player2));
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player2.getId()).remove(thief);
         gd.playerGraveyards.get(player2.getId()).add(thief.getCard());

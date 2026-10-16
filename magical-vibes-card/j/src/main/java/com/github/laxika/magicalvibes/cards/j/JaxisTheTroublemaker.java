@@ -35,7 +35,7 @@ public class JaxisTheTroublemaker extends Card {
     public JaxisTheTroublemaker() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{R}"))));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));

@@ -175,6 +175,7 @@ public class ChoiceHandlerService {
     private final EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler
             eachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport tokenCopySupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveUpToCountersFromAllPermanentsEffectHandler
             removeUpToCountersFromAllPermanentsEffectHandler;
@@ -928,6 +929,19 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.JinnieFayTokenChoice ctx) {
             handleJinnieFayTokenChoice(gameData, player, colorName, colorChoice, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.JinnieFayTokenCopyChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid Jinnie Fay token choice: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses " + colorName + " for ", ctx.sourceCard(), "."));
+            tokenCopySupport.completeJinnieFayTokenCopyChoice(gameData, colorName, ctx);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.GainLifePerPermanentOfChosenColorChoice ctx) {
@@ -3682,6 +3696,10 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
+        if (ChoiceContext.AdjustChosenCounterActionChoice.SKIP.equals(choice)) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (ctx.targetZone() == Zone.EXILE) {
             GameData.SuspendedSpellExile suspended = gameData.suspendedSpellExiles.stream()
                     .filter(pending -> pending.cardId().equals(ctx.targetId())).findFirst().orElse(null);
@@ -5041,6 +5059,17 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    private static int simultaneousTokenCount(CreateTokenEffect token) {
+        int count = 0;
+        for (CreateTokenEffect simultaneous : token.simultaneousTokens()) {
+            if (!(simultaneous.amount() instanceof com.github.laxika.magicalvibes.model.amount.Fixed fixed)) {
+                throw new IllegalStateException("Simultaneous token counts must be evaluated");
+            }
+            count += fixed.value();
+        }
+        return count;
+    }
+
     private void handleJinnieFayTokenChoice(GameData gameData, Player player, String choice,
                                              PendingInteraction.ColorChoice colorChoice,
                                              ChoiceContext.JinnieFayTokenChoice ctx) {
@@ -5050,12 +5079,15 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         boolean replace = !JinnieFayTokenReplacementEffect.ORIGINAL_OPTION.equals(choice);
         boolean cat = JinnieFayTokenReplacementEffect.CAT_OPTION.equals(choice);
+        // One choice covers the whole creation event, so a replacement also replaces every token of the
+        // event's simultaneous blueprints (Bestial Menace).
+        int replacedAmount = replace ? ctx.amount() + simultaneousTokenCount(ctx.originalToken()) : ctx.amount();
         CreateTokenEffect replacement = replace
                 ? com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport
-                .jinnieFayToken(ctx.originalToken(), ctx.amount(), cat)
+                .jinnieFayToken(ctx.originalToken(), replacedAmount, cat)
                 : ctx.originalToken();
         List<UUID> createdIds = permanentControlSupport.applyCreateTokenAfterJinnieFayChoice(
-                gameData, ctx.controllerId(), replacement, ctx.amount(), ctx.sourceSetCode(),
+                gameData, ctx.controllerId(), replacement, replacedAmount, ctx.sourceSetCode(),
                 replace ? (cat ? 2 : 3) : ctx.power(), replace ? (cat ? 2 : 1) : ctx.toughness(), replace ? Map.of() : ctx.additionalEffects());
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry != null) {

@@ -70,6 +70,12 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             throw new IllegalStateException("Choose at most " + interaction.maxCount() + " valid cards");
         }
 
+        boolean graveyardCandidateAvailable = interaction.pool().stream()
+                .anyMatch(card -> !interaction.libraryCardIds().contains(card.getId()));
+        if (selectedIds.isEmpty() && interaction.maxCount() == 1 && graveyardCandidateAvailable) {
+            throw new IllegalStateException("Must find a card in the graveyard");
+        }
+
         UUID playerId = interaction.playerId();
         boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
         List<Card> selectedCards = selectedIds.stream()
@@ -261,9 +267,9 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         if (interaction.librarySearchAllowed() && searchedLibrary) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(
                     gameData, gameLogService, interaction.playerId());
-            if (gameData.playerDecks.get(interaction.playerId()) != null) {
-                LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
-            }
+        }
+        if (interaction.shuffleAfterSearch() && gameData.playerDecks.get(interaction.playerId()) != null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
         }
     }
 

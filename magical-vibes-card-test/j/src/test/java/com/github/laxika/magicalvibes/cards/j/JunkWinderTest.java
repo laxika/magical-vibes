@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.n.NestedShambler;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -76,6 +77,7 @@ class JunkWinderTest extends BaseCardTest {
         addCreatureReady(player1, new JunkWinder());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new NestedShambler());
 
+        makePlayerActive(player2);
         castCallTheCavalry(player2);
 
         assertThat(gd.stack).isEmpty();
@@ -102,7 +104,9 @@ class JunkWinderTest extends BaseCardTest {
     @Test
     @DisplayName("Affinity ignores opponent tokens and your nontoken permanents")
     void affinityCountsOnlyYourTokens() {
+        makePlayerActive(player2);
         castCallTheCavalry(player2);
+        makePlayerActive(player1);
         harness.addToBattlefield(player1, new NestedShambler());
         harness.addToBattlefield(player1, new Forest());
         harness.setHand(player1, List.of(new JunkWinder()));
@@ -128,6 +132,11 @@ class JunkWinderTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    private void makePlayerActive(com.github.laxika.magicalvibes.model.Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
     private void castCallTheCavalry(com.github.laxika.magicalvibes.model.Player player) {

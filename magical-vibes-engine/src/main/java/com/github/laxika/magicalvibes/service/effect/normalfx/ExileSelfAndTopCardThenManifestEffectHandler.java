@@ -51,7 +51,10 @@ public class ExileSelfAndTopCardThenManifestEffectHandler implements NormalEffec
             return;
         }
 
-        cardsToManifest.addAll(source.cardsLeavingBattlefield());
+        // A token ceases to exist when it leaves the battlefield (CR 111.7), so only a card is exiled and manifested.
+        source.cardsLeavingBattlefield().stream()
+                .filter(card -> !card.isToken())
+                .forEach(cardsToManifest::add);
         if (!permanentRemovalService.removePermanentToExileFaceDown(gameData, source)) {
             manifestTopCard(gameData, entry, controllerId);
             return;

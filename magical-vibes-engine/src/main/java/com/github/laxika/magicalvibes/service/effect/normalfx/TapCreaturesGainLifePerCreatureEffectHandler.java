@@ -46,7 +46,8 @@ public class TapCreaturesGainLifePerCreatureEffectHandler implements NormalEffec
         List<UUID> untappedCreatureIds = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                if (!perm.isTapped() && gameQueryService.isCreature(gameData, perm)) {
+                if (!perm.isTapped() && !perm.isTapRestrictedUnlessAttacking()
+                        && gameQueryService.isCreature(gameData, perm)) {
                     untappedCreatureIds.add(perm.getId());
                 }
             }

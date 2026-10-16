@@ -137,5 +137,6 @@ class JukaiLiberatorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveCombat();
         harness.handleListChoice(player1, choice);
+        resolveAllTriggers();
     }
 }

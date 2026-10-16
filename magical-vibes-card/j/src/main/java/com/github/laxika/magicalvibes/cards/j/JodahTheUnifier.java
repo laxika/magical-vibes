@@ -37,7 +37,7 @@ public class JodahTheUnifier extends Card {
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardSupertypePredicate(CardSupertype.LEGENDARY),
-                List.of(new CascadeEffect(new CardSupertypePredicate(CardSupertype.LEGENDARY))),
+                List.of(new CascadeEffect(false, new CardSupertypePredicate(CardSupertype.LEGENDARY), false, true)),
                 new StackEntryCastFromZonePredicate(Zone.HAND)));
     }
 }

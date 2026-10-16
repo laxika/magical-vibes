@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayCastForManaOrPutLandOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class RevealTopCardMayCastForManaOrPutLandOntoBattlefieldEffectHandler
 
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final AdditionalSpellCostService additionalSpellCostService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,6 +56,12 @@ public class RevealTopCardMayCastForManaOrPutLandOntoBattlefieldEffectHandler
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, new Permanent(topCard));
             battlefieldEntryService.processLandETBEffects(gameData, controllerId, topCard);
+            return;
+        }
+
+        if (!additionalSpellCostService.satisfiableWithoutManaCost(gameData, controllerId, topCard)) {
+            gameLogService.append(gameData, GameLog.cardThen(topCard,
+                    " cannot be cast and stays on top of the library."));
             return;
         }
 

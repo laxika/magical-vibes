@@ -188,10 +188,10 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         harness.setHand(player2, List.of(new TurnToFrog(), new Forest(), new Mountain(), new Plains()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castAndResolveInstant(player2, 0, jin.getId());
-        assertThat(gqs.hasLostAllAbilities(gd, jin)).isTrue();
-        gs.advanceStep(gd);
+        harness.castInstant(player2, 0, jin.getId());
+        harness.passUntil(player2, TurnStep.CLEANUP);
 
+        assertThat(gqs.hasLostAllAbilities(gd, jin)).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }

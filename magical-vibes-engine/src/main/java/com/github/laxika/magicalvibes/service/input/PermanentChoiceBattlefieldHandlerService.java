@@ -2154,6 +2154,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
                 redirectSource.protectedCreatureId(), permanentId,
                 redirectAmount, redirectSource.redirectTargetId()));
+        gameData.waitingRedirectDamageSourceCards.put(permanentId, chosenCard);
 
         Permanent protectedPerm = gameQueryService.findPermanentById(gameData, redirectSource.protectedCreatureId());
         String protectedName = protectedPerm != null ? protectedPerm.getCard().getName() : "target creature";
@@ -2183,6 +2184,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         gameData.playerSourceNextDamageRedirectShields.add(new PlayerSourceNextDamageRedirectShield(
                 redirectSource.controllerId(), permanentId, redirectSource.redirectTargetId()));
+        gameData.waitingRedirectDamageSourceCards.put(permanentId, chosenSource);
 
         Permanent destination = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());
         String destinationName = destination != null ? destination.getCard().getName() : "the target creature";
@@ -2463,7 +2465,23 @@ public class PermanentChoiceBattlefieldHandlerService {
                 .filter(entry -> entry.getTargetableId().equals(sourceId))
                 .map(StackEntry::getCard)
                 .findFirst()
-                .orElseGet(() -> findCardReferencedByStackEntry(gameData, sourceId));
+                .orElseGet(() -> findCardReferencedByStackEntryOrWaitingRedirect(gameData, sourceId));
+    }
+
+    /**
+     * A departed card a waiting damage redirect still refers to is a legal damage source (CR 609.7a),
+     * so it can be chosen again while that redirect is waiting to apply.
+     */
+    private Card findCardReferencedByStackEntryOrWaitingRedirect(GameData gameData, UUID sourceId) {
+        Card referenced = findCardReferencedByStackEntry(gameData, sourceId);
+        if (referenced != null) {
+            return referenced;
+        }
+        boolean waitingRedirect = gameData.creatureDamageRedirectShields.stream()
+                .anyMatch(shield -> sourceId.equals(shield.damageSourceId()))
+                || gameData.playerSourceNextDamageRedirectShields.stream()
+                .anyMatch(shield -> sourceId.equals(shield.sourcePermanentId()));
+        return waitingRedirect ? gameData.waitingRedirectDamageSourceCards.get(sourceId) : null;
     }
 
     /**

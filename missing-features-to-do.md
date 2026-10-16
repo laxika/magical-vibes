@@ -143,6 +143,42 @@ Powerstone card's test. Don't run the full test suite; ask me. Don't commit unti
 
 ---
 
+## 30. Casting an Adventure from the top of the library
+
+**Status:** open · **Found:** 2026-10-16, while fixing J-card tests
+
+**Failing tests:**
+- `JohannApprenticeSorcererTest.adventureOnTopIsOfferedAsPlayableUsingItsInstantCharacteristics()`
+
+**What the rules require.** Johann lets you cast "an instant or sorcery spell from the top of your
+library." CR 715.3a: when an adventurer card is cast as an Adventure, only the alternative
+characteristics are evaluated to see if it can be cast. So an adventurer card whose Adventure is an
+instant or sorcery (Questing Druid's Seek the Beast) can be cast as that Adventure from the top of the
+library. The engine only looks at the front face: `CastingPermissionService.matchesTopLibraryPermission`
+and `canCastFromTopOfLibrary` check the creature's types, and `SpellCastingService.playCardFromLibraryTop`
+has no Adventure path.
+
+**Why it's large.** Library-top casting needs a whole Adventure path: the permission check and mana cost
+against the Adventure face, a cast-as-Adventure flag on `playCardFromLibraryTop` (mirroring the hand
+Adventure cast, including exile-on-resolution and the once-per-turn library-top bookkeeping), the flag
+threaded through the networking message and the test harness's library-top cast helpers, and
+`GameViewProjectionFactory.getPlayableLibraryTopCards` offering the Adventure.
+
+**Prompt to start it:**
+
+```
+Support casting an adventurer card as its Adventure from the top of the library when a permission
+allows instant/sorcery (or matching) spells from there (Johann, Apprentice Sorcerer). Per CR 715.3a only
+the Adventure's characteristics are evaluated. Update CastingPermissionService.matchesTopLibraryPermission/
+canCastFromTopOfLibrary, add an Adventure option to SpellCastingService.playCardFromLibraryTop mirroring
+the hand Adventure cast, thread it through the networking message, the harness helpers and
+GameViewProjectionFactory.getPlayableLibraryTopCards. Start with JohannApprenticeSorcererTest
+adventureOnTopIsOfferedAsPlayableUsingItsInstantCharacteristics. Don't run the full test suite; ask me.
+Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

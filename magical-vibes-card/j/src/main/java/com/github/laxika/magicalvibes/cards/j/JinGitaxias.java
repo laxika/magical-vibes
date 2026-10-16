@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -24,6 +25,9 @@ public class JinGitaxias extends Card {
 
     public JinGitaxias() {
         setBackFaceCard(new TheGreatSynthesis());
+
+        // Ward {2}.
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardAllOfPredicate(List.of(

@@ -450,6 +450,8 @@ public class BattlefieldPlacementService {
         if (perpetualPowerModifier != 0) {
             permanent.setPersistentPowerModifier(perpetualPowerModifier);
         }
+        // CR 400.7: the entering permanent is a new object, so it forgets mana noted by its previous object.
+        gameData.notedMana.remove(permanent.getCard().getId());
         gameData.playerBattlefields.get(controllerId).add(permanent);
         if (creaturePositioningSupport != null) {
             creaturePositioningSupport.applyChosenPosition(gameData, controllerId, permanent);
@@ -710,13 +712,18 @@ public class BattlefieldPlacementService {
         if (entering.isNativeDevourResolved()) {
             return creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request);
         }
-        var devour = entering.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        // CR 702.82a: each devour instance (printed, then granted) is its own replacement effect with
+        // its own sacrifice choice; instances already answered are tracked on the entering permanent.
+        var devourInstances = new ArrayList<com.github.laxika.magicalvibes.model.effect.DevourEffect>();
+        entering.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::cast)
-                .findFirst().orElse(null);
-        if (devour == null && entering.getGrantedDevour() > 0) {
-            devour = new com.github.laxika.magicalvibes.model.effect.DevourEffect(entering.getGrantedDevour());
+                .findFirst().ifPresent(devourInstances::add);
+        if (entering.getGrantedDevour() > 0) {
+            devourInstances.add(new com.github.laxika.magicalvibes.model.effect.DevourEffect(entering.getGrantedDevour()));
         }
+        var devour = entering.getDevourInstancesResolved() < devourInstances.size()
+                ? devourInstances.get(entering.getDevourInstancesResolved()) : null;
         if (devour == null || entering.isFaceDown()) {
             return creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request);
         }

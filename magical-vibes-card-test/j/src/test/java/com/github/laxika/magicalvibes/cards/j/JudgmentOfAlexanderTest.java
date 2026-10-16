@@ -24,7 +24,7 @@ class JudgmentOfAlexanderTest extends BaseCardTest {
         Permanent commanderOne = addCreatureReady(player1, new GrizzlyBears());
         Permanent commanderTwo = addCreatureReady(player1, new GrizzlyBears());
         gd.makeCommander(player1.getId(), commanderOne.getCard());
-        gd.makeCommander(player1.getId(), commanderTwo.getCard());
+        gd.addCommander(player1.getId(), commanderTwo.getCard());
         castJudgmentOfAlexander();
 
         Permanent attacker = addCreatureReady(player2, new ColossalDreadmaw());
@@ -33,6 +33,7 @@ class JudgmentOfAlexanderTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 20);
         assertThat(attacker.getMarkedDamage()).isEqualTo(4);

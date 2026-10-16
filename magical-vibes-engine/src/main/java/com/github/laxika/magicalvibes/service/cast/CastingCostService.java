@@ -818,7 +818,11 @@ public class CastingCostService {
         for (CollectedCostModifier modifier : snapshot.modifiers()) {
             delta += modifier.handler().modifyBuybackCost(context, modifier.effect(), modifier.source());
         }
-        return delta;
+        // CR 601.2f: reductions come off the total cost, which includes the optional buyback cost. The
+        // spell's own generic mana absorbs a reduction first; only the excess reaches the buyback.
+        int spellModifier = getCastCostModifier(gameData, playerId, card, snapshot, false);
+        int printedGeneric = card.getParsedManaCost() == null ? 0 : card.getParsedManaCost().getGenericCost();
+        return delta + Math.min(0, spellModifier + printedGeneric);
     }
 
     /**

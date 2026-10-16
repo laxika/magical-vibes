@@ -1657,6 +1657,12 @@ public class CardChoiceHandlerService {
                         followUp.thenEffectTargetId(),
                         followUp.thenEffectSourcePermanentId());
                 thenEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
+                StackEntry resolvingEntry = gameData.pendingEffectResolutionEntry;
+                if (resolvingEntry != null && resolvingEntry.getCard() == sourceCard) {
+                    // A back face cast from a DFC is still the front card physically (e.g. "return
+                    // this spell to its owner's hand" must find the front card in the graveyard).
+                    thenEntry.setPhysicalCard(resolvingEntry.getPhysicalCard());
+                }
                 thenEntry.setNonTargeting(true);
                 copyDiscardFollowUpContext(gameData, thenEntry, discardedCard, followUp);
                 gameData.stack.add(thenEntry);

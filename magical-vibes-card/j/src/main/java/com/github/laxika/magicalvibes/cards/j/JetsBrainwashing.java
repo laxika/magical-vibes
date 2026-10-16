@@ -30,6 +30,6 @@ public class JetsBrainwashing extends Card {
                         new UntapPermanentsEffect(TapUntapScope.TARGET)))
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1));
+        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofClueToken(1).withInvestigate(false));
     }
 }

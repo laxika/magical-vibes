@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.UnsuspectAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -39,6 +40,10 @@ public class UnsuspectAllCreaturesEffectHandler implements NormalEffectHandlerBe
                     && (unsuspect.filter() == null
                     || predicateEvaluationService.matchesPermanentPredicate(permanent, unsuspect.filter(), filterContext))) {
                 permanent.setSuspected(false);
+                synchronized (gameData.floatingEffects) {
+                    gameData.floatingEffects.removeIf(floating -> permanent.getId().equals(floating.affectedPermanentId())
+                            && floating.effect() instanceof SuspectedEffect);
+                }
             }
         });
     }

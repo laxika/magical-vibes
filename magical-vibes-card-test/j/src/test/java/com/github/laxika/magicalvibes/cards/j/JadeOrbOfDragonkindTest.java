@@ -150,6 +150,7 @@ class JadeOrbOfDragonkindTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.setHand(player1, List.of(new DragonbornLooter()));
+        harness.setHand(player2, List.of());
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         Permanent dragon = findPermanent(player1, "Dragonborn Looter");

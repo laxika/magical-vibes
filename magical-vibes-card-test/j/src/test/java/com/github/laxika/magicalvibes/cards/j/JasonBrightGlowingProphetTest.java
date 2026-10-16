@@ -177,7 +177,7 @@ class JasonBrightGlowingProphetTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(jason.hasKeyword(Keyword.FLYING)).isTrue();
 
-        harness.passUntil(player1, TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(jason.hasKeyword(Keyword.FLYING)).isFalse();
         assertThat(jason.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

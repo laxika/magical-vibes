@@ -144,6 +144,7 @@ public class CombatService {
         gameData.forEachBattlefield((playerId, battlefield) -> battlefield.forEach(permanent -> {
             permanent.rollOverCombatAttackRecord();
             permanent.clearCombatState();
+            permanent.clearUntilEndOfCombatAnimation();
         }));
         gameData.declaredAttackerIdsThisCombat.clear();
         gameData.ragingRiverBlockRestrictionsThisCombat.clear();

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfSourceAttackingOpponentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -28,7 +28,7 @@ public class Jubilation extends Card {
                 "{7}{G}{G}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new CreateTokenCopiesOfSourceAttackingOpponentsEffect()
+                        new EncoreEffect()
                 ),
                 "Encore {7}{G}{G} ({7}{G}{G}, Exile this card from your graveyard: For each opponent, create a token copy "
                         + "that attacks that opponent this turn if able. They gain haste. Sacrifice them at the beginning "

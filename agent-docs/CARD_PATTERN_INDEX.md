@@ -367,6 +367,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | trigger from the card actually drawn without revealing it | `DrawnCardTriggerEffect` |
 | random card from a fixed spellbook into hand | `ConjureGoblinInfluxArraySpellbookEffect` or `ConjureSkywriterDjinnSpellbookEffect` |
 | landfall draft of three cards from a fixed spellbook into hand | `DraftSlimefootThallidTransplantSpellbookEffect` |
+| reveal target player's nonland cards only, exile a chosen one, then conjure a named card into that player's hand (Juggernaut Peddler) | `ChooseCardsFromTargetHandEffect(..., HandChoiceDestination.EXILE).withRevealMatchingOnly().withChosenCardThen(null, new ConjureCardIntoTargetPlayerHandEffect(card))` |
 | reveal target opponent's hand, exile a chosen nonland card, then conjure a named card into that player's hand | `ChooseCardsFromTargetHandEffect(..., HandChoiceDestination.EXILE).withChosenCardThen(null, new ConjureCardIntoTargetPlayerHandEffect(card))` |
 | random Dragon card from a fixed spellbook into face-down exile with egg counters | `ConjureDarigaazShivanChampionSpellbookEffect` |
 | draft three random cards from a fixed spellbook and exile the chosen card tracked to the source | `DraftProteanWarEngineSpellbookEffect` |

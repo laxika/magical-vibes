@@ -33,6 +33,7 @@ class JunglebornPioneerTest extends BaseCardTest {
     @Test
     @DisplayName("The token is created even if Pioneer leaves before its trigger resolves")
     void tokenIsCreatedAfterPioneerLeaves() {
+        harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new JunglebornPioneer(), "{2}{G}");
         harness.passBothPriorities();
 

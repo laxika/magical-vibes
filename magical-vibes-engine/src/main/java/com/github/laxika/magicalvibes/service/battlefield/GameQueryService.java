@@ -136,6 +136,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.JohanCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentLockEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.LifePaymentReplacementEffect;
@@ -12298,6 +12299,7 @@ public class GameQueryService {
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect fe : gameData.floatingEffects) {
                 if (fe.effect() instanceof PermanentLockEffect lock && facet.test(lock)
+                        && !johanCantAttackSuppressedByLostAbilities(gameData, fe)
                         && (permanentId.equals(fe.affectedPermanentId())
                         || fe.scope() != null && matchesFloatingLockScope(gameData, permanentId, fe))) {
                     return true;
@@ -12305,6 +12307,19 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    /**
+     * Johan's "Johan can't attack" is an ability granted to Johan until end of combat, so it stops
+     * applying while Johan has lost all abilities.
+     */
+    private boolean johanCantAttackSuppressedByLostAbilities(GameData gameData, FloatingContinuousEffect effect) {
+        if (!(effect.effect() instanceof JohanCombatEffect)) {
+            return false;
+        }
+        Permanent source = findPermanentById(gameData, effect.sourcePermanentId());
+        return source != null && (source.isLosesAllAbilitiesUntilEndOfTurn()
+                || computeStaticBonus(gameData, source).losesAllAbilities());
     }
 
     private boolean matchesFloatingLockScope(GameData gameData, UUID permanentId, FloatingContinuousEffect effect) {

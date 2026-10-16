@@ -83,6 +83,8 @@ class JhoirasTimebugTest extends BaseCardTest {
         harness.handleListChoice(player1, "REMOVE");
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
@@ -115,7 +117,8 @@ class JhoirasTimebugTest extends BaseCardTest {
 
         activate(timebug, target.getId());
 
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handleListChoice(player1, "time counters");
+        harness.handleListChoice(player1, "SKIP");
 
         assertThat(target.getCounterCount(CounterType.TIME)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();

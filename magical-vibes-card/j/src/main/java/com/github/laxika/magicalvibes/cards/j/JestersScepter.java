@@ -24,11 +24,13 @@ import java.util.Set;
 public class JestersScepter extends Card {
 
     public JestersScepter() {
+        // "You may look at those cards for as long as they remain exiled" outlasts the Scepter itself.
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ExileTopCardsToSourceEffect(5, true, false, LibraryScope.TARGET_PLAYER));
+                new ExileTopCardsToSourceEffect(5, true, false, LibraryScope.TARGET_PLAYER, false,
+                        null, false, false, true));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

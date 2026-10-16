@@ -68,7 +68,10 @@ class JemLightfooteSkyExplorerTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Shock()));
 
-        advanceToEndStep(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();

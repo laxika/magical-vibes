@@ -29,7 +29,8 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                               CardPredicate chosenCardCondition,
                                               CardEffect chosenCardThenEffect,
                                               CardEffect declineEffect,
-                                              int libraryPosition)
+                                              int libraryPosition,
+                                              boolean revealMatchingOnly)
         implements CombatDamageTriggerContextEffect {
 
     public ChooseCardsFromTargetHandEffect {
@@ -54,7 +55,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
                 declineFallbackDiscardCount, upTo, exileAllCopiesOfChosenNames, imprintOnSource,
                 revealHand, grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
-                null, null, null, 0);
+                null, null, null, 0, false);
     }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -146,14 +147,34 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                 0, true, false, false, false, true, false, exilePlayOpponentTax);
     }
 
+    /**
+     * Makes the public hand reveal show only the cards that pass this effect's type and predicate
+     * filters ("reveals all nonland cards in their hand") instead of the whole hand.
+     */
+    public ChooseCardsFromTargetHandEffect withRevealMatchingOnly() {
+        return new ChooseCardsFromTargetHandEffect(count, excludedTypes, includedTypes, destination,
+                returnOnSourceLeave, filter, declineFallbackDiscardCount, upTo,
+                exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
+                returnAtNextEndStep, exilePlayOpponentTax, chosenCardCondition, chosenCardThenEffect,
+                declineEffect, libraryPosition, true);
+    }
+
     /** Adds a follow-up effect when any chosen card matches the supplied predicate. */
+    public ChooseCardsFromTargetHandEffect withUpTo(boolean newUpTo) {
+        return new ChooseCardsFromTargetHandEffect(count, excludedTypes, includedTypes, destination,
+                returnOnSourceLeave, filter, declineFallbackDiscardCount, newUpTo,
+                exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
+                returnAtNextEndStep, exilePlayOpponentTax, chosenCardCondition, chosenCardThenEffect,
+                declineEffect, libraryPosition, revealMatchingOnly);
+    }
+
     public ChooseCardsFromTargetHandEffect withChosenCardThen(CardPredicate condition,
                                                                CardEffect thenEffect) {
         return new ChooseCardsFromTargetHandEffect(count, excludedTypes, includedTypes, destination,
                 returnOnSourceLeave, filter, declineFallbackDiscardCount, upTo,
                 exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
                 returnAtNextEndStep, exilePlayOpponentTax, condition, thenEffect, declineEffect,
-                libraryPosition);
+                libraryPosition, revealMatchingOnly);
     }
 
     /** "You may choose a card; if you don't, that player discards N cards." */
@@ -168,7 +189,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            HandChoiceDestination destination,
                                            CardEffect declineEffect) {
         this(new Fixed(count), List.of(), includedTypes, destination, false, null,
-                0, true, false, false, true, false, false, 0, null, null, declineEffect, 0);
+                0, true, false, false, true, false, false, 0, null, null, declineEffect, 0, false);
     }
 
     /**
@@ -180,7 +201,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
         return new ChooseCardsFromTargetHandEffect(
                 new Fixed(count), excludedTypes, List.of(), HandChoiceDestination.TOP_OF_LIBRARY,
                 false, null, 0, false, false, false, true, false, false, 0,
-                null, null, null, libraryPosition);
+                null, null, null, libraryPosition, false);
     }
 
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes,

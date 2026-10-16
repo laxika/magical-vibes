@@ -132,6 +132,7 @@ class JoltTest extends BaseCardTest {
     @DisplayName("Declining the tap or untap still draws at the next turn's upkeep")
     void decliningStillDrawsAtNextUpkeep() {
         harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
         prepareJolt();
         harness.castAndResolveInstant(player1, 0, target.getId());

@@ -314,6 +314,7 @@ public class TurnCleanupService {
         gameData.judgmentOfAlexanderDamagePreventionShields.clear();
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
+        gameData.waitingRedirectDamageSourceCards.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();
         gameData.turnSourceDamageRedirectToControllerShields.clear();
         gameData.playerNextDamageRedirectShields.clear();
@@ -545,6 +546,7 @@ public class TurnCleanupService {
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
         gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
+        gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.clear();
         for (UUID permanentId : gameData.temporaryChosenSubtypePermanentIds) {
             gameData.forEachPermanent((ownerId, permanent) -> {
                 if (permanent.getId().equals(permanentId)) {
@@ -836,6 +838,15 @@ public class TurnCleanupService {
         }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf != null) {
+            synchronized (gameData.floatingEffects) {
+                for (FloatingContinuousEffect fe : gameData.floatingEffects) {
+                    if (fe.effect() instanceof NoMaximumHandSizeEffect
+                            && playerId.equals(fe.affectedPlayerId())
+                            && bf.stream().anyMatch(perm -> perm.getId().equals(fe.sourcePermanentId()))) {
+                        return true;
+                    }
+                }
+            }
             for (Permanent perm : bf) {
                 if (gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                     continue;

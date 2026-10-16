@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOf
 import com.github.laxika.magicalvibes.model.effect.FirstNonDrawStepDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsCreaturesToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardElseDrawReplacementEffect;
@@ -2211,6 +2212,11 @@ public class DrawService {
         });
     }
 
+    private static boolean targetsPlayerOrAnyTarget(CardEffect effect) {
+        TargetSpec spec = effect.targetSpec();
+        return spec.declares(TargetPredicates.anyTarget()) || spec.admits(TargetPredicate.Kind.PLAYER);
+    }
+
     public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
         checkControllerDrawTriggerSlot(gameData, drawingPlayerId, EffectSlot.ON_CONTROLLER_DRAWS, drawn);
         if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) == 2) {
@@ -2318,7 +2324,7 @@ public class DrawService {
                 }
                 int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         gameData, drawingPlayerId, perm);
-                if (effect instanceof MayEffect may) {
+                if (effect instanceof MayEffect may && !targetsPlayerOrAnyTarget(may.wrapped())) {
                     for (int copy = 0; copy < triggerCopies; copy++) {
                         gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may, null, perm.getId());
                     }
@@ -2497,6 +2503,10 @@ public class DrawService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()) {
+                continue;
+            }
             boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof WinGameOnEmptyLibraryDrawEffect);
             if (hasEffect) return true;

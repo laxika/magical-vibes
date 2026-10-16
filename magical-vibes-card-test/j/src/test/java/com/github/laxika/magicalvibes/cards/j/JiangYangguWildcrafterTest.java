@@ -116,7 +116,7 @@ class JiangYangguWildcrafterTest extends BaseCardTest {
 
     @Test
     void losingLastCounterRemovesManaAbility() {
-        harness.addToBattlefield(player1, new JiangYangguWildcrafter());
+        addReadyYanggu(player1, 3);
         Permanent creature = addCreatureReady(player1, new PrimordialWurm());
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.activateAbility(player1, 1, null, null);

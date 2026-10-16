@@ -63,7 +63,7 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -87,6 +87,7 @@ class JhoiraOfTheGhituTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 

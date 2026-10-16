@@ -151,6 +151,7 @@ class JunkyardScrapperTest extends BaseCardTest {
         Card candidate = new FountainOfYouth();
         harness.setLibrary(player1, List.of(candidate, new LlanowarElves(), new LlanowarElves()));
         harness.setHand(player1, List.of(new CommandersSphere()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castArtifact(player1, 0);
@@ -158,7 +159,7 @@ class JunkyardScrapperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(candidate.getId(), player1.getId());
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(candidate.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(candidate.getId());

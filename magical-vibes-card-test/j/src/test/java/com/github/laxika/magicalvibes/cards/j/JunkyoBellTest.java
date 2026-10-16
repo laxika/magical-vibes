@@ -169,10 +169,14 @@ class JunkyoBellTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.castAndResolveInstant(player2, 0, target.getId());
-        resolveAllTriggers();
 
+        assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(target.getId()));
+
+        resolveAllTriggers();
+
+        assertThat(gqs.findPermanentById(gd, target.getId())).isNotNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getName().equals("Wandering Ones"));
     }
@@ -213,7 +217,9 @@ class JunkyoBellTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.castAndResolveInstant(player2, 0, target.getId());
-        passToEndStep();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

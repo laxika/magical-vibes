@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -113,6 +114,8 @@ class JovensFerretsTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passUntil(TurnStep.COMBAT_DAMAGE);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(first.getId(), 1, second.getId(), 0));
         harness.passUntil(TurnStep.END_OF_COMBAT);
         resolveAllTriggers();
 

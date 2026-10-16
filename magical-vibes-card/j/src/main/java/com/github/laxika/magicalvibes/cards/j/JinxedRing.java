@@ -22,6 +22,9 @@ public class JinxedRing extends Card {
         // artifact deals 1 damage to you.
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+        // The destination-based battlefield watcher does not see the source's own death, so the ring's
+        // self-death trigger is registered separately.
+        addEffect(EffectSlot.ON_DEATH, new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
 
         // Sacrifice a creature: Target opponent gains control of this artifact.
         addActivatedAbility(new ActivatedAbility(

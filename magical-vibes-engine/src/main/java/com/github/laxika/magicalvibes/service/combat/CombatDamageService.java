@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
 import com.github.laxika.magicalvibes.service.effect.replacement.damage.RedirectedDamageRules;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -2290,7 +2291,12 @@ public class CombatDamageService {
                     attachedDamageSources);
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId, damageDealt);
             checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
-                    combatDamageDealtToPlayer, firedBatchedAllyTriggerSources, false);
+                    combatDamageDealtToPlayer, firedBatchedAllyTriggerSources, false, false);
+            for (UUID otherPlayerId : gameData.orderedPlayerIds) {
+                if (otherPlayerId.equals(attackerId)) continue;
+                checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, otherPlayerId, defenderId,
+                        damageDealt, combatDamageDealtToPlayer, firedBatchedAllyTriggerSources, false, true);
+            }
             checkSameNameCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkPlanarAllyCreatureCombatDamageToPlayerTriggers(
@@ -2587,18 +2593,30 @@ public class CombatDamageService {
         });
     }
 
+    private static boolean isOwnerRelativeCommanderTrigger(CardEffect effect) {
+        return effect instanceof AllyCombatDamageTriggerEffect trigger
+                && trigger.dealerPredicate() instanceof PermanentIsCommanderPredicate commander
+                && commander.ownedBySourceController();
+    }
+
     /**
      * Checks for permanents the attacker controls that trigger when an ally creature deals
      * combat damage to a player. E.g. Rakish Heir: "Whenever a Vampire you control deals
      * combat damage to a player, put a +1/+1 counter on it."
+     *
+     * <p>When {@code ownerRelativePass} is set, {@code attackerId} is a player other than the
+     * dealer's controller and only abilities keyed to a commander that player owns ("your
+     * commander", e.g. Jocasta, Automaton Avenger) are considered, since those still trigger while
+     * another player controls the commander. The dealer predicate decides whether the dealer
+     * qualifies for that player.
      */
     private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId,
                                                                UUID defenderId, int damageDealt,
                                                                Map<Permanent, Integer> combatDamageDealtToPlayer,
                                                                Set<UUID> firedBatchedAllyTriggerSources,
-                                                               boolean battleDamage) {
+                                                               boolean battleDamage, boolean ownerRelativePass) {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
-        if (!battleDamage) {
+        if (!battleDamage && !ownerRelativePass) {
             triggerCollectionService.checkEmblemAllyCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, damageDealt);
             triggerCollectionService.collectTemporaryGlobalTriggers(
@@ -2633,6 +2651,9 @@ public class CombatDamageService {
             try {
             for (CardEffect authoredEffect : effects) {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
+                if (ownerRelativePass && !isOwnerRelativeCommanderTrigger(effect)) {
+                    continue;
+                }
                 if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
                     FilterContext triggerContext = FilterContext.of(gameData)
                             .withSourceControllerId(attackerId)
@@ -3087,7 +3108,7 @@ public class CombatDamageService {
                 if (controllerId == null) continue;
                 checkAllyCreatureCombatDamageToPlayerTriggers(
                         gameData, sourceEntry.getKey(), controllerId, battleEntry.getKey(),
-                        sourceEntry.getValue(), battleEntry.getValue(), firedBatchedAllyTriggerSources, true);
+                        sourceEntry.getValue(), battleEntry.getValue(), firedBatchedAllyTriggerSources, true, false);
             }
         }
     }

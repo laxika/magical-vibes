@@ -21,12 +21,12 @@ public class JocastaAutomatonAvenger extends Card {
     public JocastaAutomatonAvenger() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
-                        new PermanentIsCommanderPredicate(),
+                        new PermanentIsCommanderPredicate(true),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(
-                        new HasAttacker(new PermanentIsCommanderPredicate()),
+                        new HasAttacker(new PermanentIsCommanderPredicate(true)),
                         new MayEffect(
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

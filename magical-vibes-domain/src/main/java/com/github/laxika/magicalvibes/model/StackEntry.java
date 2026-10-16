@@ -554,6 +554,12 @@ public class StackEntry {
      * {@code Permanent.grantedKeywords} by {@code StackResolutionService}.
      */
     private final Set<Keyword> grantedKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
+    /**
+     * Keywords the resolving permanent enters with that last until the start of its controller's
+     * next turn (Jade Orb of Dragonkind's hexproof on a Dragon). Drained into the entering
+     * {@code Permanent.untilNextTurnKeywords} by {@code StackResolutionService}.
+     */
+    private final Set<Keyword> untilNextTurnKeywordsOnEntry = EnumSet.noneOf(Keyword.class);
     /** Suspend grants haste for as long as the same player controls the resulting permanent. */
     @Setter private boolean suspendHasteOnEntry;
     /** Cast for a blitz cost granted by another source (Henzie): the permanent is sacrificed at the next end step. */
@@ -1055,6 +1061,7 @@ public class StackEntry {
                 ? List.of() : new ArrayList<>(source.targetGroupSizes);
         this.illegalTargetIndices.addAll(source.illegalTargetIndices);
         this.grantedKeywordsOnEntry.addAll(source.grantedKeywordsOnEntry);
+        this.untilNextTurnKeywordsOnEntry.addAll(source.untilNextTurnKeywordsOnEntry);
         this.suspendHasteOnEntry = source.suspendHasteOnEntry;
         this.grantedBlitzOnEntry = source.grantedBlitzOnEntry;
         this.grantedColorsOnEntry.addAll(source.grantedColorsOnEntry);

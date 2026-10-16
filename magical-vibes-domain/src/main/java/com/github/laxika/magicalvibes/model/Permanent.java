@@ -65,6 +65,8 @@ public class Permanent {
     @Setter private boolean creaturePositionPending;
     /** Whether the native simultaneous-entry devour choice has already finished. */
     @Setter private boolean nativeDevourResolved;
+    /** Devour instances (printed, then granted) already answered while this permanent was entering (CR 702.82a). */
+    @Getter @Setter private int devourInstancesResolved;
     /** Whether this entry's "as enters, discard cards" replacement choice has already been answered. */
     @Setter private boolean asEntersDiscardResolved;
     /** Whether this entry's "enter as a copy" replacement choice has already been offered and answered. */
@@ -858,6 +860,7 @@ public class Permanent {
         this.chosenCreaturePosition = source.chosenCreaturePosition;
         this.creaturePositionPending = source.creaturePositionPending;
         this.nativeDevourResolved = source.nativeDevourResolved;
+        this.devourInstancesResolved = source.devourInstancesResolved;
         this.asEntersDiscardResolved = source.asEntersDiscardResolved;
         this.copyEntryResolved = source.copyEntryResolved;
         this.pendingEntryCounterPlacements.addAll(source.pendingEntryCounterPlacements);
@@ -1439,7 +1442,6 @@ public class Permanent {
         this.bandId = null;
         this.cantBlockThisCombat = false;
         this.mustAttackThisCombat = false;
-        clearUntilEndOfCombatAnimation();
     }
 
     /** Sources this creature must block under either turn-long or combat-long requirements. */

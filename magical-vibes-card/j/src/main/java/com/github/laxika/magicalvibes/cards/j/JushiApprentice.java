@@ -22,7 +22,7 @@ public class JushiApprentice extends Card {
                 "{2}{U}",
                 List.of(
                         new DrawCardEffect(1),
-                        new ConditionalEffect(new CardsInHandAtLeast(9), new TransformToBackFaceEffect())
+                        new ConditionalEffect(new CardsInHandAtLeast(9), new TransformToBackFaceEffect(true))
                 ),
                 "{2}{U}, {T}: Draw a card. If you have nine or more cards in hand, flip this creature."
         ));

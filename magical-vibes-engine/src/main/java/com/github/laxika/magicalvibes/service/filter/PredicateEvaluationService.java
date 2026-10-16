@@ -841,9 +841,13 @@ public class PredicateEvaluationService {
                 yield sourcePermanent != null
                         && card.getManaValue() <= sourcePermanent.getCounterCount(p.counterType());
             }
-            case CardManaValueEqualsSourceIntensityPredicate ignored ->
-                    gameData != null && sourceCardId != null
-                            && card.getManaValue() == gameData.getCardIntensity(sourceCardId);
+            case CardManaValueEqualsSourceIntensityPredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Card sourceCard = gameQueryService.findCardById(gameData, sourceCardId);
+                yield sourceCard != null && card.getManaValue() == gameData.getCardIntensity(sourceCard);
+            }
             case CardManaValueGreaterThanSourceManaValuePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -1874,6 +1878,9 @@ public class PredicateEvaluationService {
                 yield gameQueryService.getEffectivePower(gameData, permanent) > basePower;
             }
             case PermanentPowerDifferentFromBasePowerPredicate ignored -> {
+                if (permanent.getLastKnownPower() != null) {
+                    yield permanent.getLastKnownPower() != permanent.getBasePower();
+                }
                 CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
                 if (gameData == null) {
                     yield layered != null

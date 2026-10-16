@@ -103,6 +103,7 @@ class JaceTelepathUnboundTest extends BaseCardTest {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new Shock(), new Shock()));
         harness.setLibrary(player2, List.of(new Shock(), new Shock()));
+        harness.setHand(player2, List.of());
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(bear.getId()));
         harness.passBothPriorities();
@@ -231,7 +232,7 @@ class JaceTelepathUnboundTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getName().equals("Shock"));
     }
 
     private Permanent addJace(Player player, int loyalty) {

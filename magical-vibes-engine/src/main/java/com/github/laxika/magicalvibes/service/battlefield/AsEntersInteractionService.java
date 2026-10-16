@@ -595,13 +595,18 @@ public class AsEntersInteractionService {
         // before ETB triggers. Prompt the controller to sacrifice any of their other creatures.
         List<Permanent> enteringBattlefieldForDevour = gameData.playerBattlefields.get(controllerId);
         Permanent devourEnteringPermanent = enteringBattlefieldForDevour.get(enteringBattlefieldForDevour.size() - 1);
-        DevourEffect devour = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+        // CR 702.82a: each devour instance (printed, then granted) is a separate replacement effect with
+        // its own sacrifice choice; the entering permanent counts the instances already answered.
+        List<DevourEffect> devourInstances = new ArrayList<>();
+        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> e instanceof DevourEffect)
                 .map(e -> (DevourEffect) e)
-                .findFirst().orElse(null);
-        if (devour == null && devourEnteringPermanent.getGrantedDevour() > 0) {
-            devour = new DevourEffect(devourEnteringPermanent.getGrantedDevour());
+                .findFirst().ifPresent(devourInstances::add);
+        if (devourEnteringPermanent.getGrantedDevour() > 0) {
+            devourInstances.add(new DevourEffect(devourEnteringPermanent.getGrantedDevour()));
         }
+        DevourEffect devour = devourEnteringPermanent.getDevourInstancesResolved() < devourInstances.size()
+                ? devourInstances.get(devourEnteringPermanent.getDevourInstancesResolved()) : null;
         if (devour != null) {
             List<UUID> sacrificeable = enteringBattlefieldForDevour.stream()
                     .filter(p -> p != devourEnteringPermanent && gameQueryService.isCreature(gameData, p))

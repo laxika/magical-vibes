@@ -31,6 +31,7 @@ import java.util.UUID;
  * @param startingLoyaltyFromX whether a copied planeswalker enters with loyalty equal to X
  * @param permanentSpellToken whether a copy of a permanent spell becomes a token
  * @param sacrificeAtEndStep whether a permanent-spell token copy is sacrificed at the next end step
+ * @param copies how many copies this single copy event creates (Jaya, Fiery Negotiator's emblem copies twice)
  */
 public record CopyControllerCastSpellEffect(
         StackEntry spellSnapshot,
@@ -47,8 +48,21 @@ public record CopyControllerCastSpellEffect(
         boolean sacrificeAtEndStep,
         List<CardSubtype> additionalSubtypes,
         Integer powerOverride,
-        Integer toughnessOverride
+        Integer toughnessOverride,
+        int copies
 ) implements CardEffect {
+
+    public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId,
+            Set<Keyword> grantedKeywords, Set<CardType> additionalTypes,
+            Set<CardSupertype> removedSupertypes, boolean tokenCopy, boolean mayChooseNewTargets,
+            boolean grantHasteToPermanentSpell, boolean markSourceOncePerTurnOnAccept,
+            boolean startingLoyaltyFromX, boolean permanentSpellToken, boolean sacrificeAtEndStep,
+            List<CardSubtype> additionalSubtypes, Integer powerOverride, Integer toughnessOverride) {
+        this(spellSnapshot, castingPlayerId, grantedKeywords, additionalTypes, removedSupertypes,
+                tokenCopy, mayChooseNewTargets, grantHasteToPermanentSpell, markSourceOncePerTurnOnAccept,
+                startingLoyaltyFromX, permanentSpellToken, sacrificeAtEndStep, additionalSubtypes,
+                powerOverride, toughnessOverride, 1);
+    }
 
     public CopyControllerCastSpellEffect(StackEntry spellSnapshot, UUID castingPlayerId) {
         this(spellSnapshot, castingPlayerId, Set.of(), Set.of(), Set.of(), false, true, false, false, false,

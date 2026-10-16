@@ -89,7 +89,8 @@ class JasconianIsleTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMayAbilityChosen(player1, false));
 
         assertThat(isle.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);

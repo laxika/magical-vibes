@@ -23,14 +23,13 @@ class JeweledBirdTest extends BaseCardTest {
     @DisplayName("Antes itself, clears the controller's other ante cards, and draws")
     void antesSelfClearsOtherOwnedAnteCardsAndDraws() {
         CardSetup setup = anteCardForPlayer1();
-        harness.addToBattlefield(player1, new JeweledBird());
+        JeweledBird bird = new JeweledBird();
+        harness.addToBattlefield(player1, bird);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .extracting(card -> card.getName())
-                .containsExactly("Jeweled Bird");
+        assertThat(gd.antedCardIds).containsExactly(bird.getId());
         harness.assertInGraveyard(player1, setup.antedCard().getName());
         harness.assertInHand(player1, setup.drawnCard().getName());
     }
@@ -40,14 +39,13 @@ class JeweledBirdTest extends BaseCardTest {
     void antesSelfAndDrawsWithoutOtherAnteCards() {
         HillGiant drawnCard = new HillGiant();
         harness.setLibrary(player1, List.of(drawnCard));
-        harness.addToBattlefield(player1, new JeweledBird());
+        JeweledBird bird = new JeweledBird();
+        harness.addToBattlefield(player1, bird);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .extracting(card -> card.getName())
-                .containsExactly("Jeweled Bird");
+        assertThat(gd.antedCardIds).containsExactly(bird.getId());
         harness.assertInHand(player1, drawnCard.getName());
     }
 
@@ -63,8 +61,8 @@ class JeweledBirdTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Jeweled Bird");
-        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(setup.antedCard());
-        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(bird);
+        assertThat(gd.antedCardIds).contains(setup.antedCard().getId())
+                .doesNotContain(bird.getId());
         assertThat(gd.playerHands.get(player1.getId())).isEqualTo(handBefore);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(setup.drawnCard());
     }
@@ -80,7 +78,7 @@ class JeweledBirdTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Jeweled Bird");
-        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(setup.antedCard());
+        assertThat(gd.antedCardIds).containsExactly(setup.antedCard().getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(setup.drawnCard());
         harness.assertNotInHand(player1, setup.drawnCard().getName());
     }
@@ -105,7 +103,7 @@ class JeweledBirdTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstAnte, secondAnte);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ordinaryExile)
                 .doesNotContain(firstAnte, secondAnte);
-        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentAnte);
+        assertThat(gd.findExiledCard(opponentAnte.getId())).isNotNull();
         assertThat(gd.antedCardIds).contains(opponentAnte.getId())
                 .doesNotContain(firstAnte.getId(), secondAnte.getId());
         harness.assertInHand(player1, drawnCard.getName());

@@ -26,8 +26,7 @@ public class Junktown extends Card {
                 true,
                 "{4}{R}",
                 List.of(new SacrificeSelfCost(), junkTokens()),
-                "{4}{R}, {T}, Sacrifice this land: Create three Junk tokens. Activate only as a sorcery.",
-                ActivationTimingRestriction.SORCERY_SPEED));
+                "{4}{R}, {T}, Sacrifice this land: Create three Junk tokens."));
     }
 
     private static CreateTokenEffect junkTokens() {

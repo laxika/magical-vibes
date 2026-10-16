@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
@@ -739,6 +740,16 @@ public class PlayerInputService {
                 sourceCard.getName() + " — Choose Cat, Dog, or original tokens."));
     }
 
+    public void beginJinnieFayTokenCopyChoice(GameData gameData, ChoiceContext.JinnieFayTokenCopyChoice ctx) {
+        List<String> options = List.of(
+                com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.CAT_OPTION,
+                com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.DOG_OPTION,
+                com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.ORIGINAL_OPTION);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                ctx.controllerId(), null, null, ctx, options,
+                ctx.sourceCard().getName() + " — Choose Cat, Dog, or original tokens."));
+    }
+
     public void beginGainLifePerPermanentOfChosenColorChoice(GameData gameData, UUID controllerId,
             Card sourceCard, StackEntryType sourceEntryType) {
         ChoiceContext.GainLifePerPermanentOfChosenColorChoice ctx =
@@ -945,6 +956,13 @@ public class PlayerInputService {
         if (effect.variableModeCount() && ctx.chosenLabels().size() >= effect.choicesRequired()) {
             optionLabels.add(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.FINISH_MODE_SELECTION);
         }
+        List<String> disabledLabels = effect.options().stream()
+                .filter(option -> optionLabels.contains(option.label()))
+                .filter(option -> option.effects().stream().anyMatch(
+                        e -> e instanceof RemoveCounterFromSourceEffect removal
+                                && !canRemoveCountersFromSource(gameData, sourcePermanentId, removal)))
+                .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
+                .toList();
         String prompt = effect.variableModeCount()
                 ? effect.choicesRequired() == 0
                 ? sourceCard.getName() + " - Choose up to " + effect.choicesMax() + " modes, or Done."
@@ -953,10 +971,23 @@ public class PlayerInputService {
                 ? sourceCard.getName() + " - Choose " + effect.choicesRequired() + " modes."
                 : sourceCard.getName() + " - Choose one.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, ctx, optionLabels, prompt));
+                controllerId, null, null, ctx, optionLabels, prompt, disabledLabels));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a mode for {}", gameData.id, playerName, sourceCard.getName());
+    }
+
+    /**
+     * Whether a mode that removes counters from its source has counters to remove. A source that is
+     * gone or has too few counters greys the mode out; a dynamic amount is left available.
+     */
+    private boolean canRemoveCountersFromSource(GameData gameData, UUID sourcePermanentId,
+                                                RemoveCounterFromSourceEffect removal) {
+        if (removal.dynamicAmount() != null || sourcePermanentId == null) {
+            return true;
+        }
+        var source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return source != null && source.getCounterCount(removal.counterType()) >= removal.amount();
     }
 
     public void beginChooseModeOnEnterChoice(GameData gameData, UUID controllerId, Card sourceCard,

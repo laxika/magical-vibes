@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -121,7 +123,7 @@ public class TokenCopySupport {
                     ? attackTargetIds.get(sourceCardIndex) : null;
             sourceCardIndex++;
             Card tokenTemplate = buildTokenCopyCard(
-                    sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
+                    sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard(), true);
             if (copyException != null) {
                 copyException.accept(tokenTemplate);
             }
@@ -142,7 +144,7 @@ public class TokenCopySupport {
                 Card tokenCard = copy == 0
                         ? tokenTemplate
                         : buildTokenCopyCard(
-                                sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard());
+                                sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard(), true);
                 if (copy != 0 && copyException != null) {
                     copyException.accept(tokenCard);
                 }
@@ -151,7 +153,7 @@ public class TokenCopySupport {
                 }
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
                         gameData, tokenControllerId, tokenCard);
-                tokens.add(withGrantedHaste(tokenCard, sourceCard, effect));
+                tokens.add(withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect));
                 expandedAttackTargets.add(sourceAttackTarget);
             }
         }
@@ -262,6 +264,23 @@ public class TokenCopySupport {
                     : expandedAttackTargets.get(i % originalAttackTargetCount));
         }
 
+        Card jinnieFay = tokens.isEmpty() ? null
+                : TokenCreationReplacementSupport.findJinnieFay(gameData, tokenControllerId);
+        if (jinnieFay != null) {
+            playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
+                    tokenControllerId, jinnieFay, entry, effect, tokens, sourcePermanent,
+                    expandedAttackTargets, attackTargetIds != null, chooseOpponentAttackTargets));
+            return List.of();
+        }
+        return enterPreparedTokenCopies(gameData, entry, tokens, sourcePermanent, tokenControllerId, effect,
+                expandedAttackTargets, attackTargetIds != null, chooseOpponentAttackTargets);
+    }
+
+    private List<UUID> enterPreparedTokenCopies(GameData gameData, StackEntry entry, List<Permanent> tokens,
+                                                Permanent sourcePermanent, UUID tokenControllerId,
+                                                CreateTokenCopyOfTargetPermanentEffect effect,
+                                                List<UUID> expandedAttackTargets, boolean explicitAttackTargets,
+                                                boolean chooseOpponentAttackTargets) {
         if (chooseOpponentAttackTargets) {
             continueOpponentAttackTargetChoices(gameData,
                     new PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking(
@@ -269,7 +288,32 @@ public class TokenCopySupport {
             return List.of();
         }
         return putPreparedTokenCopiesOntoBattlefield(gameData, entry, tokens, sourcePermanent,
-                tokenControllerId, effect, expandedAttackTargets, attackTargetIds != null);
+                tokenControllerId, effect, expandedAttackTargets, explicitAttackTargets);
+    }
+
+    /**
+     * Resumes a token-copy batch after the controller answered Jinnie Fay's replacement prompt. A Cat or
+     * Dog replaces each prepared token but still receives the creating effect's riders (haste, granted
+     * death trigger, delayed sacrifice), since those apply to the tokens actually created.
+     */
+    public void completeJinnieFayTokenCopyChoice(GameData gameData, String choice,
+                                                 ChoiceContext.JinnieFayTokenCopyChoice context) {
+        List<Permanent> tokens = context.tokens();
+        if (!JinnieFayTokenReplacementEffect.ORIGINAL_OPTION.equals(choice)) {
+            boolean cat = JinnieFayTokenReplacementEffect.CAT_OPTION.equals(choice);
+            CreateTokenEffect replacement = TokenCreationReplacementSupport.jinnieFayToken(
+                    CreateTokenEffect.ofArtifactToken(1, "", List.of(), List.of()), 1, cat);
+            String setCode = context.entry().getCard() == null ? null : context.entry().getCard().getSetCode();
+            tokens = new ArrayList<>();
+            for (int i = 0; i < context.tokens().size(); i++) {
+                Card replacementCard = TokenCardFactory.create(replacement, cat ? 2 : 3, cat ? 2 : 1, setCode);
+                tokens.add(withGrantedDeathEffects(
+                        withGrantedHaste(replacementCard, replacementCard, context.effect()), context.effect()));
+            }
+        }
+        enterPreparedTokenCopies(gameData, context.entry(), tokens, context.sourcePermanent(),
+                context.controllerId(), context.effect(), context.expandedAttackTargets(),
+                context.explicitAttackTargets(), context.chooseOpponentAttackTargets());
     }
 
     /** Continues a restricted player-or-planeswalker choice for each prepared myriad token. */
@@ -313,6 +357,19 @@ public class TokenCopySupport {
         }
         putPreparedTokenCopiesOntoBattlefield(gameData, context.entry(), context.tokens(), null,
                 context.controllerId(), context.copyEffect(), chosenTargets, true);
+    }
+
+    /**
+     * Granted "when this token dies" abilities (CR 707.2: abilities added by an effect are not part of
+     * the copiable values) are stored on the token permanent rather than its copiable card, so a copy
+     * of the token does not inherit them.
+     */
+    private static Permanent withGrantedDeathEffects(Permanent token, CreateTokenCopyOfTargetPermanentEffect effect) {
+        if (effect.additionalSlotEffects() != null) {
+            effect.additionalSlotEffects().getOrDefault(EffectSlot.ON_DEATH, List.of())
+                    .forEach(death -> token.addPersistentTriggeredEffect(EffectSlot.ON_DEATH, death));
+        }
+        return token;
     }
 
     /**
@@ -474,6 +531,16 @@ public class TokenCopySupport {
 
     private static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,
                                            Predicate<CardSubtype> isCreatureSubtype, Card targetingSourceCard) {
+        return buildTokenCopyCard(sourceCard, effect, isCreatureSubtype, targetingSourceCard, false);
+    }
+
+    /**
+     * @param deathGrantsOnPermanent when true, granted ON_DEATH effects are left off the returned card;
+     *                               the caller attaches them to the token permanent instead
+     */
+    private static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,
+                                           Predicate<CardSubtype> isCreatureSubtype, Card targetingSourceCard,
+                                           boolean deathGrantsOnPermanent) {
         boolean hasPTOverride = effect.powerOverride() != null || effect.toughnessOverride() != null;
 
         Card tokenCard = new Card();
@@ -496,7 +563,7 @@ public class TokenCopySupport {
                 tokenCard.setBackFaceCard(backFace);
             } else {
                 tokenCard.setBackFaceCard(buildTokenCopyCard(backFace, effect,
-                        isCreatureSubtype, targetingSourceCard));
+                        isCreatureSubtype, targetingSourceCard, deathGrantsOnPermanent));
             }
         }
         CardColor color = effect.colorOverride() != null ? effect.colorOverride() : sourceCard.getColor();
@@ -607,9 +674,13 @@ public class TokenCopySupport {
             }
         }
         if (effect.additionalSlotEffects() != null) {
-            effect.additionalSlotEffects().forEach((slot, effects) ->
-                    effects.forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect,
-                            com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)));
+            effect.additionalSlotEffects().forEach((slot, effects) -> {
+                if (deathGrantsOnPermanent && slot == EffectSlot.ON_DEATH) {
+                    return;
+                }
+                effects.forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect,
+                        com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT));
+            });
         }
         for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
             tokenCard.addActivatedAbility(ability);

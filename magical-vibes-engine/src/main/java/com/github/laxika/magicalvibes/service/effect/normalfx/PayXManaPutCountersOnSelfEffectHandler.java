@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaPutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -17,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -70,6 +74,19 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
             UUID selfId = e.useTriggeringPermanent() && entry.getTriggeringPermanentId() != null
                     ? entry.getTriggeringPermanentId()
                     : entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+            if (e.useTriggeringPermanent()) {
+                if (selfId != null) {
+                    gameData.enqueueTrigger(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            entry.getCard(),
+                            controllerId,
+                            cardName + "'s reflexive ability",
+                            new ArrayList<>(List.of(new PutCounterOnTargetPermanentEffect(e.counterType(), chosenValue))),
+                            selfId,
+                            (UUID) null));
+                }
+                return;
+            }
             Permanent self = gameQueryService.findPermanentById(gameData, selfId);
             if (self != null) {
                 permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), chosenValue);

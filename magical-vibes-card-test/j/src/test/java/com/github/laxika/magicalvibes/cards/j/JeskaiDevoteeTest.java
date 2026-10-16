@@ -85,8 +85,10 @@ class JeskaiDevoteeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, "WHITE");
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleListChoice(player1, "WHITE");
+        });
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }

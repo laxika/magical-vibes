@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
@@ -22,6 +23,6 @@ public class JeditOjanenOfEfrava extends Card {
                 Set.of(Keyword.FORESTWALK), Set.of()
         );
         addEffect(EffectSlot.ON_ATTACK, catWarriorToken);
-        addEffect(EffectSlot.ON_BLOCK, catWarriorToken);
+        addEffect(EffectSlot.ON_BLOCK, catWarriorToken, TriggerMode.ONCE_PER_BLOCK);
     }
 }

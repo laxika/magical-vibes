@@ -42,7 +42,7 @@ class JadeBearerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(bearsId)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be another Merfolk creature you control");
+                .hasMessageContaining("Target must be another Merfolk you control");
     }
 
     @Test
@@ -54,7 +54,7 @@ class JadeBearerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(merfolkId)))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be another Merfolk creature you control");
+                .hasMessageContaining("Target must be another Merfolk you control");
     }
 
     @Test

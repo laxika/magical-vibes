@@ -83,7 +83,7 @@ class JadeGuardianTest extends BaseCardTest {
 
             assertThatThrownBy(() -> harness.castCreature(player1, 0, bearsId))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Target must be a Merfolk creature you control");
+                    .hasMessageContaining("Target must be a Merfolk you control");
         }
 
         @Test
@@ -97,7 +97,7 @@ class JadeGuardianTest extends BaseCardTest {
 
             assertThatThrownBy(() -> harness.castCreature(player1, 0, opponentMerfolkId))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Target must be a Merfolk creature you control");
+                    .hasMessageContaining("Target must be a Merfolk you control");
         }
 
         @Test

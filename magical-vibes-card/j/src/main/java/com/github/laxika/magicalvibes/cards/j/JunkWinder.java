@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
@@ -28,6 +29,7 @@ public class JunkWinder extends Card {
                 EffectSlot.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
                 SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                        new SkipNextUntapEffect(TapUntapScope.TARGET)),
+                TriggerMode.PER_TOKEN);
     }
 }

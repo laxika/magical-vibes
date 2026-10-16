@@ -9,8 +9,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "18")
 public class JackdawSavior extends Card {
@@ -25,6 +30,13 @@ public class JackdawSavior extends Card {
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING), returnCreature));
-        addEffect(EffectSlot.ON_DEATH, returnCreature);
+        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .filter(new CardAllOfPredicate(List.of(
+                        new CardTypePredicate(CardType.CREATURE),
+                        new CardNotPredicate(new CardIsSelfPredicate()))))
+                .targetGraveyard(true)
+                .dynamicMaxManaValue(new SourceManaValueMinusOne())
+                .build());
     }
 }

@@ -23,13 +23,21 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param deferCastUntilEndOfTurn whether the hit instead receives a normal-timing free cast
  *                               permission until end of turn and remains exiled if not cast (Codie).
  * @param qualifyingCardFilter optional additional filter for the qualifying nonland card
+ * @param declinedCardStaysExiled whether a hit the caster declines to cast is left exiled instead of
+ *                                going to the bottom with the rest (Jodah, the Unifier: "Put the
+ *                                rest on the bottom")
  */
 public record CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter,
-                             boolean deferCastUntilEndOfTurn)
+                             boolean deferCastUntilEndOfTurn, boolean declinedCardStaysExiled)
         implements TriggeringSpellManaValueEffect {
 
+    public CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter,
+                         boolean deferCastUntilEndOfTurn) {
+        this(instantOrSorceryOnly, qualifyingCardFilter, deferCastUntilEndOfTurn, false);
+    }
+
     public CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter) {
-        this(instantOrSorceryOnly, qualifyingCardFilter, false);
+        this(instantOrSorceryOnly, qualifyingCardFilter, false, false);
     }
 
     public CascadeEffect() {

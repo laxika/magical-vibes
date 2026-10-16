@@ -61,6 +61,7 @@ class JinGitaxiasTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "The Great Synthesis")).isNotNull();
+        harness.passBothPriorities();
 
         harness.setHand(player1, cards(8));
         harness.forceActivePlayer(player1);

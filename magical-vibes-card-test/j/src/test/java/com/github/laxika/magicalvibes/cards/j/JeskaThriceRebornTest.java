@@ -220,6 +220,7 @@ class JeskaThriceRebornTest extends BaseCardTest {
         gd.recordCommanderCastFromCommandZone(player1.getId());
         Permanent jeska = harness.enterBattlefieldAndReturn(player1, new JeskaThriceReborn());
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(jeska),
                 0, null, bear.getId());

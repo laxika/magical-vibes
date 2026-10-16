@@ -13,9 +13,10 @@ public class JourneyForTheElixir extends Card {
     public JourneyForTheElixir() {
         // Search your library and graveyard for a basic land card and a card named Jiang Yanggu,
         // reveal them, put them into your hand, then shuffle.
+        // The two searches are one instruction, so the library is shuffled only after the second (CR 701.23h).
         addEffect(EffectSlot.SPELL, new SearchLibraryAndOrGraveyardForCardToHandEffect(
-                CardPredicateUtils.basicLand()));
+                CardPredicateUtils.basicLand(), false));
         addEffect(EffectSlot.SPELL, new SearchLibraryAndOrGraveyardForCardToHandEffect(
-                new CardNamedPredicate("Jiang Yanggu")));
+                new CardNamedPredicate("Jiang Yanggu"), true));
     }
 }

@@ -269,7 +269,7 @@ class JarOfEyeballsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Jar of Eyeballs");
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard()).isSameAs(jar.getCard());
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(jar.getCard().getId());
         harness.passBothPriorities();
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Jar of Eyeballs");

@@ -21,6 +21,7 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private int pendingBulkRemoval;
+    private boolean payAllCountersOnChosenPermanent;
     private int lastRemoved = 1;
 
     public RemoveCounterFromControlledPermanentsCostHandler(
@@ -78,7 +79,8 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
         }
 
         int available = counterCount(chosen);
-        int toRemove = pendingBulkRemoval > 0 ? pendingBulkRemoval : 1;
+        int toRemove = pendingBulkRemoval > 0 ? pendingBulkRemoval
+                : payAllCountersOnChosenPermanent ? available : 1;
         pendingBulkRemoval = 0;
         if (available < toRemove) {
             throw new IllegalStateException("Not enough " + counterLabel() + " counters on the chosen permanent");
@@ -119,7 +121,11 @@ public class RemoveCounterFromControlledPermanentsCostHandler implements Permane
                 return true;
             }
         }
-        return totalCounters(gameData, playerId) == remaining;
+        if (totalCounters(gameData, playerId) == remaining) {
+            payAllCountersOnChosenPermanent = true;
+            return true;
+        }
+        return false;
     }
 
     private boolean matchesFilter(GameData gameData, Permanent permanent) {

@@ -13,8 +13,8 @@ public class JuganTheRisingStar extends Card {
 
     public JuganTheRisingStar() {
         // When Jugan dies, you may distribute five +1/+1 counters among any number of target creatures.
-        // The division is chosen at resolution via pendingETBDamageAssignments; any creature on the
-        // battlefield may receive counters, not just ones you control.
+        // The division is announced as the trigger goes on the stack; any creature on the battlefield
+        // may receive counters, not just ones you control.
         addEffect(EffectSlot.ON_DEATH,
                 DistributeCountersAmongCreaturesOnDeathEffect.fixedAmongAnyCreatures(
                         CounterType.PLUS_ONE_PLUS_ONE, 5));

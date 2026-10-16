@@ -44,7 +44,7 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
             String playerName = gameData.playerIdToName.get(recipientId);
 
             Card emblemSource = new Card();
-            emblemSource.setName("");
+            emblemSource.setName(entry.getCard() != null ? entry.getCard().getName() : "");
             emblemSource.setType(CardType.EMBLEM);
             emblemSource.setCardText(emblemEffect.reminderText());
             emblemSource.setOwnerId(recipientId);

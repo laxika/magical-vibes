@@ -54,10 +54,10 @@ class JungleShrineTest extends BaseCardTest {
         for (String color : new String[]{"RED", "GREEN", "WHITE"}) {
             harness = new GameTestHarness();
             player1 = harness.getPlayer1();
+            gd = harness.getGameData();
             harness.skipMulligan();
 
             Permanent shrine = addShrineReady(player1);
-            GameData gd = harness.getGameData();
             ManaColor manaColor = ManaColor.valueOf(color);
 
             harness.activateAbility(player1, 0, 0, null, null);

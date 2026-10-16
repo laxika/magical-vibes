@@ -41,6 +41,16 @@ public class PreventionSupport {
                 .map(entry -> entry.getSourcePermanentId())
                 .filter(id -> !validIds.contains(id))
                 .forEach(validIds::add);
+        // CR 609.7a: an object referred to by a waiting replacement or prevention effect can be chosen as a
+        // source even after it has left the battlefield.
+        gameData.creatureDamageRedirectShields.stream()
+                .map(shield -> shield.damageSourceId())
+                .filter(id -> !validIds.contains(id))
+                .forEach(validIds::add);
+        gameData.playerSourceNextDamageRedirectShields.stream()
+                .map(shield -> shield.sourcePermanentId())
+                .filter(id -> !validIds.contains(id))
+                .forEach(validIds::add);
         return validIds;
     }
 

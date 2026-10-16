@@ -286,8 +286,7 @@ Chimeric Staff/Mass; `animateOwnLands` UEOT branch; `animateAllLands` — Natura
 `animateWhileSource` — Awakener Druid → `WHILE_SOURCE_ON_BATTLEFIELD` with the source id, so
 the floating entry and the flag revert together when the source leaves). **Deferred** (flag
 only, applies ONLY when no 7b entry exists — any real setter beats it regardless of relative
-order; cleanup debt): `animatedUntilEndOfCombat` (Jade Statue — `UNTIL_END_OF_COMBAT` floating
-expiry is not plumbed) and the AWAKENING-counter 8/8 (counters carry no timestamp; writers in
+order; cleanup debt): the AWAKENING-counter 8/8 (counters carry no timestamp; writers in
 `MultiPermanentChoiceHandlerService`). **Cleanup debt — direct `Permanent.getEffectivePower()/
 getEffectiveToughness()` callers that bypass the layered numbers** (the mana-spent-vs-P/T
 checks in `TriggerCollectionService`/`IncrementTriggerEffectHandler` were migrated to the
@@ -704,9 +703,9 @@ authoritative per-step record; this section is the reconciled summary.
   one-shot handlers write legacy `Permanent` fields AND the floating effect; the fields feed
   LKI, mid-pass predicate leaves, null-`GameData` fallbacks, and views. `transientSubtypes`/
   `transientLandTypeOverride` are still field-only (one-shot type state is not floating).
-- **Flag-only 7b stragglers**: `animatedUntilEndOfCombat` (no UNTIL_END_OF_COMBAT floating
-  expiry plumbed) and the AWAKENING-counter 8/8 (counters carry no timestamp) — any real 7b
-  entry beats them regardless of relative order.
+- **Flag-only 7b stragglers**: the AWAKENING-counter 8/8 (counters carry no timestamp) — any
+  real 7b entry beats it regardless of relative order. (`animatedUntilEndOfCombat` now also
+  adds an `UNTIL_END_OF_COMBAT` floating base P/T, expired with the other end-of-combat effects.)
 - **LKI misses layered state**: a dying creature's last-known power
   (`DeathTriggerCollectorService`) misses an active 7d switch — the departed permanent has no
   state in the pass.

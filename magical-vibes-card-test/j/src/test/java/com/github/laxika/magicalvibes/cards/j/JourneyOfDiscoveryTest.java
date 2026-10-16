@@ -161,6 +161,7 @@ class JourneyOfDiscoveryTest extends BaseCardTest {
     @DisplayName("Additional land permission expires on the next turn")
     void additionalLandPermissionExpires() {
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         cast(new int[]{1}, false, List.of(new JourneyOfDiscovery()),
                 List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

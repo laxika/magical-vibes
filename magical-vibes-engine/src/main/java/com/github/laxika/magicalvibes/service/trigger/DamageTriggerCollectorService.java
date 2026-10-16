@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherChosenPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -1010,7 +1011,7 @@ public class DamageTriggerCollectorService {
                 match.gameData(), match.permanent(), effect);
         if (effectToEnqueue == null) return false;
         OncePerTurnTriggerSupport.markIfNeeded(match.gameData(), match.permanent(), effect);
-        return enqueueAnyCreatureDealtDamage(match, effectToEnqueue, dc);
+        return enqueueAnyCreatureDealtDamage(match, effect, dc);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE)
@@ -1025,19 +1026,35 @@ public class DamageTriggerCollectorService {
     private boolean enqueueAnyCreatureDealtDamage(TriggerMatchContext match, CardEffect effect,
                                                    TriggerContext.AnyCreatureDealtDamage dc) {
         GameData gameData = match.gameData();
+        boolean markOnAcceptance = effect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance();
+        CardEffect unwrapped = markOnAcceptance ? ((OncePerTurnTriggerEffect) effect).wrapped() : effect;
+        if (unwrapped instanceof MayEffect may
+                && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || may.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+            // The target of an optional targeted trigger is chosen as the ability goes on the stack (CR 603.3d);
+            // only the choice to use the option waits until resolution (CR 603.5).
+            Permanent sourcePermanent = match.permanent();
+            Card sourceCard = sourcePermanent.getCard();
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), false,
+                    targetFilterForTriggeredEffect(sourceCard, may), dc.damageDealt(),
+                    sourcePermanent.getId(), new Permanent(sourcePermanent)));
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} targeted optional trigger for damage dealt to a creature",
+                    gameData.id, sourceCard.getName());
+            return true;
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                new ArrayList<>(List.of(unwrapped)),
                 null,
                 match.permanent().getId()
         );
-        boolean targetChosenAtResolution = effect instanceof MayEffect may
-                && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || may.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        entry.setTargetId(targetChosenAtResolution ? null : dc.damagedCreature().getId());
+        entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+        entry.setTargetId(dc.damagedCreature().getId());
         entry.setEventValue(dc.damageDealt());
         entry.setTriggeringPermanentId(dc.damagedCreature().getId());
         entry.setTriggeringPermanentControllerId(dc.damagedCreatureControllerId());
@@ -1907,6 +1924,14 @@ public class DamageTriggerCollectorService {
         if (!sourceHasColor(match.gameData(), sd, trigger.color())) return false;
 
         GameData gameData = match.gameData();
+        // "Red creature or spell": a permanent source only counts while it is a creature.
+        if (sd.sourcePermanentId() != null) {
+            Permanent damageSource = gameQueryService.findPermanentById(gameData, sd.sourcePermanentId());
+            boolean sourceIsCreature = damageSource != null
+                    ? gameQueryService.isCreature(gameData, damageSource)
+                    : sd.sourceCard().hasType(CardType.CREATURE);
+            if (!sourceIsCreature) return false;
+        }
         UUID recipientId = sd.sourceControllerId();
         if (recipientId == null || !gameData.playerIds.contains(recipientId)) return false;
 

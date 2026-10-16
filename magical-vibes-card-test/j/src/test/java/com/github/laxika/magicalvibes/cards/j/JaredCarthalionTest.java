@@ -187,6 +187,7 @@ class JaredCarthalionTest extends BaseCardTest {
     @Test
     void minusSixCanReturnAnAllColorNoncreatureCard() {
         addReadyJared(player1, 7);
+        harness.setHand(player1, List.of());
         Card otherJared = new JaredCarthalion();
         harness.setGraveyard(player1, List.of(otherJared));
         harness.setLibrary(player1, List.of(new JaredCarthalion()));

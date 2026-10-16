@@ -169,6 +169,7 @@ class JaceReawakenedTest extends BaseCardTest {
         addReadyJace(player1);
         harness.setLibrary(player1, List.of(new Mountain(), new Mountain()));
         harness.setLibrary(player2, List.of(new Mountain(), new Mountain()));
+        harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -221,6 +222,7 @@ class JaceReawakenedTest extends BaseCardTest {
         jace.setCounterCount(CounterType.LOYALTY, 6);
         harness.setLibrary(player1, List.of(new Mountain(), new Mountain()));
         harness.setLibrary(player2, List.of(new Mountain(), new Mountain()));
+        harness.setHand(player2, List.of());
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 

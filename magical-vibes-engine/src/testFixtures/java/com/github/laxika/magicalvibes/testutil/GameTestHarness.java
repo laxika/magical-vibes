@@ -1601,9 +1601,15 @@ public class GameTestHarness {
     }
 
     public void castInstantWithConvoke(Player player, int cardIndex, List<UUID> targetIds, List<UUID> convokeCreatureIds) {
-        castHandCard(player, cardIndex, null, targetIds, 0, false,
+        Card card = handCard(player, cardIndex);
+        // A client sends the one target of a single-target instant or sorcery as targetId, not in targetIds.
+        boolean singleSpellTarget = card != null && targetIds != null && targetIds.size() == 1
+                && card.getMaxTargets() <= 1
+                && (card.getType() == CardType.INSTANT || card.getType() == CardType.SORCERY);
+        UUID singleTargetId = singleSpellTarget ? targetIds.getFirst() : null;
+        castHandCard(player, cardIndex, singleTargetId, singleSpellTarget ? List.of() : targetIds, 0, false,
                 (castTargetId, castTargetIds) ->
-                        gameService.playCard(gameData, player, cardIndex, 0, null, null, castTargetIds,
+                        gameService.playCard(gameData, player, cardIndex, 0, castTargetId, null, castTargetIds,
                                 convokeCreatureIds));
     }
 

@@ -997,13 +997,14 @@ public class MayCastHandlerService {
         boolean validScope = graveyardOwnerId != null
                 && castEffect.scope().graveyardOwners(gameData.orderedPlayerIds, player.getId())
                 .contains(graveyardOwnerId);
+        UUID abilitySourceCardId = abilitySourceCardId(gameData, ability, cardToCast);
         boolean matchesFilter = graveyardCard != null
                 && predicateEvaluationService.matchesCardPredicate(
-                graveyardCard, castEffect.filter(), cardToCast.getId(), gameData, graveyardOwnerId,
+                graveyardCard, castEffect.filter(), abilitySourceCardId, gameData, graveyardOwnerId,
                 ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue());
         boolean matchesAdventureFilter = graveyardCard != null && adventureFace != null
                 && predicateEvaluationService.matchesCardPredicate(
-                adventureFace, castEffect.filter(), cardToCast.getId(), gameData, graveyardOwnerId,
+                adventureFace, castEffect.filter(), abilitySourceCardId, gameData, graveyardOwnerId,
                 ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue());
         boolean castAsAdventure = !matchesFilter && matchesAdventureFilter;
         if (!validScope || (!matchesFilter && !castAsAdventure)) {
@@ -1145,6 +1146,17 @@ public class MayCastHandlerService {
         int graveyardIndex = graveyard.indexOf(graveyardCard);
         graveyard.remove(graveyardIndex);
         return graveyardIndex;
+    }
+
+    /**
+     * Returns the card that the cast-permission ability came from (e.g. Jarsyl for its own
+     * graveyard cast), so source-relative filters read that card rather than the card being cast.
+     * Falls back to the cast card when the source permanent has already left the battlefield.
+     */
+    private UUID abilitySourceCardId(GameData gameData, PendingMayAbility ability, Card cardToCast) {
+        Permanent source = ability.sourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+        return source == null ? cardToCast.getId() : source.getCard().getId();
     }
 
     private Card castableAdventureFace(Card card) {

@@ -3840,10 +3840,13 @@ public class SpellCastingService {
                         filteredSpellEffects, effectiveXValue);
         // "Destroy target artifact. For each additional payment, destroy another target artifact":
         // the announced X is the number of targets the payments buy, so it must match the payments
-        // actually made (one base target plus one per repetition). Spells whose repeatable cost
-        // buys no targets (Taste of Paradise) read the payment count straight off the stack entry,
-        // so their X is unconstrained.
-        if (additionalCosts.repeatableManaCost() != null && card.hasXScaledTargets()
+        // actually made (one base target plus one per repetition). Only a target group whose count is
+        // exactly X is bound to the payments; an X that merely caps the targets (Strength of the
+        // Tajuru) or sets an amount, and spells whose repeatable cost buys no targets (Taste of
+        // Paradise), leave the announced X unconstrained.
+        if (additionalCosts.repeatableManaCost() != null
+                && card.getSpellTargets().stream().anyMatch(spellTarget -> spellTarget.isXScaled()
+                && spellTarget.getMinTargets() == spellTarget.getMaxTargets())
                 && effectiveXValue != 1 + repeatedAdditionalCosts.size()) {
             throw new IllegalStateException("X must be " + (1 + repeatedAdditionalCosts.size())
                     + " for the additional costs paid");
@@ -9311,7 +9314,21 @@ public class SpellCastingService {
                 : graveyardBestowCast.getCost(ManaCastingCost.class)
                 .orElseThrow(() -> new IllegalStateException("Bestow cost has no mana component"))
                 .manaCost();
-        Card card = graveyardBestowCast != null ? bestowAuraSpellCopy(physicalGraveyardCard) : physicalGraveyardCard;
+        // A modal double-faced card cast from the graveyard through a permission selects its back face with
+        // X = 1, as in the hand cast path; it is then cast with the back face's characteristics (CR 712.8f)
+        // while the front card stays the physical card.
+        final boolean graveyardModalBackFace = graveyardBestowCast == null
+                && physicalGraveyardCard.isModalDoubleFaced()
+                && physicalGraveyardCard.getBackFaceCard() != null
+                && !physicalGraveyardCard.getBackFaceCard().hasType(CardType.LAND)
+                && effectiveXValue == 1;
+        if (graveyardModalBackFace) {
+            effectiveXValue = 0;
+        }
+        Card card = graveyardBestowCast != null ? bestowAuraSpellCopy(physicalGraveyardCard)
+                : graveyardModalBackFace
+                ? physicalGraveyardCard.createRuntimeCopyWithFace(physicalGraveyardCard.getBackFaceCard())
+                : physicalGraveyardCard;
         if (card.effectiveFlashbackCast().isEmpty()
                 && card.getCastingOption(AdventureCast.class).isPresent()
                 && (castingPermissionService.hasGrantedGraveyardAdventureCastPermission(gameData, card, playerId)
@@ -9410,6 +9427,8 @@ public class SpellCastingService {
                 && flashbackOpt.isEmpty() && !isDisturb && !grantedFlashback
                 && !isHarmonize
                 && grantedFlashbackOption.isPresent();
+        boolean emblemOnlyFlashback = emblemFlashback
+                && castingPermissionService.isFlashbackGrantedOnlyByEmblem(gameData, playerId, card);
         boolean grantedGraveyardCardCast = flashbackOpt.isEmpty()
                 && !isDisturb
                 && !isHarmonize
@@ -9714,7 +9733,8 @@ public class SpellCastingService {
         }
 
         // Validate and pay flashback / disturb / graveyard cast cost
-        boolean paysFlashbackCost = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
+        boolean paysFlashbackCost = flashbackOpt.isPresent() || grantedFlashback
+                || emblemFlashback && !emblemOnlyFlashback;
         int additionalCost = castingCostService.getCastCostModifier(
                 gameData, playerId, card, paysFlashbackCost, effectiveXValue, Zone.GRAVEYARD);
         if (castingPermissionService.flashTimingRequiresAlternateCast(gameData, playerId, card)) {
@@ -9973,6 +9993,7 @@ public class SpellCastingService {
             );
             stackEntry.setSourceZone(Zone.GRAVEYARD);
             stackEntry.setCastWithWarp(castWithWarp);
+            stackEntry.setCastTransformed(graveyardModalBackFace);
             if (isGraveyardCast && graveyardCastOpt.orElseThrow().alternateManaCost() != null) {
                 stackEntry.setAlternateCost(true);
             }
@@ -10461,6 +10482,8 @@ public class SpellCastingService {
                 && filteredGraveyardPermission.get().permission().exileAfterResolution())
                 || isMayCastTopInstantOrSorcery
                 || (isGraveyardCast && graveyardCastOpt.orElseThrow().exileAfterResolution())) {
+            stackEntry.setExileInsteadOfGraveyard(true);
+        } else if (emblemOnlyFlashback) {
             stackEntry.setExileInsteadOfGraveyard(true);
         } else if (flashbackOpt.isPresent() || grantedFlashback || emblemFlashback || isJumpStart) {
             stackEntry.setCastWithFlashback(true);
@@ -12413,6 +12436,25 @@ public class SpellCastingService {
         }
     }
 
+    /**
+     * Graveyard casts of instants and sorceries may spend instant/sorcery-only mana (for example
+     * "spend this mana only to cast instant or sorcery spells"), which is promoted for the payment and
+     * restored afterwards for the unspent remainder.
+     */
+    private <T> T withInstantSorceryOnlyManaForGraveyardCast(GameData gameData, UUID playerId, Card card,
+                                                             Supplier<T> action) {
+        if (!card.hasType(CardType.INSTANT) && !card.hasType(CardType.SORCERY)) {
+            return withMulticoloredSpellMana(gameData, playerId, card, action);
+        }
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        ManaPool.InstantSorceryOnlyManaState promoted = pool.promoteInstantSorceryOnlyMana();
+        try {
+            return withMulticoloredSpellMana(gameData, playerId, card, action);
+        } finally {
+            pool.restorePromotedInstantSorceryOnlyMana(promoted);
+        }
+    }
+
     private ManaPool.MonocoloredSpellManaState promoteMonocoloredSpellMana(
             GameData gameData, Card card, ManaPool pool) {
         var colors = gameQueryService.getEffectiveCardColors(gameData, card);
@@ -12722,8 +12764,10 @@ public class SpellCastingService {
                                             Map<UUID, Integer> before,
                                             Map<UUID, Integer> after) {
         before.forEach((sourceId, amountBefore) -> {
-            if (amountBefore > after.getOrDefault(sourceId, 0)) {
+            int spent = amountBefore - after.getOrDefault(sourceId, 0);
+            if (spent > 0) {
                 gameData.addSpellCastManaSource(card.getId(), sourceId);
+                gameData.addSpellCastManaSourceAmount(card.getId(), sourceId, spent);
             }
         });
     }
@@ -13837,9 +13881,9 @@ public class SpellCastingService {
         } else if (!(dividedEffect.totalDamage() instanceof Fixed)) {
             int expectedTotal = amountEvaluationService.evaluate(gameData, dividedEffect.totalDamage(),
                     com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId, resolvedXValue));
-            // "Any number of targets" may be zero, and then there is nothing to divide.
-            boolean noTargetsChosen = assignments.isEmpty() && card.getMinTargets() == 0;
-            if (totalDamage != expectedTotal && !noTargetsChosen) {
+            // CR 601.2d: the amount is divided among one or more targets, so a positive total needs at
+            // least one assigned target even when the card's "any number of targets" wording allows zero.
+            if (totalDamage != expectedTotal) {
                 throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
             }
             if (dividedEffect.maxTargets() > 0 && assignments.size() > dividedEffect.maxTargets()) {
@@ -15203,7 +15247,9 @@ public class SpellCastingService {
         }
 
         if (usesNormalManaCost) {
-            boolean cardHasFlashback = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
+            boolean cardHasFlashback = flashbackOpt.isPresent() || grantedFlashback
+                    || emblemFlashback && !castingPermissionService.isFlashbackGrantedOnlyByEmblem(
+                    gameData, player.getId(), card);
             String grantedFlashbackManaCost = emblemFlashback
                     ? grantedFlashbackOpt.flatMap(flashback -> flashback.getCost(ManaCastingCost.class)
                     .map(ManaCastingCost::manaCost)).orElse(card.getManaCost())
@@ -15218,7 +15264,7 @@ public class SpellCastingService {
             boolean anyManaType = castingPermissionService.hasAnyManaTypePermission(
                     gameData, playerId, card.getId());
             int paymentAdditionalCost = additionalCost - delveReduction;
-            withMulticoloredSpellMana(gameData, playerId, card, () -> {
+            withInstantSorceryOnlyManaForGraveyardCast(gameData, playerId, card, () -> {
                 if (card.isRequiresNoMana()) {
                     int manaXValue = cost.hasX() ? effectiveXValue : 0;
                     ManaPool noManaPool = new ManaPool();

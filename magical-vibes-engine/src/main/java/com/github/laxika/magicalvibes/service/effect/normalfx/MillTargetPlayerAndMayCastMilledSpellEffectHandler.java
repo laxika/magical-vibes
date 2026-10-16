@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastMilledSpellWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndMayCastMilledSpellEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -20,8 +21,9 @@ import org.springframework.stereotype.Component;
  * paying its mana cost." (Jace's Mindseeker.)
  *
  * <p>Only the cards milled by this resolution are eligible, so the milled list is captured and each
- * instant or sorcery still sitting in a graveyard is offered as its own {@link PendingMayAbility};
- * the may handler casts the accepted one and clears the remaining offers.
+ * instant or sorcery is offered as its own {@link PendingMayAbility}. A milled card still in a
+ * graveyard is cast from there; one a replacement such as Rest in Peace put into exile is cast from
+ * exile instead. The accepted offer casts the card and clears the remaining offers.
  */
 @Component
 @RequiredArgsConstructor
@@ -41,20 +43,30 @@ public class MillTargetPlayerAndMayCastMilledSpellEffectHandler implements Norma
         UUID targetPlayerId = entry.getTargetId();
         if (targetPlayerId == null || !gameData.playerDecks.containsKey(targetPlayerId)) return;
 
-        List<Card> milled = graveyardService.resolveMillPlayer(gameData, targetPlayerId, e.count());
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(gameData, targetPlayerId, e.count());
 
         List<Card> castable = milled.stream()
                 .filter(c -> c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY))
-                .filter(c -> gameQueryService.findCardInGraveyardById(gameData, c.getId()) != null)
+                .filter(c -> gameQueryService.findCardInGraveyardById(gameData, c.getId()) != null
+                        || gameQueryService.findCardInExileById(gameData, c.getId()) != null)
                 .toList();
 
         for (int i = castable.size() - 1; i >= 0; i--) {
             Card card = castable.get(i);
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    card, entry.getControllerId(),
-                    List.of(new MayCastMilledSpellWithoutPayingManaCostEffect()),
-                    "Cast " + card.getName() + " without paying its mana cost?"
-            ));
+            if (gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null) {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        card, entry.getControllerId(),
+                        List.of(new MayCastMilledSpellWithoutPayingManaCostEffect()),
+                        "Cast " + card.getName() + " without paying its mana cost?"
+                ));
+            } else {
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        card, entry.getControllerId(),
+                        List.of(new MayPlayExiledCardWithoutPayingManaCostEffect(true)),
+                        "Cast " + card.getName() + " without paying its mana cost?",
+                        card.getId()
+                ));
+            }
         }
     }
 }

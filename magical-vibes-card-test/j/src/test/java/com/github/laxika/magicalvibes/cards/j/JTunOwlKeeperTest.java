@@ -120,10 +120,10 @@ class JTunOwlKeeperTest extends BaseCardTest {
     void cumulativeUpkeepCanBePaidWithMixedMana() {
         Permanent owlKeeper = harness.addToBattlefieldAndReturn(player1, new JTunOwlKeeper());
         owlKeeper.setCounterCount(CounterType.AGE, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -139,18 +139,20 @@ class JTunOwlKeeperTest extends BaseCardTest {
     void insufficientPaymentCreatesBirdsWithoutPartialPayment() {
         Permanent owlKeeper = harness.addToBattlefieldAndReturn(player1, new JTunOwlKeeper());
         owlKeeper.setCounterCount(CounterType.AGE, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
+        // CR 106.4: unspent mana empties at the end of the upkeep step, so the unspent mana is checked
+        // before the step ends (auto-pass moves on once the Birds trigger has resolved).
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(owlKeeper);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(owlKeeper.getCard());
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(countPermanents(player1, "Bird")).isEqualTo(3);
         assertThat(countPermanents(player2, "Bird")).isZero();
     }

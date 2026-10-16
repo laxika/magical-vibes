@@ -242,18 +242,15 @@ public class AnimationSupport {
 
         boolean untilEndOfCombat = effect.duration() == EffectDuration.UNTIL_END_OF_COMBAT;
         if (untilEndOfCombat) {
-            // Deferred from the layered 7b migration: UNTIL_END_OF_COMBAT floating expiry is
-            // not plumbed yet (see agent-docs/LAYER_SYSTEM.md cleanup debt) — the animation
-            // stays flag-only and applies only when no layered 7b entry exists.
             self.setAnimatedUntilEndOfCombat(true);
         } else {
             self.setAnimatedUntilEndOfTurn(true);
-            if (effect.dynamicPowerToughness() && (effect.power() != null || effect.toughness() != null)) {
-                addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
-            } else if (effect.power() != null || effect.toughness() != null) {
-                addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
-                        EffectDuration.UNTIL_END_OF_TURN);
-            }
+        }
+        if (effect.dynamicPowerToughness() && (effect.power() != null || effect.toughness() != null)) {
+            addDynamicAnimationBasePtFloatingEffect(gameData, entry, self, effect);
+        } else if (effect.power() != null || effect.toughness() != null) {
+            addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness,
+                    untilEndOfCombat ? EffectDuration.UNTIL_END_OF_COMBAT : EffectDuration.UNTIL_END_OF_TURN);
         }
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
@@ -436,7 +433,7 @@ public class AnimationSupport {
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
         for (Permanent perm : battlefield) {
-            if (!perm.getCard().hasType(CardType.LAND)) {
+            if (!gameQueryService.isLand(gameData, perm)) {
                 continue;
             }
             perm.setAnimatedUntilEndOfTurn(true);
@@ -449,6 +446,14 @@ public class AnimationSupport {
             perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
             addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness,
                     EffectDuration.UNTIL_END_OF_TURN);
+            // Layer 4 creature type as a timestamped floating effect, so it still applies to a land whose
+            // card types were overridden by an earlier effect (e.g. Song of the Dryads, CR 613.1d/613.7).
+            addAnimationCardTypeFloatingEffect(gameData, entry, perm, CardType.CREATURE,
+                    EffectDuration.UNTIL_END_OF_TURN);
+            for (CardType grantedType : effect.grantedCardTypes()) {
+                addAnimationCardTypeFloatingEffect(gameData, entry, perm, grantedType,
+                        EffectDuration.UNTIL_END_OF_TURN);
+            }
 
             log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
         }

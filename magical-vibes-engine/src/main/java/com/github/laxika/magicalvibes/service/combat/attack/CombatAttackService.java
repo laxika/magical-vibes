@@ -47,7 +47,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCre
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
@@ -88,6 +89,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalke
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentsAttackWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOrMoreOfYourOpponents;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
@@ -109,7 +111,6 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
@@ -2200,9 +2201,11 @@ public class CombatAttackService {
 
                 // An intervening-if (CR 603.4) on the ability stops it from triggering at all, so its
                 // targets are not chosen for a trigger that would never go on the stack (e.g. a Class's
-                // higher-level ability while the Class is a lower level).
+                // higher-level ability while the Class is a lower level). "Attacks a player alone" was
+                // already checked against the attacking creature above, not the ability's source.
                 matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
                         && ce.interveningIf()
+                        && !(ce.condition() instanceof AttacksPlayerAlone)
                         && !conditionEvaluationService.isMet(gameData, ce.condition(),
                                 ConditionContext.forPermanent(perm, playerId)));
 
@@ -2215,6 +2218,25 @@ public class CombatAttackService {
                         && ce.condition() instanceof AttacksPlayerAlone ? ce.wrapped() : e);
 
                 if (matchingEffects.isEmpty()) continue;
+
+                // A modal choice made while the trigger goes on the stack (CR 603.3c) is prompted now,
+                // with the attacking creature as the triggering permanent for its mode effects.
+                if (matchingEffects.size() == 1
+                        && matchingEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
+                    int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
+                    try {
+                        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                perm.getCard(), playerId, modal.choice(), perm.getId(), false, false, null,
+                                attacker.getAttackTarget(), attacker.getId(), false));
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                        log.info("Game {} - {} attack trigger queued for mode selection",
+                                gameData.id, perm.getCard().getName());
+                    } finally {
+                        gameData.restoreTriggeredAbilityCopies(previousCopies);
+                    }
+                    continue;
+                }
 
                 if (matchingEffects.size() == 1
                         && matchingEffects.getFirst() instanceof ChooseModeNotYetChosenThisTurnEffect modal) {
@@ -2890,6 +2912,13 @@ public class CombatAttackService {
                                 effectsByAttackedOpponent
                                         .computeIfAbsent(attackedOpponentId, ignored -> new ArrayList<>())
                                         .add(conditional.wrapped());
+                            }
+                            continue;
+                        }
+                        if (conditional.condition() instanceof PlayerAttacksOneOrMoreOfYourOpponents) {
+                            if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                    ConditionContext.forPermanent(perm, permController).withTargetId(playerId))) {
+                                playerAttackEffects.add(conditional.wrapped());
                             }
                             continue;
                         }
@@ -3572,11 +3601,10 @@ public class CombatAttackService {
         for (DelayedAttackDamage action : gameData.getDelayedActions(DelayedAttackDamage.class)) {
             if (!action.controllerId().equals(attackingPlayerId)) continue;
 
+            // "that creature" refers to the creature chosen when the delayed ability was created: the
+            // trigger doesn't target again, so control changes and later hexproof don't stop it.
             Permanent target = gameQueryService.findPermanentById(gameData, action.targetPermanentId());
-            UUID targetControllerId = target == null
-                    ? null : gameQueryService.findPermanentController(gameData, target.getId());
-            if (target == null || !gameQueryService.isCreature(gameData, target)
-                    || targetControllerId == null || attackingPlayerId.equals(targetControllerId)) {
+            if (target == null || !gameQueryService.isCreature(gameData, target)) {
                 continue;
             }
 
@@ -3585,10 +3613,11 @@ public class CombatAttackService {
                     action.sourceCard(),
                     action.controllerId(),
                     action.sourceCard().getName() + "'s delayed trigger",
-                    List.of(new DealDamageToTargetCreatureEffect(new EventValue())),
+                    List.of(new DealDamageToTargetCreatureEffect(new PermanentCount(
+                            new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER))),
                     action.targetPermanentId(),
                     action.sourcePermanentId());
-            entry.setEventValue(attackerIndices.size());
+            entry.setNonTargeting(true);
             gameData.stack.add(entry);
             gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
             log.info("Game {} - {} delayed attack damage trigger fires", gameData.id,

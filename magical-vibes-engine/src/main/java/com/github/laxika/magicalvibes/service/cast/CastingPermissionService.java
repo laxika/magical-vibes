@@ -2117,6 +2117,21 @@ public class CastingPermissionService {
         if (!playerId.equals(gameQueryService.findGraveyardOwnerById(gameData, card.getId()))) {
             return Optional.empty();
         }
+        Optional<FlashbackCast> fromStatic = findStaticGrantedFlashback(gameData, playerId, card);
+        return fromStatic.isPresent() ? fromStatic : findEmblemGrantedFlashback(gameData, playerId, card);
+    }
+
+    /**
+     * True when the card's flashback option comes only from an emblem. Such a spell is cast for its
+     * mana cost and the emblem's own exile-instead-of-graveyard replacement applies; it is not cast
+     * with flashback (CR 702.34a), so it is not treated as a flashback cast.
+     */
+    public boolean isFlashbackGrantedOnlyByEmblem(GameData gameData, UUID playerId, Card card) {
+        return findGrantedFlashback(gameData, playerId, card).isPresent()
+                && findStaticGrantedFlashback(gameData, playerId, card).isEmpty();
+    }
+
+    private Optional<FlashbackCast> findStaticGrantedFlashback(GameData gameData, UUID playerId, Card card) {
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) continue;
@@ -2151,6 +2166,10 @@ public class CastingPermissionService {
                 }
             }
         }
+        return Optional.empty();
+    }
+
+    private Optional<FlashbackCast> findEmblemGrantedFlashback(GameData gameData, UUID playerId, Card card) {
         for (Emblem emblem : gameData.emblems) {
             if (!emblem.controllerId().equals(playerId)) continue;
             for (CardEffect effect : emblem.staticEffects()) {

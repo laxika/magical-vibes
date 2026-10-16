@@ -49,7 +49,8 @@ public class ReckonerShakedown extends Card {
                 null,
                 null,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2, creatureOrVehicle),
-                0
+                0,
+                false
         ));
     }
 }

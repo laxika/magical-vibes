@@ -401,6 +401,7 @@ public class LibrarySearchSupport {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
                     LibrarySearchParams.builder(searcherId, new ArrayList<>(nonland))
                             .targetPlayerId(targetPlayerId)
+                            .canFailToFind(true)
                             .destination(LibrarySearchDestination.EXILE_FOR_FREE_CAST)
                             .shuffleAfterSelection(true)
                             .build(),

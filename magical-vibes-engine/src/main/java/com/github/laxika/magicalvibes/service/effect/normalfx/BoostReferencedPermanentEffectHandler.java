@@ -61,9 +61,13 @@ public class BoostReferencedPermanentEffectHandler implements NormalEffectHandle
             case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
             case ATTACHED -> {
                 Permanent source = findPermanent(gameData, entry.getSourcePermanentId());
-                yield source == null || !source.isAttached()
-                        ? null
-                        : findPermanent(gameData, source.getAttachedTo());
+                if (source != null && source.isAttached()) {
+                    yield findPermanent(gameData, source.getAttachedTo());
+                }
+                // The equipment or aura left the battlefield in response: the ability still affects the
+                // permanent it was attached to when it was activated (CR 608.2h).
+                Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
+                yield attachedSnapshot == null ? null : findPermanent(gameData, attachedSnapshot.getId());
             }
             case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
         };

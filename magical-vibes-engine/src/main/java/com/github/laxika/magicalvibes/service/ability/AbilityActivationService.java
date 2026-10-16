@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostModifierEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
@@ -181,6 +182,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
@@ -312,6 +314,17 @@ public class AbilityActivationService {
         return amount;
     }
 
+    private int tapManaAbilityIndex(GameData gameData, Permanent permanent) {
+        List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, permanent);
+        for (int i = 0; i < abilities.size(); i++) {
+            ActivatedAbility ability = abilities.get(i);
+            if (ability.isRequiresTap() && isManaAbility(ability)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -340,7 +353,13 @@ public class AbilityActivationService {
 
         if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()
                 && overriddenManaColors.isEmpty() && intrinsicBasicLandManaColors.isEmpty()) {
-            throw new IllegalStateException("Permanent has no tap effects");
+            int abilityIndex = tapManaAbilityIndex(gameData, permanent);
+            if (abilityIndex < 0) {
+                throw new IllegalStateException("Permanent has no tap effects");
+            }
+            activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, null, null, null,
+                    null, null, null, null, permanent, null);
+            return;
         }
         if (gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId)) {
             throw new IllegalStateException("Creature has summoning sickness");
@@ -1903,6 +1922,26 @@ public class AbilityActivationService {
         }
     }
 
+    private void resolveGraveyardManaAbility(GameData gameData, Player player, Card card,
+                                             ActivatedAbility ability, int xValue) {
+        UUID playerId = player.getId();
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        AmountContext context = new AmountContext(playerId, null, null, xValue, 0, false, null, List.of(), card);
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof AwardManaEffect awardMana) {
+                int amount = amountEvaluationService.evaluate(gameData, awardMana.amount(), context);
+                if (amount > 0) {
+                    ManaProductionSupport.add(gameData, playerId, pool, awardMana.color(), amount);
+                }
+            } else if (effect instanceof AwardAnyColorManaEffect anyColor) {
+                int amount = amountEvaluationService.evaluate(gameData, anyColor.amount(), context);
+                AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData, playerId,
+                        anyColor, amount, false, null, card);
+            }
+        }
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
     private void completeGraveyardAbilityActivation(GameData gameData, Player player, Card card,
                                                     ActivatedAbility ability, int xValue, UUID targetId) {
         completeGraveyardAbilityActivation(gameData, player, card, ability, xValue, targetId, null);
@@ -1917,6 +1956,13 @@ public class AbilityActivationService {
                 lifeSupport.applyLifePayment(gameData, playerId,
                         lifeCost.effectiveAmount(gameData.getLife(playerId)), card.getName());
             }
+        }
+
+        // CR 605.3b: a graveyard-activated mana ability (Jack-o'-Lantern) doesn't use the stack and
+        // resolves as soon as its costs are paid.
+        if (isManaAbility(ability)) {
+            resolveGraveyardManaAbility(gameData, player, card, ability, xValue);
+            return;
         }
 
         // Filter out cost effects for the snapshot
@@ -5337,8 +5383,11 @@ public class AbilityActivationService {
                     candidates.stream().map(Card::getId).toList(), craftMaterialCost);
         }
 
+        // Graveyard cards chosen through a targetless effect (Jack-o'-Lantern's ExileCardsFromGraveyardEffect)
+        // are still targets, so the ability must be checked for illegal targets on resolution (CR 608.2b).
         boolean nonTargeting = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
-                && !EffectResolution.needsTarget(activationEffects, List.of(), false, false);
+                && !EffectResolution.needsTarget(activationEffects, List.of(), false, false)
+                && (targetIds == null || targetIds.isEmpty());
         UUID resolutionTargetId = targetId;
         Zone resolutionTargetZone = targetZone;
         int stackSizeBeforeCompleting = gameData.stack.size();

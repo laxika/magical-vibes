@@ -1232,11 +1232,22 @@ public class SpellCastTriggerCollectorService {
         return addColorCounterTrigger(match, trigger.amount());
     }
 
+    /**
+     * A "when you spend this mana to cast ..." rider on a mana ability is a separate delayed trigger for
+     * each mana produced by its source that was spent on the spell (CR 106.6), so it fires once per such mana.
+     */
     @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId(),
-                sc.exiledSourcePermanentId());
+        int copies = trigger.requiresManaProducedBySource() && match.permanent() != null
+                ? match.gameData().getSpellCastManaSourceAmount(sc.spellCard().getId(), match.permanent().getId())
+                : 1;
+        boolean collected = false;
+        for (int i = 0; i < Math.max(1, copies); i++) {
+            collected |= handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId(),
+                    sc.exiledSourcePermanentId());
+        }
+        return collected;
     }
 
     @CollectsTrigger(value = SpellCastTriggerEffect.class,
@@ -1593,7 +1604,7 @@ public class SpellCastTriggerCollectorService {
                         trigger.mayChooseNewTargets(), trigger.grantHasteToPermanentSpell(),
                         markOnAcceptance, false, trigger.permanentSpellToken(),
                         trigger.sacrificeAtEndStep(), trigger.additionalSubtypes(),
-                        trigger.powerOverride(), trigger.toughnessOverride());
+                        trigger.powerOverride(), trigger.toughnessOverride(), trigger.copies());
         if (trigger.beforeCopyEffect() != null) {
             copyEffect = SequenceEffect.of(trigger.beforeCopyEffect(), copyEffect);
         }

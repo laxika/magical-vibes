@@ -34,6 +34,7 @@ import java.util.Set;
  * @param tokenCopy        whether the copied creature spell becomes a token as it resolves
  * @param permanentSpellToken whether copies of permanent spells become tokens as they resolve
  * @param triggerCondition optional source condition checked only when the spell is cast
+ * @param copies           how many copies the trigger creates as one copy event (Jaya, Fiery Negotiator's emblem)
  */
 public record CopyControllerCastSpellOnSpellCastEffect(
         CardPredicate spellFilter,
@@ -59,7 +60,37 @@ public record CopyControllerCastSpellOnSpellCastEffect(
         Set<CardSupertype> removedSupertypes,
         List<CardSubtype> additionalSubtypes,
         Integer powerOverride,
-        Integer toughnessOverride) implements CardEffect {
+        Integer toughnessOverride,
+        int copies) implements CardEffect {
+    public CopyControllerCastSpellOnSpellCastEffect(
+            CardPredicate spellFilter, TapMultiplePermanentsCost tapCost, String manaCost,
+            Zone requiredCastZone, StackEntryPredicate castSpellTargetCondition,
+            Set<Keyword> grantedKeywords, Condition intervening, boolean requiredCastWithAdventure,
+            Set<CardType> additionalTypes, boolean tokenCopy, boolean mayChooseNewTargets,
+            boolean grantHasteToPermanentSpell, boolean excludeHandCast, Condition triggerCondition,
+            List<CardPredicate> firstSpellFilters, CardEffect beforeCopyEffect,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate sacrificeFilter,
+            String sacrificeDescription, boolean permanentSpellToken, boolean sacrificeAtEndStep,
+            Set<CardSupertype> removedSupertypes, List<CardSubtype> additionalSubtypes,
+            Integer powerOverride, Integer toughnessOverride) {
+        this(spellFilter, tapCost, manaCost, requiredCastZone, castSpellTargetCondition,
+                grantedKeywords, intervening, requiredCastWithAdventure, additionalTypes, tokenCopy,
+                mayChooseNewTargets, grantHasteToPermanentSpell, excludeHandCast, triggerCondition,
+                firstSpellFilters, beforeCopyEffect, sacrificeFilter, sacrificeDescription,
+                permanentSpellToken, sacrificeAtEndStep, removedSupertypes, additionalSubtypes,
+                powerOverride, toughnessOverride, 1);
+    }
+
+    /** The same trigger, but creating {@code copies} copies as a single copy event. */
+    public CopyControllerCastSpellOnSpellCastEffect withCopies(int copies) {
+        return new CopyControllerCastSpellOnSpellCastEffect(spellFilter, tapCost, manaCost,
+                requiredCastZone, castSpellTargetCondition, grantedKeywords, intervening,
+                requiredCastWithAdventure, additionalTypes, tokenCopy, mayChooseNewTargets,
+                grantHasteToPermanentSpell, excludeHandCast, triggerCondition, firstSpellFilters,
+                beforeCopyEffect, sacrificeFilter, sacrificeDescription, permanentSpellToken,
+                sacrificeAtEndStep, removedSupertypes, additionalSubtypes, powerOverride,
+                toughnessOverride, copies);
+    }
     public CopyControllerCastSpellOnSpellCastEffect(
         CardPredicate spellFilter,
         TapMultiplePermanentsCost tapCost,

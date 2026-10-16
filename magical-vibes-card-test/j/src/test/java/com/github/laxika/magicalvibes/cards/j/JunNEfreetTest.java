@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -73,7 +74,8 @@ class JunNEfreetTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMayAbilityChosen(player1, false));
 
         harness.assertNotOnBattlefield(player1, "Junún Efreet");
         harness.assertInGraveyard(player1, "Junún Efreet");
@@ -88,7 +90,8 @@ class JunNEfreetTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertNotOnBattlefield(player1, "Junún Efreet");
         harness.assertInGraveyard(player1, "Junún Efreet");

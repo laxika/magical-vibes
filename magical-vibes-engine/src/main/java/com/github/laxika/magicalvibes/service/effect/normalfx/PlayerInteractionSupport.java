@@ -652,6 +652,14 @@ public class PlayerInteractionSupport {
      * whose handler already looked at the hand before the player decided (see
      * {@link ChooseCardsFromTargetHandEffect#looksAtHandBeforeMayChoice()}).
      */
+    private boolean isResolvingRevealMatchingOnly(StackEntry entry) {
+        int index = entry.getResolvingEffectIndex();
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        return index >= 0 && index < effects.size()
+                && effects.get(index) instanceof ChooseCardsFromTargetHandEffect choose
+                && choose.revealMatchingOnly();
+    }
+
     private boolean isInsideMayThatLooksAtHandFirst(StackEntry entry) {
         int index = entry.getResolvingEffectIndex();
         List<CardEffect> effects = entry.getEffectsToResolve();
@@ -836,9 +844,10 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        if (revealHand) {
+        boolean revealsMatchingOnly = revealHand && isResolvingRevealMatchingOnly(entry);
+        if (revealHand && !revealsMatchingOnly) {
             cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
-        } else if (!alreadyLookedAtHand) {
+        } else if (!revealsMatchingOnly && !alreadyLookedAtHand) {
             cardRevealService.lookAtHand(gameData, casterId, targetPlayerId);
         }
 
@@ -865,6 +874,11 @@ public class PlayerInteractionSupport {
                     handCard, filter, sourceCardId, gameData, targetPlayerId, null, null, entry.getXValue()))) {
                 validIndices.add(i);
             }
+        }
+
+        if (revealsMatchingOnly) {
+            cardRevealService.revealMatchingHandCardsToAllPlayers(gameData, targetPlayerId,
+                    validIndices.stream().map(hand::get).toList());
         }
 
         if (validIndices.isEmpty()) {

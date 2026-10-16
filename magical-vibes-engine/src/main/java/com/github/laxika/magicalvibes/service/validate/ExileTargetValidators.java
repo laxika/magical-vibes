@@ -203,7 +203,7 @@ public class ExileTargetValidators {
             throw new IllegalStateException("Effect requires a target card");
         }
         ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
-        if (exiled == null || exiled.faceDown()) {
+        if (exiled == null || exiled.faceDown() || ctx.gameData().antedCardIds.contains(ctx.targetId())) {
             throw new IllegalStateException("Target card must be face up in exile");
         }
     }

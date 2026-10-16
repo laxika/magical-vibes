@@ -65,6 +65,14 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             }
         }
 
+        int copyCount = e.copies() <= 1 ? 1 : copySupport.adjustedSpellCopyCount(gameData, e.copies());
+        for (int copyIndex = 0; copyIndex < copyCount; copyIndex++) {
+            createCopy(gameData, entry, e, spellSnapshot, castingPlayerId, spellCard);
+        }
+    }
+
+    private void createCopy(GameData gameData, StackEntry entry, CopyControllerCastSpellEffect e,
+                            StackEntry spellSnapshot, UUID castingPlayerId, Card spellCard) {
         Card copyCard = copySupport.createCopyCard(spellCard);
         boolean permanentSpell = isPermanentSpell(spellSnapshot.getEntryType());
         if (e.tokenCopy() || (e.permanentSpellToken() && permanentSpell)) {
@@ -108,7 +116,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
 
-        copySupport.addCopyToStack(gameData, copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry, e.copies() <= 1);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());

@@ -44,8 +44,8 @@ class JarsylDarkAgeScionTest extends BaseCardTest {
     void onlyOffersCardsWithManaValueEqualToIntensity() {
         JarsylDarkAgeScion jarsylCard = new JarsylDarkAgeScion();
         Permanent jarsyl = harness.addToBattlefieldAndReturn(player1, jarsylCard);
-        GrizzlyBears grizzlyBears = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(grizzlyBears));
+        DarkRitual darkRitual = new DarkRitual();
+        harness.setGraveyard(player1, List.of(darkRitual));
         gd.intensifyCard(jarsylCard, 1);
 
         triggerBeginningOfCombat(player1);
@@ -53,7 +53,7 @@ class JarsylDarkAgeScionTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.getCardIntensity(jarsyl.getCard().getId())).isEqualTo(2);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(grizzlyBears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(darkRitual);
     }
 
     @Test
@@ -67,7 +67,7 @@ class JarsylDarkAgeScionTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.getCardIntensity(jarsyl.getCard().getId())).isEqualTo(1);
+        assertThat(gd.getCardIntensity(jarsyl.getCard())).isEqualTo(1);
         assertThat(gd.getSpellsCastThisTurn(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(darkRitual);
     }

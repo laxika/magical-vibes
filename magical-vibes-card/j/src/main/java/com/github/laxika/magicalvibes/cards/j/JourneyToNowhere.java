@@ -14,6 +14,7 @@ public class JourneyToNowhere extends Card {
 
     public JourneyToNowhere() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentUntilSourceLeavesEffect());
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new ExileTargetPermanentUntilSourceLeavesEffect(false, null, true, true));
     }
 }

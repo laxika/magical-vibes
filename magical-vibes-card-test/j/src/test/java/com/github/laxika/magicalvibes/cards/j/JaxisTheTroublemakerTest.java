@@ -35,7 +35,7 @@ class JaxisTheTroublemakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent token = findToken(player1);
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -91,7 +91,6 @@ class JaxisTheTroublemakerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         Permanent jaxis = findPermanent(player1, "Jaxis, the Troublemaker");

@@ -86,9 +86,15 @@ class JadziTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
 
         harness.handleListChoice(player1, "Journey to the Oracle");
+
+        // The back face is cast as a sorcery spell (CR 712.8f), so the battlefield Jadzi's magecraft triggers
+        // for it and puts the next revealed land (the Forest) onto the battlefield.
+        assertThat(gd.stack.getLast().getDescription()).contains("ability");
         harness.passBothPriorities();
 
-        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isInstanceOf(Forest.class);
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Journey to the Oracle");
     }
 
     @Test

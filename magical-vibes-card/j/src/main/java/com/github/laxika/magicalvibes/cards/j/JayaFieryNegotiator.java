@@ -61,9 +61,8 @@ public class JayaFieryNegotiator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(new CreateEmblemEffect(
-                        List.of(
-                                new CopyControllerCastSpellOnSpellCastEffect(redInstantOrSorcery, null, null),
-                                new CopyControllerCastSpellOnSpellCastEffect(redInstantOrSorcery, null, null)),
+                        List.of(new CopyControllerCastSpellOnSpellCastEffect(redInstantOrSorcery, null, null)
+                                .withCopies(2)),
                         "Whenever you cast a red instant or sorcery spell, copy it twice. You may choose new targets for the copies.")),
                 "−8: You get an emblem with \"Whenever you cast a red instant or sorcery spell, copy it twice. You may choose new targets for the copies.\""
         ));

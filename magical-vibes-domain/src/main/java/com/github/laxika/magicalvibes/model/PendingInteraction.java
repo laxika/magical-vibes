@@ -1991,7 +1991,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                              CounterType enterWithCounterType,
                                              int enterWithCounterCount,
                                              int maxCount,
-                                             boolean attachAuraOrEquipment) implements PendingInteraction {
+                                             boolean attachAuraOrEquipment,
+                                             boolean shuffleAfterSearch) implements PendingInteraction {
 
         /** Backward-compatible canonical constructor without the extended attachment mode. */
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -2006,7 +2007,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  int enterWithCounterCount) {
             this(playerId, pool, libraryCardIds, handCardIds, outsideGameCardIds,
                     librarySearchAllowed, cardLabel, destination, attachToPermanentId,
-                    enterWithCounterType, enterWithCounterCount, 1, false);
+                    enterWithCounterType, enterWithCounterCount, 1, false, true);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -2022,7 +2023,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  int maxCount) {
             this(playerId, pool, libraryCardIds, handCardIds, outsideGameCardIds,
                     librarySearchAllowed, cardLabel, destination, attachToPermanentId,
-                    enterWithCounterType, enterWithCounterCount, maxCount, false);
+                    enterWithCounterType, enterWithCounterCount, maxCount, false, true);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -2038,7 +2039,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  boolean attachAuraOrEquipment) {
             this(playerId, pool, libraryCardIds, handCardIds, outsideGameCardIds,
                     librarySearchAllowed, cardLabel, destination, attachToPermanentId,
-                    enterWithCounterType, enterWithCounterCount, 1, attachAuraOrEquipment);
+                    enterWithCounterType, enterWithCounterCount, 1, attachAuraOrEquipment, true);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -2046,7 +2047,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  boolean librarySearchAllowed,
                                                  String cardLabel) {
             this(playerId, pool, libraryCardIds, java.util.Set.of(), java.util.Set.of(), librarySearchAllowed, cardLabel,
-                    LibrarySearchDestination.HAND, null, null, 0, 1, false);
+                    LibrarySearchDestination.HAND, null, null, 0, 1, false, true);
+        }
+
+        public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
+                                                 java.util.Set<UUID> libraryCardIds,
+                                                 boolean librarySearchAllowed,
+                                                 String cardLabel,
+                                                 boolean shuffleAfterSearch) {
+            this(playerId, pool, libraryCardIds, java.util.Set.of(), java.util.Set.of(), librarySearchAllowed, cardLabel,
+                    LibrarySearchDestination.HAND, null, null, 0, 1, false, shuffleAfterSearch);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -2056,7 +2066,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  LibrarySearchDestination destination,
                                                  int maxCount) {
             this(playerId, pool, libraryCardIds, java.util.Set.of(), java.util.Set.of(), librarySearchAllowed, cardLabel,
-                    destination, null, null, 0, maxCount, false);
+                    destination, null, null, 0, maxCount, false, true);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -2066,7 +2076,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  LibrarySearchDestination destination,
                                                  UUID attachToPermanentId) {
             this(playerId, pool, libraryCardIds, handCardIds, java.util.Set.of(),
-                    librarySearchAllowed, cardLabel, destination, attachToPermanentId, null, 0, 1, false);
+                    librarySearchAllowed, cardLabel, destination, attachToPermanentId, null, 0, 1, false, true);
         }
 
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -2074,7 +2084,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                                  java.util.Set<UUID> outsideGameCardIds,
                                                  boolean librarySearchAllowed, String cardLabel) {
             this(playerId, pool, libraryCardIds, java.util.Set.of(), outsideGameCardIds,
-                    librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null, null, 0, 1, false);
+                    librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null, null, 0, 1, false, true);
         }
 
         public SearchLibraryAndOrGraveyardChoice {

@@ -15,8 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DistributeCountersAmongCreaturesOnDeathEffect} from the
- * {@code pendingETBDamageAssignments} buffer. Skips player ids and permanents that are no longer
+ * Resolves {@link DistributeCountersAmongCreaturesOnDeathEffect} from the division announced on the
+ * stack entry, falling back to the {@code pendingETBDamageAssignments} buffer. Skips player ids and permanents that are no longer
  * creatures; when the effect is controller-scoped, also skips permanents the trigger's controller
  * does not control.
  */
@@ -36,7 +36,9 @@ public class DistributeCountersAmongCreaturesOnDeathEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DistributeCountersAmongCreaturesOnDeathEffect) effect;
-        Map<UUID, Integer> assignments = gameData.pendingETBDamageAssignments;
+        Map<UUID, Integer> assignments = entry.getDamageAssignments().isEmpty()
+                ? gameData.pendingETBDamageAssignments
+                : entry.getDamageAssignments();
         gameData.pendingETBDamageAssignments = Map.of();
         int total = e.countFromSourcePower() ? Math.max(0, entry.getEventValue()) : e.count();
         if (total <= 0 || assignments.isEmpty()) {

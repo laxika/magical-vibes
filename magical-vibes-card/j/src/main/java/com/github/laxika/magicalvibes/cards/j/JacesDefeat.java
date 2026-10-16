@@ -23,11 +23,11 @@ public class JacesDefeat extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryColorInPredicate(Set.of(CardColor.BLUE)),
                 "Target spell must be blue."));
-        // Scry check reads the countered spell while it is still on the stack, so it must
-        // resolve before the counter removes it (Jace planeswalkers all carry the Jace subtype).
+        // The counter resolves first; the scry check then reads the countered spell's last-known card
+        // (Jace planeswalkers all carry the Jace subtype).
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new TargetSpellMatches(new StackEntrySubtypeInPredicate(Set.of(CardSubtype.JACE))),
                 new ScryEffect(2)));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

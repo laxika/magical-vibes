@@ -191,7 +191,13 @@ public class BattlefieldEntryBatchSupport {
 
     /** Resumes the native entry choices after the devour replacement choice has finished. */
     public void completeNativeDevourChoice(GameData gameData, Permanent permanent) {
-        permanent.setNativeDevourResolved(true);
+        permanent.setDevourInstancesResolved(permanent.getDevourInstancesResolved() + 1);
+        int instances = (permanent.getCard().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance) ? 1 : 0)
+                + (permanent.getGrantedDevour() > 0 ? 1 : 0);
+        if (permanent.getDevourInstancesResolved() >= instances) {
+            permanent.setNativeDevourResolved(true);
+        }
         completeNativeChoice(gameData, permanent);
     }
 

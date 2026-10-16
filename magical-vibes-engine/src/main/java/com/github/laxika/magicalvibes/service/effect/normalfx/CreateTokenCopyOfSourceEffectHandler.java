@@ -111,7 +111,11 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                         tokenCard.setColor(sourceCard.getColor());
                         tokenCard.setColors(sourceCard.getColors());
                     }
-                    tokenCard.setLoyalty(sourceCard.getLoyalty());
+                    // The copy effect's loyalty modification is part of the token's copiable values, so a
+                    // copy of the token starts from the token's loyalty rather than the source's printed one (CR 707.2).
+                    tokenCard.setLoyalty(e.startingLoyaltyOverride() != null
+                            ? e.startingLoyaltyOverride()
+                            : sourceCard.getLoyalty());
                     // Embalm keeps the source's P/T; Eternalize sets a fixed base P/T (e.g. a 4/4).
                     tokenCard.setPower(e.powerOverride() != null ? e.powerOverride() : sourceCard.getPower());
                     tokenCard.setToughness(e.toughnessOverride() != null ? e.toughnessOverride() : sourceCard.getToughness());

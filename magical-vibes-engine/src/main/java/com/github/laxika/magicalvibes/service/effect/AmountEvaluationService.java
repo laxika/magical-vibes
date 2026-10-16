@@ -968,8 +968,8 @@ public class AmountEvaluationService {
                     topCardOfLibraryManaValue(gameData, ctx);
             case EnchantedPermanentManaValue ignored ->
                     enchantedPermanentManaValue(gameData, ctx);
-            case EnchantedPermanentPower ignored ->
-                    enchantedPermanentPower(gameData, ctx);
+            case EnchantedPermanentPower power ->
+                    enchantedPermanentPower(gameData, ctx, power.allowNegative());
             case TargetSpellManaValue ignored ->
                     targetSpellManaValue(gameData, ctx);
             case TargetSpellPower ignored ->
@@ -1247,16 +1247,20 @@ public class AmountEvaluationService {
     }
 
     /** Effective power of the permanent the source Aura enchants; 0 if there is none. */
-    private int enchantedPermanentPower(GameData gameData, AmountContext ctx) {
+    private int enchantedPermanentPower(GameData gameData, AmountContext ctx, boolean allowNegative) {
         Permanent source = ctx.sourcePermanent();
         if (source != null && source.getAttachedTo() != null) {
             Permanent enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
             if (enchanted != null) {
-                return Math.max(0, gameQueryService.getEffectivePower(gameData, enchanted));
+                int power = gameQueryService.getEffectivePower(gameData, enchanted);
+                return allowNegative ? power : Math.max(0, power);
             }
         }
         Integer lastKnownPower = ctx.triggeringPermanentPowerAtTrigger();
-        return lastKnownPower == null ? 0 : Math.max(0, lastKnownPower);
+        if (lastKnownPower == null) {
+            return 0;
+        }
+        return allowNegative ? lastKnownPower : Math.max(0, lastKnownPower);
     }
 
     /** Mana value of the targeted or spell-cast-triggering spell on the stack; 0 if it has left. */

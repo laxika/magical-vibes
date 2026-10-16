@@ -261,10 +261,14 @@ class JaheiraHarperEmissaryTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Pacifism()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castEnchantment(player2, 0, creature.getId());
         harness.passBothPriorities();
         Permanent enchantment = findPermanent(player2, "Pacifism");
 
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         activateSpecialization(jaheira, 4, new Forest());
         harness.handlePermanentChosen(player1, enchantment.getId());
         harness.passBothPriorities();

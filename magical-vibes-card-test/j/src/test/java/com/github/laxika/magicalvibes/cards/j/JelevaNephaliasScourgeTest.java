@@ -158,6 +158,7 @@ class JelevaNephaliasScourgeTest extends BaseCardTest {
         VisionSkeins spell = new VisionSkeins();
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of(spell));
+        harness.setHand(player2, List.of());
         Permanent jeleva = castAndResolveJeleva();
         harness.setLibrary(player1, List.of(new BalefulStrix(), new BalefulStrix()));
         harness.setLibrary(player2, List.of(new BalefulStrix(), new BalefulStrix()));

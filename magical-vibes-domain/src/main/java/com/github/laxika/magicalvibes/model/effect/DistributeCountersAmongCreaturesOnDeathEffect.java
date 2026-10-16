@@ -12,8 +12,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * Placed on the {@code ON_DEATH} slot. The death-trigger collector resolves {@code count} (for
  * {@code countFromSourceCounters} it snapshots the dying permanent's counters, which are gone by
  * resolution), wraps the baked effect in a {@link MayEffect}, and puts it on the stack. The division
- * is chosen when the trigger resolves via {@code GameData.pendingETBDamageAssignments}, the same
- * buffer used by Inferno Titan / Gang of Devils divided damage.
+ * is chosen via {@code GameData.pendingETBDamageAssignments}, the same buffer used by Inferno Titan /
+ * Gang of Devils divided damage. For targeted and any-creature forms the staged division is announced
+ * onto the stack entry when the trigger is put there, and resolution reads that announced division.
  *
  * @param counterType             the counter type placed on the receiving creatures (and, when
  *                                {@code countFromSourceCounters}, counted on the dying creature).
@@ -73,11 +74,9 @@ public record DistributeCountersAmongCreaturesOnDeathEffect(
      * "You may distribute {@code count} {@code counterType} counters among any number of target
      * creatures" (Jugan, the Rising Star).
      * <p>
-     * The printed ability targets, but the engine models the distribution the same way it models
-     * Vastwood Hydra's: the receiving creatures and their per-creature amounts are chosen as the
-     * trigger resolves rather than announced as it is put on the stack (CR 603.3d / CR 601.2d).
-     * Targeting restrictions such as shroud and protection are checked when the recipients are
-     * chosen.
+     * The printed ability targets, so the receiving creatures and their per-creature amounts are
+     * announced as the trigger is put on the stack (CR 601.2d, CR 603.3d). Targeting restrictions such
+     * as shroud and protection are checked at that announcement.
      */
     public static DistributeCountersAmongCreaturesOnDeathEffect fixedAmongAnyCreatures(
             CounterType counterType, int count) {
