@@ -186,6 +186,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsControllingReturnedP
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CreaturesControllerControlledThatDealtCombatDamageToPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithFewerCreaturesThanController;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
@@ -679,6 +680,9 @@ public class AmountEvaluationService {
                     opponentsWithMoreCardsInHandThanController(gameData, ctx);
             case OpponentsAttackedThisTurn ignored ->
                     opponentsAttackedThisTurn(gameData, ctx);
+            case CreaturesControllerControlledThatDealtCombatDamageToPlayerThisTurn ignored ->
+                    gameData.combatDamageDealersByControllerThisTurn
+                            .getOrDefault(ctx.controllerId(), java.util.Set.of()).size();
             case OpponentsDealtCombatDamageThisTurn ignored ->
                     opponentsDealtCombatDamageThisTurn(gameData, ctx);
             case OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn sourceAmount ->
@@ -854,7 +858,7 @@ public class AmountEvaluationService {
                             : gameData.damageDealtToPermanentsThisTurn
                                     .getOrDefault(ctx.targetPermanentId(), 0);
             case GreatestDamageDealtBySourceThisTurn ignored ->
-                    greatestDamageDealtBySourceThisTurn(gameData);
+                    greatestDamageDealtBySourceThisTurn(gameData, ctx.controllerId());
             case DamageDealtToSourcePermanentBySourceNameThisTurn sourceDamage ->
                     damageDealtToSourcePermanentBySourceNameThisTurn(gameData, ctx, sourceDamage.sourceName());
             case TotalManaValueOfCardsExiledWithSource ignored ->
@@ -1009,7 +1013,8 @@ public class AmountEvaluationService {
      * Projects the amount context onto a condition context so {@code FixedIfCondition} can reuse
      * the condition hierarchy. Only the values both contexts carry are transferred; cast-time flags
      * Most cast-time flags are not part of an amount context and read as false; madness is carried
-     * because some divided amounts differ when a spell is cast using it.
+     * because some divided amounts differ when a spell is cast using it, and the zone the stack
+     * entry was cast from is carried so "if this spell was cast from a graveyard" amounts work.
      */
     private ConditionContext conditionContext(GameData gameData, AmountContext ctx) {
         UUID triggeringPermanentId = ctx.stackEntry() == null
@@ -1019,7 +1024,7 @@ public class AmountEvaluationService {
         return new ConditionContext(ctx.controllerId(),
                 ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId(),
                 ctx.sourcePermanent(), ctx.sourceCard(), false, false, false, ctx.madness(), false,
-                null, ctx.xValue(), ctx.targetPermanentId(), triggeringCard, ctx.staticEvaluation(), false,
+                ctx.stackEntry() == null ? null : ctx.stackEntry().getSourceZone(), ctx.xValue(), ctx.targetPermanentId(), triggeringCard, ctx.staticEvaluation(), false,
                 triggeringPermanentId, null, null).withEventValue(ctx.eventValue());
     }
 
@@ -3513,10 +3518,12 @@ public class AmountEvaluationService {
 
     private int imprintedCardManaValue(GameData gameData, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
-        Card imprinted = ctx.stackEntry() != null && ctx.stackEntry().getExiledCostCardSnapshot() != null
-                ? ctx.stackEntry().getExiledCostCardSnapshot()
-                : gameData.getImprintedCard(ctx.sourcePermanent().getCard());
-        return imprinted == null ? 0 : imprinted.getManaValue();
+        if (ctx.stackEntry() != null && ctx.stackEntry().getExiledCostCardSnapshot() != null) {
+            return ctx.stackEntry().getExiledCostCardSnapshot().getManaValue();
+        }
+        Card imprinted = gameData.getImprintedCard(ctx.sourcePermanent().getCard());
+        if (imprinted == null || gameData.findExiledCard(imprinted.getId()) == null) return 0;
+        return imprinted.getManaValue();
     }
 
     private int imprintedCreaturePT(GameData gameData, AmountContext ctx, boolean power) {
@@ -3554,14 +3561,22 @@ public class AmountEvaluationService {
         return total;
     }
 
-    private int greatestDamageDealtBySourceThisTurn(GameData gameData) {
+    private int greatestDamageDealtBySourceThisTurn(GameData gameData, UUID controllerId) {
+        java.util.function.Predicate<UUID> controlledByOtherPlayer = sourceId ->
+                controllerId != null
+                        && gameData.damageSourcesControlledByPlayerThisTurn.entrySet().stream()
+                        .anyMatch(entry -> !entry.getKey().equals(controllerId) && entry.getValue().contains(sourceId))
+                        && !gameData.damageSourcesControlledByPlayerThisTurn
+                        .getOrDefault(controllerId, Set.of()).contains(sourceId);
         int greatestToPermanent = gameData.damageDealtToPermanentsBySourceThisTurn.values().stream()
-                .flatMap(sourceDamage -> sourceDamage.values().stream())
-                .mapToInt(Integer::intValue)
+                .flatMap(sourceDamage -> sourceDamage.entrySet().stream())
+                .filter(entry -> !controlledByOtherPlayer.test(entry.getKey()))
+                .mapToInt(Map.Entry::getValue)
                 .max()
                 .orElse(0);
-        int greatestToPlayer = gameData.damageDealtToPlayersBySourceThisTurn.values().stream()
-                .flatMap(sourceDamage -> sourceDamage.values().stream())
+        int greatestToPlayer = gameData.damageDealtToPlayersBySourceThisTurn.entrySet().stream()
+                .filter(sourceEntry -> !controlledByOtherPlayer.test(sourceEntry.getKey()))
+                .flatMap(sourceEntry -> sourceEntry.getValue().values().stream())
                 .mapToInt(Integer::intValue)
                 .max()
                 .orElse(0);

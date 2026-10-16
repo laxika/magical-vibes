@@ -49,6 +49,8 @@ class InvasionOfKylemTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         List<Permanent> warriors = findPermanents(player1, "Warrior");
         assertThat(warriors).hasSize(2);
@@ -170,6 +172,8 @@ class InvasionOfKylemTest extends BaseCardTest {
         battle.setCounterCount(CounterType.DEFENSE, 0);
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         List<Permanent> warriors = findPermanents(player1, "Warrior");
         assertThat(warriors).hasSize(2);

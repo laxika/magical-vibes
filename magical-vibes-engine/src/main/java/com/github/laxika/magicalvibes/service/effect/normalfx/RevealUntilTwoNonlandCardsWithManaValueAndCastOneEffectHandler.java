@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilTwoNonlandCardsWit
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -54,9 +55,10 @@ public class RevealUntilTwoNonlandCardsWithManaValueAndCastOneEffectHandler
         String sourceName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
         if (qualifying.isEmpty()) {
-            exiled.forEach(card -> gameData.addToExile(controllerId, card));
+            Collections.shuffle(exiled);
+            deck.addAll(exiled);
             gameLogService.append(gameData, GameLog.text(sourceName
-                    + " exiles the remaining cards from " + playerName + "'s library without finding two qualifying cards."));
+                    + " exiles cards from " + playerName + "'s library without finding a qualifying card; they are put on the bottom of the library."));
             return;
         }
 

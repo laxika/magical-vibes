@@ -108,7 +108,7 @@ class IridescentVinelasherTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         for (int i = 0; i < 2; i++) {
-            harness.enterBattlefieldAndReturn(player1, new Forest());
+            harness.enterLandBattlefieldAndReturn(player1, new Forest());
             harness.handlePermanentChosen(player1, player2.getId());
             harness.passBothPriorities();
             harness.assertLife(player2, 19 - i);

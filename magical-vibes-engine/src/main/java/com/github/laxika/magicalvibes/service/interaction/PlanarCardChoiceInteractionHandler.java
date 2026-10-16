@@ -87,7 +87,7 @@ public class PlanarCardChoiceInteractionHandler
         if (gameData.planechase == null) {
             throw new IllegalStateException("No planar deck is active");
         }
-        gameData.planechase.deck.add(selected);
+        gameData.planechase.deck.add(0, selected);
         Collections.shuffle(remaining);
         gameData.planechase.deck.addAll(remaining);
 

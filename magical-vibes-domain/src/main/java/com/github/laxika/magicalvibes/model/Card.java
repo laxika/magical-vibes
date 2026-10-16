@@ -254,6 +254,12 @@ public class Card {
      */
     private boolean attackTriggerOwnedByAura;
     /**
+     * Whether this Equipment's {@code ON_ATTACK} trigger is an ability it grants to the equipped creature
+     * ("Equipped creature has 'Whenever this creature attacks, ...'", controlled by the creature's
+     * controller) rather than the Equipment's own ("Whenever equipped creature attacks, ...").
+     */
+    private boolean attackTriggerGrantedByEquipment;
+    /**
      * Optional cross-target restriction on the whole set of chosen targets (e.g. Rivals' Duel's
      * "two target creatures that share no creature types"), checked at announcement in addition
      * to the per-position filters. Null for spells with no such restriction.
@@ -458,6 +464,7 @@ public class Card {
         this.opponentChosenSpellTargetIndices = source.opponentChosenSpellTargetIndices;
         this.attackTriggerTargetChosenByDefendingPlayer = source.attackTriggerTargetChosenByDefendingPlayer;
         this.attackTriggerOwnedByAura = source.attackTriggerOwnedByAura;
+        this.attackTriggerGrantedByEquipment = source.attackTriggerGrantedByEquipment;
         this.multiTargetConstraint = source.multiTargetConstraint;
         this.targetControllersFixedAtCast = source.targetControllersFixedAtCast;
         this.spellTargets.addAll(source.spellTargets);
@@ -764,6 +771,10 @@ public class Card {
         assertMutable();
         this.attackTriggerOwnedByAura = ownedByAura;
     }
+    public void setAttackTriggerGrantedByEquipment(boolean grantedByEquipment) {
+        assertMutable();
+        this.attackTriggerGrantedByEquipment = grantedByEquipment;
+    }
     public void setMultiTargetConstraint(MultiTargetConstraint multiTargetConstraint) { assertMutable(); this.multiTargetConstraint = multiTargetConstraint; }
     public void setTargetControllersFixedAtCast(boolean targetControllersFixedAtCast) { assertMutable(); this.targetControllersFixedAtCast = targetControllersFixedAtCast; }
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
@@ -809,6 +820,7 @@ public class Card {
         setOpponentChosenSpellTargetIndices(List.of());
         setAttackTriggerTargetChosenByDefendingPlayer(false);
         setAttackTriggerOwnedByAura(false);
+        setAttackTriggerGrantedByEquipment(false);
         setMultiTargetConstraint(null);
         setTargetControllersFixedAtCast(false);
         setCastTimeTargetFilter(null);

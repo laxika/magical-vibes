@@ -26,6 +26,6 @@ public class InThrallToThePit extends Card {
                 .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(),
-                        new SacrificeTargetPermanentAtEndStepEffect()));
+                        new SacrificeTargetPermanentAtEndStepEffect(false, true)));
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class ImperialCosmographer extends Card {
 
     public ImperialCosmographer() {
-        addEffect(EffectSlot.ON_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
+        addEffect(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD_WITHOUT_DYING,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
     }
 }

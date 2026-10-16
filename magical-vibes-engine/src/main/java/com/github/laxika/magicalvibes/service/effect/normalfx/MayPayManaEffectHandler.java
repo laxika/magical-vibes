@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +26,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -75,6 +79,12 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
         }
         if (e.wrapped() instanceof DiscardAndDrawCardEffect
                 && gameData.playerHands.getOrDefault(payer, List.of()).isEmpty()) {
+            return;
+        }
+
+        if (e.wrapped() instanceof ConditionalEffect conditional && !conditional.triggerTimeOnly()
+                && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forStackEntry(entry), entry.getEventValue())) {
             return;
         }
 

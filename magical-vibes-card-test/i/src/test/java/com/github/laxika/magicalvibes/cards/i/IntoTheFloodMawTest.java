@@ -118,8 +118,9 @@ class IntoTheFloodMawTest extends BaseCardTest {
 
     @Test
     void returnsOpponentControlledCreatureToItsActualOwner() {
-        Permanent looter = harness.addToBattlefieldAndReturn(player2, new ShorelineLooter());
-        gd.stolenCreatures.put(looter.getId(), player1.getId());
+        ShorelineLooter looterCard = new ShorelineLooter();
+        looterCard.setOwnerId(player1.getId());
+        Permanent looter = harness.addToBattlefieldAndReturn(player2, looterCard);
 
         cast(looter, false);
 

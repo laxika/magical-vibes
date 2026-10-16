@@ -537,6 +537,7 @@ public class SpellCastTriggerCollectorService {
                 Zone.STACK,
                 match.permanent().getId());
         entry.setActivePlayerId(sc.castingPlayerId());
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }
@@ -2699,6 +2700,7 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(trigger))
         );
         entry.setTargetId(sc.castingPlayerId());
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }

@@ -112,6 +112,8 @@ class IgniteTheFutureTest extends BaseCardTest {
         Card creature = new SakuraTribeElder();
         Card unused = new SakuraTribeElder();
         harness.setLibrary(player1, List.of(creature, unused, new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setGraveyard(player1, List.of(new IgniteTheFuture()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 7);

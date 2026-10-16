@@ -56,10 +56,7 @@ class InvocationOfSaintTraftTest extends BaseCardTest {
                 .contains(new DelayedPermanentAction(
                         angel.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        passThroughEndOfCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(angel);
     }
@@ -178,9 +175,7 @@ class InvocationOfSaintTraftTest extends BaseCardTest {
             assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().isToken())).hasSize(1);
         });
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        passThroughEndOfCombat();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())).isEmpty();
     }
@@ -198,6 +193,16 @@ class InvocationOfSaintTraftTest extends BaseCardTest {
             resolveAllTriggers();
             assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().isToken())).hasSize(1);
+        });
+    }
+
+    private void passThroughEndOfCombat() {
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.COMBAT_DAMAGE);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+            harness.passBothPriorities();
         });
     }
 

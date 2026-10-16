@@ -60,6 +60,7 @@ class InvasionOfTolvadaTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent brokenSky = harness.getGameData().playerBattlefields.get(player1.getId()).stream()

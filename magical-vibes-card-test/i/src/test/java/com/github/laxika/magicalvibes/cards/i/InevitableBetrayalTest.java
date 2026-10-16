@@ -86,6 +86,7 @@ class InevitableBetrayalTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
     }
     @Test
@@ -133,6 +134,7 @@ class InevitableBetrayalTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 

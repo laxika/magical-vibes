@@ -82,7 +82,7 @@ class IronCrawCrusherTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, crusher)).isEqualTo(6);
 
-        harness.forceStep(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 

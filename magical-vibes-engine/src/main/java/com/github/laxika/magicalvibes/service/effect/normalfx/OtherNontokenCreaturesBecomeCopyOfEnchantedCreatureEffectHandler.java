@@ -37,6 +37,10 @@ public class OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffectHandler im
             return;
         }
         Permanent aura = gameQueryService.findPermanentById(gameData, auraId);
+        if (aura == null) {
+            // The Aura left the battlefield in response: use its last known attachment (CR 113.7a).
+            aura = entry.getSourcePermanentSnapshot();
+        }
         if (aura == null || aura.getAttachedTo() == null) {
             return;
         }

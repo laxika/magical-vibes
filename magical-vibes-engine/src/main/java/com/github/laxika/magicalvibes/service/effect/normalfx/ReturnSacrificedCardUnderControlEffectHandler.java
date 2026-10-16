@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -47,20 +48,43 @@ public class ReturnSacrificedCardUnderControlEffectHandler implements NormalEffe
 
         Card card = gameQueryService.findCardInGraveyardById(gameData, sacrificedCardId);
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sacrificedCardId);
-        if (card == null || ownerId == null) return;
+        boolean fromExile = false;
+        if (card == null || ownerId == null) {
+            // A replacement effect (Leyline of the Void) may have exiled the sacrificed card directly;
+            // it is still the same card only if it has not left and re-entered exile since the trigger.
+            ExiledCardEntry exiled = gameData.findExiledCard(sacrificedCardId);
+            if (exiled == null || exiled.faceDown()
+                    || gameData.exileEntryVersions.getOrDefault(sacrificedCardId, 0L)
+                    != entry.getTriggeringCardExileEntryVersion()) {
+                return;
+            }
+            card = exiled.card();
+            ownerId = exiled.ownerId();
+            fromExile = true;
+        }
 
-        if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+        Zone sourceZone = fromExile ? Zone.EXILE : Zone.GRAVEYARD;
+        if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, sourceZone)) {
             gameLogService.append(gameData, GameLog.cardThen(card,
-                    " can't return from the graveyard; it stays in the graveyard."));
+                    " can't return from the " + (fromExile ? "exile zone; it stays exiled."
+                            : "graveyard; it stays in the graveyard.")));
             return;
         }
 
         UUID controllerId = entry.getControllerId();
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        permanentRemovalService.removeCardFromGraveyardById(gameData, sacrificedCardId);
+        if (fromExile) {
+            gameData.removeFromExile(sacrificedCardId);
+        } else {
+            permanentRemovalService.removeCardFromGraveyardById(gameData, sacrificedCardId);
+        }
 
         Permanent permanent = new Permanent(card);
-        permanent.setEnteredFromGraveyardOwnerId(ownerId);
+        if (fromExile) {
+            permanent.setEnteredFromExile(true);
+        } else {
+            permanent.setEnteredFromGraveyardOwnerId(ownerId);
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
         if (!controllerId.equals(ownerId)) {

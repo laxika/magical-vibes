@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "56")
 @CardRegistration(set = "WOE", collectorNumber = "333")
@@ -25,8 +26,9 @@ public class IngeniousProdigy extends Card {
                 new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE),
                         new MayEffect(
-                                new RemoveCounterFromSourceThenEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, new DrawCardEffect()),
+                                SequenceEffect.of(
+                                        new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                                        new DrawCardEffect()),
                                 "Remove a +1/+1 counter from Ingenious Prodigy?")));
     }
 }

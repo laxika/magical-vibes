@@ -19,10 +19,10 @@ import java.util.List;
 public class IcyBlast extends Card {
 
     public IcyBlast() {
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
-        ), 100)
+        ), Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
                         new ControlsPermanent(new PermanentAllOfPredicate(List.of(

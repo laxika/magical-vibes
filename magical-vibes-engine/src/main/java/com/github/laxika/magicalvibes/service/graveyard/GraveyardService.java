@@ -1785,7 +1785,8 @@ public class GraveyardService {
             }
         }
         if (sourceZone == Zone.BATTLEFIELD
-                && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE))) {
+                && (card.hasType(CardType.ARTIFACT) || card.hasType(CardType.CREATURE)
+                || battlefieldSnapshot != null && gameQueryService.isCreature(gameData, battlefieldSnapshot))) {
             gameData.artifactOrCreaturePutIntoGraveyardFromBattlefieldThisTurn = true;
         }
         Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn

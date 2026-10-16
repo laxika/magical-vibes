@@ -111,10 +111,10 @@ class IronManFuturistParagonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IronManFuturistParagon());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player2, java.util.List.of(new TurnToFrog()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, target.getId());
+        harness.addMana(player2, ManaColor.BLUE, 2);
         harness.castAndResolveInstant(player2, 0, target.getId());
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();

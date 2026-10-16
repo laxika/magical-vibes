@@ -51,7 +51,18 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         gameData.unpreventableDamageInProgress = previousUnpreventable || e.unpreventable();
         try {
             switch (e.recipient()) {
-                case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER,
+                case ENCHANTED_PERMANENT_CONTROLLER -> {
+                    // A tapped-enchanted-permanent trigger names the permanent, so its controller is
+                    // read as the ability resolves (CR 608.2h) in case control changed meanwhile.
+                    if (entry.getTriggeringPermanentId() != null
+                            && gameQueryService.findPermanentController(
+                            gameData, entry.getTriggeringPermanentId()) != null) {
+                        resolveTriggeringPermanentController(gameData, entry, e);
+                    } else {
+                        resolveSingleTargetPlayer(gameData, entry, e);
+                    }
+                }
+                case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER,
                      TRIGGERING_PLAYER, CHOSEN_PLAYER ->
                         resolveSingleTargetPlayer(gameData, entry, e);
                 case ENCHANTED_PLAYER_OR_PLANESWALKER -> resolveEnchantedPlayerOrPlaneswalker(gameData, entry, e);
@@ -216,7 +227,12 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         java.util.List<UUID> effectTargets = entry.targetsForEffect(e);
         UUID targetId = effectTargets.isEmpty() ? entry.getTargetId() : effectTargets.getFirst();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        UUID controllerId = target == null ? entry.getRemovedPermanentControllers().get(targetId)
+        // A trigger that fired for a permanent's controller ("that player") keeps that player even
+        // if the permanent has since left or changed controllers.
+        UUID controllerId = targetId != null && targetId.equals(entry.getTriggeringPermanentId())
+                && entry.getTriggeringPermanentControllerId() != null
+                ? entry.getTriggeringPermanentControllerId()
+                : target == null ? entry.getRemovedPermanentControllers().get(targetId)
                 : gameQueryService.findPermanentController(gameData, target.getId());
         if (controllerId == null) return;
         String cardName = entry.getCard().getName();

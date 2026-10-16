@@ -39,8 +39,8 @@ public class InvasionSubmersible extends Card {
                 null,
                 List.of(
                         new WaterbendCost(3),
-                        new AnimatePermanentsEffect(0, 0, List.of(), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT),
+                        new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
+                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT, null),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 3)
                 ),
                 "Waterbend {3}: This Vehicle becomes an artifact creature. Put three +1/+1 counters on it."

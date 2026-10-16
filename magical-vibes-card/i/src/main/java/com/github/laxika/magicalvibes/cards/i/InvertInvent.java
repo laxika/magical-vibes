@@ -38,7 +38,8 @@ public class InvertInvent extends Card {
                 false,
                 false,
                 false);
-        CardEffect searchSorcery = new SearchLibraryEffect(new CardTypePredicate(CardType.SORCERY));
+        CardEffect searchSorcery = new SearchLibraryEffect(new CardTypePredicate(CardType.SORCERY))
+                .asContinuationOfPreviousSearch();
 
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

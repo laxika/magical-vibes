@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
@@ -86,9 +85,8 @@ public class AwardManaOfTypeLandsCouldProduceEffectHandler implements ManaAbilit
                 continue;
             }
             for (Permanent land : battlefield) {
-                if (!land.getCard().hasType(CardType.LAND)
-                        || !predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, land, effect.landPredicate())) {
+                if (!predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, land, effect.landPredicate())) {
                     continue;
                 }
                 availableTypes.addAll(landManaTypeSupport.manaTypesCouldProduce(gameData, land));

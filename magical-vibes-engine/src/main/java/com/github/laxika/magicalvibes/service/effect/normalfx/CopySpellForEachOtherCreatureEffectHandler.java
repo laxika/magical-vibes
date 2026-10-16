@@ -50,7 +50,7 @@ public class CopySpellForEachOtherCreatureEffectHandler implements NormalEffectH
             if (permanent.getId().equals(e.originalTargetId())) return;
             if (!gameQueryService.isCreature(gameData, permanent)) return;
             if (!validTargetService.canPermanentBeTargetedBySpell(
-                    gameData, permanent, spellCard, e.castingPlayerId())) return;
+                    gameData, permanent, spellCard, e.castingPlayerId(), spellSnapshot.getXValue())) return;
             eligibleTargets.add(permanent);
         });
 
@@ -58,7 +58,11 @@ public class CopySpellForEachOtherCreatureEffectHandler implements NormalEffectH
             Card copyCard = copySupport.createCopyCard(spellCard);
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     spellSnapshot, copyCard, entry.getControllerId(), target.getId());
-            copyEntry.setDeclaredTargetIds(List.of());
+            for (int i = 0; i < copyEntry.getDeclaredTargetIds().size(); i++) {
+                if (e.originalTargetId().equals(copyEntry.getDeclaredTargetIds().get(i))) {
+                    copyEntry.replaceTargetIdAt(i, target.getId());
+                }
+            }
             if (!copyEntry.getDamageAssignments().isEmpty()) {
                 int damage = copyEntry.getDamageAssignments().values().stream().mapToInt(Integer::intValue).sum();
                 copyEntry.getDamageAssignments().clear();

@@ -1825,8 +1825,9 @@ public class DamagePreventionService {
             }
             if (shield.damageMultiplier() != 0) {
                 it.remove();
-                return damage * shield.damageMultiplier()
+                damage = damage * shield.damageMultiplier()
                         * MaroGoneNutsSupport.doublingFactor(gameData);
+                continue;
             }
             if (!preventable) {
                 return damage;

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAnyNumberOfTimesPutCountersOnSelfEffect;
@@ -80,13 +81,15 @@ public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements No
                         new PutCountersOnSelfEffect(e.counterType(), chosenPayments), e.thenEffect());
                 queueReflexiveTargetedAbility(gameData, entry, reflexive, chosenPayments);
             } else {
-                UUID selfId = entry.getSourcePermanentId() != null
-                        ? entry.getSourcePermanentId() : entry.getTargetId();
-                Permanent self = gameQueryService.findPermanentById(gameData, selfId);
-                if (self != null) {
-                    permanentCounterSupport.placeCounterOnPermanent(
-                            gameData, entry, self, e.counterType(), chosenPayments);
-                }
+                // "When you pay this cost one or more times, put that many counters on it" is a
+                // reflexive triggered ability (CR 603.12): it goes on the stack separately.
+                StackEntry reflexive = new StackEntry(StackEntryType.TRIGGERED_ABILITY, entry.getCard(),
+                        controllerId, cardName + "'s reflexive ability",
+                        new java.util.ArrayList<>(List.of(
+                                new PutCountersOnSelfEffect(e.counterType(), chosenPayments))),
+                        (UUID) null, entry.getSourcePermanentId());
+                reflexive.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+                gameData.stack.add(reflexive);
             }
             return;
         }

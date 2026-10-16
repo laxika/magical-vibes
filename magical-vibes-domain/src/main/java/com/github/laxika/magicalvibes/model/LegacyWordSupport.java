@@ -10,6 +10,9 @@ public final class LegacyWordSupport {
     private static final Pattern ABILITY_WORD_HEADING =
             Pattern.compile("^\\s*(.+?)\\s*—\\s*.+$");
 
+    /** Cycling is not a {@link Keyword}; a card has it when it carries a cycling ability. */
+    public static final String CYCLING = "CYCLING";
+
     private LegacyWordSupport() {
     }
 
@@ -27,6 +30,10 @@ public final class LegacyWordSupport {
         String normalizedChoice = normalize(chosenWord);
         if (normalizedChoice.isEmpty()) {
             return false;
+        }
+        if (CYCLING.equals(normalizedChoice)
+                && card.getHandActivatedAbilities().stream().anyMatch(ActivatedAbility::isCyclingAbility)) {
+            return true;
         }
         if (card.getKeywords().stream()
                 .anyMatch(keyword -> normalize(keyword.name()).equals(normalizedChoice))) {

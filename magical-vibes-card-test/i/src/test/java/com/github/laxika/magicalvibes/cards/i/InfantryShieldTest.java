@@ -39,7 +39,7 @@ class InfantryShieldTest extends BaseCardTest {
         assertThat(tokens).hasSize(2);
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
         });
     }
 
@@ -153,21 +153,23 @@ class InfantryShieldTest extends BaseCardTest {
         battle.setCounterCount(CounterType.DEFENSE, 3);
         battle.setProtectorPlayerId(player2.getId());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).contains(battle.getId());
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.validPermanentIds()).contains(battle.getId());
 
-        harness.handlePermanentChosen(player1, battle.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
-        resolveAllTriggers();
+            harness.handlePermanentChosen(player1, battle.getId());
+            harness.handlePermanentChosen(player1, player2.getId());
+            resolveAllTriggers();
 
-        assertThat(warriorTokens(player1)).hasSize(2);
-        assertThat(warriorTokens(player1)).extracting(Permanent::getAttackTarget)
-                .containsExactlyInAnyOrder(battle.getId(), player2.getId());
+            assertThat(warriorTokens(player1)).hasSize(2);
+            assertThat(warriorTokens(player1)).extracting(Permanent::getAttackTarget)
+                    .containsExactlyInAnyOrder(battle.getId(), player2.getId());
+        });
     }
 
     @Test
@@ -177,16 +179,18 @@ class InfantryShieldTest extends BaseCardTest {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraHopesBeacon());
         planeswalker.setCounterCount(CounterType.LOYALTY, 5);
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
 
-        harness.handlePermanentChosen(player1, planeswalker.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
-        resolveAllTriggers();
+            harness.handlePermanentChosen(player1, planeswalker.getId());
+            harness.handlePermanentChosen(player1, player2.getId());
+            resolveAllTriggers();
 
-        assertThat(warriorTokens(player1)).hasSize(2);
-        assertThat(warriorTokens(player1)).extracting(Permanent::getAttackTarget)
-                .containsExactlyInAnyOrder(planeswalker.getId(), player2.getId());
+            assertThat(warriorTokens(player1)).hasSize(2);
+            assertThat(warriorTokens(player1)).extracting(Permanent::getAttackTarget)
+                    .containsExactlyInAnyOrder(planeswalker.getId(), player2.getId());
+        });
 
         advanceToEndStep(player1);
 

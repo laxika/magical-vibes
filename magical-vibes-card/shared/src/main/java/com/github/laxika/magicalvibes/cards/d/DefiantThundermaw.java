@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -15,6 +16,6 @@ public class DefiantThundermaw extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.DRAGON)),
-                        new DealDamageToAnyTargetEffect(2)));
+                        DealDamageToAnyTargetEffect.fromEnteringPermanent(new Fixed(2))));
     }
 }

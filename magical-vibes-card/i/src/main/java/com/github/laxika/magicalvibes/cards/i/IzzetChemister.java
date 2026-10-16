@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CastAllCardsExiledWithSourceWithoutPayingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -39,8 +39,7 @@ public class IzzetChemister extends Card {
                 "{1}{R}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(
-                                instantOrSorcery, true)),
+                        new CastAllCardsExiledWithSourceWithoutPayingEffect(instantOrSorcery)),
                 "{1}{R}, {T}, Sacrifice Izzet Chemister: Cast any number of cards exiled with this "
                         + "creature without paying their mana costs."));
     }

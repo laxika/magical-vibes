@@ -143,7 +143,8 @@ class InvasionOfInnistradTest extends BaseCardTest {
             harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                     .checkAfterDefenseRemoved(gd, battle));
 
-            harness.passBothPriorities(); // resolve defeat trigger (exile + put transformed spell)
+            harness.passBothPriorities(); // resolve defeat trigger (exile, then offer the cast)
+            harness.handleMayAbilityChosen(player1, true);
             harness.passBothPriorities(); // resolve Deluge spell
             harness.passBothPriorities(); // resolve Deluge ETB
 
@@ -260,7 +261,8 @@ class InvasionOfInnistradTest extends BaseCardTest {
 
             harness.castInstant(player1, 0, battle.getId());
             harness.passBothPriorities(); // resolve Shock
-            harness.passBothPriorities(); // resolve defeat trigger (exile + put transformed spell)
+            harness.passBothPriorities(); // resolve defeat trigger (exile, then offer the cast)
+            harness.handleMayAbilityChosen(player1, true);
             harness.passBothPriorities(); // resolve Deluge spell
             harness.passBothPriorities(); // resolve Deluge ETB
 

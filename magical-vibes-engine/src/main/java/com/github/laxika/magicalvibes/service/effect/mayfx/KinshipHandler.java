@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -50,9 +49,8 @@ public class KinshipHandler implements MayEffectHandlerBean {
                 if (deck != null && !deck.isEmpty()) {
                     gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals ", deck.getFirst(), " from the top of their library."));
                 }
-                Permanent self = ability.sourcePermanentId() != null
-                        ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
-                if (self != null && !kinship.revealEffects().isEmpty()) {
+                // The revealed-card effects still happen if the source left the battlefield in response.
+                if (!kinship.revealEffects().isEmpty()) {
                     StackEntry kinshipEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                             ability.sourceCard(), ability.controllerId(),
                             ability.sourceCard().getName() + " (Kinship)",

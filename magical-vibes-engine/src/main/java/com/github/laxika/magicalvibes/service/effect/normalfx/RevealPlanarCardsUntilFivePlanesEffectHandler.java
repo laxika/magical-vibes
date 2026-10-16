@@ -71,7 +71,7 @@ public class RevealPlanarCardsUntilFivePlanesEffectHandler implements NormalEffe
         List<Card> remaining = new ArrayList<>(revealed);
         if (selected != null) {
             remaining.remove(selected);
-            gameData.planechase.deck.add(selected);
+            gameData.planechase.deck.add(0, selected);
         }
         Collections.shuffle(remaining);
         gameData.planechase.deck.addAll(remaining);

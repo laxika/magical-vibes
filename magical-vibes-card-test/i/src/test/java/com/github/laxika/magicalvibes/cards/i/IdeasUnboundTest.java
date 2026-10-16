@@ -141,6 +141,7 @@ class IdeasUnboundTest extends BaseCardTest {
                 new ArabaMothrider(), new GhostLitRedeemer(), new KitsuneBonesetter()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castAndResolveSorcery(player1, 0, 0);
+        harness.setLibrary(player1, List.of(new ArabaMothrider(), new ArabaMothrider()));
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -159,8 +160,9 @@ class IdeasUnboundTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        int handBeforeOwnEndStep = gd.playerHands.get(player1.getId()).size();
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeOwnEndStep);
     }
 }

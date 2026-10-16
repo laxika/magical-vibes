@@ -148,17 +148,7 @@ public class GraveyardReturnSupport {
      * default to "enchant creature".
      */
     private boolean canEnchant(GameData gameData, Card auraCard, UUID auraControllerId, Permanent host) {
-        if (!auraCard.isAura()) {
-            return false;
-        }
-        TargetFilter auraFilter = auraCard.getTargetFilter();
-        if (auraFilter == null) {
-            return gameQueryService.isCreature(gameData, host);
-        }
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(auraCard.getId())
-                .withSourceControllerId(auraControllerId);
-        return predicateEvaluationService.checkTargetFilter(auraFilter, host, filterContext).isEmpty();
+        return auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, host);
     }
 
     /**
@@ -1004,6 +994,11 @@ public class GraveyardReturnSupport {
                         applyBattlefieldReturnRiders(gameData, targetPlayerId, card, effect, entry,
                                 gyEntry.getKey(), entersWithPlusOneCounters);
                         queueNextUpkeepExile(gameData, entry, effect, targetPlayerId, returnedPermanent);
+                        if (returnedPermanent != null && effect.enterAttacking()) {
+                            makeChosenPermanentAttackingEffectHandler.resolve(gameData, entry,
+                                    new com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect(
+                                            returnedPermanent.getId()));
+                        }
                     }
                     returnedCards.add(card);
                 }
@@ -2974,6 +2969,30 @@ public class GraveyardReturnSupport {
         beginNextGraveyardReturnFromQueue(gameData);
     }
 
+    /** Moves every card chosen during a simultaneous "each player returns" flow from its graveyard to its player's hand. */
+    private void releaseHeldHandReturns(GameData gameData) {
+        gameData.holdGraveyardHandReturns = false;
+        if (gameData.heldGraveyardHandReturns.isEmpty()) {
+            return;
+        }
+        Map<UUID, UUID> held = new LinkedHashMap<>(gameData.heldGraveyardHandReturns);
+        gameData.heldGraveyardHandReturns.clear();
+        for (Map.Entry<UUID, UUID> heldEntry : held.entrySet()) {
+            UUID playerId = heldEntry.getValue();
+            Card card = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(c -> c.getId().equals(heldEntry.getKey()))
+                    .findFirst()
+                    .orElse(null);
+            if (card == null) {
+                continue;
+            }
+            permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+            permanentRemovalService.addCardToHandFromGraveyard(gameData, playerId, playerId, card);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(playerId) + " returns ", card, " from graveyard to hand."));
+        }
+    }
+
     /**
      * Pops the next entry from the graveyard return queue and prompts that player to choose
      * a card to return from their graveyard. Does nothing if the queue is empty.
@@ -2992,6 +3011,7 @@ public class GraveyardReturnSupport {
                     putCardsOntoBattlefieldSimultaneouslyUnderController(gameData, batch);
                 }
             }
+            releaseHeldHandReturns(gameData);
             if (gameData.graveyardReturnQueueLeaveBatchOpen) {
                 gameData.graveyardReturnQueueLeaveBatchOpen = false;
                 graveyardService.endGraveyardLeaveBatch(gameData);
@@ -3139,8 +3159,8 @@ public class GraveyardReturnSupport {
 
         UUID controllerId = state.controllerId();
         String destText = switch (state.disposition()) {
-            case HAND, HAND_WITH_FACE_DOWN_PILE, HAND_AND_EXILE_WITH_FACE_DOWN_PILE, HAND_AND_BOTTOM,
-                    HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE -> "put into your hand";
+            case HAND, HAND_AND_THOPTER, HAND_WITH_FACE_DOWN_PILE, HAND_AND_EXILE_WITH_FACE_DOWN_PILE,
+                    HAND_AND_BOTTOM, HAND_AND_BOTTOM_WITH_FACE_DOWN_PILE -> "put into your hand";
             case ONE_FROM_CHOSEN_HAND_AND_BOTTOM -> "put one card into your hand";
             case SEARCH_ONE_TO_HAND -> "search (the other pile is exiled)";
             case OPPONENT_CHOOSES_EXILE -> "exile";
@@ -3301,12 +3321,7 @@ public class GraveyardReturnSupport {
             }
             if (state.disposition() == CardPileDisposition.HAND_AND_THOPTER
                     && gameData.pendingEffectResolutionEntry != null) {
-                createTokenEffectHandler.resolve(gameData, gameData.pendingEffectResolutionEntry,
-                        new CreateTokenEffect(
-                                CardType.CREATURE, 1, "Thopter", 0, 0, null, Set.of(),
-                                List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT),
-                                false, false, Map.of(), List.of(), false, false, false,
-                                cardsPutIntoGraveyard, Set.of(), Set.of()));
+                createIntrudeThopter(gameData, gameData.pendingEffectResolutionEntry, cardsPutIntoGraveyard);
             }
             return;
         }
@@ -3345,6 +3360,33 @@ public class GraveyardReturnSupport {
                 gameData.playerGraveyards.get(ownerId).add(card);
                 String ownerName = gameData.playerIdToName.get(ownerId);
                 gameLogService.append(gameData, GameLog.cardThen(card, " returns to " + ownerName + "'s graveyard."));
+            }
+        }
+    }
+
+    /**
+     * Creates Intrude on the Mind's 0/0 Thopter, then puts a +1/+1 counter on it for each card put into
+     * the graveyard. The counters arrive after the token has entered, so enter triggers see it as a 0/0.
+     */
+    public void createIntrudeThopter(GameData gameData, StackEntry entry, int counters) {
+        List<UUID> before = new ArrayList<>(entry.getCreatedPermanentIds());
+        createTokenEffectHandler.resolve(gameData, entry,
+                new CreateTokenEffect(
+                        CardType.CREATURE, 1, "Thopter", 0, 0, null, Set.of(),
+                        List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT),
+                        false, false, Map.of(), List.of(), false, false, false,
+                        0, Set.of(), Set.of()));
+        if (counters <= 0) {
+            return;
+        }
+        for (UUID createdId : entry.getCreatedPermanentIds()) {
+            if (before.contains(createdId)) {
+                continue;
+            }
+            Permanent thopter = gameQueryService.findPermanentById(gameData, createdId);
+            if (thopter != null) {
+                permanentCounterSupport.placeCounterOnPermanent(
+                        gameData, entry, thopter, CounterType.PLUS_ONE_PLUS_ONE, counters);
             }
         }
     }

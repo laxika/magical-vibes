@@ -95,7 +95,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
         AmountContext amountContext = AmountContext.forStackEntry(entry, resolveSource(gameData, entry));
 
-        int count = entry.isCastWithFlashback()
+        int count = entry.isCastWithFlashback() && effect.castFromGraveyardCount() != 1
                 ? effect.castFromGraveyardCount()
                 : Math.max(0, amountEvaluationService.evaluate(gameData, effect.count(), amountContext));
 
@@ -233,8 +233,13 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         if (destination == LibrarySearchDestination.BATTLEFIELD_TAPPED_UNDER_TARGET_PLAYER) {
             params.battlefieldControllerId(entry.getTargetId());
         }
-        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, params.build(),
-                prompt, restricted);
+        gameData.suppressNextLibrarySearchTriggers = effect.continuesPreviousSearch();
+        try {
+            librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, params.build(),
+                    prompt, restricted);
+        } finally {
+            gameData.suppressNextLibrarySearchTriggers = false;
+        }
 
         log.info("Game {} - {} searches library for {} card(s) to {} ({} matches)",
                 gameData.id, playerName, count, destination, matchingCards.size());

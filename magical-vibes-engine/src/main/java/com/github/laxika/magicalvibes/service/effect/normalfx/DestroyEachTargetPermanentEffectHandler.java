@@ -96,6 +96,11 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
         // Per-permanent controller tally for riders that need "the number of permanents THEY
         // controlled that were put into a graveyard this way" (Builder's Bane), which the single
         // event value can't express. Duplicates are meaningful: three artifacts lost = three entries.
+        entry.setEventDestroyedPlayerIds(toDestroy.stream()
+                .filter(permanent -> gameQueryService.findPermanentById(gameData, permanent.getId()) == null)
+                .map(permanent -> controllerByPermanentId.get(permanent.getId()))
+                .filter(java.util.Objects::nonNull)
+                .toList());
         entry.setEventPlayerIds(destroyedControllerIds);
         entry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
     }

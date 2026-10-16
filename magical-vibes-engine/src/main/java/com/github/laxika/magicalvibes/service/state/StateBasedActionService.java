@@ -103,6 +103,10 @@ public class StateBasedActionService {
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.StoriedEffectHandler storiedEffectHandler;
+
     public void performStateBasedActions(GameData gameData) {
         if (gameData.waitingForSubgame) return;
         // Damage and tapping can turn a masked creature face up in the domain model. Collect
@@ -126,6 +130,10 @@ public class StateBasedActionService {
         }
         triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
         initializeSpeedForPlayers(gameData);
+        // CR 702.195a: storied is a static ability that checks continuously, not only on entry.
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            storiedEffectHandler.checkPermanentStoried(gameData, playerId);
+        }
 
         // CR 603.8 — a state trigger fires as soon as the game state matches, which can be a state
         // that state-based actions are about to destroy (e.g. a creature with toughness 0 counting

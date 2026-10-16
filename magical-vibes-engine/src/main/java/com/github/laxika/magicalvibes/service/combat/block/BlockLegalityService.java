@@ -223,6 +223,7 @@ public class BlockLegalityService {
                 || (creature.isTapped() && !canBlockAsThoughUntapped(context, creature))
                 || creature.isCantBlockThisTurn()
                 || creature.isCantBlockThisCombat()
+                || gameQueryService.isLockedFromBlocking(context.gameData, creature.getId())
                 || gameQueryService.hasSuspectedAbilities(context.gameData, creature)
                 || isOutsideChosenBlockers(context.gameData, creature)) {
             return false;

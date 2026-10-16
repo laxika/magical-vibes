@@ -1225,6 +1225,9 @@ public class SpellCastingService {
         if (chosenModeCount > maximumAllowedModes) {
             throw new IllegalStateException("The additional modal modes are not available");
         }
+        if (chosenModeCount < modal.choicesRequired() && !(conditionMet && modal.anyNumberWhenConditionMet())) {
+            throw new IllegalStateException("Choose at least " + modal.choicesRequired() + " mode");
+        }
     }
 
     private static void validateModalXSelection(ChooseOneEffect modal, int modeEncoding,
@@ -2418,6 +2421,16 @@ public class SpellCastingService {
                                    Map<UUID, Integer> damageAssignments, UUID sacrificePermanentId) {
         List<Card> hand = gameData.castingSourceCards(player.getId());
         Card attempted = hand != null && cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
+        if (attempted != null && attempted.getBackFaceCard() != null
+                && attempted.getCastingOption(AdventureCast.class).isPresent()
+                && targetId == null && (targetIds == null || targetIds.isEmpty())
+                && attempted.getBackFaceCard().getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
+            // Graveyard targets are chosen through the interactive prompt of the main casting path.
+            playCardWithAdventure(gameData, player, cardIndex, xValue, null, damageAssignments, targetIds,
+                    sacrificePermanentId);
+            return;
+        }
         try {
             playAdventureCardInternal(gameData, player, cardIndex, xValue, targetId, targetIds,
                     damageAssignments, sacrificePermanentId);
@@ -2802,6 +2815,18 @@ public class SpellCastingService {
         }
         if (cardIndex < 0 || !card.hasType(CardType.CREATURE)) {
             return;
+        }
+
+        int costIncrease = castingCostService.getCastCostModifierForFaceDownSpell(gameData, playerId, card);
+        if (costIncrease > 0) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            ManaCost increaseCost = new ManaCost("{0}");
+            if (!increaseCost.canPayWithAdditionalGenericCost(pool, 0, costIncrease)) {
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " can't be cast face down: its cost increase can't be paid."));
+                return;
+            }
+            increaseCost.payWithAdditionalGenericCost(pool, 0, costIncrease);
         }
 
         hand.remove(cardIndex);
@@ -4008,9 +4033,18 @@ public class SpellCastingService {
         modalHasBattlefieldOrPlayerTarget |= wasModal && castTimeTargetFilter != null
                 && !(castTimeTargetFilter instanceof StackEntryPredicateTargetFilter)
                 && !(castTimeTargetFilter instanceof GraveyardCardPredicateTargetFilter);
+        // An instant or sorcery that declares a required target but has no effect to carry it
+        // ("Target permanent.", Indicate) still has to be cast with that target (CR 601.2c).
+        boolean effectlessSpellWithRequiredTarget = !wasModal
+                && (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                && targetingSpellEffects.stream().allMatch(CostEffect.class::isInstance)
+                && card.getMinTargets() > 0
+                && castTimeTargetFilter != null
+                && !(castTimeTargetFilter instanceof StackEntryPredicateTargetFilter)
+                && !(castTimeTargetFilter instanceof GraveyardCardPredicateTargetFilter);
         boolean unwrappedNeedsTarget = EffectResolution.needsSpellCastTarget(
                 targetingSpellEffects, card.isAuraThatRequiresAttachment(), card.isEnchantPlayer())
-                || modalHasBattlefieldOrPlayerTarget;
+                || modalHasBattlefieldOrPlayerTarget || effectlessSpellWithRequiredTarget;
         boolean allSpellTargetsAlsoAllowPermanents = unwrappedNeedsSpellTarget
                 && targetingSpellEffects.stream()
                 .filter(EffectResolution::targetsSpellOnStack)
@@ -4861,7 +4895,7 @@ public class SpellCastingService {
             targetLegalityService.validateSpellTargetGroupsAfterPrimary(
                     gameData, card, targetIds, playerId, effectiveXValue, true);
         } else if (!variableMixedTargetGroups && card.getMaxTargets() > 0 && !multipleSpellTargets
-                && (!targetIds.isEmpty() || needsSingleGraveyardTargeting || (targetId == null
+                && (!targetIds.isEmpty() || (needsSingleGraveyardTargeting && targetId == null) || (targetId == null
                 && (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
                 || card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_OPPONENT)))) {
             if (!modalTargetGroupSizes.isEmpty()) {
@@ -6555,7 +6589,8 @@ public class SpellCastingService {
                     if (dividedEffect != null && dividedEffect.totalDamage() instanceof Fixed fixedTotal) {
                         // Fixed-damage divided damage spell (e.g. Ignite Disorder, Pyrotechnics).
                         // "Any number of targets" (unbounded) may choose zero targets, which deals nothing.
-                        boolean zeroTargetsChosen = damageAssignments.isEmpty() && dividedEffect.maxTargets() == 0;
+                        boolean zeroTargetsChosen = damageAssignments.isEmpty() && dividedEffect.maxTargets() == 0
+                                && card.getMinTargets() == 0;
                         if (totalDamage != fixedTotal.value() && !zeroTargetsChosen) {
                             throw new IllegalStateException("Damage assignments must sum to " + fixedTotal.value());
                         }
@@ -9304,6 +9339,26 @@ public class SpellCastingService {
                 && !castingPermissionService.canUseFlashback(gameData, playerId, flashbackOpt.get())) {
             flashbackOpt = Optional.empty();
         }
+        // A graveyard-cast permission that uses the normal mana cost (Bösium Strip) stands in for
+        // flashback when the flashback mana cost can't be paid.
+        if (flashbackOpt.isPresent()
+                && castingPermissionService.canCastTopInstantOrSorceryFromGraveyard(gameData, playerId, card)) {
+            Optional<ManaCastingCost> flashbackManaCost = flashbackOpt.get().getCost(ManaCastingCost.class);
+            if (flashbackManaCost.isPresent() && !new ManaCost(flashbackManaCost.get().manaCost())
+                    .canPayFlashbackFromGraveyard(gameData.playerManaPools.get(playerId), 0)) {
+                flashbackOpt = Optional.empty();
+            }
+        }
+        // A flashback grant (Iroh, Grand Lotus) gives its own cost in addition to the printed one; it
+        // stands in for the printed flashback cost when only the granted cost can be paid.
+        if (flashbackOpt.isPresent()
+                && castingPermissionService.findGrantedFlashback(gameData, playerId, card).isPresent()) {
+            Optional<ManaCastingCost> printedFlashbackManaCost = flashbackOpt.get().getCost(ManaCastingCost.class);
+            if (printedFlashbackManaCost.isPresent() && !new ManaCost(printedFlashbackManaCost.get().manaCost())
+                    .canPayFlashbackFromGraveyard(gameData.playerManaPools.get(playerId), 0)) {
+                flashbackOpt = Optional.empty();
+            }
+        }
         Card castHalf = flashbackOpt.isPresent() ? card.graveyardCastHalf() : card;
         var disturbOpt = graveyardAbilitiesSuppressed
                 ? Optional.<DisturbCast>empty()
@@ -10975,6 +11030,11 @@ public class SpellCastingService {
                 && !playWithoutPaying
                 && castingPermissionService.hasExilePlayForLifeEqualToManaValuePermission(
                 gameData, playerId, exileCardId);
+        // CR 107.3b: the life payment replaces the mana cost and includes no X, so X can only be 0.
+        if (useManaValueLifeAlternative && card.getParsedManaCost() != null
+                && card.getParsedManaCost().hasX() && effectiveXValue != 0) {
+            throw new IllegalStateException("X must be zero when paying life instead of the mana cost");
+        }
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
         boolean putOnBottomOfOwnersLibrary =
                 castingPermissionService.putsExileCastOnBottomOfOwnersLibrary(
@@ -11068,6 +11128,8 @@ public class SpellCastingService {
                 }
                 // Cast without paying its mana cost — no payment.
             } else if (manaValueLifeAlternative || useManaValueLifeAlternative || sourceManaValueLifeAlternative) {
+                // Cost increases (Thalia) still apply on top of the alternative cost (CR 118.9d).
+                payFreeExileCastCostIncrease(gameData, playerId, card, effectiveXValue);
                 payLifeForExileAlternative(gameData, player, card);
             } else if (!flashforwardCast && castForForetell) {
                 ManaCost cost = gameData.foretoldCardCosts.get(exileCardId);

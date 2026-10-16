@@ -287,7 +287,8 @@ public class CreatureControlService {
             }
         }
 
-        gameData.stolenCreatures.putIfAbsent(permanent.getId(), current);
+        UUID ownerId = permanent.getOriginalCard().getOwnerId();
+        gameData.stolenCreatures.putIfAbsent(permanent.getId(), ownerId != null ? ownerId : current);
         if (derived.equals(gameData.stolenCreatures.get(permanent.getId()))) {
             gameData.stolenCreatures.remove(permanent.getId());
         }

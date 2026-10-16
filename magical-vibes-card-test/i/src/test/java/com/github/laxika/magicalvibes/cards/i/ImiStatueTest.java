@@ -65,7 +65,7 @@ class ImiStatueTest extends BaseCardTest {
         kite.tap();
         forest.tap();
 
-        advanceToNextTurn(player2);
+        advanceToNextTurn(player2, TurnStep.UPKEEP);
 
         assertThat(kite.isTapped()).isFalse();
         assertThat(forest.isTapped()).isFalse();
@@ -104,10 +104,15 @@ class ImiStatueTest extends BaseCardTest {
         forest.tap();
 
         advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstKite.getId(), secondKite.getId()));
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
-                List.of(firstKite.getId(), secondKite.getId())));
+                List.of(firstKite.getId(), secondKite.getId())))
+                .isInstanceOf(IllegalStateException.class);
         assertThat(firstKite.isTapped()).isTrue();
+        assertThat(secondKite.isTapped()).isTrue();
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstKite.getId()));
+        assertThat(firstKite.isTapped()).isFalse();
         assertThat(secondKite.isTapped()).isTrue();
     }
 
@@ -127,6 +132,7 @@ class ImiStatueTest extends BaseCardTest {
         secondForest.tap();
 
         advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstKite.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(firstKite.getId(), firstForest.getId()));
 
         assertThat(firstKite.isTapped()).isFalse();
@@ -136,12 +142,16 @@ class ImiStatueTest extends BaseCardTest {
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
+        advanceToNextTurn(currentActivePlayer, TurnStep.UNTAP);
+    }
+
+    private void advanceToNextTurn(Player currentActivePlayer, TurnStep stopStep) {
         harness.forceActivePlayer(currentActivePlayer);
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.passUntil(newActivePlayer, stopStep);
     }
 }

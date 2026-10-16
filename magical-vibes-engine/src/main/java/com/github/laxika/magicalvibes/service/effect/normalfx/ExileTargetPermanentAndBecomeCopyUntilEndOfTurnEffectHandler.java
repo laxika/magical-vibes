@@ -46,7 +46,7 @@ public class ExileTargetPermanentAndBecomeCopyUntilEndOfTurnEffectHandler implem
             return;
         }
 
-        Card targetCard = target.getCard();
+        Card targetCard = target.isFaceDown() ? permanentCopierService.copiableCard(target) : target.getCard();
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
         exileSupport.exileAndScheduleReturn(gameData, entry, target, ownerId, false, TurnStep.END_STEP, 0);

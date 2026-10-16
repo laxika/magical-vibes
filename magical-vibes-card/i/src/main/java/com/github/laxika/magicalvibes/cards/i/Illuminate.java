@@ -22,7 +22,7 @@ public class Illuminate extends Card {
 
     public Illuminate() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{R}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{3}{U}")));
+        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{3}{U}"), true, 1));
 
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()))

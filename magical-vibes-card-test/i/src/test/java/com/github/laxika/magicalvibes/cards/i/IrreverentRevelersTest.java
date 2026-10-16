@@ -98,18 +98,15 @@ class IrreverentRevelersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Casting needs no artifact target; the mode is chosen after the creature resolves")
+    @DisplayName("Casting needs no artifact target even though the other mode could use one")
     void choosesModeAfterCreatureResolves() {
         harness.addToBattlefield(player2, new BronzeSword());
         prepareRevelers();
 
-        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0, 1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleListChoice(player1, "Irreverent Revelers gains haste until end of turn");
-        harness.passBothPriorities();
+        resolveCreatureAndEtb();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Irreverent Revelers"), Keyword.HASTE)).isTrue();
     }

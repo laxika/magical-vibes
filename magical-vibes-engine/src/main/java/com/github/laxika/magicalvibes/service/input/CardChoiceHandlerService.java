@@ -112,6 +112,10 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class CardChoiceHandlerService {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.AsEntersDiscardSupport asEntersDiscardSupport;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     private final DrawService drawService;
@@ -123,6 +127,7 @@ public class CardChoiceHandlerService {
     private final CombatBlockService combatBlockService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService attackLegalityService;
     private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
@@ -1338,6 +1343,11 @@ public class CardChoiceHandlerService {
         triggerCollectionService.finishDiscardEvent(gameData);
         finalizePendingReturnToHandOnDiscard(gameData);
         applyPendingGainLifeOnDiscardType(gameData);
+
+        if (followUp.thenEffect() instanceof com.github.laxika.magicalvibes.model.effect.AsEntersDiscardEntry entry) {
+            asEntersDiscardSupport.complete(gameData, entry, followUp.discardedCardIds());
+            return;
+        }
 
         if (followUp.pendingSpellCast() != null) {
             exileFreeCastQueueSupport.completeCastAfterDiscard(gameData, followUp.pendingSpellCast());
@@ -2890,21 +2900,12 @@ public class CardChoiceHandlerService {
             combatBlockService.markTokenAsBlocking(gameData, permanent,
                     gameQueryService.findPermanentById(gameData, blockingAttackerId));
         }
-        if (enterAttacking) {
-            permanent.setAttacking(true);
-            permanent.setAttackTarget(attackTargetId);
-            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-            if (pendingEntry != null) {
-                UUID attackTarget = pendingEntry.getAttackedTargetId();
-                if (attackTarget == null && pendingEntry.getSourcePermanentId() != null) {
-                    Permanent attackingSource = gameQueryService.findPermanentById(
-                            gameData, pendingEntry.getSourcePermanentId());
-                    if (attackingSource != null) {
-                        attackTarget = attackingSource.getAttackTarget();
-                    }
-                }
-                permanent.setAttackTarget(attackTarget);
-            }
+        // CR 508.4: the controller of a creature put onto the battlefield attacking chooses which
+        // player, planeswalker, or battle it attacks whenever more than one is a legal choice.
+        boolean chooseAttackTarget = enterAttacking && gameQueryService.isCreature(gameData, permanent)
+                && attackLegalityService.getValidAttackTargetIds(gameData, playerId).size() > 1;
+        if (enterAttacking && !chooseAttackTarget) {
+            enterAttackingWithInheritedTarget(gameData, permanent, attackTargetId);
         }
 
         String stateSuffix = enterTapped && enterAttacking ? " tapped and attacking"
@@ -2951,8 +2952,16 @@ public class CardChoiceHandlerService {
             }
         }
         if (returnToHandAtEndStep) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
-                    DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+            // The delayed return belongs to the ability or spell that put the card onto the
+            // battlefield (Ilharg's attack trigger), not to the returned permanent.
+            StackEntry creatingEntry = gameData.pendingEffectResolutionEntry;
+            gameData.queueDelayedAction(creatingEntry == null
+                    ? new DelayedPermanentAction(permanent.getId(),
+                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)
+                    : new DelayedPermanentAction(permanent.getId(),
+                            DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP, false, null, null, null,
+                            false, creatingEntry.getCard(), creatingEntry.getControllerId(),
+                            creatingEntry.getSourcePermanentId()));
         }
 
         // Flash: "sacrifice it unless you pay its mana cost reduced by {N}." Prompt a pay-or-sacrifice
@@ -2971,7 +2980,48 @@ public class CardChoiceHandlerService {
                     null, reducedCost, permanent.getId()));
             playerInputService.processNextMayAbility(gameData);
         }
+        if (chooseAttackTarget) {
+            if (gameData.interaction.isAwaitingInput()) {
+                enterAttackingWithInheritedTarget(gameData, permanent, attackTargetId);
+            } else {
+                beginEnteringAttackerTargetChoice(gameData, playerId, permanent);
+            }
+        }
         return permanent;
+    }
+
+    private void enterAttackingWithInheritedTarget(GameData gameData, Permanent permanent, UUID attackTargetId) {
+        permanent.setAttacking(true);
+        permanent.setAttackTarget(attackTargetId);
+        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        if (pendingEntry != null) {
+            UUID attackTarget = pendingEntry.getAttackedTargetId();
+            if (attackTarget == null && pendingEntry.getSourcePermanentId() != null) {
+                Permanent attackingSource = gameQueryService.findPermanentById(
+                        gameData, pendingEntry.getSourcePermanentId());
+                if (attackingSource != null) {
+                    attackTarget = attackingSource.getAttackTarget();
+                }
+            }
+            permanent.setAttackTarget(attackTarget);
+        }
+    }
+
+    private void beginEnteringAttackerTargetChoice(GameData gameData, UUID playerId, Permanent permanent) {
+        Set<UUID> validTargetIds = attackLegalityService.getValidAttackTargetIds(gameData, playerId);
+        List<UUID> validPlayerIds = gameData.orderedPlayerIds.stream()
+                .filter(validTargetIds::contains)
+                .toList();
+        List<UUID> validPermanentIds = new ArrayList<>();
+        gameData.forEachPermanent((ownerId, candidate) -> {
+            if (validTargetIds.contains(candidate.getId())) {
+                validPermanentIds.add(candidate.getId());
+            }
+        });
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.ChosenPermanentAttackTarget(permanent.getId()));
+        playerInputService.beginAnyTargetChoice(gameData, playerId, validPermanentIds, validPlayerIds,
+                "Choose the player, planeswalker, or battle for " + permanent.getCard().getName() + " to attack.");
     }
 
     /**
@@ -3166,10 +3216,14 @@ public class CardChoiceHandlerService {
         }
         boolean lastDiscard = pending.remainingDiscards() == 1;
         gameData.pendingConnive = pending.remainingDiscards() > 1
-                ? new PendingConnive(pending.sourcePermanentId(), pending.remainingDiscards() - 1)
+                ? pending.withRemainingDiscards(pending.remainingDiscards() - 1)
                 : null;
         Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         if (source == null) {
+            if (lastDiscard && pending.lastKnownSource() != null) {
+                triggerCollectionService.checkAllyCreatureConniveTriggers(
+                        gameData, pending.lastKnownSource(), pending.lastKnownControllerId());
+            }
             return;
         }
         if (!discardedCard.hasType(CardType.LAND)) {

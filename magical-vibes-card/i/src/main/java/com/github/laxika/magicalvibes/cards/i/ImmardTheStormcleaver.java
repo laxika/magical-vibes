@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -38,7 +38,7 @@ public class ImmardTheStormcleaver extends Card {
                         "Remove a charge counter from Immard",
                         new RemoveCounterFromSourceThenEffect(CounterType.CHARGE, removalMode))));
 
-        var triggeredCounterMode = new ChooseOneAtTriggerTimeEffect(counterMode);
+        var triggeredCounterMode = new ChooseOneAtResolutionEffect(counterMode);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, triggeredCounterMode);
         addEffect(EffectSlot.ON_ATTACK, triggeredCounterMode);
     }

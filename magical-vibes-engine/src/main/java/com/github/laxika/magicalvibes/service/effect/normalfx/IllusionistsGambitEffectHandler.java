@@ -47,11 +47,24 @@ public class IllusionistsGambitEffectHandler implements NormalEffectHandlerBean 
         }
         List<UUID> attackerIds = attackers.stream().map(Permanent::getId).toList();
         gameData.additionalCombatPhasesOnly++;
-        gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
+        var additionalCombat = new DelayedAdditionalCombatBeginningEffect(
                 attackingPlayerId,
                 entry.getCard(),
                 new IllusionistsGambitAdditionalCombatEffect(
                         Set.copyOf(attackerIds), entry.getControllerId()),
-                entry.getSourcePermanentId()));
+                entry.getSourcePermanentId());
+        // The most recently created additional combat occurs first, so its payload is consumed first.
+        synchronized (gameData.delayedActions) {
+            int firstCombat = 0;
+            while (firstCombat < gameData.delayedActions.size()
+                    && !(gameData.delayedActions.get(firstCombat) instanceof DelayedAdditionalCombatBeginningEffect)) {
+                firstCombat++;
+            }
+            if (firstCombat == gameData.delayedActions.size()) {
+                gameData.queueDelayedAction(additionalCombat);
+            } else {
+                gameData.delayedActions.add(firstCombat, additionalCombat);
+            }
+        }
     }
 }

@@ -81,13 +81,13 @@ class InThrallToThePitTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         gs.playCard(gd, player1, 0, 0, target.getId(), null,
                 List.of(), List.of(), false, null, null, null, null, null, true);
         harness.passBothPriorities();
         harness.passUntil(TurnStep.END_STEP);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());

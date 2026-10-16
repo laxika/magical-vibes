@@ -38,7 +38,7 @@ public class InfiniteGuidelineStation extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenEffect(multicoloredPermanents, "Robot", 2, 2, null,
-                        List.of(CardSubtype.ROBOT), Set.of(), Set.of()).withTapped(true));
+                        List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT)).withTapped(true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

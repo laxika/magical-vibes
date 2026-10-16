@@ -37,7 +37,7 @@ public class Imprison extends Card {
                 "{1}",
                 SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED),
-                        new RemoveReferencedPermanentFromCombatEffect(PermanentReference.TRIGGERING)),
+                        new RemoveReferencedPermanentFromCombatEffect(PermanentReference.TRIGGERING, true)),
                 "Pay {1} to tap and remove the creature from combat?",
                 new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));
         addEffect(EffectSlot.ON_ATTACK, combatTrigger);

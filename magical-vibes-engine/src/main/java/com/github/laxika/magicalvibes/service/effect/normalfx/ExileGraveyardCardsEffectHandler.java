@@ -113,6 +113,11 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             sourcePermanentId = entry.getSourcePermanentId();
         }
 
+        // CR 610.3b: the source already left the battlefield, so the cards don't move.
+        if (e.returnExiledCardsToGraveyardOnSourceLeave() && sourcePermanentId == null) {
+            return;
+        }
+
         if (graveyard == null || graveyard.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + " has no cards in graveyard to exile."));
             return;

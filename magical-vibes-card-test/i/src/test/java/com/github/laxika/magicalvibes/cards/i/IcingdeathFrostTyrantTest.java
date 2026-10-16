@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -135,7 +136,7 @@ class IcingdeathFrostTyrantTest extends BaseCardTest {
 
         assertThat(token.isAttached()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         assertThat(victim.isTapped()).isFalse();
     }

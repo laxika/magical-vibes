@@ -59,6 +59,9 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             if (controllerId != null) {
                 entry.getRemovedPermanentControllers().put(targetId, controllerId);
             }
+            // Later steps of the same resolution read the exiled permanent's last known information.
+            entry.rememberLastKnownPermanentCard(targetId, target.getCard());
+            entry.getLastKnownPermanentPowers().put(targetId, gameQueryService.getEffectivePower(gameData, target));
             permanentRemovalService.removePermanentToExile(gameData, target);
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
             log.info("Game {} - {} is exiled by {}",

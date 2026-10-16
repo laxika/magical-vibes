@@ -86,8 +86,8 @@ class InventiveWingsmithTest extends BaseCardTest {
     void handSpellInResponsePreventsCounterAtResolution() {
         Permanent wingsmith = addWingsmith();
         harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
         beginEndStep(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
         assertThat(gd.stack).hasSize(1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
@@ -112,8 +112,8 @@ class InventiveWingsmithTest extends BaseCardTest {
     void opponentsHandSpellDoesNotPreventCounter() {
         Permanent wingsmith = addWingsmith();
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
         beginEndStep(player1);
+        harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.passBothPriorities();

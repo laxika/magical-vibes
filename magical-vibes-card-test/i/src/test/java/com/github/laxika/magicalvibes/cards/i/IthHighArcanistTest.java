@@ -123,7 +123,7 @@ class IthHighArcanistTest extends BaseCardTest {
         protectedAttacker.tap();
         harness.setLife(player2, 20);
 
-        activateIth(ith, protectedAttacker);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> activateIth(ith, protectedAttacker));
 
         assertThat(protectedAttacker.isAttacking()).isTrue();
         resolveCombat();

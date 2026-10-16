@@ -104,7 +104,8 @@ class InfestedThrinaxTest extends BaseCardTest {
         castInfestedThrinax();
         harness.addToBattlefield(player1, new EldraziMonument());
         Permanent dyingCreature = findPermanent(player1, "Infested Thrinax");
-        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, dyingCreature);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, dyingCreature));
         harness.runStateBasedActions();
         resolveAllTriggers();
 

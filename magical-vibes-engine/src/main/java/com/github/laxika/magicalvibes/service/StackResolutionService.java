@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
-import com.github.laxika.magicalvibes.model.effect.TurnFaceUpOnDamageOrTapEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -406,7 +405,7 @@ public class StackResolutionService {
                 perm.setFaceDown(2, 2, Set.of(CardType.CREATURE));
             }
             if (entry.isFaceDownTurnsFaceUpOnDamageOrTap()) {
-                perm.addTemporaryTriggeredEffect(EffectSlot.STATIC, new TurnFaceUpOnDamageOrTapEffect());
+                perm.setTurnsFaceUpOnDamageOrTap(true);
             }
         }
         perm.setCastFromZone(entry.getSourceZone());
@@ -1641,7 +1640,7 @@ public class StackResolutionService {
                     entry.getExileAndReturnSourceCard() != null ? entry.getExileAndReturnSourceCard() : entry.getCard(),
                     entry.getControllerId()));
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
-        } else if (entry.isCastWithFlashback()) {
+        } else if (entry.isCastWithFlashback() && exileSpellEffect == null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is exiled (flashback)."));

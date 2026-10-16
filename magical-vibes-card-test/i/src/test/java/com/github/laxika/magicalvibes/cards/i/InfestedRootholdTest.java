@@ -30,6 +30,7 @@ class InfestedRootholdTest extends BaseCardTest {
     void opponentArtifactSpellCreatesInsect() {
         harness.addToBattlefield(player1, new InfestedRoothold());
         prepareOpponentArtifactSpell();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -49,6 +50,7 @@ class InfestedRootholdTest extends BaseCardTest {
     void decliningCreatesNoInsect() {
         harness.addToBattlefield(player1, new InfestedRoothold());
         prepareOpponentArtifactSpell();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(countPermanents(player1, "Insect")).isZero();
@@ -105,7 +107,9 @@ class InfestedRootholdTest extends BaseCardTest {
         harness.addToBattlefield(player1, new InfestedRoothold());
         prepareOpponentArtifactSpell();
 
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);

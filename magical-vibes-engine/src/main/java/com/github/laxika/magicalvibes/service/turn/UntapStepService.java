@@ -249,8 +249,8 @@ public class UntapStepService {
                 // ENCHANTED-scope DoesntUntapEffect on an attached aura keeps the host tapped.
                 boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);
                 boolean hasSelfDoesntUntap = untapPreventionSupport.hasActiveSelfDoesntUntap(gameData, p);
-                boolean hasMayNotUntap = p.isTapped() && p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
+                boolean hasMayNotUntap = p.isTapped() && gameQueryService.hasActiveStaticEffect(
+                        gameData, p, MayNotUntapDuringUntapStepEffect.class);
                 boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
                         || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
                 boolean skipsNextUntap = p.getSkipUntapCount() > 0
@@ -597,8 +597,8 @@ public class UntapStepService {
             }
             boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);
             boolean hasSelfDoesntUntap = untapPreventionSupport.hasActiveSelfDoesntUntap(gameData, p);
-            boolean hasMayNotUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
+            boolean hasMayNotUntap = gameQueryService.hasActiveStaticEffect(
+                    gameData, p, MayNotUntapDuringUntapStepEffect.class);
             boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
                     || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
             boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);

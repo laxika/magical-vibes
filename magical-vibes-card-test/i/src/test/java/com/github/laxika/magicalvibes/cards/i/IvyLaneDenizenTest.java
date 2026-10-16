@@ -103,6 +103,7 @@ class IvyLaneDenizenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IvyLaneDenizen());
         Permanent entering = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
 
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, entering.getId());
         harness.passBothPriorities();
 
@@ -115,6 +116,7 @@ class IvyLaneDenizenTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new IvyLaneDenizen());
         Permanent second = harness.enterBattlefieldAndReturn(player1, new IvyLaneDenizen());
 
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, second.getId());
         harness.passBothPriorities();
 

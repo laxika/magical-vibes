@@ -161,12 +161,13 @@ class IridescentHornbeetleTest extends BaseCardTest {
         Permanent hornbeetle = addCreatureReady(player1, new IridescentHornbeetle());
         harness.setLibrary(player1, List.of(new IridescentHornbeetle(), new IridescentHornbeetle()));
         harness.setLibrary(player2, List.of(new IridescentHornbeetle(), new IridescentHornbeetle()));
+        harness.setHand(player2, List.of());
         putFortificationCounterOn(hornbeetle);
         advanceToEndStepAndResolve(player1);
         assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Insect")).isEqualTo(1);

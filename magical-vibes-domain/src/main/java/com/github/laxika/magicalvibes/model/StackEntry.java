@@ -392,6 +392,9 @@ public class StackEntry {
     /** Controllers of the nontoken permanents actually destroyed by the event, positionally aligned
      * with the nontoken subset of {@link #eventPlayerIds}. */
     @Setter private List<UUID> eventNontokenPlayerIds = List.of();
+    /** Controllers of the permanents destroyed by the event wherever they ended up (a destroyed
+     * permanent exiled instead of dying still counts as destroyed), one entry per permanent. */
+    @Setter private List<UUID> eventDestroyedPlayerIds = List.of();
     /** Card ids of the permanents actually destroyed by the event that produced this entry. */
     @Setter private List<UUID> eventCardIds = List.of();
     private final Map<UUID, Long> eventCardGraveyardEntryVersions = new HashMap<>();
@@ -980,6 +983,8 @@ public class StackEntry {
         this.eventPlayerIds = source.eventPlayerIds.isEmpty() ? List.of() : new ArrayList<>(source.eventPlayerIds);
         this.eventNontokenPlayerIds = source.eventNontokenPlayerIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.eventNontokenPlayerIds);
+        this.eventDestroyedPlayerIds = source.eventDestroyedPlayerIds.isEmpty()
+                ? List.of() : new ArrayList<>(source.eventDestroyedPlayerIds);
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
         this.eventCardGraveyardEntryVersions.putAll(source.eventCardGraveyardEntryVersions);
         this.resolutionExiledCardIds = source.resolutionExiledCardIds;

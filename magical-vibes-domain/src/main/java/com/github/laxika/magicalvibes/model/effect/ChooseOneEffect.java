@@ -21,8 +21,16 @@ import java.util.function.Supplier;
 public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                               boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
                               Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
-                              boolean choicesEqualModalXValue)
+                              boolean choicesEqualModalXValue, boolean anyNumberWhenConditionMet)
         implements CombatDamageTriggerContextEffect {
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
+                           boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
+                           Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
+                           boolean choicesEqualModalXValue) {
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, modesMayRepeat,
+                choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue, false);
+    }
 
     public static final String NO_MODE_LABEL = "Choose no modes";
     public static final String FINISH_MODE_SELECTION = "Done";
@@ -117,6 +125,15 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     /** Modal with one required mode and additional modes available when the condition is met. */
     public static ChooseOneEffect oneOrMoreWhen(List<ChooseOneOption> options, Condition choicesMaxCondition) {
         return new ChooseOneEffect(options, false, 1, options.size(), false, false, choicesMaxCondition);
+    }
+
+    /**
+     * "Choose one. If [condition], choose any number instead." Exactly one mode is required unless the
+     * condition holds, in which case any number of modes, including none, may be chosen.
+     */
+    public static ChooseOneEffect anyNumberWhen(List<ChooseOneOption> options, Condition choicesMaxCondition) {
+        return new ChooseOneEffect(options, false, 1, options.size(), false, false, choicesMaxCondition,
+                List.of(), 0, false, true);
     }
 
     /** Modal with an exact number of selections where a mode may be selected repeatedly. */
@@ -291,6 +308,11 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
                 throw new IllegalStateException("Invalid mode index: " + xValue);
             }
             return List.of(xValue);
+        }
+        if (xValue == 0 && anyNumberWhenConditionMet) {
+            // "Choose any number instead": the empty selection is encoded as 0 and is only legal when the
+            // condition allows the larger number of modes (validated when the spell is cast).
+            return List.of();
         }
         if (xValue >= 0) {
             throw new IllegalStateException("Invalid mode bitmask: " + xValue);

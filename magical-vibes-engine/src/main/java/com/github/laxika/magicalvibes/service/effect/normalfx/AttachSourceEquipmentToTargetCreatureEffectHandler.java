@@ -48,7 +48,7 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
         Permanent equipment = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : null;
-        if (equipment == null) {
+        if (equipment == null && entry.getSourcePermanentId() == null) {
             equipment = equipSupport.findEquipmentByCardId(gameData, entry.getCard().getId());
         }
         if (equipment == null) {

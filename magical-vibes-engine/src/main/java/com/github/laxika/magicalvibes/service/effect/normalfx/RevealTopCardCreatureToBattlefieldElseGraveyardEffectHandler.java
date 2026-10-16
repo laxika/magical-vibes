@@ -75,7 +75,9 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
                     gameData, controllerId, topCard, null, false);
 
             if (fx.sacrificeAtEndStep()) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                // CR 603.7e: the ability's controller controls the delayed trigger and is the one who sacrifices.
+                gameData.queueDelayedAction(new DelayedPermanentAction(perm.getId(),
+                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, null, null, controllerId, false));
             }
 
             log.info("Game {} - {} puts {} onto the battlefield ({})",

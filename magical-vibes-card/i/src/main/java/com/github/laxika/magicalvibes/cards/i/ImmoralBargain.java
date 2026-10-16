@@ -18,7 +18,7 @@ public class ImmoralBargain extends Card {
         addEffect(EffectSlot.SPELL, new SacrificeAnyNumberOfPermanentsCost(
                 new PermanentIsCreaturePredicate()));
 
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Targets must be nonland permanents"
         ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());

@@ -15,11 +15,11 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class InduceParanoia extends Card {
 
     public InduceParanoia() {
-        // Mill before countering so the target spell is still on the stack when its mana value
-        // and controller are evaluated.
+        // The countering step records the spell's mana value and controller on the resolving entry,
+        // so the mill that follows reads the countered spell's last known values.
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.BLACK),
                 new MillEffect(new TargetSpellManaValue(), MillRecipient.TARGET_SPELL_CONTROLLER)));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

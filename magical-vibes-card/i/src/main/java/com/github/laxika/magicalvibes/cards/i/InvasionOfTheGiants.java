@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -20,7 +21,8 @@ public class InvasionOfTheGiants extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_II, new DrawCardEffect(1));
         addEffect(EffectSlot.SAGA_CHAPTER_II, new MayRevealSubtypeFromHandEffect(
                 CardSubtype.GIANT,
-                new DealDamageToTargetPlayerOrPlaneswalkerEffect(2, PlayerRelation.OPPONENT),
+                new QueueReflexiveAbilityEffect(
+                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(2, PlayerRelation.OPPONENT)),
                 "Reveal a Giant card from your hand to deal 2 damage?"));
         addEffect(EffectSlot.SAGA_CHAPTER_III,
                 new ReduceCastCostForNextMatchingSpellEffect(new CardSubtypePredicate(CardSubtype.GIANT), 2));

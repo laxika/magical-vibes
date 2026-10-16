@@ -41,10 +41,11 @@ public class ImmortalObligation extends Card {
         addEffect(EffectSlot.SPELL, new GrantEffectsToCounterBearersEffect(CounterType.DUTY, List.of(
                 new GoadCreaturesUntilNextTurnEffect(new PermanentHasCountersPredicate(CounterType.DUTY)),
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
-                        new PermanentNotPredicate(new PermanentTruePredicate()), true),
+                        new PermanentNotPredicate(new PermanentTruePredicate()), false, null, true),
                 new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                         new PermanentHasCountersPredicate(CounterType.DUTY),
                         new PermanentControlledBySourceControllerPredicate(),
-                        "Creatures with duty counters can't block creatures you control"))));
+                        "Creatures with duty counters can't block creatures you control")),
+                true));
     }
 }

@@ -77,6 +77,7 @@ class InvokeTheWindsTest extends BaseCardTest {
     void controlDoesNotExpireAtEndOfTurn() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         target.setSummoningSick(false);
+        harness.setHand(player2, List.of());
 
         cast(target);
 

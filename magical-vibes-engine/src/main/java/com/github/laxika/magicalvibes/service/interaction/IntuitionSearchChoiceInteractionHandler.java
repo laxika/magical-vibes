@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public class IntuitionSearchChoiceInteractionHandler
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
+    private final ExileService exileService;
 
     @Override
     public Class<PendingInteraction.IntuitionSearchChoice> handledType() {
@@ -48,7 +50,7 @@ public class IntuitionSearchChoiceInteractionHandler
     @Override
     public void handleAnswer(GameData gameData, Player player, PendingInteraction.IntuitionSearchChoice interaction,
                              InteractionAnswer answer) {
-        if (!player.getId().equals(interaction.playerId())) {
+        if (!player.getId().equals(interaction.decidingPlayerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
@@ -101,6 +103,20 @@ public class IntuitionSearchChoiceInteractionHandler
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         deck.removeIf(card -> chosenIds.contains(card.getId()));
+
+        if (interaction.decisionPlayerId() != null) {
+            // Opposition Agent: the searching player exiles each card found instead of revealing them.
+            for (Card card : chosen) {
+                exileService.exileCard(gameData, controllerId, card);
+                gameData.exilePlayPermissions.put(card.getId(), interaction.decisionPlayerId());
+                gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+                gameLogService.append(gameData, GameLog.textCardText(
+                        controllerName + " exiles ", card, " (Opposition Agent)."));
+            }
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         GameLog.Builder revealBuilder = GameLog.builder().text(controllerName + " reveals ");
         for (int i = 0; i < chosen.size(); i++) {

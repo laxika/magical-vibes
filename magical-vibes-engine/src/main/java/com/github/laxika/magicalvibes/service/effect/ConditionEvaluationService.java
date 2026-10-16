@@ -4513,7 +4513,9 @@ public class ConditionEvaluationService {
         Permanent source = sourcePermanent(gameData, ctx);
         if (source == null) return false;
         Card imprintedCard = gameData.getImprintedCard(source.getCard());
-        return imprintedCard != null && imprintedCard.getName().equals(ctx.triggeringCard().getName());
+        // The imprint refers to "the exiled card": once it has left exile there is none to match.
+        return imprintedCard != null && gameData.findExiledCard(imprintedCard.getId()) != null
+                && imprintedCard.getName().equals(ctx.triggeringCard().getName());
     }
 
     private boolean isFreerunningMet(GameData gameData, UUID controllerId) {

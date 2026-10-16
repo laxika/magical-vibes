@@ -764,6 +764,9 @@ public class GameQueryService {
             return false;
         }
         for (Permanent source : battlefield) {
+            if (hasLostAllAbilities(gameData, source)) {
+                continue;
+            }
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PreventTransformEffect prevent
                         && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, prevent.filter())) {
@@ -5078,6 +5081,12 @@ public class GameQueryService {
                 } else if (effect instanceof PlayerCounterReplacementEffect replacement) {
                     result = MaroGoneNutsSupport.apply(
                             gameData, effect, replacement.replace(result));
+                } else if (effect instanceof com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrPlayersEffect replacement
+                        && replacement.appliesTo(null, false, true, true, true)) {
+                    // Level 3 of Innkeeper's Talent / Vorinclex: the controller puts the energy counters
+                    // on themself, so they are the placing player.
+                    result = MaroGoneNutsSupport.apply(
+                            gameData, effect, replacement.replace(null, result));
                 }
             }
         }

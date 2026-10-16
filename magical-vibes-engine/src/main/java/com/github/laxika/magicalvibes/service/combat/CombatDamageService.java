@@ -1847,6 +1847,9 @@ public class CombatDamageService {
             gameData.combatDamageToPlayerControllerSubtypesThisTurn
                     .computeIfAbsent(attackerId, k -> ConcurrentHashMap.newKeySet())
                     .addAll(gameData.combatDamageSourceSubtypesThisTurn.get(creature.getId()));
+            gameData.combatDamageDealersByControllerThisTurn
+                    .computeIfAbsent(attackerId, k -> ConcurrentHashMap.newKeySet())
+                    .add(creature.getId());
             if (gameData.combatDamageSourcesWithChangelingThisTurn.contains(creature.getId())) {
                 gameData.controllersDealtCombatDamageWithChangelingThisTurn.add(attackerId);
             }
@@ -2702,6 +2705,11 @@ public class CombatDamageService {
                     // +1/+1 counters on it" (Necropolis Regent) can read it back at resolution.
                     se.setEventValue(triggerDamage);
                     se.setNonTargeting(true);
+                    if (trigger.bindSourceToDealer()) {
+                        // The dealer may have left the battlefield by resolution; keep its last known
+                        // information so the ability still sees what it was (CR 608.2h).
+                        se.setSourcePermanentSnapshot(new Permanent(creature));
+                    }
                     if (authoredEffect instanceof OncePerTurnTriggerEffect once && once.markOnAcceptance()) {
                         se.setMarkSourceOncePerTurnOnAcceptance(true);
                     }

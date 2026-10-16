@@ -12,7 +12,7 @@ public class InversionBehemoth extends Card {
     public InversionBehemoth() {
         // At the beginning of combat on your turn, switch the power and toughness of each of any
         // number of target creatures until end of turn.
-        target(TargetFilters.creature(), 0, 100)
+        target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new SwitchPowerToughnessEffect());
     }
 }

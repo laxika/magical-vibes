@@ -184,6 +184,7 @@ class ImprovisationCapstoneTest extends BaseCardTest {
         assertThat(gd.exiledCards.stream().map(e -> e.card().getId())).contains(capstone.getId());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.passBothPriorities();
@@ -255,6 +256,7 @@ class ImprovisationCapstoneTest extends BaseCardTest {
         harness.addToBattlefield(player2, new RuleOfLaw());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 

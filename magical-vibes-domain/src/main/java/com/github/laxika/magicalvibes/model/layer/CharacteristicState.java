@@ -84,6 +84,8 @@ public class CharacteristicState {
     @Setter private int toughnessDelta;
     /** Number of layer-7d switches applied; an odd count means P/T are swapped. */
     private int switchCount;
+    /** True once an effect has made the permanent a token (Intangible Vibes). */
+    @Setter private boolean tokenized;
     /** True once a "loses all abilities" effect has been applied in layer 6. */
     private boolean losesAllAbilities;
     /** CR 613.7 timestamp of the lose-all effect; only meaningful while {@link #losesAllAbilities}. */
@@ -210,6 +212,7 @@ public class CharacteristicState {
         this.powerDelta = source.powerDelta;
         this.toughnessDelta = source.toughnessDelta;
         this.switchCount = source.switchCount;
+        this.tokenized = source.tokenized;
         this.losesAllAbilities = source.losesAllAbilities;
         this.losesAllAbilitiesTimestamp = source.losesAllAbilitiesTimestamp;
         this.losesAllNonManaAbilities = source.losesAllNonManaAbilities;

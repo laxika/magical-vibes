@@ -207,8 +207,8 @@ class IgniteDisorderTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new IgniteDisorder(), new Deathlace()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        Permanent changedTarget = harness.addToBattlefieldAndReturn(player2, new EliteVanguard());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        Permanent changedTarget =harness.addToBattlefieldAndReturn(player2, new EliteVanguard());
         Permanent legalTarget = harness.addToBattlefieldAndReturn(player2, new WindDrake());
 
         harness.castInstant(player1, 0, Map.of(changedTarget.getId(), 2, legalTarget.getId(), 1));
@@ -226,7 +226,7 @@ class IgniteDisorderTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new IgniteDisorder(), new Deathlace()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WindDrake());
 
         harness.castInstant(player1, 0, Map.of(target.getId(), 3));

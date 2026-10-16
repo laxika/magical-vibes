@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureOrTransformSourceEffect;
@@ -45,12 +46,14 @@ public class AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler
         opponents.removeIf(id -> creatureIds(gameData, id, controllerId).isEmpty());
 
         if (opponents.isEmpty()) {
-            finish(gameData, entry.getCard(), controllerId, entry.getSourcePermanentId(), List.of());
+            finish(gameData, entry.getCard(), controllerId, entry.getSourcePermanentId(), List.of(),
+                    entry.getSourcePermanentSnapshot());
             return;
         }
 
         promptNext(gameData, entry.getCard(), new AnyOpponentMaySacrificeCreatureOrTransformSourceEffect(
-                List.copyOf(opponents), controllerId, entry.getSourcePermanentId(), List.of()));
+                List.copyOf(opponents), controllerId, entry.getSourcePermanentId(), List.of(),
+                entry.getSourcePermanentSnapshot()));
     }
 
     /** The creatures an opponent can legally sacrifice for this ability. */
@@ -94,15 +97,18 @@ public class AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler
 
         if (!remaining.isEmpty()) {
             promptNext(gameData, sourceCard, new AnyOpponentMaySacrificeCreatureOrTransformSourceEffect(
-                    List.copyOf(remaining), effect.abilityControllerId(), effect.sourcePermanentId(), chosen));
+                    List.copyOf(remaining), effect.abilityControllerId(), effect.sourcePermanentId(), chosen,
+                    effect.sourcePermanentSnapshot()));
             return;
         }
 
-        finish(gameData, sourceCard, effect.abilityControllerId(), effect.sourcePermanentId(), chosen);
+        finish(gameData, sourceCard, effect.abilityControllerId(), effect.sourcePermanentId(), chosen,
+                effect.sourcePermanentSnapshot());
     }
 
     private void finish(GameData gameData, Card sourceCard, UUID abilityControllerId,
-                        UUID sourcePermanentId, List<UUID> chosenCreatureIds) {
+                        UUID sourcePermanentId, List<UUID> chosenCreatureIds,
+                        Permanent sourcePermanentSnapshot) {
         if (!chosenCreatureIds.isEmpty()) {
             destructionSupport.performSimultaneousSacrifice(gameData, chosenCreatureIds);
             return;
@@ -119,6 +125,7 @@ public class AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler
                 List.of(new TransformSelfEffect()),
                 null,
                 sourcePermanentId);
+        transformEntry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
         transformSelfEffectHandler.resolve(gameData, transformEntry, new TransformSelfEffect());
     }
 }

@@ -143,7 +143,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
             int count, List<CardType> excludedTypes, int exilePlayOpponentTax) {
         return new ChooseCardsFromTargetHandEffect(new Fixed(count), excludedTypes, List.of(),
                 HandChoiceDestination.EXILE, false, null,
-                0, true, false, false, true, true, false, exilePlayOpponentTax);
+                0, true, false, false, false, true, false, exilePlayOpponentTax);
     }
 
     /** Adds a follow-up effect when any chosen card matches the supplied predicate. */

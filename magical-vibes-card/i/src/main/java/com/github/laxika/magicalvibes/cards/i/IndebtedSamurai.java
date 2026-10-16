@@ -24,5 +24,9 @@ public class IndebtedSamurai extends Card {
                         new CardSubtypePredicate(CardSubtype.SAMURAI),
                         new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
                                 "Put a +1/+1 counter on Indebted Samurai?")));
+        // Printed creatures are excluded from their own ON_ALLY_CREATURE_DIES scan, so its own death
+        // (it is a Samurai it controls) is authored here.
+        addEffect(EffectSlot.ON_DEATH, new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
+                "Put a +1/+1 counter on Indebted Samurai?"));
     }
 }

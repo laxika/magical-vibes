@@ -28,7 +28,7 @@ public class InitiateOfBlood extends Card {
                 null,
                 List.of(
                         new DealDamageToTargetCreatureEffect(1),
-                        new ResolveEffectOnTargetDeathThisTurnEffect(new TransformToBackFaceEffect())
+                        new ResolveEffectOnTargetDeathThisTurnEffect(new TransformToBackFaceEffect(true))
                 ),
                 "{T}: Initiate of Blood deals 1 damage to target creature that was dealt damage this turn. "
                         + "When that creature dies this turn, flip Initiate of Blood.",

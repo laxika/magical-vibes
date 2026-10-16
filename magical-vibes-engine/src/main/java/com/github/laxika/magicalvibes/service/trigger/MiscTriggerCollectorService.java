@@ -826,6 +826,8 @@ public class MiscTriggerCollectorService {
         entry.setTriggeringCardId(sacrificed.sacrificedCard().getId());
         entry.setTriggeringCardGraveyardEntryVersion(
                 match.gameData().graveyardEntryVersion(sacrificed.sacrificedCard().getId()));
+        entry.setTriggeringCardExileEntryVersion(match.gameData().exileEntryVersions
+                .getOrDefault(sacrificed.sacrificedCard().getId(), 0L));
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;

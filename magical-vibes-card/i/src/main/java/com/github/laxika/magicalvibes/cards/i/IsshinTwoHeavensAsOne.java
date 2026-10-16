@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class IsshinTwoHeavensAsOne extends Card {
 
     public IsshinTwoHeavensAsOne() {
-        addEffect(EffectSlot.STATIC, AdditionalTriggeredAbilityEffect.forAttackTriggers(
-                new PermanentTruePredicate(), null));
+        addEffect(EffectSlot.STATIC, new AdditionalTriggeredAbilityEffect(
+                new PermanentTruePredicate(), null, true, true, false, false));
     }
 }

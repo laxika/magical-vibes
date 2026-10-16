@@ -69,8 +69,9 @@ public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements Nor
             gameData.chosenXValue = null;
 
             if (chosenValue == 0) {
-                gameLogService.append(gameData, GameLog.text(playerName + " chooses X=0 for " + cardName + "'s ability."));
-                log.info("Game {} - {} chooses X=0 for {}", gameData.id, playerName, cardName);
+                gameLogService.append(gameData, GameLog.text(playerName + " pays {0} for " + cardName + "."));
+                log.info("Game {} - {} pays 0 mana for {}", gameData.id, playerName, cardName);
+                beginReflexiveTrigger(gameData, entry, e, controllerId, 0);
                 return;
             }
 
@@ -95,12 +96,8 @@ public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements Nor
         }
 
         // First call: cap includes untapped mana sources so an empty pool with untapped
-        // lands still opens the prompt (CR 605.3a — mana abilities during the payment).
-        if (maxPotentialX(gameData, controllerId) <= 0) {
-            gameLogService.append(gameData, GameLog.textCardText(playerName + " has no mana to pay for ", sourceCard, "'s ability."));
-            log.info("Game {} - {} has no mana for {}'s pay-X reanimate ability", gameData.id, playerName, cardName);
-            return;
-        }
+        // lands still opens the prompt (CR 605.3a — mana abilities during the payment). Paying
+        // {0} is always possible, so the prompt opens even with no mana at all.
         beginXPrompt(gameData, controllerId, cardName);
     }
 
@@ -183,9 +180,11 @@ public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements Nor
         return payableFromPool(gameData.playerManaPools.get(controllerId)) + untappedSources;
     }
 
-    /** Generic-payable mana in the pool right now — mirrors what {@code pay} can drain. */
+    /**
+     * Mana in the pool that may pay this cost right now. Artifact-only and Myr-only mana is
+     * restricted to casting spells and activating abilities, so it can't pay a triggered ability's cost.
+     */
     private static int payableFromPool(ManaPool pool) {
-        return pool.getTotal() + pool.getArtifactOnlyColorless()
-                + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
+        return pool.getTotal() + pool.getXCostOnlyColorless();
     }
 }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfChosenColorEqualToDevotionEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
@@ -190,6 +191,13 @@ public class LandManaTypeSupport {
                 addIfNonNull(types, mana.color());
             } else if (effect instanceof AwardUncounterableGrantingManaEffect mana) {
                 addIfNonNull(types, mana.color());
+            } else if (effect instanceof AwardManaOfChosenColorEqualToDevotionEffect) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+                for (ManaColor color : ManaColor.COLORS) {
+                    if (gameQueryService.getDevotionToColor(gameData, controllerId, color) > 0) {
+                        types.add(color);
+                    }
+                }
             } else if (effect instanceof RemoveCountersForManaEffect mana) {
                 types.addAll(mana.colors());
             } else if (effect instanceof ManaProducingEffect mana) {

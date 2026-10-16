@@ -29,6 +29,9 @@ public class BecomePreparedEffectHandler implements NormalEffectHandlerBean,
 
     @Override
     public void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent, CardEffect effect) {
+        if (effect instanceof BecomePreparedEffect prepared && prepared.asTriggeredAbility()) {
+            return;
+        }
         preparedSupport.preparePermanent(gameData, enteringPermanent, controllerId);
     }
 

@@ -25,6 +25,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -101,6 +102,12 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", targetEntry.getCard(), " is created."));
         log.info("Game {} - {} copies {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
+
+        // The copy keeps the original's targets, so each of those objects becomes the target of a
+        // spell the copy's controller controls (e.g. "becomes the target of a spell you control").
+        if (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()) {
+            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, copyEntry);
+        }
 
         // Only the instant/sorcery-copy mode offers "you may choose new targets for the copy".
         if (!copyEffect.tokenCopy() && !copyEffect.tokenWithHaste()

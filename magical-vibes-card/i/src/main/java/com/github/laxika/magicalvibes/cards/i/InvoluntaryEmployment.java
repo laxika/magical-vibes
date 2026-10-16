@@ -18,8 +18,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class InvoluntaryEmployment extends Card {
 
     public InvoluntaryEmployment() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
+        target(TargetFilters.creature())
                 .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
+                .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
                 .addEffect(EffectSlot.SPELL, CreateTokenEffect.ofTreasureToken(1));
     }

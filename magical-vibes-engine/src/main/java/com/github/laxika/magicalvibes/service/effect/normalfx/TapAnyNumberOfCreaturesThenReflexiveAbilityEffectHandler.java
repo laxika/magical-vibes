@@ -26,6 +26,7 @@ public class TapAnyNumberOfCreaturesThenReflexiveAbilityEffectHandler
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,6 +51,11 @@ public class TapAnyNumberOfCreaturesThenReflexiveAbilityEffectHandler
         if (eligibleIds.isEmpty()) {
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" resolves, but there are no untapped creatures to tap.").build());
+            entry.setEventValue(0);
+            entry.setXValue(0);
+            queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
+                    new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(
+                            tapEffect.reflexiveEffect()));
             return;
         }
 

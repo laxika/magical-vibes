@@ -59,7 +59,7 @@ class IronwillForgerTest extends BaseCardTest {
                         && permanent.isAttacking()
                         && permanent.getAttackTarget().equals(thirdPlayerId));
 
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
         resolveAllTriggers();
 

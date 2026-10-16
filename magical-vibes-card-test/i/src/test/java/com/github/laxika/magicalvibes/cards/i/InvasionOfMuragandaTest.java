@@ -58,6 +58,8 @@ class InvasionOfMuragandaTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         Permanent plasm = findPermanent(player1, "Primordial Plasm");
         assertThat(plasm.isTransformed()).isTrue();
@@ -174,6 +176,8 @@ class InvasionOfMuragandaTest extends BaseCardTest {
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Primordial Plasm");

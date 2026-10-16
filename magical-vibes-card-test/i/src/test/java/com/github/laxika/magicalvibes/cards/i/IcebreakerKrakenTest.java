@@ -79,6 +79,7 @@ class IcebreakerKrakenTest extends BaseCardTest {
     @Test
     @DisplayName("Returning three snow lands as a cost returns Icebreaker Kraken to its owner's hand")
     void returnsThreeSnowLandsAndItself() {
+        harness.setHand(player1, List.of());
         Permanent kraken = harness.addToBattlefieldAndReturn(player1, new IcebreakerKraken());
         Permanent snowLand1 = harness.addToBattlefieldAndReturn(player1, new SnowCoveredIsland());
         Permanent snowLand2 = harness.addToBattlefieldAndReturn(player1, new SnowCoveredIsland());

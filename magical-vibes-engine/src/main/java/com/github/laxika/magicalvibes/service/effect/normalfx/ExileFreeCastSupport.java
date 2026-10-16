@@ -220,7 +220,12 @@ public class ExileFreeCastSupport {
                 : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
 
         // A spell with no declared target groups (auto-derived targeting) cannot be cast without a target.
-        if (EffectResolution.needsTarget(card) && (card.getMinTargets() > 0 || card.getMaxTargets() == 0
+        // A modal spell's targets belong to the chosen mode, whose effects were unwrapped above.
+        boolean needsTarget = chosenEffects != null
+                ? EffectResolution.needsTarget(spellEffects, List.of(), card.isAuraThatRequiresAttachment(),
+                card.isEnchantPlayer())
+                : EffectResolution.needsTarget(card);
+        if (needsTarget && (card.getMinTargets() > 0 || card.getMaxTargets() == 0
                 || !exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId).isEmpty())) {
             List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId);
             boolean multiTarget = card.getMaxTargets() > 1;

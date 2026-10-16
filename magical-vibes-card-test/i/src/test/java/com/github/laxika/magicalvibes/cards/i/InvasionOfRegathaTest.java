@@ -59,6 +59,7 @@ class InvasionOfRegathaTest extends BaseCardTest {
                 .checkAfterDefenseRemoved(gd, battle));
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent transformed = gd.playerBattlefields.get(player1.getId()).stream()

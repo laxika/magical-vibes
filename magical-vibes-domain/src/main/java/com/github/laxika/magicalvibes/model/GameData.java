@@ -1661,6 +1661,16 @@ public class GameData {
      * them (Grave Sifter). The batch ends when the queue runs out.
      */
     public boolean graveyardReturnQueueLeaveBatchOpen;
+    /**
+     * Set while the {@link #pendingGraveyardReturnQueue} choices of an "each player returns cards from
+     * their graveyard to their hand" effect are being made: the chosen cards stay in their graveyards
+     * (recorded in {@link #heldGraveyardHandReturns}) until every player has chosen, then move together.
+     */
+    public boolean holdGraveyardHandReturns;
+    /** Set while a continuation of an earlier library search begins, so it fires no new "searches" triggers. */
+    public boolean suppressNextLibrarySearchTriggers;
+    /** Cards chosen but not yet returned while {@link #holdGraveyardHandReturns} is set, mapped to the player returning each. */
+    public final Map<UUID, UUID> heldGraveyardHandReturns = Collections.synchronizedMap(new LinkedHashMap<>());
     /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** Draw count before the current optional draw instruction, retained across replacement choices. */
@@ -3162,6 +3172,10 @@ public class GameData {
      *  they controlled that dealt combat damage to a player this turn. Used to evaluate the prowl
      *  alternative cost ("if you dealt combat damage to a player this turn with a [subtype]"). */
     public final Map<UUID, Set<CardSubtype>> combatDamageToPlayerControllerSubtypesThisTurn = new ConcurrentHashMap<>();
+
+    /** Per player who controlled the source at damage time, the creatures that dealt combat damage to a
+     *  player this turn, kept after the creatures leave the battlefield (Excess). */
+    public final Map<UUID, Set<UUID>> combatDamageDealersByControllerThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks which players dealt combat damage to a player this turn with a Changeling creature they
      *  controlled (which counts as every creature subtype for prowl). */
@@ -7492,6 +7506,8 @@ public class GameData {
         copy.deferredGraveyardCastCopies.addAll(this.deferredGraveyardCastCopies);
         copy.pendingGraveyardReturnBatch = this.pendingGraveyardReturnBatch;
         copy.graveyardReturnQueueLeaveBatchOpen = this.graveyardReturnQueueLeaveBatchOpen;
+        copy.holdGraveyardHandReturns = this.holdGraveyardHandReturns;
+        copy.heldGraveyardHandReturns.putAll(this.heldGraveyardHandReturns);
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
         copy.pendingEachPlayerDrawUpToInitialCount = this.pendingEachPlayerDrawUpToInitialCount;
         copy.pendingEachPlayerPutContinuation = this.pendingEachPlayerPutContinuation;
@@ -8065,6 +8081,8 @@ public class GameData {
                 copy.legendaryCreatureCombatDamageToPlayersThisTurn.put(sourceId, new HashSet<>(playerIds)));
         this.combatDamageToPlayerControllerSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayerControllerSubtypesThisTurn.put(k, new HashSet<>(v)));
+        this.combatDamageDealersByControllerThisTurn.forEach((k, v) ->
+                copy.combatDamageDealersByControllerThisTurn.put(k, new HashSet<>(v)));
         copy.controllersDealtCombatDamageWithChangelingThisTurn.addAll(this.controllersDealtCombatDamageWithChangelingThisTurn);
         copy.combatDamageSourcesThatWereCommandersThisTurn.addAll(this.combatDamageSourcesThatWereCommandersThisTurn);
         this.combatBlockOpponentSubtypesThisTurn.forEach((k, v) ->

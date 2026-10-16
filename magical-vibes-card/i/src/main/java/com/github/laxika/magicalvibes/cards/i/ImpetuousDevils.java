@@ -22,7 +22,7 @@ public class ImpetuousDevils extends Card {
                         new PermanentControlledByDefendingPlayerPredicate()
                 )),
                 "Target must be a creature defending player controls"), 0, 1)
-                .addEffect(EffectSlot.ON_ATTACK, new MustBlockSourceEffect(null));
+                .addEffect(EffectSlot.ON_ATTACK, new MustBlockSourceEffect(null, null, true));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect());
     }
 }

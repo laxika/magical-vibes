@@ -56,6 +56,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_TOKEN_ENTERS_BATTLEFIELD,
     ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
     ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever a creature enters" (any controller, including the source itself, e.g. as a creature
+     *  through Opalescence). Use {@link #ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD} for "another creature". */
+    ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
     /** Aura slot for player-enchanting Curses: "Whenever a creature enchanted player controls enters, …".
      *  Fires once per matching Curse attached to the entering creature's controller. The enchanted player
      *  is baked as the (non-targeting) {@code targetId} so a {@code LoseLifeEffect(TARGET_PLAYER)} lands on
@@ -924,7 +927,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever a creature is put into exile from the battlefield, regardless of its
      *  controller. Checked after the permanent has been removed and its card has entered exile. */
     ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD,
+    /** Triggers once, however many creatures leave together, for "whenever one or more other
+     *  creatures you control leave the battlefield without dying" (Dour Port-Mage). */
     ON_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
+    /** Triggers separately for each other creature the controller controls that leaves the battlefield
+     *  without dying, even when several leave at once ("whenever another creature you control leaves
+     *  the battlefield without dying" - Imperial Cosmographer). */
+    ON_ALLY_CREATURE_LEAVES_BATTLEFIELD_WITHOUT_DYING,
     ON_SELF_OR_ALLY_CREATURES_LEAVE_BATTLEFIELD_WITHOUT_DYING,
     /** Triggers whenever another permanent controlled by this permanent's controller leaves the
      *  battlefield during that controller's turn. */

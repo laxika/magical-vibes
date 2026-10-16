@@ -32,6 +32,7 @@ public class InvokeJustice extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardIsPermanentPredicate())
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build());
 
         PermanentPredicate creatureOrVehicle = new PermanentAnyOfPredicate(List.of(

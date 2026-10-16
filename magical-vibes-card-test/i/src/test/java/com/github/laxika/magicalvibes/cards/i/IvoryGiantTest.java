@@ -78,6 +78,7 @@ class IvoryGiantTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -100,6 +101,7 @@ class IvoryGiantTest extends BaseCardTest {
         }
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -132,6 +134,7 @@ class IvoryGiantTest extends BaseCardTest {
         Permanent cavalry = harness.addToBattlefieldAndReturn(player2, new BenalishCavalry());
 
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();

@@ -101,6 +101,7 @@ class IrencragPyromancerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Gingerbrute(), new Gingerbrute(),
                 new Gingerbrute(), new Gingerbrute()));
         harness.setLibrary(player2, List.of(new Gingerbrute()));
+        harness.setHand(player1, List.of());
         draw(player1.getId());
         draw(player1.getId());
         harness.passBothPriorities();

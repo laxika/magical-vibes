@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.function.Function;
 
 @Component
 @RequiredArgsConstructor
@@ -29,17 +30,25 @@ public class IllusionistsGambitAdditionalCombatEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        IllusionistsGambitAdditionalCombatEffect gambit =
-                (IllusionistsGambitAdditionalCombatEffect) effect;
+        apply(gameData, entry.getCard().getName(), entry.getSourcePermanentId(),
+                (IllusionistsGambitAdditionalCombatEffect) effect, id -> gameQueryService.findPermanentById(gameData, id));
+    }
+
+    /**
+     * Applies the inserted combat's restrictions as a rule of that combat, not as a triggered ability:
+     * each removed creature must attack if able and cannot attack the protected player.
+     */
+    public static void apply(GameData gameData, String sourceName, UUID sourcePermanentId,
+                             IllusionistsGambitAdditionalCombatEffect gambit, Function<UUID, Permanent> findPermanent) {
         for (UUID attackerId : gambit.attackerIds()) {
-            Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
+            Permanent attacker = findPermanent.apply(attackerId);
             if (attacker == null) {
                 continue;
             }
 
             attacker.setMustAttackThisCombat(true);
             gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                    UUID.randomUUID(), sourceName, sourcePermanentId,
                     gambit.protectedPlayerId(),
                     new CreaturesCantAttackControllerUnlessPredicateEffect(
                             new PermanentNotPredicate(new PermanentTruePredicate()), true),

@@ -69,8 +69,38 @@ public record SearchLibraryEffect(
         int topLibraryPosition,
         boolean battlefieldIfOpponentControlsMoreLands,
         int topLibraryFractionDenominator,
-        boolean optionalCount
+        boolean optionalCount,
+        boolean continuesPreviousSearch
 ) implements CardEffect {
+
+    public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
+                               ManaValueBound manaValueBound, int castFromGraveyardCount,
+                               boolean requireDifferentNames, boolean grantHaste, boolean exileAtEndStep,
+                               boolean returnToHandAtEndStep, AnimatePermanentsEffect animateFound,
+                               LibrarySearchPlayer searchPlayer, boolean onlyIfSacrificed,
+                               boolean battlefieldIfChosenBeholdType, boolean shuffleAfterSelection,
+                               CounterType battlefieldCounter, EnterWithCountersEffect enterWithCounters,
+                               int topLibraryPosition, boolean battlefieldIfOpponentControlsMoreLands,
+                               int topLibraryFractionDenominator, boolean optionalCount) {
+        this(count, filter, destination, manaValueBound, castFromGraveyardCount, requireDifferentNames,
+                grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound, searchPlayer,
+                onlyIfSacrificed, battlefieldIfChosenBeholdType, shuffleAfterSelection,
+                battlefieldCounter, enterWithCounters, topLibraryPosition,
+                battlefieldIfOpponentControlsMoreLands, topLibraryFractionDenominator, optionalCount, false);
+    }
+
+    /**
+     * The same tutor, flagged as the second half of one search ("an instant card and/or a sorcery card"):
+     * it still looks through the library again but is not a separate search for "whenever a player
+     * searches their library" triggers.
+     */
+    public SearchLibraryEffect asContinuationOfPreviousSearch() {
+        return new SearchLibraryEffect(count, filter, destination, manaValueBound, castFromGraveyardCount,
+                requireDifferentNames, grantHaste, exileAtEndStep, returnToHandAtEndStep, animateFound,
+                searchPlayer, onlyIfSacrificed, battlefieldIfChosenBeholdType, shuffleAfterSelection,
+                battlefieldCounter, enterWithCounters, topLibraryPosition,
+                battlefieldIfOpponentControlsMoreLands, topLibraryFractionDenominator, optionalCount, true);
+    }
 
     public SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination,
                                ManaValueBound manaValueBound, int castFromGraveyardCount,

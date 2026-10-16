@@ -64,7 +64,7 @@ public class EncoreEffectHandler implements NormalEffectHandlerBean {
                 }
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         permanentId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null, entry.getControllerId()));
+                        false, null, null, entry.getControllerId(), false, entry.getCard()));
             }
         }
     }

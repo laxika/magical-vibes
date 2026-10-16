@@ -21,7 +21,7 @@ public class IntruderAlarm extends Card {
                 new MatchingPermanentsDoesntUntapEffect(new PermanentIsCreaturePredicate()));
 
         // Whenever a creature enters, untap all creatures.
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
                 new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES));
     }
 }

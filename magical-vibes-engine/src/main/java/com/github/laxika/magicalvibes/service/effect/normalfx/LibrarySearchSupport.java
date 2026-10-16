@@ -962,6 +962,7 @@ public class LibrarySearchSupport {
         // ON_OPPONENT_SEARCHES_LIBRARY (Ob Nixilis, Unshackled) for a player searching their OWN
         // library. A search of someone else's library (targetPlayerId set) is not "their library".
         if (singleSearchCardIds == null
+                && !gameData.suppressNextLibrarySearchTriggers
                 && (params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId()))
                 && params.followUp().basicLandSearchQueue() == null
                 && params.followUp().eachPlayerToHandCount() == 0) {

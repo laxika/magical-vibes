@@ -365,7 +365,7 @@ SYNTH("Synth"),
 
     private static final List<CardSubtype> LAND_TYPES = List.of(
             PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST, CLOUD, DESERT, CAVE, LAIR, GATE, LOCUS, TOWN,
-            URZAS, ULAMOGS, MINE, POWER_PLANT, TOWER, SPHERE, OMEN);
+            URZAS, ULAMOGS, MINE, POWER_PLANT, TOWER, SPHERE, PLANET, OMEN);
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
             AJANI, BASRI, GARRUK, KOTH, HUATLI, ASHIOK, KARN, GIDEON, LILIANA, JACE, NISSA,

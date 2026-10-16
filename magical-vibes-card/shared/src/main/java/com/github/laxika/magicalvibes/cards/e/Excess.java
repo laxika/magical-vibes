@@ -3,14 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.CreaturesControllerControlledThatDealtCombatDamageToPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-
-import java.util.List;
 
 /**
  * Excess — back half of Indulge // Excess.
@@ -20,11 +14,8 @@ import java.util.List;
 public class Excess extends Card {
 
     public Excess() {
-        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofTreasureToken(new PermanentCount(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentDealtCombatDamageToPlayerThisTurnPredicate())),
-                CountScope.CONTROLLER)));
+        addEffect(EffectSlot.SPELL, CreateTokenEffect.ofTreasureToken(
+                new CreaturesControllerControlledThatDealtCombatDamageToPlayerThisTurn()));
 
         addCastingOption(new FlashbackCast("{1}{R}"));
     }

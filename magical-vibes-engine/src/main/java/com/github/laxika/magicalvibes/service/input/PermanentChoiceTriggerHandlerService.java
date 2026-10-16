@@ -1283,6 +1283,10 @@ public class PermanentChoiceTriggerHandlerService {
                 token.setAttackTarget(chosenTargets.get(i % chosenTargets.size()));
             }
         }
+        StackEntry parkedEntry = gameData.pendingEffectResolutionEntry;
+        if (parkedEntry != null) {
+            parkedEntry.getCreatedPermanentIds().addAll(createdIds);
+        }
 
         if (context.sacrificeAtEndStep()) {
             for (UUID createdId : createdIds) {

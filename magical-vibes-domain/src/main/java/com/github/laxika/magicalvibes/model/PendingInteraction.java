@@ -2194,15 +2194,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * only the picked cards leave the library before the shuffle.
      */
     record IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count,
-                                 boolean requireDifferentNames)
+                                 boolean requireDifferentNames, UUID decisionPlayerId)
             implements PendingInteraction {
 
         public IntuitionSearchChoice {
             pool = java.util.List.copyOf(pool);
         }
 
+        public IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count,
+                                     boolean requireDifferentNames) {
+            this(playerId, opponentId, pool, count, requireDifferentNames, null);
+        }
+
         public IntuitionSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool, int count) {
-            this(playerId, opponentId, pool, count, false);
+            this(playerId, opponentId, pool, count, false, null);
         }
 
         /** The selectable card IDs, in begin-time pool order. */
@@ -2210,9 +2215,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             return pool.stream().map(Card::getId).toList();
         }
 
+        /** The searcher, or the player controlling the search (Opposition Agent). */
         @Override
         public UUID decidingPlayerId() {
-            return playerId;
+            return decisionPlayerId != null ? decisionPlayerId : playerId;
         }
 
         @Override

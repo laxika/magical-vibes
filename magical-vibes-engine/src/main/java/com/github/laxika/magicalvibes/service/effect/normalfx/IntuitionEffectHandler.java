@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IntuitionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final ExileService exileService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,20 +61,43 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (deck.size() == 1) {
-            Card onlyCard = deck.removeFirst();
-            gameData.addCardToHand(controllerId, onlyCard);
+        UUID searchControllerId = librarySearchSupport.oppositionAgentControllerId(gameData, controllerId);
+        List<Card> searchable = deck;
+        int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
+        if (topLimit < deck.size()) {
+            searchable = deck.subList(0, topLimit);
+        }
+
+        if (searchable.size() == 1) {
+            Card onlyCard = searchable.getFirst();
+            deck.remove(onlyCard);
+            if (searchControllerId != null) {
+                exileFoundCardForOppositionAgent(gameData, controllerId, onlyCard, searchControllerId);
+            } else {
+                gameData.addCardToHand(controllerId, onlyCard);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        controllerName + " reveals ", onlyCard, " and puts it into their hand."));
+            }
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    controllerName + " reveals ", onlyCard, " and puts it into their hand."));
             return;
         }
 
-        int count = Math.min(SEARCH_COUNT, deck.size());
+        int count = Math.min(SEARCH_COUNT, searchable.size());
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.IntuitionSearchChoice(
-                        controllerId, entry.getTargetId(), new ArrayList<>(deck), count));
+                        controllerId, entry.getTargetId(), new ArrayList<>(searchable), count, false,
+                        searchControllerId));
 
         log.info("Game {} - {} searches library for {} cards for Intuition", gameData.id, controllerName, count);
+    }
+
+    /** Opposition Agent: a card found by the searching opponent is exiled and playable by the Agent's controller. */
+    private void exileFoundCardForOppositionAgent(GameData gameData, UUID libraryOwnerId, Card card,
+                                                 UUID agentControllerId) {
+        exileService.exileCard(gameData, libraryOwnerId, card);
+        gameData.exilePlayPermissions.put(card.getId(), agentControllerId);
+        gameData.exilePlayAnyManaTypeWhileExiled.add(card.getId());
+        gameLogService.append(gameData, GameLog.textCardText(
+                gameData.playerIdToName.get(libraryOwnerId) + " exiles ", card, " (Opposition Agent)."));
     }
 }

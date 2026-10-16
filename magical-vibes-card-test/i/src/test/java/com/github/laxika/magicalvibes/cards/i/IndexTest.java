@@ -87,10 +87,6 @@ class IndexTest extends BaseCardTest {
         harness.castFromHand(player1, new Index(), "{U}");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
-                .containsExactly(onlyCard);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
-
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);

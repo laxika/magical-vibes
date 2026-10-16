@@ -22,10 +22,12 @@ public class IconicShield extends Card {
 
     public IconicShield() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.EQUIPPED_CREATURE));
 
-        // Whenever equipped creature attacks, another target attacking creature gains
+        // The attack trigger is granted to the equipped creature, so that creature is its source and
+        // its controller controls it.
+        setAttackTriggerGrantedByEquipment(true);
+
+        // Equipped creature has "Whenever this creature attacks, another target attacking creature gains
         // indestructible until end of turn.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

@@ -368,10 +368,29 @@ public class PermanentCounterSupport {
 
     public void firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
             GameData gameData, Permanent target, int count, UUID placingPlayerId) {
-        if (target == null || count <= 0 || placingPlayerId == null
-                || !placingPlayerId.equals(gameQueryService.findPermanentController(gameData, target.getId()))
-                || !gameQueryService.isCreature(gameData, target)
-                || !gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.HERO)) {
+        if (target == null) {
+            return;
+        }
+        firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
+                gameData, List.of(target), count, placingPlayerId);
+    }
+
+    /**
+     * Fires "whenever you put one or more +1/+1 counters on another Hero" once per watcher for a
+     * single event that put counters on all of {@code targets} simultaneously.
+     */
+    public void firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
+            GameData gameData, List<Permanent> targets, int count, UUID placingPlayerId) {
+        if (count <= 0 || placingPlayerId == null) {
+            return;
+        }
+        List<Permanent> heroTargets = targets.stream()
+                .filter(target -> placingPlayerId.equals(
+                        gameQueryService.findPermanentController(gameData, target.getId()))
+                        && gameQueryService.isCreature(gameData, target)
+                        && gameQueryService.effectiveCreatureSubtypes(gameData, target).contains(CardSubtype.HERO))
+                .toList();
+        if (heroTargets.isEmpty()) {
             return;
         }
 
@@ -380,7 +399,7 @@ public class PermanentCounterSupport {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
-            if (source.getId().equals(target.getId())) {
+            if (heroTargets.stream().allMatch(target -> target.getId().equals(source.getId()))) {
                 continue;
             }
             List<CardEffect> effects = source.getCard().getEffects(

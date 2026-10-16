@@ -15,11 +15,11 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 import java.util.Set;
@@ -35,12 +35,12 @@ public class InvisibleWoman extends Card {
 
         PermanentCount creaturesYouControl = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        target(TargetFilters.creature()).addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new MayPayManaEffect(
                         "{R}{G}{W}{U}",
-                        SequenceEffect.of(
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new BoostTargetCreatureEffect(creaturesYouControl, new Fixed(0)),
-                                new MakeCreatureUnblockableEffect()),
+                                new MakeCreatureUnblockableEffect())),
                         "Pay {R}{G}{W}{U} to boost a creature and make it unblockable?"));
     }
 }

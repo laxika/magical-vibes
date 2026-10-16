@@ -135,6 +135,13 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
     }
 
     private boolean applyEffect(GameData gameData, StackEntry entry, LosesAllAbilitiesEffect e, Permanent target) {
+        // Abilities granted earlier have an older timestamp than this effect and are removed by it;
+        // abilities granted afterwards are kept (CR 613.7).
+        target.clearTemporaryTriggeredEffects();
+        if (target.isCantBlockGrantedAbilityThisTurn()) {
+            target.setCantBlockThisTurn(false);
+            target.setCantBlockGrantedAbilityThisTurn(false);
+        }
         if (e.duration() == EffectDuration.PERMANENT) {
             target.setLosesAllAbilitiesPermanently(true);
         } else if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {

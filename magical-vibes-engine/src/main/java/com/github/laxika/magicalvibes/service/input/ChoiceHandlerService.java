@@ -525,7 +525,8 @@ public class ChoiceHandlerService {
             throw new IllegalArgumentException("Invalid card name: " + colorName);
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameRevealHandThenChoice
-                && !colorChoice.options().contains(colorName)) {
+                && !colorChoice.options().contains(colorName)
+                && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, List.of())) {
             throw new IllegalArgumentException("Invalid card name: " + colorName);
         }
         if (colorChoice.context() instanceof ChoiceContext.TriggeredModalChoice

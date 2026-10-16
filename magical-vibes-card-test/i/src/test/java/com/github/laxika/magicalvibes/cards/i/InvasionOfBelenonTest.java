@@ -54,6 +54,7 @@ class InvasionOfBelenonTest extends BaseCardTest {
                 .checkAfterDefenseRemoved(gd, battle));
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent anthem = findPermanentByName(player1, "Belenon War Anthem");
@@ -87,6 +88,7 @@ class InvasionOfBelenonTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent anthem = findPermanentByName(player1, "Belenon War Anthem");

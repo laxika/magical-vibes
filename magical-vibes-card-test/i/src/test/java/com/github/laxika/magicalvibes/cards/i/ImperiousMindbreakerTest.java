@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ImperiousMindbreakerTest extends BaseCardTest {
 
     private Permanent castAndPairWithBears() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new ImperiousMindbreaker()));
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castCreature(player1, 0);
@@ -35,7 +35,6 @@ class ImperiousMindbreakerTest extends BaseCardTest {
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bears)));
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(sizeBefore - 2);
     }
@@ -50,7 +49,6 @@ class ImperiousMindbreakerTest extends BaseCardTest {
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(mindbreaker)));
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(sizeBefore - 4);
     }
@@ -63,7 +61,6 @@ class ImperiousMindbreakerTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveCombat();
-        harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(sizeBefore);
     }

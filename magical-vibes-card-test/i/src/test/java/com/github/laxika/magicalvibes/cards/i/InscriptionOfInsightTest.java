@@ -133,6 +133,7 @@ class InscriptionOfInsightTest extends BaseCardTest {
     void bounceModeCanChooseOneTarget() {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new CliffhavenSellSword());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new CliffhavenSellSword());
+        harness.setHand(player2, List.of());
         prepareCard();
 
         harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{0},

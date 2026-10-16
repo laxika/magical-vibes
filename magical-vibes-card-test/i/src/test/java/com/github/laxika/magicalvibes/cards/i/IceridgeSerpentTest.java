@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -51,10 +52,10 @@ class IceridgeSerpentTest extends BaseCardTest {
         IceridgeSerpent stolenCreature = new IceridgeSerpent();
         stolenCreature.setOwnerId(player1.getId());
         harness.addToBattlefield(player2, stolenCreature);
-        UUID targetId = harness.getPermanentId(player2, "Iceridge Serpent");
-        gd.stolenCreatures.put(targetId, player1.getId());
+        Permanent target = findPermanent(player2, "Iceridge Serpent");
+        setOwnerAndController(target, player1, player2);
 
-        castSerpent(targetId);
+        castSerpent(target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -83,9 +84,8 @@ class IceridgeSerpentTest extends BaseCardTest {
         castSerpent(harness.getPermanentId(player2, "Iceridge Serpent"));
         harness.passBothPriorities();
 
-        var target = gd.playerBattlefields.get(player2.getId()).removeFirst();
-        gd.playerBattlefields.get(player1.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        setOwnerAndController(target, player2, player1);
         harness.passBothPriorities();
 
         harness.assertNotInHand(player2, "Iceridge Serpent");

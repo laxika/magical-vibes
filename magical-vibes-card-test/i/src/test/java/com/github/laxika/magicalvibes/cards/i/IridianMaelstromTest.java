@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.j.JaredCarthalion;
 import com.github.laxika.magicalvibes.cards.j.JodahTheUnifier;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -37,7 +39,8 @@ class IridianMaelstromTest extends BaseCardTest {
         harness.addToBattlefield(player2, new BalefulStrix());
         harness.addToBattlefield(player1, new FusionElemental());
         harness.addToBattlefield(player2, new FusionElemental());
-        harness.addToBattlefield(player2, new JaredCarthalion());
+        Permanent jared = harness.addToBattlefieldAndReturn(player2, new JaredCarthalion());
+        jared.setCounterCount(CounterType.LOYALTY, 5);
 
         harness.castFromHand(player1, new IridianMaelstrom(), "{W}{U}{B}{R}{G}");
         harness.passBothPriorities();

@@ -134,6 +134,7 @@ class IronManBleedingEdgeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IronManBleedingEdge());
         harness.setLibrary(player1, List.of(new SolRing(), new SolRing()));
         harness.setLibrary(player2, List.of(new SolRing(), new SolRing()));
+        harness.setHand(player2, List.of());
         harness.castFromHand(player1, new SolRing(), "{1}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

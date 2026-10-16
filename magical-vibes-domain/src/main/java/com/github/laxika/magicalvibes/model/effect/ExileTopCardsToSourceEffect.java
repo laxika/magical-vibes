@@ -28,7 +28,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
                                           boolean toGraveyardOnControlLoss, LibraryScope scope,
                                           boolean targetedOpponent, DynamicAmount dynamicCount,
-                                          boolean markWithIntelCounters, boolean mayLookAtFaceDownCards)
+                                          boolean markWithIntelCounters, boolean mayLookAtFaceDownCards,
+                                          boolean exilerMayLookWhileExiled)
         implements CombatDamageTriggerContextEffect, CombatDamageAmountAwareEffect {
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown,
@@ -37,6 +38,24 @@ public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
                                        boolean markWithIntelCounters) {
         this(count, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount,
                 markWithIntelCounters, true);
+    }
+
+    public ExileTopCardsToSourceEffect(int count, boolean faceDown,
+                                       boolean toGraveyardOnControlLoss, LibraryScope scope,
+                                       boolean targetedOpponent, DynamicAmount dynamicCount,
+                                       boolean markWithIntelCounters, boolean mayLookAtFaceDownCards) {
+        this(count, faceDown, toGraveyardOnControlLoss, scope, targetedOpponent, dynamicCount,
+                markWithIntelCounters, mayLookAtFaceDownCards, false);
+    }
+
+    /**
+     * Face-down exile from the controller's own library where only the player who exiled the
+     * card may look at it, for as long as it remains exiled, even if the source changes controller
+     * or leaves the battlefield (Intet, the Dreamer).
+     */
+    public static ExileTopCardsToSourceEffect faceDownLookedAtByExiler(int count) {
+        return new ExileTopCardsToSourceEffect(count, true, false, LibraryScope.CONTROLLER,
+                false, null, false, false, true);
     }
 
     /** Exiles cards face down without granting either player permission to look at them. */

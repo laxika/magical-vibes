@@ -478,7 +478,16 @@ public final class EffectResolution {
         List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
         return !card.getSpellTargets().isEmpty()
                 || !computeAllowedTargets(List.of(), etbEffects, false, false).isEmpty()
-                || etbEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack);
+                || etbEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
+                || etbEffects.stream().anyMatch(EffectResolution::hasTargetedModalOption);
+    }
+
+    /** Whether a modal ability has a mode that chooses a target (the mode itself is chosen separately). */
+    private static boolean hasTargetedModalOption(CardEffect effect) {
+        return effect instanceof ChooseOneEffect modal && modal.options().stream().anyMatch(option ->
+                option.targetFilter() != null
+                        || !computeAllowedTargets(List.of(), option.effects(), false, false).isEmpty()
+                        || option.effects().stream().anyMatch(EffectResolution::targetsSpellOnStack));
     }
 
     /**

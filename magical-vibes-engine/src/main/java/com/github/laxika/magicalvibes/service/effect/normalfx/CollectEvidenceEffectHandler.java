@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceEffect;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
@@ -27,6 +29,7 @@ import java.util.UUID;
 public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
 
@@ -39,13 +42,32 @@ public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CollectEvidenceEffect collectEvidence = (CollectEvidenceEffect) effect;
         List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
-        if (collectEvidence.minimumManaValue() > 0
+        int minimumManaValue = collectEvidence.minimumManaValue();
+        if (collectEvidence.chooseX()) {
+            int available = graveyard == null ? 0 : graveyard.stream().mapToInt(Card::getManaValue).sum();
+            if (gameData.chosenXValue == null && available > 0) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
+                        entry.getControllerId(), available,
+                        entry.getCard().getName() + " — Choose X for collect evidence X.",
+                        entry.getCard().getName()));
+                return;
+            }
+            minimumManaValue = gameData.chosenXValue == null ? 0 : gameData.chosenXValue;
+            gameData.chosenXValue = null;
+            entry.setEventValue(minimumManaValue);
+            if (minimumManaValue == 0) {
+                triggerCollectionService.checkCollectEvidenceTriggers(gameData, entry.getControllerId());
+                queueReflexiveAbility(gameData, entry, collectEvidence.thenEffect());
+                return;
+            }
+        }
+        if (minimumManaValue > 0
                 && (graveyard == null || graveyard.isEmpty()
-                || graveyard.stream().mapToInt(Card::getManaValue).sum() < collectEvidence.minimumManaValue())) {
+                || graveyard.stream().mapToInt(Card::getManaValue).sum() < minimumManaValue)) {
             return;
         }
 
-        if (collectEvidence.minimumManaValue() == 0 && (graveyard == null || graveyard.isEmpty())) {
+        if (minimumManaValue == 0 && (graveyard == null || graveyard.isEmpty())) {
             entry.setEventValue(0);
             triggerCollectionService.checkCollectEvidenceTriggers(gameData, entry.getControllerId());
             queueReflexiveAbility(gameData, entry, collectEvidence.thenEffect());
@@ -56,9 +78,9 @@ public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
         gameData.rerunCurrentEffectAfterInteraction = true;
         playerInputService.beginMultiGraveyardChoiceWithMinimumManaValue(
                 gameData, entry.getControllerId(), new ArrayList<>(graveyard), graveyard.size(),
-                collectEvidence.minimumManaValue(),
+                minimumManaValue,
                 entry.getCard().getName() + " — You may collect evidence "
-                        + collectEvidence.minimumManaValue() + ". Choose cards from your graveyard.");
+                        + minimumManaValue + ". Choose cards from your graveyard.");
     }
 
     public void queueReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {

@@ -640,8 +640,8 @@ public class EtbTriggerService {
             return true;
         }
         // "This creature enters prepared" is applied as the permanent enters, not as a triggered ability.
-        if (effect instanceof BecomePreparedEffect) {
-            return true;
+        if (effect instanceof BecomePreparedEffect prepared) {
+            return !prepared.asTriggeredAbility();
         }
         if (effect instanceof ConditionalEffect conditional) {
             return isEntryReplacementEffect(conditional.wrapped());

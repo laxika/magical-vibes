@@ -86,6 +86,8 @@ class IntellectualOfferingTest extends BaseCardTest {
         Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
         ownArtifact.tap();
         opponentArtifact.tap();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
 
@@ -105,6 +107,9 @@ class IntellectualOfferingTest extends BaseCardTest {
         Permanent ownCreature = tappedCreature(player1);
         Permanent chosenCreature = tappedCreature(player2);
         Permanent unchosenCreature = tappedCreature(player3);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setHand(player3, List.of());
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
 

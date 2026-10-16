@@ -1604,7 +1604,13 @@ public class AbilityActivationService {
         // ability is put on the stack — prevents the same graveyard card from being activated twice.
         if (ability.getEffects().stream().anyMatch(ExileSelfFromGraveyardCost.class::isInstance)) {
             graveyard.remove(card);
+            int stackBeforeExileCost = gameData.stack.size();
             graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, card);
+            if (gameData.stack.size() > stackBeforeExileCost) {
+                gameData.pendingActivatedAbilityCostTriggers.addAll(
+                        new ArrayList<>(gameData.stack.subList(stackBeforeExileCost, gameData.stack.size())));
+                gameData.stack.subList(stackBeforeExileCost, gameData.stack.size()).clear();
+            }
             exileService.exileCard(gameData, playerId, card);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " exiles ", card, " from the graveyard as an activation cost."));
@@ -2447,7 +2453,7 @@ public class AbilityActivationService {
                 gameData.cardEnteringGraveyardByCycling = card.getId();
             }
             try {
-                graveyardService.addCardToGraveyard(gameData, playerId, card, Zone.HAND);
+                graveyardService.discardCard(gameData, playerId, card);
                 discarded = true;
             } finally {
                 gameData.cardEnteringGraveyardByCycling = previousCyclingCard;
@@ -3169,12 +3175,16 @@ public class AbilityActivationService {
             throw new IllegalStateException("Source permanent is no longer on the battlefield");
         }
         ActivatedAbility ability = resolveAbility(gameData, source, context.abilityIndex());
-        HandRevealCost handRevealCost = ability.getEffects().stream()
-                .filter(HandRevealCost.class::isInstance)
-                .map(HandRevealCost.class::cast)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Activated ability no longer has the hand reveal cost"));
-        validateHandRevealSelection(gameData, player.getId(), handRevealCost, context.xValue(), selectedIds);
+        if (ability.getEffects().stream().anyMatch(RevealTwoCardsSharingColorCost.class::isInstance)) {
+            validateColorSharingPairSelection(gameData.playerHands.get(player.getId()), selectedIds);
+        } else {
+            HandRevealCost handRevealCost = ability.getEffects().stream()
+                    .filter(HandRevealCost.class::isInstance)
+                    .map(HandRevealCost.class::cast)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Activated ability no longer has the hand reveal cost"));
+            validateHandRevealSelection(gameData, player.getId(), handRevealCost, context.xValue(), selectedIds);
+        }
 
         gameData.interaction.clearAwaitingInput();
         activateAbilityInternal(
@@ -4000,6 +4010,11 @@ public class AbilityActivationService {
                     gameData, targetId, ability.getTargetFilter(), playerId, permanent, effectiveXValue);
         }
 
+        if (targetId != null && targetId.equals(permanent.getId())
+                && abilityEffects.stream().anyMatch(EquipEffect.class::isInstance)) {
+            throw new IllegalStateException("An Equipment can't equip itself");
+        }
+
         ForageOrPayManaCost forageCost = abilityEffects.stream()
                 .filter(ForageOrPayManaCost.class::isInstance)
                 .map(ForageOrPayManaCost.class::cast).findFirst().orElse(null);
@@ -4567,6 +4582,26 @@ public class AbilityActivationService {
             }
         }
 
+        if (abilityEffects.stream().anyMatch(RevealTwoCardsSharingColorCost.class::isInstance)) {
+            if (revealedHandCardIds == null) {
+                List<List<Card>> pairs = colorSharingPairs(gameData.playerHands.get(playerId));
+                if (pairs.size() > 1) {
+                    interactionHandlerRegistry.begin(gameData,
+                            new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
+                                    playerId,
+                                    pairs.stream().flatMap(List::stream).map(Card::getId).distinct().toList(),
+                                    permanent.getCard().getName(),
+                                    null,
+                                    new PendingInteraction.ActivatedAbilityRevealContext(
+                                            permanent.getId(), effectiveIndex, effectiveXValue, targetId,
+                                            targetZone, targetIds, damageAssignments)));
+                    return;
+                }
+            } else {
+                validateColorSharingPairSelection(gameData.playerHands.get(playerId), revealedHandCardIds);
+            }
+        }
+
         Optional<RemoveCounterFromSourceCost> removeCounterCost = abilityEffects.stream()
                 .filter(e -> e instanceof RemoveCounterFromSourceCost)
                 .map(e -> (RemoveCounterFromSourceCost) e)
@@ -5080,8 +5115,11 @@ public class AbilityActivationService {
 
         // Pay reveal-two-color-sharing-cards cost: reveal a qualifying pair (cards stay in hand)
         if (abilityEffects.stream().anyMatch(e -> e instanceof RevealTwoCardsSharingColorCost)) {
-            List<Card> pair = colorSharingPair(gameData.playerHands.get(playerId));
-            if (pair != null) {
+            List<Card> pair = revealedHandCardIds != null
+                    ? gameData.playerHands.get(playerId).stream()
+                            .filter(card -> revealedHandCardIds.contains(card.getId())).toList()
+                    : colorSharingPair(gameData.playerHands.get(playerId));
+            if (pair != null && pair.size() == 2) {
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " reveals ")
                         .card(pair.get(0))
@@ -5384,7 +5422,8 @@ public class AbilityActivationService {
             throw new IllegalStateException("At least one target must be chosen");
         }
         if (!deferAmountValidation && assignedAmount != expectedAmount
-                && !(assignments.isEmpty() && dividedDamage.maxTargets() == 0
+                && !(assignments.isEmpty()
+                && (dividedDamage.maxTargets() == 0 || (ability != null && ability.getMinTargets() == 0))
                 && !abilityEffects.stream().anyMatch(UnattachEquipmentFromSourceCost.class::isInstance))) {
             throw new IllegalStateException("Damage assignments must sum to " + expectedAmount);
         }
@@ -8862,6 +8901,34 @@ public class AbilityActivationService {
      * {@link RevealTwoCardsSharingColorCost}). Colorless cards share no color and never qualify.
      * Returns the qualifying pair, or {@code null} if none exists.
      */
+    private List<List<Card>> colorSharingPairs(List<Card> hand) {
+        List<List<Card>> pairs = new ArrayList<>();
+        if (hand == null) {
+            return pairs;
+        }
+        for (int i = 0; i < hand.size(); i++) {
+            List<CardColor> colorsA = hand.get(i).getColors();
+            for (int j = i + 1; j < hand.size(); j++) {
+                if (hand.get(j).getColors().stream().anyMatch(colorsA::contains)) {
+                    pairs.add(List.of(hand.get(i), hand.get(j)));
+                }
+            }
+        }
+        return pairs;
+    }
+
+    private void validateColorSharingPairSelection(List<Card> hand, List<UUID> selectedIds) {
+        if (selectedIds == null || selectedIds.size() != 2 || new HashSet<>(selectedIds).size() != 2) {
+            throw new IllegalStateException("Must reveal exactly two cards that share a color");
+        }
+        boolean shareColor = colorSharingPairs(hand).stream()
+                .anyMatch(pair -> selectedIds.contains(pair.get(0).getId())
+                        && selectedIds.contains(pair.get(1).getId()));
+        if (!shareColor) {
+            throw new IllegalStateException("Must reveal two cards that share a color");
+        }
+    }
+
     private List<Card> colorSharingPair(List<Card> hand) {
         if (hand == null) {
             return null;

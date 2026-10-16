@@ -147,11 +147,11 @@ class InTheDarknessBindThemTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent saga = addSagaWithLore(3);
         harness.setHand(player2, List.of(new BeastWithin()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         advanceToNextChapter();
         harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.ensurePriority(player2);
         harness.castInstant(player2, 0, opponentCreature.getId());
         resolveAllTriggers();

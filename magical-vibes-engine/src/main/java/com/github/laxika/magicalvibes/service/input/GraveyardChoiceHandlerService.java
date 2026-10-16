@@ -394,6 +394,8 @@ public class GraveyardChoiceHandlerService {
                         && gameData.pendingGraveyardReturnBatch != null
                         && gameData.pendingGraveyardReturnBatch.holdInGraveyard()) {
                     // Stays in the graveyard until the whole batch enters.
+                } else if (destination == GraveyardChoiceDestination.HAND && gameData.holdGraveyardHandReturns) {
+                    // Stays in the graveyard until every player has chosen.
                 } else if (destination == GraveyardChoiceDestination.EXILE) {
                     permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
                 } else {
@@ -404,6 +406,23 @@ public class GraveyardChoiceHandlerService {
 
             switch (destination) {
                 case HAND -> {
+                    if (gameData.holdGraveyardHandReturns && cardPool == null) {
+                        gameData.heldGraveyardHandReturns.put(card.getId(), playerId);
+                        gameLogService.append(gameData, GameLog.textCardText(
+                                player.getUsername() + " chooses ", card, " from graveyard."));
+                        if (!gameData.pendingGraveyardReturnQueue.isEmpty()
+                                && gameData.pendingGraveyardReturnQueue.getFirst().playerId().equals(playerId)) {
+                            PendingGraveyardReturnChoice next = gameData.pendingGraveyardReturnQueue.removeFirst();
+                            Set<UUID> excludedCardIds = new HashSet<>(next.excludedCardIds());
+                            excludedCardIds.add(card.getId());
+                            gameData.pendingGraveyardReturnQueue.addFirst(new PendingGraveyardReturnChoice(
+                                    next.playerId(), next.remainingCount(), next.filter(), next.destination(),
+                                    next.skipRemainingOnDecline(), next.mandatory(), next.fromBattlefieldThisTurn(),
+                                    next.distinctManaValues(), next.distinctNames(), next.excludedManaValues(),
+                                    excludedCardIds, next.choosingPlayerId()));
+                        }
+                        break;
+                    }
                     permanentRemovalService.addCardToHandFromGraveyard(
                             gameData, cardGraveyardOwnerId, playerId, card);
 
@@ -702,7 +721,8 @@ public class GraveyardChoiceHandlerService {
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
-        } else if (gameData.pendingGraveyardReturnBatch != null || gameData.graveyardReturnQueueLeaveBatchOpen) {
+        } else if (gameData.pendingGraveyardReturnBatch != null || gameData.graveyardReturnQueueLeaveBatchOpen
+                || gameData.holdGraveyardHandReturns) {
             graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
@@ -1027,7 +1047,8 @@ public class GraveyardChoiceHandlerService {
                     .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
                     .filter(java.util.Objects::nonNull)
                     .toList();
-            if (gameData.pendingEffectResolutionEntry != null) {
+            if (gameData.pendingEffectResolutionEntry != null
+                    && (collectEvidence == null || !collectEvidence.chooseX())) {
                 gameData.pendingEffectResolutionEntry.setEventValue(
                         exiledCards.stream().mapToInt(Card::getManaValue).sum());
             }

@@ -162,9 +162,9 @@ class InterveneTest extends BaseCardTest {
         MightOfOaks might = new MightOfOaks();
         harness.setHand(player1, List.of(might, new Intervene()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, wurm.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, might.getId());
 
         assertThat(gd.stack).isEmpty();

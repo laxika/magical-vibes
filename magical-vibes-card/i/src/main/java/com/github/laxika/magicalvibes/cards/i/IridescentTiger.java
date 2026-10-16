@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class IridescentTiger extends Card {
 
     public IridescentTiger() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(true),
                 SequenceEffect.of(
                         new AwardManaEffect(ManaColor.WHITE),
                         new AwardManaEffect(ManaColor.BLUE),

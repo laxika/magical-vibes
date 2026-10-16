@@ -119,6 +119,8 @@ class IrohDragonOfTheWestTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, iroh, Keyword.FIREBENDING)).isTrue();
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FIREBENDING)).isFalse();
         declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.END_OF_COMBAT);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
     }

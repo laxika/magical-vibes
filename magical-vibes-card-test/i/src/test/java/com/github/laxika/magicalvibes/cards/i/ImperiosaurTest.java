@@ -79,7 +79,7 @@ class ImperiosaurTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("basic lands");
+                .hasMessageContaining("not playable");
         harness.assertInHand(player1, "Imperiosaur");
         assertThat(gd.stack).isEmpty();
     }

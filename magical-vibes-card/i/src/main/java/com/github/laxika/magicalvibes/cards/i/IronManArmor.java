@@ -13,9 +13,13 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -40,10 +44,13 @@ public class IronManArmor extends Card {
                 "{2}",
                 List.of(new ConditionalEffect(
                         new NotCondition(new SourceIsCreature()),
-                        AnimatePermanentsEffect.withDynamicPowerToughness(
-                                artifactsYouControl, artifactsYouControl,
-                                List.of(CardSubtype.CONSTRUCT, CardSubtype.HERO),
-                                Set.of(Keyword.FLYING), Set.of()))),
+                        SequenceEffect.of(
+                                new AnimatePermanentsEffect(0, 0,
+                                        List.of(CardSubtype.CONSTRUCT, CardSubtype.HERO),
+                                        Set.of(Keyword.FLYING)),
+                                new GrantStaticEffectToSourceEffect(
+                                        new BoostSelfEffect(artifactsYouControl, artifactsYouControl),
+                                        EffectDuration.UNTIL_END_OF_TURN)))),
                 "{2}: If this Equipment isn't a creature, it becomes a 0/0 Construct Hero artifact creature "
                         + "with flying and \"This creature gets +1/+1 for each artifact you control\" until end of turn."
         ));

@@ -4190,8 +4190,10 @@ public class DeathTriggerCollectorService {
         if (!stack.isEmpty()) {
             StackEntry queued = stack.get(stack.size() - 1);
             if (match.permanent().getId().equals(queued.getSourcePermanentId())) {
+                // The trigger is collected before the card actually enters exile, which bumps its
+                // exile-entry version; expect the version of that upcoming exile object (CR 400.7).
                 queued.setTriggeringCardExileEntryVersion(match.gameData().exileEntryVersions
-                        .getOrDefault(match.permanent().getCard().getId(), -1L));
+                        .getOrDefault(match.permanent().getCard().getId(), 0L) + 1L);
             }
         }
         return true;

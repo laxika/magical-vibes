@@ -261,7 +261,8 @@ public class CombatTriggerService {
                                     // equipped creature attacks" ability is likewise the Equipment's own ability.
                                     boolean permOwnedAttackTrigger = slot == EffectSlot.ON_ATTACK
                                             && (perm.getCard().isAttackTriggerOwnedByAura()
-                                            || perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT));
+                                            || (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                                            && !perm.getCard().isAttackTriggerGrantedByEquipment()));
                                     UUID grantedAttackControllerId = permOwnedAttackTrigger
                                             ? auraOwnerId : finalCreatureControllerId;
                                     UUID targetChooserId = slot == EffectSlot.ON_ATTACK
@@ -285,14 +286,19 @@ public class CombatTriggerService {
                                         .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance)
                                         ? finalCreatureControllerId
                                         : null;
+                                // A token-creating ability granted to the enchanted creature (Invocation of
+                                // Saint Traft) is an ability of that creature, so the creature is its source
+                                // and its controller controls it (CR 113.7, CR 113.8).
+                                boolean grantedToCreature = slot == EffectSlot.ON_ATTACK
+                                        && triggeringPlayerId != null;
                                 StackEntry trigger = new StackEntry(
                                         StackEntryType.TRIGGERED_ABILITY,
                                         perm.getCard(),
-                                        auraOwnerId,
+                                        grantedToCreature ? finalCreatureControllerId : auraOwnerId,
                                         perm.getCard().getName() + "'s triggered ability",
                                         effectsForStack,
                                         triggeringPlayerId,
-                                        perm.getId()
+                                        grantedToCreature ? creature.getId() : perm.getId()
                                 );
                                 if (triggeringPlayerId != null) {
                                     trigger.setNonTargeting(true);
@@ -310,7 +316,7 @@ public class CombatTriggerService {
                                                 ? creature.getAttackTarget()
                                                 : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
                                 trigger.setTriggeringPermanentId(creature.getId());
-                                trigger.setSourcePermanentSnapshot(new Permanent(perm));
+                                trigger.setSourcePermanentSnapshot(new Permanent(grantedToCreature ? creature : perm));
                                 trigger.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());
                                 gameData.stack.add(trigger);
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));

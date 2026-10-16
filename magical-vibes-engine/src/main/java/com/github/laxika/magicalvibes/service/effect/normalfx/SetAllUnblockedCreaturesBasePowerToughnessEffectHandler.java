@@ -37,13 +37,17 @@ public class SetAllUnblockedCreaturesBasePowerToughnessEffectHandler implements 
         int power = e.power();
         int toughness = e.toughness();
 
+        // CR 509.1h: attackers become blocked or unblocked as blockers are declared, so before that
+        // step no attacking creature is an unblocked creature yet.
+        boolean blockersDeclared = gameData.currentStep != null && !gameData.currentStep.isBeforeBlockersDeclared();
+
         int count = 0;
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
                     continue;
                 }
-                if (!permanent.isAttacking() || isBlocked(gameData, permanent)) {
+                if (!blockersDeclared || !permanent.isAttacking() || isBlocked(gameData, permanent)) {
                     continue;
                 }
                 // CR 613 layer engine: one floating layer-7b effect per affected creature locks the
@@ -69,6 +73,9 @@ public class SetAllUnblockedCreaturesBasePowerToughnessEffectHandler implements 
 
     /** An attacking creature is blocked if any permanent references its id as a blocking target. */
     private boolean isBlocked(GameData gameData, Permanent attacker) {
+        if (attacker.isBlockedWithoutBlockers()) {
+            return true;
+        }
         for (List<Permanent> bf : gameData.playerBattlefields.values()) {
             for (Permanent blocker : bf) {
                 if (blocker.isBlocking() && blocker.getBlockingTargetIds().contains(attacker.getId())) {

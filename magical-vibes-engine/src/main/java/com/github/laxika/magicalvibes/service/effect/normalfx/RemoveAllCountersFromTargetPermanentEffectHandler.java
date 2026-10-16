@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final BattleDefeatSupport battleDefeatSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,6 +40,7 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
         int removed = 0;
         int oilRemoved = target.getCounterCount(CounterType.OIL);
         int timeCountersBefore = target.getCounterCount(CounterType.TIME);
+        boolean hadDefenseCounters = target.getCounterCount(CounterType.DEFENSE) > 0;
         for (CounterType counterType : CounterType.values()) {
             if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
                 continue;
@@ -48,6 +51,9 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
         gameData.recordOilCounterRemoved(target, oilRemoved);
         permanentCounterSupport.checkLastTimeCounterRemoved(gameData, target, CounterType.TIME, timeCountersBefore);
         entry.setEventValue(removed);
+        if (hadDefenseCounters) {
+            battleDefeatSupport.checkAfterDefenseRemoved(gameData, target);
+        }
 
         if (removed > 0) {
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())

@@ -194,6 +194,8 @@ class IslandSanctuaryTest extends BaseCardTest {
     @DisplayName("Advancing through the next turn removes Sanctuary protection")
     void shieldExpiresThroughNormalTurnProgression() {
         harness.addToBattlefield(player1, new IslandSanctuary());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.withAutoStop(TurnStep.DRAW, () -> resolveDrawStepChoice(player1, true));
         addCreatureReady(player2, new GrizzlyBears());
 

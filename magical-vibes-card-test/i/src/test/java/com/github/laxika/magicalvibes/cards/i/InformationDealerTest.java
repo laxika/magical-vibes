@@ -56,11 +56,7 @@ class InformationDealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryReorder reorder =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
-        assertThat(reorder).isNotNull();
-        assertThat(reorder.cards()).containsExactly(topCard);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
         assertThat(gd.interaction.activeInteraction()).isNull();

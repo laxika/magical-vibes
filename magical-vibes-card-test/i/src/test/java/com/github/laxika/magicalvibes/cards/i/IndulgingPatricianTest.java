@@ -70,7 +70,8 @@ class IndulgingPatricianTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new IndulgingPatrician()));
         harness.castFromHand(player1, new Revitalize(), "{1}{W}");
         harness.passBothPriorities();
-        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 5, "test life loss");
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player1.getId(), 5, "test life loss"));
         harness.addToBattlefield(player1, new IndulgingPatrician());
 
         advanceToEndStep(player1);
@@ -90,7 +91,7 @@ class IndulgingPatricianTest extends BaseCardTest {
         advanceToEndStep(player1);
         assertThat(gd.stack).isEmpty();
         harness.castFromHand(player1, new Revitalize(), "{1}{W}");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.getLifeGainedThisTurn(player1.getId())).isEqualTo(3);
         assertThat(gd.stack).isEmpty();

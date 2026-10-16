@@ -16,7 +16,7 @@ public class IrreverentGremlin extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentPowerAtMostPredicate(2),
-                        new OncePerTurnTriggerEffect(
+                        OncePerTurnTriggerEffect.markOnAcceptance(
                                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"))));
     }
 }

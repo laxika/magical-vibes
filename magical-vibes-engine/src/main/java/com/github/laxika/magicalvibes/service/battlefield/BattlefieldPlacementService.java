@@ -119,6 +119,9 @@ public class BattlefieldPlacementService {
     private CloneService cloneService;
 
     @Autowired @Lazy
+    private AsEntersDiscardSupport asEntersDiscardSupport;
+
+    @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.RegisterEchoAtNextUpkeepEffectHandler echoHandler;
 
     private final GameQueryService gameQueryService;
@@ -254,6 +257,7 @@ public class BattlefieldPlacementService {
         if (beginAmplifyChoice(gameData, request)) return;
         if (beginUnleashChoice(gameData, request)) return;
         if (beginRiotChoices(gameData, request)) return;
+        if (asEntersDiscardSupport.begin(gameData, request)) return;
         if (creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request)) return;
         UUID puttingPlayerId = request.controllerId();
         UUID controllerId = request.controllerId();
@@ -601,6 +605,9 @@ public class BattlefieldPlacementService {
 
     private boolean beginNativeDevourChoice(GameData gameData, BattlefieldEntryRequest request) {
         Permanent entering = request.permanent();
+        if (asEntersDiscardSupport.begin(gameData, request)) {
+            return true;
+        }
         if (entering.isNativeDevourResolved()) {
             return creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request);
         }

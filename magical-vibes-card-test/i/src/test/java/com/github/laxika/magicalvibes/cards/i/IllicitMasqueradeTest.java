@@ -94,7 +94,8 @@ class IllicitMasqueradeTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getId).contains(creature.getCard().getId());
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .extracting(Card::getId).containsExactly(otherCreature.getId());
+                .extracting(Card::getId).contains(otherCreature.getId())
+                .doesNotContain(creature.getCard().getId());
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 

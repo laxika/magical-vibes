@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final AuraAttachmentService auraAttachmentService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
 
@@ -46,6 +48,11 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
         }
 
         if (target.getId().equals(aura.getAttachedTo())) return;
+
+        if (!auraAttachmentService.canEnchant(gameData, aura.getCard(), entry.getControllerId(), target)) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " can't be attached to " + target.getCard().getName() + "."));
+            return;
+        }
 
         gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(target.getId());

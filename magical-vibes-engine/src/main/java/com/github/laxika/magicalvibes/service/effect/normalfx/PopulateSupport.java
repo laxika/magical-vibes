@@ -42,7 +42,7 @@ public class PopulateSupport {
             return tokens;
         }
         for (Permanent permanent : battlefield) {
-            if (permanent.getCard().isToken() && gameQueryService.isCreature(gameData, permanent)) {
+            if (gameQueryService.isToken(gameData, permanent) && gameQueryService.isCreature(gameData, permanent)) {
                 tokens.add(permanent);
             }
         }

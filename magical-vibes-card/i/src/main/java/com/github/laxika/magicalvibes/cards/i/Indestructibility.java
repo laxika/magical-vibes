@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Indestructibility extends Card {
 
     public Indestructibility() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_PERMANENT));
     }
 }

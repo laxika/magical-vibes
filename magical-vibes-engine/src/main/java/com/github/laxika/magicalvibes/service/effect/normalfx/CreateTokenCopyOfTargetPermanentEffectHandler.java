@@ -189,15 +189,22 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     private void resolveForDepartedTarget(GameData gameData, StackEntry entry,
                                           CreateTokenCopyOfTargetPermanentEffect effect, UUID targetId, int copyCount) {
         Card lastKnownCard = entry.lastKnownPermanentCard(targetId);
-        if (lastKnownCard == null || effect.chooseAttackTarget() || effect.createForTargetController()) {
+        if (lastKnownCard == null || effect.chooseAttackTarget()) {
             return;
+        }
+        UUID tokenControllerId = entry.getControllerId();
+        if (effect.createForTargetController()) {
+            tokenControllerId = entry.getRemovedPermanentControllers().get(targetId);
+            if (tokenControllerId == null) {
+                return;
+            }
         }
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         UUID attackTargetId = effect.tappedAndAttacking() ? entry.getAttackedTargetId() : null;
         List<UUID> attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
         tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, lastKnownCard),
-                sourcePermanent, entry.getControllerId(), effect, attackTargetIds);
+                sourcePermanent, tokenControllerId, effect, attackTargetIds);
     }
 
     private List<CardSubtype> tokenSubtypes(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {

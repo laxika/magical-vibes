@@ -129,7 +129,7 @@ class InnocuousResearcherTest extends BaseCardTest {
         opposingLand.tap();
 
         triggerEndStepAbility();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(ownLand.isTapped()).isFalse();
         assertThat(opposingLand.isTapped()).isTrue();
@@ -159,9 +159,10 @@ class InnocuousResearcherTest extends BaseCardTest {
     void castingRestrictionExpiresAtControllersNextTurn() {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         Permanent researcher = addReadyResearcher();
         triggerEndStepAbility();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
         gd.playerBattlefields.get(player1.getId()).remove(researcher);
         harness.setHand(player1, List.of(new Shock()));
 

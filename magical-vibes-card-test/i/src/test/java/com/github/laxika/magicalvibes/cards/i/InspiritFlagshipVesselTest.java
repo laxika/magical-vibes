@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InspiritFlagshipVessel.class, GrizzlyBears.class, DarksteelRelic.class})
+@CardUsed({InspiritFlagshipVessel.class, GrizzlyBears.class, Millstone.class})
 class InspiritFlagshipVesselTest extends BaseCardTest {
 
     @Test
@@ -66,8 +66,8 @@ class InspiritFlagshipVesselTest extends BaseCardTest {
     @DisplayName("Other artifacts you control have hexproof and indestructible")
     void protectsOtherControlledArtifactsOnly() {
         Permanent vessel = harness.addToBattlefieldAndReturn(player1, new InspiritFlagshipVessel());
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
-        Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new DarksteelRelic());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
 
         assertThat(gqs.hasKeyword(gd, vessel, Keyword.HEXPROOF)).isFalse();
         assertThat(gqs.hasKeyword(gd, vessel, Keyword.INDESTRUCTIBLE)).isFalse();
@@ -81,7 +81,7 @@ class InspiritFlagshipVesselTest extends BaseCardTest {
     @DisplayName("The beginning-of-combat target must be another artifact you control")
     void targetMustBeAnotherControlledArtifact() {
         Permanent vessel = harness.addToBattlefieldAndReturn(player1, new InspiritFlagshipVessel());
-        Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new DarksteelRelic());
+        Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
 
         advanceToBeginningOfCombat(player1);
 
@@ -99,7 +99,7 @@ class InspiritFlagshipVesselTest extends BaseCardTest {
 
     private void addVesselAndArtifact() {
         harness.addToBattlefieldAndReturn(player1, new InspiritFlagshipVessel());
-        harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
+        harness.addToBattlefieldAndReturn(player1, new Millstone());
     }
 
     private void advanceToBeginningOfCombat(Player activePlayer) {

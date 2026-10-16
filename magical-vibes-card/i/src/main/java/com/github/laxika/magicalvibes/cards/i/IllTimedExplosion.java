@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MKM", collectorNumber = "207")
@@ -20,7 +21,8 @@ public class IllTimedExplosion extends Card {
         addEffect(EffectSlot.SPELL, new MayEffect(
                 SequenceEffect.of(
                         new DiscardEffect(2, DiscardRecipient.CONTROLLER),
-                        new MassDamageEffect(new GreatestDiscardedCardManaValue(), false)),
+                        new QueueReflexiveAbilityEffect(
+                                new MassDamageEffect(new GreatestDiscardedCardManaValue(), false))),
                 "Discard two cards?"));
     }
 }

@@ -5,12 +5,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import lombok.RequiredArgsConstructor;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class AllowCastSourceCardFromGraveyardThisTurnEffectHandler implements NormalEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -22,8 +27,14 @@ public class AllowCastSourceCardFromGraveyardThisTurnEffectHandler implements No
         UUID controllerId = entry.getControllerId();
         Card sourceCard = entry.getCard();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (sourceCard == null || graveyard == null
-                || graveyard.stream().noneMatch(card -> card.getId().equals(sourceCard.getId()))) {
+        if (sourceCard == null) {
+            return;
+        }
+        boolean inGraveyard = graveyard != null
+                && graveyard.stream().anyMatch(card -> card.getId().equals(sourceCard.getId()));
+        boolean onBattlefield = entry.getSourcePermanentId() != null
+                && gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) != null;
+        if (!inGraveyard && !onBattlefield) {
             return;
         }
 

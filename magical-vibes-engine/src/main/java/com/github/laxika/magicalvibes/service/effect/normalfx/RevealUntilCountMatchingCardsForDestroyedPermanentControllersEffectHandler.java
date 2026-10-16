@@ -47,7 +47,7 @@ public class RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var reveal = (RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect) effect;
         Map<UUID, Integer> requiredByController = new LinkedHashMap<>();
-        for (UUID controllerId : entry.getEventPlayerIds()) {
+        for (UUID controllerId : entry.getEventDestroyedPlayerIds()) {
             requiredByController.merge(controllerId, 1, Integer::sum);
         }
 
@@ -65,6 +65,10 @@ public class RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect
         }
 
         enterCardsSimultaneously(gameData, cardsToEnterByController);
+
+        for (UUID controllerId : requiredByController.keySet()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        }
     }
 
     private List<Card> revealCards(GameData gameData, StackEntry entry, UUID controllerId,
@@ -89,7 +93,6 @@ public class RevealUntilCountMatchingCardsForDestroyedPermanentControllersEffect
         }
 
         library.addAll(cardsToReturn);
-        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
         logReveal(gameData, entry, controllerId, revealedCards);
         return foundCards;
     }

@@ -50,6 +50,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MayEffect) effect;
         CardEffect declineBranch = e.elseEffect() instanceof MayEffect elseMay ? elseMay.wrapped() : e.elseEffect();
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect
+                && e.elseEffect() == null
+                && gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).isEmpty()) {
+            // Nothing can be discarded, so there is no choice to offer and "if you do" can't happen.
+            return;
+        }
         if (e.wrapped() instanceof ReturnCardFromGraveyardEffect battlefieldReturn
                 && battlefieldReturn.targetGraveyard()
                 && battlefieldReturn.destination() == GraveyardChoiceDestination.BATTLEFIELD

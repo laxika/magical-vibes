@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Stomp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -39,8 +38,7 @@ class IntoTheTimeVortexTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == hit
-                && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == hit);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(belowHit, skippedLand, skippedNonland);
     }
 

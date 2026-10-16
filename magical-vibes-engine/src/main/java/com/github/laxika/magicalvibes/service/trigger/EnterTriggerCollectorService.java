@@ -1001,6 +1001,7 @@ public class EnterTriggerCollectorService {
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         boolean needsTargetChoice = isTargeting(effect);
@@ -1462,7 +1463,9 @@ public class EnterTriggerCollectorService {
                 entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
             }
             entry.setNonTargeting(!isTargeting(mayPay));
-            if (enteringPermanentId != null && mayPay.wrapped() instanceof CreateTokenCopyOfTargetPermanentEffect) {
+            CardEffect payOffEffect = mayPay.wrapped() instanceof ConditionalEffect payOffConditional
+                    ? payOffConditional.wrapped() : mayPay.wrapped();
+            if (enteringPermanentId != null && payOffEffect instanceof CreateTokenCopyOfTargetPermanentEffect) {
                 // "that creature" is not a target (Flameshadow Conjuring), so the copy still happens
                 // from last known information when the entering creature has already left.
                 entry.setNonTargeting(true);

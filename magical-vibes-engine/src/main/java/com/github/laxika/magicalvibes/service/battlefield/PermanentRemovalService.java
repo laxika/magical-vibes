@@ -643,16 +643,16 @@ public class PermanentRemovalService {
         notifyCreatureLeftWithoutDying(gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAllyPermanentLeavesBattlefieldDuringControllerTurnTriggers(gameData, target, controllerId);
         triggerCollectionService.checkAnotherArtifactLeavesBattlefieldTriggers(gameData, target, controllerId);
+        // A creature made a token by a continuous effect is still put into its owner's hand and
+        // ceases to exist the next time state-based actions are checked (CR 111.7, CR 704.5d).
+        for (Card leaving : target.cardsLeavingBattlefield()) {
+            gameData.addCardToHand(ownerOfCard(leaving, ownerId), leaving);
+        }
         if (!dynamicToken) {
-            for (Card leaving : target.cardsLeavingBattlefield()) {
-                gameData.addCardToHand(ownerOfCard(leaving, ownerId), leaving);
-            }
             Card companion = detachWerewhatCompanion(gameData, target);
             if (companion != null) {
                 gameData.addCardToHand(ownerOfCard(companion, ownerId), companion);
             }
-        } else {
-            clearDynamicToken(gameData, target);
         }
         if (commanderChoice) gameData.commanderBounceContexts.put(target.getCard().getId(),
                 new com.github.laxika.magicalvibes.model.CommanderBounceContext(target, controllerId, ownerId, wasCreature));
@@ -1351,6 +1351,7 @@ public class PermanentRemovalService {
             // beginning of the next end step" are each a single trigger).
             List<Object> batchKey = (kind == DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP
                     || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
+                    || kind == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP
                     || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
                     && action.sourceCard() != null
                     ? List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), "")
@@ -2134,7 +2135,7 @@ public class PermanentRemovalService {
         UUID cardId = dying.getCard().getId();
         if (gameData.creatureCardsDamagedThisTurnBySourcePermanent
                 .getOrDefault(dying.getId(), Set.of()).contains(cardId)
-                && (hasExileDamagedCreaturesInsteadOfDying(dying)
+                && (hasExileDamagedCreaturesInsteadOfDying(gameData, dying)
                 || auraOnSourceExilesDamagedCreatures(gameData, dying.getId()))) {
             return true;
         }
@@ -2144,7 +2145,7 @@ public class PermanentRemovalService {
                         .getOrDefault(source.getId(), Set.of()).contains(cardId)) {
                     continue;
                 }
-                if (hasExileDamagedCreaturesInsteadOfDying(source)
+                if (hasExileDamagedCreaturesInsteadOfDying(gameData, source)
                         || auraOnSourceExilesDamagedCreatures(gameData, source.getId())) {
                     return true;
                 }
@@ -2156,7 +2157,7 @@ public class PermanentRemovalService {
         for (Permanent source : gameData.simultaneousDyingCreatures.values()) {
             if (gameData.creatureCardsDamagedThisTurnBySourcePermanent
                     .getOrDefault(source.getId(), Set.of()).contains(cardId)
-                    && (hasExileDamagedCreaturesInsteadOfDying(source)
+                    && (hasExileDamagedCreaturesInsteadOfDying(gameData, source)
                     || auraOnSourceExilesDamagedCreatures(gameData, source.getId()))) {
                 return true;
             }
@@ -2187,10 +2188,11 @@ public class PermanentRemovalService {
         return false;
     }
 
-    private static boolean hasExileDamagedCreaturesInsteadOfDying(Permanent permanent) {
+    private boolean hasExileDamagedCreaturesInsteadOfDying(GameData gameData, Permanent permanent) {
         return permanent.isExileDamagedCreaturesInsteadOfDyingThisTurn()
-                || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance);
+                || (!gameQueryService.hasLostAllAbilities(gameData, permanent)
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance));
     }
 
     private boolean auraOnSourceExilesDamagedCreatures(GameData gameData, UUID sourceId) {
@@ -2198,7 +2200,7 @@ public class PermanentRemovalService {
             for (Permanent aura : battlefield) {
                 if (aura.isAttached()
                         && sourceId.equals(aura.getAttachedTo())
-                        && hasExileDamagedCreaturesInsteadOfDying(aura)) {
+                        && hasExileDamagedCreaturesInsteadOfDying(gameData, aura)) {
                     return true;
                 }
             }
@@ -2449,7 +2451,8 @@ public class PermanentRemovalService {
                     triggerCollectionService.checkGraveyardAllyCreatureDeathTriggers(gameData, controllerId, target);
                     triggerCollectionService.checkGraveyardOpponentCreatureDeathTriggers(
                             gameData, controllerId, target);
-                    triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target);
+                    triggerCollectionService.checkAnyCreatureDeathTriggers(
+                            gameData, controllerId, target, dyingPowerAtDeath, dyingToughnessAtDeath);
                     triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(
                             gameData, controllerId, target, dyingPowerAtDeath);
                     triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(

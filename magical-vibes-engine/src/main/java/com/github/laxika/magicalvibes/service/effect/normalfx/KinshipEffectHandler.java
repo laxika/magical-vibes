@@ -51,6 +51,10 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) : null;
         if (source == null) {
+            // The source left the battlefield in response: its last known creature types are used.
+            source = entry.getSourcePermanentSnapshot();
+        }
+        if (source == null) {
             return;
         }
 

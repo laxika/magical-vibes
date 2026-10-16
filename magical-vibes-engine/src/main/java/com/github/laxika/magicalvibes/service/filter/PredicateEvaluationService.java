@@ -3957,8 +3957,13 @@ public class PredicateEvaluationService {
     private Permanent equippedCreatureOfSource(GameData gameData, UUID sourceCardId, FilterContext filterContext) {
         if (gameData == null) return null;
         Permanent equipment = sourceCardId == null ? null : findPermanentByOriginalCardId(gameData, sourceCardId);
-        if (equipment == null && filterContext != null) {
-            equipment = filterContext.sourcePermanentSnapshot();
+        if ((equipment == null || !equipment.isAttached()) && filterContext != null) {
+            // An ability that already triggered keeps referring to the creature the Equipment was
+            // attached to when it triggered, even if the Equipment has since become unattached.
+            Permanent snapshot = filterContext.sourcePermanentSnapshot();
+            if (equipment == null || (snapshot != null && snapshot.isAttached())) {
+                equipment = snapshot;
+            }
         }
         if (equipment == null || !equipment.isAttached()) return null;
         return gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
@@ -4596,6 +4601,7 @@ public class PredicateEvaluationService {
                     permanent.getCard().getCastingOption(AdventureCast.class).isPresent();
             case PermanentIsCreaturePredicate ignored ->
                     state.hasCardType(CardType.CREATURE) || isOneShotAnimated(permanent);
+            case PermanentIsTokenPredicate ignored -> permanent.getCard().isToken() || state.isTokenized();
             case PermanentIsDamagedPredicate ignored -> permanent.getMarkedDamage() > 0;
             case PermanentIsCommanderPredicate commander ->
                     commander.ownedBySourceController()

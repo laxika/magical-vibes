@@ -98,7 +98,8 @@ class IronheartCleverChampionTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstantWithConvoke(player1, 0, List.of(target.getId()), List.of(ironheart.getId()));
+        harness.ensurePriority(player1);
+        gs.playCard(gd, player1, 0, 0, target.getId(), null, List.of(), List.of(ironheart.getId()));
         harness.passBothPriorities();
 
         assertThat(ironheart.isTapped()).isTrue();

@@ -60,6 +60,7 @@ class InvasionOfUlgrothaTest extends BaseCardTest {
                 .checkAfterDefenseRemoved(gd, battle));
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent grandmother = findPermanent(player1, "Grandmother Ravi Sengir");

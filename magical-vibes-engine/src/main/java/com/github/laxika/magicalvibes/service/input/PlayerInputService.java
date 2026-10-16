@@ -2182,9 +2182,11 @@ public class PlayerInputService {
 
     public void beginLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
         ChoiceContext.LandwalkGrantChoice choiceContext = new ChoiceContext.LandwalkGrantChoice(targetId);
-        List<String> landTypes = List.of(
-                "PLAINSWALK", "ISLANDWALK", "SWAMPWALK", "MOUNTAINWALK", "FORESTWALK",
-                "DESERT", "CAVE", "GATE", "LOCUS");
+        List<String> landTypes = java.util.stream.Stream.concat(
+                java.util.stream.Stream.of("PLAINSWALK", "ISLANDWALK", "SWAMPWALK", "MOUNTAINWALK", "FORESTWALK"),
+                CardSubtype.landTypes().stream()
+                        .filter(subtype -> !CardSubtype.basicLandTypes().contains(subtype))
+                        .map(Enum::name)).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, choiceContext, landTypes, "Choose a land type for landwalk."));
     }

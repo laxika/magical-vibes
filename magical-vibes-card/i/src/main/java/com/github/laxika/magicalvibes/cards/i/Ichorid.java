@@ -30,7 +30,7 @@ public class Ichorid extends Card {
         addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
                 new ConditionalEffect(
                         new SourceCardInGraveyard(),
-                        new ExileOwnGraveyardCardThenEffect(
+                        ExileOwnGraveyardCardThenEffect.ifYouDo(
                                 new CardAllOfPredicate(List.of(
                                         new CardColorPredicate(CardColor.BLACK),
                                         new CardTypePredicate(CardType.CREATURE),
@@ -40,7 +40,8 @@ public class Ichorid extends Card {
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                         .filter(new CardIsSelfPredicate())
                                         .returnAll(true)
-                                        .build()
+                                        .build(),
+                                false
                         )));
     }
 }

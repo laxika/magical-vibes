@@ -44,7 +44,6 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         StackEntry copy = gd.stack.stream().filter(StackEntry::isCopy).findFirst().orElseThrow();
         assertThat(copy.getControllerId()).isEqualTo(player1.getId());
@@ -102,7 +101,6 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         harness.castEnchantment(player2, 0, bear.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         StackEntry copy = gd.stack.stream().filter(StackEntry::isCopy).findFirst().orElseThrow();
         assertThat(copy.getTargetId()).isEqualTo(ivy.getId());
@@ -134,7 +132,6 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         harness.castInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.stack).anySatisfy(copy -> {
             assertThat(copy.isCopy()).isTrue();
@@ -179,12 +176,11 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.castInstant(player2, 0, spell.getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Shore Up");
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.stack).anyMatch(StackEntry::isCopy);
         harness.passBothPriorities();
 
@@ -204,7 +200,6 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, ivy, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
@@ -219,13 +214,13 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new YavimayaIconoclast());
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new ColossalGrowth()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castKickedInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(ivy.getEffectivePower()).isEqualTo(6);
@@ -263,7 +258,6 @@ class IvyGleefulSpellthiefTest extends BaseCardTest {
         harness.castInstant(player2, 0, List.of(creature.getId(), creature.getId(), creature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(ivy.getEffectivePower()).isEqualTo(5);

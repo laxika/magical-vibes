@@ -71,9 +71,13 @@ public class ChooseOpponentDrawAndUntapEffectHandler implements NormalEffectHand
                     new UntapPermanentsEffect(TapUntapScope.CONTROLLED, nonland),
                     new UntapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland)));
         } else {
+            // The draws happen at the same time (CR 101.4); they are logged in APNAP order.
+            CardEffect ownDraw = new DrawCardEffect(3);
+            CardEffect opponentDraw = new DrawCardForTargetPlayerEffect(3);
+            boolean opponentFirst = chosenOpponentId.equals(gameData.activePlayerId);
             entry.insertEffectsToResolve(insertionIndex, List.of(
-                    new DrawCardEffect(3),
-                    new DrawCardForTargetPlayerEffect(3),
+                    opponentFirst ? opponentDraw : ownDraw,
+                    opponentFirst ? ownDraw : opponentDraw,
                     new ChooseOpponentDrawAndUntapEffect(true)));
         }
     }

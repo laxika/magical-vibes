@@ -4,8 +4,14 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WarriorEnKor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -72,8 +78,8 @@ class IcewindStalwartTest extends BaseCardTest {
     void returnsBorrowedCreatureToOwner() {
         GrizzlyBears card = new GrizzlyBears();
         card.setOwnerId(player2.getId());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, card);
-        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, card);
+        gainControl(player1, bears);
 
         castStalwart(bears.getId());
 
@@ -123,14 +129,19 @@ class IcewindStalwartTest extends BaseCardTest {
         harness.castCreature(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        gd.playerBattlefields.get(player1.getId()).remove(bears);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-        gd.stolenCreatures.put(bears.getId(), player1.getId());
+        gainControl(player2, bears);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(findPermanent(player2, "Grizzly Bears").getId()).isEqualTo(bears.getId());
         assertThat(gd.stack).isEmpty();
+    }
+
+    private void gainControl(Player newController, Permanent target) {
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, newController.getId(), target,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT), EffectDuration.PERMANENT,
+                        null, "Test setup"));
     }
 
     private void castStalwart(UUID targetId) {

@@ -128,9 +128,28 @@ public class PlanechaseService {
         roll(game, playerId);
     }
 
+    /**
+     * Returns the number of planar dice to roll for this player after static replacements. A
+     * permanent that has lost its abilities adds no extra die.
+     */
+    private int numberOfRolls(GameData game, UUID rollingPlayerId) {
+        int count = 1;
+        for (Permanent permanent : game.playerBattlefields.getOrDefault(rollingPlayerId, List.of())) {
+            if (query.hasLostPrintedAbilities(game, permanent)) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof RollPlanarDieWithAdvantageEffect) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
     public void roll(GameData game, UUID playerId) {
         if (game.planechase == null) return;
-        int rollCount = Math.max(1, die.numberOfRolls(game, playerId));
+        int rollCount = numberOfRolls(game, playerId);
         List<PlanarDieResult> rolls = new ArrayList<>(rollCount);
         for (int i = 0; i < rollCount; i++) {
             rolls.add(die.roll());

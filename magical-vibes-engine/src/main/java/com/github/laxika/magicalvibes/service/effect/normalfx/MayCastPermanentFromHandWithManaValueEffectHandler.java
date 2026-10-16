@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastPermanentFromHandWithManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +30,22 @@ public class MayCastPermanentFromHandWithManaValueEffectHandler implements Norma
         List<Card> hand = gameData.playerHands.get(controllerId);
         int requiredManaValue = greatestOtherPermanentManaValue(gameData, entry) + 1;
 
-        List<Card> eligible = hand == null ? List.of() : hand.stream()
-                .filter(this::isPermanentSpell)
-                .filter(card -> card.getManaValue() == requiredManaValue)
-                .toList();
+        List<Card> eligible = new ArrayList<>();
+        List<Boolean> backFaceOffers = new ArrayList<>();
+        if (hand != null) {
+            for (Card card : hand) {
+                if (isPermanentSpell(card) && card.getManaValue() == requiredManaValue) {
+                    eligible.add(card);
+                    backFaceOffers.add(false);
+                }
+                Card backFace = card.getBackFaceCard();
+                if (card.isModalDoubleFaced() && backFace != null && isPermanentSpell(backFace)
+                        && backFace.getManaValue() == requiredManaValue) {
+                    eligible.add(card.createRuntimeCopyWithFace(backFace));
+                    backFaceOffers.add(true);
+                }
+            }
+        }
 
         if (eligible.isEmpty()) {
             int effectIndex = entry.getEffectsToResolve().indexOf(effect);
@@ -45,7 +58,8 @@ public class MayCastPermanentFromHandWithManaValueEffectHandler implements Norma
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     card,
                     controllerId,
-                    List.of(new MayCastPermanentFromHandWithManaValueEffect(i == eligible.size() - 1)),
+                    List.of(new MayCastPermanentFromHandWithManaValueEffect(
+                            i == eligible.size() - 1, backFaceOffers.get(i))),
                     "Cast " + card.getName() + " without paying its mana cost?"
             ));
         }

@@ -881,27 +881,19 @@ public class MayMiscHandlerService {
                                               PendingMayAbility ability) {
         Card card = ability.sourceCard();
         UUID controllerId = ability.controllerId();
-        List<Card> hand = gameData.playerHands.get(controllerId);
-        boolean sourceInHand = hand != null && hand.stream()
-                .anyMatch(handCard -> handCard.getId().equals(card.getId()));
         ChooseLegacyWordEffect effect = ability.effects().stream()
                 .filter(ChooseLegacyWordEffect.class::isInstance)
                 .map(ChooseLegacyWordEffect.class::cast)
                 .findFirst()
                 .orElseThrow();
 
-        if (accepted && sourceInHand) {
-            playerInputService.beginPregameLegacyWordChoice(gameData, controllerId, card, effect.options());
-            return;
+        // Legacy is not optional: the keyword or ability word must be chosen before the game starts,
+        // so declining the offer asks again.
+        if (!accepted) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " must choose a Legacy word for ", card, "."));
         }
-
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + (accepted ? " cannot choose a Legacy word for "
-                        : " declines to choose a Legacy word for "), card, "."));
-        playerInputService.processNextMayAbility(gameData);
-        if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-            mulliganService.continueStartGame(gameData);
-        }
+        playerInputService.beginPregameLegacyWordChoice(gameData, controllerId, card, effect.options());
     }
 
     public void handleGemstoneCavernsChoice(GameData gameData, Player player, boolean accepted,

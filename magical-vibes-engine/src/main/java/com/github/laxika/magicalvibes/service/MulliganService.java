@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.PregameChoiceEffect;
 import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.ChooseLegacyWordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -296,7 +297,17 @@ public class MulliganService {
         for (UUID playerId : pregameActionOrder) {
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand == null) continue;
-            for (Card card : hand) {
+            List<Card> pregameCards = new ArrayList<>(hand);
+            List<Card> library = gameData.playerDecks.get(playerId);
+            if (library != null) {
+                // Legacy cards are chosen before the game starts wherever they are in the deck.
+                library.stream()
+                        .filter(card -> card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).stream()
+                                .anyMatch(effect -> effect instanceof MayEffect may
+                                        && may.wrapped() instanceof ChooseLegacyWordEffect))
+                        .forEach(pregameCards::add);
+            }
+            for (Card card : pregameCards) {
                 for (CardEffect effect : card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)) {
                     if (effect instanceof MayEffect may
                             && may.wrapped() instanceof PregameChoiceEffect pregame

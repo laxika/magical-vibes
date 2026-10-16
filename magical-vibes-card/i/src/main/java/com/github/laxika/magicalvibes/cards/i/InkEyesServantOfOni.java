@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,12 +24,11 @@ public class InkEyesServantOfOni extends Card {
     public InkEyesServantOfOni() {
         addNinjutsu("{3}{B}{B}");
 
-        // The combat damage trigger narrows the graveyard choice to the damaged player, and the
-        // trigger path allows an empty selection, so "you may put target creature card" reads as
-        // up-to-one (decline = choose nothing) with no MayEffect wrapper.
+        // The target is chosen as the trigger goes on the stack; "you may" is asked on resolution.
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new PutCardFromOpponentGraveyardOntoBattlefieldEffect(
-                        false, new CardTypePredicate(CardType.CREATURE), false, null, true));
+                new MayEffect(new PutCardFromOpponentGraveyardOntoBattlefieldEffect(
+                        false, new CardTypePredicate(CardType.CREATURE), false),
+                        "Put target creature card from that player's graveyard onto the battlefield under your control?"));
 
         addActivatedAbility(new ActivatedAbility(false, "{1}{B}",
                 List.of(new RegenerateEffect()),

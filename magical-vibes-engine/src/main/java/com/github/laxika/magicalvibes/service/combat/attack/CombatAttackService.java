@@ -1023,7 +1023,9 @@ public class CombatAttackService {
                     || gameQueryService.hasLostPrintedAbilities(gameData, attacker)
                     || equipmentAttackTrigger
                     ? List.of() : attacker.getCard().getEffects(EffectSlot.ON_ATTACK);
-            List<CardEffect> temporaryAttackEffects = attacker.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK);
+            // A granted triggered ability is an ability of the creature, so losing all abilities removes it.
+            List<CardEffect> temporaryAttackEffects = gameQueryService.hasLostAllAbilities(gameData, attacker)
+                    ? List.of() : attacker.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK);
             // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver
             // "Whenever this creature attacks, it deals 1 damage to any target").
             List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
@@ -2434,6 +2436,13 @@ public class CombatAttackService {
                     // Unwrap minimum-attackers conditionals — check minimum before offering the trigger
                     if (innerEffect instanceof ConditionalEffect ce
                             && ce.condition() instanceof MinimumAttackers mac) {
+                        innerEffect = ce.wrapped();
+                    }
+                    // "Whenever one or more legendary creatures you control attack" is a plain event
+                    // trigger: the attackers were checked above and the ability resolves even if they
+                    // have left the battlefield since.
+                    if (innerEffect instanceof ConditionalEffect ce
+                            && containsHasAttackerCondition(ce.condition())) {
                         innerEffect = ce.wrapped();
                     }
 

@@ -84,7 +84,7 @@ class IllvoiLightJammerTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.ensurePriority(player1);
 
-        castIllvoiLightJammer(creature);
+        harness.withAutoStop(TurnStep.END_STEP, () -> castIllvoiLightJammer(creature));
 
         assertThat(findPermanent(player1, "Illvoi Light Jammer").getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();

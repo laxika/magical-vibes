@@ -31,6 +31,7 @@ class InspiredSpriteTest extends BaseCardTest {
     void acceptUntaps() {
         Permanent sprite = addTappedSprite();
         harness.castFromHand(player1, new StonybrookBanneret(), "{1}{U}");
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -43,6 +44,7 @@ class InspiredSpriteTest extends BaseCardTest {
     void declineStaysTapped() {
         Permanent sprite = addTappedSprite();
         harness.castFromHand(player1, new StonybrookBanneret(), "{1}{U}");
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
@@ -136,6 +138,7 @@ class InspiredSpriteTest extends BaseCardTest {
         Permanent sprite = harness.addToBattlefieldAndReturn(player1, new InspiredSprite());
         sprite.tap();
         harness.castFromHand(player1, new StonybrookBanneret(), "{1}{U}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -149,6 +152,7 @@ class InspiredSpriteTest extends BaseCardTest {
     void canLootAgainAfterWizardCast() {
         Permanent sprite = addTappedSprite();
         harness.castFromHand(player1, new StonybrookBanneret(), "{1}{U}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         harness.setHand(player1, List.of(new StonybrookBanneret()));
@@ -161,6 +165,7 @@ class InspiredSpriteTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         assertThat(sprite.isTapped()).isFalse();
@@ -180,6 +185,7 @@ class InspiredSpriteTest extends BaseCardTest {
     void changelingSpellTriggersUntap() {
         Permanent sprite = addTappedSprite();
         harness.castFromHand(player1, new MothdustChangeling(), "{U}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);

@@ -191,6 +191,7 @@ class InvasionOfTherosTest extends BaseCardTest {
     @Test
     void epharaDoesNotDrawForAnOpponentsEnchantmentOrANonEnchantment() {
         addTransformedEphara();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.enterBattlefieldAndReturn(player2, new GloriousAnthem());
         harness.enterBattlefieldAndReturn(player1, new Forest());
@@ -200,6 +201,7 @@ class InvasionOfTherosTest extends BaseCardTest {
 
     @Test
     void epharaDoesNotTriggerForItsOwnEntry() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.enterBattlefieldAndReturn(player1, new EpharaEverSheltering());
         assertThat(gd.stack).isEmpty();

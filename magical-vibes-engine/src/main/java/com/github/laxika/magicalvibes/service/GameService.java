@@ -2457,7 +2457,7 @@ public class GameService {
             int deferredManaTriggersBefore = gameData.pendingManaAbilityTriggers.size();
             if (!interactionHandlerRegistry.dispatchAnswer(gameData, player, answer)) {
                 throw new IllegalStateException(
-                        "Not awaiting " + answer.getClass().getSimpleName() + " input");
+                        "Not awaiting " + answer.getClass().getSimpleName() + " input" /*DBG*/ + " active=" + gameData.interaction.activeInteraction() + " stack=" + gameData.stack.stream().map(e -> e.getCard().getName()).toList() + " step=" + gameData.currentStep);
             }
             // A nested prompt's handler normally returns to its outer prompt through the
             // input-completion epilogue; one that ends without it must not strand the outer one.

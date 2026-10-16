@@ -209,6 +209,22 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             }
         });
         for (StackEntry stackEntry : gameData.stack) {
+            // CR 609.7a: any object referred to by an object on the stack is a legal source, even
+            // while it sits in a graveyard or exile.
+            List<UUID> referencedIds = new ArrayList<>(stackEntry.getTargetIds());
+            if (stackEntry.getTargetId() != null) referencedIds.add(stackEntry.getTargetId());
+            referencedIds.addAll(stackEntry.getTargetCardIds());
+            for (UUID referencedId : referencedIds) {
+                Card referencedCard = gameQueryService.findCardInGraveyardById(gameData, referencedId);
+                if (referencedCard == null && gameData.findExiledCard(referencedId) != null) {
+                    referencedCard = gameData.findExiledCard(referencedId).card();
+                }
+                if (referencedCard != null && !validIds.contains(referencedId)
+                        && (sourceFilter == null || predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, new Permanent(referencedCard), sourceFilter))) {
+                    validIds.add(referencedId);
+                }
+            }
             boolean spell = isSpell(stackEntry.getEntryType());
             Permanent source = spell ? new Permanent(stackEntry.getCard())
                     : stackEntry.getSourcePermanentSnapshot();

@@ -33,6 +33,7 @@ class IncineratorOfTheGuiltyTest extends BaseCardTest {
         resolveCombat();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(evidence.getId()));
         harness.passBothPriorities();
@@ -81,6 +82,7 @@ class IncineratorOfTheGuiltyTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
             resolveCombat();
+            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
             harness.handleXValueChosen(player1, 1);
@@ -102,6 +104,7 @@ class IncineratorOfTheGuiltyTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
             resolveCombat();
+            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
             if (gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null) {
                 harness.handleXValueChosen(player1, 0);

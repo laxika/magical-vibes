@@ -98,9 +98,8 @@ public class PerpetualPowerToughnessChoiceInteractionHandler
                 }
                 List<CardEffect> selfCastEffects = updated.computeIfAbsent(
                         EffectSlot.ON_SELF_CAST, ignoredSlot -> new java.util.ArrayList<>());
-                if (!selfCastEffects.contains(interaction.selfCastAbility())) {
-                    selfCastEffects.add(interaction.selfCastAbility());
-                }
+                // Each incorporation grants its own instance of the ability, so repeating it stacks.
+                selfCastEffects.add(interaction.selfCastAbility());
                 updated.replaceAll((slot, effects) -> List.copyOf(effects));
                 return java.util.Map.copyOf(updated);
             });

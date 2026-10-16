@@ -252,6 +252,7 @@ class InvasionOfNewPhyrexiaTest extends BaseCardTest {
             harness.passBothPriorities();
         }
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Invasion of New Phyrexia");

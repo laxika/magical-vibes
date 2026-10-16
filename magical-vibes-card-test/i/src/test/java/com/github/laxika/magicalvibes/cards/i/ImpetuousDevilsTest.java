@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -111,6 +112,8 @@ class ImpetuousDevilsTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(blocker.getId(), 1, player2.getId(), 5)));
 
         harness.assertLife(player2, 15);
         harness.assertInGraveyard(player1, "Impetuous Devils");

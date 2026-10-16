@@ -17,7 +17,7 @@ import java.util.List;
 public class InfernalReckoning extends Card {
 
     public InfernalReckoning() {
-        // Gain life first so the target's power is read before it is exiled.
+        // Exile first, then gain life equal to the exiled creature's last known power.
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -25,7 +25,7 @@ public class InfernalReckoning extends Card {
                 )),
                 "Target must be a colorless creature"
         ))
-                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetPower()))
-                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new ExileTargetPermanentEffect())
+                .addEffect(EffectSlot.SPELL, new GainLifeEffect(new TargetPower()));
     }
 }

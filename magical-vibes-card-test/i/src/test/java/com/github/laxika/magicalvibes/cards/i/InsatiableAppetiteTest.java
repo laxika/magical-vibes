@@ -98,20 +98,20 @@ class InsatiableAppetiteTest extends BaseCardTest {
     @Test
     void opponentsFoodDoesNotEnableLargerBoost() {
         harness.addToBattlefield(player2, new GoldenEgg());
-        Permanent target = addCreatureReady(player1, new Gingerbrute());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         castAppetite(target.getId());
 
         assertThat(countPermanents(player2, "Golden Egg")).isOne();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(target.getEffectivePower()).isEqualTo(4);
-        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(target.getEffectivePower()).isEqualTo(1);
-        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test

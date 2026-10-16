@@ -40,6 +40,7 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -66,6 +67,9 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
 
         if (revealedCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty."));
+            if (e.disposition() == CardPileDisposition.HAND_AND_THOPTER) {
+                graveyardReturnSupport.createIntrudeThopter(gameData, entry, 0);
+            }
             return;
         }
 
@@ -90,6 +94,9 @@ public class RevealTopCardsAndSeparateEffectHandler implements NormalEffectHandl
             // No opponent to separate the piles — put the revealed cards into the controller's hand.
             for (Card card : revealedCards) {
                 gameData.addCardToHand(controllerId, card);
+            }
+            if (e.disposition() == CardPileDisposition.HAND_AND_THOPTER) {
+                graveyardReturnSupport.createIntrudeThopter(gameData, entry, 0);
             }
             return;
         }

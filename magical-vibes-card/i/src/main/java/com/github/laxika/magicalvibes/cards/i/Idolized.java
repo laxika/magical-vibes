@@ -26,7 +26,7 @@ public class Idolized extends Card {
 
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                        EffectSlot.ON_ALLY_CREATURE_ATTACKS,
+                        EffectSlot.ON_ATTACK,
                         new ConditionalEffect(new AttacksAlone(),
                                 new BoostSelfEffect(nonlandPermanents, nonlandPermanents)),
                         GrantScope.ENCHANTED_CREATURE));

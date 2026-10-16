@@ -162,6 +162,7 @@ class IzzetSteamMazeTest extends BaseCardTest {
     void chaosDiscountExpiresAtEndOfTurn() {
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.passBothPriorities();
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateToken
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -60,6 +61,16 @@ public class GraveyardTargetingSupport {
             // SequenceEffect, so the targeting step lives one level deeper (Iname, Life Aspect).
             if (targetEffect instanceof SequenceEffect sequence) {
                 Target nested = findTarget(sequence.steps());
+                if (nested != null) {
+                    return nested;
+                }
+                continue;
+            }
+            // "Exile it. If you do, return target cards" keeps its targets chosen as the ability is put on
+            // the stack; only the payload of the same-ability form targets (Iname, Life Aspect).
+            if (targetEffect instanceof ExileSourceCardFromGraveyardThenEffect exileSourceThen
+                    && !exileSourceThen.reflexive()) {
+                Target nested = findTarget(List.of(exileSourceThen.thenEffect()));
                 if (nested != null) {
                     return nested;
                 }

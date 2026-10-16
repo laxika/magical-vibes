@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 public class ImpactTremors extends Card {
 
     public ImpactTremors() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +19,8 @@ class InspiringBardTest extends BaseCardTest {
     void bardicInspirationBoostsTargetCreatureUntilEndOfTurn() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new InspiringBard());
 
-        cast(0, bear);
+        cast(0, null);
+        harness.handlePermanentChosen(player1, bear.getId());
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
@@ -70,14 +70,11 @@ class InspiringBardTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InspiringBard()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        PendingInteraction.ColorChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice).isNotNull();
-        harness.handleListChoice(player1, choice.options().get(mode));
         if (target != null) {
-            harness.handlePermanentChosen(player1, target.getId());
+            harness.castCreature(player1, 0, mode, target.getId());
+        } else {
+            harness.castCreature(player1, 0, mode);
         }
+        harness.passBothPriorities();
     }
 }

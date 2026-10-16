@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -125,10 +126,16 @@ class InTooDeepTest extends BaseCardTest {
     void transformedPlaneswalkerHasOnlyClueAbilityAndRetainsCounters() {
         Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
         jace.setCounterCount(CounterType.LOYALTY, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new InTooDeep()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.castEnchantment(player2, 0, jace.getId());
         harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player1.getId()))

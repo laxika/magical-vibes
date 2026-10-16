@@ -34,7 +34,7 @@ class ImperviousGreatwurmTest extends BaseCardTest {
         Permanent secondHelper = addCreatureReady(player1, new ImperviousGreatwurm());
         Permanent thirdHelper = addCreatureReady(player1, new ImperviousGreatwurm());
         harness.setHand(player1, List.of(new ImperviousGreatwurm()));
-        harness.addMana(player1, ManaColor.GREEN, 8);
+        harness.addMana(player1, ManaColor.GREEN, 7);
 
         gs.playCard(gd, player1, 0, 0, null, null, List.of(),
                 List.of(firstHelper.getId(), secondHelper.getId(), thirdHelper.getId()));

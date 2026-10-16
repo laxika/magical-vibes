@@ -72,14 +72,22 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
         gameData.pendingConnive = null;
         List<Card> hand = gameData.playerHands.get(controllerId);
         int discardAmount = Math.min(amount, hand == null ? 0 : hand.size());
+        // CR 701.50b: a permanent no longer on the battlefield connives using its last known information.
+        Permanent lastKnownSource = source == null && sourcePermanentId != null
+                && entry.getSourcePermanentSnapshot() != null
+                && sourcePermanentId.equals(entry.getSourcePermanentSnapshot().getId())
+                ? entry.getSourcePermanentSnapshot() : null;
         if (sourcePermanentId != null && discardAmount > 0) {
-            gameData.pendingConnive = new PendingConnive(sourcePermanentId, discardAmount);
+            gameData.pendingConnive = new PendingConnive(sourcePermanentId, discardAmount,
+                    lastKnownSource, controllerId);
         }
 
         gameData.discardCausedByOpponent = false;
         playerInteractionSupport.resolveDiscardCards(gameData, controllerId, discardAmount);
         if (discardAmount == 0 && source != null) {
             triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, source);
+        } else if (discardAmount == 0 && lastKnownSource != null) {
+            triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, lastKnownSource, controllerId);
         }
     }
 

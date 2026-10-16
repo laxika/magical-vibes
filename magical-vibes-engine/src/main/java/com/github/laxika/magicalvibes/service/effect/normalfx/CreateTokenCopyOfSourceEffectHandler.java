@@ -63,7 +63,8 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                 if (sourcePermanent != null) {
                     sourceCard = sourcePermanent.getCard();
                 } else {
-                    sourceCard = entry.getCard();
+                    sourceCard = entry.getSourcePermanentSnapshot() != null
+                            ? entry.getSourcePermanentSnapshot().getCard() : entry.getCard();
                     if (sourceCard == null) {
                         log.info("Game {} - Source permanent no longer on battlefield and no card reference", gameData.id);
                         return;

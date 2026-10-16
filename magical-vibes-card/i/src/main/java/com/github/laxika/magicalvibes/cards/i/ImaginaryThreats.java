@@ -17,13 +17,14 @@ public class ImaginaryThreats extends Card {
 
     public ImaginaryThreats() {
         // Creatures target opponent controls attack this turn if able.
-        // During that player's next untap step, creatures they control don't untap.
+        // During that player's next untap step, creatures they control don't untap. The creatures
+        // are matched at untap time, so ones that arrive after resolution are affected too.
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.SPELL, new TargetPlayersCreaturesMustAttackThisTurnEffect())
                 .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(
-                        TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsCreaturePredicate()));
+                        TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsCreaturePredicate(), 1, true));
 
         // Cycling {2} ({2}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{2}");

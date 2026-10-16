@@ -6,10 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DiscardAnyNumberThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCreatureCardsAsEntersForKeywordCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutKeywordCountersOnSelfForDiscardedCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -34,12 +32,8 @@ public class IndominusRexAlpha extends Card {
     );
 
     public IndominusRexAlpha() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardAnyNumberThenEffect(
-                new CardTypePredicate(CardType.CREATURE),
-                SequenceEffect.of(
-                        new PutKeywordCountersOnSelfForDiscardedCardsEffect(KEYWORD_COUNTERS),
-                        new DrawCardEffect(new AllCountersOnSource())),
-                "creature cards",
-                true));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardCreatureCardsAsEntersForKeywordCountersEffect(
+                new CardTypePredicate(CardType.CREATURE), KEYWORD_COUNTERS));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(new AllCountersOnSource()));
     }
 }

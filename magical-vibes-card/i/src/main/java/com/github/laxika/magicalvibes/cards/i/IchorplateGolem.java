@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 public class IchorplateGolem extends Card {
 
     public IchorplateGolem() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureHasCountersConditionalEffect(
                         CounterType.OIL,
                         new PutCountersOnEnteringCreatureEffect(CounterType.OIL, 1, false, CounterType.OIL)));

@@ -168,6 +168,9 @@ public class LayerSystemService {
             CardSubtype.LANDER, CardSubtype.MAP, CardSubtype.MUTAGEN, CardSubtype.POWERSTONE, CardSubtype.SPACECRAFT,
             CardSubtype.TREASURE, CardSubtype.VEHICLE, CardSubtype.VIBRANIUM);
 
+    /** Planeswalker types represented in the {@code CardSubtype} enum. */
+    private static final Set<CardSubtype> PLANESWALKER_SUBTYPES = Set.copyOf(CardSubtype.planeswalkerTypes());
+
     private static final ThreadLocal<Pass> ACTIVE_PASS = new ThreadLocal<>();
 
     /**
@@ -1815,6 +1818,9 @@ public class LayerSystemService {
                     if (!state.hasCardType(CardType.ARTIFACT)) {
                         state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
                     }
+                    if (!state.hasCardType(CardType.PLANESWALKER)) {
+                        state.removeSubtypesIf(PLANESWALKER_SUBTYPES::contains);
+                    }
                     record(board, instance, target, new L4Contribution(
                             List.of(), false, false, null, null, true,
                             List.copyOf(set.cardTypes())));
@@ -2026,6 +2032,10 @@ public class LayerSystemService {
                 for (PermanentSlot target : scopeTargets(gameData, instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.overrideCardTypes(Set.of(CardType.LAND));
+                    // CR 205.1a: subtypes correlated with a removed card type are removed too.
+                    state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                    state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
+                    state.removeSubtypesIf(PLANESWALKER_SUBTYPES::contains);
                     record(board, instance, target, new L4Contribution(
                             List.<CardSubtype>of(), false, false, CardType.LAND, null, true));
                 }
@@ -2963,6 +2973,10 @@ public class LayerSystemService {
             if (harvested.isLosesAllNonManaAbilities()) {
                 state.loseAllNonManaAbilities(instance.timestamp());
                 board.clearGrantedEffects(target.permanent().getId());
+                touched = true;
+            }
+            if (harvested.isTokenized()) {
+                state.setTokenized(true);
                 touched = true;
             }
             for (Keyword removed : harvested.getRemovedKeywords()) {

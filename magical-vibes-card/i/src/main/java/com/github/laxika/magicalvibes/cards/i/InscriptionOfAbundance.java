@@ -26,12 +26,13 @@ public class InscriptionOfAbundance extends Card {
 
     public InscriptionOfAbundance() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}{G}"));
+        setAllowSharedTargets(true);
 
         var anyPlayer = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player.");
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMoreWhen(List.of(
+        addEffect(EffectSlot.SPELL, ChooseOneEffect.anyNumberWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on target creature",
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),

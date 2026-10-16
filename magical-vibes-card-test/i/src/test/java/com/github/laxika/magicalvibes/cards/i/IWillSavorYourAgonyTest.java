@@ -114,8 +114,8 @@ class IWillSavorYourAgonyTest extends BaseCardTest {
         harness.handleListChoice(player1, DRAW);
         harness.handleListChoice(player1, DESTROY);
         harness.handleListChoice(player1, GAIN);
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.handlePermanentChosen(player1, sphinx.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 

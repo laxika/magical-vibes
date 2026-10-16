@@ -36,7 +36,6 @@ class IchorElixirTest extends BaseCardTest {
         planar = GameTestEngineContext.get().getBean(PlanechaseService.class);
         originalDie = (PlanarDieRoller) ReflectionTestUtils.getField(planar, "die");
         die = mock(PlanarDieRoller.class);
-        when(die.numberOfRolls(gd, player1.getId())).thenCallRealMethod();
         ReflectionTestUtils.setField(planar, "die", die);
 
         gd.planechase = new PlanechaseState();

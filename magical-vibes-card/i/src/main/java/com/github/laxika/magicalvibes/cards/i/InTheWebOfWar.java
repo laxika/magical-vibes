@@ -13,7 +13,7 @@ public class InTheWebOfWar extends Card {
 
     public InTheWebOfWar() {
         // Whenever a creature you control enters, it gets +2/+0 and gains haste until end of turn.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new BoostEnteringCreatureEffect(2, 0, Set.of(Keyword.HASTE)));
     }
 }

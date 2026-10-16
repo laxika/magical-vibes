@@ -22,7 +22,7 @@ public class IroncladRevolutionary extends Card {
                         SequenceEffect.of(
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)),
-                        "an artifact"),
+                        "an artifact", false, false),
                 "Sacrifice an artifact?"));
     }
 }

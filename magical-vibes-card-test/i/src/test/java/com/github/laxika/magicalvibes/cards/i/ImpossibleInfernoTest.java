@@ -160,6 +160,8 @@ class ImpossibleInfernoTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CautiousSurvivor());
 
         cast(target);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);

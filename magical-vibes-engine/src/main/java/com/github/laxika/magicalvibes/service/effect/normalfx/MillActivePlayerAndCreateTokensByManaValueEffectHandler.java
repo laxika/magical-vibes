@@ -47,7 +47,9 @@ public class MillActivePlayerAndCreateTokensByManaValueEffectHandler implements 
         Card milled = deck.getFirst();
         int manaValue = Math.max(0, milled.getManaValue());
         List<Card> milledCards = graveyardService.resolveMillPlayer(gameData, playerId, 1);
-        if (!milledCards.contains(milled)) {
+        // A replacement effect (Leyline of the Void) may exile the card instead of putting it into the
+        // graveyard; it still left the library as the card the mill instruction was applied to.
+        if (!milledCards.contains(milled) && deck.contains(milled)) {
             return;
         }
 

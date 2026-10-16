@@ -133,7 +133,7 @@ class IvoryGargoyleTest extends BaseCardTest {
         IvoryGargoyle card = new IvoryGargoyle();
         card.setOwnerId(player1.getId());
         Permanent gargoyle = harness.addToBattlefieldAndReturn(player2, card);
-        gd.stolenCreatures.put(gargoyle.getId(), player1.getId());
+        setOwnerAndController(gargoyle, player1, player2);
         killGargoyle(gargoyle);
 
         harness.assertNotOnBattlefield(player2, "Ivory Gargoyle");
@@ -143,7 +143,7 @@ class IvoryGargoyleTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Ivory Gargoyle");
         assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);
@@ -161,14 +161,14 @@ class IvoryGargoyleTest extends BaseCardTest {
     @DisplayName("Countering the delayed return does not undo the draw-step skip")
     void counteringDelayedReturnDoesNotUndoSkip() {
         harness.setHand(player2, List.of(new Disallow()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         killGargoyle(player1);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, gd.stack.getLast().getCard().getId());
         harness.passBothPriorities();

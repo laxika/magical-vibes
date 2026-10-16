@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,8 +27,9 @@ public class ImposeHierarchy extends Card {
                         new PermanentMaxManaValuePredicate(4)
                 )),
                 "Target must be a creature with mana value 4 or less"
-        )).addEffect(EffectSlot.SPELL, new GainLifeEffect(new MatchingCardsInHand(
-                CountScope.TARGET_PLAYER, new CardTypePredicate(CardType.CREATURE))))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                new GainLifeEffect(new MatchingCardsInHand(
+                        CountScope.TARGET_PLAYER, new CardTypePredicate(CardType.CREATURE))),
+                ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET));
     }
 }

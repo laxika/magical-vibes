@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.TurnFaceUpOnDamageOrTapEffect;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -64,6 +63,8 @@ public class Permanent {
     @Setter private boolean creaturePositionPending;
     /** Whether the native simultaneous-entry devour choice has already finished. */
     @Setter private boolean nativeDevourResolved;
+    /** Whether this entry's "as enters, discard cards" replacement choice has already been answered. */
+    @Setter private boolean asEntersDiscardResolved;
     /** Whether this entry's "enter as a copy" replacement choice has already been offered and answered. */
     @Setter private boolean copyEntryResolved;
     private boolean attacking;
@@ -279,6 +280,9 @@ public class Permanent {
     @Setter private int chosenSacrificedToughness;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
+    /** True when {@link #cantBlockThisTurn} comes from a granted "can't block" ability (Incite Hysteria),
+     *  which a later loss of all abilities removes. */
+    @Setter private boolean cantBlockGrantedAbilityThisTurn;
     @Setter private boolean cantBlockThisCombat;
     /** True while this permanent has the suspected designation. Cleared only by a leave-and-return
      *  event or an effect that specifically makes it no longer suspected. */
@@ -398,6 +402,8 @@ public class Permanent {
     private boolean faceDown;
     /** An automatic Illusionary Mask turn-up whose engine triggers still need to be collected. */
     @Setter private boolean pendingAutomaticTurnFaceUp;
+    /** Illusionary Mask: this face-down permanent turns face up before it deals or is dealt damage, or becomes tapped. */
+    @Setter private boolean turnsFaceUpOnDamageOrTap;
     private boolean cloaked;
     /** Ward supplied by casting this permanent face down using disguise. */
     private boolean faceDownWard;
@@ -847,6 +853,7 @@ public class Permanent {
         this.chosenCreaturePosition = source.chosenCreaturePosition;
         this.creaturePositionPending = source.creaturePositionPending;
         this.nativeDevourResolved = source.nativeDevourResolved;
+        this.asEntersDiscardResolved = source.asEntersDiscardResolved;
         this.copyEntryResolved = source.copyEntryResolved;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
@@ -935,6 +942,7 @@ public class Permanent {
         this.chosenSacrificedToughness = source.chosenSacrificedToughness;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
+        this.cantBlockGrantedAbilityThisTurn = source.cantBlockGrantedAbilityThisTurn;
         this.cantBlockThisCombat = source.cantBlockThisCombat;
         this.suspected = source.suspected;
         this.commander = source.commander;
@@ -981,6 +989,7 @@ public class Permanent {
         this.toughnessAsLoyalty = source.toughnessAsLoyalty;
         this.faceDown = source.faceDown;
         this.pendingAutomaticTurnFaceUp = source.pendingAutomaticTurnFaceUp;
+        this.turnsFaceUpOnDamageOrTap = source.turnsFaceUpOnDamageOrTap;
         this.cloaked = source.cloaked;
         this.faceDownWard = source.faceDownWard;
         this.faceDownPower = source.faceDownPower;
@@ -1239,7 +1248,7 @@ public class Permanent {
         if (amount <= 0) {
             return;
         }
-        if (faceDown && hasTemporaryStaticEffect(TurnFaceUpOnDamageOrTapEffect.class)) {
+        if (faceDown && turnsFaceUpOnDamageOrTap) {
             turnFaceUp();
             pendingAutomaticTurnFaceUp = true;
         }
@@ -1266,7 +1275,7 @@ public class Permanent {
         if (!tapped && !attacking && !tapRestrictionEffectIds.isEmpty()) {
             return false;
         }
-        if (faceDown && hasTemporaryStaticEffect(TurnFaceUpOnDamageOrTapEffect.class)) {
+        if (faceDown && turnsFaceUpOnDamageOrTap) {
             turnFaceUp();
             pendingAutomaticTurnFaceUp = true;
         }
@@ -1292,11 +1301,6 @@ public class Permanent {
     /** Whether this permanent is currently prevented from becoming tapped except while attacking. */
     public boolean isTapRestrictedUnlessAttacking() {
         return !tapRestrictionEffectIds.isEmpty();
-    }
-
-    private boolean hasTemporaryStaticEffect(Class<? extends CardEffect> effectType) {
-        return temporaryTriggeredEffects.getOrDefault(EffectSlot.STATIC, List.of()).stream()
-                .anyMatch(effectType::isInstance);
     }
 
     /** Sets the permanent's status for an entry replacement without applying untap effects. */
@@ -1813,6 +1817,11 @@ public class Permanent {
         temporaryTriggeredEffects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
     }
 
+    /** Drops every temporarily granted ability; used when a later-timestamp effect removes all abilities. */
+    public void clearTemporaryTriggeredEffects() {
+        temporaryTriggeredEffects.clear();
+    }
+
     public List<CardEffect> getTemporaryTriggeredEffects(EffectSlot slot) {
         List<CardEffect> effects = temporaryTriggeredEffects.getOrDefault(slot, List.of());
         List<CardEffect> untilEndOfCombat = combatTriggeredEffects.getOrDefault(slot, List.of());
@@ -1953,6 +1962,7 @@ public class Permanent {
         this.cantBeBlocked = false;
         this.cantAttackThisTurn = false;
         this.cantBlockThisTurn = false;
+        this.cantBlockGrantedAbilityThisTurn = false;
         this.additionalBlocksUntilEndOfTurn = 0;
         this.mustBlockThisTurnIfAble = false;
         this.mustBlockEachAttackingCreatureThisTurnIfAble = false;

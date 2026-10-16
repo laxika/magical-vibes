@@ -85,7 +85,7 @@ public class LibraryRevealSupport {
     /** Every distinct creature card name across all zones, sorted alphabetically (Wood Sage). */
     public List<String> collectCreatureCardNamesInGame(GameData gameData) {
         Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
-                card -> card.hasType(CardType.CREATURE)));
+                card -> card.hasType(CardType.CREATURE) && !card.isToken()));
         if (cardCatalog != null) {
             List<String> cached = catalogCreatureNames;
             if (cached == null) {
@@ -93,7 +93,7 @@ public class LibraryRevealSupport {
                 for (CardSet set : CardSet.values()) {
                     for (var printing : cardCatalog.getPrintings(set)) {
                         Card card = printing.createCard();
-                        if (card.getName() != null && card.hasType(CardType.CREATURE)) {
+                        if (card.getName() != null && card.hasType(CardType.CREATURE) && !card.isToken()) {
                             catalogNames.add(card.getName());
                         }
                     }

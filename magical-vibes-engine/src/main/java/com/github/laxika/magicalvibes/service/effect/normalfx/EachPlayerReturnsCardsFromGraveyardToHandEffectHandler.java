@@ -57,6 +57,7 @@ public class EachPlayerReturnsCardsFromGraveyardToHandEffectHandler implements N
         }
 
         if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {
+            gameData.holdGraveyardHandReturns = true;
             graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
         }
     }

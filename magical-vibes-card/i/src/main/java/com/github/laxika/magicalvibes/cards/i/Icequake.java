@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,13 +21,13 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Icequake extends Card {
 
     public Icequake() {
-        // Snow check runs while the land is still on the battlefield — before the destroy.
-        // Equivalent to the printed "was a snow land" wording (Gloomlance pattern).
+        // The snow check and controller are snapshotted before the land is destroyed, but the
+        // damage is dealt afterwards so a destroyed snow Glacial Chasm no longer prevents it.
         target(TargetFilters.land())
-                .addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                        new TargetPermanentMatches(
-                                new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PERMANENT_CONTROLLER)))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                        EventStat.NONE,
+                        new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER),
+                        ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
+                        new PermanentHasSupertypePredicate(CardSupertype.SNOW)));
     }
 }

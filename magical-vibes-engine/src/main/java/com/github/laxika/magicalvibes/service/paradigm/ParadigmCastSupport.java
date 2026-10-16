@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -39,6 +40,7 @@ public class ParadigmCastSupport {
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
+    private final CastingPermissionService castingPermissionService;
 
     // @Lazy breaks cycle: ParadigmCastSupport → InputCompletionService → TurnProgressionService →
     // StepTriggerService → ParadigmService → ParadigmCastSupport.
@@ -47,13 +49,15 @@ public class ParadigmCastSupport {
                                PlayerInputService playerInputService,
                                @Lazy TriggerCollectionService triggerCollectionService,
                                @Lazy InputCompletionService inputCompletionService,
-                               ExileCastTargetSupport exileCastTargetSupport) {
+                               ExileCastTargetSupport exileCastTargetSupport,
+                               @Lazy CastingPermissionService castingPermissionService) {
         this.gameLogService = gameLogService;
         this.graveyardService = graveyardService;
         this.playerInputService = playerInputService;
         this.triggerCollectionService = triggerCollectionService;
         this.inputCompletionService = inputCompletionService;
         this.exileCastTargetSupport = exileCastTargetSupport;
+        this.castingPermissionService = castingPermissionService;
     }
 
     public void castFromExileWithoutPaying(GameData gameData, Player player, UUID exileCardId) {
@@ -67,6 +71,13 @@ public class ParadigmCastSupport {
         Card card = exiledEntry.card();
         if (card.isCastOnlyFromGraveyard()) {
             gameLogService.append(gameData, GameLog.cardThen(card, " cannot be cast from exile."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (castingPermissionService.isSpellLimitReached(gameData, playerId, card)) {
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " can't be cast: the spell limit for this turn has been reached."));
+            log.info("Game {} - paradigm copy of {} blocked by spell limit", gameData.id, card.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

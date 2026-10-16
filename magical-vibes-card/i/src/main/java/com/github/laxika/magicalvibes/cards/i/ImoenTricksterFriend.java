@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffe
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeImoenEffect;
@@ -87,15 +88,15 @@ public class ImoenTricksterFriend extends Card {
                     CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate());
             case BLUE -> {
                 PermanentPredicate opponentCreature = TargetFilters.creatureAnOpponentControls().predicate();
-                yield SequenceEffect.of(
+                yield new QueueReflexiveAbilityEffect(SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET, opponentCreature));
+                        new SkipNextUntapEffect(TapUntapScope.TARGET, opponentCreature)));
             }
             case BLACK -> CreateTokenEffect.blackZombie(1);
             case RED -> new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT);
             case GREEN -> SequenceEffect.of(new DrawCardEffect(), new PlayAdditionalLandsEffect(1));
         };
-        return new ExileOwnGraveyardCardThenEffect(INSTANT_OR_SORCERY, effect);
+        return ExileOwnGraveyardCardThenEffect.ifYouDo(INSTANT_OR_SORCERY, effect, false);
     }
 
     public static void setSpecializedBaseCharacteristics(Card card) {

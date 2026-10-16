@@ -113,6 +113,10 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         for (Permanent p : plusOneTargets) {
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, p, entry.getControllerId());
         }
+        if (!plusOneTargets.isEmpty()) {
+            permanentCounterSupport.firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
+                    gameData, plusOneTargets, amount, entry.getControllerId());
+        }
         for (Map.Entry<Permanent, Integer> placement : minusOneTargets.entrySet()) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
                     gameData, placement.getKey(), placement.getValue());

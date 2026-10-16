@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({IrmaPartTimeMutant.class, GrizzlyBears.class, FoeLiage.class, EvolvingWilds.class})
@@ -144,6 +146,9 @@ class IrmaPartTimeMutantTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, irma)).isEqualTo(4);
         assertThat(irma.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
+        gs.declareAttackers(gd, player1, List.of());
+
         harness.enterBattlefieldAndReturn(player1, new EvolvingWilds());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -157,6 +162,6 @@ class IrmaPartTimeMutantTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }

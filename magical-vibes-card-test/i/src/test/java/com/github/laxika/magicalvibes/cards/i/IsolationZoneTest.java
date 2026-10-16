@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -94,9 +95,9 @@ class IsolationZoneTest extends BaseCardTest {
     @Test
     @DisplayName("A stolen creature returns to its owner rather than its previous controller")
     void stolenCreatureReturnsToOwner() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        gd.stolenCreatures.put(bearsId, player1.getId());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        setOwnerAndController(bears, player1, player2);
+        UUID bearsId = bears.getId();
 
         castAndResolveIsolationZone(bearsId);
 

@@ -141,6 +141,7 @@ class IncandescentSoulstokeTest extends BaseCardTest {
 
         Permanent elemental = findPermanent(player1, "Flamekin Brawler");
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.HASTE)).isTrue();
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Flamekin Brawler");
@@ -156,6 +157,7 @@ class IncandescentSoulstokeTest extends BaseCardTest {
         giveManaForAbility();
 
         putElementalFromHand(0);
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.assertOnBattlefield(player1, "Flamekin Brawler");
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);

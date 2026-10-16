@@ -34,6 +34,7 @@ class InvasionOfErgamonTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -90,6 +91,7 @@ class InvasionOfErgamonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -113,6 +115,7 @@ class InvasionOfErgamonTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
@@ -127,6 +130,7 @@ class InvasionOfErgamonTest extends BaseCardTest {
         Forest libraryCard = new Forest();
         harness.setLibrary(player1, List.of(libraryCard));
         harness.castFromHand(player1, new InvasionOfErgamon(), "{R}{G}");
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -149,6 +153,7 @@ class InvasionOfErgamonTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));

@@ -2226,6 +2226,7 @@ public class ActivatedAbilityExecutionService {
                 gameData.stack.subList(stackBeforeRollCosts, gameData.stack.size()));
         gameData.stack.subList(stackBeforeRollCosts, gameData.stack.size()).clear();
         if (ability.getTargetFilter() == null && ability.getMultiTargetFilters().isEmpty()
+                && (damageAssignments == null || damageAssignments.isEmpty())
                 && snapshotEffects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
             stackEntry.setNonTargeting(true);
         }

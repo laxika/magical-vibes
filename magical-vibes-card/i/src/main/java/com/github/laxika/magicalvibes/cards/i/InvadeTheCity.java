@@ -45,7 +45,7 @@ public class InvadeTheCity extends Card {
                 ConditionalEffect.unless(controlsArmy,
                         SequenceEffect.of(
                                 new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, instantSorceryCount, army),
+                                        CounterType.PLUS_ONE_PLUS_ONE, instantSorceryCount, army, false, true),
                                 new GrantSubtypeToChosenPermanentEffect(CardSubtype.ZOMBIE))));
         addEffect(EffectSlot.SPELL,
                 ConditionalEffect.unless(new NotCondition(controlsArmy),
@@ -55,6 +55,6 @@ public class InvadeTheCity extends Card {
                                         List.of(CardSubtype.ZOMBIE, CardSubtype.ARMY), Set.of(), Set.of(),
                                         false, false, Map.of(), List.of(), false, false, false, 0, Set.of()),
                                 new PutCounterOnChosenOwnPermanentEffect(
-                                        CounterType.PLUS_ONE_PLUS_ONE, instantSorceryCount, army))));
+                                        CounterType.PLUS_ONE_PLUS_ONE, instantSorceryCount, army, false, true))));
     }
 }

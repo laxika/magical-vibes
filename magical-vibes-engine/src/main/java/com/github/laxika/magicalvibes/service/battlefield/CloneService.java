@@ -725,6 +725,14 @@ public class CloneService {
                     perm, copiedCard, effectivePowerOverride, effectiveToughnessOverride,
                     additionalTypesOverride, List.of(), copyColor);
             permanentCopierService.applyCardTypesOverride(perm, cardTypesOverride);
+            if (cardTypesOverride != null && !cardTypesOverride.isEmpty()
+                    && !cardTypesOverride.contains(CardType.CREATURE)) {
+                // Creature subtypes don't correspond to any of the copy's types (CR 205.3d), so the
+                // copiable values keep none; it doesn't regain them when it is later crewed.
+                perm.getCard().setSubtypes(perm.getCard().getSubtypes().stream()
+                        .filter(subtype -> !gameQueryService.isCreatureSubtype(subtype))
+                        .toList());
+            }
                 boolean creatureOnlyCharacteristicsApply = !additionalCreatureOnlyCharacteristics
                         || perm.getCard().hasType(CardType.CREATURE);
                 applyAdditionalCopyCharacteristics(perm.getCard(), additionalSupertypesOverride,

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesFromHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ public class EachOpponentExilesFromHandEffectHandler implements NormalEffectHand
 
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,6 +37,11 @@ public class EachOpponentExilesFromHandEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachOpponentExilesFromHandEffect) effect;
+        // A "until this leaves the battlefield" exile never happens if the source already left.
+        if (e.returnOnSourceLeave() && (entry.getSourcePermanentId() == null
+                || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
+            return;
+        }
         UUID controllerId = entry.getControllerId();
         UUID activePlayerId = gameData.activePlayerId;
 

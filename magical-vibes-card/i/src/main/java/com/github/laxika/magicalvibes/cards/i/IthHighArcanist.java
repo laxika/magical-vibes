@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -24,5 +25,13 @@ public class IthHighArcanist extends Card {
                         PreventDamageEffect.allCombatByTargetCreatures()),
                 "{T}: Untap target attacking creature. Prevent all combat damage that would be dealt to and dealt by that creature this turn.",
                 TargetFilters.attackingCreature()));
+
+        addHandActivatedAbility(new ActivatedAbility(
+                false,
+                "{W}{U}",
+                List.of(),
+                "Suspend 4—{W}{U}",
+                ActivationTimingRestriction.SORCERY_SPEED
+        ).withSuspendsSourceFromHand(4));
     }
 }

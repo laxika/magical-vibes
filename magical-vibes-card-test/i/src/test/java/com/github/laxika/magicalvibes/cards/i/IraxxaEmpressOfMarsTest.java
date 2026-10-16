@@ -136,6 +136,7 @@ class IraxxaEmpressOfMarsTest extends BaseCardTest {
         assertThat(nonattacker.getEffectivePower()).isEqualTo(2);
         assertThat(opponent.getEffectivePower()).isEqualTo(2);
 
+        gs.declareBlockers(gd, player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -149,7 +150,8 @@ class IraxxaEmpressOfMarsTest extends BaseCardTest {
         Permanent iraxxa = addCreatureReady(player1, new IraxxaEmpressOfMars());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackersAndPrepareBlockers(List.of(0));
+        iraxxa.setAttacking(true);
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(

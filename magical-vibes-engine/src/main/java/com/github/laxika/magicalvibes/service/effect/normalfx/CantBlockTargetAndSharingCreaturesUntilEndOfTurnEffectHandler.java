@@ -54,6 +54,7 @@ public class CantBlockTargetAndSharingCreaturesUntilEndOfTurnEffectHandler imple
                 return;
             }
             permanent.setCantBlockThisTurn(true);
+            permanent.setCantBlockGrantedAbilityThisTurn(true);
             affectedCount[0]++;
         });
 

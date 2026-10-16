@@ -38,6 +38,7 @@ class InvasionOfSegoviaTest extends BaseCardTest {
 
         gs.playCard(gd, player1, 0, 0, player2.getId(), null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
@@ -129,6 +130,7 @@ class InvasionOfSegoviaTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(rona.isTapped()).isFalse();
@@ -194,6 +196,7 @@ class InvasionOfSegoviaTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, player2.getId(), null,
                 List.of(), List.of(caetus.getId(), rona.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(caetus.isTapped()).isTrue();
@@ -222,6 +225,7 @@ class InvasionOfSegoviaTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         return gd.playerBattlefields.get(player1.getId()).stream()

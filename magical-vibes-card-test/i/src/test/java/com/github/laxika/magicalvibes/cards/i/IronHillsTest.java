@@ -197,9 +197,7 @@ class IronHillsTest extends BaseCardTest {
         addCounterAbilityMana();
         harness.activateAbility(player1, 0, 1, null, dwarf.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(dwarf);
-        gd.playerBattlefields.get(player2.getId()).add(dwarf);
-        gd.stolenCreatures.put(dwarf.getId(), player1.getId());
+        setOwnerAndController(dwarf, player1, player2);
         harness.passBothPriorities();
 
         assertThat(dwarf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

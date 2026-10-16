@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSameNameEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
     private final DrawService drawService;
     private final PlayerInputService playerInputService;
     private final GameLogService gameLogService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,6 +66,11 @@ public class CounterSpellAndExileAllWithSameNameEffectHandler implements NormalE
         StackEntry counterable = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (counterable != null) {
             counterSupport.counterSpell(gameData, entry, counterable);
+        }
+
+        if (counterEffect.exileCondition() != null && !conditionEvaluationService.isMet(
+                gameData, counterEffect.exileCondition(), ConditionContext.forStackEntry(entry))) {
+            return;
         }
 
         if (counterEffect.chooseHiddenZoneMatches()) {

@@ -41,10 +41,9 @@ public class IntermediateChirography extends Card {
 
         target(TargetFilters.creatureYouControl()).addEffect(
                 EffectSlot.ON_CONTROLLER_LOSES_LIFE,
-                new ConditionalEffect(
+                OncePerTurnTriggerEffect.firstLifeLoss(new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
-                        new OncePerTurnTriggerEffect(
-                                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))));
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -23,17 +24,18 @@ import java.util.Set;
 public class IncreasingVengeance extends Card {
 
     public IncreasingVengeance() {
-        // Copy target instant or sorcery spell you control.
+        // Copy target instant or sorcery spell you control. If this spell was cast from a graveyard,
+        // copy that spell twice instead (a single copy event, so Twinning Staff adds one copy).
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(
                         new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                         new StackEntryControlledByPredicate()
                 )),
                 "Target must be an instant or sorcery spell you control."
-        )).addEffect(EffectSlot.SPELL, new CopySpellEffect());
-
-        // If this spell was cast from a graveyard, copy that spell twice instead (make a second copy).
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new CopySpellEffect()));
+        )).addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                new NotCondition(new CastFromZone(Zone.GRAVEYARD)), new CopySpellEffect()));
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(
+                new CastFromZone(Zone.GRAVEYARD), CopySpellEffect.times(2)));
 
         addCastingOption(new FlashbackCast("{3}{R}{R}"));
     }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfSourceAttackingOpponentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class Impulsivity extends Card {
                 "{7}{R}{R}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new CreateTokenCopiesOfSourceAttackingOpponentsEffect()
+                        new EncoreEffect()
                 ),
                 "Encore {7}{R}{R} ({7}{R}{R}, Exile this card from your graveyard: For each opponent, create a token copy "
                         + "that attacks that opponent this turn if able. They gain haste. Sacrifice them at the beginning "

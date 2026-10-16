@@ -25,6 +25,7 @@ public class InvasionOfTolvada extends Card {
                         new CardIsPermanentPredicate(),
                         new CardNotPredicate(new CardTypePredicate(CardType.BATTLE)))))
                 .targetGraveyard(true)
+                .chooseAuraAttachment(true)
                 .build());
     }
 

@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawnCardTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardCreateTokenIfInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExceptFirstDrawStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyLibraryDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
@@ -274,6 +275,7 @@ public class DrawService {
                     for (int remaining = i + 1; remaining < drawAmount; remaining++) {
                         gameData.pendingCardDraws.addLast(playerId);
                     }
+                    beginPausingDrawMayAbility(gameData);
                     break;
                 }
             }
@@ -291,6 +293,20 @@ public class DrawService {
             UUID playerId = gameData.pendingCardDraws.removeFirst();
             resolveDrawCardInternal(gameData, playerId, pendingCyclingCard(gameData, playerId));
         }
+    }
+
+    /** Opens the optional "as you draw it" choice that paused the draw instruction, if it is not open yet. */
+    private void beginPausingDrawMayAbility(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput() || gameData.pendingMayAbilities.isEmpty()) {
+            return;
+        }
+        PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
+        if (next.effects().stream().noneMatch(CardEffect::pausesDrawInstruction)) {
+            return;
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MayAbilityChoice(
+                next.choicePlayerId() != null ? next.choicePlayerId() : next.controllerId(),
+                next.description(), next.manaCost()));
     }
 
     private boolean drawChoicePending(GameData gameData) {
@@ -1144,7 +1160,7 @@ public class DrawService {
                     return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
                 }
             }
-            if (gameData.currentStep == TurnStep.DRAW) {
+            if (gameData.currentStep == TurnStep.DRAW && playerId.equals(gameData.activePlayerId)) {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.MAY_SKIP_DRAW_STEP_DRAW)) {
                     if (effect instanceof IslandSanctuaryEffect replacement) {
                         return new MaySkipDrawSource(permanent.getCard(), replacement.replacementKind(), permanent.getId());
@@ -2291,6 +2307,15 @@ public class DrawService {
                     continue;
                 }
 
+                if (effect instanceof RevealDrawnCardCreateTokenIfInstantOrSorceryEffect reveal) {
+                    // "You may reveal the first card you draw each turn as you draw it" is not a
+                    // triggered ability: the choice is made during the draw, before any later draw.
+                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                            perm.getCard(), drawingPlayerId, List.of(reveal),
+                            perm.getCard().getName() + " - Reveal " + reveal.drawnCard().getName() + "?",
+                            null, null, perm.getId()));
+                    continue;
+                }
                 int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         gameData, drawingPlayerId, perm);
                 if (effect instanceof MayEffect may) {

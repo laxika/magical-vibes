@@ -34,7 +34,12 @@ public class RemoveReferencedPermanentFromCombatEffectHandler implements NormalE
             case TRIGGERING -> findPermanent(gameData, entry.getTriggeringPermanentId());
             case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
         };
-        if (permanent != null) {
+        if (permanent == null) {
+            return;
+        }
+        if (referencedEffect.unblockSoleBlockedAttackers()) {
+            combatRemovalSupport.removeFromCombatAndUnblockSoleBlockers(gameData, entry, permanent);
+        } else {
             combatRemovalSupport.removeFromCombat(gameData, entry, permanent);
         }
     }

@@ -115,7 +115,7 @@ class IcetillExplorerTest extends BaseCardTest {
 
         for (int i = 0; i < 3; i++) {
             harness.playLand(player1, 0);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

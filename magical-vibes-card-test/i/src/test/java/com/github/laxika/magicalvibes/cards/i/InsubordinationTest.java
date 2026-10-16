@@ -105,11 +105,11 @@ class InsubordinationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.setHand(player1, List.of(new Vendetta()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
             harness.passUntil(player2, TurnStep.END_STEP);
             assertThat(gd.stack).hasSize(1);
+            harness.addMana(player1, ManaColor.BLACK, 1);
             harness.castInstant(player1, 0, creature.getId());
             resolveAllTriggers();
         });
@@ -127,11 +127,11 @@ class InsubordinationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.setHand(player1, List.of(new Dominate()));
-        harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
             harness.passUntil(player2, TurnStep.END_STEP);
             assertThat(gd.stack).hasSize(1);
+            harness.addMana(player1, ManaColor.BLUE, 5);
             harness.castInstant(player1, 0, 2, creature.getId());
             resolveAllTriggers();
         });

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "57")
 public class InventiveIteration extends Card {
@@ -29,23 +30,28 @@ public class InventiveIteration extends Card {
     public InventiveIteration() {
         setBackFaceCard(new LivingBreakthrough());
 
-        target(new PermanentPredicateTargetFilter(
+        var creatureOrPlaneswalker = new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
-                "Target must be a creature or planeswalker."), 0, 1)
+                "Target must be a creature or planeswalker.");
+        target(creatureOrPlaneswalker, 0, 1)
                 .addEffect(EffectSlot.SAGA_CHAPTER_I, ReturnToHandEffect.target());
+        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(creatureOrPlaneswalker));
 
         var artifactInGraveyard = new GraveyardCardThreshold(1, new CardTypePredicate(CardType.ARTIFACT));
+        // "If you can't, draw a card" is decided before the return, so the draw comes first and the
+        // two branches stay mutually exclusive.
+        addEffect(EffectSlot.SAGA_CHAPTER_II, ConditionalEffect.unless(new NotCondition(artifactInGraveyard),
+                new DrawCardEffect()));
         addEffect(EffectSlot.SAGA_CHAPTER_II, ConditionalEffect.unless(artifactInGraveyard,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.ARTIFACT))
+                        .mandatory(true)
                         .build()));
-        addEffect(EffectSlot.SAGA_CHAPTER_II, ConditionalEffect.unless(new NotCondition(artifactInGraveyard),
-                new DrawCardEffect()));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

@@ -190,7 +190,7 @@ public class AsEntersInteractionService {
 
         boolean turnsOtherCreaturesFaceDown = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(TurnOtherNontokenCreaturesFaceDownOnEnterEffect.class::isInstance);
-        if (turnsOtherCreaturesFaceDown) {
+        if (turnsOtherCreaturesFaceDown && !gameQueryService.hasLostAllAbilities(gameData, enteringPermanent)) {
             Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
             for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
                 for (Permanent permanent : battlefield) {

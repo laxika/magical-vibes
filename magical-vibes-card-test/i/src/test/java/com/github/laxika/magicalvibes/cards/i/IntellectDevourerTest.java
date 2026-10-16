@@ -97,8 +97,7 @@ class IntellectDevourerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.ExileFromHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ExileFromHandChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(bears);
         assertThat(gd.getCardsExiledByPermanent(devourer.getId())).isEmpty();
     }
@@ -111,8 +110,7 @@ class IntellectDevourerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.ExileFromHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ExileFromHandChoice.class)).isNull();
         assertThat(gd.getCardsExiledByPermanent(findPermanent(player1, "Intellect Devourer").getId()))
                 .isEmpty();
     }

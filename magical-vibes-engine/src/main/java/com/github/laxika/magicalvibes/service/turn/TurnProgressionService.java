@@ -50,7 +50,9 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombat
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.TargetCreatureMustAttackNextCombat;
+import com.github.laxika.magicalvibes.model.effect.IllusionistsGambitAdditionalCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.IllusionistsGambitAdditionalCombatEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnSkipReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
@@ -649,6 +651,11 @@ public class TurnProgressionService {
                 gameData.onlyLandCreaturesCanAttackThisCombat = true;
                 return;
             }
+            if (pending.effect() instanceof IllusionistsGambitAdditionalCombatEffect gambit) {
+                IllusionistsGambitAdditionalCombatEffectHandler.apply(gameData, pending.sourceCard().getName(),
+                        pending.sourcePermanentId(), gambit, id -> findPermanentOnAnyBattlefield(gameData, id));
+                return;
+            }
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     pending.sourceCard(),
@@ -1202,6 +1209,7 @@ public class TurnProgressionService {
         gameData.combatDamageSourcesWithLegendaryThisTurn.clear();
         gameData.legendaryCreatureCombatDamageToPlayersThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
+        gameData.combatDamageDealersByControllerThisTurn.clear();
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
         gameData.combatDamageSourcesThatWereCommandersThisTurn.clear();
         gameData.combatBlockOpponentSubtypesThisTurn.clear();

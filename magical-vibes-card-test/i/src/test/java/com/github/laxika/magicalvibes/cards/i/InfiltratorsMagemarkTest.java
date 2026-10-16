@@ -193,7 +193,7 @@ class InfiltratorsMagemarkTest extends BaseCardTest {
         addCreatureReady(player2, new IzzetGuildmage());
         prepareDeclareBlockers();
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only be blocked by creatures with defender");
     }

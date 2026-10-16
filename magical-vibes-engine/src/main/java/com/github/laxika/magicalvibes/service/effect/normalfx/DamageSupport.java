@@ -791,6 +791,11 @@ public class DamageSupport {
         }
 
         if (targetIsPlayer) {
+            // Damage redirected from the player to a creature (Saving Grace) is still dealt by this
+            // source, so a creature dealt damage this way can't be regenerated either.
+            Map<UUID, Integer> damageBefore = cantRegenerate
+                    ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn)
+                    : Map.of();
             UUID redirectedPlayerId = cantBeRedirected ? null
                     : damagePreventionService.applyNextInstantOrSorceryDamageRedirectShield(
                             gameData, entry, targetId, rawDamage);
@@ -801,6 +806,9 @@ public class DamageSupport {
             if (isDamageSourcePreventedWithLog(gameData, entry)) return 0;
             // dealDamageToPlayer handles per-permanent prevention (permanentsPreventedFromDealingDamage)
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
+            if (cantRegenerate) {
+                markCreaturesDamagedSinceAsUnregenerable(gameData, damageBefore);
+            }
             return 0;
         } else {
             if (!targetPermanent.isDamageCantBePreventedOrRedirectedThisTurn()
@@ -825,17 +833,21 @@ public class DamageSupport {
             int damageDealt = dealCreatureDamage(gameData, entry, targetPermanent, rawDamage,
                     cantBeRedirected);
             if (cantRegenerate) {
-                gameData.damageDealtToPermanentsThisTurn.forEach((permanentId, totalDamage) -> {
-                    if (totalDamage > damageBefore.getOrDefault(permanentId, 0)) {
-                        Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-                        if (damagedPermanent != null && gameQueryService.isCreature(gameData, damagedPermanent)) {
-                            damagedPermanent.setCantRegenerateThisTurn(true);
-                        }
-                    }
-                });
+                markCreaturesDamagedSinceAsUnregenerable(gameData, damageBefore);
             }
             return damageDealt;
         }
+    }
+
+    private void markCreaturesDamagedSinceAsUnregenerable(GameData gameData, Map<UUID, Integer> damageBefore) {
+        gameData.damageDealtToPermanentsThisTurn.forEach((permanentId, totalDamage) -> {
+            if (totalDamage > damageBefore.getOrDefault(permanentId, 0)) {
+                Permanent damagedPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+                if (damagedPermanent != null && gameQueryService.isCreature(gameData, damagedPermanent)) {
+                    damagedPermanent.setCantRegenerateThisTurn(true);
+                }
+            }
+        });
     }
 
     public int computeExcessDamageToAnyTarget(int damageDealt, boolean creature, int lethalDamageThresholdBefore,
@@ -1283,6 +1295,11 @@ public class DamageSupport {
             gameData.recordDamageSourceControlledBy(damageSourceId, sourceControllerId);
             gameData.recordDamageDealtBySourceToPlayer(
                     entry.getSourcePermanentId(), playerId, effectiveDamage);
+            if (entry.getSourcePermanentId() == null) {
+                gameData.damageDealtToPlayersBySourceThisTurn
+                        .computeIfAbsent(damageSourceId, ignored -> new java.util.concurrent.ConcurrentHashMap<>())
+                        .merge(playerId, effectiveDamage, Integer::sum);
+            }
             entry.recordPlayerDealtDamage(playerId);
             gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
             String sourcePermanentName = sourcePermanent != null
@@ -1292,6 +1309,12 @@ public class DamageSupport {
             gameData.recordPermanentDamageSourceNameToPlayer(sourcePermanentName, playerId);
             if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
                 gameData.recordCreatureDamageSourceToPlayer(sourcePermanent.getId(), playerId);
+            } else if (sourcePermanent == null && entry.getSourcePermanentId() != null
+                    && entry.getSourcePermanentSnapshot() != null
+                    && entry.getSourcePermanentSnapshot().getCard().hasType(CardType.CREATURE)) {
+                // The creature left the battlefield as a cost (Mogg Fanatic); its last known
+                // information still says it was a creature that dealt the damage.
+                gameData.recordCreatureDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
             }
             recordRedSpellDamage(gameData, entry, source, playerId);
             triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
@@ -1664,6 +1687,8 @@ public class DamageSupport {
         if (sourceEntry.getTargetId() != null) {
             targetIds.add(sourceEntry.getTargetId());
         }
+        // One creature chosen for several instances of "target" is still a single targeted object.
+        targetIds = targetIds.stream().distinct().toList();
         if (targetIds.size() != 1) return null;
 
         Permanent target = gameQueryService.findPermanentById(gameData, targetIds.getFirst());

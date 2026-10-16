@@ -21,6 +21,7 @@ public class InspirationFromBeyond extends Card {
         addEffect(EffectSlot.SPELL, new MillEffect(3, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.SPELL, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
+                .mandatory(true)
                 .filter(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)

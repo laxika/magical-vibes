@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.cards.v.VoltaicKey;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -70,6 +72,7 @@ class ImmovableRodTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Lost Mine of Phandelver");
         harness.passBothPriorities();
+        answerCaveEntranceScry();
 
         assertThatCode(() -> declareAttack(target)).doesNotThrowAnyException();
     }
@@ -141,6 +144,7 @@ class ImmovableRodTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Lost Mine of Phandelver");
         harness.passBothPriorities();
+        answerCaveEntranceScry();
 
         assertThat(rod.isTapped()).isFalse();
         assertThatCode(() -> harness.activateAbility(player2, 0, null, null)).doesNotThrowAnyException();
@@ -210,6 +214,7 @@ class ImmovableRodTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Lost Mine of Phandelver");
         harness.passBothPriorities();
+        answerCaveEntranceScry();
         harness.passBothPriorities();
 
         assertThat(rod.isTapped()).isFalse();
@@ -248,6 +253,7 @@ class ImmovableRodTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Lost Mine of Phandelver");
         harness.passBothPriorities();
+        answerCaveEntranceScry();
         addRodMana();
 
         harness.activateAbility(player1, 0, null, secondTarget.getId());
@@ -279,6 +285,11 @@ class ImmovableRodTest extends BaseCardTest {
         harness.beginAttackerDeclarationInput();
         int index = gd.playerBattlefields.get(player2.getId()).indexOf(creature);
         gs.declareAttackers(gd, player2, List.of(index));
+    }
+
+    private void answerCaveEntranceScry() {
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
     }
 
     private void runUntapStep(Player untappingPlayer) {

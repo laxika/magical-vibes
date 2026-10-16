@@ -680,6 +680,7 @@ public class CastingPermissionService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.getChosenColor() != null
+                        && !perm.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, perm)
                         && card.getColors().contains(perm.getChosenColor())
                         && perm.getCard().getEffects(EffectSlot.STATIC).stream()
                                 .anyMatch(OpponentsCantCastSpellsOfChosenColorEffect.class::isInstance)) {
@@ -2120,6 +2121,9 @@ public class CastingPermissionService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
+                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                    continue;
+                }
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                     CardEffect resolved = staticEffectConditionResolver.resolve(
                             gameData, permanent, sourceControllerId, effect);

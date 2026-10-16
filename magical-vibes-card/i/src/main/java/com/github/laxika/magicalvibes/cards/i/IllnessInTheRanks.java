@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 public class IllnessInTheRanks extends Card {
 
     public IllnessInTheRanks() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentIsTokenPredicate()));
     }
 }

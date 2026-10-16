@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.PendingGuildFeud;
 import com.github.laxika.magicalvibes.model.PendingLibraryRevealRemainder;
 import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler;
 import com.github.laxika.magicalvibes.model.PendingManifoldInsightsChoice;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
@@ -138,6 +139,7 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffectHandler returnTwoExiledCardsWithSourceHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler seekTwoCardsToBattlefieldEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService manifestService;
@@ -937,6 +939,10 @@ public class LibraryChoiceHandlerService {
                     ? player.getUsername() + " chooses not to take a card. Library is shuffled."
                     : player.getUsername() + " chooses not to take a card.";
             gameLogService.append(gameData, GameLog.text(logEntry));
+            if (shuffleAfterSelection && !deckOwnerId.equals(playerId)) {
+                gameLogService.append(gameData, GameLog.text(
+                        gameData.playerIdToName.get(deckOwnerId) + "'s library is shuffled."));
+            }
             log.info("Game {} - {} declines to take a card from library", gameData.id, player.getUsername());
             insertNoCardFollowUp(gameData, followUp);
             // Per ruling: if you find only one basic land with Cultivate, it must go to
@@ -3237,6 +3243,16 @@ public class LibraryChoiceHandlerService {
         if (libraryRevealChoice.lifeCostPerSelection() > 0 && libraryRevealChoice.beneficiaryPlayerId() != null) {
             handlePunisherRevealChoice(gameData, allRevealedCards, cardIds,
                     libraryRevealChoice.beneficiaryPlayerId(), libraryRevealChoice.lifeCostPerSelection());
+            return;
+        }
+
+        StackEntry seekEntry = gameData.pendingEffectResolutionEntry;
+        if (seekEntry != null && gameData.pendingEffectResolutionIndex > 0
+                && gameData.pendingEffectResolutionIndex <= seekEntry.getEffectsToResolve().size()
+                && SeekTwoCardsToBattlefieldEffectHandler.isSeekTwoToBattlefield(
+                seekEntry.getEffectsToResolve().get(gameData.pendingEffectResolutionIndex - 1))) {
+            seekTwoCardsToBattlefieldEffectHandler.completeChoice(gameData, controllerId, allRevealedCards, cardIds);
+            finishSearchAndResume(gameData);
             return;
         }
 

@@ -41,6 +41,7 @@ class InfiltratorIlKorTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -75,6 +76,7 @@ class InfiltratorIlKorTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
 

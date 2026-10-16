@@ -187,8 +187,9 @@ class IncreasingVengeanceTest extends BaseCardTest {
         IncreasingVengeance flashback = new IncreasingVengeance();
         harness.setHand(player1, List.of(counsel, new IncreasingVengeance()));
         harness.setGraveyard(player1, List.of(flashback));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.addMana(player1, ManaColor.RED, 7);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castSorcery(player1, 0, 0);
         harness.castFlashback(player1, 0, counsel.getId());

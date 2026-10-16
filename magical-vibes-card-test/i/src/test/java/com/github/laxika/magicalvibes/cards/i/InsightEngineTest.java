@@ -37,6 +37,6 @@ class InsightEngineTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(engine.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
 }

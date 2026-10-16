@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InterceptorShadowsHound.class, ShadowMysteriousAssassin.class, BalefulStrix.class,
+@CardUsed({InterceptorShadowsHound.class, IsamaruHoundOfKonda.class, ShadowMysteriousAssassin.class, BalefulStrix.class,
         SwordsToPlowshares.class})
 class InterceptorShadowsHoundTest extends BaseCardTest {
 
@@ -90,7 +91,7 @@ class InterceptorShadowsHoundTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handleMayAbilityChosen(player1, false));
 
         harness.assertInGraveyard(player1, "Interceptor, Shadow's Hound");
         assertThat(countPermanents(player1, "Interceptor, Shadow's Hound")).isZero();
@@ -130,7 +131,7 @@ class InterceptorShadowsHoundTest extends BaseCardTest {
 
     @Test
     void doesNotTriggerForOpponentsLegendaryAttack() {
-        addCreatureReady(player2, new ShadowMysteriousAssassin());
+        addCreatureReady(player2, new IsamaruHoundOfKonda());
         harness.setGraveyard(player1, List.of(new InterceptorShadowsHound()));
 
         declareAttackers(player2, List.of(0));

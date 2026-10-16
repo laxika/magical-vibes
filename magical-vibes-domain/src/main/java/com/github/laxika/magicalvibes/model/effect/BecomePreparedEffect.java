@@ -15,15 +15,28 @@ import java.util.UUID;
  * onto the resolving stack entry (see {@code SpellCastTriggerCollectorService}). When granted to
  * another permanent, the granting permanent id is retained on the effect instead.
  */
-public record BecomePreparedEffect(UUID grantingPermanentId) implements GrantingPermanentAwareEffect {
+public record BecomePreparedEffect(UUID grantingPermanentId, boolean asTriggeredAbility)
+        implements GrantingPermanentAwareEffect {
 
     public BecomePreparedEffect() {
-        this(null);
+        this(null, false);
+    }
+
+    public BecomePreparedEffect(UUID grantingPermanentId) {
+        this(grantingPermanentId, false);
+    }
+
+    /**
+     * "When this creature enters, it becomes prepared": a triggered ability that goes on the stack,
+     * unlike "this creature enters prepared", which is applied as the permanent enters.
+     */
+    public static BecomePreparedEffect triggerOnly() {
+        return new BecomePreparedEffect(null, true);
     }
 
     @Override
     public CardEffect withGrantingPermanentId(UUID permanentId) {
-        return new BecomePreparedEffect(permanentId);
+        return new BecomePreparedEffect(permanentId, asTriggeredAbility);
     }
 
     @Override

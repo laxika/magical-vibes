@@ -46,15 +46,15 @@ public class DealDamageToTargetCreatureAndAllWithSameNameEffectHandler implement
         int damage = evaluated;
 
         // Face-down permanents have no name (CR 708.2), so they never share one with another creature.
-        String targetName = target.isFaceDown() ? null : target.getCard().getName();
+        String targetName = gameQueryService.getEffectiveName(gameData, target);
         List<Permanent> toDamage = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : battlefield) {
                 if (!gameQueryService.isCreature(gameData, perm)) {
                     continue;
                 }
-                boolean sharesName = targetName != null && !perm.isFaceDown()
-                        && perm.getCard().getName().equals(targetName);
+                boolean sharesName = targetName != null
+                        && targetName.equals(gameQueryService.getEffectiveName(gameData, perm));
                 if (perm.getId().equals(target.getId()) || sharesName) {
                     toDamage.add(perm);
                 }

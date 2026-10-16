@@ -209,6 +209,7 @@ class InstillEnergyTest extends BaseCardTest {
         firstAura.setAttachedTo(bears.getId());
         Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new InstillEnergy());
         secondAura.setAttachedTo(bears.getId());
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
 
         bears.tap();

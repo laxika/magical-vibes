@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BattleDefeatedExileAndCastTransformedEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -96,7 +98,7 @@ public class BattleDefeatSupport {
     }
 
     /**
-     * Exile the battle and put its transformed spell on the stack without paying mana.
+     * Exiles a defeated battle, then queues the optional cast of its back face (CR 310.12b).
      */
     public void resolveDefeat(GameData gameData, StackEntry entry) {
         UUID sourceId = entry.getSourcePermanentId();
@@ -109,7 +111,6 @@ public class BattleDefeatSupport {
         Card frontCard = battle.getOriginalCard() != null ? battle.getOriginalCard() : battle.getCard();
         Card backFace = frontCard.getBackFaceCard();
         UUID controllerId = entry.getControllerId();
-        UUID ownerId = frontCard.getOwnerId() != null ? frontCard.getOwnerId() : controllerId;
 
         permanentRemovalService.removePermanentToExile(gameData, battle);
         gameLogService.append(gameData, GameLog.cardThen(frontCard, " is exiled (defeated)."));
@@ -119,6 +120,27 @@ public class BattleDefeatSupport {
             log.warn("Game {} - Defeated battle {} not found in exile after removal", gameData.id, frontCard.getName());
             return;
         }
+
+        Card announced = backFace != null ? backFace : frontCard;
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                frontCard,
+                controllerId,
+                List.of(new BattleDefeatedExileAndCastTransformedEffect()),
+                "Cast " + announced.getName() + " transformed without paying its mana cost?",
+                frontCard.getId(),
+                null, null, null, 0, 0, null, null, null, null, null, null, 0));
+    }
+
+    /**
+     * Casts a defeated battle that is still in exile, transformed and without paying its mana cost.
+     * Called when the controller accepts the optional cast (CR 310.12b).
+     */
+    public void castExiledBattleTransformed(GameData gameData, UUID controllerId, Card frontCard) {
+        if (gameData.findExiledCard(frontCard.getId()) == null) {
+            return;
+        }
+        Card backFace = frontCard.getBackFaceCard();
+        UUID ownerId = frontCard.getOwnerId() != null ? frontCard.getOwnerId() : controllerId;
 
         gameData.removeFromExile(frontCard.getId());
 
@@ -132,7 +154,12 @@ public class BattleDefeatSupport {
         spell.setCastTransformed(true);
         spell.setOwnerIdOverride(ownerId.equals(controllerId) ? null : ownerId);
         gameData.stack.add(spell);
-        gameData.recordSpellCast(controllerId, frontCard);
+        Card castCharacteristics = frontCard;
+        if (backFace != null) {
+            castCharacteristics = frontCard.createRuntimeCopyWithFace(backFace);
+            castCharacteristics.freeze();
+        }
+        gameData.recordSpellCast(controllerId, castCharacteristics);
         gameData.priorityPassedBy.clear();
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -141,7 +168,7 @@ public class BattleDefeatSupport {
                 " transformed without paying its mana cost."));
         log.info("Game {} - {} casts defeated battle {} transformed", gameData.id, playerName, frontCard.getName());
 
-        triggerCollectionService.checkSpellCastTriggers(gameData, frontCard, controllerId, false);
+        triggerCollectionService.checkSpellCastTriggers(gameData, castCharacteristics, controllerId, Zone.EXILE, null);
     }
 
     private static StackEntryType mapBackFaceSpellType(Card card) {

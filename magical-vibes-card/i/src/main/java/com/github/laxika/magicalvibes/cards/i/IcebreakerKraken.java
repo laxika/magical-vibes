@@ -45,7 +45,7 @@ public class IcebreakerKraken extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new SkipNextUntapEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, ARTIFACT_OR_CREATURE));
+                        new SkipNextUntapEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, ARTIFACT_OR_CREATURE, 1, true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

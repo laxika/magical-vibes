@@ -21,7 +21,7 @@ import java.util.Set;
 public class IndomitableCreativity extends Card {
 
     public IndomitableCreativity() {
-        targetX(new PermanentPredicateTargetFilter(
+        targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())),

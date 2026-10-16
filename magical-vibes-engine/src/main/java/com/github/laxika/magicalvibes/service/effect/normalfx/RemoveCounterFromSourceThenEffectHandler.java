@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -98,6 +99,13 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
     }
 
     private void beginReflexiveTrigger(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        if (thenEffect instanceof ChooseOneEffect modal) {
+            // CR 700.2b: the reflexive trigger's mode is chosen as it is put onto the stack.
+            playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
+                    modal, true, entry.getSourcePermanentId());
+            return;
+        }
+
         if (thenEffect instanceof CombatDamageTriggerContextEffect contextEffect
                 && contextEffect.combatDamageTriggerContext()
                 == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER

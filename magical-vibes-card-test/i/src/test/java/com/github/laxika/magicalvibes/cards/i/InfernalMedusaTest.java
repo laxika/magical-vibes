@@ -29,6 +29,7 @@ class InfernalMedusaTest extends BaseCardTest {
         resolveAllTriggers();
         harness.assertOnBattlefield(player2, "Durkwood Boars");
         resolveCombat();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player2, "Durkwood Boars");
         harness.assertInGraveyard(player2, "Durkwood Boars");
@@ -62,6 +63,7 @@ class InfernalMedusaTest extends BaseCardTest {
         resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Durkwood Boars");
         resolveCombat();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Durkwood Boars");
         harness.assertInGraveyard(player1, "Durkwood Boars");
@@ -80,6 +82,7 @@ class InfernalMedusaTest extends BaseCardTest {
         resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Wall of Dust");
         resolveCombat();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Wall of Dust");
         harness.assertInGraveyard(player1, "Wall of Dust");

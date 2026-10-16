@@ -477,6 +477,9 @@ public class MayCopyHandlerService {
         List<UUID> validTargets = new ArrayList<>();
         validTargets.addAll(valid.validPermanentIds());
         validTargets.addAll(valid.validPlayerIds());
+        if (valid.validGraveyardCardIds() != null) {
+            validTargets.addAll(valid.validGraveyardCardIds());
+        }
 
         if (validTargets.isEmpty()) {
             gameLogService.append(gameData, GameLog.text("No valid new targets available for the copy."));

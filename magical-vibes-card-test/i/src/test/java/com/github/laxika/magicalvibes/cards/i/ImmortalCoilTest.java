@@ -174,8 +174,6 @@ class ImmortalCoilTest extends BaseCardTest {
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handleMultipleCardsChosen(player1, gd.playerGraveyards.get(player1.getId()).stream()
-                .map(Card::getId).toList());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(2);

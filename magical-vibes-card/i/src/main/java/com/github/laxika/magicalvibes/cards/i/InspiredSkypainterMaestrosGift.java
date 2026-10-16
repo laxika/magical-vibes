@@ -21,8 +21,8 @@ public class InspiredSkypainterMaestrosGift extends Card {
     public InspiredSkypainterMaestrosGift() {
         setBackFaceCard(new MaestrosGift());
 
-        // This creature enters prepared.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
+        // When this creature enters, it becomes prepared.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, BecomePreparedEffect.triggerOnly());
 
         // Whenever one or more creature tokens you control deal combat damage to a player, this
         // creature becomes prepared.

@@ -34,7 +34,7 @@ public class InscriptionOfInsight extends Card {
                 "Target must be a player.");
         var cardsInTargetPlayerHand = new CardsInHand(CountScope.TARGET_PLAYER);
 
-        addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMoreWhen(List.of(
+        addEffect(EffectSlot.SPELL, ChooseOneEffect.anyNumberWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return up to two target creatures to their owners' hands",
                         List.of(ReturnToHandEffect.target()), TargetFilters.creature(), null,

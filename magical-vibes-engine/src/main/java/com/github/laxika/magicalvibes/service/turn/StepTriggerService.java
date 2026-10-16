@@ -1806,7 +1806,8 @@ public class StepTriggerService {
                                 upkeepPlayerId,
                                 perm.getId()
                         );
-                        entry.setNonTargeting(effect.targetSpec() == TargetSpec.NONE);
+                        // The upkeep player is baked in as the effect's player, not chosen as a target (hexproof is irrelevant).
+                        entry.setNonTargeting(true);
                         entry.setSourcePermanentSnapshot(new Permanent(perm));
                         gameData.stack.add(entry);
                     }
@@ -4645,8 +4646,15 @@ public class StepTriggerService {
         }
 
         if (gameData.hasDelayedAction(DrawCardsAtNextEndStep.class)) {
-            List<DrawCardsAtNextEndStep> pendingDraws =
-                    gameData.drainDelayedActions(DrawCardsAtNextEndStep.class);
+            // A draw registered by the same spell as a pending exile-return ("return those cards to
+            // your hand, then draw a card", Ignorant Bliss) is part of that single delayed trigger and
+            // is added to it below.
+            List<DrawCardsAtNextEndStep> pendingDraws = gameData.drainDelayedActions(
+                    DrawCardsAtNextEndStep.class,
+                    draw -> gameData.getDelayedActions(ReturnExiledCardToHandAtNextEndStep.class).stream()
+                            .noneMatch(ret -> ret.sourceCard() == draw.sourceCard()
+                                    && ret.controllerId().equals(draw.controllerId())
+                                    && draw.drawingPlayerId().equals(draw.controllerId())));
             for (DrawCardsAtNextEndStep pending : pendingDraws) {
                 boolean drawerIsController = pending.drawingPlayerId().equals(pending.controllerId());
                 StackEntry drawEntry = new StackEntry(
@@ -4883,13 +4891,22 @@ public class StepTriggerService {
             }
             for (List<ReturnExiledCardToHandAtNextEndStep> group : groups.values()) {
                 ReturnExiledCardToHandAtNextEndStep action = group.getFirst();
-                List<CardEffect> returns = group.stream()
+                List<CardEffect> returns = new ArrayList<>(group.stream()
                         .filter(member -> gameData.findExiledCard(member.cardId()) != null)
                         .map(member -> (CardEffect) new ReturnExiledCardToHandEffect(member.cardId(), member.ownerId()))
-                        .toList();
+                        .toList());
                 var exiled = group.stream().map(member -> gameData.findExiledCard(member.cardId()))
                         .filter(java.util.Objects::nonNull).findFirst().orElse(null);
-                if (exiled == null) {
+                List<DrawCardsAtNextEndStep> thenDraws = action.sourceCard() == null ? List.of()
+                        : gameData.drainDelayedActions(DrawCardsAtNextEndStep.class,
+                        draw -> draw.sourceCard() == action.sourceCard()
+                                && draw.controllerId().equals(action.controllerId())
+                                && draw.drawingPlayerId().equals(draw.controllerId()));
+                int thenDrawCount = thenDraws.stream().mapToInt(DrawCardsAtNextEndStep::count).sum();
+                if (thenDrawCount > 0) {
+                    returns.add(new DrawCardEffect(thenDrawCount));
+                }
+                if (exiled == null && thenDrawCount == 0) {
                     log.info("Game {} - Delayed next-end-step exile-to-hand return for card {} skipped (no longer in exile)",
                             gameData.id, action.cardId());
                     continue;

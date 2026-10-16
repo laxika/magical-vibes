@@ -21,7 +21,7 @@ public class ImmersturmBattlefield extends Card {
 
     public ImmersturmBattlefield() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(
-                2, 0, Set.of(Keyword.HASTE), GrantScope.ALL_CREATURES,
+                2, 0, Set.of(Keyword.HASTE), GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHostedBySourcePredicate()));
 
         addActivatedAbility(new ActivatedAbility(

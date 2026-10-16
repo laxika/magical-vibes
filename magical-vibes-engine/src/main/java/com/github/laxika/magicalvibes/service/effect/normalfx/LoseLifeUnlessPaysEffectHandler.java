@@ -22,6 +22,7 @@ public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.cast.PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +38,9 @@ public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean 
 
         com.github.laxika.magicalvibes.model.ManaCost cost = new com.github.laxika.magicalvibes.model.ManaCost("{" + e.payAmount() + "}");
         com.github.laxika.magicalvibes.model.ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
-        boolean canPay = cost.canPayResolutionCost(pool);
+        // Mana abilities may be activated while paying, so mana the player could still produce counts.
+        boolean canPay = cost.canPayResolutionCost(pool)
+                || cost.canPayResolutionCost(potentialManaService.buildVirtualManaPool(gameData, targetPlayerId));
 
         if (!canPay) {
             // Can't pay — auto-apply life loss

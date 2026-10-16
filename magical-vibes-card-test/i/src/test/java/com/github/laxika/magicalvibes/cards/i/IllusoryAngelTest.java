@@ -118,6 +118,7 @@ class IllusoryAngelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RuneclawBear(), new IllusoryAngel()));
         harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
         harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
