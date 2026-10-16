@@ -149,9 +149,11 @@ class IdeasUnboundTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.handleCardChosen(player1, 0);
+            harness.handleCardChosen(player1, 0);
+            harness.handleCardChosen(player1, 0);
+        });
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);

@@ -1280,6 +1280,12 @@ public class PredicateEvaluationService {
                 if (layered != null) {
                     yield matchesPermanentPredicate(layered, permanent, hasAnySubtypePredicate, filterContext);
                 }
+                if (gameData != null && !GameQueryService.isStaticEvaluationActive()) {
+                    // Answer from the layered characteristics so floating "loses all creature types"
+                    // style effects (Amoeboid Changeling) are honored, like the single-subtype case.
+                    yield hasAnySubtypePredicate.subtypes().stream()
+                            .anyMatch(subtype -> gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype));
+                }
                 Set<CardSubtype> wanted = permanent.isLosesAllCreatureTypesUntilEndOfTurn()
                         ? hasAnySubtypePredicate.subtypes().stream()
                                 .filter(st -> !gameQueryService.isCreatureSubtype(st))
@@ -1468,7 +1474,10 @@ public class PredicateEvaluationService {
                 if (sourceAura == null && gameData != null && sourceCardId != null) {
                     sourceAura = findPermanentByOriginalCardId(gameData, sourceCardId);
                 }
-                if (sourceAura == null && filterContext != null) {
+                if ((sourceAura == null || !sourceAura.isAttached()) && filterContext != null
+                        && filterContext.sourcePermanentSnapshot() != null
+                        && (sourceAura == null || filterContext.sourcePermanentSnapshot().isAttached())) {
+                    // An ability that already triggered keeps the host it had when it triggered.
                     sourceAura = filterContext.sourcePermanentSnapshot();
                 }
                 yield sourceAura != null && sourceAura.isAttached()
@@ -3966,7 +3975,13 @@ public class PredicateEvaluationService {
             }
         }
         if (equipment == null || !equipment.isAttached()) return null;
-        return gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        Permanent equipped = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        if (equipped == null && filterContext != null && filterContext.attachedPermanentSnapshot() != null
+                && filterContext.attachedPermanentSnapshot().getId().equals(equipment.getAttachedTo())) {
+            // The creature left the battlefield after the ability triggered: use its last-known information.
+            return filterContext.attachedPermanentSnapshot();
+        }
+        return equipped;
     }
 
     /**

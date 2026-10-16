@@ -435,6 +435,11 @@ public class AuraAttachmentService {
             return null;
         }
 
+        // An Aura that lost all abilities has lost its enchant ability, so it can't legally enchant
+        // anything (Immovable Rod ruling, 2021-07-23): it is put into its owner's graveyard.
+        if (gameQueryService.hasLostAllAbilities(gameData, attachment)) {
+            return "it lost its enchant ability";
+        }
         // The card's declared target filter is its enchant restriction (e.g. "Enchant creature");
         // player-shaped filters never apply to a permanent host.
         if (gameQueryService.cantBeEnchantedByOtherAurasRemovingExisting(gameData, host)

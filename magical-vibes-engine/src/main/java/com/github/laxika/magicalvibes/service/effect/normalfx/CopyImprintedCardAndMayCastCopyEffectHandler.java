@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCo
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -45,27 +46,45 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
         // The source may have left the battlefield since activation; entry.getCard() keeps the
         // imprint pointer alive in that case (same fallback as the token-copy handler).
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Card imprintedCard = copyEffect.copyOtherExiledCard()
-                ? findOtherExiledCard(gameData, entry, copyEffect)
-                : sourcePermanent != null
-                        ? gameData.getImprintedCard(sourcePermanent.getCard())
-                        : gameData.getImprintedCard(entry.getCard());
+        List<Card> imprintedCards = new ArrayList<>();
+        if (copyEffect.copyOtherExiledCard()) {
+            Card other = findOtherExiledCard(gameData, entry, copyEffect);
+            if (other != null) {
+                imprintedCards.add(other);
+            }
+        } else {
+            // A doubled imprint trigger exiles several cards; the ability copies each of them.
+            Card imprinted = sourcePermanent != null
+                    ? gameData.getImprintedCard(sourcePermanent.getCard())
+                    : gameData.getImprintedCard(entry.getCard());
+            if (imprinted != null) {
+                imprintedCards.add(imprinted);
+            }
+            for (Card exiled : gameData.getCardsExiledByPermanent(entry.getSourcePermanentId())) {
+                if (imprintedCards.stream().noneMatch(card -> card.getId().equals(exiled.getId()))) {
+                    imprintedCards.add(exiled);
+                }
+            }
+        }
+        imprintedCards.removeIf(card -> gameData.findExiledCard(card.getId()) == null);
 
-        if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null) {
+        if (imprintedCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " has no exiled card to copy."));
             return;
         }
 
-        Card copy = copySupport.createCopyCard(imprintedCard);
-        exileService.exileCard(gameData, controllerId, copy);
+        for (Card imprintedCard : imprintedCards.reversed()) {
+            Card copy = copySupport.createCopyCard(imprintedCard);
+            exileService.exileCard(gameData, controllerId, copy);
 
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                copy,
-                controllerId,
-                List.of(copyEffect),
-                "Cast the copy of " + copy.getName() + " without paying its mana cost?",
-                copy.getId()
-        ));
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    copy,
+                    controllerId,
+                    List.of(copyEffect),
+                    "Cast the copy of " + copy.getName() + " without paying its mana cost?",
+                    copy.getId()
+            ));
+        }
     }
 
     private Card findOtherExiledCard(GameData gameData, StackEntry entry,

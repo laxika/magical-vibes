@@ -835,6 +835,22 @@ public class GraveyardService {
         return toExile;
     }
 
+    /** Exiles the given cards (chosen by the player) from that player's graveyard. */
+    public void exileChosenCardsFromGraveyard(GameData gameData, UUID playerId, List<UUID> cardIds) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) return;
+        List<Card> exiled = graveyard.stream().filter(card -> cardIds.contains(card.getId())).toList();
+        if (exiled.isEmpty()) return;
+        graveyard.removeAll(exiled);
+        notifyCardsExiledFromGraveyard(gameData, playerId, exiled);
+        for (Card card : exiled) {
+            exileService.exileCard(gameData, playerId, card);
+        }
+        String playerName = gameData.playerIdToName.get(playerId);
+        gameLogService.append(gameData, GameLog.text(playerName + " exiles " + exiled.size() + " card"
+                + (exiled.size() != 1 ? "s" : "") + " from their graveyard."));
+    }
+
     /**
      * Exiles exactly {@code count} actual cards from the front of a player's graveyard when that
      * many cards are available. Tokens in the graveyard do not count and remain in place for the

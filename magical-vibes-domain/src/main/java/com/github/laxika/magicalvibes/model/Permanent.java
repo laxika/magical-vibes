@@ -57,6 +57,8 @@ public class Permanent {
     /** Null until the controller has chosen the cards to reveal for Amplify. */
     @Setter private Integer amplifyRevealedCards;
     @Setter private Boolean chosenTappedEntryState;
+    /** The enter-as-a-copy source the controller chose to apply last for this entry; null until chosen. */
+    @Setter private UUID chosenEnterAsCopySourceId;
     /** Chosen slot among controlled creatures for the current battlefield entry or control change. */
     @Setter private Integer chosenCreaturePosition;
     /** Whether a control change still requires the controller to position this creature. */
@@ -852,6 +854,7 @@ public class Permanent {
         this.entryCostResolved = source.entryCostResolved;
         this.amplifyRevealedCards = source.amplifyRevealedCards;
         this.chosenTappedEntryState = source.chosenTappedEntryState;
+        this.chosenEnterAsCopySourceId = source.chosenEnterAsCopySourceId;
         this.chosenCreaturePosition = source.chosenCreaturePosition;
         this.creaturePositionPending = source.creaturePositionPending;
         this.nativeDevourResolved = source.nativeDevourResolved;

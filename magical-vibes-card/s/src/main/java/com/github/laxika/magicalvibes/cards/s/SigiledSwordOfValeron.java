@@ -26,7 +26,7 @@ public class SigiledSwordOfValeron extends Card {
         addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.KNIGHT, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
                 1, "Knight", 2, 2, CardColor.WHITE, List.of(CardSubtype.KNIGHT),
-                Set.of(Keyword.VIGILANCE), true, false));
+                Set.of(Keyword.VIGILANCE), true, false).withAttackingUntapped());
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

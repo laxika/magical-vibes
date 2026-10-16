@@ -28,7 +28,6 @@ class IcefallRegentTest extends BaseCardTest {
         castAndResolveRegent(bears);
 
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
         harness.performUntapStep(player2);
         assertThat(bears.isTapped()).isTrue();
     }

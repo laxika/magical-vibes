@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -200,8 +202,14 @@ public class PlayerInteractionSupport {
         UUID returnExiledSourceCardId = effect.returnExiledSourceIfSacrificed()
                 && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getCard().getId() : null;
+        boolean persistentHaste = effect.grantHaste();
+        if (effect.grantHaste() && effect.hasteUntilEndOfTurn() && thenEffect == null) {
+            persistentHaste = false;
+            thenEffect = new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.HASTE, null);
+            thenCondition = null;
+        }
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
-                effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
+                persistentHaste, effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking(),
                 effect.drawAndRepeat(), repeats ? effect.predicate() : null,
                 repeats ? effect.label() : null, effect.putAnyNumber(), effect.faceDown(),
                 effect.faceDownPower(), effect.faceDownToughness(), effect.faceDownCardTypes(),

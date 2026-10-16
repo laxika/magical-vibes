@@ -73,6 +73,15 @@ public class TargetRedirectionSupport {
     }
 
     public boolean isValidNewTargetForSpell(GameData gameData, StackEntry targetSpell, UUID candidateTargetId) {
+        return isValidNewTargetForSpell(gameData, targetSpell, candidateTargetId, targetSpell.getControllerId());
+    }
+
+    /**
+     * Checks a candidate target for a spell, or for a copy of it, evaluating "you control" style
+     * restrictions from {@code spellControllerId}'s point of view (the copy's controller).
+     */
+    public boolean isValidNewTargetForSpell(GameData gameData, StackEntry targetSpell, UUID candidateTargetId,
+                                            UUID spellControllerId) {
         if (targetSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || targetSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
             return isValidNewTargetForAbility(gameData, targetSpell, candidateTargetId);
@@ -81,15 +90,15 @@ public class TargetRedirectionSupport {
         Card spellCard = targetSpell.getCard();
 
         if (EffectResolution.needsSpellTarget(spellCard)) {
-            return targetLegalityService.checkSpellTargetOnStack(gameData, candidateTargetId, spellCard.getTargetFilter(), targetSpell.getControllerId()).isEmpty();
+            return targetLegalityService.checkSpellTargetOnStack(gameData, candidateTargetId, spellCard.getTargetFilter(), spellControllerId).isEmpty();
         }
 
         if (targetSpell.getTargetZone() == Zone.GRAVEYARD) {
-            return targetLegalityService.checkGraveyardRetargetCandidate(gameData, spellCard, candidateTargetId, targetSpell.getControllerId()).isEmpty();
+            return targetLegalityService.checkGraveyardRetargetCandidate(gameData, spellCard, candidateTargetId, spellControllerId).isEmpty();
         }
 
         return targetLegalityService.checkSpellTargeting(gameData, spellCard, candidateTargetId, null,
-                targetSpell.getControllerId(), EffectResolution.needsTarget(spellCard),
+                spellControllerId, EffectResolution.needsTarget(spellCard),
                 targetSpell.getXValue(), targetSpell.wasKicked(), targetSpell.isMadness()).isEmpty();
     }
 

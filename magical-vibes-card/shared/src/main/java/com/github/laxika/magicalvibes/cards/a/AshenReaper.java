@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class AshenReaper extends Card {
 
     public AshenReaper() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
+        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, ConditionalEffect.unless(
                 new PermanentPutIntoGraveyardFromBattlefieldThisTurn(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
     }

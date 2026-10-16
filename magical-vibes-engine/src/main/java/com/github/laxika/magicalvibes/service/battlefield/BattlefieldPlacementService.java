@@ -255,6 +255,7 @@ public class BattlefieldPlacementService {
     public void place(GameData gameData, BattlefieldEntryRequest request) {
         if (cloneService != null && cloneService.beginEntryCopyChoice(gameData, request.withControllerId(
                 resolveEnteringController(gameData, request.controllerId(), request.permanent())))) return;
+        if (beginEnterAsCopyOrderChoice(gameData, request)) return;
         if (beginAmplifyChoice(gameData, request)) return;
         if (beginUnleashChoice(gameData, request)) return;
         if (beginRiotChoices(gameData, request)) return;
@@ -787,8 +788,11 @@ public class BattlefieldPlacementService {
         }
         for (PendingMysticReflection reflection
                 : List.copyOf(gameData.activeMysticReflectionsForEntryBatch)) {
-            permanent.setCard(permanent.getCard().createRuntimeCopyWithFace(
-                    reflection.lastKnownTargetCard()));
+            boolean wasToken = permanent.getCard().isToken();
+            Card reflected = permanent.getCard().createRuntimeCopyWithFace(reflection.lastKnownTargetCard());
+            // The tokens are still tokens; only their copiable characteristics become the chosen creature's.
+            reflected.setToken(wasToken);
+            permanent.setCard(reflected);
         }
     }
 
@@ -1264,45 +1268,88 @@ public class BattlefieldPlacementService {
      * skips entering tokens, while {@code tokenOnly} skips nontoken creatures.
      */
     private void applyCreaturesEnterAsCopyReplacementEffect(GameData gameData, UUID controllerId, Permanent entering) {
-        if (!entering.getCard().hasType(CardType.CREATURE)) {
+        List<EnterAsCopyCandidate> candidates = enterAsCopyCandidates(gameData, controllerId, entering);
+        if (candidates.isEmpty()) {
             return;
         }
+        // With several effects the controller orders them (CR 616.1) and the last one applied wins,
+        // so the chosen source is the one whose copy the creature ends up as.
+        EnterAsCopyCandidate applied = candidates.stream()
+                .filter(candidate -> candidate.source().getId().equals(entering.getChosenEnterAsCopySourceId()))
+                .findFirst().orElse(candidates.getFirst());
+        permanentCopierService.applyCloneCopy(entering, applied.copied(), null, null);
+        // Reset any counters that were pre-set by the original card's "enters with"
+        // replacement effects — the creature now enters as Essence, which has no such
+        // effects, so those counters should not apply.
+        entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        entering.setCounterCount(CounterType.CHARGE, 0);
+        entering.setCounterCount(CounterType.WISH, 0);
+    }
+
+    private record EnterAsCopyCandidate(Permanent source, Permanent copied) {}
+
+    private List<EnterAsCopyCandidate> enterAsCopyCandidates(GameData gameData, UUID controllerId,
+                                                             Permanent entering) {
+        List<EnterAsCopyCandidate> candidates = new ArrayList<>();
+        if (!entering.getCard().hasType(CardType.CREATURE)) {
+            return candidates;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return;
+        if (battlefield == null) return candidates;
 
         for (Permanent source : battlefield) {
             CreaturesEnterAsCopyOfSourceEffect effect = source.getCard().getEffects(EffectSlot.STATIC).stream()
                     .filter(e -> e instanceof CreaturesEnterAsCopyOfSourceEffect)
                     .map(e -> (CreaturesEnterAsCopyOfSourceEffect) e)
                     .findFirst().orElse(null);
-            if (effect != null) {
-                if (!gameQueryService.hasActiveStaticEffect(gameData, source, CreaturesEnterAsCopyOfSourceEffect.class)) {
-                    continue;
-                }
-                if (effect.nontokenOnly() && entering.getCard().isToken()) {
-                    continue;
-                }
-                if (effect.tokenOnly() && !entering.getCard().isToken()) {
-                    continue;
-                }
-                Permanent copied = source;
-                if (effect.copyEnchantedCreature()) {
-                    copied = source.getAttachedTo() == null ? null
-                            : gameQueryService.findPermanentById(gameData, source.getAttachedTo());
-                    if (copied == null || copied.getId().equals(entering.getId())) {
-                        continue;
-                    }
-                }
-                permanentCopierService.applyCloneCopy(entering, copied, null, null);
-                // Reset any counters that were pre-set by the original card's "enters with"
-                // replacement effects — the creature now enters as Essence, which has no such
-                // effects, so those counters should not apply.
-                entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
-                entering.setCounterCount(CounterType.CHARGE, 0);
-                entering.setCounterCount(CounterType.WISH, 0);
-                return;
+            if (effect == null
+                    || !gameQueryService.hasActiveStaticEffect(gameData, source, CreaturesEnterAsCopyOfSourceEffect.class)) {
+                continue;
             }
+            if (effect.nontokenOnly() && entering.getCard().isToken()) {
+                continue;
+            }
+            if (effect.tokenOnly() && !entering.getCard().isToken()) {
+                continue;
+            }
+            Permanent copied = source;
+            if (effect.copyEnchantedCreature()) {
+                copied = source.getAttachedTo() == null ? null
+                        : gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+                if (copied == null || copied.getId().equals(entering.getId())) {
+                    continue;
+                }
+            }
+            candidates.add(new EnterAsCopyCandidate(source, copied));
         }
+        return candidates;
+    }
+
+    /**
+     * CR 616.1 — when several "enters as a copy" effects apply and they would produce different
+     * copies, the entering creature's controller chooses the order; the last effect applied decides
+     * what it becomes, so the prompt asks which copy that is.
+     */
+    private boolean beginEnterAsCopyOrderChoice(GameData gameData, BattlefieldEntryRequest request) {
+        Permanent entering = request.permanent();
+        if (entering.getChosenEnterAsCopySourceId() != null || interactionHandlerRegistry == null) {
+            return false;
+        }
+        UUID controllerId = resolveEnteringController(gameData, request.controllerId(), entering);
+        Map<String, UUID> sourceIdByCopiedName = new java.util.LinkedHashMap<>();
+        for (EnterAsCopyCandidate candidate : enterAsCopyCandidates(gameData, controllerId, entering)) {
+            sourceIdByCopiedName.putIfAbsent(candidate.copied().getCard().getName(), candidate.source().getId());
+        }
+        if (sourceIdByCopiedName.size() < 2) {
+            return false;
+        }
+        List<String> options = List.copyOf(sourceIdByCopiedName.keySet());
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(controllerId, null, null,
+                new com.github.laxika.magicalvibes.model.ChoiceContext.EnterAsCopyOrderChoice(
+                        request.withControllerId(controllerId), List.copyOf(sourceIdByCopiedName.values())),
+                options, "Choose the creature " + entering.getCard().getName()
+                        + " enters as a copy of (the copy effect applied last)."));
+        return true;
     }
 
     private void applyPerpetualEnterTapped(GameData gameData, Permanent permanent) {

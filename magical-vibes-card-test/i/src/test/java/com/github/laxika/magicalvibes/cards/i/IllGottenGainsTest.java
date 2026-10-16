@@ -174,7 +174,8 @@ class IllGottenGainsTest extends BaseCardTest {
 
     private void chooseCards(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            harness.handleGraveyardCardChosen(player, 0);
+            harness.handleGraveyardCardChosen(player, gd.interaction
+                    .activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices().getFirst());
         }
     }
 }

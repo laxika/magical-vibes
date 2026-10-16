@@ -121,8 +121,8 @@ class InvasionOfMercadiaTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, player2.getId(), null);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
         assertThat(gd.stack).isEmpty();

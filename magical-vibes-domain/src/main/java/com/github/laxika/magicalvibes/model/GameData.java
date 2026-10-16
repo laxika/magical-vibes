@@ -8359,6 +8359,7 @@ public class GameData {
         copy.graveyardTargetOperation.resolutionTimeCollectEvidenceResume =
                 this.graveyardTargetOperation.resolutionTimeCollectEvidenceResume;
         copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
+        copy.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume = this.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume;
         copy.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume =
                 this.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume;
         copy.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume =

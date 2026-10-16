@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -28,7 +28,7 @@ public class ImmersturmPredator extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsSourceCardPredicate(),
                         SequenceEffect.of(
-                                new ExileUpToOneCardFromGraveyardEffect(),
+                                ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyard(),
                                 new PutCountersOnSourceEffect(1, 1, 1))));
 
         addActivatedAbility(new ActivatedAbility(

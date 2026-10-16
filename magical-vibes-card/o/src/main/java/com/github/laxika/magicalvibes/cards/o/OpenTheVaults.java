@@ -33,6 +33,7 @@ public class OpenTheVaults extends Card {
                 )))
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .returnAll(true)
+                .chooseAuraAttachment(true)
                 .underOwnersControl(true)
                 .build());
     }

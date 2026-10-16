@@ -5,16 +5,19 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCommanderEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /** Resolves I Am Never Alone's commander-wide token-copy effect. */
 @Component
@@ -23,6 +26,7 @@ public class CreateTokenCopyOfCommanderEffectHandler implements NormalEffectHand
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,7 +40,30 @@ public class CreateTokenCopyOfCommanderEffectHandler implements NormalEffectHand
             return;
         }
 
-        Card commander = commanders.getFirst();
+        if (commanders.size() > 1) {
+            playerInputService.beginCommandZoneCardChoice(
+                    gameData, entry.getControllerId(), commanders,
+                    "Choose a commander to create a token copy of.", entry.getCard());
+            return;
+        }
+        createTokenCopyOfCommander(gameData, entry, commanders.getFirst());
+    }
+
+    /** Completes the commander choice made when the controller has several commanders. */
+    public void completeChoice(GameData gameData, UUID playerId, UUID commanderId, Card sourceCard) {
+        Card commander = gameData.playerCommanders.getOrDefault(playerId, List.of()).stream()
+                .filter(card -> card.getId().equals(commanderId))
+                .findFirst()
+                .orElse(null);
+        if (commander == null) {
+            return;
+        }
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+                sourceCard == null ? "" : sourceCard.getName(), List.of());
+        createTokenCopyOfCommander(gameData, entry, commander);
+    }
+
+    private void createTokenCopyOfCommander(GameData gameData, StackEntry entry, Card commander) {
         Permanent commanderPermanent = null;
         Card sourceCard = null;
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
@@ -57,6 +84,13 @@ public class CreateTokenCopyOfCommanderEffectHandler implements NormalEffectHand
         }
         if (sourceCard == null) {
             sourceCard = gameQueryService.findCardById(gameData, commander.getId());
+            // CR 707.2: a copy of an object on the stack acquires the value of X chosen for it.
+            for (StackEntry stackEntry : gameData.stack) {
+                if (stackEntry.getCard() != null && commander.getId().equals(stackEntry.getCard().getId())) {
+                    entry.setTokenCopyXValue(stackEntry.getXValue());
+                    break;
+                }
+            }
         }
         if (sourceCard == null) {
             sourceCard = commander;

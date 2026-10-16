@@ -31,7 +31,7 @@ public class SneakAttack extends Card {
                         "Put a creature card from your hand onto the battlefield?"
                 )),
                 "{R}: You may put a creature card from your hand onto the battlefield. "
-                        + "That creature gains haste until end of turn. Sacrifice the creature at the beginning of the next end step."
+                        + "That creature gains haste. Sacrifice the creature at the beginning of the next end step."
         ));
     }
 }

@@ -126,12 +126,15 @@ class InspiringEaselTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castInstant(player1, 0, player2.getId());
 
-        for (int i = 0; i < 2; i++) {
-            harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, false);
-        }
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
 
-        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2);
+        // The first copy sits above the second copy trigger, so it resolves before that trigger does.
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
         resolveAllTriggers();
         harness.assertLife(player2, 11);
     }

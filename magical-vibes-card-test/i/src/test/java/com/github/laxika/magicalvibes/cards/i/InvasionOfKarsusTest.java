@@ -49,6 +49,7 @@ class InvasionOfKarsusTest extends BaseCardTest {
                 .checkAfterDefenseRemoved(gd, battle));
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent backFace = findPermanent(player1, "Refraction Elemental");

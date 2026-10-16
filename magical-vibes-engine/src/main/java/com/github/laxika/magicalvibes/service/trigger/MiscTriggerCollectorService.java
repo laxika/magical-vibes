@@ -3605,6 +3605,21 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = PutCounterOnTargetPermanentEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleLifeLossPutCounterOnTarget(TriggerMatchContext match,
+            PutCounterOnTargetPermanentEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+
+        gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                sourceCard, match.controllerId(), List.of(effect), match.permanent().getId()));
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on life loss (put counter on target)",
+                gameData.id, sourceCard.getName());
+        return true;
+    }
+
     @CollectsTriggers({
             @CollectsTrigger(value = CreateTokenEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE),
             @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_CONTROLLER_LOSES_LIFE),

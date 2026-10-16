@@ -2463,7 +2463,27 @@ public class PermanentChoiceBattlefieldHandlerService {
                 .filter(entry -> entry.getTargetableId().equals(sourceId))
                 .map(StackEntry::getCard)
                 .findFirst()
-                .orElse(null);
+                .orElseGet(() -> findCardReferencedByStackEntry(gameData, sourceId));
+    }
+
+    /**
+     * A card in a graveyard or in exile that a spell or ability on the stack refers to (Reanimate's
+     * target) is still a legal damage source even though it is not a permanent.
+     */
+    private Card findCardReferencedByStackEntry(GameData gameData, UUID sourceId) {
+        boolean referenced = gameData.stack.stream().anyMatch(entry ->
+                sourceId.equals(entry.getTargetId())
+                        || entry.getTargetIds().contains(sourceId)
+                        || entry.getTargetCardIds().contains(sourceId));
+        if (!referenced) {
+            return null;
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, sourceId);
+        if (graveyardCard != null) {
+            return graveyardCard;
+        }
+        var exiled = gameData.findExiledCard(sourceId);
+        return exiled == null ? null : exiled.card();
     }
 
     /**

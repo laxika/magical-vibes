@@ -205,6 +205,17 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /**
+     * Orders several "enters as a copy of ..." replacement effects (CR 616.1). {@code sourceIds} lines up
+     * with the prompt's options: the chosen source is the effect applied last, so its copy is the result.
+     */
+    record EnterAsCopyOrderChoice(BattlefieldEntryRequest request, List<UUID> sourceIds) implements ChoiceContext {
+        public EnterAsCopyOrderChoice {
+            request = request.deepCopy();
+            sourceIds = List.copyOf(sourceIds);
+        }
+    }
+
     /** Positions an entering creature, or an existing creature whose controller has changed. */
     record CreaturePositionChoice(BattlefieldEntryRequest request, UUID permanentId,
                                   List<String> options) implements ChoiceContext {

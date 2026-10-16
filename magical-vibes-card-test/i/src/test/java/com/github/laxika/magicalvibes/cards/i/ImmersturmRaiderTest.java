@@ -79,8 +79,8 @@ class ImmersturmRaiderTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
@@ -96,8 +96,8 @@ class ImmersturmRaiderTest extends BaseCardTest {
         harness.castFromHand(player1, new ImmersturmRaider(), "{1}{R}");
 
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

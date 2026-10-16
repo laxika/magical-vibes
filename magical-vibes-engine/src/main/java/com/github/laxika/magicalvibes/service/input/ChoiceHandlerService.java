@@ -552,6 +552,17 @@ public class ChoiceHandlerService {
             libraryChoiceHandlerService.completeEntryCounterReplacementOrder(gameData, order, colorName);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.EnterAsCopyOrderChoice ctx) {
+            int index = colorChoice.options().indexOf(colorName);
+            if (index < 0) {
+                throw new IllegalArgumentException("Invalid enter-as-a-copy effect");
+            }
+            gameData.interaction.clearAwaitingInput();
+            var request = ctx.request();
+            request.permanent().setChosenEnterAsCopySourceId(ctx.sourceIds().get(index));
+            libraryChoiceHandlerService.completeTappedEntryStateChoice(gameData, request);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.CreaturePositionChoice ctx) {
             var request = creaturePositioningSupport.completeChoice(gameData, ctx, colorName);
             if (request != null) {

@@ -9,12 +9,10 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -35,16 +33,15 @@ public class InameAsOne extends Card {
                         new SearchLibraryEffect(spiritPermanent, LibrarySearchDestination.BATTLEFIELD),
                         "Search your library for a Spirit permanent card?")));
 
+        // The target is chosen as the trigger goes on the stack; the exile is the resolution-time
+        // "you may" that gates the return.
         addEffect(EffectSlot.ON_DEATH, new MayEffect(
-                new ConditionalEffect(
-                        new SourceCardInGraveyard(),
-                        SequenceEffect.of(
-                                new ExileSourceCardFromGraveyardEffect(),
-                                ReturnCardFromGraveyardEffect.builder()
-                                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                        .filter(spiritPermanent)
-                                        .targetGraveyard(true)
-                                        .build())),
+                ExileSourceCardFromGraveyardThenEffect.sameAbility(
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(spiritPermanent)
+                                .targetGraveyard(true)
+                                .build()),
                 "Exile Iname as One to return target Spirit permanent card?"));
     }
 }

@@ -444,8 +444,7 @@ public class CombatBlockService {
             int attackerIdx = assignment.attackerIndex();
 
             if (!blockable.contains(blockerIdx)) {
-                if (blockerIdx >= 0 && blockerIdx < defenderBattlefield.size()
-                        && defenderBattlefield.get(blockerIdx).isTapped()) {
+                if (blockerIdx >= 0 && blockerIdx < defenderBattlefield.size()) {
                     throw new IllegalStateException("Invalid blocker index: " + blockerIdx + " ("
                             + defenderBattlefield.get(blockerIdx).getCard().getName() + " can't block)");
                 }

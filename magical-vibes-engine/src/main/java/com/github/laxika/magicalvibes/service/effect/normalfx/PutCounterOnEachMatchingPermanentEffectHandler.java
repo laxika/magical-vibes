@@ -79,7 +79,8 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
                 .withSourceControllerId(entry.getControllerId())
                 .withTriggeringPermanentId(entry.getTriggeringPermanentId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot() != null
-                        ? entry.getSourcePermanentSnapshot() : source);
+                        ? entry.getSourcePermanentSnapshot() : source)
+                .withAttachedPermanentSnapshot(entry.getAttachedPermanentSnapshot());
         int count = 0;
         int totalPlaced = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();

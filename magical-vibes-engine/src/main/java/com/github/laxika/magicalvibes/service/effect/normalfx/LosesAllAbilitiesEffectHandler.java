@@ -166,6 +166,11 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
                     || gameQueryService.findPermanentById(gameData, sourcePermanentId) == null) {
                 return false;
             }
+            if (e.duration() == EffectDuration.WHILE_SOURCE_REMAINS_TAPPED
+                    && !gameQueryService.findPermanentById(gameData, sourcePermanentId).isTapped()) {
+                // The source untapped before this resolved, so the effect never begins.
+                return false;
+            }
         }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), sourcePermanentId, entry.getControllerId(), e,

@@ -23,7 +23,7 @@ class IncineratingBlastTest extends BaseCardTest {
     @DisplayName("Deals 6 damage to a target creature and allows declining the discard")
     void dealsDamageAndMayDeclineDiscard() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new IncineratingBlast()));
+        harness.setHand(player1, List.of(new IncineratingBlast(), new GrizzlyBears()));
         addMana();
 
         harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
@@ -113,7 +113,7 @@ class IncineratingBlastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         var target = gd.playerBattlefields.get(player1.getId()).getFirst();
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
-        harness.setHand(player1, List.of(new IncineratingBlast()));
+        harness.setHand(player1, List.of(new IncineratingBlast(), new GrizzlyBears()));
         addMana();
 
         harness.castSorcery(player1, 0, target.getId());

@@ -43,7 +43,8 @@ public record CreateTokenEffect(
         Set<CardSupertype> supertypes,
         TargetFilter tokenTargetFilter,
         boolean investigate,
-        List<CreateTokenEffect> simultaneousTokens
+        List<CreateTokenEffect> simultaneousTokens,
+        boolean attackingUntapped
 ) implements TokenCreatingEffect, CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
 
     public CreateTokenEffect {
@@ -76,9 +77,39 @@ public record CreateTokenEffect(
         this(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of());
     }
 
+    /**
+     * Compatibility constructor for blueprints that enter tapped and attacking (or untapped, when
+     * {@code attackingUntapped} is set) with simultaneous tokens.
+     */
+    public CreateTokenEffect(CardType primaryType, DynamicAmount amount, String tokenName,
+            DynamicAmount power, DynamicAmount toughness, CardColor color, Set<CardColor> colors,
+            List<CardSubtype> subtypes, Set<Keyword> keywords, Set<CardType> additionalTypes,
+            boolean tappedAndAttacking, boolean tapped, Map<EffectSlot, CardEffect> tokenEffects,
+            List<ActivatedAbility> tokenAbilities, boolean exileAtEndOfCombat, boolean exileAtEndStep,
+            boolean legendary, int initialPlusOnePlusOneCounters,
+            Set<Keyword> grantedKeywordsUntilEndOfTurn, Set<CardSupertype> supertypes,
+            TargetFilter tokenTargetFilter, boolean investigate, List<CreateTokenEffect> simultaneousTokens) {
+        this(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords,
+                additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat,
+                exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn,
+                supertypes, tokenTargetFilter, investigate, simultaneousTokens, false);
+    }
+
+    /**
+     * Copy of this blueprint that enters attacking without being tapped ("create a ... token that's
+     * attacking", as opposed to "tapped and attacking"). Only meaningful with {@code tappedAndAttacking}.
+     */
+    public CreateTokenEffect withAttackingUntapped() {
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors,
+                subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
+                tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter,
+                investigate, simultaneousTokens, true);
+    }
+
     /** Other token profiles created simultaneously by this same instruction. */
     public CreateTokenEffect withSimultaneousTokens(List<CreateTokenEffect> otherTokens) {
-        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, otherTokens);
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, otherTokens, attackingUntapped);
     }
 
     @Override
@@ -171,14 +202,14 @@ public record CreateTokenEffect(
                 subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes,
-                tokenTargetFilter, newInvestigate);
+                tokenTargetFilter, newInvestigate, List.of(), attackingUntapped);
     }
     /** Copy of this blueprint with a different (already-evaluated) token count, all other fields preserved. */
     public CreateTokenEffect withAmount(int newAmount) {
         return new CreateTokenEffect(primaryType, new Fixed(newAmount), tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped);
     }
 
     /** Copy of this blueprint with a different number of initial +1/+1 counters. */
@@ -186,7 +217,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, newCount,
-                grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate);
+                grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped);
     }
 
     /** Copy of this blueprint with a different tapped state, all other fields preserved. */
@@ -194,7 +225,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color,
                 colors, subtypes, keywords, additionalTypes, tappedAndAttacking, newTapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped);
     }
 
     /**
@@ -206,7 +237,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, new Fixed(newPower), new Fixed(newToughness),
                 color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped);
     }
 
     /** Copy of this blueprint with a different token name. */
@@ -214,7 +245,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, newTokenName, power, toughness,
                 color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped);
     }
 
     /** Copy of this blueprint with the target filter for a targeted token ability. */
@@ -223,7 +254,7 @@ public record CreateTokenEffect(
                 subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects,
                 tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary,
                 initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes,
-                newTokenTargetFilter, investigate);
+                newTokenTargetFilter, investigate, List.of(), attackingUntapped);
     }
 
     /**
@@ -235,7 +266,7 @@ public record CreateTokenEffect(
         return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors, subtypes,
                 keywords, additionalTypes, tappedAndAttacking, tapped, newTokenEffects, tokenAbilities,
                 exileAtEndOfCombat, exileAtEndStep, legendary,
-                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate);
+                initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of(), attackingUntapped);
     }
 
     /** Canonical shape with a dynamic token count and printed power/toughness */

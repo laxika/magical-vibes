@@ -138,7 +138,9 @@ class ImmersturmPredatorTest extends BaseCardTest {
 
     private void tap(Permanent permanent) {
         permanent.tap();
-        harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+        harness.inMutationScope(() -> {
+            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+            harness.getTriggerCollectionService().processNextSpellGraveyardTargetTrigger(gd);
+        });
     }
 }

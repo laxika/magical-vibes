@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.t.ThatcherRevolt;
 import com.github.laxika.magicalvibes.cards.w.WanderingWolf;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -241,7 +242,12 @@ class InfiniteReflectionTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.pendingInteractions).isNotEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "Wandering Wolf");
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard().getName().equals("Cathedral Sanctifier")))
+                .singleElement().satisfies(copy -> assertThat(copy.getCard().getName()).isEqualTo("Wandering Wolf"));
     }
 
     @Test

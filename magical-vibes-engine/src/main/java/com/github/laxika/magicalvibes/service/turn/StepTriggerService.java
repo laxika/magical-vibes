@@ -208,6 +208,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersSkipUpkeepStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -6625,7 +6626,15 @@ public class StepTriggerService {
             if (enchantedPermanentControllerId == null) return;
             if (!enchantedPermanentControllerId.equals(activePlayerId)) return;
 
+            Permanent enchantedPermanent = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
             for (CardEffect effect : enchantedControllerEndStepEffects) {
+                // The enchanted creature's attack status can't be read once it has left the
+                // battlefield, so a creature that attacked never gets this trigger put on the stack.
+                if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof EnchantedCreatureDidntAttack
+                        && enchantedPermanent != null && enchantedPermanent.isAttackedThisTurn()) {
+                    continue;
+                }
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),

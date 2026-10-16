@@ -38,7 +38,6 @@ class InvasionOfSegoviaTest extends BaseCardTest {
 
         gs.playCard(gd, player1, 0, 0, player2.getId(), null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
@@ -165,7 +164,6 @@ class InvasionOfSegoviaTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, caetus.getId());
         harness.handlePermanentChosen(player1, rona.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(caetus.isTapped()).isFalse();
@@ -176,14 +174,18 @@ class InvasionOfSegoviaTest extends BaseCardTest {
     void doesNotTriggerOnOpponentsEndStep() {
         Permanent caetus = addCaetus();
         caetus.tap();
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        opposingCreature.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(caetus.isTapped()).isTrue();
+        assertThat(opposingCreature.isTapped()).isTrue();
     }
 
     @Test
@@ -196,7 +198,6 @@ class InvasionOfSegoviaTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 0, player2.getId(), null,
                 List.of(), List.of(caetus.getId(), rona.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(caetus.isTapped()).isTrue();

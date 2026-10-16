@@ -55,7 +55,8 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (triggeringSpellEffect.retargetToSource()
                 && (sourcePermanentId == null
-                || !targetRedirectionSupport.isValidNewTargetForSpell(gameData, spell, sourcePermanentId))) {
+                || !targetRedirectionSupport.isValidNewTargetForSpell(
+                gameData, spell, sourcePermanentId, entry.getControllerId()))) {
             return;
         }
 

@@ -35,6 +35,8 @@ class InvasionOfKaladeshTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         Permanent aetherwing = findPermanent(player1, "Aetherwing, Golden-Scale Flagship");
         assertThat(aetherwing.isTransformed()).isTrue();

@@ -17,9 +17,10 @@ public class ImperialMask extends Card {
         // "You have hexproof."
         addEffect(EffectSlot.STATIC, new GrantControllerKeywordEffect(Keyword.HEXPROOF));
         // "Each of your teammates creates a token copy" — the engine has no team games, so there are
-        // zero teammates; the nontoken-gated trigger still goes on the stack and creates nothing.
+        // zero teammates; the trigger's "if it isn't a token" clause is an intervening-if, so a token
+        // never triggers while a nontoken still puts the trigger on the stack and creates nothing.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new NotCondition(new SourceIsToken()),
-                        new CreateTokenCopyOfSourceEffect(false, 0)));
+                        new CreateTokenCopyOfSourceEffect(false, 0), true));
     }
 }

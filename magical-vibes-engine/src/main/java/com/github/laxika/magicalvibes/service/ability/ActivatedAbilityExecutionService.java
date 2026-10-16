@@ -506,7 +506,10 @@ public class ActivatedAbilityExecutionService {
                 // enchanted creature." Capture the attached creature now, before a sacrifice or
                 // bounce cost removes the attachment and its attachedTo link.
                 effectiveTargetId = permanent.getAttachedTo();
-            } else if (abilityEffects.stream().anyMatch(e -> e.targetSpec().selfTargeting())) {
+            } else if ((damageAssignments == null || damageAssignments.isEmpty())
+                    && abilityEffects.stream().anyMatch(e -> e.targetSpec().selfTargeting())) {
+                // Chosen divided-damage targets are the ability's targets; a self-targeting rider
+                // (Iron Fist's counters) must not add a legal self target that stops it fizzling.
                 effectiveTargetId = permanent.getId();
             }
         }

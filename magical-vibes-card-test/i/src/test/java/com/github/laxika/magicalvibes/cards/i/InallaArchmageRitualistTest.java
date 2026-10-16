@@ -38,7 +38,8 @@ class InallaArchmageRitualistTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                .anyMatch(a -> a.permanentId().equals(token.getId())
+                        && a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
     }
 
     @Test

@@ -80,6 +80,8 @@ public class StackEntry {
     @Getter(AccessLevel.NONE)
     private int nextSimultaneousGroup;
     @Setter private int xValue;
+    /** X chosen for a spell on the stack that a resolving token-copy effect copies (CR 707.2); 0 otherwise. */
+    @Setter private int tokenCopyXValue;
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
     /**

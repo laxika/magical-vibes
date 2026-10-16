@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -183,6 +184,10 @@ public class EtbEffectResolver {
                 case TargetPermanentMatches targetMatches when ctx.targetId() != null && ctx.card().isAura() ->
                         conditionEvaluationService.isMet(ctx.gameData(), targetMatches, conditionContext)
                                 ? effect : null;
+                // "if it isn't a token" (CR 603.4): token-ness is fixed as the permanent enters.
+                case NotCondition notCondition when notCondition.inner() instanceof SourceIsToken ->
+                        conditionEvaluationService.isMet(ctx.gameData(), notCondition, conditionContext)
+                                ? conditional.wrapped() : null;
                 case ControllerMainPhase controllerMainPhase ->
                         conditionEvaluationService.isMet(ctx.gameData(), controllerMainPhase, conditionContext)
                                 ? conditional.wrapped() : null;

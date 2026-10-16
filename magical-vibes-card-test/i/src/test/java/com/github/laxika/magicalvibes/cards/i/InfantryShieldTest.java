@@ -32,8 +32,10 @@ class InfantryShieldTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = warriorTokens(player1);
         assertThat(tokens).hasSize(2);

@@ -37,7 +37,8 @@ class ImpromptuRaidTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(creature.getId()));
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(bears.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                .anyMatch(a -> a.permanentId().equals(bears.getId())
+                        && a.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
     }
 
     @Test

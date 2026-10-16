@@ -95,7 +95,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
         AmountContext amountContext = AmountContext.forStackEntry(entry, resolveSource(gameData, entry));
 
-        int count = entry.isCastWithFlashback() && effect.castFromGraveyardCount() != 1
+        int count = (entry.isCastWithFlashback() || entry.getSourceZone() == Zone.GRAVEYARD)
+                && effect.castFromGraveyardCount() != 1
                 ? effect.castFromGraveyardCount()
                 : Math.max(0, amountEvaluationService.evaluate(gameData, effect.count(), amountContext));
 

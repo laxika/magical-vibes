@@ -648,6 +648,14 @@ public class AnimationSupport {
 
         target.getGrantedKeywords().addAll(effect.grantedKeywords());
         target.getPersistentGrantedKeywords().addAll(effect.grantedKeywords());
+        if (!effect.grantedKeywords().isEmpty()) {
+            // Timestamped layer-6 grant (CR 613.7) so an earlier "loses all abilities" effect
+            // (Turn to Frog) doesn't strip keywords this animation grants afterwards.
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName,
+                    sourcePermanentId, controllerId,
+                    new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET),
+                    target.getId(), null, null, EffectDuration.PERMANENT, 0));
+        }
 
         // The animation has no duration, so the granted card types must survive turn cleanup too
         // (Stalking Stones "becomes a 3/3 Elemental artifact creature that's still a land").

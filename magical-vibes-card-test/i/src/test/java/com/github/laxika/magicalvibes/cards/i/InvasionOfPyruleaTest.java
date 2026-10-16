@@ -73,6 +73,7 @@ class InvasionOfPyruleaTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent slabhorn = gd.playerBattlefields.get(player1.getId()).stream()

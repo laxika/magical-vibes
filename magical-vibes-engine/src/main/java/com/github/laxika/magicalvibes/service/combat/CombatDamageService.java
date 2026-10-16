@@ -1279,6 +1279,40 @@ public class CombatDamageService {
         return blockerMap;
     }
 
+    /**
+     * Turns face up every face-down creature that would assign combat damage in {@code phase} and
+     * turns face up when it assigns damage (Illusionary Mask). The turn-up triggers are collected by
+     * the next state-based-action pass. Returns whether any creature was turned face up.
+     */
+    private boolean turnMaskedCombatantsFaceUp(CombatDamageState state, DamagePhase phase,
+                                               DamagePhaseSnapshot snap,
+                                               Map<Integer, List<Integer>> blockerMap,
+                                               List<Permanent> atkBf, List<Permanent> defBf) {
+        boolean turnedUp = false;
+        for (var entry : blockerMap.entrySet()) {
+            int atkIdx = entry.getKey();
+            if (!(phase == DamagePhase.REGULAR && state.deadAttackerIndices.contains(atkIdx))) {
+                turnedUp |= turnMaskedCombatantFaceUp(atkBf.get(atkIdx), snap.attackerStats().get(atkIdx), phase);
+            }
+            for (int blkIdx : entry.getValue()) {
+                if (phase == DamagePhase.REGULAR && state.deadDefenderIndices.contains(blkIdx)) continue;
+                turnedUp |= turnMaskedCombatantFaceUp(defBf.get(blkIdx), snap.defenderStats().get(blkIdx), phase);
+            }
+        }
+        return turnedUp;
+    }
+
+    private static boolean turnMaskedCombatantFaceUp(Permanent combatant, CombatantStats stats, DamagePhase phase) {
+        if (!combatant.isFaceDown() || !combatant.isTurnsFaceUpOnDamageOrTap() || stats == null
+                || stats.combatDamage() <= 0 || stats.preventedFromDealingCombatDamage()
+                || !stats.participatesInDamagePhase(phase)) {
+            return false;
+        }
+        combatant.turnFaceUp();
+        combatant.setPendingAutomaticTurnFaceUp(true);
+        return true;
+    }
+
     private void resolveDamagePhase(GameData gameData, CombatDamageState state,
                                      Map<Integer, List<Integer>> blockerMap,
                                      List<Permanent> atkBf, List<Permanent> defBf,
@@ -1292,7 +1326,13 @@ public class CombatDamageService {
         // pre-damage snapshot captured under a single shared layered pass — mid-step mutations
         // (infect counters, consumed shields) must not feed back into this step's damage math.
         // Casualty determination below stays on live queries: it must see those mutations.
-        DamagePhaseSnapshot snap = snapshotDamagePhase(gameData, blockerMap, atkBf, defBf);
+        DamagePhaseSnapshot initialSnap = snapshotDamagePhase(gameData, blockerMap, atkBf, defBf);
+        // Illusionary Mask: a masked face-down creature that would assign combat damage is turned
+        // face up first and assigns damage as the face-up creature, so re-snapshot after turning up.
+        DamagePhaseSnapshot snap = turnMaskedCombatantsFaceUp(
+                state, phase, initialSnap, blockerMap, atkBf, defBf)
+                ? snapshotDamagePhase(gameData, blockerMap, atkBf, defBf)
+                : initialSnap;
 
         Map<Integer, Integer> blockerDamage = precomputeBlockerDamage(
                 snap, blockerMap, state.deadDefenderIndices, phase);
@@ -1966,8 +2006,13 @@ public class CombatDamageService {
 
                 if (effect instanceof MayEffect may) {
                     if (may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                        // An opponent-graveyard scope on a combat damage trigger means the damaged
+                        // player's graveyard (Ink-Eyes, "that player's graveyard").
+                        UUID mayGraveyardOwnerId =
+                                may.targetSpec().graveyardScope().orElse(null) == GraveyardSearchScope.OPPONENT_GRAVEYARD
+                                        ? defenderId : attackerId;
                         gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                                creature.getCard(), attackerId, List.of(effect), attackerId,
+                                creature.getCard(), attackerId, List.of(effect), mayGraveyardOwnerId,
                                 1, 0, 1, null, false, null, creature.getId()));
                         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a graveyard target."));

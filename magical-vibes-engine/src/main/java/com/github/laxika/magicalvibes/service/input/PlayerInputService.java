@@ -116,6 +116,12 @@ public class PlayerInputService {
                 playerId, cards.stream().map(Card::getId).toList(), prompt));
     }
 
+    public void beginCommandZoneCardChoice(GameData gameData, UUID playerId, List<Card> cards, String prompt,
+                                           Card tokenCopySourceCard) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.CommandZoneCardChoice(
+                playerId, cards.stream().map(Card::getId).toList(), prompt, tokenCopySourceCard));
+    }
+
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                 boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep) {
         beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null);
@@ -2833,9 +2839,12 @@ public class PlayerInputService {
         return new ArrayList<>(names);
     }
 
-    /** A card's name is offered only when it has none of {@code excludedTypes} and, if set, has {@code requiredType}. */
+    /**
+     * A card's name is offered only when it has none of {@code excludedTypes} and, if set, has {@code requiredType}.
+     * A token's name is not a card name unless the token is also a card, so battlefield tokens are never offered.
+     */
     private boolean isNameCandidate(Card card, List<CardType> excludedTypes, CardType requiredType) {
-        return !hasExcludedType(card, excludedTypes) && (requiredType == null || card.hasType(requiredType));
+        return (!card.isToken() || card.isTokenCard()) && !hasExcludedType(card, excludedTypes) && (requiredType == null || card.hasType(requiredType));
     }
 
     private boolean hasExcludedType(Card card, List<CardType> excludedTypes) {

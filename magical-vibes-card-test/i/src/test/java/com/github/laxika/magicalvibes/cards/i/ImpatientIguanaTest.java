@@ -94,7 +94,7 @@ class ImpatientIguanaTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        declareAttackers(player1, List.of(0));
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isAttacking()).isTrue();
     }

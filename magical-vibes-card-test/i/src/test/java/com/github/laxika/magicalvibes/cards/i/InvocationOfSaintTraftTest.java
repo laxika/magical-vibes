@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DevilthornFox;
 import com.github.laxika.magicalvibes.cards.j.JaceUnravelerOfSecrets;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -105,7 +106,8 @@ class InvocationOfSaintTraftTest extends BaseCardTest {
     void angelAttackDestinationCanDifferFromCreature() {
         Permanent creature = addCreatureReady(player1, new DevilthornFox());
         attachInvocation(player1, creature);
-        harness.addToBattlefield(player2, new JaceUnravelerOfSecrets());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceUnravelerOfSecrets());
+        jace.setCounterCount(CounterType.LOYALTY, 5);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(player1, List.of(0));

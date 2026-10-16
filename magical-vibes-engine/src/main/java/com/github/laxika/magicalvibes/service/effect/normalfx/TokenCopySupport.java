@@ -380,7 +380,8 @@ public class TokenCopySupport {
         int tokenIndex = 0;
         for (Permanent tokenPermanent : tokens) {
             battlefieldEntryService.putPermanentOntoBattlefield(
-                gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered);
+                gameData, tokenControllerId, tokenPermanent, enterTappedTypes, simultaneouslyEntered,
+                entry.getTokenCopyXValue(), false);
             entry.getCreatedPermanentIds().add(tokenPermanent.getId());
             createdIds.add(tokenPermanent.getId());
             if (effect.trackWithSource() && entry.getSourcePermanentId() != null) {
@@ -488,11 +489,15 @@ public class TokenCopySupport {
         }
         tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
         tokenCard.setToken(true);
-        if (sourceCard.getBackFaceCard() != null && !sourceCard.isModalDoubleFaced()
-                && !sourceCard.getBackFaceCard().hasType(CardType.INSTANT)
-                && !sourceCard.getBackFaceCard().hasType(CardType.SORCERY)) {
-            tokenCard.setBackFaceCard(buildTokenCopyCard(sourceCard.getBackFaceCard(), effect,
-                    isCreatureSubtype, targetingSourceCard));
+        if (sourceCard.getBackFaceCard() != null && !sourceCard.isModalDoubleFaced()) {
+            Card backFace = sourceCard.getBackFaceCard();
+            if (backFace.hasType(CardType.INSTANT) || backFace.hasType(CardType.SORCERY)) {
+                // A prepare spell stays part of the copy and ignores the copy exceptions (CR 722.3c).
+                tokenCard.setBackFaceCard(backFace);
+            } else {
+                tokenCard.setBackFaceCard(buildTokenCopyCard(backFace, effect,
+                        isCreatureSubtype, targetingSourceCard));
+            }
         }
         CardColor color = effect.colorOverride() != null ? effect.colorOverride() : sourceCard.getColor();
         tokenCard.setColor(color);

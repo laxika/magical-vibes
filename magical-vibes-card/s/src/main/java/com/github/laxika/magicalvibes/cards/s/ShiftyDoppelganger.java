@@ -24,6 +24,7 @@ public class ShiftyDoppelganger extends Card {
                                 new PutCardToBattlefieldEffect(
                                         new CardTypePredicate(CardType.CREATURE),
                                         "creature", false, false, true, true)
+                                        .withHasteUntilEndOfTurn()
                                         .returningExiledSourceIfSacrificed(),
                                 "Put a creature card from your hand onto the battlefield?"
                         )

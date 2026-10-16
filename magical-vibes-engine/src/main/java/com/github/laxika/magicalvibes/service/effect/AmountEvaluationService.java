@@ -1226,8 +1226,9 @@ public class AmountEvaluationService {
     private int targetManaValue(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
-        Card card = target != null ? target.getCard()
-                : ctx.stackEntry() != null ? ctx.stackEntry().lastKnownPermanentCard(ctx.targetPermanentId()) : null;
+        if (target != null) return gameQueryService.getPermanentManaValue(target);
+        Card card = ctx.stackEntry() != null
+                ? ctx.stackEntry().lastKnownPermanentCard(ctx.targetPermanentId()) : null;
         return card == null ? 0 : card.getManaValue();
     }
 

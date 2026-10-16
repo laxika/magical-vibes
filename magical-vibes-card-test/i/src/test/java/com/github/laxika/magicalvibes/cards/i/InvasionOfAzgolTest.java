@@ -83,7 +83,8 @@ class InvasionOfAzgolTest extends BaseCardTest {
 
     @Test
     void targetWithoutCreatureOrPlaneswalkerStillLosesLife() {
-        harness.addToBattlefield(player2, new InvasionOfAzgol());
+        Permanent existingBattle = harness.addToBattlefieldAndReturn(player2, new InvasionOfAzgol());
+        existingBattle.setCounterCount(CounterType.DEFENSE, 4);
         int lifeBefore = gd.getLife(player2.getId());
 
         castInvasionTargeting(player2);
@@ -110,8 +111,9 @@ class InvasionOfAzgolTest extends BaseCardTest {
     void targetPlayerCanChoosePlaneswalkerInsteadOfCreature() {
         Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfAzgol());
         battle.setCounterCount(CounterType.DEFENSE, 0);
-        defeatBattle(battle);
+        defeatBattle(battle, player2);
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraHopesBeacon());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         int lifeBefore = gd.getLife(player2.getId());
 
         castInvasionTargeting(player2);
@@ -146,9 +148,6 @@ class InvasionOfAzgolTest extends BaseCardTest {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new HiddenPredators());
         defeatBattle(battle);
         Permanent reaper = findPermanent(player1, "Ashen Reaper");
-        harness.setHand(player1, List.of(new Disenchant()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -157,6 +156,9 @@ class InvasionOfAzgolTest extends BaseCardTest {
 
         assertThat(gd.stack).anySatisfy(entry ->
                 assertThat(entry.getSourcePermanentId()).isEqualTo(reaper.getId()));
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, enchantment.getId());
         harness.passBothPriorities();
 
@@ -218,10 +220,14 @@ class InvasionOfAzgolTest extends BaseCardTest {
     }
 
     private void defeatBattle(Permanent battle) {
+        defeatBattle(battle, player1);
+    }
+
+    private void defeatBattle(Permanent battle, Player controller) {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(controller, true);
         harness.passBothPriorities();
     }
 }

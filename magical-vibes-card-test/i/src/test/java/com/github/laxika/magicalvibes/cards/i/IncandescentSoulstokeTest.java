@@ -211,11 +211,14 @@ class IncandescentSoulstokeTest extends BaseCardTest {
     }
 
     private void putElementalFromHand(int cardIndex) {
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-        harness.handleCardChosen(player1, cardIndex);
+        // Keep priority in the current end step instead of auto-passing into the next turn.
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+            harness.handleCardChosen(player1, cardIndex);
+        });
     }
 
     private void giveManaForAbility() {

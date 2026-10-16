@@ -101,6 +101,12 @@ public class GraveyardTargetOperationState {
      */
     public boolean resolutionTimeExileResume;
     /**
+     * The controller of Immortal Coil is choosing which cards of their own graveyard to exile for the
+     * damage it prevented. When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}
+     * exiles the chosen cards. Set by {@code DamageSupport.applyImmortalCoilPrevention}.
+     */
+    public boolean resolutionTimeExileOwnGraveyardResume;
+    /**
      * Resolution-time "you may exile a creature card from your graveyard. If you do, create a 4/4
      * black Zombie token copy with haste until end of turn" (God-Pharaoh's Gift). When set,
      * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the chosen card,

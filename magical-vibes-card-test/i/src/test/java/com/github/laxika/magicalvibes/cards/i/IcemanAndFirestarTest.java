@@ -132,9 +132,9 @@ class IcemanAndFirestarTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);

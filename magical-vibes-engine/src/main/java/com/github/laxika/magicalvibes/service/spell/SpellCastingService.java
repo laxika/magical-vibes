@@ -2425,7 +2425,8 @@ public class SpellCastingService {
                 && attempted.getCastingOption(AdventureCast.class).isPresent()
                 && targetId == null && (targetIds == null || targetIds.isEmpty())
                 && attempted.getBackFaceCard().getEffects(EffectSlot.SPELL).stream()
-                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                        || effect instanceof ReturnTargetCardsFromGraveyardToHandEffect)) {
             // Graveyard targets are chosen through the interactive prompt of the main casting path.
             playCardWithAdventure(gameData, player, cardIndex, xValue, null, damageAssignments, targetIds,
                     sacrificePermanentId);
@@ -3988,6 +3989,12 @@ public class SpellCastingService {
         if ((additionalCosts.returnAnyNumberCost() != null || card.hasXScaledTargets()
                 || castTimeDividedDamage != null && !(castTimeDividedDamage.totalDamage() instanceof Fixed))
                 && castTimeDividedDamage != null) {
+            // Ruling 2004-10-04 (Infernal Harvest): with X greater than 0 the damage must be divided
+            // among at least one target, so choosing zero targets is not allowed.
+            if (additionalCosts.returnAnyNumberCost() != null && effectiveXValue > 0
+                    && (damageAssignments == null || damageAssignments.isEmpty())) {
+                throw new IllegalStateException("Incorrect number of targets for X");
+            }
             validateDividedDamageAssignments(gameData, card, playerId, effectiveXValue, targetId,
                     damageAssignments == null ? Map.of() : damageAssignments, castTimeDividedDamage);
         }
@@ -4035,13 +4042,14 @@ public class SpellCastingService {
                 && !(castTimeTargetFilter instanceof GraveyardCardPredicateTargetFilter);
         // An instant or sorcery that declares a required target but has no effect to carry it
         // ("Target permanent.", Indicate) still has to be cast with that target (CR 601.2c).
+        TargetFilter effectlessTargetFilter = card.getTargetFilter(kicked);
         boolean effectlessSpellWithRequiredTarget = !wasModal
                 && (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
                 && targetingSpellEffects.stream().allMatch(CostEffect.class::isInstance)
                 && card.getMinTargets() > 0
-                && castTimeTargetFilter != null
-                && !(castTimeTargetFilter instanceof StackEntryPredicateTargetFilter)
-                && !(castTimeTargetFilter instanceof GraveyardCardPredicateTargetFilter);
+                && effectlessTargetFilter != null
+                && !(effectlessTargetFilter instanceof StackEntryPredicateTargetFilter)
+                && !(effectlessTargetFilter instanceof GraveyardCardPredicateTargetFilter);
         boolean unwrappedNeedsTarget = EffectResolution.needsSpellCastTarget(
                 targetingSpellEffects, card.isAuraThatRequiresAttachment(), card.isEnchantPlayer())
                 || modalHasBattlefieldOrPlayerTarget || effectlessSpellWithRequiredTarget;
@@ -6638,7 +6646,10 @@ public class SpellCastingService {
                         int expectedTotal = amountEvaluationService.evaluate(gameData,
                                 dividedEffect.totalDamage(),
                                 com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId, resolvedXValue));
-                        if (totalDamage != expectedTotal) {
+                        // "Any number of targets" (unbounded) may choose zero targets, which deals nothing.
+                        boolean zeroTargetsChosen = damageAssignments.isEmpty() && dividedEffect.maxTargets() == 0
+                                && card.getMinTargets() == 0;
+                        if (totalDamage != expectedTotal && !zeroTargetsChosen) {
                             throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
                         }
                         if (dividedEffect.maxTargets() > 0
@@ -13826,7 +13837,9 @@ public class SpellCastingService {
         } else if (!(dividedEffect.totalDamage() instanceof Fixed)) {
             int expectedTotal = amountEvaluationService.evaluate(gameData, dividedEffect.totalDamage(),
                     com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId, resolvedXValue));
-            if (totalDamage != expectedTotal) {
+            // "Any number of targets" may be zero, and then there is nothing to divide.
+            boolean noTargetsChosen = assignments.isEmpty() && card.getMinTargets() == 0;
+            if (totalDamage != expectedTotal && !noTargetsChosen) {
                 throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
             }
             if (dividedEffect.maxTargets() > 0 && assignments.size() > dividedEffect.maxTargets()) {

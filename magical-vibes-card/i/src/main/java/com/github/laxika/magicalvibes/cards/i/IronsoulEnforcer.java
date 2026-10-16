@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -32,11 +32,10 @@ public class IronsoulEnforcer extends Card {
                 .build();
 
         // Whenever this creature or a commander you control attacks alone, return target artifact
-        // card from your graveyard to the battlefield.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
-                EffectSlot.ON_ATTACK,
-                new ConditionalEffect(new AttacksAlone(), returnArtifact),
-                GrantScope.ALL_OWN_CREATURES,
-                thisCreatureOrCommander));
+        // card from your graveyard to the battlefield. The Enforcer itself is the ability's source,
+        // so each Enforcer you control triggers separately when a commander attacks alone.
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
+                new AllOf(List.of(new AttacksAlone(), new HasAttacker(thisCreatureOrCommander))),
+                returnArtifact));
     }
 }

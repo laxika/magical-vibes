@@ -28,7 +28,7 @@ public class ValorsReachTagTeam extends Card {
                 Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.WARRIOR), Set.of(), Set.of(),
                 false, false,
                 Map.of(EffectSlot.ON_ALLY_CREATURES_ATTACK,
-                        new ConditionalEffect(
+                        ConditionalEffect.atTriggerTime(
                                 new AllConditions(List.of(
                                         new SourceIsAttacking(),
                                         new MinimumMatchingAttackers(2, new PermanentAllOfPredicate(List.of(

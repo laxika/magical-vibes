@@ -1817,6 +1817,19 @@ public class DamageSupport {
                         .anyMatch(e -> e instanceof PreventAllDamageToControllerAndExileFromGraveyardEffect));
         if (!hasEffect) return 0;
 
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        // The controller chooses which cards are exiled. The choice is skipped when it cannot matter:
+        // every card goes, there is already a choice waiting, or all the cards share one name.
+        if (graveyard != null && graveyard.size() > damage
+                && !gameData.interaction.isAwaitingInput()
+                && graveyard.stream().map(Card::getName).distinct().count() > 1) {
+            gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume = true;
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                    playerId, new ArrayList<>(graveyard), damage,
+                    "Choose " + damage + " card" + (damage != 1 ? "s" : "")
+                            + " from your graveyard to exile for the prevented damage.", damage));
+            return damage;
+        }
         graveyardService.exileCardsFromGraveyard(gameData, playerId, damage);
         // CR 603.8: a state trigger (Immortal Coil's "no cards in your graveyard") triggers as soon as the
         // state is true, even in the middle of a spell's resolution.

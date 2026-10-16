@@ -77,7 +77,12 @@ class IchorAberrationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castFromGraveyard(player1, 0);
+        int aberrationIndex = 0;
+        while (!gd.playerGraveyards.get(player1.getId()).get(aberrationIndex).getId()
+                .equals(aberration.getCard().getId())) {
+            aberrationIndex++;
+        }
+        harness.castFromGraveyard(player1, aberrationIndex);
         harness.passBothPriorities();
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();

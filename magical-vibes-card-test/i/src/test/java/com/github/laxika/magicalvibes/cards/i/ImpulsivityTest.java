@@ -212,8 +212,10 @@ class ImpulsivityTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
-        resolveAllTriggers();
+        // Stay in the end step: Ray of Command's control effect ends during cleanup.
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
     }
 

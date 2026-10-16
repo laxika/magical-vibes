@@ -75,6 +75,7 @@ class InvasionOfRavnicaTest extends BaseCardTest {
                 .checkAfterDefenseRemoved(gd, battle));
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         Permanent paragon = findPermanent(player1, "Guildpact Paragon");

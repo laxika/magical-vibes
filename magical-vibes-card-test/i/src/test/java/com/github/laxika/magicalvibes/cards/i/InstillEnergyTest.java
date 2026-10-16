@@ -213,9 +213,12 @@ class InstillEnergyTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
 
         bears.tap();
-        harness.activateAbility(player1, 1, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 1, null, null);
+            harness.passBothPriorities();
+        });
         assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
 
         bears.tap();
         harness.activateAbility(player1, 2, null, null);

@@ -28,7 +28,9 @@ import java.util.Set;
  * @param enterTapped             if {@code true}, the chosen card enters the battlefield tapped (e.g. Embrace the Paradox)
  * @param maxManaValueBoundedByX  if {@code true}, only cards whose mana value is at most the spell's X value
  *                                are eligible (e.g. Mind into Matter's "mana value X or less")
- * @param grantHaste              if {@code true}, the chosen card gains haste until end of turn (e.g. Incandescent Soulstoke)
+ * @param grantHaste              if {@code true}, the chosen card gains haste (e.g. Arms Race's "That artifact gains haste")
+ * @param hasteUntilEndOfTurn     if {@code true} (with {@code grantHaste}), that haste lasts only until end of turn
+ *                                (e.g. Incandescent Soulstoke's "That creature gains haste until end of turn")
  * @param sacrificeAtEndStep      if {@code true}, the chosen card is sacrificed at the beginning of the next end step
  *                                (e.g. Incandescent Soulstoke)
  * @param attachSourceEquipment   if {@code true}, the source Equipment is attached to the chosen card after it enters
@@ -63,7 +65,8 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean enterBlocking,
                                          boolean maxManaValueBoundedByEventValue,
                                          Set<com.github.laxika.magicalvibes.model.CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
-                                         boolean suppressesTriggeringPermanentEntry)
+                                         boolean suppressesTriggeringPermanentEntry,
+                                         boolean hasteUntilEndOfTurn)
         implements CardEffect, CombatDamageAmountAwareEffect, CombatOpponentReferencingEffect,
         TriggeringPermanentManaValueEffect, TriggeringPermanentEntryExclusionEffect {
 
@@ -238,7 +241,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked,
                 returnExiledSourceIfSacrificed, returnToHandAtEndStep, enterTappedAndAttackingIf,
-                enterBlocking, true, untapSourceIfEnteredCardHasAnySubtype, suppressesTriggeringPermanentEntry);
+                enterBlocking, true, untapSourceIfEnteredCardHasAnySubtype, suppressesTriggeringPermanentEntry, hasteUntilEndOfTurn);
     }
 
     /** Shifty Doppelganger: return its exiled source card if the entered creature is sacrificed. */
@@ -247,7 +250,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked, true,
                 returnToHandAtEndStep, enterTappedAndAttackingIf, enterBlocking, maxManaValueBoundedByEventValue,
-                untapSourceIfEnteredCardHasAnySubtype, suppressesTriggeringPermanentEntry);
+                untapSourceIfEnteredCardHasAnySubtype, suppressesTriggeringPermanentEntry, hasteUntilEndOfTurn);
     }
 
     /** Surprise Deployment: return the chosen permanent to its owner's hand at the next end step. */
@@ -257,7 +260,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                 cloaked, returnExiledSourceIfSacrificed, true, enterTappedAndAttackingIf, enterBlocking,
                 maxManaValueBoundedByEventValue, untapSourceIfEnteredCardHasAnySubtype,
-                suppressesTriggeringPermanentEntry);
+                suppressesTriggeringPermanentEntry, hasteUntilEndOfTurn);
     }
 
     public PutCardToBattlefieldEffect withEnterTappedAndAttackingIf(CardPredicate predicate) {
@@ -266,7 +269,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                 cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep, predicate, enterBlocking,
                 maxManaValueBoundedByEventValue, untapSourceIfEnteredCardHasAnySubtype,
-                suppressesTriggeringPermanentEntry);
+                suppressesTriggeringPermanentEntry, hasteUntilEndOfTurn);
     }
 
     @Override
@@ -285,7 +288,8 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked,
                 returnExiledSourceIfSacrificed, returnToHandAtEndStep, enterTappedAndAttackingIf,
-                enterBlocking, maxManaValueBoundedByEventValue, untapSourceIfEnteredCardHasAnySubtype, true);
+                enterBlocking, maxManaValueBoundedByEventValue, untapSourceIfEnteredCardHasAnySubtype, true,
+                hasteUntilEndOfTurn);
     }
 
     @Override
@@ -298,6 +302,39 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 grantHaste, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
                 putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes,
                 cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep,
-                enterTappedAndAttackingIf, enterBlocking, maxManaValueBoundedByEventValue, Set.copyOf(subtypes));
+                enterTappedAndAttackingIf, enterBlocking, maxManaValueBoundedByEventValue, Set.copyOf(subtypes),
+                suppressesTriggeringPermanentEntry, hasteUntilEndOfTurn);
+    }
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label,
+                                      boolean enterTapped, boolean maxManaValueBoundedByX,
+                                      boolean grantHaste, boolean sacrificeAtEndStep,
+                                      boolean attachSourceEquipment, boolean enterAttacking,
+                                      boolean drawAndRepeat, boolean putAnyNumber,
+                                      boolean faceDown, int faceDownPower, int faceDownToughness,
+                                      Set<CardType> faceDownCardTypes, boolean cloaked,
+                                      boolean returnExiledSourceIfSacrificed,
+                                      boolean returnToHandAtEndStep,
+                                      CardPredicate enterTappedAndAttackingIf,
+                                      boolean enterBlocking,
+                                      boolean maxManaValueBoundedByEventValue,
+                                      Set<com.github.laxika.magicalvibes.model.CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
+                                      boolean suppressesTriggeringPermanentEntry) {
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep,
+                attachSourceEquipment, enterAttacking, drawAndRepeat, putAnyNumber,
+                faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked,
+                returnExiledSourceIfSacrificed, returnToHandAtEndStep, enterTappedAndAttackingIf,
+                enterBlocking, maxManaValueBoundedByEventValue, untapSourceIfEnteredCardHasAnySubtype,
+                suppressesTriggeringPermanentEntry, false);
+    }
+
+    /** Limits the granted haste to "until end of turn" (Incandescent Soulstoke, Shifty Doppelganger). */
+    public PutCardToBattlefieldEffect withHasteUntilEndOfTurn() {
+        return new PutCardToBattlefieldEffect(predicate, label, enterTapped, maxManaValueBoundedByX,
+                true, sacrificeAtEndStep, attachSourceEquipment, enterAttacking, drawAndRepeat,
+                putAnyNumber, faceDown, faceDownPower, faceDownToughness, faceDownCardTypes, cloaked,
+                returnExiledSourceIfSacrificed, returnToHandAtEndStep, enterTappedAndAttackingIf,
+                enterBlocking, maxManaValueBoundedByEventValue, untapSourceIfEnteredCardHasAnySubtype,
+                suppressesTriggeringPermanentEntry, true);
     }
 }

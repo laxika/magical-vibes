@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -161,6 +162,8 @@ public class LibraryChoiceHandlerService {
     private AbilityActivationService abilityActivationService;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport exileFreeCastSupport;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -4405,6 +4408,20 @@ public class LibraryChoiceHandlerService {
             }
             if (cardIndex < -1 || cardIndex >= searchCards.size()) {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
+            }
+            if (cardIndex >= 0) {
+                Card hit = searchCards.get(cardIndex);
+                if (hit.getBackFaceCard() != null && hit.getCastingOption(AdventureCast.class).isPresent()) {
+                    // The caster picks which face to cast (the creature or its Adventure); the uncast cards
+                    // are put on the bottom now because the face choice ends the search flow.
+                    exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData, sourceCards.stream()
+                            .map(Card::getId).filter(id -> !id.equals(hit.getId())).toList());
+                    exileFreeCastQueueSupport.putRemainderIntoLibraryBottom(gameData);
+                    gameData.interaction.clearAwaitingInput();
+                    exileFreeCastSupport.castWithManaValueLimit(gameData, player, hit.getId(),
+                            spellManaValueLimit);
+                    return;
+                }
             }
             exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData,
                     sourceCards.stream().map(Card::getId).toList());

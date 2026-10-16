@@ -1966,8 +1966,16 @@ public class CombatAttackService {
                             .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                     || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                     if (needsGraveyardTarget) {
-                        graveyardTargetingService.handleAttackGraveyardTargeting(
-                                gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null);
+                        if (gameData.interaction.isAwaitingInput()) {
+                            // A previous attack trigger is already choosing its graveyard targets; queue this one
+                            // so it prompts after the first resolves its choice instead of overwriting it.
+                            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                    perm.getCard(), playerId, filteredEffects, null, 0, 0, 0, null, false, null,
+                                    perm.getId()));
+                        } else {
+                            graveyardTargetingService.handleAttackGraveyardTargeting(
+                                    gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null);
+                        }
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
                         log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK graveyard trigger queued",

@@ -1637,6 +1637,23 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
+            // Players only appear here because an effect's no-op "player or permanent" spec (e.g.
+            // untapping "all targets") admits them. When no effect genuinely targets a player and no
+            // permanent is legal, a trigger whose targets are declared with a minimum of zero still
+            // goes on the stack with no targets; otherwise it is removed.
+            if (pending.targetFilter() instanceof AnyTargetPredicateTargetFilter
+                    && validPermanentTargets.isEmpty()
+                    && pending.effects().stream().noneMatch(effect ->
+                            effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                    && !effect.targetSpec().declares(TargetPredicates.playerOrPermanent()))
+                    && declaredMinimumTargetCount(pending.sourceCard(), pending.effects()) == 0) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+                pushSpellTargetTriggerWithoutTarget(gameData, pending);
+                gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                        "'s triggered ability triggers without a target."));
+                continue;
+            }
+
             String prompt = pending.playerTargetOnly()
                     ? pending.sourceCard().getName() + "'s ability - Choose target player."
                     : pending.sourceCard().getName() + "'s ability - Choose any target.";

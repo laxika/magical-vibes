@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -102,6 +104,12 @@ final class DeclaredEtbTargets {
             }
         } else if (!listed.isEmpty() && card.getMaxTargets() > 0) {
             targetLegalityService.validateMultiSpellTargets(gameData, card, etbTargets, player.getId(), xValue, kicked);
+        } else if (modalEtbOption(card, xValue) != null) {
+            // The mode is chosen as the spell is cast (xValue), so the target is checked against it.
+            for (UUID etbTarget : etbTargets) {
+                targetLegalityService.validateEffectTargetInZone(gameData, card, modalEtbOption(card, xValue).effects(),
+                        etbTarget, Zone.BATTLEFIELD, xValue, player.getId());
+            }
         } else {
             for (UUID etbTarget : etbTargets) {
                 targetLegalityService.validateSpellTargeting(gameData, card, etbTarget, null, player.getId(),
@@ -109,6 +117,16 @@ final class DeclaredEtbTargets {
             }
         }
         return new CastTargets(null, List.of(), List.copyOf(etbTargets));
+    }
+
+    /** The ETB mode a modal enters-the-battlefield ability picks at cast time via {@code mode}, or null. */
+    private static ChooseOneEffect.ChooseOneOption modalEtbOption(Card card, int mode) {
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect instanceof ChooseOneEffect choice && mode >= 0 && mode < choice.options().size()) {
+                return choice.options().get(mode);
+            }
+        }
+        return null;
     }
 
     /** The card's target groups that belong to its enter-the-battlefield ability (or to no ability). */

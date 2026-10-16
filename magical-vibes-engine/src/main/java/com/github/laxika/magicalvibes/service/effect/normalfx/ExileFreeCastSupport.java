@@ -225,9 +225,12 @@ public class ExileFreeCastSupport {
                 ? EffectResolution.needsTarget(spellEffects, List.of(), card.isAuraThatRequiresAttachment(),
                 card.isEnchantPlayer())
                 : EffectResolution.needsTarget(card);
+        List<UUID> firstCandidates = !needsTarget ? List.of()
+                : chosenEffects != null
+                ? exileCastTargetSupport.firstSlotCandidates(gameData, card, spellEffects, playerId)
+                : exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId);
         if (needsTarget && (card.getMinTargets() > 0 || card.getMaxTargets() == 0
-                || !exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId).isEmpty())) {
-            List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId);
+                || !firstCandidates.isEmpty())) {
             boolean multiTarget = card.getMaxTargets() > 1;
             boolean hasLegalTargets = multiTarget
                     ? exileCastTargetSupport.hasLegalTargetSet(gameData, card, playerId)

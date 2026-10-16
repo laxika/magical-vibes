@@ -38,7 +38,7 @@ public class IncandescentSoulstoke extends Card {
                                 new CardAllOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),
                                         new CardSubtypePredicate(CardSubtype.ELEMENTAL))),
-                                "Elemental creature", false, false, true, true),
+                                "Elemental creature", false, false, true, true).withHasteUntilEndOfTurn(),
                         "Put an Elemental creature card from your hand onto the battlefield?"
                 )),
                 "{1}{R}, {T}: You may put an Elemental creature card from your hand onto the battlefield. "

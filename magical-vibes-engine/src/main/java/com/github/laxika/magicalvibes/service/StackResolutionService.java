@@ -1304,10 +1304,16 @@ public class StackResolutionService {
             return;
         }
 
-        Card card = entry.getCard();
+        Card physicalCard = entry.getCard();
+        // A defeated Siege cast transformed (or a Disturb cast) enters with its back-face characteristics.
+        Card card = disturbCharacteristics(entry, physicalCard);
         UUID controllerId = entry.getControllerId();
 
-        Permanent perm = new Permanent(card);
+        Permanent perm = new Permanent(physicalCard);
+        if (card != physicalCard) {
+            perm.setCard(card);
+            perm.setTransformed(true);
+        }
         if (entry.isCopy()) {
             perm.becomeTokenFromCopiedSpell();
         }

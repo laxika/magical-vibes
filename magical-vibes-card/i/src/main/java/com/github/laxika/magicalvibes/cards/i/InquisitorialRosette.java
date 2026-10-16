@@ -26,7 +26,7 @@ public class InquisitorialRosette extends Card {
                 new CreateTokenEffect(
                         1, "Astartes Warrior", 2, 2, CardColor.WHITE,
                         List.of(CardSubtype.ASTARTES, CardSubtype.WARRIOR),
-                        Set.of(Keyword.VIGILANCE), true, false),
+                        Set.of(Keyword.VIGILANCE), true, false).withAttackingUntapped(),
                 new GrantKeywordEffect(
                         Keyword.MENACE, GrantScope.ALL_CREATURES, new PermanentIsAttackingPredicate())
         ));

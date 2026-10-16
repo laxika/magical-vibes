@@ -317,6 +317,7 @@ public class CombatTriggerService {
                                                 : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
                                 trigger.setTriggeringPermanentId(creature.getId());
                                 trigger.setSourcePermanentSnapshot(new Permanent(grantedToCreature ? creature : perm));
+                                trigger.setAttachedPermanentSnapshot(new Permanent(creature));
                                 trigger.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());
                                 gameData.stack.add(trigger);
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));

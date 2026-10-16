@@ -2828,9 +2828,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override public InteractionOptions legalOptions() { return new InteractionOptions.AcceptDecline(); }
     }
 
-    /** Chooses one of the controller's commanders to put into their hand. */
-    record CommandZoneCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String prompt)
+    /**
+     * Chooses one of the controller's commanders: to put into their hand, or, when
+     * {@code tokenCopySourceCard} is set, to create a token copy of for that source.
+     */
+    record CommandZoneCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String prompt,
+                                 Card tokenCopySourceCard)
             implements PendingInteraction {
+
+        public CommandZoneCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String prompt) {
+            this(playerId, validCardIds, prompt, null);
+        }
 
         public CommandZoneCardChoice {
             validCardIds = java.util.List.copyOf(validCardIds);

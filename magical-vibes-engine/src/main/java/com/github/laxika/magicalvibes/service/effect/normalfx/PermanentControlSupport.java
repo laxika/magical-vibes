@@ -295,7 +295,9 @@ public class PermanentControlSupport {
             UUID enteringControllerId = gameQueryService.findPermanentController(gameData, tokenPermanent.getId());
 
             if (tokenBlueprint.tappedAndAttacking()) {
-                tokenPermanent.tap();
+                if (!tokenBlueprint.attackingUntapped()) {
+                    tokenPermanent.tap();
+                }
                 tokenPermanent.enterAttacking(gameData.activePlayerId.equals(enteringControllerId)
                         && gameData.currentStep != null && gameData.currentStep.isCombatPhase());
             } else if (tokenBlueprint.tapped()) {
@@ -349,7 +351,8 @@ public class PermanentControlSupport {
             if (hasNativeDevour) {
                 nativeEntries.add(new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
                         controllerId, controllerId, tokenCard, com.github.laxika.magicalvibes.model.Zone.STACK,
-                        null, null, tokenPermanent, List.of(), tokenBlueprint.tapped() || tokenBlueprint.tappedAndAttacking()));
+                        null, null, tokenPermanent, List.of(), tokenBlueprint.tapped()
+                                || (tokenBlueprint.tappedAndAttacking() && !tokenBlueprint.attackingUntapped())));
             }
         }
 

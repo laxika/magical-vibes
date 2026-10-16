@@ -3637,7 +3637,9 @@ public class ConditionEvaluationService {
     private boolean enchantedCreatureDidntAttackThisTurn(GameData gameData, ConditionContext ctx) {
         if (ctx.targetId() != null) {
             Permanent enchanted = gameQueryService.findPermanentById(gameData, ctx.targetId());
-            return enchanted != null && !enchanted.isAttackedThisTurn();
+            // A creature that attacked never got its end-step trigger, so one that has since left
+            // the battlefield did not attack (Insubordination keeps damaging its former controller).
+            return enchanted == null || !enchanted.isAttackedThisTurn();
         }
         Permanent aura = ctx.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());

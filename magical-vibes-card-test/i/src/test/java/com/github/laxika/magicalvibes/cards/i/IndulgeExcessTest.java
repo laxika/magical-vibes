@@ -28,8 +28,10 @@ class IndulgeExcessTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, List.of());
 
-        declareAttackers(List.of(0, 1));
-        resolveDelayedTokenTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            resolveDelayedTokenTriggers();
+        });
 
         List<Permanent> tokens = findPermanents(player1, "Citizen").stream()
                 .filter(permanent -> permanent.getCard().isToken())

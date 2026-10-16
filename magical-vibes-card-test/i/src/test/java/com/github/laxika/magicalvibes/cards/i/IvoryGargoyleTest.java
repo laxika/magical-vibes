@@ -143,7 +143,7 @@ class IvoryGargoyleTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         harness.assertOnBattlefield(player1, "Ivory Gargoyle");
         assertThat(gd.skipNextDrawStepCount.getOrDefault(player2.getId(), 0)).isEqualTo(1);

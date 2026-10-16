@@ -190,9 +190,6 @@ class IndestructibilityTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handlePermanentChosen(player1, artifact.getId());
-
         harness.assertOnBattlefield(player1, "Indestructibility");
         harness.assertNotInGraveyard(player1, "Indestructibility");
         assertThat(findPermanent(player1, "Indestructibility").getAttachedTo()).isEqualTo(artifact.getId());

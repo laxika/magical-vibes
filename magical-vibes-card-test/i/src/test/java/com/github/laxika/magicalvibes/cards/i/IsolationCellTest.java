@@ -230,8 +230,8 @@ class IsolationCellTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.tapPermanent(player2, 0);
-        harness.tapPermanent(player2, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbility(player2, 1, null, null);
         harness.handleMayAbilityChosen(player2, true);
 
         harness.assertLife(player2, 20);
