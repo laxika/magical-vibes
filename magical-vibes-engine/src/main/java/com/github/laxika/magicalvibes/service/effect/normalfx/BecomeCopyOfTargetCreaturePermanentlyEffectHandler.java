@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreaturePermanentlyEffect;
@@ -19,7 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -68,6 +71,11 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
         permanentCopierService.applyCloneCopy(source, target, null, null);
         if (copyEffect.nameOverride() != null) {
             source.getCard().setName(copyEffect.nameOverride());
+        }
+        if (!copyEffect.additionalKeywords().isEmpty()) {
+            HashSet<Keyword> keywords = new HashSet<>(source.getCard().getKeywords());
+            keywords.addAll(copyEffect.additionalKeywords());
+            source.getCard().setKeywords(Set.copyOf(keywords));
         }
         if (retainedRegistration != null) {
             EffectSlot slot = copyEffect.retainedEffectSlot();

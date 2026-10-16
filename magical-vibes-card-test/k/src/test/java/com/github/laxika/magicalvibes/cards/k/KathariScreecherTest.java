@@ -33,7 +33,7 @@ class KathariScreecherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Kathari Screecher");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Kathari Screecher");
     }
 
@@ -107,7 +107,7 @@ class KathariScreecherTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(findPermanent(player1, "Kathari Screecher").isAttacking()).isTrue();
     }

@@ -72,7 +72,7 @@ class KnightOfOldBenaliaTest extends BaseCardTest {
         }
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

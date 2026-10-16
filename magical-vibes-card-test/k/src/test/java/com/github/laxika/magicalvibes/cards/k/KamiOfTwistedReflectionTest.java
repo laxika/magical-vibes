@@ -100,7 +100,7 @@ class KamiOfTwistedReflectionTest extends BaseCardTest {
         WanderingOnes stolenCard = new WanderingOnes();
         stolenCard.setOwnerId(player2.getId());
         Permanent target = harness.addToBattlefieldAndReturn(player1, stolenCard);
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -117,9 +117,7 @@ class KamiOfTwistedReflectionTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
 
         harness.activateAbility(player1, 0, null, target.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Wandering Ones");

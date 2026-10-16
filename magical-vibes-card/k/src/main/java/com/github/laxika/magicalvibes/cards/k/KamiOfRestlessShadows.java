@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -28,7 +29,7 @@ public class KamiOfRestlessShadows extends Card {
                 new CardTypePredicate(CardType.CREATURE), ninjaOrRogue));
         GraveyardSearchScope ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return up to one target Ninja or Rogue creature card from your graveyard to your hand",
                         List.of(ReturnCardFromGraveyardEffect.builder()
@@ -50,6 +51,6 @@ public class KamiOfRestlessShadows extends Card {
                                 .build(),
                         new GraveyardCardPredicateTargetFilter(
                                 new CardTypePredicate(CardType.CREATURE), ownGraveyard))
-        )));
+        ))));
     }
 }

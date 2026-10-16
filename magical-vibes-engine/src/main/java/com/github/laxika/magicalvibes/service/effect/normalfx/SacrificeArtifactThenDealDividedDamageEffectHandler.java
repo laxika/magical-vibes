@@ -39,6 +39,20 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
 
+        // CR 608.2b: if every divided-damage target is now illegal, the ability doesn't resolve,
+        // so no artifact is sacrificed.
+        Map<UUID, Integer> stagedAssignments = entry.getDamageAssignments().isEmpty()
+                ? gameData.pendingETBDamageAssignments
+                : entry.getDamageAssignments();
+        if (!stagedAssignments.isEmpty() && stagedAssignments.keySet().stream()
+                .noneMatch(targetId -> gameData.playerIds.contains(targetId)
+                        || gameQueryService.findPermanentById(gameData, targetId) != null)) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s ability has no legal targets and doesn't resolve."));
+            gameData.pendingETBDamageAssignments = Map.of();
+            return;
+        }
+
         List<UUID> validArtifactIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
@@ -58,7 +72,8 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
             return;
         }
 
-        Map<UUID, Integer> damageAssignments = gameData.pendingETBDamageAssignments;
+        Map<UUID, Integer> damageAssignments = stagedAssignments;
+        gameData.pendingETBDamageAssignments = Map.of();
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificeArtifactForDividedDamage(
                         controllerId, entry.getCard(), damageAssignments));

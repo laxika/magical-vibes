@@ -48,7 +48,7 @@ public class KitesailLarcenist extends Card {
                                 EffectDuration.WHILE_SOURCE_REMAINS))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.TREASURE,
-                                EffectDuration.WHILE_SOURCE_REMAINS))
+                                EffectDuration.WHILE_SOURCE_REMAINS, true))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new LosesAllAbilitiesEffect(GrantScope.TARGET,
                                 EffectDuration.WHILE_SOURCE_REMAINS))

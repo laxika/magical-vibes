@@ -136,7 +136,8 @@ class KryShieldTest extends BaseCardTest {
         assertThat(giant.getToughnessModifier()).isEqualTo(7);
 
         declareAttackersAndPrepareBlockers(List.of(1));
-        gs.declareBlockers(gd, player2, List.of());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
         harness.activateAbility(player2, 0, null, giant.getId());
         harness.passBothPriorities();
 

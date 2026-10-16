@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +42,14 @@ public class DestroyReferencedPermanentEffectHandler implements NormalEffectHand
         };
         if (referenced == null) {
             return;
+        }
+
+        if (e.reference() == PermanentReference.TRIGGERING) {
+            // Later "that permanent's controller" instructions read the controller as it was destroyed.
+            UUID controllerId = gameQueryService.findPermanentController(gameData, referenced.getId());
+            if (controllerId != null) {
+                entry.setTriggeringPermanentControllerId(controllerId);
+            }
         }
 
         destructionSupport.destroyBatch(

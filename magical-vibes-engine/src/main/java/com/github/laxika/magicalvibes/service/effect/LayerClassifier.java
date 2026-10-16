@@ -69,10 +69,12 @@ import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreat
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect;
+import com.github.laxika.magicalvibes.model.effect.ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhileMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
@@ -275,6 +277,7 @@ public final class LayerClassifier {
 
         // Layer 2 — control-changing effects (CR 613.2b).
         map.put(GainControlOfTargetEffect.class, fixed(Layer.L2_CONTROL));
+        map.put(GainControlOfTargetHauntedCreatureEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfTargetCreatureWhileMonarchEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfTargetWhileHasCounterEffect.class, fixed(Layer.L2_CONTROL));
         map.put(GainControlOfEnchantedTargetEffect.class, fixed(Layer.L2_CONTROL));
@@ -526,6 +529,7 @@ public final class LayerClassifier {
         map.put(GainActivatedAbilitiesOfTopLibraryCardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect.class, fixed(Layer.L6_ABILITIES));
+        map.put(ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect.class, fixed(Layer.L6_ABILITIES));
 
         // Sublayers 7a/7b — P/T setting. A "P/T equal to [amount]" static in the creature's
         // own STATIC slot is the characteristic-defining */* ability (7a, CR 613.4a); the same

@@ -92,7 +92,7 @@ class KukemssaSerpentTest extends BaseCardTest {
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, forest);
         assertThat(bonus.landSubtypeOverriding()).isTrue();
         assertThat(bonus.grantedSubtypes()).containsExactly(CardSubtype.ISLAND);
-        assertThat(forest.getEffectiveLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.computeStaticBonus(gd, forest).grantedSubtypes()).containsExactly(CardSubtype.ISLAND);
     }
 
     @Test
@@ -131,13 +131,13 @@ class KukemssaSerpentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent forest = gqs.findPermanentById(gd, forestId);
-        assertThat(forest.getEffectiveLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.computeStaticBonus(gd, forest).grantedSubtypes()).containsExactly(CardSubtype.ISLAND);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.CLEANUP);
 
-        assertThat(forest.getEffectiveLandTypeOverride()).isNull();
+        assertThat(gqs.computeStaticBonus(gd, forest).landSubtypeOverriding()).isFalse();
     }
 
     @Test
@@ -204,10 +204,8 @@ class KukemssaSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         harness.addMana(player1, ManaColor.BLUE, 1);
         UUID forestId = harness.getPermanentId(player2, "Forest");
-        UUID islandId = harness.getPermanentId(player1, "Island");
 
         harness.activateAbility(player1, 0, null, forestId);
-        harness.handlePermanentChosen(player1, islandId);
 
         harness.assertOnBattlefield(player1, "Kukemssa Serpent");
         harness.assertInGraveyard(player1, "Island");
@@ -216,12 +214,13 @@ class KukemssaSerpentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Kukemssa Serpent");
-        assertThat(gqs.findPermanentById(gd, forestId).getEffectiveLandTypeOverride()).isNull();
+        assertThat(gqs.computeStaticBonus(gd, gqs.findPermanentById(gd, forestId)).landSubtypeOverriding()).isFalse();
 
         harness.passBothPriorities();
 
-        assertThat(gqs.findPermanentById(gd, forestId).getEffectiveLandTypeOverride())
-                .isEqualTo(CardSubtype.ISLAND);
+        GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, gqs.findPermanentById(gd, forestId));
+        assertThat(bonus.landSubtypeOverriding()).isTrue();
+        assertThat(bonus.grantedSubtypes()).containsExactly(CardSubtype.ISLAND);
     }
 
     @Test

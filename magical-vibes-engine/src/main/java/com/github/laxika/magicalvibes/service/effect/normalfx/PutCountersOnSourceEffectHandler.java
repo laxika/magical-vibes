@@ -56,6 +56,8 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
                     gameData, entry, source, amount, CounterType.PLUS_ONE_PLUS_ONE);
             permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
                     gameData, source, amount, entry.getControllerId());
+            permanentCounterSupport.recordPlusOnePlusOneCounterReceivedOnSource(
+                    gameData, source, entry.getControllerId());
             permanentCounterSupport.firePlusOnePlusOneCountersPutOnOtherControlledHeroTriggers(
                     gameData, source, amount, entry.getControllerId());
             permanentCounterSupport.firePlusOnePlusOneCounterTriggers(gameData, source, entry.getControllerId());

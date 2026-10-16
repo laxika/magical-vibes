@@ -11,9 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -35,15 +33,13 @@ public class KarganIntimidator extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, "{1}", List.of(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.COWARD)),
                 "Target creature becomes a Coward until end of turn. Activate only once each turn.",
-                TargetFilters.creature()));
+                TargetFilters.creature()).withMaxActivationsPerTurn(1));
 
         addActivatedAbility(new ActivatedAbility(
                 false, "{1}", List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
                 "Target Warrior gains trample until end of turn. Activate only once each turn.",
                 new PermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.WARRIOR))),
-                        "Target must be a Warrior creature")));
+                        new PermanentHasSubtypePredicate(CardSubtype.WARRIOR),
+                        "Target must be a Warrior")).withMaxActivationsPerTurn(1));
     }
 }

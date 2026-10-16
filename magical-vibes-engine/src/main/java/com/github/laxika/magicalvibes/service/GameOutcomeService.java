@@ -99,7 +99,8 @@ public class GameOutcomeService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             boolean commanderDamage = gameData.format == com.github.laxika.magicalvibes.model.DeckFormat.COMMANDER
                     && gameData.commanderDamageReceived.getOrDefault(playerId, java.util.Map.of()).values().stream().anyMatch(damage -> damage >= 21);
-            if (gameData.playersAttemptedDrawFromEmptyLibrary.contains(playerId)) candidates.put(playerId, LossReason.EMPTY_LIBRARY);
+            if (gameData.playersAttemptedDrawFromEmptyLibrary.contains(playerId)
+                    && gameData.status != GameStatus.MULLIGAN) candidates.put(playerId, LossReason.EMPTY_LIBRARY);
             else if (commanderDamage) candidates.put(playerId, LossReason.COMMANDER_DAMAGE);
             else if (gameData.playerPoisonCounters.getOrDefault(playerId, 0) >= 10) candidates.put(playerId, LossReason.POISON);
             else if (gameData.getLife(playerId) <= 0) candidates.put(playerId, LossReason.LIFE);

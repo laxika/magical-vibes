@@ -183,6 +183,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final TargetPredicateEvaluationService targetPredicateEvaluationService;
+    private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final CreatureControlService creatureControlService;
     private final PopulateSupport populateSupport;
@@ -2879,7 +2880,9 @@ public class PermanentChoiceBattlefieldHandlerService {
                             continue;
                         }
                         for (Permanent p : battlefield) {
-                            if (targetPredicateEvaluationService.matchesPermanent(declared, p, filterContext)) {
+                            if (targetPredicateEvaluationService.matchesPermanent(declared, p, filterContext)
+                                    && !validTargetService.isBlockedByHexproofOrGrantedEffect(
+                                    gameData, p, ctx.controllerId())) {
                                 validPermanentTargets.add(p.getId());
                             }
                         }
@@ -3024,7 +3027,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent source = ctx.sourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        if (source == null) {
+        if (source == null && ctx.sourcePermanentId() == null) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
             if (battlefield != null) {
                 source = battlefield.stream()

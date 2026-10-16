@@ -128,7 +128,7 @@ class KaaliaOfTheVastTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
         attackWithKaalia();
 
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> harness.handleCardChosen(player1, 0));
 
         Permanent demon = findPermanent(player1, "Demon of Death's Gate");
         assertThat(demon).isNotNull();
@@ -157,7 +157,7 @@ class KaaliaOfTheVastTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(kaalia.getCard());
         resolveAllTriggers();
 
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> harness.handleCardChosen(player1, 0));
 
         Permanent dragon = findPermanent(player1, "Dragonlord Dromoka");
         assertThat(dragon).isNotNull();

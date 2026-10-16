@@ -1873,12 +1873,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record EachPlayerRevealContext(java.util.List<UUID> remainingPlayerIds,
                                    java.util.List<UUID> playerOrder,
                                    java.util.Map<UUID, Integer> revealedCounts,
+                                   java.util.Map<UUID, java.util.List<Card>> revealedCards,
                                    CardPredicate filter, CreateTokenEffect token) {
 
         public EachPlayerRevealContext {
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             playerOrder = java.util.List.copyOf(playerOrder);
             revealedCounts = java.util.Map.copyOf(revealedCounts);
+            revealedCards = java.util.Map.copyOf(revealedCards);
         }
     }
 

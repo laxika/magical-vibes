@@ -19,6 +19,15 @@ public record RegisterEchoAtNextUpkeepEffect(String manaCost, DynamicAmount dyna
         paidEffects = paidEffects == null ? List.of() : List.copyOf(paidEffects);
     }
 
+    /**
+     * Echo is a triggered ability of the permanent itself (CR 702.30a), so registering it still
+     * happens when the spell or ability this effect is bundled with has lost its other targets.
+     */
+    @Override
+    public boolean resolvesWhenTargetIllegal() {
+        return true;
+    }
+
     public RegisterEchoAtNextUpkeepEffect(String manaCost) {
         this(manaCost, null, null, null, List.of());
     }

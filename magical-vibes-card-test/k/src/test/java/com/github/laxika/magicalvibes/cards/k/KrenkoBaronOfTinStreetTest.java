@@ -125,7 +125,7 @@ class KrenkoBaronOfTinStreetTest extends BaseCardTest {
         Permanent token = findPermanent(player1, "Goblin");
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Goblin");
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();

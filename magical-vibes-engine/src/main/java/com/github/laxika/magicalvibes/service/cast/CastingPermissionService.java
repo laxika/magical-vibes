@@ -1143,9 +1143,13 @@ public class CastingPermissionService {
         return false;
     }
 
-    /** Explicit sorcery-timing restrictions prevent a cast made during another effect's resolution. */
+    /**
+     * Explicit sorcery-timing restrictions and effects that stop a player casting spells (Dosan the
+     * Falling Leaf, Grand Abolisher) prevent a cast made during another effect's resolution.
+     */
     public boolean canCastDuringResolution(GameData gameData, UUID playerId) {
-        return !isSorcerySpeedOnlyForPlayer(gameData, playerId)
+        return !isPlayerPreventedFromCasting(gameData, playerId)
+                && !isSorcerySpeedOnlyForPlayer(gameData, playerId)
                 && !gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(gameData, playerId);
     }
 
@@ -1513,6 +1517,7 @@ public class CastingPermissionService {
     public Optional<GraveyardLandPermission> findGraveyardLandPermission(
             GameData gameData, UUID playerId, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        Optional<GraveyardLandPermission> limitedPermission = Optional.empty();
         for (Permanent perm : battlefield == null ? List.<Permanent>of() : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
@@ -1555,10 +1560,18 @@ public class CastingPermissionService {
                 if (card != null && !matchesGraveyardPermission(gameData, playerId, card, permission)) {
                     continue;
                 }
-                return Optional.of(new GraveyardLandPermission(perm.getId(), permission));
+                GraveyardLandPermission available = new GraveyardLandPermission(perm.getId(), permission);
+                if (!permission.oncePerControllerTurn() && !permission.oncePerControllerTurnForLand()) {
+                    return Optional.of(available);
+                }
+                if (limitedPermission.isEmpty()) {
+                    limitedPermission = Optional.of(available);
+                }
             }
         }
-        return Optional.empty();
+        // A permission that is not limited to once per turn is used first so a limited one (Kagha)
+        // is not spent on a land another permission (Crucible of Worlds) also lets the player play.
+        return limitedPermission;
     }
 
     private boolean matchesLandFilter(GameData gameData, UUID playerId, Card card,

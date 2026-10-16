@@ -31,6 +31,6 @@ public class KefnetsLastWord extends Card {
         ))
                 .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.PERMANENT))
                 // Lands you control don't untap during your next untap step.
-                .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
+                .addEffect(EffectSlot.SPELL, new SkipNextUntapEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 1, true));
     }
 }

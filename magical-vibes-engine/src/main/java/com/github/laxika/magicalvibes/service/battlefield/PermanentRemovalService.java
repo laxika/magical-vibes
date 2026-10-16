@@ -850,8 +850,13 @@ public class PermanentRemovalService {
         List<Card> creatureCards = leavingCards.stream()
                 .filter(card -> !isToken(gameData, card) && card.hasType(CardType.CREATURE))
                 .toList();
+        int exiledNontokenCards = (int) leavingCards.stream()
+                .filter(card -> !isToken(gameData, card))
+                .count();
         graveyardService.notifyCardsExiledFromBattlefield(
-                gameData, leavingCards.size(), controllerId, wasCreature, creatureCards);
+                gameData, exiledNontokenCards, controllerId, wasCreature, creatureCards);
+        triggerCollectionService.checkDepartedPermanentCardsExiledDuringYourTurnTriggers(
+                gameData, target, controllerId, exiledNontokenCards);
         triggerCollectionService.checkAllyCreatureExiledFromBattlefieldTriggers(
                 gameData, target, wasCreature, controllerId);
         triggerCollectionService.checkAnyCreatureExiledFromBattlefieldTriggers(
@@ -2168,24 +2173,33 @@ public class PermanentRemovalService {
     private boolean controlledSourceExilesDyingCreature(GameData gameData, UUID dyingCardId) {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent effectSource : battlefield) {
-                if (effectSource.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .noneMatch(ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect.class::isInstance)) {
+                if (!hasControlledSourceExileReplacement(gameData, effectSource)) {
                     continue;
                 }
                 UUID controllerId = gameQueryService.findPermanentController(gameData, effectSource.getId());
-                if (controllerId == null) {
-                    continue;
-                }
-                for (UUID sourceId : gameData.damageSourcesControlledByPlayerThisTurn
-                        .getOrDefault(controllerId, Set.of())) {
-                    if (gameData.creatureCardsDamagedThisTurnBySourcePermanent
-                            .getOrDefault(sourceId, Set.of()).contains(dyingCardId)) {
-                        return true;
-                    }
+                if (controllerId != null
+                        && gameData.creatureCardsDamagedThisTurnByController
+                        .getOrDefault(controllerId, Set.of()).contains(dyingCardId)) {
+                    return true;
                 }
             }
         }
+        for (Permanent effectSource : gameData.simultaneousDyingCreatures.values()) {
+            UUID controllerId = gameData.simultaneousDyingControllers.get(effectSource.getId());
+            if (controllerId != null
+                    && hasControlledSourceExileReplacement(gameData, effectSource)
+                    && gameData.creatureCardsDamagedThisTurnByController
+                    .getOrDefault(controllerId, Set.of()).contains(dyingCardId)) {
+                return true;
+            }
+        }
         return false;
+    }
+
+    private boolean hasControlledSourceExileReplacement(GameData gameData, Permanent effectSource) {
+        return !gameQueryService.hasLostAllAbilities(gameData, effectSource)
+                && effectSource.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect.class::isInstance);
     }
 
     private boolean hasExileDamagedCreaturesInsteadOfDying(GameData gameData, Permanent permanent) {
@@ -2203,6 +2217,13 @@ public class PermanentRemovalService {
                         && hasExileDamagedCreaturesInsteadOfDying(gameData, aura)) {
                     return true;
                 }
+            }
+        }
+        for (Permanent aura : gameData.simultaneousDyingPermanents.values()) {
+            if (aura.isAttached()
+                    && sourceId.equals(aura.getAttachedTo())
+                    && hasExileDamagedCreaturesInsteadOfDying(gameData, aura)) {
+                return true;
             }
         }
         return false;
@@ -2392,7 +2413,7 @@ public class PermanentRemovalService {
             // Any permanent owned by another player is put into a graveyard (Kothophed, Soul Hoarder).
             if (!creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkOtherPlayerOwnedPermanentPutIntoGraveyardTriggers(
-                        gameData, target.getOriginalCard(), ownerId);
+                        gameData, target, controllerId, ownerId);
             }
             // "Whenever a creature or planeswalker you control dies" — fires once even when the
             // dying permanent is both (Ajani's Last Stand).
@@ -2491,12 +2512,7 @@ public class PermanentRemovalService {
                         gameData, target.getCard(), ownerId, controllerId);
             }
             if (destroyedBySpellOrAbility && !wasCreature) {
-                UUID destroyingControllerId = gameData.currentlyResolvingControllerId;
-                if (destroyingControllerId != null && !destroyingControllerId.equals(controllerId)) {
-                    gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.add(controllerId);
-                }
-                triggerCollectionService.checkNoncreaturePermanentDestroyedByOpponentTriggers(
-                        gameData, target, controllerId, gameData.currentlyResolvingControllerId);
+                recordNoncreaturePermanentDestroyedByOpponent(gameData, target, controllerId);
             }
             if (!creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId,
@@ -2509,7 +2525,21 @@ public class PermanentRemovalService {
                     && !creatureDeathTriggersSuppressed) {
                 triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);
             }
+        } else if (exiledFromBattlefield > 0 && destroyedBySpellOrAbility && !wasCreature) {
+            // The permanent was still destroyed when a replacement effect exiled it instead of
+            // putting it into a graveyard, so "is destroyed" abilities (Karmic Justice) trigger.
+            recordNoncreaturePermanentDestroyedByOpponent(gameData, target, controllerId);
         }
+    }
+
+    private void recordNoncreaturePermanentDestroyedByOpponent(GameData gameData, Permanent target,
+                                                               UUID controllerId) {
+        UUID destroyingControllerId = gameData.currentlyResolvingControllerId;
+        if (destroyingControllerId != null && !destroyingControllerId.equals(controllerId)) {
+            gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn.add(controllerId);
+        }
+        triggerCollectionService.checkNoncreaturePermanentDestroyedByOpponentTriggers(
+                gameData, target, controllerId, gameData.currentlyResolvingControllerId);
     }
 
     private UUID exilingControllerId(GameData gameData) {

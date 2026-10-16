@@ -208,6 +208,7 @@ public class AnimationSupport {
         target.setAnimatedUntilNextTurn(true);
         target.setUntilNextTurnAnimatedPower(power);
         target.setUntilNextTurnAnimatedToughness(toughness);
+        target.setUntilNextTurnAnimationGrantorId(entry.getControllerId());
         target.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
         target.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
         addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
@@ -256,7 +257,10 @@ public class AnimationSupport {
         self.setAnimatedToughness(toughness);
         self.setAnimatedColor(effect.animatedColor());
         applyAnimatedColors(self, effect);
-        boolean crew = effect.equals(AnimatePermanentsEffect.crew());
+        // Only a crew activation makes the Vehicle "crewed" (CR 702.122a); an identical triggered
+        // animation (Kolodin, Triumph Caster) does not.
+        boolean crew = entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                && effect.equals(AnimatePermanentsEffect.crew());
         // Crew only makes the Vehicle an artifact creature (CR 702.122a); it keeps its subtypes.
         if (!crew) {
             self.getTransientSubtypes().clear();
@@ -388,6 +392,7 @@ public class AnimationSupport {
                 perm.setAnimatedUntilNextTurn(true);
                 perm.setUntilNextTurnAnimatedPower(power);
                 perm.setUntilNextTurnAnimatedToughness(toughness);
+                perm.setUntilNextTurnAnimationGrantorId(entry.getControllerId());
                 perm.getUntilNextTurnSubtypes().clear();
                 perm.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
                 perm.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());

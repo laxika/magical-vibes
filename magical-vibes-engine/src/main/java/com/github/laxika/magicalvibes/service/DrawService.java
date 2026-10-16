@@ -2322,7 +2322,7 @@ public class DrawService {
                             null, null, perm.getId()));
                     continue;
                 }
-                int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                int triggerCopies = 1 + gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(
                         gameData, drawingPlayerId, perm);
                 if (effect instanceof MayEffect may && !targetsPlayerOrAnyTarget(may.wrapped())) {
                     for (int copy = 0; copy < triggerCopies; copy++) {
@@ -2557,7 +2557,7 @@ public class DrawService {
                             continue;
                         }
                     }
-                    int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                    int triggerCopies = 1 + gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(
                             gameData, playerId, perm);
                     for (int copy = 0; copy < triggerCopies; copy++) {
                         if (effect instanceof MayEffect may) {
@@ -2670,7 +2670,7 @@ public class DrawService {
                         effect = drawTrigger.effectForDrawCount(cardsDrawnThisTurn).orElse(null);
                         if (effect == null) continue;
                     }
-                    int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                    int triggerCopies = 1 + gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(
                             gameData, auraControllerId, perm);
                     for (int copy = 0; copy < triggerCopies; copy++) {
                         if (effect instanceof MayEffect may) {

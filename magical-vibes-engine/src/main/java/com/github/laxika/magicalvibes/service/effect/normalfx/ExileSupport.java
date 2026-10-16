@@ -14,11 +14,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -32,7 +32,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -46,6 +45,7 @@ import java.util.UUID;
 public class ExileSupport {
 
     private final GameQueryService gameQueryService;
+    private final ExileCastTargetSupport exileCastTargetSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
@@ -57,9 +57,13 @@ public class ExileSupport {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private SplitCardCastSupport splitCardCastSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private ExileFreeCastSupport exileFreeCastSupport;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileSupport(GameQueryService gameQueryService,
+                        @Lazy ExileCastTargetSupport exileCastTargetSupport,
                         PredicateEvaluationService predicateEvaluationService,
                         GameLogService gameLogService,
                         PermanentRemovalService permanentRemovalService,
@@ -69,6 +73,7 @@ public class ExileSupport {
                         com.github.laxika.magicalvibes.service.event.GameMutationCoordinator mutationCoordinator,
                         @Lazy InputCompletionService inputCompletionService) {
         this.gameQueryService = gameQueryService;
+        this.exileCastTargetSupport = exileCastTargetSupport;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
         this.permanentRemovalService = permanentRemovalService;
@@ -342,6 +347,12 @@ public class ExileSupport {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (chosenCard.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e instanceof SacrificeCreatureCost)) {
+            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
+                    " has a mandatory additional cost that can't be paid (Knowledge Pool) and stays exiled."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (SplitCardCastSupport.isSplitCard(chosenCard)) {
             if (!splitCardCastSupport.beginFromExile(gameData, playerId, chosenCard, false,
                     SplitCardCast.ExileCast.ofCard(), Integer.MAX_VALUE, null, null)) {
@@ -352,6 +363,16 @@ public class ExileSupport {
             return;
         }
 
+        boolean chooseOneSpell = chosenCard.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(e -> e instanceof ChooseOneEffect modal
+                        && (modal.options().stream().anyMatch(option -> option.manaCost() != null)
+                        || (modal.choicesRequired() == 1 && !modal.modesMayRepeat())));
+        if (chooseOneSpell) {
+            // The mode and its targets are chosen while casting (CR 601.2b-c), before the spell is on the stack.
+            exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, chosenCard.getId());
+            return;
+        }
+
         // Determine spell type
         StackEntryType spellType = mapCardTypeToSpellType(chosenCard);
         List<CardEffect> spellEffects = new ArrayList<>(chosenCard.getEffects(EffectSlot.SPELL));
@@ -359,30 +380,8 @@ public class ExileSupport {
         String playerName = gameData.playerIdToName.get(playerId);
 
         // If the spell needs a target, set up target selection
-        if (EffectResolution.needsTarget(chosenCard)) {
-            Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(chosenCard);
-            List<UUID> validTargets = new ArrayList<>();
-
-            // Only add permanents if the spell can actually target them
-            if (allowedTargets.contains(TargetType.PERMANENT)) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (chosenCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                            if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                                validTargets.add(p.getId());
-                            }
-                        } else if (gameQueryService.isCreature(gameData, p)) {
-                            validTargets.add(p.getId());
-                        }
-                    }
-                }
-            }
-
-            if (allowedTargets.contains(TargetType.PLAYER)) {
-                validTargets.addAll(gameData.orderedPlayerIds);
-            }
+        if (EffectResolution.needsTarget(chosenCard) || EffectResolution.needsSpellTarget(spellEffects)) {
+            List<UUID> validTargets = exileCastTargetSupport.flatSingleTargetCandidates(gameData, chosenCard, playerId);
 
             if (validTargets.isEmpty()) {
                 // It was never cast, and nothing in the oracle text moves it elsewhere: it stays

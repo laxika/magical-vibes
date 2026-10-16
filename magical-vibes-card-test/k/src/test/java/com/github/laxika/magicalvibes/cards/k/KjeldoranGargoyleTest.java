@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.b.Backlash;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -98,8 +99,11 @@ class KjeldoranGargoyleTest extends BaseCardTest {
         Permanent gargoyle = addCreatureReady(player1, new KjeldoranGargoyle());
         gargoyle.setPowerModifier(2);
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(gargoyle)));
-        resolveCombat();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(gargoyle)));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            gs.declareBlockers(gd, player2, List.of());
+            resolveCombat();
+        });
 
         harness.assertLife(player2, 15);
         harness.assertLife(player1, 15);

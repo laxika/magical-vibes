@@ -8,6 +8,12 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.FreeCastKickerOffer;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayKickerForFreeCastEffect;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -214,6 +220,10 @@ public class ExileFreeCastSupport {
             if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (offerKickerForFreeCast(gameData, player, card, exileCardId,
+                new FreeCastKickerOffer(grantHaste, returnToHandIfUnable, suspendHaste, completeInput, face))) {
+            return;
+        }
         String playerName = player.getUsername();
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
         List<CardEffect> spellEffects = chosenEffects != null ? chosenEffects
@@ -252,6 +262,7 @@ public class ExileFreeCastSupport {
             }
 
             // Remove from exile now that it will be cast; the ExileCastSpellTarget flow puts it on the stack.
+            gameData.freeCastKickerDecidedIds.remove(exileCardId);
             gameData.removeFromExile(exileCardId);
             if (exileInsteadOfGraveyard) {
                 gameData.exileInsteadOfGraveyard.add(exileCardId);
@@ -274,6 +285,22 @@ public class ExileFreeCastSupport {
             return;
         }
 
+        if (EffectResolution.needsSpellTarget(spellEffects)
+                && exileCastTargetSupport.flatSingleTargetCandidates(gameData, card, playerId).isEmpty()) {
+            gameData.spellsGrantedHasteOnEntry.remove(exileCardId);
+            gameData.spellsGrantedSuspendHasteOnEntry.remove(exileCardId);
+            if (returnToHandIfUnable) {
+                returnExiledCardToHand(gameData, exileCardId);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, " has no valid targets and is put into its owner's hand."));
+            } else {
+                gameLogService.append(gameData, GameLog.cardThen(card, " has no valid targets and stays exiled."));
+            }
+            log.info("Game {} - {} exile free-cast has no spell to target", gameData.id, card.getName());
+            if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         gameData.removeFromExile(exileCardId);
         StackEntry stackEntry = new StackEntry(
                 spellType, card, playerId, card.getName(),
@@ -285,6 +312,8 @@ public class ExileFreeCastSupport {
         stackEntry.setOwnerIdOverride(exiledEntry.ownerId());
         stackEntry.setSourceZone(Zone.EXILE);
         stackEntry.setSuspendHasteOnEntry(suspendHaste && card.hasType(CardType.CREATURE));
+        stackEntry.setKicked(gameData.freeCastKickedIds.remove(exileCardId));
+        gameData.freeCastKickerDecidedIds.remove(exileCardId);
         if (grantHaste && card.hasType(CardType.CREATURE)) {
             gameData.spellsGrantedHasteOnEntry.add(exileCardId);
         }
@@ -302,6 +331,48 @@ public class ExileFreeCastSupport {
         triggerCollectionService.checkSpellCastTriggers(
                 gameData, card, playerId, Zone.EXILE, exiledEntry.sourcePermanentId());
         if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Kicker is an optional additional cost, so a spell cast without paying its mana cost may still be
+     * kicked (CR 118.9, CR 601.2b). Offers a mana-only kicker the controller can currently afford and
+     * pauses the cast until that offer is answered.
+     *
+     * @return true when the cast is paused on the offer
+     */
+    private boolean offerKickerForFreeCast(GameData gameData, Player player, Card card, UUID exileCardId,
+                                           FreeCastKickerOffer offer) {
+        if (!offer.completeInput() || gameData.freeCastKickerDecidedIds.contains(exileCardId)) {
+            return false;
+        }
+        KickerEffect kicker = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(KickerEffect.class::isInstance)
+                .map(KickerEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (kicker == null || !kicker.hasManaCost() || kicker.hasSacrificeCost() || kicker.hasTapCost()
+                || kicker.hasReturnCost() || kicker.hasDiscardCost() || kicker.hasLifeCost()
+                || kicker.hasForageCost()) {
+            return false;
+        }
+        ManaCost cost = new ManaCost(kicker.cost());
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        if (cost.hasX() || pool == null || !cost.canPay(pool, 0)) {
+            return false;
+        }
+        gameData.pendingFreeCastKickerOffers.put(exileCardId, offer);
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(card, player.getId(),
+                List.of(new MayPayKickerForFreeCastEffect()),
+                "Pay the kicker cost " + kicker.cost() + " for " + card.getName() + "?", exileCardId));
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        return true;
+    }
+
+    /** Resumes a free cast that paused for its kicker offer, with the options it was started with. */
+    public void resumeAfterKickerDecision(GameData gameData, Player player, UUID exileCardId,
+                                          FreeCastKickerOffer offer) {
+        castSelectedFace(gameData, player, exileCardId, offer.grantHaste(), offer.returnToHandIfUnable(),
+                offer.suspendHaste(), offer.completeInput(), offer.face());
     }
 
     /**

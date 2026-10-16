@@ -95,6 +95,7 @@ class KimoyoBeadsTest extends BaseCardTest {
     void primeBeadResetsPreviouslyChosenModes() {
         harness.addToBattlefield(player1, new KimoyoBeads());
         harness.setLibrary(player1, List.of(new KimoyoBeads(), new KimoyoBeads()));
+        harness.setHand(player1, List.of());
         harness.setLife(player1, 20);
 
         advanceToEndStep();

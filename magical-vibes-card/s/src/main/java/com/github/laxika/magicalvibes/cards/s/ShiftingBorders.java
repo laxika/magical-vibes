@@ -19,7 +19,7 @@ public class ShiftingBorders extends Card {
 
         target(new PermanentPredicateTargetFilter(new PermanentIsLandPredicate(), "Second target must be a land"))
                 .addEffect(EffectSlot.SPELL, new ExchangeControlOfTargetPermanentsEffect(
-                        new PermanentIsLandPredicate(), false));
+                        new PermanentIsLandPredicate(), false, false));
 
         addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{3}{U}"));
     }

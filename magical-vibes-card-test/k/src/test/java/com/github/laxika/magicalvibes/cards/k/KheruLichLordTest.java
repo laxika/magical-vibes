@@ -54,7 +54,8 @@ class KheruLichLordTest extends BaseCardTest {
         assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(returned.isExileIfLeavesBattlefield()).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(returned.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                .contains(new DelayedPermanentAction(returned.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP,
+                        player1.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 
@@ -198,6 +199,7 @@ class KheruLichLordTest extends BaseCardTest {
 
     @Test
     void skippingYourEndStepWaitsForYourNextEndStep() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new KheruLichLord());
         harness.addToBattlefield(player1, new SundialOfTheInfinite());
         Card creature = new AlpineGrizzly();
@@ -221,7 +223,9 @@ class KheruLichLordTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Alpine Grizzly");
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature);
 
-        harness.forceActivePlayer(player1);
+        harness.passBothPriorities();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();

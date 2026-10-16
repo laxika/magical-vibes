@@ -124,7 +124,7 @@ class KurosTakenTest extends BaseCardTest {
         assertThat(taken.getRegenerationShield()).isEqualTo(1);
         assertThat(taken.isTapped()).isFalse();
 
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(taken.getRegenerationShield()).isZero();
         assertThat(taken.isTapped()).isFalse();

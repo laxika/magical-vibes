@@ -100,9 +100,7 @@ class KessigTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).contains(CardSubtype.WEREWOLF);
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);

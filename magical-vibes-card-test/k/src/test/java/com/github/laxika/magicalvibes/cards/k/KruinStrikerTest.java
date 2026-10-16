@@ -119,7 +119,7 @@ class KruinStrikerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ThatcherRevolt()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castSorcery(player1, 0);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         GameData gd = harness.getGameData();
         assertThat(gqs.getEffectivePower(gd, striker)).isEqualTo(5);

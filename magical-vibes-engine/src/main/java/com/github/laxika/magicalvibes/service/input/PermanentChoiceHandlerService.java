@@ -85,6 +85,8 @@ public class PermanentChoiceHandlerService {
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final OpponentChoosesCardFromGraveyardToHandEffectHandler opponentChoosesCardHandler;
     private final DawnbreakReclaimerEffectHandler dawnbreakReclaimerEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnPermanentsToHandSimultaneouslyEffectHandler
+            returnPermanentsToHandSimultaneouslyEffectHandler;
     private final AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
     private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
     private final GuidedPassageEffectHandler guidedPassageEffectHandler;
@@ -471,6 +473,11 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.TargetOpponentChoosesPlayerForRestriction restriction) {
             targetOpponentChoosesPlayerForRestrictionEffectHandler.completeChoice(gameData, permanentId, restriction);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.BounceBatch bounceBatch) {
+            returnPermanentsToHandSimultaneouslyEffectHandler.completeChoice(gameData, permanentId, bounceBatch);
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             battlefieldHandler.handleBounceCreature(gameData, permanentId, bounceCreature);
         } else if (context instanceof PermanentChoiceContext.BouncePermanentThen bounceThen) {
@@ -551,8 +558,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleDeathTrigger(gameData, permanentId, dtt);
         } else if (context instanceof PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
             triggerHandler.handleSelfTriggeredAbility(gameData, permanentId, slt);
-        } else if (context instanceof PermanentChoiceContext.KayaSpiritsJusticeTokenChoice kaya) {
-            triggerHandler.handleKayaSpiritsJusticeTokenChoice(gameData, permanentId, kaya);
         } else if (context instanceof PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
             battlefieldHandler.handlePreventDamageSourceChoice(gameData, permanentId, preventSource);
         } else if (context instanceof PermanentChoiceContext.GuardDogsPermanentChoice) {

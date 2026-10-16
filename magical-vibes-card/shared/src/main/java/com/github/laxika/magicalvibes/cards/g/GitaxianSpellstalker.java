@@ -16,11 +16,9 @@ public class GitaxianSpellstalker extends Card {
     public GitaxianSpellstalker() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
 
-        SpellCastTriggerEffect prowess = new SpellCastTriggerEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 List.of(new BoostSelfEffect(1, 1))
-        );
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, prowess);
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, prowess);
+        ));
     }
 }

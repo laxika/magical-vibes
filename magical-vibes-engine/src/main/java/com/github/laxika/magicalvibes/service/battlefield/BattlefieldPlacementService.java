@@ -765,11 +765,13 @@ public class BattlefieldPlacementService {
                 .filter(AmplifyEffect.class::isInstance).map(AmplifyEffect.class::cast)
                 .findFirst().orElse(null);
         if (amplify == null) return false;
-        List<UUID> validIds = gameData.playerHands.getOrDefault(request.controllerId(), List.of()).stream()
-                .filter(card -> !card.getId().equals(permanent.getCard().getId()))
-                .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, amplify.filter(), permanent.getCard().getId()))
-                .map(Card::getId).toList();
+        List<UUID> validIds = gameQueryService.withEnteringPermanent(gameData, request.controllerId(), permanent,
+                () -> gameData.playerHands.getOrDefault(request.controllerId(), List.of()).stream()
+                        .filter(card -> !card.getId().equals(permanent.getCard().getId()))
+                        .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                                card, amplify.filter(), permanent.getCard().getId(), gameData,
+                                request.controllerId(), null, null, null, permanent))
+                        .map(Card::getId).toList());
         if (validIds.isEmpty()) {
             permanent.setAmplifyRevealedCards(0);
             return false;
@@ -2136,6 +2138,10 @@ public class BattlefieldPlacementService {
             permanent.setCounterCount(counterType, permanent.getCounterCount(counterType) + count);
             log.info("Game {} - {} enters with {} {} counter(s)",
                     gameData.id, permanent.getCard().getName(), count, counterType);
+            if (counterType == CounterType.PLUS_ONE_PLUS_ONE) {
+                permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherCreatureTriggers(
+                        gameData, permanent, count, controllerId);
+            }
         }
     }
 

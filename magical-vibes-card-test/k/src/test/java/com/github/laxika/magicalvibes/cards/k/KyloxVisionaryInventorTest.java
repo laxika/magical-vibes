@@ -147,6 +147,7 @@ class KyloxVisionaryInventorTest extends BaseCardTest {
         assertThat(castChoice.validCardIds()).containsExactlyInAnyOrder(divination.getId(), shock.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of());
+        gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(5);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == divination || entry.getCard() == shock);

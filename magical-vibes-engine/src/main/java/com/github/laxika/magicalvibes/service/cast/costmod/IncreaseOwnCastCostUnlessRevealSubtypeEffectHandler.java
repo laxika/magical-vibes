@@ -39,6 +39,9 @@ public class IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler implements Cost
     @Override
     public int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source) {
         var reveal = (IncreaseOwnCastCostUnlessRevealSubtypeEffect) effect;
+        if (reveal.explicitSelection()) {
+            return context.spell().getId().equals(context.gameData().beholdCostWaivedCardId) ? 0 : reveal.amount();
+        }
         UUID playerId = context.castingPlayerId();
         List<Card> hand = context.gameData().playerHands.get(playerId);
         UUID spellId = context.spell().getId();

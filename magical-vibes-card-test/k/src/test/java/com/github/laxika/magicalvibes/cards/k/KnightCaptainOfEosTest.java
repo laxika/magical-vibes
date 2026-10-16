@@ -122,7 +122,6 @@ class KnightCaptainOfEosTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, equipment.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(equipment);

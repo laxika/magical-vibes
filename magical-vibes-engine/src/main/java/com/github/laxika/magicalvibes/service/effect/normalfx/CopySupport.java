@@ -226,6 +226,7 @@ public class CopySupport {
         copy.setSacrificedPermanentSnapshot(source.getSacrificedPermanentSnapshot() == null
                 ? null : new com.github.laxika.magicalvibes.model.Permanent(source.getSacrificedPermanentSnapshot()));
         copy.setKicked(source.isKicked());
+        copy.setGiftPromised(source.isGiftPromised());
         copy.setAlternateCost(source.isAlternateCost());
         copy.setWaterbendCostPaid(source.isWaterbendCostPaid());
         copy.setCastForForetell(source.isCastForForetell());

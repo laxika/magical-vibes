@@ -34,6 +34,7 @@ class KessigNaturalistTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "Add {R}");
+        harness.passBothPriorities();
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
@@ -48,6 +49,7 @@ class KessigNaturalistTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Add {G}");
+        harness.passBothPriorities();
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
@@ -114,6 +116,7 @@ class KessigNaturalistTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, lord));
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Add {R}");
+        harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();

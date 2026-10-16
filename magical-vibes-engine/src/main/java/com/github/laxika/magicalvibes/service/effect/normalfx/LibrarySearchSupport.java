@@ -92,6 +92,30 @@ public class LibrarySearchSupport {
         List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerBasicLandSearches());
         while (!remaining.isEmpty()) {
             UUID nextPlayerId = remaining.remove(0);
+            LibrarySearchFollowUp nextFollowUp = followUp.withRemainingEachPlayerBasicLandSearches(remaining);
+            if (maySearch) {
+                List<Card> deck = gameData.playerDecks.get(nextPlayerId);
+                if (deck != null && !deck.isEmpty() && !isSearchPrevented(gameData, nextPlayerId)
+                        && opponentSearchTopCardsLimit(gameData, nextPlayerId) == Integer.MAX_VALUE) {
+                    // The optional search is offered even when the library holds no basic land: the
+                    // player may decline, and declining means they never searched and do not shuffle.
+                    sendLibrarySearchToPlayer(gameData, nextPlayerId,
+                            LibrarySearchParams.builder(nextPlayerId,
+                                            deck.stream()
+                                                    .filter(card -> card.hasType(CardType.LAND)
+                                                            && gameQueryService.cardHasSupertype(card,
+                                                            CardSupertype.BASIC, gameData, nextPlayerId))
+                                                    .toList())
+                                    .canFailToFind(true)
+                                    .prompt(prompt)
+                                    .destination(destination)
+                                    .followUp(nextFollowUp)
+                                    .declineSkipsShuffle(true)
+                                    .build(),
+                            prompt, true);
+                    return true;
+                }
+            }
             boolean started = performLibrarySearch(
                     gameData,
                     nextPlayerId,
@@ -102,7 +126,7 @@ public class LibrarySearchSupport {
                     false,
                     true,
                     destination,
-                    followUp.withRemainingEachPlayerBasicLandSearches(remaining)
+                    nextFollowUp
             );
             if (started) {
                 return true;

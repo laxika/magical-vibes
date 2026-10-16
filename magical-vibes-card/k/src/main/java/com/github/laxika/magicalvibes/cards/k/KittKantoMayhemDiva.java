@@ -12,13 +12,13 @@ import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTu
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 import java.util.Set;
@@ -36,16 +36,13 @@ public class KittKantoMayhemDiva extends Card {
         PermanentPredicate activePlayerCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledByActivePlayerPredicate()));
-        target(new PermanentPredicateTargetFilter(
-                activePlayerCreature,
-                "Target must be a creature that player controls"))
-                .addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
-                        new MayPayTapPermanentsEffect(
-                                new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()),
-                                SequenceEffect.of(
-                                        new BoostTargetCreatureEffect(2, 2, activePlayerCreature),
-                                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
-                                        new GoadTargetCreatureUntilNextTurnEffect(activePlayerCreature)),
-                                "Tap two untapped creatures you control?"));
+        addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
+                new MayPayTapPermanentsEffect(
+                        new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()),
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                                new BoostTargetCreatureEffect(2, 2, activePlayerCreature),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                                new GoadTargetCreatureUntilNextTurnEffect(activePlayerCreature))),
+                        "Tap two untapped creatures you control?"));
     }
 }

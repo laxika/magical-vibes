@@ -1209,7 +1209,7 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record KillingWaveKeep(UUID choosingPlayerId, int xValue, String sourceName,
                            java.util.List<UUID> remainingPlayerIds,
-                           java.util.List<UUID> accumulatedKeepIds)
+                           java.util.List<UUID> accumulatedKeepIds, UUID sourceControllerId)
             implements MultiPermanentChoiceContext {
     }
 

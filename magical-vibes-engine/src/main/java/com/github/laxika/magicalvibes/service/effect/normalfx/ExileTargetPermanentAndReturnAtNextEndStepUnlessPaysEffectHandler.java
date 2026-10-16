@@ -41,6 +41,7 @@ public class ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffectHandler
             targetIds = entry.getTargetIds();
         }
 
+        boolean queued = false;
         for (UUID targetId : targetIds) {
             if (targetId == null) {
                 continue;
@@ -55,12 +56,20 @@ public class ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffectHandler
             }
 
             Card exiledCard = cards.getFirst();
+            queued = true;
             gameData.queueDelayedAction(new ReturnExiledCardAtNextEndStepUnlessPays(
                     exiledCard.getId(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
             gameLogService.append(gameData, GameLog.cardThen(exiledCard,
                     " is exiled. It will return at the beginning of the next end step unless its controller pays {3}{B}."));
             log.info("Game {} - {} exiles {}; return delayed until next end step unless paid",
                     gameData.id, entry.getCard().getName(), exiledCard.getName());
+        }
+
+        if (!queued && targetIds.stream().noneMatch(java.util.Objects::nonNull)) {
+            // "Up to one" with no target chosen: the delayed trigger is still created and its payment
+            // still offered, but there is no card to return.
+            gameData.queueDelayedAction(new ReturnExiledCardAtNextEndStepUnlessPays(
+                    null, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

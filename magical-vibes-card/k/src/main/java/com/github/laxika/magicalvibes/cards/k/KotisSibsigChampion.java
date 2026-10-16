@@ -19,7 +19,7 @@ public class KotisSibsigChampion extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 List.of(), 3));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD,
                 new EnteringCreatureFromGraveyardConditionalEffect(
                         new PutCountersOnSourceEffect(1, 1, 2)));
     }

@@ -96,6 +96,7 @@ class KeeperOfTheCrownTest extends BaseCardTest {
         harness.castAdventure(player1, 0, target.getId());
         harness.passBothPriorities();
 
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 

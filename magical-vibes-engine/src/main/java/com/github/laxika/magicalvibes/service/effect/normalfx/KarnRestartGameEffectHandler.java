@@ -88,7 +88,10 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
                 if (bf == null) continue;
                 for (Permanent perm : bf) {
                     if (!perm.getCard().isToken()) {
-                        UUID ownerId = gameData.stolenCreatures.getOrDefault(perm.getId(), ctrlId);
+                        UUID ownerId = perm.getOriginalCard().getOwnerId();
+                        if (ownerId == null) {
+                            ownerId = gameData.stolenCreatures.getOrDefault(perm.getId(), ctrlId);
+                        }
                         if (ownerId.equals(playerId)) {
                             owned.add(perm.getOriginalCard());
                         }
@@ -421,9 +424,13 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.permanentsSacrificedThisTurn.clear();
 
         // Step 4: Each player draws 7 cards (CR 726 — pregame procedure)
+        gameData.playersAttemptedDrawFromEmptyLibrary.clear();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> deck = gameData.playerDecks.get(playerId);
             int toDraw = Math.min(7, deck.size());
+            if (toDraw < 7) {
+                gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
+            }
             for (int i = 0; i < toDraw; i++) {
                 gameData.addCardToHand(playerId, deck.removeFirst());
             }

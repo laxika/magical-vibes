@@ -13,10 +13,11 @@ import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
 public class KindredDenial extends Card {
 
     public KindredDenial() {
-        // Seek first so the target spell's mana value is still available.
+        // Counter first, then seek: the countered spell's mana value is remembered on the resolving entry,
+        // and a spell shuffled into its owner's library by a replacement effect can be the card sought.
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL, new SeekCardsToHandEffect(
                 new Fixed(1), null,
                 new ManaValueBound(new TargetSpellManaValue(), true, 0)));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

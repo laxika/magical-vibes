@@ -29,6 +29,8 @@ public class GrantExtraLoyaltyActivationToSourceEffectHandler implements NormalE
                 || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, source.getId()))) {
             return;
         }
-        source.setExtraLoyaltyActivationsThisTurn(source.getExtraLoyaltyActivationsThisTurn() + 1);
+        int current = source.getExtraLoyaltyActivationsThisTurn();
+        source.setExtraLoyaltyActivationsThisTurn(
+                ((GrantExtraLoyaltyActivationToSourceEffect) effect).nonStacking() ? Math.max(current, 1) : current + 1);
     }
 }

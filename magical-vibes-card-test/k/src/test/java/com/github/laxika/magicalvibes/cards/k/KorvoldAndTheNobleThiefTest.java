@@ -140,6 +140,7 @@ class KorvoldAndTheNobleThiefTest extends BaseCardTest {
         resolveThirdChapter();
 
         harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 

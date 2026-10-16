@@ -81,6 +81,11 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
                 if (targetPermanent != null) {
                     copySources.addAll(Collections.nCopies(copyCount, copySourceFor(targetPermanent)));
+                    continue;
+                }
+                Card lastKnownCard = entry.lastKnownPermanentCard(targetId);
+                if (lastKnownCard != null) {
+                    copySources.addAll(Collections.nCopies(copyCount, lastKnownCard));
                 }
             }
             tokenCopySupport.createTokenCopies(gameData, entry, copySources, sourcePermanent,

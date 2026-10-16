@@ -2460,10 +2460,33 @@ public class MayCastHandlerService {
     }
 
     private void queueDeclineEffect(GameData gameData, PendingMayAbility ability) {
+        if (hasSiblingChoiceGroupOffers(gameData, ability)) {
+            return;
+        }
         CardEffect declineEffect = declineEffect(ability);
         if (declineEffect != null) {
             queueEffectAfterMayChoice(gameData, declineEffect);
         }
+    }
+
+    /**
+     * True when another offer from the same cast-from-hand choice group is still pending. The
+     * decline effect ("if you don't, ...") applies only once every offer in the group is declined.
+     */
+    private boolean hasSiblingChoiceGroupOffers(GameData gameData, PendingMayAbility ability) {
+        UUID choiceGroupId = ability.effects().stream()
+                .filter(MayCastFromHandWithoutPayingManaCostEffect.class::isInstance)
+                .map(MayCastFromHandWithoutPayingManaCostEffect.class::cast)
+                .map(MayCastFromHandWithoutPayingManaCostEffect::choiceGroupId)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+        if (choiceGroupId == null) {
+            return false;
+        }
+        return gameData.pendingMayAbilities.stream().anyMatch(pending -> pending.effects().stream()
+                .anyMatch(effect -> effect instanceof MayCastFromHandWithoutPayingManaCostEffect may
+                        && choiceGroupId.equals(may.choiceGroupId())));
     }
 
     private CardEffect declineEffect(PendingMayAbility ability) {

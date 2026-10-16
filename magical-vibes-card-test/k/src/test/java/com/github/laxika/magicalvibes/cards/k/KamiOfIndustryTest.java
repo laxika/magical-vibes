@@ -41,6 +41,7 @@ class KamiOfIndustryTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Mind Stone");
@@ -117,6 +118,7 @@ class KamiOfIndustryTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Runaway Trash-Bot");

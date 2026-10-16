@@ -2183,7 +2183,8 @@ public class SpellCastTriggerCollectorService {
         int manaValue = spellManaValue(match.gameData(), sc.spellCard());
         List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(manaValue));
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects)
+                match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects),
+                false, null, 0, match.permanent().getId()
         ));
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s triggered ability triggers — choose a target for " + manaValue + " damage."));
@@ -3164,9 +3165,14 @@ public class SpellCastTriggerCollectorService {
                     spellCard.getId()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         } else if (needsGraveyardTarget) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    sourceCard, match.controllerId(), resolved
-            ));
+            boolean markOnAcceptance = match.rawEffect() instanceof OncePerTurnTriggerEffect once
+                    && once.markOnAcceptance();
+            match.gameData().queueInteraction(markOnAcceptance
+                    ? new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            sourceCard, match.controllerId(), resolved, null, 0, 0, 0, null, false, null,
+                            sourcePermanentId, true)
+                    : new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            sourceCard, match.controllerId(), resolved));
             log.info("Game {} - {} spell-cast graveyard-target trigger queued",
                     match.gameData().id, sourceCard.getName());
         } else if (needsSpellTarget && !needsTargeting) {

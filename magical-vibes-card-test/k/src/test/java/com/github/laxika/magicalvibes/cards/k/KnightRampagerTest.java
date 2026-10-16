@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DenyTheWitch;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -157,6 +158,7 @@ class KnightRampagerTest extends BaseCardTest {
     void attackTargetRequirementExpiresAfterCombat() {
         Permanent knight = addReadyKnight(player1);
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
         knight.tap();
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();

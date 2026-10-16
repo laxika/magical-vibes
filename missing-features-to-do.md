@@ -179,6 +179,25 @@ Don't commit until I say so.
 
 ---
 
+## 31. Ordering competing "dies → exile instead" replacements
+
+**Status:** open · **Found:** 2026-10-16, `K` test batch
+
+**Failing tests:**
+- `KalitasTraitorOfGhetTest.opponentChoosesBetweenKalitasAndFlayingTendrilsReplacements()`
+
+**What the rules require.** CR 616.1: when two or more replacement effects try to modify the same event, the affected object's controller chooses one to apply. With Kalitas, Traitor of Ghet ("exile it instead … create a 2/2 Zombie") and Flaying Tendrils ("exile it instead") both applying to an opponent's dying creature, that creature's controller picks which applies. The engine's `PermanentRemovalService` / `tryApplyExileReplacementEffect` just applies the exile replacements in a fixed order with no prompt, so Kalitas's Zombie rider can be lost.
+
+**Why it's large.** Creature death goes through `removePermanentToGraveyard` from many callers that expect a synchronous result. A prompt needs a dying-creature `ReplacementEvent` listing candidate sources, plus a resume path through every caller, including simultaneous-death batches.
+
+**Prompt to start it:**
+
+```
+Implement CR 616.1 ordering for competing "if a creature would die, exile it instead" replacement effects (Kalitas, Traitor of Ghet; Flaying Tendrils; Rest in Peace-style effects with riders). When two or more apply to the same dying creature and their outcomes differ, prompt the creature's controller to choose which applies, then resume the removal. Start from PermanentRemovalService.tryApplyExileReplacementEffect and the existing ReplacementOrderService. Make KalitasTraitorOfGhetTest.opponentChoosesBetweenKalitasAndFlayingTendrilsReplacements pass without breaking other death-replacement tests.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

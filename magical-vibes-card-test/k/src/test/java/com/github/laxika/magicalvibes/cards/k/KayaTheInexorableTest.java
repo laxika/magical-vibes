@@ -219,6 +219,7 @@ class KayaTheInexorableTest extends BaseCardTest {
     @Test
     void ultimateDoesNotUseCardsOwnedByOpponent() {
         createEmblem();
+        harness.setHand(player1, List.of());
         harness.setExile(player2, List.of(new TyvarKell()));
         advanceToUpkeep(player1);
         resolveAllTriggers();

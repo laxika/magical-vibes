@@ -474,28 +474,6 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleKayaSpiritsJusticeTokenChoice(GameData gameData, UUID targetId,
-                                                     PermanentChoiceContext.KayaSpiritsJusticeTokenChoice kaya) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                kaya.sourceCard(),
-                kaya.controllerId(),
-                kaya.sourceCard().getName() + "'s ability",
-                new ArrayList<>(List.of(
-                        new BecomeCopyOfCardUntilEndOfTurnEffect(kaya.chosenCard()),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET))),
-                null,
-                targetId
-        );
-        entry.setTargetId(targetId);
-        pushTriggeredEntry(gameData, entry);
-        gameLogService.append(gameData, GameLog.builder().card(kaya.sourceCard())
-                .text("'s ability targets a token to become a copy of "
-                        + kaya.chosenCard().getName() + ".").build());
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleExploreTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.ExploreTriggerTarget ett) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

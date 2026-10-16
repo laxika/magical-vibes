@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.c.CourserOfKruphix;
+import com.github.laxika.magicalvibes.cards.s.SythisHarvestsHand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KavaronConsumed.class, GrizzlyBears.class, SolRing.class, CourserOfKruphix.class})
+@CardUsed({KavaronConsumed.class, GrizzlyBears.class, SolRing.class, SythisHarvestsHand.class})
 class KavaronConsumedTest extends BaseCardTest {
 
     @Test
@@ -125,14 +125,14 @@ class KavaronConsumedTest extends BaseCardTest {
     @Test
     @DisplayName("Becoming an artifact creature retains the enchantment card type")
     void retainsEnchantmentType() {
-        harness.setHand(player1, List.of(new KavaronConsumed(), new CourserOfKruphix()));
+        harness.setHand(player1, List.of(new KavaronConsumed(), new SythisHarvestsHand()));
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
-        Permanent chosen = findPermanent(player1, "Courser of Kruphix");
+        Permanent chosen = findPermanent(player1, "Sythis, Harvest's Hand");
         assertThat(gqs.isArtifact(gd, chosen)).isTrue();
         assertThat(gqs.isCreature(gd, chosen)).isTrue();
         assertThat(gqs.isEnchantment(gd, chosen)).isTrue();

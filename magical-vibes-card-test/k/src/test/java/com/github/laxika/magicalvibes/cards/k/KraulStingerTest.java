@@ -40,6 +40,9 @@ class KraulStingerTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, java.util.Map.of(
+                stinger.getId(), 2,
+                player2.getId(), 4));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(stinger);

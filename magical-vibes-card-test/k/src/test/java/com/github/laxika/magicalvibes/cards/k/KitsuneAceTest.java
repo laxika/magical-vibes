@@ -75,6 +75,7 @@ class KitsuneAceTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(player1, List.of(indexOf(player1, vehicle)));
+            harness.passBothPriorities();
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
             harness.handleListChoice(player1, "That Vehicle gains first strike until end of turn");

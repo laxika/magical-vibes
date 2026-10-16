@@ -11,7 +11,7 @@ public class KronchWrangler extends Card {
 
     public KronchWrangler() {
         // Whenever a creature you control with power 4 or greater enters, put a +1/+1 counter on this creature.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(4,
                         new PutCountersOnSourceEffect(1, 1, 1)));
     }

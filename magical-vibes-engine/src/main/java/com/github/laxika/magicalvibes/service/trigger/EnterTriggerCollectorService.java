@@ -560,6 +560,7 @@ public class EnterTriggerCollectorService {
     @CollectsTriggers({
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
@@ -947,6 +948,12 @@ public class EnterTriggerCollectorService {
                     tokensEnter.permanentIds(),
                     List.of());
             entry.setNonTargeting(true);
+            for (UUID tokenId : tokensEnter.permanentIds()) {
+                Permanent token = gameQueryService.findPermanentById(match.gameData(), tokenId);
+                if (token != null) {
+                    entry.rememberLastKnownPermanentCard(tokenId, token.getCard());
+                }
+            }
             match.gameData().enqueueTrigger(entry);
         }
         logTriggered(match);

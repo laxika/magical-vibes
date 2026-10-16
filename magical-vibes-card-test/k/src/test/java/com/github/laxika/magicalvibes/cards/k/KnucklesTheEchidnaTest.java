@@ -22,6 +22,7 @@ class KnucklesTheEchidnaTest extends BaseCardTest {
     @Test
     @DisplayName("Creates one Treasure for each combat damage step that reaches a player")
     void createsTreasureForBothDoubleStrikeDamageSteps() {
+        clearHands();
         addCreatureReady(player1, new KnucklesTheEchidna());
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -69,9 +70,14 @@ class KnucklesTheEchidnaTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
+    private void clearHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
+
     private void resolveCombatUnblocked() {
         gs.declareBlockers(gd, player2, List.of());
-        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        resolveCombat(player1);
     }
 
     private long treasureCount(Player player) {
@@ -88,6 +94,7 @@ class KnucklesTheEchidnaTest extends BaseCardTest {
 
     @Test
     void simultaneousCreatureDamageCreatesOnlyOneTreasure() {
+        clearHands();
         harness.addToBattlefield(player1, new KnucklesTheEchidna());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
@@ -101,13 +108,15 @@ class KnucklesTheEchidnaTest extends BaseCardTest {
 
     @Test
     void opponentCreatureDamageDoesNotCreateTreasure() {
+        clearHands();
         harness.addToBattlefield(player1, new KnucklesTheEchidna());
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());
-        harness.passUntil(player2, TurnStep.END_OF_COMBAT);
+        resolveCombat(player2);
 
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
         assertThat(treasureCount(player1)).isZero();
     }
 

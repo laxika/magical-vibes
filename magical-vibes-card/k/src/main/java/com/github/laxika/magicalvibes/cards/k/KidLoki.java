@@ -16,7 +16,7 @@ public class KidLoki extends Card {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.HEXPROOF,
                 GrantScope.ALL_OWN_CREATURES,
-                new PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate()));
+                new PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate(true)));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 new PutCountersOnSourceEffect(1, 1, 1));
     }

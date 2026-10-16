@@ -81,7 +81,7 @@ class KykarZephyrAwakenerTest extends BaseCardTest {
     void stolenCreatureReturnsToOwnerWithoutKykar() {
         Permanent kykar = harness.addToBattlefieldAndReturn(player1, new KykarZephyrAwakener());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.stolenCreatures.put(target.getId(), player2.getId());
+        setOwnerAndController(target, player2, player1);
 
         castNoncreatureSpell();
         harness.handleListChoice(player1, FLICKER);
@@ -134,9 +134,7 @@ class KykarZephyrAwakenerTest extends BaseCardTest {
         harness.handleListChoice(player1, FLICKER);
         harness.handlePermanentChosen(player1, target.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        setOwnerAndController(target, player1, player2);
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Grizzly Bears").getId()).isEqualTo(target.getId());

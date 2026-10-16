@@ -86,7 +86,8 @@ class KravenProudPredatorTest extends BaseCardTest {
     void attackingDoesNotTapKraven() {
         Permanent kraven = addCreatureReady(player1, new KravenProudPredator());
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
 
         assertThat(kraven.isAttacking()).isTrue();
         assertThat(kraven.isTapped()).isFalse();

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.ConvokeCreatureCount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
@@ -21,7 +20,7 @@ public class KnightErrantOfEos extends Card {
         ConvokeCreatureCount convokeCount = new ConvokeCreatureCount();
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LookAtTopCardsEffect(
                 new Fixed(6),
-                new Min(new Fixed(2), convokeCount),
+                new Fixed(2),
                 new CardTypePredicate(CardType.CREATURE),
                 LookDestination.BOTTOM_OF_LIBRARY_RANDOM,
                 false,

@@ -120,7 +120,8 @@ class KeldonBattlewagonTest extends BaseCardTest {
         Permanent battlewagon = addCreatureReady(player1, new KeldonBattlewagon());
 
         declareAttackers(List.of(index(battlewagon)));
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Keldon Battlewagon");
         harness.assertInGraveyard(player1, "Keldon Battlewagon");

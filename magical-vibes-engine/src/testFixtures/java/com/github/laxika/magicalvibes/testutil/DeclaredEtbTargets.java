@@ -106,9 +106,12 @@ final class DeclaredEtbTargets {
             targetLegalityService.validateMultiSpellTargets(gameData, card, etbTargets, player.getId(), xValue, kicked);
         } else if (modalEtbOption(card, xValue) != null) {
             // The mode is chosen as the spell is cast (xValue), so the target is checked against it.
+            ChooseOneEffect.ChooseOneOption option = modalEtbOption(card, xValue);
             for (UUID etbTarget : etbTargets) {
-                targetLegalityService.validateEffectTargetInZone(gameData, card, modalEtbOption(card, xValue).effects(),
+                targetLegalityService.validateEffectTargetInZone(gameData, card, option.effects(),
                         etbTarget, Zone.BATTLEFIELD, xValue, player.getId());
+                targetLegalityService.validatePermanentTargetFilter(gameData, option.targetFilter(), card,
+                        etbTarget, player.getId());
             }
         } else {
             for (UUID etbTarget : etbTargets) {

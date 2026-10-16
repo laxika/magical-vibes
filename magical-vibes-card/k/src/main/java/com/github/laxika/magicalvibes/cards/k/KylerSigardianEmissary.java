@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -31,8 +31,8 @@ public class KylerSigardianEmissary extends Card {
                 new TriggeringPermanentConditionalEffect(OTHER_HUMAN,
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
         addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
-                new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
-                new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
+                new AllCountersOnSource(),
+                new AllCountersOnSource(),
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
     }

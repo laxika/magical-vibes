@@ -8,14 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForInstantOrSorcerySharingSourceColorAndMayCastEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -48,15 +43,6 @@ public class KasminaEnigmaSage extends Card {
         addActivatedAbility(fractalAbility);
         addActivatedAbility(searchAbility);
 
-        var otherPlaneswalkers = new PermanentAllOfPredicate(List.of(
-                new PermanentIsPlaneswalkerPredicate(),
-                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-        ));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                scryAbility, GrantScope.OWN_PERMANENTS, otherPlaneswalkers));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                fractalAbility, GrantScope.OWN_PERMANENTS, otherPlaneswalkers));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                searchAbility, GrantScope.OWN_PERMANENTS, otherPlaneswalkers));
+        addEffect(EffectSlot.STATIC, new ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect());
     }
 }

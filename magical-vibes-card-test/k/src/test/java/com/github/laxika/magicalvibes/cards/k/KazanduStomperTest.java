@@ -91,7 +91,7 @@ class KazanduStomperTest extends BaseCardTest {
     @Test
     void returnsAControlledLandToItsOwnersHand() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        gd.stolenCreatures.put(forest.getId(), player2.getId());
+        setOwnerAndController(forest, player2, player1);
         castStomper();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));

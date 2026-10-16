@@ -53,7 +53,7 @@ public class KatsumasaTheAnimator extends Card {
                                 new NotCondition(new TargetPermanentMatches(
                                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                                 new SetBasePowerToughnessEffect(1, 1,
-                                        EffectDuration.UNTIL_END_OF_TURN, noncreatureArtifact))
+                                        EffectDuration.UNTIL_END_OF_TURN, new PermanentIsArtifactPredicate()))
                 ),
                 "{2}{U}: Until end of turn, target noncreature artifact you control becomes an artifact creature and gains flying. If it's not a Vehicle, it has base power and toughness 1/1 until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(noncreatureArtifact,

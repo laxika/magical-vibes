@@ -44,7 +44,7 @@ class KavaronHarrierTest extends BaseCardTest {
         assertThat(robot.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(robot.getCard().getColors()).isEmpty();
         assertThat(robot.isTapped()).isTrue();
-        assertThat(robot.isAttackedThisTurn()).isTrue();
+        assertThat(robot.isAttacking()).isTrue();
         assertThat(robot.getAttackTarget()).isEqualTo(harrier.getAttackTarget());
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

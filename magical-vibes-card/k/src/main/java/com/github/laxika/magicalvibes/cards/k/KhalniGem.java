@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsToHandSimultaneouslyEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -15,10 +14,8 @@ import java.util.List;
 public class KhalniGem extends Card {
 
     public KhalniGem() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
-                new ReturnPermanentControlledByPlayerToHandEffect(new PermanentIsLandPredicate(), "land"),
-                new ReturnPermanentControlledByPlayerToHandEffect(new PermanentIsLandPredicate(), "land")
-        ));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new ReturnPermanentsToHandSimultaneouslyEffect(new PermanentIsLandPredicate(), "land", 2));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

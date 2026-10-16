@@ -102,14 +102,11 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
                     ? multiplier * gameQueryService.getCombatDamageToCreatureMultiplier(ctx.gameData(), ctx.target())
                     : multiplier;
         }
-        int multiplier = gameQueryService.getDealingSourceDamageMultiplier(ctx.gameData(), ctx.entry());
         Permanent explicitSource = ctx.event().explicitSource();
         if (explicitSource != null && !explicitSource.getId().equals(ctx.entry().getSourcePermanentId())) {
-            multiplier *= gameQueryService.getSourceDamageMultiplier(ctx.gameData(), ctx.sourceControllerId(),
-                    explicitSource)
-                    * gameQueryService.getPermanentDamageMultiplier(ctx.gameData(), explicitSource.getId());
+            return gameQueryService.getExplicitSourceDamageMultiplier(ctx.gameData(), ctx.entry(), explicitSource);
         }
-        return multiplier;
+        return gameQueryService.getDealingSourceDamageMultiplier(ctx.gameData(), ctx.entry());
     }
 
     private int replacedDamage(PermanentDamageContext ctx) {

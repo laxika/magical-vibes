@@ -80,9 +80,10 @@ class KardursViciousReturnTest extends BaseCardTest {
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player2, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
-        harness.passUntil(player1, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
     }
 

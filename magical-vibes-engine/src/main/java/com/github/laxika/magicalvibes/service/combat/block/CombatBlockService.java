@@ -2558,10 +2558,13 @@ public class CombatBlockService {
                     }
                 } else if (effectiveEffect instanceof GrantAdditionalBlockPerEquipmentEffect
                         && p.getId().equals(creature.getId())) {
-                    for (Permanent eq : battlefield) {
-                        if (eq.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                                && creature.getId().equals(eq.getAttachedTo())) {
-                            additionalBlocks++;
+                    // Equipment counts while attached to the creature, whichever player controls it.
+                    for (List<Permanent> controlledPermanents : gameData.playerBattlefields.values()) {
+                        for (Permanent eq : controlledPermanents) {
+                            if (eq.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                                    && creature.getId().equals(eq.getAttachedTo())) {
+                                additionalBlocks++;
+                            }
                         }
                     }
                 }

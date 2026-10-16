@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -25,6 +26,10 @@ import com.github.laxika.magicalvibes.model.effect.SeekInstantOrSorceryAndMayCas
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeKarlachEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -43,24 +48,28 @@ import java.util.Set;
 public class KarlachRagingTiefling extends Card {
 
     public KarlachRagingTiefling() {
-        addSpecializeAbility(CardColor.WHITE);
-        addSpecializeAbility(CardColor.BLUE);
-        addSpecializeAbility(CardColor.BLACK);
-        addSpecializeAbility(CardColor.RED);
-        addSpecializeAbility(CardColor.GREEN);
+        addSpecializeAbility(CardColor.WHITE, CardSubtype.PLAINS);
+        addSpecializeAbility(CardColor.BLUE, CardSubtype.ISLAND);
+        addSpecializeAbility(CardColor.BLACK, CardSubtype.SWAMP);
+        addSpecializeAbility(CardColor.RED, CardSubtype.MOUNTAIN);
+        addSpecializeAbility(CardColor.GREEN, CardSubtype.FOREST);
     }
 
-    private void addSpecializeAbility(CardColor color) {
-        addActivatedAbility(createSpecializeAbility(color));
-        addGraveyardActivatedAbility(createSpecializeAbility(color));
+    private void addSpecializeAbility(CardColor color, CardSubtype basicLandType) {
+        addActivatedAbility(createSpecializeAbility(color, basicLandType));
+        addGraveyardActivatedAbility(createSpecializeAbility(color, basicLandType));
     }
 
-    private static ActivatedAbility createSpecializeAbility(CardColor color) {
+    private static ActivatedAbility createSpecializeAbility(CardColor color, CardSubtype basicLandType) {
+        CardPredicate discardFilter = new CardAnyOfPredicate(List.of(
+                new CardColorPredicate(color), new CardSubtypePredicate(basicLandType)));
+        String discardLabel = color.name().toLowerCase() + " card or " + basicLandType.name().toLowerCase();
         return new ActivatedAbility(
                 false,
                 "{6}",
-                List.of(new SpecializeKarlachEffect(color)),
-                "Rage Beyond Death — Specialize {6}",
+                List.of(new DiscardCardTypeCost(discardFilter, discardLabel),
+                        new SpecializeKarlachEffect(color)),
+                "Rage Beyond Death — Specialize {6} (discard a " + discardLabel + ")",
                 ActivationTimingRestriction.SORCERY_SPEED);
     }
 

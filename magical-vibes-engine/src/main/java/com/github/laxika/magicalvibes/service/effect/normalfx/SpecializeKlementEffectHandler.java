@@ -9,14 +9,15 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Boon;
+import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateBoonEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekThreeNonlandPermanentAndChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeKlementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -114,8 +115,9 @@ public class SpecializeKlementEffectHandler implements NormalEffectHandlerBean {
         }
         source.exchangeCard(specialized);
         if (specialize.color() == CardColor.WHITE) {
-            gameData.boons.add(new Boon(entry.getControllerId(), specialized,
-                    new PutCountersOnEnteringCreatureEffect(CounterType.LIFELINK, 1, false), 1));
+            enqueueSpecializationTrigger(gameData, entry, specialized, new CreateBoonEffect(1,
+                    new GrantAdditionalCounterToTriggeringCreatureSpellEffect(CounterType.LIFELINK, 1),
+                    BoonTrigger.CREATURE_CAST, null));
         } else if (specialize.color() == CardColor.BLACK) {
             enqueueSpecializationTrigger(gameData, entry, specialized, CreateTokenEffect.blackZombie(2));
         } else if (specialize.color() == CardColor.BLUE) {

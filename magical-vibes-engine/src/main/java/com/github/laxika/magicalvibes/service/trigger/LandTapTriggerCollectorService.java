@@ -612,14 +612,18 @@ public class LandTapTriggerCollectorService {
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;
         boolean subtypeMatches = trigger.subtypes().stream()
-                .anyMatch(tappedLand.getCard().getSubtypes()::contains);
+                .anyMatch(subtype -> gameQueryService.hasEffectiveSubtype(match.gameData(), tappedLand, subtype));
         if (!subtypeMatches) return false;
 
         ManaColor producedColor = null;
-        for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
-            if (tapEffect instanceof AwardManaEffect awardMana) {
-                producedColor = awardMana.color();
-                break;
+        if (lt.producedColors().size() == 1) {
+            producedColor = lt.producedColors().iterator().next();
+        } else {
+            for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
+                if (tapEffect instanceof AwardManaEffect awardMana) {
+                    producedColor = awardMana.color();
+                    break;
+                }
             }
         }
         if (producedColor == null) return false;

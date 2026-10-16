@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DOM", collectorNumber = "134")
 public class KeldonOverseer extends Card {
@@ -24,14 +25,12 @@ public class KeldonOverseer extends Card {
 
         // When this creature enters, if it was kicked, gain control of target creature
         // until end of turn. Untap that creature. It gains haste until end of turn.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), 
-                new GainControlOfTargetEffect(ControlDuration.END_OF_TURN)
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), 
-                new UntapPermanentsEffect(TapUntapScope.TARGET)
-        ));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), 
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
-        ));
+        target(TargetFilters.creature())
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN)))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET)))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)));
     }
 }

@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * Escape-hatch validators for the destroy / sacrifice family. The structural single-target
  * destroy / sacrifice effects now carry a harmful {@code TargetSpec} interpreted by
@@ -46,7 +49,15 @@ public class DestructionTargetValidators {
             throw new IllegalStateException("Target must be a creature blocking this creature");
         }
         int sourceIndex = tvs.findSourcePermanentIndex(ctx);
-        if (sourceIndex < 0 || !target.getBlockingTargets().contains(sourceIndex)) {
+        if (sourceIndex < 0) {
+            throw new IllegalStateException("Target must be a creature blocking this creature");
+        }
+        // The blocked attacker is tracked by id so the relationship survives a change in battlefield order.
+        List<UUID> blockedIds = target.getBlockingTargetIds();
+        boolean blockingThis = blockedIds.isEmpty()
+                ? target.getBlockingTargets().contains(sourceIndex)
+                : blockedIds.contains(tvs.findSourcePermanentId(ctx));
+        if (!blockingThis) {
             throw new IllegalStateException("Target must be a creature blocking this creature");
         }
     }

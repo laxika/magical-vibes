@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -38,8 +39,8 @@ class KessigCagebreakersTest extends BaseCardTest {
 
         gs.declareAttackers(gd, player1, List.of(0));
 
-        // Resolve the attack trigger
-        harness.passBothPriorities();
+        // Resolve the attack trigger, stopping before the tokens leave combat
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
 
         // 3 Wolf tokens should be on the battlefield
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
@@ -191,7 +192,7 @@ class KessigCagebreakersTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(cagebreakers);
         harness.setGraveyard(player1, List.of(cagebreakers.getCard()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().isToken()).hasSize(1)
@@ -208,6 +209,7 @@ class KessigCagebreakersTest extends BaseCardTest {
         cagebreakers.setSummoningSick(false);
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
         battle.setProtectorPlayerId(player2.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
         harness.setGraveyard(player1, List.of(new AvacynsPilgrim()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -220,7 +222,8 @@ class KessigCagebreakersTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validPermanentIds()).contains(battle.getId());
-        harness.handlePermanentChosen(player1, battle.getId());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handlePermanentChosen(player1, battle.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().isToken()).hasSize(1)
                 .allSatisfy(token -> {

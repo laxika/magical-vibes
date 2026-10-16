@@ -48,7 +48,7 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, caravan)).isTrue();
         assertThat(gqs.hasKeyword(gd, caravan, Keyword.FLYING)).isTrue();
-        assertThat(gqs.effectiveCreatureSubtypes(gd, caravan)).contains(CardSubtype.VEHICLE);
+        assertThat(gqs.getEffectiveSubtypes(gd, caravan)).contains(CardSubtype.VEHICLE);
         assertThat(gqs.getEffectivePower(gd, caravan)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, caravan)).isEqualTo(5);
     }
@@ -115,7 +115,6 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, ring.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
         activateAnimation(ring);
 
@@ -177,7 +176,6 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, caravan.getId());
         harness.handlePermanentChosen(player1, ring.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         activateAnimation(caravan);
         resolveAllTriggers();
 

@@ -2625,10 +2625,6 @@ public class CastingCostService {
                                 ? effect.amount() : 0)
                         .sum())
                 .sum();
-        if (battlefieldReduction != 0) {
-            return battlefieldReduction;
-        }
-
         int ownPermanentReduction = card.getEffects(EffectSlot.STATIC).stream()
                 .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
                 .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
@@ -2643,8 +2639,10 @@ public class CastingCostService {
                                         .withSourceCardId(card.getId())
                                         .withSourceControllerId(playerId))) ? effect.amount() : 0)
                 .sum();
-        if (ownPermanentReduction != 0) {
-            return ownPermanentReduction;
+        // CR 601.2f: every cost reduction that applies is subtracted, so a battlefield source and the
+        // spell's own targeting reduction stack.
+        if (battlefieldReduction + ownPermanentReduction != 0) {
+            return battlefieldReduction + ownPermanentReduction;
         }
 
         UUID firstTargetId = targetIds.getFirst();

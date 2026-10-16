@@ -121,5 +121,6 @@ class KneelBeforeMyLegionsTest extends BaseCardTest {
                 sourceCard.getEffects(EffectSlot.SPELL)));
         harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
+        resolveAllTriggers();
     }
 }

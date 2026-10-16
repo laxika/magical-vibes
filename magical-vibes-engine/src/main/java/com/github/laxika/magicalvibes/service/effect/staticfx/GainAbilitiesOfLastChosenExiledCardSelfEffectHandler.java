@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import org.springframework.stereotype.Component;
@@ -40,9 +42,15 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         Card chosenCard = context.source().getLastChosenExiledCard();
         if (chosenCard == null) return;
+        if (context.gameData() != null && context.gameData().getCardsExiledByPermanent(context.source().getId())
+                .stream().noneMatch(c -> c.getId().equals(chosenCard.getId()))) {
+            return;
+        }
 
+        String link = "gained:" + chosenCard.getId();
         for (ActivatedAbility ability : chosenCard.getActivatedAbilities()) {
-            accumulator.addActivatedAbility(ability);
+            accumulator.addActivatedAbility(ability.withEffects(ability.getEffects().stream()
+                    .map(gainedEffect -> linkGainedEffect(gainedEffect, link)).toList()));
         }
 
         var onTapEffects = chosenCard.getEffects(EffectSlot.ON_TAP);
@@ -58,5 +66,20 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
                         slot, triggeredEffect, GrantScope.SELF));
             }
         }
+    }
+
+    /**
+     * An exile ability gained from the chosen card tracks its cards under a link of its own, and the gained
+     * ability that returns them looks only at that link, so neither touches cards exiled by the
+     * gaining permanent's own abilities.
+     */
+    private static CardEffect linkGainedEffect(CardEffect effect, String link) {
+        if (effect instanceof ExileTargetPermanentAndTrackWithSourceEffect) {
+            return new ExileTargetPermanentAndTrackWithSourceEffect(link);
+        }
+        if (effect instanceof ReturnCardExiledWithSourceToBattlefieldEffect returnEffect) {
+            return returnEffect.withAbilityLink(link);
+        }
+        return effect;
     }
 }

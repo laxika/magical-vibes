@@ -18,13 +18,16 @@ import java.util.List;
 @CardRegistration(set = "KTK", collectorNumber = "75")
 public class KheruBloodsucker extends Card {
 
+    private static final TriggeringPermanentConditionalEffect DEATH_TRIGGER =
+            new TriggeringPermanentConditionalEffect(
+                    new PermanentToughnessAtLeastPredicate(4),
+                    SequenceEffect.of(
+                            new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
+                            new GainLifeEffect(2)));
+
     public KheruBloodsucker() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentToughnessAtLeastPredicate(4),
-                        SequenceEffect.of(
-                                new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
-                                new GainLifeEffect(2))));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, DEATH_TRIGGER);
+        addEffect(EffectSlot.ON_DEATH, DEATH_TRIGGER);
 
         addActivatedAbility(new ActivatedAbility(
                 false,

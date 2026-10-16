@@ -2356,7 +2356,7 @@ public class CardChoiceHandlerService {
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
         if (choice.enterAttacking()) {
-            permanent.setAttacking(true);
+            permanent.enterAttacking(true);
             permanent.setAttackTarget(choice.attackTargetId());
         }
         if (!player.getId().equals(originalOwnerId)) {
@@ -2997,7 +2997,7 @@ public class CardChoiceHandlerService {
     }
 
     private void enterAttackingWithInheritedTarget(GameData gameData, Permanent permanent, UUID attackTargetId) {
-        permanent.setAttacking(true);
+        permanent.enterAttacking(true);
         permanent.setAttackTarget(attackTargetId);
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (pendingEntry != null) {

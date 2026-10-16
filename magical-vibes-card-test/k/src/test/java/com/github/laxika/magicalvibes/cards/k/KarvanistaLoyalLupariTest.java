@@ -43,6 +43,7 @@ class KarvanistaLoyalLupariTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
+        harness.setHand(player2, List.of());
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
@@ -99,6 +100,7 @@ class KarvanistaLoyalLupariTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KarvanistaLoyalLupari()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of());
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 

@@ -31,6 +31,7 @@ class KnickknackOupheTest extends BaseCardTest {
 
         gs.playCard(gd, player1, 0, 2, null, null);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);

@@ -54,6 +54,7 @@ class KaervekThePunisherTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();

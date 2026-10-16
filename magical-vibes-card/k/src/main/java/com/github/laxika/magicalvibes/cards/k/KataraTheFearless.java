@@ -13,6 +13,6 @@ public class KataraTheFearless extends Card {
     public KataraTheFearless() {
         addEffect(EffectSlot.STATIC,
                 new AdditionalTriggeredAbilityEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.ALLY)));
+                        new PermanentHasSubtypePredicate(CardSubtype.ALLY), null, true, false));
     }
 }

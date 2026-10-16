@@ -8196,6 +8196,16 @@ public class GameQueryService {
      */
     public boolean cantBeTargetedBySpellColor(GameData gameData, Permanent target, CardColor spellColor,
                                               UUID spellControllerId) {
+        return cantBeTargetedBySourceColor(gameData, target, spellColor, spellControllerId, true);
+    }
+
+    /**
+     * Color check for a targeting source that is either a spell ({@code sourceIsSpell}) or an
+     * ability. Spell-only restrictions ("can't be the target of [color] spells", Karplusan Strider)
+     * block only spells; restrictions covering spells and abilities block both.
+     */
+    public boolean cantBeTargetedBySourceColor(GameData gameData, Permanent target, CardColor spellColor,
+                                               UUID spellControllerId, boolean sourceIsSpell) {
         if (spellColor == null) {
             return false;
         }
@@ -8206,14 +8216,14 @@ public class GameQueryService {
                 && (ignoresOpponentPermanentHexproof(gameData, spellControllerId)
                 || (isCreature(gameData, target) && ignoresOpponentCreatureHexproof(gameData, spellControllerId)));
         for (CardEffect effect : getActiveStaticEffects(gameData, target)) {
-            if (isSpellColorRestriction(effect, spellColor, opponentControlled)
+            if (isSpellColorRestriction(effect, spellColor, opponentControlled, sourceIsSpell)
                     && (!isHexproofFromColorRestriction(effect, spellColor)
                     || (!hexproofLifted && hasHexproofFromColor(gameData, target, spellColor)))) {
                 return true;
             }
         }
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
-            if (isSpellColorRestriction(effect, spellColor, opponentControlled)
+            if (isSpellColorRestriction(effect, spellColor, opponentControlled, sourceIsSpell)
                     && (!isHexproofFromColorRestriction(effect, spellColor)
                     || (!hexproofLifted && hasHexproofFromColor(gameData, target, spellColor)))) {
                 return true;
@@ -8221,7 +8231,7 @@ public class GameQueryService {
         }
 
         // Check per-player turn-duration protection (Autumn's Veil style)
-        if (isCreature(gameData, target)) {
+        if (sourceIsSpell && isCreature(gameData, target)) {
             UUID controllerId = findPermanentController(gameData, target.getId());
             if (controllerId != null) {
                 Set<CardColor> protectedColors = gameData.playerCreaturesCantBeTargetedByColorsThisTurn.get(controllerId);
@@ -8383,10 +8393,10 @@ public class GameQueryService {
      * known to be opponent-controlled.
      */
     private static boolean isSpellColorRestriction(CardEffect effect, CardColor spellColor,
-                                                   boolean opponentControlled) {
+                                                   boolean opponentControlled, boolean sourceIsSpell) {
         return effect instanceof TargetingRestrictionEffect r
-                && (r.kind() == TargetingSourceKind.SPELLS
-                || r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES)
+                && (r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
+                || (sourceIsSpell && r.kind() == TargetingSourceKind.SPELLS))
                 && r.mode() == TargetColorMode.BLOCKED_COLORS
                 && r.colors().contains(spellColor)
                 && (!r.opponentOnly() || opponentControlled);
@@ -8647,6 +8657,7 @@ public class GameQueryService {
         return gameData.playerBattlefields.entrySet().stream()
                 .filter(entry -> !entry.getKey().equals(playerId))
                 .flatMap(entry -> entry.getValue().stream())
+                .filter(permanent -> !permanent.isFaceDown() && !hasLostPrintedAbilities(gameData, permanent))
                 .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect.class::isInstance));
     }
@@ -9443,10 +9454,29 @@ public class GameQueryService {
                 gameData, controllerId, triggeringPermanent, attackTrigger, null);
     }
 
+    /**
+     * Returns the number of additional copies for a triggered ability caused by a player drawing a card.
+     * Only static effects restricted to draw-caused triggers (Krang, the All-Powerful) apply here.
+     */
+    public int countAdditionalDrawTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
+                                                           Permanent triggeringPermanent) {
+        return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent,
+                false, null, true);
+    }
+
     public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
                                                         Permanent triggeringPermanent,
                                                         boolean attackTrigger,
                                                         TriggerContext triggerContext) {
+        return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent,
+                attackTrigger, triggerContext, false);
+    }
+
+    private int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
+                                                         Permanent triggeringPermanent,
+                                                         boolean attackTrigger,
+                                                         TriggerContext triggerContext,
+                                                         boolean drawCaused) {
         if (controllerId == null || triggeringPermanent == null) return 0;
         int count = 0;
         Map<UUID, List<Permanent>> staticSources = new HashMap<>();
@@ -9475,6 +9505,7 @@ public class GameQueryService {
                             && !matchesInstantSorceryCastOrCopy(triggerContext, staticControllerId))
                             || (additional.permanentTurnsFaceUpOnly()
                             && !(triggerContext instanceof TriggerContext.PermanentTurnsFaceUp))
+                            || (additional.drawCauseOnly() && !drawCaused)
                             || (additional.controlledCreatureDealtDamageOnly()
                             && !controlledCreatureWasDealtDamage(gameData, controllerId, triggerContext))
                             || (!additional.allControllers() && !staticControllerId.equals(controllerId))
@@ -9798,7 +9829,7 @@ public class GameQueryService {
                                         || (animateLands.scope() == GrantScope.OPPONENT_LANDS
                                                 && !sourceControlsPermanent(gameData, source, permanent)))
                                 && (animateLands.requiredSubtype() == null
-                                        || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))));
+                                        || hasEffectiveSubtype(gameData, permanent, animateLands.requiredSubtype()))));
     }
 
     private boolean sourceControlsPermanent(GameData gameData, Permanent source, Permanent permanent) {
@@ -10234,10 +10265,15 @@ public class GameQueryService {
      * its effective creature types in that zone.
      */
     public boolean shareCreatureType(GameData gameData, Permanent permanent, Card card) {
+        return shareCreatureType(gameData, permanent, card, card.getOwnerId());
+    }
+
+    /** As above, reading the card's effective creature types for the given owner. */
+    public boolean shareCreatureType(GameData gameData, Permanent permanent, Card card, UUID cardOwnerId) {
         boolean permanentChangeling = hasKeyword(gameData, permanent, Keyword.CHANGELING);
         boolean cardChangeling = card.hasKeyword(Keyword.CHANGELING);
         Set<CardSubtype> permanentTypes = effectiveCreatureSubtypes(gameData, permanent);
-        Set<CardSubtype> cardTypes = getCardSubtypes(card, gameData, card.getOwnerId()).stream()
+        Set<CardSubtype> cardTypes = getCardSubtypes(card, gameData, cardOwnerId).stream()
                 .filter(this::isCreatureSubtype)
                 .collect(java.util.stream.Collectors.toSet());
         if (permanentChangeling) {
@@ -11281,6 +11317,21 @@ public class GameQueryService {
      * The multipliers for noncombat damage {@code entry} deals, apart from the global ones
      * ({@link #getDamageMultiplier}): the controller's and the source's doublings.
      */
+    /**
+     * The multipliers for noncombat damage that {@code explicitSource} deals while {@code entry} is
+     * the stack entry causing it (a fight, where the other creature deals the damage back): the
+     * explicit source's controller's doublings and its own. The entry's source does not deal this
+     * damage, so its doublings are not applied.
+     */
+    public int getExplicitSourceDamageMultiplier(GameData gameData, StackEntry entry, Permanent explicitSource) {
+        UUID controllerId = findPermanentController(gameData, explicitSource.getId());
+        if (controllerId == null && entry != null) {
+            controllerId = entry.getControllerId();
+        }
+        return getControllerDamageMultiplier(gameData, controllerId, entry, false, explicitSource)
+                * getPermanentDamageMultiplier(gameData, explicitSource.getId());
+    }
+
     public int getDealingSourceDamageMultiplier(GameData gameData, StackEntry entry) {
         Permanent source = dealingSourcePermanent(gameData, entry);
         UUID controllerId = dealingSourceController(gameData, entry, source);
@@ -12376,6 +12427,21 @@ public class GameQueryService {
                 && isCreature(gameData, permanent)
                 && !hasKeyword(gameData, permanent, Keyword.HASTE)
                 && !canActivateCreatureAbilitiesAsThoughHaste(gameData, controllerId);
+    }
+
+    /**
+     * Runs {@code query} with continuous effects evaluated as though {@code permanent} were already on the
+     * battlefield under {@code controllerId}, for "as this enters" choices that read the entering
+     * permanent's own characteristics (e.g. Amplify's shared creature type under Conspiracy).
+     */
+    public <T> T withEnteringPermanent(GameData gameData, UUID controllerId, Permanent permanent,
+                                       java.util.function.Supplier<T> query) {
+        LayerSystemService.Pass pass = layerSystemService.beginPassWithEnteringPermanent(gameData, controllerId, permanent);
+        try {
+            return query.get();
+        } finally {
+            layerSystemService.endPass(pass);
+        }
     }
 
     /** Checks which printed abilities an entering permanent retains after continuous effects apply. */

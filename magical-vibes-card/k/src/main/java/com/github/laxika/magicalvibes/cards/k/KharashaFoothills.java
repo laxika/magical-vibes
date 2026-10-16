@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OPC2", collectorNumber = "22")
 @CardRegistration(set = "OPCA", collectorNumber = "43")
@@ -19,13 +21,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class KharashaFoothills extends Card {
 
     public KharashaFoothills() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
-                new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect());
-        addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, new TriggeringPermanentConditionalEffect(
+                new PermanentIsAttackingOpponentOfSourceControllerPredicate(),
+                new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect()));
+        target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
                 new SacrificeAnyNumberOfPermanentsEffect(new PermanentIsCreaturePredicate()),
-                ConditionalEffect.unless(
+                new ConditionalEffect(
                         new EventValueAtLeast(1),
-                        new QueueReflexiveAbilityEffect(
-                                new DealDamageToTargetCreatureEffect(new EventValue()), false, true))));
+                        new DealDamageToTargetCreatureEffect(new EventValue()))));
     }
 }

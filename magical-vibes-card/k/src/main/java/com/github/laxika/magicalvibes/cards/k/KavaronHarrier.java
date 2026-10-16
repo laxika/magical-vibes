@@ -42,7 +42,7 @@ public class KavaronHarrier extends Card {
                                 false,
                                 0,
                                 Set.of()),
-                        new MakeCreatedPermanentsAttackingEffect(),
+                        new MakeCreatedPermanentsAttackingEffect(true),
                         new SacrificeCreatedPermanentsAtEndOfCombatEffect()),
                 "Pay {2} to create a Robot token?"));
     }

@@ -21,8 +21,31 @@ public record ReturnCardExiledWithSourceToBattlefieldEffect(
         boolean enterTapped, boolean enterAttacking,
         boolean returnAtRandom, boolean targeted, int additionalPlusOnePlusOneCounters,
         boolean onlyCardsOwnedByController, boolean grantHaste,
-        EnterWithCountersEffect battlefieldEntryReplacement, boolean activePlayerReturns)
+        EnterWithCountersEffect battlefieldEntryReplacement, boolean activePlayerReturns,
+        String abilityLink)
         implements CardEffect {
+
+    public ReturnCardExiledWithSourceToBattlefieldEffect(
+            CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,
+            boolean enterTapped, boolean enterAttacking,
+            boolean returnAtRandom, boolean targeted, int additionalPlusOnePlusOneCounters,
+            boolean onlyCardsOwnedByController, boolean grantHaste,
+            EnterWithCountersEffect battlefieldEntryReplacement, boolean activePlayerReturns) {
+        this(filter, requiresManaValueEqualsX, grantedSubtype, enterTapped, enterAttacking,
+                returnAtRandom, targeted, additionalPlusOnePlusOneCounters,
+                onlyCardsOwnedByController, grantHaste, battlefieldEntryReplacement, activePlayerReturns, null);
+    }
+
+    /**
+     * The same effect restricted to cards exiled by the linked exile ability named {@code link}, as an
+     * ability gained from another card is linked only to the exile ability gained with it.
+     */
+    public ReturnCardExiledWithSourceToBattlefieldEffect withAbilityLink(String link) {
+        return new ReturnCardExiledWithSourceToBattlefieldEffect(
+                filter, requiresManaValueEqualsX, grantedSubtype, enterTapped, enterAttacking,
+                returnAtRandom, targeted, additionalPlusOnePlusOneCounters,
+                onlyCardsOwnedByController, grantHaste, battlefieldEntryReplacement, activePlayerReturns, link);
+    }
 
     public ReturnCardExiledWithSourceToBattlefieldEffect(
             CardPredicate filter, boolean requiresManaValueEqualsX, CardSubtype grantedSubtype,

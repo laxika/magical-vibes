@@ -25,7 +25,9 @@ public class KratosStoicFather extends Card {
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.GOD),
                 new ExperienceCountersEffect(1)));
-        addEffect(EffectSlot.ON_DEATH, new ExperienceCountersEffect(1));
+        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
+                new PermanentHasSubtypePredicate(CardSubtype.GOD),
+                new ExperienceCountersEffect(1)));
 
         target(TargetFilters.creature()).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new PutCounterOnTargetPermanentEffect(

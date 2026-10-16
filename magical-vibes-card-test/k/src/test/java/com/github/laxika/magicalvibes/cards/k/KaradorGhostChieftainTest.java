@@ -174,6 +174,7 @@ class KaradorGhostChieftainTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLACK, 1);

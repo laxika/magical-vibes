@@ -205,7 +205,7 @@ class KiraGreatGlassSpinnerTest extends BaseCardTest {
         harness.castInstant(player2, 0, frostlingId);
         resolveAllTriggers();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, frostlingId);

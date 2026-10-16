@@ -85,8 +85,6 @@ class KirolAttentiveFirstYearTest extends BaseCardTest {
         UUID triggerId = createTrialOfZealTrigger();
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(kirol), null, triggerId);
-        harness.handlePermanentChosen(player1, kirol.getId());
-        harness.handlePermanentChosen(player1, cost.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, newTarget.getId());
@@ -108,8 +106,6 @@ class KirolAttentiveFirstYearTest extends BaseCardTest {
         UUID triggerId = createTrialOfZealTrigger();
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(kirol), null, triggerId);
-        harness.handlePermanentChosen(player1, kirol.getId());
-        harness.handlePermanentChosen(player1, cost.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();

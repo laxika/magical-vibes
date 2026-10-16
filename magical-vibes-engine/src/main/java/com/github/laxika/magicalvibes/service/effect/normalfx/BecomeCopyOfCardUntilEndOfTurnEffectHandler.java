@@ -65,6 +65,12 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
             }
             source.getCard().setSubtypes(subtypes);
         }
+        if (!copyEffect.additionalKeywords().isEmpty()) {
+            java.util.Set<com.github.laxika.magicalvibes.model.Keyword> keywords =
+                    new java.util.HashSet<>(source.getCard().getKeywords());
+            keywords.addAll(copyEffect.additionalKeywords());
+            source.getCard().setKeywords(keywords);
+        }
         source.setCopyUntilEndOfTurn(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(),

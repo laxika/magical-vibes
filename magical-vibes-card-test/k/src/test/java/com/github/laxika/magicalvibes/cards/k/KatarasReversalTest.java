@@ -151,6 +151,7 @@ class KatarasReversalTest extends BaseCardTest {
     @Test
     void countersATriggeredAbilityWithoutRemovingItsSource() {
         harness.setLibrary(player2, List.of(new KindlyCustomer()));
+        harness.setHand(player2, List.of());
         harness.enterBattlefieldAndReturn(player2, new KindlyCustomer());
         UUID triggerId = gd.stack.getLast().getTargetableId();
         harness.setHand(player1, List.of(new KatarasReversal()));

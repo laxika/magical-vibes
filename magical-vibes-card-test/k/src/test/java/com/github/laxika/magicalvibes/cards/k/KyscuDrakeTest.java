@@ -208,7 +208,7 @@ class KyscuDrakeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(drake.getToughnessModifier()).isEqualTo(0);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, null, null);

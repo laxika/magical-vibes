@@ -111,7 +111,7 @@ class KavuChameleonTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.getEffectiveColors(gd, kavu)).containsExactly(CardColor.GREEN);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");

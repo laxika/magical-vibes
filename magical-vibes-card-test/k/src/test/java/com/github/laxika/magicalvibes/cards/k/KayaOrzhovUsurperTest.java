@@ -172,7 +172,7 @@ class KayaOrzhovUsurperTest extends BaseCardTest {
         harness.setExile(player2, List.of(new Forest()));
         harness.setExile(player1, List.of(new GrizzlyBears(), new LlanowarElves()));
         harness.activateAbility(player1, 0, 2, null, player2.getId());
-        harness.setExile(player2, List.of(new Forest(), new Shock(), new GrizzlyBears()));
+        harness.setExile(player2, List.of(new Shock(), new GrizzlyBears()));
 
         harness.passBothPriorities();
 

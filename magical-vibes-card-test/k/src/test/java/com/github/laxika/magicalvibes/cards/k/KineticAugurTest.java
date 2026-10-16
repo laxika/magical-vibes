@@ -18,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -133,6 +134,13 @@ class KineticAugurTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                findPermanent(player2, "Alpine Watchdog").getId(), 2,
+                player2.getId(), 1
+        ));
 
         harness.assertLife(player2, 19);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(augur);

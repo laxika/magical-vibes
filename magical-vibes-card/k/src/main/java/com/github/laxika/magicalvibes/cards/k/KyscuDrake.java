@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 
@@ -29,7 +31,9 @@ public class KyscuDrake extends Card {
                 List.of(
                         new SacrificePermanentsSequenceCost(
                                 List.of(
-                                        new PermanentNamedPredicate("Spitting Drake"),
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentNamedPredicate("Spitting Drake"),
+                                                new PermanentIsCreaturePredicate())),
                                         new PermanentIsSourceCardPredicate()
                                 ),
                                 List.of("a creature named Spitting Drake", "this creature")

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -19,7 +20,7 @@ import java.util.List;
 public class KnightOfAutumn extends Card {
 
     public KnightOfAutumn() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on Knight of Autumn",
                         new PutCountersOnSourceEffect(1, 1, 2)
@@ -39,6 +40,6 @@ public class KnightOfAutumn extends Card {
                         "You gain 4 life",
                         new GainLifeEffect(4)
                 )
-        )));
+        ))));
     }
 }

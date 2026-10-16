@@ -4,13 +4,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final ExileService exileService;
@@ -40,12 +37,9 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
         var e = (KnowledgePoolExileAndCastEffect) effect;
         UUID kpPermanentId = e.knowledgePoolPermanentId();
 
-        // Step 1: Verify KP permanent still on battlefield
-        Permanent kpPermanent = gameQueryService.findPermanentById(gameData, kpPermanentId);
-        if (kpPermanent == null) {
-            log.info("Game {} - Knowledge Pool no longer on battlefield, trigger fizzles", gameData.id);
-            return;
-        }
+        // Step 1: The triggered ability exists independently of its source (CR 113.7a). If Knowledge Pool
+        // has already left the battlefield, its last known information is used: the spell is still exiled
+        // with it and the choice still draws from the cards exiled with it.
 
         // Step 2: Find original spell on stack by card ID
         UUID originalSpellCardId = e.originalSpellCardId();

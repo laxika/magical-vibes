@@ -41,6 +41,11 @@ public class ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffectHandler im
             return;
         }
 
+        if (fromZone == Zone.GRAVEYARD && entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(cardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
+
         UUID controllerId = entry.getControllerId();
         if (fromZone == Zone.GRAVEYARD) {
             returnFromGraveyard(gameData, controllerId, cardId);

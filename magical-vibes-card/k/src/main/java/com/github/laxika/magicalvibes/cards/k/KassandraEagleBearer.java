@@ -21,7 +21,7 @@ public class KassandraEagleBearer extends Card {
 
     public KassandraEagleBearer() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new SearchZonesForCardNamedToBattlefieldEffect("The Spear of Leonidas"));
+                SearchZonesForCardNamedToBattlefieldEffect.alwaysShuffling("The Spear of Leonidas"));
 
         PermanentAllOfPredicate legendaryEquipment = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),

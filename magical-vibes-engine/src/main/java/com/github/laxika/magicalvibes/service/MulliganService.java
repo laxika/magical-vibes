@@ -373,6 +373,8 @@ public class MulliganService {
                 boolean isCreature = card.hasType(CardType.CREATURE);
                 if (isCreature) {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+                } else {
+                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, null, false);
                 }
 
                 gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts " , card, " onto the battlefield (Karn Liberated)."));

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -70,6 +71,14 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         }
         int count = amountEvaluationService.evaluate(gameData, e.amount(),
                 AmountContext.forStackEntry(entry, source));
+
+        // "Put a counter on it" for the triggering permanent: the counter goes on that permanent wherever
+        // it is now, even if control changed before resolution.
+        if (e.predicate() instanceof PermanentIsTriggeringPermanentPredicate
+                && entry.getTriggeringPermanentId() != null) {
+            resolveTargets(gameData, entry, List.of(entry.getTriggeringPermanentId()), e, count);
+            return;
+        }
 
         // Predicate-based resolution: choose from controller's battlefield (non-targeting).
         if (e.predicate() != null) {

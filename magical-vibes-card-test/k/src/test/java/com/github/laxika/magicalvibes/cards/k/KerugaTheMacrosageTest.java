@@ -77,10 +77,10 @@ class KerugaTheMacrosageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IndathaCrystal());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, giant.getId());
         harness.passBothPriorities();
 
@@ -95,10 +95,10 @@ class KerugaTheMacrosageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new IndathaCrystal());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0,
                 harness.getPermanentId(player1, "Keruga, the Macrosage"));
         harness.passBothPriorities();

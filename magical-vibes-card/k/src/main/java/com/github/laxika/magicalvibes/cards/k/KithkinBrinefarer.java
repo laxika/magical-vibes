@@ -22,7 +22,7 @@ public class KithkinBrinefarer extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.KITHKIN),
                         new ConjureDuplicateOfCardPutIntoHandFromLibraryEffect()));
-        addEffect(EffectSlot.ON_ATTACK,
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new PerpetuallyBoostMatchingHandCardsEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.KITHKIN),

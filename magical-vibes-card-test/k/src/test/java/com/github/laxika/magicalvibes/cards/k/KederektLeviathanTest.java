@@ -79,7 +79,7 @@ class KederektLeviathanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Kederekt Leviathan");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(perm.hasKeyword(Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Kederekt Leviathan");
     }
 

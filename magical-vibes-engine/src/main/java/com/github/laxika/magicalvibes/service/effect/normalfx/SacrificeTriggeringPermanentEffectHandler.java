@@ -49,9 +49,7 @@ public class SacrificeTriggeringPermanentEffectHandler implements NormalEffectHa
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(triggering.getCard())
-                .text(" is sacrificed (")
-                .card(entry.getCard())
-                .text(" became unattached).")
+                .text(" is sacrificed.")
                 .build());
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, triggering);
         permanentRemovalService.removeOrphanedAuras(gameData);

@@ -75,9 +75,9 @@ class KhalniAmbushTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new KhalniAmbush(), new Unsummon()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castModalInstant(player1, 0, 0, List.of(first.getId(), second.getId()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, returnFirstTarget ? first.getId() : second.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();

@@ -126,6 +126,7 @@ class KairiTheSwirlingSkyTest extends BaseCardTest {
         Card instant = new TamiyosSafekeeping();
         Card sorcery = new InvokeDespair();
         Card seventhCard = new CoilingStalker();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(sorcery));
         harness.setLibrary(player1, List.of(instant, new CoilingStalker(), new CoilingStalker(),
                 new CoilingStalker(), new CoilingStalker(), new CoilingStalker(), seventhCard));
@@ -148,6 +149,7 @@ class KairiTheSwirlingSkyTest extends BaseCardTest {
         Card sorcery = new InvokeDespair();
         Card instant = new TamiyosSafekeeping();
         Card opposingSpell = new InvokeDespair();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(sorcery));
         harness.setGraveyard(player2, List.of(opposingSpell));
         harness.setLibrary(player1, List.of(instant, new CoilingStalker()));
@@ -169,6 +171,7 @@ class KairiTheSwirlingSkyTest extends BaseCardTest {
     @Test
     void millModeFinishesWithAShortLibraryAndNoEligibleCards() {
         Card creature = new CoilingStalker();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(creature));
         harness.addToBattlefield(player1, new KairiTheSwirlingSky());
 

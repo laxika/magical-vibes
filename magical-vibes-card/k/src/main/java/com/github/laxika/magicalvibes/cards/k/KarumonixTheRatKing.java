@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,8 +29,11 @@ public class KarumonixTheRatKing extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.RAT)
         ));
 
+        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
         addEffect(EffectSlot.STATIC,
                 new GrantKeywordEffect(Keyword.TOXIC, GrantScope.OWN_CREATURES, rat));
+        addEffect(EffectSlot.STATIC,
+                new GrantEffectEffect(new ToxicEffect(1), GrantScope.OWN_CREATURES, rat));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LookAtTopCardsEffect(
                         new Fixed(5),

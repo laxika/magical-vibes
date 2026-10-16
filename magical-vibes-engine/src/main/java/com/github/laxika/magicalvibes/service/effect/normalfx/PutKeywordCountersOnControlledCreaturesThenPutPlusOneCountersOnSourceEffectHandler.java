@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -36,7 +39,7 @@ public class PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSour
         PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffect kathrilEffect =
                 (PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffect) effect;
         List<CounterType> matchingCounterTypes = kathrilEffect.counterTypes().stream()
-                .filter(counterType -> counterType.grantedKeyword() != null)
+                .filter(counterType -> counterType.grantedKeyword() != null || counterType.hexproofFromColor() != null)
                 .filter(counterType -> hasKeywordInControllerGraveyard(gameData, entry, counterType))
                 .distinct()
                 .toList();
@@ -112,6 +115,13 @@ public class PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSour
     private boolean hasKeywordInControllerGraveyard(GameData gameData, StackEntry entry,
                                                     CounterType counterType) {
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of());
+        if (counterType.hexproofFromColor() != null) {
+            CardEffect hexproofFromColor = TargetingRestrictionEffect.hexproofFromColors(
+                    Set.of(counterType.hexproofFromColor()));
+            return graveyard.stream()
+                    .filter(card -> card.hasType(CardType.CREATURE))
+                    .anyMatch(card -> card.getEffects(EffectSlot.STATIC).contains(hexproofFromColor));
+        }
         return graveyard.stream()
                 .filter(card -> card.hasType(CardType.CREATURE))
                 .anyMatch(card -> card.getKeywords().contains(counterType.grantedKeyword()));

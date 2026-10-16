@@ -137,6 +137,13 @@ public record KickerEffect(String cost, PermanentPredicate sacrificePredicate, S
         return sacrificePredicate != null;
     }
 
+    /** This kicker without its mana component, for casts that fold that mana into the spell's total cost. */
+    public KickerEffect withoutManaCost() {
+        return new KickerEffect(null, sacrificePredicate, sacrificeDescription, tapPredicate, tapDescription,
+                returnPredicate, returnDescription, discardPredicate, discardDescription, sacrificeCount,
+                lifeCost, xColorRestrictions, xUsesEachColorAtMostOnce, forageCost, countsAsKicker);
+    }
+
     public boolean hasManaCost() {
         return cost != null && !cost.isEmpty();
     }

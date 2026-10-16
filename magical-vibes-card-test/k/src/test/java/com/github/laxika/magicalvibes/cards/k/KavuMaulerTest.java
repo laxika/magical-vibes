@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,11 +25,16 @@ class KavuMaulerTest extends BaseCardTest {
     void boostedDamageTramplesOverBlocker() {
         addCreatureReady(player1, new KavuMauler());
         addCreatureReady(player1, new KavuGlider());
-        addCreatureReady(player2, new Dodecapod());
+        Permanent blocker = addCreatureReady(player2, new Dodecapod());
 
-        declareAttackersAndPrepareBlockers(player1, List.of(0, 1));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0, 1));
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 3, player2.getId(), 2));
 
         harness.assertLife(player2, 16);
         harness.assertInGraveyard(player2, "Dodecapod");

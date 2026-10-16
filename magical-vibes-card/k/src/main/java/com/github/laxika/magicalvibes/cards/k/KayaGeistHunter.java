@@ -34,7 +34,7 @@ public class KayaGeistHunter extends Card {
                 false,
                 null,
                 List.of(
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES),
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                 "+1: Creatures you control gain deathtouch until end of turn. Put a +1/+1 counter on up to one target creature token you control.",
                 new ControlledPermanentPredicateTargetFilter(

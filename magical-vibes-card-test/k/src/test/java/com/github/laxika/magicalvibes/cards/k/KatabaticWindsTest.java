@@ -225,8 +225,10 @@ class KatabaticWindsTest extends BaseCardTest {
     }
 
     private void advanceTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.UNTAP);
+        harness.passUntil(TurnStep.UPKEEP);
     }
 }

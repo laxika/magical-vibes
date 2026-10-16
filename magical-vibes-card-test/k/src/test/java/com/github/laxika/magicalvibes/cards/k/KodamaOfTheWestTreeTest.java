@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -114,9 +115,9 @@ class KodamaOfTheWestTreeTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest()));
 
         assertThat(gqs.hasKeyword(gd, opponent, Keyword.TRAMPLE)).isFalse();
-        declareAttackers(player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(findPermanents(player1, "Forest")).isEmpty();

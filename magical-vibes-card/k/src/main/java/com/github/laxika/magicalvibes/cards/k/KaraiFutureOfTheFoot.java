@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "151")
 public class KaraiFutureOfTheFoot extends Card {
@@ -17,11 +21,14 @@ public class KaraiFutureOfTheFoot extends Card {
     public KaraiFutureOfTheFoot() {
         addSneak("{2}{W}{B}");
 
+        // Sneak is Karai's only alternative cost, and she can only have been cast for it this turn
+        // while she is still the permanent that entered this turn.
+        AllOf sneakCostPaidThisTurn = new AllOf(List.of(new CastForAlternateCost(), new CameUnderControlThisTurn()));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new ConditionalEffect(
-                new NotCondition(new CastForAlternateCost()),
+                new NotCondition(sneakCostPaidThisTurn),
                 returnCreatureToHand()));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new ConditionalEffect(
-                new CastForAlternateCost(),
+                sneakCostPaidThisTurn,
                 returnCreatureToBattlefield()));
     }
 

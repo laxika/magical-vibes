@@ -43,6 +43,7 @@ class KeldonHalberdierTest extends BaseCardTest {
         }
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -63,6 +64,7 @@ class KeldonHalberdierTest extends BaseCardTest {
             advanceToUpkeep(player1);
             harness.passBothPriorities();
         }
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -18,8 +20,11 @@ import java.util.UUID;
 
 /** Records a perpetual triggered-ability grant on a controlled creature card identity. */
 @Component
+@RequiredArgsConstructor
 public class PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffectHandler
         implements NormalEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,28 +43,28 @@ public class PerpetuallyGrantTriggeredAbilityToTargetCreatureOrGraveyardCardEffe
             Permanent targetPermanent = findPermanent(gameData, targetId);
             Card targetCard = targetPermanent == null
                     ? findCardInGraveyard(gameData, targetId) : targetPermanent.getOriginalCard();
-            if (targetCard == null || !targetCard.hasType(CardType.CREATURE)) {
+            boolean isCreature = targetPermanent == null
+                    ? targetCard != null && targetCard.hasType(CardType.CREATURE)
+                    : gameQueryService.isCreature(gameData, targetPermanent);
+            if (targetCard == null || !isCreature) {
                 continue;
             }
 
+            // CR 113.2c: each granted instance of the same ability functions independently, so repeated grants
+            // are appended rather than deduplicated.
             UUID cardId = targetCard.getId();
             gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
                 Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
                 if (existing != null) {
                     existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
                 }
-                List<CardEffect> effects = updated.computeIfAbsent(grant.triggeredAbilitySlot(),
-                        ignoredSlot -> new ArrayList<>());
-                if (!effects.contains(grant.triggeredAbility())) {
-                    effects.add(grant.triggeredAbility());
-                }
+                updated.computeIfAbsent(grant.triggeredAbilitySlot(), ignoredSlot -> new ArrayList<>())
+                        .add(grant.triggeredAbility());
                 updated.replaceAll((slot, slotEffects) -> List.copyOf(slotEffects));
                 return Map.copyOf(updated);
             });
 
-            if (targetPermanent != null
-                    && !targetPermanent.getPersistentTriggeredEffects(grant.triggeredAbilitySlot())
-                    .contains(grant.triggeredAbility())) {
+            if (targetPermanent != null) {
                 targetPermanent.addPersistentTriggeredEffect(
                         grant.triggeredAbilitySlot(), grant.triggeredAbility());
             }

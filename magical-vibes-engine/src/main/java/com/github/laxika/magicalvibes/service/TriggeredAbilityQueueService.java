@@ -2733,6 +2733,8 @@ public class TriggeredAbilityQueueService {
                     pending.sourcePowerAtTrigger();
             gameData.graveyardTargetOperation.triggeringPermanentId = pending.triggeringPermanentId();
             gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
+            gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance =
+                    pending.markSourceOncePerTurnOnAcceptance();
             if (gameData.graveyardTargetOperation.sourcePermanentId == null) {
                 // ETB source permanent (for intervening-if / attach); find by card id on the controller's BF
                 List<Permanent> bf = gameData.playerBattlefields.get(pending.controllerId());

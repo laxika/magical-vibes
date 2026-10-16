@@ -59,7 +59,7 @@ class KavLandseekerTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Lander")).isEmpty();
         assertThat(findPermanents(player1, "Forest")).isEmpty();
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(findPermanent(player1, "Forest").getCard()).isSameAs(forest);
         assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();

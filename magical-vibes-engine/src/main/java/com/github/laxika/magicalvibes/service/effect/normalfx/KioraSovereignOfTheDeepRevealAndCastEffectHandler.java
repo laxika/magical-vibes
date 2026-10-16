@@ -60,6 +60,11 @@ public class KioraSovereignOfTheDeepRevealAndCastEffectHandler implements Normal
             return;
         }
 
+        // The looked-at cards wait in exile while the free cast is offered, so the cast goes through the
+        // exile free-cast flow that pays mandatory additional costs (discard, sacrifice, behold) before the
+        // spell reaches the stack; the cards not cast return to the bottom of the library.
+        topCards.forEach(card -> gameData.addToExile(controllerId, card));
+
         String prompt = "You may cast a spell with mana value less than "
                 + kioraEffect.spellManaValue() + " from among the top " + count
                 + " cards without paying its mana cost.";

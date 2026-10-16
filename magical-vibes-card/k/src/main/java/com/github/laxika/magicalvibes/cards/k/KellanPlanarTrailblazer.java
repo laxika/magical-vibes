@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -28,11 +29,13 @@ public class KellanPlanarTrailblazer extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{1}{R}", List.of(
                 SequenceEffect.of(
                         new ConditionalEffect(new SourceHasSubtype(CardSubtype.SCOUT),
-                                GrantEffectToTargetEffect.toSourcePermanent(
+                                new GrantEffectToTargetEffect(
                                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                                        new ExileTopCardMayPlayThisTurnEffect(false))),
-                        BecomeCreatureTypeWithBasePowerToughnessEffect.replacingSubtype(
-                                CardSubtype.DETECTIVE, CardSubtype.SCOUT, CardSubtype.SCOUT)
+                                        new ExileTopCardMayPlayThisTurnEffect(false),
+                                        EffectDuration.PERMANENT, false, GrantScope.SELF)),
+                        BecomeCreatureTypeWithBasePowerToughnessEffect.settingCreatureTypes(
+                                null, null, CardSubtype.SCOUT,
+                                CardSubtype.HUMAN, CardSubtype.FAERIE, CardSubtype.DETECTIVE)
                 )),
                 "{1}{R}: If Kellan is a Scout, it becomes a Human Faerie Detective and gains \"Whenever Kellan deals combat damage to a player, exile the top card of your library. You may play that card this turn.\""));
 
@@ -41,8 +44,9 @@ public class KellanPlanarTrailblazer extends Card {
                         new ConditionalEffect(new SourceHasSubtype(CardSubtype.DETECTIVE),
                                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF,
                                         GrantDuration.INDEFINITE)),
-                        BecomeCreatureTypeWithBasePowerToughnessEffect.replacingSubtype(
-                                3, 2, CardSubtype.ROGUE, CardSubtype.DETECTIVE, CardSubtype.DETECTIVE)
+                        BecomeCreatureTypeWithBasePowerToughnessEffect.settingCreatureTypes(
+                                3, 2, CardSubtype.DETECTIVE,
+                                CardSubtype.HUMAN, CardSubtype.FAERIE, CardSubtype.ROGUE)
                 )),
                 "{2}{R}: If Kellan is a Detective, it becomes a 3/2 Human Faerie Rogue and gains double strike."));
     }

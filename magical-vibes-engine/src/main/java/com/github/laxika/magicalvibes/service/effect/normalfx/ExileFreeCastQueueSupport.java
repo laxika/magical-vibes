@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingFreeCastLifeLoss;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -78,6 +79,9 @@ public class ExileFreeCastQueueSupport {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private LifeSupport lifeSupport;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
@@ -300,6 +304,12 @@ public class ExileFreeCastQueueSupport {
             if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
                     && additionalCosts.sacrificeAllCreatures()
                     && additionalSpellCostService.satisfiable(gameData, playerId, cardToCast)) {
+                castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
+                return;
+            }
+            if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
+                    && additionalCosts.sacrificePermanentOrDiscardCardCost() != null
+                    && additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, cardToCast)) {
                 castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
                 return;
             }
@@ -864,7 +874,18 @@ public class ExileFreeCastQueueSupport {
         }
     }
 
+    private void applyPendingFreeCastLifeLosses(GameData gameData) {
+        List<PendingFreeCastLifeLoss> losses = new ArrayList<>(gameData.pendingFreeCastLifeLosses);
+        gameData.pendingFreeCastLifeLosses.clear();
+        for (PendingFreeCastLifeLoss loss : losses) {
+            if (gameData.findExiledCard(loss.cardId()) == null) {
+                lifeSupport.applyLifeLoss(gameData, loss.ownerId(), loss.manaValue(), loss.sourceName());
+            }
+        }
+    }
+
     private void finishFreeCastProcess(GameData gameData) {
+        applyPendingFreeCastLifeLosses(gameData);
         gameData.pendingFreeCastManaValueBudget = null;
         gameData.pendingFreeCastLandPlayIds.clear();
         spellweaverVoluteSupport.clearIfUncast(gameData);

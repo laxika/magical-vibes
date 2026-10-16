@@ -97,6 +97,7 @@ class KassandraEagleBearerTest extends BaseCardTest {
 
         castKassandra();
         resolveKassandraEnterTrigger();
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "The Spear of Leonidas");
         harness.assertNotInHand(player1, "The Spear of Leonidas");
@@ -127,6 +128,7 @@ class KassandraEagleBearerTest extends BaseCardTest {
 
         castKassandra();
         resolveKassandraEnterTrigger();
+        harness.handleCardChosen(player1, 0);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "The Spear of Leonidas");

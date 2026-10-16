@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KeeperOfFables.class, GrizzlyBears.class, YouthfulKnight.class, Ornithopter.class,
@@ -115,7 +117,7 @@ class KeeperOfFablesTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat(player2);
-        harness.passUntil(player2, TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertLife(player1, 18);
         assertThat(gd.stack).isEmpty();
@@ -127,6 +129,7 @@ class KeeperOfFablesTest extends BaseCardTest {
     void doubleStrikeDrawsTwoCards() {
         addCreatureReady(player1, new KeeperOfFables());
         addAttacker(new RagingRedcap());
+        harness.setHand(player1, List.of());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();

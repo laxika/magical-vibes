@@ -18,9 +18,9 @@ import java.util.Set;
 public class KhodEtlanShiisEnvoy extends Card {
 
     public KhodEtlanShiisEnvoy() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.ALL_LANDS));
+        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.ALL_LANDS_INCLUDING_SELF));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                ManaAbilities.tapFor(ManaColor.BLUE), GrantScope.ALL_LANDS));
+                ManaAbilities.tapFor(ManaColor.BLUE), GrantScope.ALL_LANDS_INCLUDING_SELF));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(
                         CardSubtype.HOMARID,

@@ -26,13 +26,14 @@ class KorvoldGleefulGluttonTest extends BaseCardTest {
     void costsLessForEachDistinctPermanentTypeSacrificedThisTurn() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         harness.addToBattlefield(player1, new ZuranOrb());
-        harness.addToBattlefield(player1, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -56,6 +57,7 @@ class KorvoldGleefulGluttonTest extends BaseCardTest {
                 new Forest(), new GrizzlyBears(), new Millstone(), new Pacifism(), new Shock()));
         harness.setLibrary(player1, List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
 
         resolveCombat();
         harness.passBothPriorities();

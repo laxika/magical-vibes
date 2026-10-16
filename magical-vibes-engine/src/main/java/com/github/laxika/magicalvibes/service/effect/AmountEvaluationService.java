@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.DevotionToChosenColor;
+import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
 import com.github.laxika.magicalvibes.model.amount.ColorsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanentsAndSpellsCastThisTurn;
@@ -184,6 +185,7 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastCardsDraw
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastLandsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsControllingReturnedPermanents;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OpponentsControllingPermanentMatching;
 import com.github.laxika.magicalvibes.model.amount.OpponentsAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesControllerControlledThatDealtCombatDamageToPlayerThisTurn;
@@ -567,6 +569,8 @@ public class AmountEvaluationService {
                     countMatchingLibraryCards(gameData, c, ctx);
             case ColorManaSymbolsAmongControlledPermanents c ->
                     countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
+            case DevotionToColor c ->
+                    gameQueryService.getDevotionToColor(gameData, ctx.controllerId(), c.color());
             case DevotionToChosenColor ignored ->
                     gameData.chosenSpellColor == null ? 0 : gameQueryService.getDevotionToColor(
                             gameData, ctx.controllerId(),
@@ -740,6 +744,8 @@ public class AmountEvaluationService {
                     countOpponentPoisonCounters(gameData, ctx);
             case OpponentsWithAtLeastPoisonCounters c ->
                     opponentsWithAtLeastPoisonCounters(gameData, c, ctx);
+            case OpponentsControllingPermanentMatching c ->
+                    opponentsControllingPermanentMatching(gameData, c, ctx);
             case DefendingPlayerPoisonCounters ignored ->
                     countDefendingPlayerPoisonCounters(gameData, ctx);
             case OtherAttackersSharingCreatureTypeWithTarget ignored ->
@@ -1578,6 +1584,23 @@ public class AmountEvaluationService {
                         ? predicateEvaluationService.matchesStaticFilter(permanent, count.filter(), filterContext)
                         : predicateEvaluationService.matchesPermanentPredicate(permanent, count.filter(), filterContext);
                 if (matchesFilter) {
+                    matches += CreatureCountSupport.countsCreatures(count.filter())
+                            ? CreatureCountSupport.creatureCount(gameData, permanent, gameQueryService) : 1;
+                }
+            }
+        }
+        if (includeSourceIfAbsent) {
+            // Look-back (CR 603.10a): permanents that died in the same event were still on the battlefield
+            // immediately before it, so they count too. The source itself is handled below.
+            for (Map.Entry<UUID, Permanent> dying : gameData.simultaneousDyingPermanents.entrySet()) {
+                Permanent permanent = dying.getValue();
+                UUID dyingControllerId = gameData.simultaneousDyingPermanentControllers.get(dying.getKey());
+                if (dyingControllerId == null
+                        || (ctx.sourcePermanent() != null && permanent.getId().equals(ctx.sourcePermanent().getId()))
+                        || !isPlayerInScope(gameData, dyingControllerId, count.scope(), ctx)) {
+                    continue;
+                }
+                if (predicateEvaluationService.matchesPermanentPredicate(permanent, count.filter(), filterContext)) {
                     matches += CreatureCountSupport.countsCreatures(count.filter())
                             ? CreatureCountSupport.creatureCount(gameData, permanent, gameQueryService) : 1;
                 }
@@ -3379,6 +3402,23 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private int opponentsControllingPermanentMatching(GameData gameData,
+                                                      OpponentsControllingPermanentMatching amount,
+                                                      AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int qualifyingOpponents = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            boolean controlsMatch = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                            permanent, amount.filter(), FilterContext.empty().withSourceControllerId(playerId)));
+            if (controlsMatch) {
+                qualifyingOpponents++;
+            }
+        }
+        return qualifyingOpponents;
     }
 
     private int opponentsWithAtLeastPoisonCounters(

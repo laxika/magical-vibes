@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.PendingMurmursFromBeyondChoice;
 import com.github.laxika.magicalvibes.model.PendingAnimalMagnetismChoice;
 import com.github.laxika.magicalvibes.model.PendingMemoriesReturningChoice;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
+import com.github.laxika.magicalvibes.model.PendingStudyCounterExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
@@ -988,10 +989,16 @@ public class LibraryChoiceHandlerService {
 
         Card chosenCard = searchCards.get(cardIndex);
 
-        boolean selectedFromGraveyard = destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT
+        boolean selectedFromGraveyard = (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT
+                || destination == LibrarySearchDestination.BATTLEFIELD)
                 && gameData.playerGraveyards.getOrDefault(deckOwnerId, List.of()).contains(chosenCard);
+        boolean selectedFromHand = destination == LibrarySearchDestination.BATTLEFIELD
+                && !selectedFromGraveyard
+                && gameData.playerHands.getOrDefault(deckOwnerId, List.of()).contains(chosenCard);
         if (selectedFromGraveyard) {
             sourceZone = gameData.playerGraveyards.get(deckOwnerId);
+        } else if (selectedFromHand) {
+            sourceZone = gameData.playerHands.get(deckOwnerId);
         }
 
         if (librarySearch.decisionPlayerId() != null
@@ -1696,6 +1703,15 @@ public class LibraryChoiceHandlerService {
             }
             if (!perm.getCard().isAura()) {
                 triggerCollectionService.checkEquipmentAttachedTriggers(gameData, perm, null);
+            }
+        } else if (destination == LibrarySearchDestination.BATTLEFIELD && (selectedFromGraveyard || selectedFromHand)) {
+            Permanent perm = new Permanent(chosenCard, selectedFromGraveyard ? Zone.GRAVEYARD : Zone.HAND);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm,
+                    battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of(), enterWithCounters);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, playerId, perm.getCard(), null, false);
+            if (!gameData.interaction.isAwaitingInput()) {
+                legendRuleService.checkLegendRule(gameData, playerId);
             }
         } else if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PERMANENT) {
             Permanent perm = new Permanent(chosenCard, selectedFromGraveyard ? Zone.GRAVEYARD : Zone.LIBRARY);
@@ -2868,7 +2884,8 @@ public class LibraryChoiceHandlerService {
                         ? predicateEvaluationService.matchesCardPredicate(
                                 card, spec.predicate(), null, gameData, controllerId)
                         : spec.subtype() != null
-                                ? card.getSubtypes().contains(spec.subtype())
+                                ? predicateEvaluationService.matchesCardPredicate(
+                                        card, new CardSubtypePredicate(spec.subtype()), null, gameData, controllerId)
                                 : card.hasType(spec.type()))
                 .toList();
         if (eligible.isEmpty()) {
@@ -3244,6 +3261,12 @@ public class LibraryChoiceHandlerService {
         // Karn, Scion of Urza -1: controller chose which silver-counter card to return
         if (gameData.hasPendingInteraction(PendingKarnScionExileReturn.class)) {
             handleKarnScionReturnFromExile(gameData, allRevealedCards, cardIds, controllerId);
+            return;
+        }
+
+        // Imbraham: controller may put one card they own in exile with a study counter into hand.
+        if (gameData.hasPendingInteraction(PendingStudyCounterExileReturn.class)) {
+            handleStudyCounterExileReturn(gameData, allRevealedCards, cardIds, controllerId);
             return;
         }
 
@@ -4198,6 +4221,29 @@ public class LibraryChoiceHandlerService {
         finishSearchAndResume(gameData);
     }
 
+    private void handleStudyCounterExileReturn(GameData gameData, List<Card> allRevealedCards,
+                                               List<UUID> selectedCardIds, UUID controllerId) {
+        gameData.clearPendingInteractions(PendingStudyCounterExileReturn.class);
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        Set<UUID> selectedIds = new HashSet<>(selectedCardIds);
+        for (Card card : allRevealedCards) {
+            if (selectedIds.contains(card.getId())) {
+                gameData.removeFromExile(card.getId());
+                gameData.exiledCardsWithStudyCounters.remove(card.getId());
+                gameData.addCardToHand(controllerId, card);
+
+                gameLogService.append(gameData, GameLog.textCardText(
+                        controllerName + " returns ", card, " from exile to their hand."));
+                log.info("Game {} - {} returns {} from exile (study counter) to hand",
+                        gameData.id, controllerName, card.getName());
+                break;
+            }
+        }
+
+        finishSearchAndResume(gameData);
+    }
+
     private void handleKarnScionReturnFromExile(GameData gameData, List<Card> allRevealedCards,
                                                  List<UUID> selectedCardIds, UUID controllerId) {
         gameData.clearPendingInteractions(PendingKarnScionExileReturn.class);
@@ -4881,11 +4927,11 @@ public class LibraryChoiceHandlerService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                            validTargets.add(p.getId());
-                        }
-                    } else if (gameQueryService.isCreature(gameData, p)) {
+                    boolean matchesFilter = card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter
+                            ? predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())
+                            : gameQueryService.isCreature(gameData, p);
+                    if (matchesFilter && targetLegalityService.checkSpellTargeting(
+                            gameData, card, p.getId(), null, controllerId).isEmpty()) {
                         validTargets.add(p.getId());
                     }
                 }
@@ -5162,6 +5208,22 @@ public class LibraryChoiceHandlerService {
      * <p>Requires {@link #canCastWithoutPaying} to hold — an uncastable card must never reach here,
      * because where it goes instead is the calling effect's decision, not this method's.
      */
+    /**
+     * Returns the card's owner when a card cast from another player's library or graveyard is not
+     * controlled by its owner, so the resolved spell is disposed of in its owner's zones (CR 400.3).
+     * Returns null when the caster owns the card.
+     */
+    private UUID searchedCardOwnerOverride(GameData gameData, Card card, UUID controllerId) {
+        UUID ownerId = card.getOwnerId();
+        if (ownerId == null) {
+            ownerId = gameData.startingDeckCardIds.entrySet().stream()
+                    .filter(entry -> entry.getValue().contains(card.getId()))
+                    .map(java.util.Map.Entry::getKey)
+                    .findFirst().orElse(null);
+        }
+        return ownerId == null || ownerId.equals(controllerId) ? null : ownerId;
+    }
+
     private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard) {
         castCardWithoutPaying(gameData, player, chosenCard, null, false, false);
     }
@@ -5227,7 +5289,8 @@ public class LibraryChoiceHandlerService {
 
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(
-                            castCard, playerId, spellEffects, spellType, null, discoverValue, null, sourceZone));
+                            castCard, playerId, spellEffects, spellType, null, discoverValue,
+                            searchedCardOwnerOverride(gameData, castCard, playerId), sourceZone));
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + castCard.getName() + ".");
 
@@ -5244,6 +5307,7 @@ public class LibraryChoiceHandlerService {
                 spellEffects, 0, (UUID) null, null
         );
         freeSpell.setSourceZone(sourceZone);
+        freeSpell.setOwnerIdOverride(searchedCardOwnerOverride(gameData, castCard, playerId));
         gameData.stack.add(freeSpell);
 
         gameData.recordSpellCast(playerId, castCard);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -25,13 +26,12 @@ public class KamiOfTheTendedGarden extends Card {
                         List.of(new SacrificeSelfEffect()),
                         true));
 
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+        addEffect(EffectSlot.ON_DEATH, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
-                .upTo(true)
-                .build());
+                .build(), "Return target Spirit card to your hand?"));
     }
 }

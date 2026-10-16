@@ -6143,16 +6143,22 @@ public class StepTriggerService {
                         }
                     }
 
+                    // CR 400.7: the ability refers to this graveyard stay; a card that has left and re-entered
+                    // the graveyard by resolution is a new object, so the stay's identity is recorded here.
                     if (innerEffect instanceof MayEffect may) {
-                        gameData.queueMayAbility(card, playerId, may);
+                        gameData.queueMayAbility(card, playerId, may, card.getId());
                     } else {
-                        gameData.stack.add(new StackEntry(
+                        StackEntry endStepEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 card,
                                 playerId,
                                 card.getName() + "'s end step ability",
                                 new ArrayList<>(List.of(innerEffect))
-                        ));
+                        );
+                        endStepEntry.setTriggeringCardId(card.getId());
+                        endStepEntry.setTriggeringCardGraveyardEntryVersion(
+                                gameData.graveyardEntryVersion(card.getId()));
+                        gameData.stack.add(endStepEntry);
 
                         gameLogService.append(gameData, GameLog.cardThen(card, "'s end step ability triggers."));
                         log.info("Game {} - {} graveyard end-step trigger pushed onto stack", gameData.id, card.getName());

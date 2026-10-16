@@ -36,7 +36,7 @@ public class ReduceOwnCastCostEffectHandler implements CostModificationHandlerBe
     public int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source) {
         var reduce = (ReduceOwnCastCostEffect) effect;
         int amount = amountEvaluationService.evaluate(context.gameData(), reduce.amount(),
-                AmountContext.forCasting(context.castingPlayerId()));
+                AmountContext.forCasting(context.castingPlayerId(), 0, context.spell()));
         return -amount;
     }
 }

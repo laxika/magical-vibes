@@ -77,6 +77,7 @@ class KLiTheResourcefulTest extends BaseCardTest {
 
     @Test
     void drawsForAnotherDwarfWithoutEquipmentEntering() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addToBattlefieldAndReturn(player1, new KLiTheResourceful());
 
@@ -89,6 +90,7 @@ class KLiTheResourcefulTest extends BaseCardTest {
 
     @Test
     void equipmentTriggerConsumesTheDwarfTriggerForTheTurn() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addToBattlefieldAndReturn(player1, new KLiTheResourceful());
 
@@ -103,6 +105,7 @@ class KLiTheResourcefulTest extends BaseCardTest {
 
     @Test
     void unrelatedAndOpposingEntriesDoNotConsumeTheTrigger() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addToBattlefieldAndReturn(player1, new KLiTheResourceful());
 
@@ -120,6 +123,7 @@ class KLiTheResourcefulTest extends BaseCardTest {
 
     @Test
     void drawLimitResetsOnTheOpponentsTurn() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.addToBattlefieldAndReturn(player1, new KLiTheResourceful());
         harness.enterBattlefieldAndReturn(player1, new BronzeSword());
@@ -134,6 +138,7 @@ class KLiTheResourcefulTest extends BaseCardTest {
 
     @Test
     void equipmentDoesNotTriggerAfterKiliLosesAllAbilities() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         Permanent kili = harness.addToBattlefieldAndReturn(player1, new KLiTheResourceful());
         harness.setHand(player2, List.of(new TurnToFrog()));
@@ -168,7 +173,9 @@ class KLiTheResourcefulTest extends BaseCardTest {
 
     @Test
     void firstEquipIsFreeAgainOnTheNextTurn() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         addStoriedKili();
         Permanent sword = harness.addToBattlefieldAndReturn(player1, new BronzeSword());
@@ -194,6 +201,7 @@ class KLiTheResourcefulTest extends BaseCardTest {
 
     @Test
     void panharmoniconCannotDoubleTheEquipmentDrawTrigger() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.addToBattlefieldAndReturn(player1, new KLiTheResourceful());
         harness.addToBattlefieldAndReturn(player1, new Panharmonicon());
@@ -207,6 +215,7 @@ class KLiTheResourcefulTest extends BaseCardTest {
 
     @Test
     void panharmoniconCannotDoubleTheDwarfDrawTrigger() {
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.addToBattlefieldAndReturn(player1, new KLiTheResourceful());
         harness.addToBattlefieldAndReturn(player1, new Panharmonicon());

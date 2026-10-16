@@ -120,6 +120,7 @@ class KimahriValiantGuardianTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(kimahri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.getEffectivePower(gd, kimahri)).isEqualTo(3);
@@ -164,6 +165,6 @@ class KimahriValiantGuardianTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }

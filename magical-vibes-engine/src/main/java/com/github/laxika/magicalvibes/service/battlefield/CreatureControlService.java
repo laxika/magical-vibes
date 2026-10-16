@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterConditionedControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
@@ -574,6 +575,9 @@ public class CreatureControlService {
             if (!stale && fe.effect() instanceof GainControlOfEnchantedTargetEffect) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());
                 stale = affected == null || !gameQueryService.isEnchanted(gameData, affected);
+            }
+            if (!stale && fe.effect() instanceof GainControlOfTargetHauntedCreatureEffect) {
+                stale = !gameData.hauntingCardToPermanentId.containsValue(fe.affectedPermanentId());
             }
             if (!stale && fe.effect() instanceof MonarchBoundControlEffect) {
                 stale = !Objects.equals(gameData.monarchPlayerId, fe.affectedPlayerId());

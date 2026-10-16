@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensEffect;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -22,9 +24,11 @@ public class EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensSupport {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentControlSupport permanentControlSupport;
+    private final CardRevealService cardRevealService;
 
     public boolean beginNextChoice(GameData gameData, StackEntry entry, List<UUID> remainingPlayerIds,
                                    List<UUID> playerOrder, Map<UUID, Integer> revealedCounts,
+                                   Map<UUID, List<Card>> revealedCards,
                                    EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensEffect effect) {
         for (int i = 0; i < remainingPlayerIds.size(); i++) {
             UUID playerId = remainingPlayerIds.get(i);
@@ -38,12 +42,25 @@ public class EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensSupport {
                     new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
                             playerId, validCardIds, entry.getCard().getName(), null, null,
                             new PendingInteraction.EachPlayerRevealContext(
-                                    remaining, playerOrder, revealedCounts, effect.filter(), effect.token())));
+                                    remaining, playerOrder, revealedCounts, revealedCards,
+                                    effect.filter(), effect.token())));
             return true;
         }
 
+        revealChosenCards(gameData, playerOrder, revealedCards);
         createTokens(gameData, entry, playerOrder, revealedCounts, effect.token());
         return false;
+    }
+
+    /** Reveals every player's chosen cards together once all choices are made (CR 101.4). */
+    private void revealChosenCards(GameData gameData, List<UUID> playerOrder,
+                                   Map<UUID, List<Card>> revealedCards) {
+        for (UUID playerId : playerOrder) {
+            List<Card> cards = revealedCards.getOrDefault(playerId, List.of());
+            if (!cards.isEmpty()) {
+                cardRevealService.revealToAllPlayers(gameData, playerId, GameEventFact.RevealZone.HAND, cards);
+            }
+        }
     }
 
     private void createTokens(GameData gameData, StackEntry entry, List<UUID> playerOrder,
@@ -85,6 +102,6 @@ public class EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensSupport {
     public boolean beginInitialChoice(GameData gameData, StackEntry entry,
                                       EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensEffect effect) {
         List<UUID> order = apnapOrder(gameData);
-        return beginNextChoice(gameData, entry, order, order, Map.of(), effect);
+        return beginNextChoice(gameData, entry, order, order, Map.of(), Map.of(), effect);
     }
 }

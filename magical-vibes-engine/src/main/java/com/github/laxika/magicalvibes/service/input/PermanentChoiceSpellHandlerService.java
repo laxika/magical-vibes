@@ -416,6 +416,11 @@ public class PermanentChoiceSpellHandlerService {
             entry.setCopy(ect.copy());
             entry.setCastCopy(ect.copy());
             entry.setPhysicalCard(ect.physicalCard());
+            boolean kickedFreeCast = gameData.freeCastKickedIds.remove(ect.cardToCast().getId());
+            if (ect.physicalCard() != null) {
+                kickedFreeCast |= gameData.freeCastKickedIds.remove(ect.physicalCard().getId());
+            }
+            entry.setKicked(kickedFreeCast);
             entry.setCastWithAdventure(ect.physicalCard() != null
                     && ect.physicalCard().getCastingOption(com.github.laxika.magicalvibes.model.AdventureCast.class).isPresent()
                     && ect.physicalCard().getBackFaceCard() != null

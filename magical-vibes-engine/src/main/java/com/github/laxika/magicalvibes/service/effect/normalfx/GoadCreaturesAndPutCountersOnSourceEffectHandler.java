@@ -53,17 +53,31 @@ public class GoadCreaturesAndPutCountersOnSourceEffectHandler implements NormalE
                     candidate, goadAndCount.affectedPredicate(), context)) {
                 continue;
             }
+            goadedCount++;
+            if (isAlreadyGoadedBy(gameData, candidate.getId(), entry.getControllerId())) {
+                continue;
+            }
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard() == null ? "Goad" : entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(),
                     new GoadTargetCreatureUntilNextTurnEffect(), candidate.getId(),
                     null, null, EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
-            goadedCount++;
         }
 
         if (goadedCount > 0 && source != null) {
             permanentCounterSupport.placeCounterOnPermanent(
                     gameData, entry, source, goadAndCount.counterType(), goadedCount);
         }
+    }
+
+    /**
+     * Returns whether the given player already goads the creature. A player goading a creature again
+     * has no effect and creates no additional combat requirement (CR 701.15d).
+     */
+    private boolean isAlreadyGoadedBy(GameData gameData, UUID creatureId, UUID goadingPlayerId) {
+        return gameData.floatingEffects.stream()
+                .anyMatch(effect -> effect.effect() instanceof GoadTargetCreatureUntilNextTurnEffect
+                        && creatureId.equals(effect.affectedPermanentId())
+                        && goadingPlayerId.equals(effect.controllerId()));
     }
 }

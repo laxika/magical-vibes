@@ -15,7 +15,7 @@ public class Kuon extends Card {
 
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new CreatureDeathsThisTurnAtLeast(3),
-                new TransformToBackFaceEffect()));
+                new TransformToBackFaceEffect(true)));
     }
 
     @Override

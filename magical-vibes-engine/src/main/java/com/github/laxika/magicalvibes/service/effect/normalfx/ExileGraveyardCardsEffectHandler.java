@@ -449,6 +449,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
 
     private void resolveAllGraveyards(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect effect) {
         int totalExiled = 0;
+        graveyardService.beginGraveyardLeaveBatch(gameData);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null || graveyard.isEmpty()) continue;
@@ -471,6 +472,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             graveyard.removeAll(toExile);
             graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
         }
+        graveyardService.endGraveyardLeaveBatch(gameData);
         entry.setEventValue(totalExiled);
 
         if (totalExiled > 0) {

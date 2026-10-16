@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ public class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandler implement
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,6 +54,17 @@ public class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandler implement
 
         // Collect all matching cards across hand, graveyard, and library of the card's owner
         List<Card> matchingCards = new ArrayList<>();
+
+        // "Exile target card ... Search ... for any number of cards with the same name": the targeted
+        // card is exiled by the first sentence, whatever the player picks from the search afterwards.
+        // It stays in the offered list so a selection that includes it remains valid.
+        boolean targetExiledFirst = exileEffect.trackWithSource() && entry.getSourcePermanentId() != null;
+        if (targetExiledFirst) {
+            gameData.playerGraveyards.get(targetPlayerId).remove(targetedCard);
+            gameData.addToExile(targetPlayerId, targetedCard, entry.getSourcePermanentId());
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, List.of(targetedCard));
+            matchingCards.add(targetedCard);
+        }
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         if (hand != null) {

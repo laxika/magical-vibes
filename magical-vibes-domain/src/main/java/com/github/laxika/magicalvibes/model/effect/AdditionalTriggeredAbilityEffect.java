@@ -17,14 +17,15 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                                boolean allyCreatureBecomesTarget,
                                                boolean combatDamageToPlayerOnly,
                                                boolean controlledCreatureDealtDamageOnly,
-                                               boolean permanentTurnsFaceUpOnly)
+                                               boolean permanentTurnsFaceUpOnly,
+                                               boolean drawCauseOnly)
         implements CardEffect {
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
                                              boolean attackOnly, boolean includeSourcePermanent,
                                              boolean allControllers, boolean instantSorceryCastOrCopyOnly) {
         this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
-                allControllers, instantSorceryCastOrCopyOnly, false, false, false, false);
+                allControllers, instantSorceryCastOrCopyOnly, false, false, false, false, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
@@ -32,7 +33,7 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                              boolean allControllers, boolean instantSorceryCastOrCopyOnly,
                                              boolean allyCreatureBecomesTarget) {
         this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
-                allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget, false, false, false);
+                allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget, false, false, false, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
@@ -41,7 +42,7 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                              boolean allyCreatureBecomesTarget, boolean combatDamageToPlayerOnly) {
         this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
                 allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget,
-                combatDamageToPlayerOnly, false, false);
+                combatDamageToPlayerOnly, false, false, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate, Condition condition,
@@ -51,7 +52,7 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
                                              boolean controlledCreatureDealtDamageOnly) {
         this(sourcePredicate, condition, attackOnly, includeSourcePermanent,
                 allControllers, instantSorceryCastOrCopyOnly, allyCreatureBecomesTarget,
-                combatDamageToPlayerOnly, controlledCreatureDealtDamageOnly, false);
+                combatDamageToPlayerOnly, controlledCreatureDealtDamageOnly, false, false);
     }
 
     public AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicate) {
@@ -98,6 +99,12 @@ public record AdditionalTriggeredAbilityEffect(PermanentPredicate sourcePredicat
     /** Makes triggered abilities caused by turning a face-down permanent face up trigger again. */
     public static AdditionalTriggeredAbilityEffect forPermanentTurnsFaceUp() {
         return new AdditionalTriggeredAbilityEffect(
-                new PermanentTruePredicate(), null, false, true, false, false, false, false, false, true);
+                new PermanentTruePredicate(), null, false, true, false, false, false, false, false, true, false);
+    }
+
+    /** Makes triggered abilities caused by a player drawing a card trigger one additional time (Krang, the All-Powerful). */
+    public static AdditionalTriggeredAbilityEffect forDrawCausedTriggers() {
+        return new AdditionalTriggeredAbilityEffect(
+                new PermanentTruePredicate(), null, false, true, false, false, false, false, false, false, true);
     }
 }

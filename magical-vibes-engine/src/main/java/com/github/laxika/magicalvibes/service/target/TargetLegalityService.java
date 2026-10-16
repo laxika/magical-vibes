@@ -1007,8 +1007,17 @@ public class TargetLegalityService {
 
             // Per-position filter
             if (positionFilter != null) {
-                predicateEvaluationService.validateTargetFilter(positionFilter, target,
-                        filterContext(gameData, sourceCard.getId(), playerId));
+                var targetFilterContext = filterContext(gameData, sourceCard.getId(), playerId);
+                try {
+                    predicateEvaluationService.validateTargetFilter(positionFilter, target, targetFilterContext);
+                } catch (IllegalStateException wrongPosition) {
+                    // "Up to one target X and up to one target Y": when every slot is optional, an
+                    // omitted earlier slot shifts a later-slot target into an earlier list position.
+                    if (!skippedOptionalSlotAccepts(ability, xValue, perPositionFilters, i, target,
+                            targetFilterContext)) {
+                        throw wrongPosition;
+                    }
+                }
             }
         }
 
@@ -1016,6 +1025,22 @@ public class TargetLegalityService {
         validateMultiTargetConstraint(gameData, ability.getMultiTargetConstraint(), targetIds);
         validateFlagbearerTargetChoiceForMultiAbility(gameData, playerId, ability, abilityEffects,
                 targetIds, sourceCard, xValue);
+    }
+
+    private boolean skippedOptionalSlotAccepts(ActivatedAbility ability, int xValue, List<TargetFilter> filters,
+                                               int position, Permanent target, FilterContext context) {
+        if (ability.getEffectiveMinTargets(xValue) != 0 || filters.size() < 2) {
+            return false;
+        }
+        for (int later = position + 1; later < filters.size(); later++) {
+            try {
+                predicateEvaluationService.validateTargetFilter(filters.get(later), target, context);
+                return true;
+            } catch (IllegalStateException wrongSlot) {
+                // try the next later slot
+            }
+        }
+        return false;
     }
 
     private void validateTargetCardGroupConstraints(GameData gameData, List<CardEffect> effects,
@@ -1914,6 +1939,20 @@ public class TargetLegalityService {
         return validTargets;
     }
 
+    /**
+     * Validates a battlefield target against an explicit target filter, such as the filter a modal
+     * option declares for its own target. Non-permanent targets are left to the effect validation.
+     */
+    public void validatePermanentTargetFilter(GameData gameData, TargetFilter filter, Card sourceCard,
+                                              UUID targetId, UUID controllerId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (filter == null || target == null) {
+            return;
+        }
+        predicateEvaluationService.validateTargetFilter(filter, target,
+                filterContext(gameData, sourceCard.getId(), controllerId));
+    }
+
     public void validateEffectTargetInZone(GameData gameData, Card card, UUID targetId, Zone targetZone) {
         targetValidationService.validateEffectTargets(card.getEffects(EffectSlot.SPELL),
                 new TargetValidationContext(gameData, targetId, targetZone, card));
@@ -2285,7 +2324,7 @@ public class TargetLegalityService {
                 predicateEvaluationService.validateTargetFilter(
                         targetFilterForCast(positionFilter, kicked, giftPromised), target,
                         filterContext(gameData, card.getId(), controllerId).withXValue(xValue));
-            } else if (card.getTargetFilter(kicked) != null) {
+            } else if (card.getTargetFilter(kicked) != null && !inheritsFirstGroupFilter(card, targetGroup, kicked)) {
                 predicateEvaluationService.validateTargetFilter(
                         targetFilterForCast(card.getTargetFilter(kicked), kicked, giftPromised), target,
                         filterContext(gameData, card.getId(), controllerId).withXValue(xValue));
@@ -4331,13 +4370,14 @@ public class TargetLegalityService {
                 return true;
             }
         }
-        var sourceColor = entry.getCard().getColor();
-        if (sourceColor == null) return false;
-        if (gameQueryService.cantBeTargetedByColorSources(gameData, targetPerm, sourceColor)) return true;
-        if (!gameQueryService.hasHexproofFromColor(gameData, targetPerm, sourceColor)) return false;
-        if (opponentHexproofLifted(gameData, targetPerm, entry.getControllerId())) return false;
-        UUID targetController = gameQueryService.findPermanentController(gameData, targetPerm.getId());
-        return targetController != null && !targetController.equals(entry.getControllerId());
+        for (CardColor sourceColor : sourceColors) {
+            if (gameQueryService.cantBeTargetedByColorSources(gameData, targetPerm, sourceColor)) return true;
+            if (!gameQueryService.hasHexproofFromColor(gameData, targetPerm, sourceColor)) continue;
+            if (opponentHexproofLifted(gameData, targetPerm, entry.getControllerId())) continue;
+            UUID targetController = gameQueryService.findPermanentController(gameData, targetPerm.getId());
+            if (targetController != null && !targetController.equals(entry.getControllerId())) return true;
+        }
+        return false;
     }
 
     private void validateHexproofFromColor(GameData gameData, Permanent target, Card sourceCard, UUID sourcePlayerId) {
@@ -4352,19 +4392,19 @@ public class TargetLegalityService {
                         + " has hexproof from monocolored");
             }
         }
-        var sourceColor = sourceCard.getColor();
-        if (sourceColor == null) return;
-        if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {
-            throw new IllegalStateException(target.getCard().getName()
-                    + " can't be the target of " + sourceColor.name().toLowerCase()
-                    + " spells or abilities from " + sourceColor.name().toLowerCase() + " sources");
-        }
-        if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)
-                && !opponentHexproofLifted(gameData, target, sourcePlayerId)) {
-            UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-            if (targetController != null && !targetController.equals(sourcePlayerId)) {
+        for (CardColor sourceColor : effectiveSourceColors(gameData, sourceCard)) {
+            if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {
                 throw new IllegalStateException(target.getCard().getName()
-                        + " has hexproof from " + sourceColor.name().toLowerCase());
+                        + " can't be the target of " + sourceColor.name().toLowerCase()
+                        + " spells or abilities from " + sourceColor.name().toLowerCase() + " sources");
+            }
+            if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)
+                    && !opponentHexproofLifted(gameData, target, sourcePlayerId)) {
+                UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+                if (targetController != null && !targetController.equals(sourcePlayerId)) {
+                    throw new IllegalStateException(target.getCard().getName()
+                            + " has hexproof from " + sourceColor.name().toLowerCase());
+                }
             }
         }
     }
@@ -4380,18 +4420,18 @@ public class TargetLegalityService {
                 return target.getCard().getName() + " has hexproof from monocolored";
             }
         }
-        var sourceColor = sourceCard.getColor();
-        if (sourceColor == null) return null;
-        if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {
-            return target.getCard().getName() + " can't be the target of "
-                    + sourceColor.name().toLowerCase() + " spells or abilities from "
-                    + sourceColor.name().toLowerCase() + " sources";
-        }
-        if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)
-                && !opponentHexproofLifted(gameData, target, sourcePlayerId)) {
-            UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-            if (targetController != null && !targetController.equals(sourcePlayerId)) {
-                return target.getCard().getName() + " has hexproof from " + sourceColor.name().toLowerCase();
+        for (CardColor sourceColor : effectiveSourceColors(gameData, sourceCard)) {
+            if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {
+                return target.getCard().getName() + " can't be the target of "
+                        + sourceColor.name().toLowerCase() + " spells or abilities from "
+                        + sourceColor.name().toLowerCase() + " sources";
+            }
+            if (gameQueryService.hasHexproofFromColor(gameData, target, sourceColor)
+                    && !opponentHexproofLifted(gameData, target, sourcePlayerId)) {
+                UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
+                if (targetController != null && !targetController.equals(sourcePlayerId)) {
+                    return target.getCard().getName() + " has hexproof from " + sourceColor.name().toLowerCase();
+                }
             }
         }
         return null;
@@ -4708,7 +4748,7 @@ public class TargetLegalityService {
             if (hexReason != null) return hexReason;
         }
         for (CardColor color : effectiveColors) {
-            if (gameQueryService.cantBeTargetedBySpellColor(gameData, target, color, sourcePlayerId)) {
+            if (gameQueryService.cantBeTargetedBySourceColor(gameData, target, color, sourcePlayerId, sourceIsSpell)) {
                 return target.getCard().getName() + " can't be the target of "
                         + color.name().toLowerCase() + " spells";
             }
@@ -4850,6 +4890,15 @@ public class TargetLegalityService {
         return gameData.playerIds.contains(attackedTargetId)
                 ? attackedTargetId
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
+    }
+
+    /**
+     * True when the card-level target filter is merely the first target group's declared filter and
+     * {@code group} is a later, unfiltered group, which that filter does not describe.
+     */
+    private static boolean inheritsFirstGroupFilter(Card card, SpellTarget group, boolean kicked) {
+        return !card.getSpellTargets().isEmpty() && card.getSpellTargets().getFirst() != group
+                && card.getTargetFilter(kicked) == card.getDeclaredTargetFilter(kicked);
     }
 
     private TargetFilter getPositionFilter(List<TargetFilter> filters, int index) {
@@ -5629,6 +5678,13 @@ public class TargetLegalityService {
                     || gameData.playerHands.getOrDefault(targetPlayerId, List.of()).size()
                     >= gameData.playerHands.getOrDefault(controllerId, List.of()).size()
                     + handPredicate.minimumDifference();
+        }
+        if (predicate instanceof PlayerControlsMoreCreaturesThanControllerPredicate creaturePredicate) {
+            if (controllerId == null || controllerId.equals(targetPlayerId)) {
+                return false;
+            }
+            return !creaturePredicate.recheckAtResolution()
+                    || gameQueryService.controlsMoreCreaturesThan(gameData, targetPlayerId, controllerId);
         }
         if (predicate instanceof PlayerHasFewerCreatureCardsInGraveyardThanControllerPredicate graveyardPredicate) {
             if (controllerId == null || controllerId.equals(targetPlayerId)) {

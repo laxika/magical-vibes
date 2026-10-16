@@ -90,9 +90,7 @@ class KeldonRaiderTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature
-        harness.passBothPriorities(); // resolve ETB → may prompt
-
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve ETB — nothing to discard, so no may prompt is offered
 
         // Hand is empty — no discard possible, so no draw either
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

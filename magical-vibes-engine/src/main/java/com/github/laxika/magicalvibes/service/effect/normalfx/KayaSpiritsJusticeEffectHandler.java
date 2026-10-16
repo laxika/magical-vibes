@@ -30,8 +30,11 @@ public class KayaSpiritsJusticeEffectHandler implements NormalEffectHandlerBean 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (entry.getTargetId() == null) {
+            return;
+        }
         List<Card> creatureCards = new ArrayList<>();
-        for (java.util.UUID cardId : entry.getTriggeringCardIds()) {
+        for (java.util.UUID cardId : ((KayaSpiritsJusticeEffect) effect).creatureCardIds()) {
             ExiledCardEntry exiled = gameData.findExiledCard(cardId);
             if (exiled != null && !exiled.faceDown()
                     && !exiled.card().isToken()

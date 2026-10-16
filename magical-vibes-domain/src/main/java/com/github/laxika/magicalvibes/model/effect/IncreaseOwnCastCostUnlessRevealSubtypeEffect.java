@@ -13,6 +13,15 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * card, so auto-revealing whenever a matching card is available is game-state-equivalent to the
  * player choosing to reveal — the only option lost is paying {@code amount} despite holding a
  * matching card, which is never advantageous.
+ *
+ * <p>When {@code explicitSelection} is true ("behold a [subtype] or pay {amount}"), the cost is waived
+ * only if the caster explicitly beholds a matching permanent they control or reveals a matching card
+ * from hand with the cast request; otherwise the caster pays {@code amount}.
  */
-public record IncreaseOwnCastCostUnlessRevealSubtypeEffect(int amount, CardSubtype subtype) implements CardEffect {
+public record IncreaseOwnCastCostUnlessRevealSubtypeEffect(int amount, CardSubtype subtype,
+                                                           boolean explicitSelection) implements CardEffect {
+
+    public IncreaseOwnCastCostUnlessRevealSubtypeEffect(int amount, CardSubtype subtype) {
+        this(amount, subtype, false);
+    }
 }

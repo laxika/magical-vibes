@@ -81,6 +81,7 @@ class KaraiFutureOfTheFootTest extends BaseCardTest {
         harness.passBothPriorities();
         resolveCombat();
         resolveAllTriggers();
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 

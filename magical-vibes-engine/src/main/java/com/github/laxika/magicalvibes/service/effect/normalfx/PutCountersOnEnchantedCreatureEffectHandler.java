@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatur
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +36,15 @@ public class PutCountersOnEnchantedCreatureEffectHandler implements NormalEffect
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent sourceSnapshot = source == null ? entry.getSourcePermanentSnapshot() : source;
-        var enchantedId = sourceSnapshot == null ? entry.getTargetId() : sourceSnapshot.getAttachedTo();
+        UUID enchantedId;
+        if (source != null) {
+            enchantedId = source.getAttachedTo();
+        } else if (sourceSnapshot == null) {
+            enchantedId = entry.getTargetId();
+        } else {
+            enchantedId = sourceSnapshot.getAttachedTo() != null
+                    ? sourceSnapshot.getAttachedTo() : sourceSnapshot.getLastAttachedTo();
+        }
         if (enchantedId == null) {
             return;
         }

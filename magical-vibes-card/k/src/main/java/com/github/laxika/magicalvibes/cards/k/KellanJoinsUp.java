@@ -31,7 +31,7 @@ public class KellanJoinsUp extends Card {
                                         new CardMaxManaValuePredicate(3))),
                                 "a nonland card with mana value 3 or less"),
                         "You may exile a nonland card with mana value 3 or less from your hand and plot it."));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         new PutCounterOnEachControlledPermanentEffect(

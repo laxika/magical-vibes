@@ -22,9 +22,14 @@ public class KardurDoomscourge extends Card {
 
     public KardurDoomscourge() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GoadCreaturesUntilNextTurnEffect(new PermanentNotPredicate(
+                GoadCreaturesUntilNextTurnEffect.requirementOnly(new PermanentNotPredicate(
                         new PermanentControlledBySourceControllerPredicate())));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+                new PermanentIsAttackingPredicate(),
+                SequenceEffect.of(
+                        new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
+                        new GainLifeEffect(1))));
+        addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(),
                 SequenceEffect.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),

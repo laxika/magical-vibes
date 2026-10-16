@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourcePermanentHauntingTargetEffect;
@@ -57,6 +58,11 @@ public class ExileSourcePermanentHauntingTargetEffectHandler implements NormalEf
                 return;
             }
         } else {
+            // An activated ability exiles its source only from the battlefield (Kaya, Ghost Haunter);
+            // the graveyard path is the haunt trigger, which exiles the dying card itself.
+            if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+                return;
+            }
             sourceCard = entry.getCard();
             UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCard.getId());
             if (graveyardOwnerId == null) {

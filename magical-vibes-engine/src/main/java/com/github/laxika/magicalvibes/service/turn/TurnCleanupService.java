@@ -682,17 +682,16 @@ public class TurnCleanupService {
             if (manaPool != null) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 ManaColor replacementColor = battlefield == null ? null : battlefield.stream()
+                        .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
                         .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
                         .filter(ReplaceManaDrainWithColorlessEffect.class::isInstance)
                         .map(ReplaceManaDrainWithColorlessEffect.class::cast)
                         .map(ReplaceManaDrainWithColorlessEffect::replacementColor)
                         .findFirst()
                         .orElse(null);
-                if (replacementColor != null) {
-                    manaPool.convertNonPersistentManaTo(replacementColor);
-                }
                 Set<ManaColor> protectedColors = protectedManaColors(gameData, playerId);
                 if (replacementColor != null) {
+                    manaPool.convertNonPersistentManaTo(replacementColor, protectedColors);
                     protectedColors.add(replacementColor);
                 }
                 manaPool.drainNonPersistent(protectedColors);

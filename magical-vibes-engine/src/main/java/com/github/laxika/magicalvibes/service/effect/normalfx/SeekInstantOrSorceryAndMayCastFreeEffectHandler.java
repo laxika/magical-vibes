@@ -3,13 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekInstantOrSorceryAndMayCastFreeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -18,10 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Resolves Karlach's blue face by seeking one eligible card into hand and offering a free cast. */
+/** Resolves Karlach's blue face by seeking one eligible card into hand and allowing a free cast this turn. */
 @Component
 @RequiredArgsConstructor
 public class SeekInstantOrSorceryAndMayCastFreeEffectHandler implements NormalEffectHandlerBean {
@@ -57,10 +57,8 @@ public class SeekInstantOrSorceryAndMayCastFreeEffectHandler implements NormalEf
         Card sought = eligible.get(ThreadLocalRandom.current().nextInt(eligible.size()));
         library.removeIf(card -> card.getId().equals(sought.getId()));
         gameData.addCardToHand(controllerId, sought);
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                sought,
-                controllerId,
-                List.of(new MayCastFromHandWithoutPayingManaCostEffect()),
-                "Cast " + sought.getName() + " without paying its mana cost?"));
+        // "Until end of turn, you may cast that card without paying its mana cost": a free-cast permission
+        // for exactly that card, usable any time this turn it could be cast, not only right now.
+        gameData.addNextSpellFreeCastPermission(controllerId, new CardIdSetPredicate(Set.of(sought.getId())));
     }
 }

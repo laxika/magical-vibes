@@ -3,19 +3,28 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
+import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.KroxaDiscardState;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KroxaDiscardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
-/** Resolves Kroxa's opponent discard and nonland comparison. */
+/**
+ * Resolves Kroxa's opponent discard and nonland comparison. Each opponent chooses a card in APNAP
+ * order, then all chosen cards are discarded simultaneously (CR 608.2f); opponents who did not
+ * discard a nonland card then lose 3 life. Choices are deferred through {@link EachPlayerRummageState}
+ * and the handler re-runs after each completed selection via {@code rerunCurrentEffectAfterInteraction}.
+ */
 @Component
 @RequiredArgsConstructor
 public class KroxaDiscardEffectHandler implements NormalEffectHandlerBean {
@@ -23,6 +32,7 @@ public class KroxaDiscardEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final LifeSupport lifeSupport;
+    private final ObjectProvider<CardChoiceHandlerService> cardChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,71 +41,73 @@ public class KroxaDiscardEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        KroxaDiscardState state = gameData.kroxaDiscard;
+        EachPlayerRummageState state = gameData.eachPlayerRummage;
+        UUID controllerId = entry.getControllerId();
+
         if (!state.active) {
+            state.reset();
             state.active = true;
-            state.controllerId = entry.getControllerId();
-            addOpponentsInApnapOrder(gameData, state);
-        } else if (state.currentPlayerId != null) {
-            state.discardedNonland.put(state.currentPlayerId,
-                    !gameData.lastDiscardedCardTypes.isEmpty()
-                            && !gameData.lastDiscardedCardTypes.contains(CardType.LAND));
-            state.currentPlayerId = null;
+            state.deferDiscards = true;
+            List<UUID> ordered = List.copyOf(gameData.orderedPlayerIds);
+            int activeIndex = Math.max(0, ordered.indexOf(gameData.activePlayerId));
+            for (int offset = 0; offset < ordered.size(); offset++) {
+                UUID playerId = ordered.get((activeIndex + offset) % ordered.size());
+                if (!playerId.equals(controllerId)) {
+                    state.remaining.addLast(playerId);
+                }
+            }
+            state.chosenAmounts.clear();
+            for (UUID playerId : state.remaining) {
+                state.chosenAmounts.put(playerId, 0);
+            }
         }
 
-        processNextOpponent(gameData, entry, state);
-    }
-
-    private void processNextOpponent(GameData gameData, StackEntry entry, KroxaDiscardState state) {
         while (!state.remaining.isEmpty()) {
-            UUID playerId = state.remaining.removeFirst();
-            state.currentPlayerId = playerId;
-            List<Card> hand = gameData.playerHands.get(playerId);
-            if (hand == null || hand.isEmpty()
-                    || gameQueryService.isDiscardPrevented(gameData, playerId)) {
-                state.discardedNonland.put(playerId, false);
-                state.currentPlayerId = null;
+            UUID playerId = state.remaining.pollFirst();
+            List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+            if (hand.isEmpty() || gameQueryService.isDiscardPrevented(gameData, playerId)
+                    || !gameQueryService.canEffectCauseDiscard(gameData, playerId, controllerId)) {
                 continue;
             }
 
-            gameData.lastDiscardedCardTypes = java.util.Set.of();
+            state.currentPlayerId = playerId;
             gameData.discardCausedByOpponent = true;
             gameData.rerunCurrentEffectAfterInteraction = true;
             playerInteractionSupport.resolveDiscardCards(gameData, playerId, 1, DiscardFollowUp.NONE);
-            return;
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+            state.currentPlayerId = null;
         }
 
+        gameData.rerunCurrentEffectAfterInteraction = false;
         finish(gameData, entry, state);
     }
 
-    private void finish(GameData gameData, StackEntry entry, KroxaDiscardState state) {
-        List<UUID> lifeLossPlayers = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(state.controllerId)
-                    && !Boolean.TRUE.equals(state.discardedNonland.get(playerId))) {
-                lifeLossPlayers.add(playerId);
-            }
+    private void finish(GameData gameData, StackEntry entry, EachPlayerRummageState state) {
+        UUID controllerId = entry.getControllerId();
+        List<UUID> opponents = new ArrayList<>(state.chosenAmounts.keySet());
+        List<EachPlayerRummageState.SelectedDiscard> selected = List.copyOf(state.selectedDiscards);
+
+        Set<UUID> discardedNonland = new HashSet<>();
+        for (EachPlayerRummageState.SelectedDiscard selection : selected) {
+            gameData.playerHands.getOrDefault(selection.playerId(), List.of()).stream()
+                    .filter(card -> card.getId().equals(selection.cardId()))
+                    .findFirst()
+                    .filter(card -> !card.hasType(CardType.LAND))
+                    .ifPresent(card -> discardedNonland.add(selection.playerId()));
         }
 
+        var discardedCounts = cardChoiceHandlerServiceProvider.getObject().discardCollectedCards(
+                gameData, selected, controllerId);
         state.reset();
         gameData.discardCausedByOpponent = false;
-        gameData.rerunCurrentEffectAfterInteraction = false;
-        for (UUID playerId : lifeLossPlayers) {
-            lifeSupport.applyLifeLoss(gameData, playerId, 3, entry.getCard().getName());
-        }
-    }
 
-    private void addOpponentsInApnapOrder(GameData gameData, KroxaDiscardState state) {
-        List<UUID> orderedPlayers = List.copyOf(gameData.orderedPlayerIds);
-        int activePlayerIndex = orderedPlayers.indexOf(gameData.activePlayerId);
-        if (activePlayerIndex < 0) {
-            activePlayerIndex = 0;
-        }
-        for (int offset = 0; offset < orderedPlayers.size(); offset++) {
-            UUID playerId = orderedPlayers.get((activePlayerIndex + offset) % orderedPlayers.size());
-            if (!playerId.equals(state.controllerId)) {
-                state.remaining.addLast(playerId);
+        for (UUID playerId : opponents) {
+            if (discardedCounts.getOrDefault(playerId, 0) > 0 && discardedNonland.contains(playerId)) {
+                continue;
             }
+            lifeSupport.applyLifeLoss(gameData, playerId, 3, entry.getCard().getName());
         }
     }
 }

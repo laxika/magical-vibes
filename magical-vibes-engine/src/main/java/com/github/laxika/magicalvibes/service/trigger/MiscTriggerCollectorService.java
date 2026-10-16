@@ -72,6 +72,9 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -3975,6 +3978,20 @@ public class MiscTriggerCollectorService {
             CardEffect effect, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.ControllerCreaturesOrCreatureCardsExiled exiled)) {
             return false;
+        }
+        if (effect instanceof KayaSpiritsJusticeEffect) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    new ArrayList<>(List.of(new KayaSpiritsJusticeEffect(
+                            exiled.creatureCards().stream().map(Card::getId).toList()))),
+                    match.permanent().getId(),
+                    new ControlledPermanentPredicateTargetFilter(
+                            new PermanentIsTokenPredicate(), "Target must be a token you control")));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            log.info("Game {} - {} triggers (creatures or creature cards exiled) and needs a token target",
+                    match.gameData().id, match.permanent().getCard().getName());
+            return true;
         }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

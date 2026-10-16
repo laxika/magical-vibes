@@ -10,12 +10,18 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *
  * @param subtype the subtype to grant to the target creature
  * @param duration how long the subtype grant lasts
+ * @param overriding when true, the subtype replaces the target's existing subtypes of the same kind
+ *                   (CR 205.1a, e.g. "becomes a Treasure artifact" replaces artifact types)
  */
-public record GrantSubtypeToTargetCreatureEffect(CardSubtype subtype, EffectDuration duration)
+public record GrantSubtypeToTargetCreatureEffect(CardSubtype subtype, EffectDuration duration, boolean overriding)
         implements CardEffect {
 
+    public GrantSubtypeToTargetCreatureEffect(CardSubtype subtype, EffectDuration duration) {
+        this(subtype, duration, false);
+    }
+
     public GrantSubtypeToTargetCreatureEffect(CardSubtype subtype) {
-        this(subtype, EffectDuration.PERMANENT);
+        this(subtype, EffectDuration.PERMANENT, false);
     }
 
     @Override

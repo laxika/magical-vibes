@@ -347,8 +347,10 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         prepareDeclareBlockers(player1);
 
         // Resolve the ability, then remove its source before combat.
-        harness.activateAbility(player2, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.activateAbility(player2, 0, null, null);
+            harness.passBothPriorities();
+        });
         gd.playerBattlefields.get(player2.getId()).remove(guard);
 
         resolveCombat();

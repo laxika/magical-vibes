@@ -115,6 +115,7 @@ class KarnTheGreatCreatorTest extends BaseCardTest {
     @DisplayName("Opposing artifacts remain animated throughout their controller's next turn")
     void opposingAnimationLastsUntilKarnsControllersNextTurn() {
         addReadyKarn(5);
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
@@ -137,6 +138,7 @@ class KarnTheGreatCreatorTest extends BaseCardTest {
     @DisplayName("The controller's artifact animation expires at their next turn")
     void ownAnimationExpiresAtNextTurn() {
         addReadyKarn(5);
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());

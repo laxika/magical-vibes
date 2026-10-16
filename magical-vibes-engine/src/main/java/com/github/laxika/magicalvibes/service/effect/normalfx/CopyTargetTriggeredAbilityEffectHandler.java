@@ -27,6 +27,7 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;
+    private final PsychicBattleSupport psychicBattleSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,7 +78,8 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
         log.info("Game {} - copy of {}'s triggered ability created",
                 gameData.id, targetEntry.getDescription());
 
-        // "You may choose new targets for the copy." Single-target only; multi-target keeps originals.
+        // "You may choose new targets for the copy." A single target is retargeted in one step; with several
+        // targets each one is offered in turn (CR 707.10c).
         boolean singleTarget = targetEntry.getTargetId() != null
                 && (targetEntry.getTargetIds() == null || targetEntry.getTargetIds().size() <= 1);
         if (singleTarget && !targetEntry.isNonTargeting()) {
@@ -90,6 +92,9 @@ public class CopyTargetTriggeredAbilityEffectHandler implements NormalEffectHand
                     copyEntry.getTargetableId()
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);
+        } else if (!singleTarget && !copyEntry.isNonTargeting() && !copyEntry.getDeclaredTargetIds().isEmpty()) {
+            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), copyControllerId,
+                    copyEntry.getTargetableId(), 0);
         }
     }
 }

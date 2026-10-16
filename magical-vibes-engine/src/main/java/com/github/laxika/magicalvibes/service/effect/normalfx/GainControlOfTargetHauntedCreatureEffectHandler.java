@@ -3,10 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,8 +39,8 @@ public class GainControlOfTargetHauntedCreatureEffectHandler implements NormalEf
                 gameData,
                 entry.getControllerId(),
                 target,
-                new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_REMAINS),
-                EffectDuration.WHILE_SOURCE_REMAINS,
+                new GainControlOfTargetHauntedCreatureEffect(),
+                EffectDuration.PERMANENT,
                 target.getId(),
                 entry.getCard().getName());
     }

@@ -20,7 +20,8 @@ import java.util.List;
 public class Knife extends Card {
 
     public Knife() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+                new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE)));
         addActivatedAbility(new ActivatedAbility(

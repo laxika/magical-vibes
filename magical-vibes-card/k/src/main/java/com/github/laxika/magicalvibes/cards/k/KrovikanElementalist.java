@@ -30,7 +30,7 @@ public class KrovikanElementalist extends Card {
                 false, "{U}{U}",
                 List.of(
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
-                        new SacrificeTargetPermanentAtEndStepEffect()
+                        new SacrificeTargetPermanentAtEndStepEffect(false, true)
                 ),
                 "{U}{U}: Target creature you control gains flying until end of turn. "
                         + "Sacrifice it at the beginning of the next end step.",

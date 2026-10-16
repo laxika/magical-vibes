@@ -36,9 +36,14 @@ public class KarganDragonlord extends Card {
                 "{R}",
                 List.of(new BoostSelfEffect(1, 0)),
                 "{R}: This creature gets +1/+0 until end of turn."
-        ));
+        ).withActivationCondition(new SourceCounterThreshold(8, CounterType.LEVEL),
+                "This creature has level 8 or more"));
 
+        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.SELF));
         addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new SourceCounterThreshold(4, CounterType.LEVEL),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(4, CounterType.LEVEL),

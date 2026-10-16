@@ -155,6 +155,7 @@ class KenrithsTransformationTest extends BaseCardTest {
     void drawTriggerResolvesAfterAuraLeavesBattlefield() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrashingDrawbridge());
         harness.setLibrary(player1, List.of(new ShamblingSuit()));
+        harness.setHand(player2, List.of());
 
         castAndResolve(creature);
         Permanent aura = gqs.findPermanentById(gd,

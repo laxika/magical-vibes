@@ -99,6 +99,17 @@ public class AutoPassService {
             return;
         }
 
+        // CR 502.4: no player receives priority during the untap step, so triggers that fired while
+        // permanents untapped (and any targets they need) wait until the upkeep.
+        if (gameData.currentStep == TurnStep.UNTAP && gameData.stack.isEmpty()
+                && !gameData.pendingInteractions.isEmpty() && gameData.pendingMayAbilities.isEmpty()) {
+            advanceStep.accept(gameData);
+            if (gameData.currentStep != TurnStep.UNTAP) {
+                resolveAutoPass(gameData, advanceStep);
+            }
+            return;
+        }
+
         // CR 117.5: State-based actions happen before triggered abilities are put on the stack
         // and before the next player receives priority. Keeping the check at this common
         // priority handoff covers special actions such as playing a land as well as casts,

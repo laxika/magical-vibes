@@ -208,9 +208,13 @@ class KrovikanElementalistTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player2, 0, bears.getId());
 
-        harness.passUntil(TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(TurnStep.END_STEP);
+            harness.passBothPriorities();
+        });
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Balduvian Bears");
         harness.assertNotInGraveyard(player1, "Balduvian Bears");
     }

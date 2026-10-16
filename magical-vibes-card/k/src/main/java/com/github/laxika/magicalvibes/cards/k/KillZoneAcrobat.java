@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class KillZoneAcrobat extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentIsArtifactPredicate()
                                 )),
-                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                         )),
                         Keyword.FLYING,
                         "another creature or artifact"),

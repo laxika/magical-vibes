@@ -22,12 +22,14 @@ import java.util.List;
 public class KangDynasty extends Card {
 
     public KangDynasty() {
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new TapPermanentsEffect(TapUntapScope.TARGET));
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new GoadTargetCreatureUntilNextTurnEffect());
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new RegisterDelayedWatchedCreaturesCombatDamageEffect(
-                List.of(new DrawCardEffect()), true));
-        setSagaChapterTargetGroups(EffectSlot.SAGA_CHAPTER_I, List.of(
-                new SagaChapterTargetGroup(TargetFilters.creatureAnOpponentControls(), 0, 99)));
+        for (EffectSlot chapter : List.of(EffectSlot.SAGA_CHAPTER_I, EffectSlot.SAGA_CHAPTER_II)) {
+            addEffect(chapter, new TapPermanentsEffect(TapUntapScope.TARGET));
+            addEffect(chapter, new GoadTargetCreatureUntilNextTurnEffect());
+            addEffect(chapter, new RegisterDelayedWatchedCreaturesCombatDamageEffect(
+                    List.of(new DrawCardEffect()), true));
+            setSagaChapterTargetGroups(chapter, List.of(
+                    new SagaChapterTargetGroup(TargetFilters.creatureAnOpponentControls(), 0, 99)));
+        }
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);

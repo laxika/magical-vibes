@@ -63,11 +63,13 @@ class KaitoDancingShadowTest extends BaseCardTest {
 
     @Test
     void repeatedCombatDamageTriggersDoNotAllowAThirdLoyaltyActivation() {
+        harness.setHand(player1, List.of());
         Permanent kaito = addReadyKaito(3);
 
         for (int combat = 0; combat < 2; combat++) {
             Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
             attacker.setAttacking(true);
+            harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
             harness.passBothPriorities();
@@ -79,6 +81,7 @@ class KaitoDancingShadowTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
@@ -103,6 +106,7 @@ class KaitoDancingShadowTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();

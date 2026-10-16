@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -170,7 +171,8 @@ public class LookAtTopCardsRevealTwoTypesToHandThenRestEffectHandler implements 
         for (int i = 0; i < subtypes.size(); i++) {
             CardSubtype subtype = subtypes.get(i);
             List<Card> eligible = lookedAtCards.stream()
-                    .filter(card -> card.getSubtypes().contains(subtype))
+                    .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                            card, new CardSubtypePredicate(subtype), null, gameData, controllerId))
                     .toList();
             if (!eligible.isEmpty()) {
                 beginPick(gameData, controllerId, eligible, lookedAtCards,

@@ -806,6 +806,24 @@ public class MayAbilityHandlerService {
                 boolean canPayAdditionalLife = ability.additionalLifeCost() == 0
                         || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
                                 && gameData.getLife(player.getId()) >= ability.additionalLifeCost());
+                // K'rrik-style permission: each black symbol in the cost may be paid with 2 life instead.
+                ManaCost blackAsLifeCost = cost.withBlackManaAsPhyrexian();
+                if (!paidWithLife && ability.lifeCost() == 0 && ability.additionalLifeCost() == 0
+                        && !cost.canPayResolutionCost(pool) && canPayAdditionalLife
+                        && gameQueryService.canPayBlackManaWithLife(gameData, player.getId())
+                        && blackAsLifeCost.canPayResolutionCost(pool)) {
+                    int lifeOwed = blackAsLifeCost.payPhyrexianManaAuto(new ManaPool(pool), 0);
+                    if (gameQueryService.canPlayerLifeChange(gameData, player.getId())
+                            && gameData.getLife(player.getId()) >= lifeOwed) {
+                        blackAsLifeCost.payPhyrexianManaAuto(pool, 0);
+                        blackAsLifeCost.payResolutionCost(pool);
+                        if (lifeOwed > 0) {
+                            lifeSupport.applyLifePayment(gameData, player.getId(), lifeOwed,
+                                    ability.sourceCard().getName());
+                        }
+                        paidWithLife = true;
+                    }
+                }
                 if (!paidWithLife && (!cost.canPayResolutionCost(pool) || !canPayAdditionalLife)) {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " cannot pay " + ability.manaCost()

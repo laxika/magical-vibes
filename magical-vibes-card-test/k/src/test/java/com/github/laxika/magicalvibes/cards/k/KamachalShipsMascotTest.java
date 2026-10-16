@@ -135,6 +135,8 @@ class KamachalShipsMascotTest extends BaseCardTest {
 
     @Test
     void uncastCardRemainsExiledButPermissionExpiresAfterTheTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new KamachalShipsMascot());
         CardInLibrary library = setDamageTwoLibrary();
         declareAttackers(List.of(0));

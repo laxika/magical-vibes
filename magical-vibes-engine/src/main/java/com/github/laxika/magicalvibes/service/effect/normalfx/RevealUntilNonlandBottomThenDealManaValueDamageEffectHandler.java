@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandBottomThenDealManaValueDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -27,6 +28,7 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final LibraryRevealSupport libraryRevealSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,13 +49,33 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
             if (groupTargets.isEmpty()) {
                 return;
             }
-            targetId = groupTargets.getFirst();
-            insertFollowUpEffects(entry, revealEffect, groupTargets);
+            List<UUID> orderedTargets = inTurnOrder(gameData, groupTargets);
+            targetId = orderedTargets.getFirst();
+            insertFollowUpEffects(entry, revealEffect, orderedTargets);
         } else if (targetId == null) {
             targetId = entry.getTargetId();
         }
 
         resolveForTarget(gameData, entry, targetId, revealEffect.randomizeBottom(), false);
+    }
+
+    /**
+     * Orders targets starting with the active player's own target and the permanents that player
+     * controls, then the next player in turn order and so on (the 2022-09-09 ruling for this card);
+     * targets of the same player keep the order they were chosen in.
+     */
+    private List<UUID> inTurnOrder(GameData gameData, List<UUID> targets) {
+        List<UUID> turnOrder = gameData.orderedPlayerIds;
+        int start = Math.max(0, turnOrder.indexOf(gameData.activePlayerId));
+        return targets.stream()
+                .sorted(java.util.Comparator.comparingInt(target -> {
+                    UUID playerId = gameData.playerIds.contains(target) ? target
+                            : gameQueryService.findPermanentController(gameData, target);
+                    int index = turnOrder.indexOf(playerId);
+                    return index < 0 ? turnOrder.size()
+                            : Math.floorMod(index - start, turnOrder.size());
+                }))
+                .toList();
     }
 
     private void insertFollowUpEffects(StackEntry entry,

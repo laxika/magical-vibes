@@ -134,9 +134,7 @@ class KaitoCunningInfiltratorTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passBothPriorities();
-        assertThat(kaito.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player2, 16);
         assertThat(kaito.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);

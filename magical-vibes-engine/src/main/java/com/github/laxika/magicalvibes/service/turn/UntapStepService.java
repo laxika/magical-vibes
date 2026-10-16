@@ -244,6 +244,14 @@ public class UntapStepService {
         List<Permanent> mayNotUntapPermanents = new ArrayList<>();
         List<Permanent> untappedDuringStep = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        // CR 502.3: the untaps happen simultaneously, so a lock is judged against the state at the
+        // start of the step. An untap that releases a lock (Kill Switch) must not free the locked
+        // permanents that happen to be processed after it.
+        Set<UUID> untapLockedAtStart = battlefield == null ? Set.of() : battlefield.stream()
+                .filter(p -> !p.getUntapPreventedByPermanentIds().isEmpty()
+                        || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty())
+                .map(Permanent::getId)
+                .collect(java.util.stream.Collectors.toSet());
         if (battlefield != null) {
             battlefield.forEach(p -> {
                 // ENCHANTED-scope DoesntUntapEffect on an attached aura keeps the host tapped.
@@ -251,8 +259,7 @@ public class UntapStepService {
                 boolean hasSelfDoesntUntap = untapPreventionSupport.hasActiveSelfDoesntUntap(gameData, p);
                 boolean hasMayNotUntap = p.isTapped() && gameQueryService.hasActiveStaticEffect(
                         gameData, p, MayNotUntapDuringUntapStepEffect.class);
-                boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
-                        || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
+                boolean hasUntapLock = untapLockedAtStart.contains(p.getId());
                 boolean skipsNextUntap = p.getSkipUntapCount() > 0
                         && (p.getSkipUntapControllerId() == null || activePlayerId.equals(p.getSkipUntapControllerId()));
                 // A global static (e.g. Marble Titan) can lock this permanent based on a predicate.

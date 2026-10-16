@@ -579,7 +579,8 @@ public class PredicateEvaluationService {
                             : sourceCardId == null ? null : findPermanentByOriginalCardId(gameData, sourceCardId);
                 }
                 yield source != null && gameQueryService.isCreature(gameData, source)
-                        && gameQueryService.shareCreatureType(gameData, source, card);
+                        && gameQueryService.shareCreatureType(gameData, source, card,
+                        cardOwnerId != null ? cardOwnerId : card.getOwnerId());
             }
             case CardSharesColorWithControlledPermanentPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null) {
@@ -640,6 +641,10 @@ public class PredicateEvaluationService {
                         || gameData.perpetualKeywords
                         .getOrDefault(card.getId(), java.util.Set.of())
                         .contains(p.keyword()));
+                if (p.keyword() == Keyword.CONVOKE && gameData != null
+                        && gameData.spellWasCastWithConvokeGrant(card.getId())) {
+                    granted = true;
+                }
                 if (p.keyword() == Keyword.FLASH && gameData != null && cardOwnerId != null) {
                     granted |= gameData.playerBattlefields.entrySet().stream()
                             .flatMap(battlefield -> battlefield.getValue().stream()
@@ -2962,6 +2967,9 @@ public class PredicateEvaluationService {
                 }
                 UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
                 if (controllerId == null) {
+                    controllerId = gameData.simultaneousDyingControllers.get(permanent.getId());
+                }
+                if (controllerId == null) {
                     controllerId = sourceControllerId;
                 }
                 List<Permanent> controllerBattlefield = controllerId == null
@@ -2970,12 +2978,21 @@ public class PredicateEvaluationService {
                 if (controllerBattlefield == null) {
                     yield false;
                 }
-                int maxPower = Math.max(gameQueryService.getEffectivePower(gameData, permanent),
+                Integer lastKnownPower = gameData.simultaneousDyingPowers.get(permanent.getId());
+                int ownPower = lastKnownPower != null
+                        ? lastKnownPower : gameQueryService.getEffectivePower(gameData, permanent);
+                int maxPower = Math.max(ownPower,
                         controllerBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .mapToInt(p -> gameQueryService.getEffectivePower(gameData, p))
-                        .max().orElse(0));
-                yield gameQueryService.getEffectivePower(gameData, permanent) == maxPower;
+                        .max().orElse(Integer.MIN_VALUE));
+                UUID powerControllerId = controllerId;
+                for (var dying : gameData.simultaneousDyingPowers.entrySet()) {
+                    if (powerControllerId.equals(gameData.simultaneousDyingControllers.get(dying.getKey()))) {
+                        maxPower = Math.max(maxPower, dying.getValue());
+                    }
+                }
+                yield ownPower == maxPower;
             }
             case PermanentHasLeastPowerAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasLeastPowerAmongAllCreatures(gameData, permanent);

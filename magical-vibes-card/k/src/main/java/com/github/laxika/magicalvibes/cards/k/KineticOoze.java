@@ -49,8 +49,8 @@ public class KineticOoze extends Card {
         PermanentPredicate otherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
-        targetUpTo(new FixedIfCondition(new SpellXAtLeast(10), 99, 0),
-                new PermanentPredicateTargetFilter(otherCreature, "Targets must be other creatures"), 99)
+        targetUpTo(new FixedIfCondition(new SpellXAtLeast(10), Integer.MAX_VALUE, 0),
+                new PermanentPredicateTargetFilter(otherCreature, "Targets must be other creatures"), Integer.MAX_VALUE)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new SpellXAtLeast(10),
                                 new DoublePlusOneCountersOnTargetCreatureEffect()));

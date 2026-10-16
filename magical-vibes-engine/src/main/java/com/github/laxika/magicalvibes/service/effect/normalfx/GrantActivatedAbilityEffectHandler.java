@@ -93,6 +93,11 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 count++;
             }
         } else if (e.scope() == GrantScope.TARGET) {
+            if (e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+                    && (entry.getSourcePermanentId() == null
+                    || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
+                return;
+            }
             // "Target creature gains '[ability]' until end of turn" (e.g. Banishing Knack).
             // Bound to a target group; falls back to the single-target id.
             List<UUID> ids = new ArrayList<>();

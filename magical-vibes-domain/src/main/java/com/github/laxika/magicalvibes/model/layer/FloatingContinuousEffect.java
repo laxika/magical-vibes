@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetHauntedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAuraAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MonarchBoundControlEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -60,6 +61,7 @@ public record FloatingContinuousEffect(
     public boolean isControlEffect() {
         return effect instanceof CounterConditionedControlEffect
                 || effect instanceof GainControlOfTargetEffect
+                || effect instanceof GainControlOfTargetHauntedCreatureEffect
                 || effect instanceof ControlEnchantedCreatureEffect
                 || effect instanceof GainControlOfEnchantedTargetEffect
                 || effect instanceof GainControlOfEnchantedPermanentEffect

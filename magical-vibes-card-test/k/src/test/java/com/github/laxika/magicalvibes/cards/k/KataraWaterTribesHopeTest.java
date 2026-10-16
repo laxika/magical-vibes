@@ -100,9 +100,12 @@ class KataraWaterTribesHopeTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.activateAbility(player1, 0, 4, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, 4, null);
+            harness.passBothPriorities();
+        });
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(4);
     }

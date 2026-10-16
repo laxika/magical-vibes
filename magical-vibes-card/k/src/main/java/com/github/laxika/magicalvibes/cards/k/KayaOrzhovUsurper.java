@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -34,8 +35,9 @@ public class KayaOrzhovUsurper extends Card {
     public KayaOrzhovUsurper() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(ExileGraveyardCardsEffect.targetedFromAnyGraveyardWithEventValue(
-                                2, new CardTypePredicate(CardType.CREATURE)),
+                List.of(new ExileGraveyardCardsEffect(2, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                                null, null, false, false, false, new CardTypePredicate(CardType.CREATURE),
+                                false, true, false, false),
                         new GainLifeEffect(new Scaled(new Min(new EventValue(), new Fixed(1)), 2))),
                 "+1: Exile up to two target cards from a single graveyard. You gain 2 life if at least one creature card was exiled this way."
         ));

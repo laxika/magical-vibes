@@ -135,6 +135,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -885,7 +886,7 @@ public class ActivatedAbilityExecutionService {
             }
             if (ability.isRequiresTap()) {
                 triggerCollectionService.checkNonlandPermanentTapForManaTriggers(
-                        gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
+                        gameData, playerId, permanent, manaTypesBefore, manaTypeChoicePending);
             }
             if (ability.isRequiresTap() && gameQueryService.isCreature(gameData, permanent)) {
                 triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
@@ -2074,6 +2075,47 @@ public class ActivatedAbilityExecutionService {
                 gameData, source.getChosenSacrificedPermanentSnapshot());
     }
 
+    /**
+     * Pairs each announced battlefield target with the target slot it fills. Targets normally fill the
+     * slots in order, but when every slot is optional ("up to one target creature and up to one target
+     * land") an omitted earlier slot shifts a later-slot target into an earlier list position, so a
+     * target that fails its positional filter is paired with the first later slot that accepts it.
+     */
+    private List<TargetFilter> slotFiltersForTargets(GameData gameData, UUID playerId, Permanent source,
+                                                     ActivatedAbility ability, List<UUID> targetIds, int xValue) {
+        List<TargetFilter> slots = ability.getMultiTargetFilters();
+        List<TargetFilter> result = new ArrayList<>(targetIds.size());
+        boolean allSlotsOptional = slots.size() >= 2 && ability.getEffectiveMinTargets(xValue) == 0;
+        FilterContext context = FilterContext.of(gameData)
+                .withSourceCardId(source.getCard().getId())
+                .withSourceControllerId(playerId);
+        int nextSlot = 0;
+        for (int i = 0; i < targetIds.size(); i++) {
+            int slot = Math.max(i, nextSlot);
+            Permanent target = allSlotsOptional ? gameQueryService.findPermanentById(gameData, targetIds.get(i)) : null;
+            if (target != null && slot < slots.size() && !acceptsTarget(slots.get(slot), target, context)) {
+                for (int later = slot + 1; later < slots.size(); later++) {
+                    if (acceptsTarget(slots.get(later), target, context)) {
+                        slot = later;
+                        break;
+                    }
+                }
+            }
+            nextSlot = slot + 1;
+            result.add(slot < slots.size() ? slots.get(slot) : ability.getTargetFilter());
+        }
+        return result;
+    }
+
+    private boolean acceptsTarget(TargetFilter filter, Permanent target, FilterContext context) {
+        try {
+            predicateEvaluationService.validateTargetFilter(filter, target, context);
+            return true;
+        } catch (IllegalStateException wrongSlot) {
+            return false;
+        }
+    }
+
     private void pushAbilityOnStack(GameData gameData,
                                     UUID playerId,
                                     Permanent permanent,
@@ -2152,13 +2194,8 @@ public class ActivatedAbilityExecutionService {
         }
         stackEntry.setTargetFilter(ability.getTargetFilter());
         if (!ability.getMultiTargetFilters().isEmpty()) {
-            List<TargetFilter> targetFilters = new ArrayList<>(effectivePermanentTargetIds.size());
-            for (int i = 0; i < effectivePermanentTargetIds.size(); i++) {
-                targetFilters.add(i < ability.getMultiTargetFilters().size()
-                        ? ability.getMultiTargetFilters().get(i)
-                        : ability.getTargetFilter());
-            }
-            stackEntry.setTargetFilters(targetFilters);
+            stackEntry.setTargetFilters(slotFiltersForTargets(gameData, playerId, permanent, ability,
+                    effectivePermanentTargetIds, effectiveXValue));
         }
         stackEntry.setMultiTargetConstraint(ability.getMultiTargetConstraint());
         stackEntry.setTargetCardIdsByEffect(targetCardIdsByEffect(

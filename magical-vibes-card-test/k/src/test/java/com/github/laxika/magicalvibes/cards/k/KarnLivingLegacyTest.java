@@ -80,7 +80,6 @@ class KarnLivingLegacyTest extends BaseCardTest {
 
         assertThat(gd.emblems).hasSize(1);
         harness.activateEmblemAbility(player1, 0, 0, null, player2.getId());
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         assertThat(artifact.isTapped()).isTrue();
@@ -98,7 +97,6 @@ class KarnLivingLegacyTest extends BaseCardTest {
         artifact.setSummoningSick(true);
 
         harness.activateEmblemAbility(player1, 0, 0, null, player2.getId());
-        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         assertThat(artifact.isTapped()).isTrue();
@@ -109,6 +107,7 @@ class KarnLivingLegacyTest extends BaseCardTest {
     @DisplayName("-1 can pay zero without looking at or moving any cards")
     void minusOneCanPayZero() {
         addReadyKarn(4);
+        harness.setHand(player1, List.of());
         Card first = new Forest();
         harness.setLibrary(player1, List.of(first));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -128,6 +127,7 @@ class KarnLivingLegacyTest extends BaseCardTest {
     @DisplayName("-1 pays the full amount even when fewer cards remain in the library")
     void minusOneWithShortLibrary() {
         addReadyKarn(4);
+        harness.setHand(player1, List.of());
         Card first = new Forest();
         harness.setLibrary(player1, List.of(first));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -146,6 +146,7 @@ class KarnLivingLegacyTest extends BaseCardTest {
     @DisplayName("-1 resolves without drawing when the library is empty")
     void minusOneWithEmptyLibrary() {
         addReadyKarn(4);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

@@ -574,6 +574,15 @@ public class DamagePreventionService {
                             ? damage : 0;
                 },
                 ALWAYS));
+        steps.add(step("SelfDamageControlChangeUnpreventable",
+                "Have an opponent gain control of it (the damage can't be prevented)", prevention, false,
+                (gd, c, damage) -> damage > 0 && !preventable(gd, c) && c.applySelfDamagePrevention()
+                        && hasControlChangeOnPrevention(gd, c.permanent())
+                        && selfDamagePrevented(gd, c.permanent(), damage) > 0,
+                (gd, c, damage) -> {
+                    makeOpponentGainControl(gd, c.permanent());
+                    return damage;
+                }));
         steps.add(step("SelfDamagePrevention", "Prevent damage to it", prevention, false,
                 (gd, c, damage) -> preventable(gd, c) && c.applySelfDamagePrevention()
                         && applySelfDamagePreventionAmount(gd, c.permanent(), damage) > 0,

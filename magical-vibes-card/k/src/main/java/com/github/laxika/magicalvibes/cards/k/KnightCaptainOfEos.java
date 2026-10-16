@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -24,10 +22,7 @@ public class KnightCaptainOfEos extends Card {
                 false,
                 "{W}",
                 List.of(new SacrificePermanentCost(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasSubtypePredicate(CardSubtype.SOLDIER)
-                        )),
+                        new PermanentHasSubtypePredicate(CardSubtype.SOLDIER),
                         "Sacrifice a Soldier",
                         false
                 ), PreventDamageEffect.allCombat()),

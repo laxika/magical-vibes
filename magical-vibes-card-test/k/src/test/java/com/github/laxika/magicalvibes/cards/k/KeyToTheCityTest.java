@@ -77,14 +77,16 @@ class KeyToTheCityTest extends BaseCardTest {
     @Test
     void decliningUntapTriggerDoesNotDraw() {
         addTappedKey(player1);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new DukharaPeafowl()));
 
         runUntapStep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        // Declining leaves the game to proceed into the draw step, whose turn-based draw is the only card drawn.
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -152,6 +154,7 @@ class KeyToTheCityTest extends BaseCardTest {
     @Test
     void untapTriggerDrawsForTheKeysController() {
         addTappedKey(player2);
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new Forest()));
 

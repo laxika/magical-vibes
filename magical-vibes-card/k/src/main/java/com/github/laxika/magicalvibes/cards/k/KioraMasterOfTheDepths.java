@@ -31,7 +31,7 @@ public class KioraMasterOfTheDepths extends Card {
                 "+1: Untap up to one target creature and up to one target land.",
                 null, +1, null, null,
                 List.of(TargetFilters.creature(), TargetFilters.land()), 0, 2
-        ));
+        ).withAllowSharedTargets());
 
         addActivatedAbility(new ActivatedAbility(
                 -2,

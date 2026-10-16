@@ -202,6 +202,15 @@ public class GraveyardReturnSupport {
             return;
         }
 
+        // Grafdigger's Cage etc.: a card that can't enter the battlefield from a graveyard is never removed
+        // from it, so the target stays in the graveyard it is in.
+        if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD
+                && isCardBlockedFromEnteringFromZone(gameData, targetCard, Zone.GRAVEYARD)) {
+            gameLogService.append(gameData, GameLog.cardThen(targetCard,
+                    " can't enter the battlefield from a graveyard; it stays in the graveyard."));
+            return;
+        }
+
         // Mandatory attach-to-source path (Hakim, Loreweaver): the Aura is put onto the battlefield
         // attached to the source permanent itself, so there is no host to choose. The target is
         // illegal — and the ability fizzles — when the Aura can't legally enchant the source.
@@ -2290,7 +2299,7 @@ public class GraveyardReturnSupport {
         }
         if (exileAtEndStep || exileAtYourNextEndStep) {
             gameData.queueDelayedAction(exileAtYourNextEndStep
-                    ? new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
+                    ? new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP,
                     controllerId)
                     : new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
         }

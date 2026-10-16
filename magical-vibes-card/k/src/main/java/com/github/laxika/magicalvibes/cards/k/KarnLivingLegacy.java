@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaEffect;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
@@ -46,19 +46,18 @@ public class KarnLivingLegacy extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(new CreateEmblemEffect(
-                        List.of(new GrantActivatedAbilityEffect(
-                                new ActivatedAbility(
-                                        true,
-                                        null,
-                                        List.of(new DealDamageToAnyTargetEffect(1)),
-                                        "{T}: This emblem deals 1 damage to any target."
-                                ),
-                                GrantScope.OWN_PERMANENTS,
-                                new PermanentIsArtifactPredicate()
-                        )),
-                        "Tap an untapped artifact you control: This emblem deals 1 damage to any target."
-                )),
-                "−7: You get an emblem with \"Tap an untapped artifact you control: This emblem deals "
+                        List.of(),
+                        "Tap an untapped artifact you control: This emblem deals 1 damage to any target.",
+                        EmblemRecipient.CONTROLLER,
+                        List.of(new ActivatedAbility(
+                                false,
+                                null,
+                                List.of(
+                                        new TapMultiplePermanentsCost(1, new PermanentIsArtifactPredicate()),
+                                        new DealDamageToAnyTargetEffect(1)),
+                                "Tap an untapped artifact you control: This emblem deals 1 damage to any target."
+                        )))),
+                "\u22127: You get an emblem with \"Tap an untapped artifact you control: This emblem deals "
                         + "1 damage to any target.\""
         ));
     }

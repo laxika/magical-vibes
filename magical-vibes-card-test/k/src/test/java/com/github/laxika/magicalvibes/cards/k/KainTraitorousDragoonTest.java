@@ -81,11 +81,12 @@ class KainTraitorousDragoonTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addMana(player2, ManaColor.BLUE, 4);
         Permanent kain = addCreatureReady(player1, new KainTraitorousDragoon());
         kain.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player2, ManaColor.BLUE, 4);
         harness.castInstant(player2, 0, kain.getId());
         resolveAllTriggers();
 

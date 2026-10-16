@@ -41,6 +41,7 @@ class KorFirewalkerTest extends BaseCardTest {
 
         int startingLife = gd.playerLifeTotals.get(player1.getId());
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -78,6 +79,7 @@ class KorFirewalkerTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.castInstant(player2, 0, player2.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -100,6 +102,7 @@ class KorFirewalkerTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
@@ -118,6 +121,7 @@ class KorFirewalkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();

@@ -223,6 +223,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** One choice of a batch of permanents that are returned to hand together once all are chosen. */
+    record BounceBatch(UUID controllerId, Card sourceCard, PermanentPredicate filter, String noun,
+                       int count, List<UUID> chosenIds) implements PermanentChoiceContext {
+        public BounceBatch {
+            chosenIds = List.copyOf(chosenIds);
+        }
+    }
+
     /** A chosen permanent is returned to hand, then a reflexive follow-up resolves. */
     record BouncePermanentThen(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                CardEffect thenEffect) implements PermanentChoiceContext {}
@@ -1634,10 +1642,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseOpponentForSelfFlicker(UUID sourcePermanentId, UUID controllerId, String sourceCardName)
             implements PermanentChoiceContext {}
 
-    /** Kaya, Spirits' Justice: the controller chooses a token to copy the selected creature card. */
-    record KayaSpiritsJusticeTokenChoice(Card sourceCard, UUID controllerId, Card chosenCard)
-            implements PermanentChoiceContext {}
-
     /** Targeted "whenever you cycle or discard a card" trigger on a battlefield permanent
      *  ({@code EffectSlot.ON_CONTROLLER_DISCARDS}), e.g. Zenith Seeker — "target creature gains
      *  flying until end of turn." The controller chooses the target when the discard trigger is
@@ -2809,8 +2813,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        Integer sourcePowerAtTrigger,
                                        boolean sourceAlternateCostAtTrigger,
                                        UUID triggeringPermanentId,
-                                       UUID sourcePermanentId)
+                                       UUID sourcePermanentId,
+                                       boolean markSourceOncePerTurnOnAcceptance)
     implements PermanentChoiceContext {
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
+                                           Integer sourcePowerAtTrigger,
+                                           boolean sourceAlternateCostAtTrigger,
+                                           UUID triggeringPermanentId,
+                                           UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
+                    sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
+                    sourcePermanentId, false);
+        }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                            UUID graveyardOwnerId, int minCount, int xValue, int maxCount,

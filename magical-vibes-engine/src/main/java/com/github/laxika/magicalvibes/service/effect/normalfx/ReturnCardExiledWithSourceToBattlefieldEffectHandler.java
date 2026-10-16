@@ -75,6 +75,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             ExiledCardEntry target = gameData.findExiledCard(entry.getTargetId());
             if (target == null || target.faceDown()
                     || !sourcePermanentId.equals(target.sourcePermanentId())
+                    || (returnEffect.abilityLink() != null
+                    && !returnEffect.abilityLink().equals(target.abilityLink()))
                     || (returnEffect.onlyCardsOwnedByController()
                     && !controllerId.equals(target.ownerId()))
                     || !matches(entry, returnEffect, target.card())) {
@@ -91,6 +93,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
 
         List<Card> matching = gameData.exiledCards.stream()
                 .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
+                .filter(e -> returnEffect.abilityLink() == null
+                        || returnEffect.abilityLink().equals(e.abilityLink()))
                 .filter(e -> !returnEffect.onlyCardsOwnedByController()
                         || controllerId.equals(e.ownerId()))
                 .map(ExiledCardEntry::card)

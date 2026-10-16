@@ -4945,7 +4945,18 @@ public class ManaPool {
      * Persistent mana remains in its original color until it would actually drain.
      */
     public void convertNonPersistentManaToColorless() {
+        convertNonPersistentManaToColorless(Set.of());
+    }
+
+    /**
+     * Like {@link #convertNonPersistentManaToColorless()}, except that mana of the given colors is
+     * left alone (it is protected from draining, so it is not converted either).
+     */
+    public void convertNonPersistentManaToColorless(Set<ManaColor> unconvertedColors) {
         for (ManaColor color : ManaColor.COLORS) {
+            if (unconvertedColors.contains(color)) {
+                continue;
+            }
             int current = pool.getOrDefault(color, 0);
             int persistent = persistentMana.getOrDefault(color, 0)
                     + combatMana.getOrDefault(color, 0);
@@ -5047,13 +5058,21 @@ public class ManaPool {
 
     /** Changes all mana that would drain at the next boundary to the requested color. */
     public void convertNonPersistentManaTo(ManaColor replacementColor) {
+        convertNonPersistentManaTo(replacementColor, Set.of());
+    }
+
+    /**
+     * Like {@link #convertNonPersistentManaTo(ManaColor)}, except that mana of the given colors is
+     * left alone, because it is protected from draining.
+     */
+    public void convertNonPersistentManaTo(ManaColor replacementColor, Set<ManaColor> unconvertedColors) {
         if (replacementColor == ManaColor.COLORLESS) {
-            convertNonPersistentManaToColorless();
+            convertNonPersistentManaToColorless(unconvertedColors);
             return;
         }
 
         for (ManaColor color : ManaColor.values()) {
-            if (color == replacementColor) {
+            if (color == replacementColor || unconvertedColors.contains(color)) {
                 continue;
             }
             int current = pool.getOrDefault(color, 0);

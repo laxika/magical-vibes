@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterLimitEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -629,39 +630,48 @@ public class StateBasedActionService {
     }
 
     /**
-     * Seraph: "Sacrifice the creature when you lose control of this creature." Each creature Seraph
-     * returned is linked to that Seraph. When a Seraph that is still on the battlefield changes
-     * controllers, the player who lost control sacrifices the linked creatures they still control.
-     * A Seraph that leaves the battlefield never triggers this — its linkage is simply dropped, so
-     * the returned creatures stay for good. Modeled as an SBA-timed check (the engine has no
-     * control-change triggered-ability slot); rare enough that the loss of stack interaction is
-     * acceptable.
+     * Seraph and Krovikan Vampire: "Sacrifice it when you lose control of this creature." Each creature
+     * the source returned is linked to it. When the source changes controllers or leaves the
+     * battlefield (the player no longer controls it), the player who lost control gets a triggered
+     * ability that sacrifices each linked creature they still control when it resolves. Modeled as an
+     * SBA-timed check because the engine has no control-change triggered-ability slot.
      */
     private boolean sacrificeCreaturesOnSeraphControlLoss(GameData gameData) {
         if (gameData.seraphReturnedCreatures.isEmpty()) return false;
 
-        List<Permanent> toSacrifice = new ArrayList<>();
+        boolean queued = false;
         for (UUID seraphId : new ArrayList<>(gameData.seraphReturnedCreatures.keySet())) {
             Permanent seraph = gameQueryService.findPermanentById(gameData, seraphId);
-            if (seraph == null) {
-                // Seraph left the battlefield: no sacrifice ever; stop tracking.
-                gameData.seraphReturnedCreatures.remove(seraphId);
-                gameData.seraphControlWatch.remove(seraphId);
-                continue;
-            }
             java.util.Set<UUID> linked = gameData.seraphReturnedCreatures.get(seraphId);
             linked.removeIf(id -> gameQueryService.findPermanentById(gameData, id) == null);
 
-            UUID currentController = gameData.findControllerOf(seraph);
+            UUID currentController = seraph == null ? null : gameData.findControllerOf(seraph);
             UUID prevController = gameData.seraphControlWatch.get(seraphId);
             if (prevController != null && !prevController.equals(currentController)) {
                 for (UUID creatureId : new ArrayList<>(linked)) {
                     Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
                     if (creature != null && prevController.equals(gameData.findControllerOf(creature))) {
-                        toSacrifice.add(creature);
+                        StackEntry trigger = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                creature.getCard(),
+                                prevController,
+                                creature.getCard().getName() + "'s control-loss sacrifice ability",
+                                List.of(new SacrificeTriggeringPermanentEffect()),
+                                null,
+                                seraphId);
+                        trigger.setTriggeringPermanentId(creatureId);
+                        trigger.setNonTargeting(true);
+                        gameData.enqueueTrigger(trigger);
+                        gameLogService.append(gameData, GameLog.abilityTriggers(creature.getCard()));
                         linked.remove(creatureId);
+                        queued = true;
                     }
                 }
+            }
+            if (seraph == null) {
+                gameData.seraphReturnedCreatures.remove(seraphId);
+                gameData.seraphControlWatch.remove(seraphId);
+                continue;
             }
             gameData.seraphControlWatch.put(seraphId, currentController);
             if (linked.isEmpty()) {
@@ -669,17 +679,7 @@ public class StateBasedActionService {
                 gameData.seraphControlWatch.remove(seraphId);
             }
         }
-
-        for (Permanent creature : toSacrifice) {
-            if (permanentRemovalService.removePermanentToGraveyard(gameData, creature)) {
-                gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), " is sacrificed (its controller lost control of Seraph)."));
-                log.info("Game {} - {} sacrificed (lost control of Seraph)", gameData.id, creature.getCard().getName());
-            }
-        }
-        if (!toSacrifice.isEmpty()) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
-        return !toSacrifice.isEmpty();
+        return queued;
     }
 
     /** Queues the registered control-loss ability when its watched permanent changes controller or leaves. */

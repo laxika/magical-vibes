@@ -15,7 +15,7 @@ public class KitsuneMystic extends Card {
         setBackFaceCard(new AutumnTailKitsuneSage());
 
         addEffect(EffectSlot.END_STEP_TRIGGERED,
-                new ConditionalEffect(new EnchantedByAtLeastAuras(2), new TransformToBackFaceEffect()));
+                new ConditionalEffect(new EnchantedByAtLeastAuras(2), new TransformToBackFaceEffect(true)));
     }
 
     @Override

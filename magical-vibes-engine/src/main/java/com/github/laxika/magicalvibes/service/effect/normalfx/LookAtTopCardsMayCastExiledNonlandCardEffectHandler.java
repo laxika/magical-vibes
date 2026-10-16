@@ -52,6 +52,8 @@ public class LookAtTopCardsMayCastExiledNonlandCardEffectHandler implements Norm
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
+        Permanent sourceSnapshot = entry.getSourcePermanentSnapshot() != null
+                ? entry.getSourcePermanentSnapshot() : source;
         int count = amountEvaluationService.evaluate(gameData, typedEffect.count(),
                 AmountContext.forStackEntry(entry, source));
         if (count <= 0) {
@@ -74,7 +76,8 @@ public class LookAtTopCardsMayCastExiledNonlandCardEffectHandler implements Norm
                 .filter(card -> !card.hasType(CardType.LAND))
                 .filter(card -> typedEffect.castPredicate() == null
                         || predicateEvaluationService.matchesCardPredicate(
-                        card, typedEffect.castPredicate(), entry.getCard().getId(), gameData, controllerId))
+                        card, typedEffect.castPredicate(), entry.getCard().getId(), gameData, controllerId,
+                        entry.getSourcePermanentId(), null, null, sourceSnapshot))
                 .toList();
         if (nonlandCards.isEmpty()) {
             Collections.shuffle(topCards);

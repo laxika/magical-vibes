@@ -1,22 +1,40 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
+import java.util.Set;
 
-/** Makes the source permanent a permanent copy of a target creature. */
+/**
+ * Makes the source permanent a permanent copy of a target creature.
+ *
+ * <p>{@code additionalKeywords} are keywords the copy has as a copiable value ("except it has vigilance"),
+ * so they are carried by the copy's characteristics and inherited by later copies of it.
+ */
 public record BecomeCopyOfTargetCreaturePermanentlyEffect(
         String nameOverride,
         EffectSlot retainedEffectSlot,
         PermanentPredicate targetPredicate,
         List<EffectSlot> additionalRetainedEffectSlots,
-        TargetPredicate targetType
+        TargetPredicate targetType,
+        Set<Keyword> additionalKeywords
 ) implements CardEffect {
 
     public BecomeCopyOfTargetCreaturePermanentlyEffect {
         additionalRetainedEffectSlots = additionalRetainedEffectSlots == null
                 ? List.of() : List.copyOf(additionalRetainedEffectSlots);
         targetType = targetType == null ? TargetPredicates.creature() : targetType;
+        additionalKeywords = additionalKeywords == null ? Set.of() : Set.copyOf(additionalKeywords);
+    }
+
+    public BecomeCopyOfTargetCreaturePermanentlyEffect(
+            String nameOverride,
+            EffectSlot retainedEffectSlot,
+            PermanentPredicate targetPredicate,
+            List<EffectSlot> additionalRetainedEffectSlots,
+            TargetPredicate targetType) {
+        this(nameOverride, retainedEffectSlot, targetPredicate, additionalRetainedEffectSlots, targetType, Set.of());
     }
 
     /** Backward-compatible constructor for creature-copy effects. */
@@ -26,7 +44,7 @@ public record BecomeCopyOfTargetCreaturePermanentlyEffect(
             PermanentPredicate targetPredicate,
             List<EffectSlot> additionalRetainedEffectSlots) {
         this(nameOverride, retainedEffectSlot, targetPredicate, additionalRetainedEffectSlots,
-                TargetPredicates.creature());
+                TargetPredicates.creature(), Set.of());
     }
 
     public BecomeCopyOfTargetCreaturePermanentlyEffect() {
@@ -46,7 +64,7 @@ public record BecomeCopyOfTargetCreaturePermanentlyEffect(
     public static BecomeCopyOfTargetCreaturePermanentlyEffect forTargetPermanent(
             EffectSlot retainedEffectSlot, PermanentPredicate targetPredicate) {
         return new BecomeCopyOfTargetCreaturePermanentlyEffect(
-                null, retainedEffectSlot, targetPredicate, List.of(), TargetPredicates.permanent());
+                null, retainedEffectSlot, targetPredicate, List.of(), TargetPredicates.permanent(), Set.of());
     }
 
     @Override

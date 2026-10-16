@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
@@ -193,6 +194,11 @@ public class EtbEffectResolver {
                                 ? conditional.wrapped() : null;
                 case ControllerMainPhase controllerMainPhase ->
                         conditionEvaluationService.isMet(ctx.gameData(), controllerMainPhase, conditionContext)
+                                ? conditional.wrapped() : null;
+                // "When this enters, if you have fewer than four cards in hand" (Krang, Master Mind): the
+                // hand size is an intervening-if (CR 603.4), so the trigger is never put on the stack when false.
+                case CardsInHandAtMost cardsInHandAtMost ->
+                        conditionEvaluationService.isMet(ctx.gameData(), cardsInHandAtMost, conditionContext)
                                 ? conditional.wrapped() : null;
                 case SourceUntapped ignored ->
                         conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)

@@ -1464,6 +1464,20 @@ public class GraveyardService {
                 .add(damagedCreature.getCard().getId());
         damagedCreature.recordDamageDealtByPermanent(sourcePermanentId);
         recordCreatureDamagedBySource(gameData, sourcePermanentId, damagedCreature, damage);
+        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+        if (sourceControllerId != null) {
+            recordCreatureDamagedByController(gameData, sourceControllerId, damagedCreature);
+        }
+    }
+
+    /** Records that a creature was damaged by a source the given player controlled at the time of damage. */
+    public void recordCreatureDamagedByController(GameData gameData, UUID controllerId, Permanent damagedCreature) {
+        if (controllerId == null || damagedCreature == null || !gameQueryService.isCreature(gameData, damagedCreature)) {
+            return;
+        }
+        gameData.creatureCardsDamagedThisTurnByController
+                .computeIfAbsent(controllerId, ignored -> ConcurrentHashMap.newKeySet())
+                .add(damagedCreature.getCard().getId());
     }
 
     /** Records damage history for any source object, including instant and sorcery cards. */

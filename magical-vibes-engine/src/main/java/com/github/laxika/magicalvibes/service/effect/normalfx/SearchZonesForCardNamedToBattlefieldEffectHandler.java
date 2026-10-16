@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -89,6 +90,11 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
             return;
         }
 
+        if (!effect.attachToTarget() && effect.includeHand() && effect.alwaysShuffle()
+                && effect.selectedZones().isEmpty() && searchAllZonesAtOnce(gameData, controllerId, effect)) {
+            return;
+        }
+
         // Hand-including wording ("graveyard, hand, and/or library") lets the controller pick the zone when
         // matches sit in several of them. Each option searches one zone, which covers every outcome.
         if (!effect.attachToTarget() && effect.includeHand() && effect.selectedZones().isEmpty()) {
@@ -96,17 +102,17 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
             if (gameData.playerGraveyards.get(controllerId).stream().anyMatch(card -> cardName.equals(card.getName()))) {
                 options.add(new ChooseOneEffect.ChooseOneOption("Search your graveyard",
                         new SearchZonesForCardNamedToBattlefieldEffect(cardName, true, false,
-                                List.of(), Set.of(Zone.GRAVEYARD))));
+                                List.of(), Set.of(Zone.GRAVEYARD), effect.alwaysShuffle())));
             }
             if (gameData.playerHands.get(controllerId).stream().anyMatch(card -> cardName.equals(card.getName()))) {
                 options.add(new ChooseOneEffect.ChooseOneOption("Search your hand",
                         new SearchZonesForCardNamedToBattlefieldEffect(cardName, true, false,
-                                List.of(), Set.of(Zone.HAND))));
+                                List.of(), Set.of(Zone.HAND), effect.alwaysShuffle())));
             }
             if (gameData.playerDecks.get(controllerId).stream().anyMatch(card -> cardName.equals(card.getName()))) {
                 options.add(new ChooseOneEffect.ChooseOneOption("Search your library",
                         new SearchZonesForCardNamedToBattlefieldEffect(cardName, true, false,
-                                List.of(), Set.of(Zone.LIBRARY))));
+                                List.of(), Set.of(Zone.LIBRARY), effect.alwaysShuffle())));
             }
             if (options.size() > 1) {
                 chooseOneEffectHandler.resolve(gameData, entry, new ChooseOneEffect(options));
@@ -160,6 +166,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
                             .build());
                 }
                 log.info("Game {} - {} finds {} in graveyard", gameData.id, playerName, cardName);
+                shuffleIfLibraryAlsoSearched(gameData, effect, controllerId);
                 return;
             }
         }
@@ -180,6 +187,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
                         playerName + " reveals ", found, " from their hand and puts it onto the battlefield."));
                 graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, found);
                 log.info("Game {} - {} finds {} in hand", gameData.id, playerName, cardName);
+                shuffleIfLibraryAlsoSearched(gameData, effect, controllerId);
                 return;
             }
         }
@@ -202,6 +210,59 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
                 LibrarySearchFollowUp.NONE,
                 host == null ? null : host.getId());
     }
+    /**
+     * "Search your graveyard, hand, and library for a card named X, put it onto the battlefield, then
+     * shuffle" (Kassandra, Eagle Bearer). Every matching card is offered in one pick. The hand and the
+     * library are hidden zones, so the controller may find nothing in them, but a card in the graveyard
+     * (a public zone) must be found, so declining is only possible without a graveyard match
+     * (CR 701.23b). Returns false when nothing needs a choice, leaving the automatic zone-by-zone search
+     * to handle it.
+     */
+    private boolean searchAllZonesAtOnce(GameData gameData, UUID controllerId,
+                                         SearchZonesForCardNamedToBattlefieldEffect effect) {
+        String cardName = effect.cardName();
+        List<Card> graveyardMatches = gameData.playerGraveyards.get(controllerId).stream()
+                .filter(card -> cardName.equals(card.getName())).toList();
+        List<Card> handMatches = gameData.playerHands.get(controllerId).stream()
+                .filter(card -> cardName.equals(card.getName())).toList();
+        if (librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId) != Integer.MAX_VALUE) {
+            return false;
+        }
+        boolean librarySearchAllowed = librarySearchSupport.checkSearchRestriction(gameData, controllerId);
+        List<Card> libraryMatches = librarySearchAllowed
+                ? gameData.playerDecks.get(controllerId).stream()
+                        .filter(card -> cardName.equals(card.getName())).toList()
+                : List.of();
+        boolean needsChoice = !handMatches.isEmpty()
+                || (!libraryMatches.isEmpty() && !graveyardMatches.isEmpty());
+        if (!needsChoice) {
+            return false;
+        }
+        List<Card> options = new java.util.ArrayList<>(graveyardMatches);
+        options.addAll(handMatches);
+        options.addAll(libraryMatches);
+        String prompt = "Find a card named " + cardName + " in your graveyard, hand, or library.";
+        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
+                LibrarySearchParams.builder(controllerId, options)
+                        .reveals(true)
+                        .canFailToFind(graveyardMatches.isEmpty())
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.BATTLEFIELD)
+                        .shuffleAfterSelection(librarySearchAllowed)
+                        .build(),
+                prompt, graveyardMatches.isEmpty());
+        return true;
+    }
+
+    private void shuffleIfLibraryAlsoSearched(GameData gameData, SearchZonesForCardNamedToBattlefieldEffect effect,
+                                              UUID controllerId) {
+        if (!effect.alwaysShuffle()) {
+            return;
+        }
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+        com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+    }
+
     private void resolveMultipleNames(GameData gameData, StackEntry entry,
                                       SearchZonesForCardNamedToBattlefieldEffect effect) {
         UUID controllerId = entry.getControllerId();

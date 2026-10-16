@@ -521,8 +521,7 @@ public class ManaCost {
      */
     public ManaCost withBlackManaAsPhyrexian() {
         int blackCost = coloredCosts.getOrDefault(ManaColor.BLACK, 0);
-        if (blackCost == 0 && hybridCosts.stream().noneMatch(h -> h.genericAlternative() < 0
-                && h.colors().contains(ManaColor.BLACK))) {
+        if (blackCost == 0 && hybridCosts.stream().noneMatch(h -> h.colors().contains(ManaColor.BLACK))) {
             return this;
         }
 
@@ -533,8 +532,7 @@ public class ManaCost {
             additionalPhyrexian.merge(ManaColor.BLACK, blackCost, Integer::sum);
         }
         List<HybridSymbol> remainingHybrids = hybridCosts.stream()
-                .map(hybrid -> hybrid.genericAlternative() < 0
-                        && hybrid.colors().contains(ManaColor.BLACK)
+                .map(hybrid -> hybrid.colors().contains(ManaColor.BLACK) && !hybrid.phyrexianAlternative()
                         ? new HybridSymbol(hybrid.colors(), hybrid.genericAlternative(), true)
                         : hybrid)
                 .toList();

@@ -78,6 +78,14 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
                 .filter(card -> subtype == null || card.getSubtypes().contains(subtype))
                 .toList();
 
+        int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
+        if (topLimit < deck.size()) {
+            List<Card> searchable = deck.subList(0, topLimit);
+            matchingCards = matchingCards.stream()
+                    .filter(card -> searchable.stream().anyMatch(top -> top == card))
+                    .toList();
+        }
+
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logMsg = playerName + " searches their library but finds no "

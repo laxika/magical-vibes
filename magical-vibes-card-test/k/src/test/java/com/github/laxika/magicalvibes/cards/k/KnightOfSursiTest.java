@@ -163,7 +163,7 @@ class KnightOfSursiTest extends BaseCardTest {
     private void advanceThroughSuspendCountdown() {
         for (int i = 0; i < 3; i++) {
             advanceToUpkeep(player1);
-            harness.passBothPriorities();
+            resolveAllTriggers();
         }
     }
 }

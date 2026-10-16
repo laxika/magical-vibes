@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.HaveFullTextOfTopCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
@@ -83,6 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectedEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SetCreatureTypesToImprintedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
@@ -1377,6 +1380,20 @@ public class LayerSystemService {
                     instances.add(new EffectInstance(null, grant, grant, counterEffect, false,
                             counterEffect.timestamp(), slot.position()));
                 }
+                for (CounterType counterType : CounterType.values()) {
+                    CardColor hexproofColor = counterType.hexproofFromColor();
+                    if (hexproofColor == null || permanent.getCounterCount(counterType) <= 0) {
+                        continue;
+                    }
+                    GrantEffectEffect grant = new GrantEffectEffect(
+                            TargetingRestrictionEffect.hexproofFromColors(Set.of(hexproofColor)), GrantScope.TARGET);
+                    FloatingContinuousEffect counterEffect = new FloatingContinuousEffect(
+                            UUID.randomUUID(), "hexproof from " + hexproofColor.name().toLowerCase() + " counter",
+                            null, slot.controllerId(), grant, permanent.getId(), null, null,
+                            EffectDuration.PERMANENT, permanent.getCounterTimestamp(counterType));
+                    instances.add(new EffectInstance(null, grant, grant, counterEffect, false,
+                            counterEffect.timestamp(), slot.position()));
+                }
             }
         }
         instances.sort(Comparator.comparing((EffectInstance i) -> !i.characteristicDefining())
@@ -1712,6 +1729,9 @@ public class LayerSystemService {
                         state.addSubtype(grant.subtype());
                     } else if (BASIC_LAND_SUBTYPES.contains(grant.subtype())) {
                         setLandType(state, target.permanent().getId(), grant.subtype(), landTypeOverrides);
+                    } else if (ARTIFACT_SUBTYPES.contains(grant.subtype())) {
+                        state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
+                        state.addSubtype(grant.subtype());
                     } else {
                         setCreatureType(state, grant.subtype());
                     }
@@ -2192,7 +2212,7 @@ public class LayerSystemService {
                     if (state.hasCardType(CardType.LAND) && !state.hasCardType(CardType.CREATURE)
                             && scopeMatches
                             && (animateLands.requiredSubtype() == null
-                                    || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))
+                                    || state.hasSubtype(animateLands.requiredSubtype()))
                             && !isOneShotAnimated(permanent)) {
                         state.addCardType(CardType.CREATURE);
                     }
@@ -2292,6 +2312,19 @@ public class LayerSystemService {
                 for (PermanentSlot target : targets) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (state == null) continue;
+                    if (animate.cardTypeOverriding()) {
+                        // "He's a 3/4 Ninja creature" sets the card types instead of adding to them
+                        // (CR 205.1a), so a planeswalker stops being one (Kaito, Bane of Nightmares).
+                        Set<CardType> types = EnumSet.of(CardType.CREATURE);
+                        types.addAll(animate.grantedCardTypes());
+                        state.overrideCardTypes(types);
+                        if (!state.hasCardType(CardType.ARTIFACT)) {
+                            state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
+                        }
+                        if (!state.hasCardType(CardType.PLANESWALKER)) {
+                            state.removeSubtypesIf(PLANESWALKER_SUBTYPES::contains);
+                        }
+                    }
                     state.addCardType(CardType.CREATURE);
                     for (CardType grantedType : animate.grantedCardTypes()) {
                         state.addCardType(grantedType);
@@ -2795,6 +2828,51 @@ public class LayerSystemService {
                              Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L6_ABILITIES),
                 slots, slotsById, board, this::applyL6Instance);
+        applyLoyaltyAbilitySharing(slots, board);
+    }
+
+    /**
+     * "Each other planeswalker you control has all loyalty abilities of this planeswalker" (Kasmina,
+     * Enigma Sage). The shared set includes loyalty abilities the source gained from other layer 6
+     * effects, so it is applied after every other grant, from a snapshot of each source's abilities
+     * taken before any sharing so that two sharing sources do not feed each other.
+     */
+    private void applyLoyaltyAbilitySharing(List<PermanentSlot> slots, LayeredBoardState board) {
+        Map<PermanentSlot, List<ActivatedAbility>> shared = new java.util.LinkedHashMap<>();
+        for (PermanentSlot source : slots) {
+            CharacteristicState sourceState = board.states().get(source.permanent().getId());
+            if (sourceState == null || sourceState.isPrintedAbilitiesRemoved() || sourceState.isLosesAllAbilities()
+                    || sourceState.isLosesAllNonManaAbilities()
+                    || source.permanent().getCard().getEffects(EffectSlot.STATIC).stream()
+                    .noneMatch(ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect.class::isInstance)) {
+                continue;
+            }
+            List<ActivatedAbility> abilities = new ArrayList<>();
+            for (ActivatedAbility ability : source.permanent().getCard().getActivatedAbilities()) {
+                if (ability.getLoyaltyCost() != null || ability.isVariableLoyaltyCost()) {
+                    abilities.add(ability);
+                }
+            }
+            for (ActivatedAbility ability : sourceState.getGrantedActivatedAbilities()) {
+                if (ability.getLoyaltyCost() != null || ability.isVariableLoyaltyCost()) {
+                    abilities.add(ability);
+                }
+            }
+            shared.put(source, abilities);
+        }
+        shared.forEach((source, abilities) -> {
+            for (PermanentSlot target : slots) {
+                CharacteristicState targetState = board.states().get(target.permanent().getId());
+                if (target.permanent() == source.permanent() || targetState == null
+                        || !source.controllerId().equals(target.controllerId())
+                        || !targetState.hasCardType(CardType.PLANESWALKER)) {
+                    continue;
+                }
+                abilities.forEach(ability -> targetState.addActivatedAbility(
+                        ability.withGrantSource(source.permanent().getId())));
+                board.l56Touched().add(target.permanent().getId());
+            }
+        });
     }
 
     /**

@@ -195,6 +195,7 @@ public class DamageSupport {
         } else {
             graveyardService.recordCreatureDamagedBySource(
                     gameData, damageSourceKey(entry, null), target, damage);
+            graveyardService.recordCreatureDamagedByController(gameData, entry.getControllerId(), target);
         }
 
         // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)

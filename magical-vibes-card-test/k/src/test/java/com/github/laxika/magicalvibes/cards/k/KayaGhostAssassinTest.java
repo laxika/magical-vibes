@@ -46,6 +46,7 @@ class KayaGhostAssassinTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, creature.getId());
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Exile Grizzly Bears");
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(creature.getCard());

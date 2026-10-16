@@ -67,6 +67,11 @@ public class RevealUntilCountMatchingCardsToBattlefieldRestOnBottomRandomEffectH
         if (requiredCount <= 0 || deck == null || deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     ": " + playerName + " reveals no cards."));
+            if (shuffleLibrary && requiredCount > 0 && deck != null) {
+                // Revealing from an empty library still ends with the library being shuffled
+                // (Kindred Summons' 2017 ruling on short libraries).
+                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            }
             return;
         }
 

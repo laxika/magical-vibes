@@ -82,6 +82,7 @@ class KravenTheHunterTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Forest drawnCard = new Forest();
         Forest remainingCard = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard, remainingCard));
         giant.setMarkedDamage(3);
         bears.setMarkedDamage(2);
@@ -136,6 +137,7 @@ class KravenTheHunterTest extends BaseCardTest {
         Permanent kraven = harness.addToBattlefieldAndReturn(player1, new KravenTheHunter());
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));
         kraven.setMarkedDamage(3);
         giant.setMarkedDamage(3);

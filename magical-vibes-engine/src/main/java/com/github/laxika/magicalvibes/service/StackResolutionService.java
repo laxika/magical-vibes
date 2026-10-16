@@ -560,7 +560,7 @@ public class StackResolutionService {
         if (entry.isGiftPromised()) {
             for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
                 StackEntry triggeredEntry = gameData.stack.get(i);
-                if (triggeredEntry.getTargetableId().equals(card.getId())) {
+                if (triggeredEntry.getCard() != null && card.getId().equals(triggeredEntry.getCard().getId())) {
                     triggeredEntry.setGiftPromised(true);
                 }
             }
@@ -586,7 +586,7 @@ public class StackResolutionService {
         if (entry.isGiftPromised()) {
             for (int i = stackSizeBeforeEtb; i < gameData.stack.size(); i++) {
                 StackEntry triggeredEntry = gameData.stack.get(i);
-                if (triggeredEntry.getTargetableId().equals(card.getId())) {
+                if (triggeredEntry.getCard() != null && card.getId().equals(triggeredEntry.getCard().getId())) {
                     triggeredEntry.setGiftPromised(true);
                 }
             }

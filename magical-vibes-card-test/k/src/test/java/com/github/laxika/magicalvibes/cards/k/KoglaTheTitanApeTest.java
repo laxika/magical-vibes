@@ -197,6 +197,7 @@ class KoglaTheTitanApeTest extends BaseCardTest {
     @Test
     @DisplayName("Indestructible expires at the end of the turn")
     void indestructibleExpires() {
+        harness.setHand(player1, List.of());
         Permanent kogla = harness.addToBattlefieldAndReturn(player1, new KoglaTheTitanApe());
         Permanent human = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
         harness.addMana(player1, ManaColor.GREEN, 1);

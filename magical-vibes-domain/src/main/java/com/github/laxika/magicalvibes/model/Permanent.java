@@ -785,6 +785,10 @@ public class Permanent {
     @Setter private boolean animatedUntilNextTurn;
     @Setter private int untilNextTurnAnimatedPower;
     @Setter private int untilNextTurnAnimatedToughness;
+    /** The player whose effect granted the current "until your next turn" animation, or null when the
+     *  animation is not tied to a grantor. A grantor's animation ends at the grantor's next turn rather
+     *  than at the permanent's controller's next turn (Karn, the Great Creator's +1 on an opponent's artifact). */
+    @Setter private UUID untilNextTurnAnimationGrantorId;
     /** Subtypes granted by "until your next turn" animation effects (e.g. Elemental from Sylvan Awakening).
      *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
      *  Cleared at the beginning of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
@@ -1441,6 +1445,10 @@ public class Permanent {
         this.mustBlockIdsUntilEndOfCombat.clear();
         this.bandId = null;
         this.cantBlockThisCombat = false;
+        if (this.mustAttackThisCombat && !this.mustAttackThisTurn) {
+            // A combat-long attack requirement's chosen target ends with that combat.
+            this.mustAttackTargetId = null;
+        }
         this.mustAttackThisCombat = false;
     }
 
@@ -2119,12 +2127,29 @@ public class Permanent {
 
     public void clearUntilNextTurnEffects() {
         this.untilNextTurnActivatedAbilities.clear();
+        if (this.untilNextTurnAnimationGrantorId == null) {
+            clearUntilNextTurnAnimation();
+        }
+        this.untilNextTurnLandTypeOverride = null;
+    }
+
+    /**
+     * Ends an "until your next turn" animation granted by {@code playerId}'s effect when that player's
+     * turn begins. An animation an opponent granted outlasts the permanent's own controller's turns.
+     */
+    public void clearUntilNextTurnAnimationGrantedBy(UUID playerId) {
+        if (playerId != null && playerId.equals(this.untilNextTurnAnimationGrantorId)) {
+            clearUntilNextTurnAnimation();
+        }
+    }
+
+    private void clearUntilNextTurnAnimation() {
         this.animatedUntilNextTurn = false;
         this.untilNextTurnAnimatedPower = 0;
         this.untilNextTurnAnimatedToughness = 0;
         this.untilNextTurnSubtypes.clear();
         this.untilNextTurnKeywords.clear();
-        this.untilNextTurnLandTypeOverride = null;
+        this.untilNextTurnAnimationGrantorId = null;
     }
 
     /**

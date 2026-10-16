@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.l.Luminollusk;
 import com.github.laxika.magicalvibes.cards.o.OkoLorwynLiege;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,14 +37,16 @@ class KinscaerSentryTest extends BaseCardTest {
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
                 .containsExactly(0);
 
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleCardChosen(player1, 0);
 
-        Permanent entered = findPermanent(player1, "Grizzly Bears");
-        assertThat(entered).isNotNull();
-        assertThat(entered.isTapped()).isTrue();
-        assertThat(entered.isAttacking()).isTrue();
-        assertThat(entered.isAttackedThisTurn()).isFalse();
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elemental);
+            Permanent entered = findPermanent(player1, "Grizzly Bears");
+            assertThat(entered).isNotNull();
+            assertThat(entered.isTapped()).isTrue();
+            assertThat(entered.isAttacking()).isTrue();
+            assertThat(entered.isAttackedThisTurn()).isFalse();
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(elemental);
+        });
     }
 
     @Test
@@ -104,13 +107,15 @@ class KinscaerSentryTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sentry));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleCardChosen(player1, 0);
 
-        Permanent entered = findPermanent(player1, "Kinscaer Sentry");
-        assertThat(entered.isTapped()).isTrue();
-        assertThat(entered.isAttacking()).isTrue();
-        assertThat(entered.getAttackTarget()).isEqualTo(player2.getId());
-        assertThat(gd.stack).isEmpty();
+            Permanent entered = findPermanent(player1, "Kinscaer Sentry");
+            assertThat(entered.isTapped()).isTrue();
+            assertThat(entered.isAttacking()).isTrue();
+            assertThat(entered.getAttackTarget()).isEqualTo(player2.getId());
+            assertThat(gd.stack).isEmpty();
+        });
     }
 
     @Test

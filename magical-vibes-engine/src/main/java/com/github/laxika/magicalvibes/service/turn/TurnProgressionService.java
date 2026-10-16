@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -1263,6 +1264,7 @@ public class TurnProgressionService {
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.creatureCardsDamagedThisTurnBySource.clear();
+        gameData.creatureCardsDamagedThisTurnByController.clear();
         gameData.sourcesThatDealtDamageToCreaturesThisTurn.clear();
         gameData.sourcesWhoseDamagedCreaturesDiedThisTurn.clear();
         gameData.creatureCardsDamagedBySourceThatDiedThisTurn.clear();
@@ -1320,6 +1322,8 @@ public class TurnProgressionService {
         List<Permanent> activePlayerBf = gameData.playerBattlefields.get(nextActive);
         if (activePlayerBf != null) {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
+            gameData.playerBattlefields.values().stream().filter(Objects::nonNull).forEach(battlefield ->
+                    battlefield.forEach(p -> p.clearUntilNextTurnAnimationGrantedBy(nextActive)));
             // Promote/expire Wall of Dust "can't attack next turn" restrictions on the active player's
             // creatures (scoped to their controller's turn so it never arms on an opponent's turn).
             activePlayerBf.forEach(Permanent::promoteCantAttackNextTurn);

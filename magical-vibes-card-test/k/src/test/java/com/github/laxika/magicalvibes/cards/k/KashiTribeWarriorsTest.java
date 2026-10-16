@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,6 +69,9 @@ class KashiTribeWarriorsTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                warriors.getId(), 4,
+                player2.getId(), 1));
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(warriors);

@@ -229,7 +229,7 @@ class KutzilMalametExemplarTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
 
         resolveCombat(player2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }

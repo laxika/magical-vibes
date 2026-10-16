@@ -37,7 +37,7 @@ public class KlauthsWill extends Card {
                         new MassDamageEffect(new XValue(), false, false, withoutFlying)),
                 ChooseOneEffect.ChooseOneOption.upToXTargets(
                         "Destroy up to X target artifacts and/or enchantments",
-                        new DestroyEachTargetPermanentEffect(), artifactOrEnchantment, 100)
+                        new DestroyEachTargetPermanentEffect(), artifactOrEnchantment, Integer.MAX_VALUE)
         ), new ControlledCommanderAsCast()));
     }
 }

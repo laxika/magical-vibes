@@ -33,6 +33,11 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantSubtypeToTargetCreatureEffect) effect;
+        if (e.duration() == EffectDuration.WHILE_SOURCE_REMAINS
+                && (entry.getSourcePermanentId() == null
+                || gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) == null)) {
+            return;
+        }
         List<UUID> targetIds = entry.targetsForEffect(effect);
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
@@ -52,7 +57,7 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                         entry.getControllerId(),
-                        new GrantSubtypeEffect(e.subtype(), GrantScope.TARGET),
+                        new GrantSubtypeEffect(e.subtype(), GrantScope.TARGET, e.overriding()),
                         target.getId(), null, null, e.duration(), 0));
             }
 

@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentAttacksPlaneswalke
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentsAttackWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponents;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksAnotherOpponent;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOrMoreOfYourOpponents;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
@@ -120,7 +121,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardPersistentAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationControl;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -1006,9 +1006,6 @@ public class CombatAttackService {
         String logEntry = playerName + " declares " + attackerIndices.size() +
                 " attacker" + (attackerIndices.size() > 1 ? "s" : "") + ".";
         gameLogService.append(gameData, GameLog.text(logEntry));
-        int attackingPower = attackerIndices.stream()
-                .mapToInt(index -> gameQueryService.getEffectivePower(gameData, battlefield.get(index)))
-                .sum();
 
         // Collect all attack-step triggers, then reorder per APNAP (CR 603.3b)
         // Check for "when this creature attacks" triggers
@@ -1386,10 +1383,7 @@ public class CombatAttackService {
                                             abilityEffects, attackerIndices.size(), attacker.getId());
                                     attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
                                     attackTrigger.setDefendingPlayerId(defendingPlayerId);
-                                    attackTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
-                                    if (abilityEffects.stream().anyMatch(AwardPersistentAnyColorManaEffect.class::isInstance)) {
-                                        attackTrigger.setEventValue(attackingPower);
-                                    }
+                                    attackTrigger.setSourcePermanentSnapshot(snapshotAttackingSource(gameData, attacker));
                                     gameData.stack.add(attackTrigger);
                                     triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
                                             gameData, attacker, attackTrigger);
@@ -1468,10 +1462,7 @@ public class CombatAttackService {
                                 );
                                 attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
                                 attackTrigger.setDefendingPlayerId(defendingPlayerId);
-                                attackTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
-                                if (abilityEffects.stream().anyMatch(AwardPersistentAnyColorManaEffect.class::isInstance)) {
-                                    attackTrigger.setEventValue(attackingPower);
-                                }
+                                attackTrigger.setSourcePermanentSnapshot(snapshotAttackingSource(gameData, attacker));
                                 gameData.stack.add(attackTrigger);
                                 triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
                                         gameData, attacker, attackTrigger);
@@ -2539,8 +2530,14 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             UUID attackedTargetId = resolvedTargets.get(idx);
+            Permanent attackedBattle = gameData.playerIds.contains(attackedTargetId)
+                    ? null : gameQueryService.findPermanentById(gameData, attackedTargetId);
+            // The defending player of an attacked battle is its protector (CR 506.2).
             UUID attackedPlayerId = gameData.playerIds.contains(attackedTargetId)
                     ? attackedTargetId
+                    : attackedBattle != null && gameQueryService.isBattle(gameData, attackedBattle)
+                    && attackedBattle.getProtectorPlayerId() != null
+                    ? attackedBattle.getProtectorPlayerId()
                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
             if (attackedPlayerId == null) continue;
             triggerCollectionService.checkTemporaryGlobalCreatureAttacksYouTriggers(
@@ -2912,6 +2909,18 @@ public class CombatAttackService {
                                 effectsByAttackedOpponent
                                         .computeIfAbsent(attackedOpponentId, ignored -> new ArrayList<>())
                                         .add(conditional.wrapped());
+                            }
+                            continue;
+                        }
+                        if (conditional.condition() instanceof OpponentAttacksAnotherOpponent) {
+                            if (!permController.equals(playerId)) {
+                                for (UUID attackedOpponentId : attackedOpponents(gameData, permController, resolvedTargets)) {
+                                    if (!attackedOpponentId.equals(playerId)) {
+                                        effectsByAttackedOpponent
+                                                .computeIfAbsent(attackedOpponentId, ignored -> new ArrayList<>())
+                                                .add(conditional.wrapped());
+                                    }
+                                }
                             }
                             continue;
                         }
@@ -4217,6 +4226,12 @@ public class CombatAttackService {
         gameData.keyedOncePerTurnTriggersFiredThisTurn
                 .computeIfAbsent(playerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                 .add(FIRST_QUALIFYING_ATTACK_KEY + gameData.combatPhasesThisTurn);
+    }
+
+    private Permanent snapshotAttackingSource(GameData gameData, Permanent attacker) {
+        Permanent snapshot = new Permanent(attacker);
+        snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, attacker));
+        return snapshot;
     }
 
     private Permanent snapshotDeclaredAttacker(GameData gameData, Permanent attacker) {

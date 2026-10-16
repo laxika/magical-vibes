@@ -57,7 +57,13 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             source.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
         }
 
-        if (e.replacedSubtype() != null) {
+        if (!e.setSubtypes().isEmpty()) {
+            boolean overriding = true;
+            for (CardSubtype subtype : e.setSubtypes()) {
+                addSubtypeEffect(gameData, entry, source, subtype, overriding);
+                overriding = false;
+            }
+        } else if (e.replacedSubtype() != null) {
             var subtypes = new java.util.LinkedHashSet<>(gameQueryService.effectiveCreatureSubtypes(gameData, source));
             subtypes.remove(e.replacedSubtype());
             subtypes.add(e.addedSubtype());

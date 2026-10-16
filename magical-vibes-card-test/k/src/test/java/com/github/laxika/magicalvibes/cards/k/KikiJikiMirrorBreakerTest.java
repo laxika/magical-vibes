@@ -39,9 +39,10 @@ class KikiJikiMirrorBreakerTest extends BaseCardTest {
         Permanent token = findPermanents(player1, "Wandering Ones").stream()
                 .filter(p -> p.getCard().isToken())
                 .findFirst().orElseThrow();
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, null, player1.getId()));
     }
 
     @Test
@@ -167,7 +168,7 @@ class KikiJikiMirrorBreakerTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player2, "Wandering Ones")).contains(token);
+        assertThat(findPermanents(player1, "Wandering Ones")).contains(token);
     }
 
     @Test
@@ -184,7 +185,7 @@ class KikiJikiMirrorBreakerTest extends BaseCardTest {
         stealCreature(token);
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player2, "Wandering Ones")).contains(token);
+        assertThat(findPermanents(player1, "Wandering Ones")).contains(token);
     }
 
     private void stealCreature(Permanent token) {

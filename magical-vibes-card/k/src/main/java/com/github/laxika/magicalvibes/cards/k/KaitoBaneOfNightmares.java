@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -15,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -31,12 +34,16 @@ import java.util.Set;
 public class KaitoBaneOfNightmares extends Card {
 
     public KaitoBaneOfNightmares() {
+        addNinjutsu("{1}{U}{B}");
+
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new AllConditions(List.of(
                         new ControllerTurn(),
                         new SourceCounterThreshold(1, CounterType.LOYALTY)
                 )),
-                new AnimatePermanentsEffect(3, 4, List.of(CardSubtype.NINJA), Set.of(Keyword.HEXPROOF))));
+                new AnimatePermanentsEffect(new Fixed(3), new Fixed(4), List.of(CardSubtype.NINJA),
+                        Set.of(Keyword.HEXPROOF), null, Set.of(CardType.CREATURE), GrantScope.SELF,
+                        EffectDuration.UNTIL_END_OF_TURN, null, true)));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

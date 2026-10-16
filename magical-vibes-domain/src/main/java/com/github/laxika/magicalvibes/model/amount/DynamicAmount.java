@@ -53,6 +53,8 @@ public sealed interface DynamicAmount permits
         GreatestOpponentHandSize,
         ColorManaSymbolsAmongControlledPermanents,
         DevotionToChosenColor,
+        DevotionToColor,
+        OpponentsControllingPermanentMatching,
         ColorManaPairsSpentToCast,
         ColorsSpentToCast,
         ColorsAmongControlledPermanents,

@@ -46,8 +46,13 @@ public class PerpetuallyBecomeArtifactCreatureEffectHandler implements NormalEff
         }
 
         Card modifiedCard = target.getCard().createRuntimeCopy();
+        // CR 205.1b: "becomes an artifact creature" retains all of the object's prior card types.
+        Set<CardType> retainedTypes = EnumSet.of(CardType.ARTIFACT);
+        retainedTypes.add(modifiedCard.getType());
+        retainedTypes.addAll(modifiedCard.getAdditionalTypes());
+        retainedTypes.remove(CardType.CREATURE);
         modifiedCard.setType(CardType.CREATURE);
-        modifiedCard.setAdditionalTypes(Set.of(CardType.ARTIFACT));
+        modifiedCard.setAdditionalTypes(retainedTypes);
         modifiedCard.setPower(change.power());
         modifiedCard.setToughness(change.toughness());
 

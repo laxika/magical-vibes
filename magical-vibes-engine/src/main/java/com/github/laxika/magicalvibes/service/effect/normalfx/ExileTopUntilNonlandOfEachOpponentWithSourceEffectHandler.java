@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfEachOpponentWithSourceEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
 public class ExileTopUntilNonlandOfEachOpponentWithSourceEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final ExileService exileService;
 
     @Override
@@ -30,9 +28,7 @@ public class ExileTopUntilNonlandOfEachOpponentWithSourceEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        Permanent sourcePermanent = sourcePermanentId == null
-                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (sourcePermanent == null) {
+        if (sourcePermanentId == null) {
             sourcePermanentId = findSourcePermanentId(gameData, entry);
         }
         if (sourcePermanentId == null) {

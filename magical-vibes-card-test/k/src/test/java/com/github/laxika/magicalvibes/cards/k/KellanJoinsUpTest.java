@@ -132,6 +132,7 @@ class KellanJoinsUpTest extends BaseCardTest {
     @Test
     void plottedCardCanBeCastForFreeOnlyOnALaterTurnAtSorcerySpeed() {
         GrizzlyBears eligible = new GrizzlyBears();
+        harness.setHand(player2, List.of());
         harness.castFromHand(player1, new KellanJoinsUp(), "{G}{W}{U}");
         harness.setHand(player1, List.of(eligible));
         harness.passBothPriorities();

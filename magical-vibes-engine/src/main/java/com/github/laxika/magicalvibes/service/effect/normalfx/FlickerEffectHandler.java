@@ -230,9 +230,26 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
         if (targetIds.isEmpty()) {
             resolveSelfAtStep(gameData, entry, e);
-        } else {
-            resolveTargetAtStep(gameData, entry, e);
+            return;
         }
+        // "Exile this permanent or up to one target creature": only the creature is targeted, so the
+        // controller picks between the source and the target as the ability resolves.
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent target = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
+        if (source == null || target == null) {
+            resolveTargetAtStep(gameData, entry, e);
+            return;
+        }
+        playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(List.of(
+                        new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                                "Exile " + source.getCard().getName(),
+                                e.withScope(com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF)),
+                        new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                                "Exile " + target.getCard().getName(),
+                                e.withScope(com.github.laxika.magicalvibes.model.effect.FlickerScope.TARGET)))),
+                false, entry.getSourcePermanentId());
     }
 
     private void resolvePlayersPermanentsAtStep(GameData gameData, StackEntry entry, FlickerEffect e) {

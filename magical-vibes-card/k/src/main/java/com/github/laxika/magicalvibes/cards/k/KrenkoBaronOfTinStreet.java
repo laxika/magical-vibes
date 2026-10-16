@@ -12,10 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -33,10 +31,7 @@ public class KrenkoBaronOfTinStreet extends Card {
                         new PutCounterOnEachControlledPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 1,
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)
-                                )))
+                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN))
                 ),
                 "{T}, Sacrifice an artifact: Put a +1/+1 counter on each Goblin you control."
         ));

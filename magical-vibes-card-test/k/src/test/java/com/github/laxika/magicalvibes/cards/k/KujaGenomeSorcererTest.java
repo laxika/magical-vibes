@@ -105,7 +105,9 @@ class KujaGenomeSorcererTest extends BaseCardTest {
         advanceToEndStep();
         resolveAllTriggers();
 
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new FugitiveWizard()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);

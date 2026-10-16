@@ -20,7 +20,7 @@ public class KithkinMourncaller extends Card {
     public KithkinMourncaller() {
         // Whenever an attacking Kithkin or Elf is put into your graveyard from the battlefield,
         // you may draw a card.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+        addEffect(EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD, new TriggeringPermanentConditionalEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.KITHKIN, CardSubtype.ELF)))),

@@ -75,7 +75,7 @@ class KolaghanForerunnersTest extends BaseCardTest {
         assertThat(forerunners.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Kolaghan Forerunners");
@@ -105,7 +105,7 @@ class KolaghanForerunnersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Kolaghan Forerunners");
         harness.assertNotInHand(player1, "Kolaghan Forerunners");

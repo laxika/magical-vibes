@@ -2801,14 +2801,19 @@ public class CombatDamageService {
         // control deals combat damage to a player, if this card is in your graveyard, you may return
         // this card to your hand." The stack entry's source is the graveyard card itself.
         if (battleDamage) return;
-        checkGraveyardAllyCreatureCombatDamageTriggers(gameData, creature, attackerId,
-                EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
-                firedBatchedAllyTriggerSources);
+        if (!ownerRelativePass) {
+            checkGraveyardAllyCreatureCombatDamageTriggers(gameData, creature, attackerId,
+                    EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
+                    firedBatchedAllyTriggerSources);
+        }
         List<Card> graveyard = gameData.playerGraveyards.get(attackerId);
         if (graveyard == null) return;
         for (Card card : new ArrayList<>(graveyard)) {
             for (CardEffect effect : gameQueryService.getEffectiveGraveyardEffects(
                     gameData, card, EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER)) {
+                if (ownerRelativePass && !isOwnerRelativeCommanderTrigger(effect)) {
+                    continue;
+                }
                 if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
                     if (trigger.dealerPredicate() != null
                             && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerPredicate())) {
@@ -4302,6 +4307,12 @@ public class CombatDamageService {
                 : gameQueryService.hasKeyword(gameData, source, Keyword.DEATHTOUCH);
         boolean unpreventable = gameQueryService.damageCantBePreventedFromSource(gameData, source, true)
                 || target != null && target.isDamageCantBePreventedOrRedirectedThisTurn();
+        if (target != null && !unpreventable && gameQueryService.isDamagePreventable(gameData, true)
+                && gameQueryService.hasProtectionFromDamageSource(gameData, target, source)) {
+            // CR 702.16e: protection prevents the redirected damage, but the redirection still happened.
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage is prevented."));
+            return null;
+        }
         return new DamagePortion(sourceId, snapshot, amount, counterDamage, deathtouch,
                 originPortion != null && originPortion.unblocked(), unpreventable);
     }

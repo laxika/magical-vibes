@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AerialBoost;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -50,7 +51,7 @@ class KarsusDepthguardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castAndResolveInstant(player1, 0, depthguard.getId());
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(depthguard.isAttacking()).isTrue();
     }

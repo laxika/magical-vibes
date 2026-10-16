@@ -209,9 +209,7 @@ class KessigWolfRunTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);

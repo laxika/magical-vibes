@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "AVR", collectorNumber = "143")
 @CardRegistration(set = "DDS", collectorNumber = "40")
@@ -15,7 +16,8 @@ public class KruinStriker extends Card {
 
     public KruinStriker() {
         // Whenever another creature you control enters, this creature gets +1/+0 and gains trample until end of turn.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new BoostSelfEffect(1, 0));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, SequenceEffect.of(
+                new BoostSelfEffect(1, 0),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }
 }

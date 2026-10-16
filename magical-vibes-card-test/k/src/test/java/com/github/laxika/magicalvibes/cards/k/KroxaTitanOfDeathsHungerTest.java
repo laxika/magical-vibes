@@ -118,6 +118,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
     @Test
     void escapePaysFiveOtherCardsAndStillTriggersLifeLoss() {
         prepareEscapeGraveyard(5);
+        harness.setHand(player2, List.of());
 
         harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4, 5));
         resolveAllTriggers();
@@ -203,12 +204,7 @@ class KroxaTitanOfDeathsHungerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castCreature(player1, 0);
-        while (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
-            harness.clearPriorityPassed();
-            gs.passPriority(gd, player1);
-            gs.passPriority(gd, player2);
-            gs.passPriority(gd, thirdPlayer);
-        }
+        resolveAllTriggers();
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())

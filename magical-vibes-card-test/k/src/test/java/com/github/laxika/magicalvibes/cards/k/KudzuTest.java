@@ -127,6 +127,10 @@ class KudzuTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.tapPermanent(player2, 0);
+        harness.clearPriorityPassed();
+        harness.passPriority(player1);
+        harness.clearPriorityPassed();
+        assertThat(gd.stack).hasSize(1);
         harness.castAndResolveInstant(player1, 0, List.of(host.getId(), exchangedLand.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(host);
         resolveAllTriggers();

@@ -28,6 +28,6 @@ public class KarmicGuide extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{3}{W}{W}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{3}{W}{W}"));
     }
 }

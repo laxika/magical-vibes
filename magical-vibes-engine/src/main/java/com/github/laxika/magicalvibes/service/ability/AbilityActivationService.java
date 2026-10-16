@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsXEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -525,7 +526,7 @@ public class AbilityActivationService {
         triggerCollectionService.checkAnyPlayerTapsPermanentForManaTriggers(
                 gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
         triggerCollectionService.checkNonlandPermanentTapForManaTriggers(
-                gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
+                gameData, playerId, permanent, manaTypesBefore, manaTypeChoicePending);
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
         List<StackEntry> deferred = List.of();
         if (gameData.stack.size() > stackBeforeTriggers) {
@@ -4560,6 +4561,17 @@ public class AbilityActivationService {
             List<Card> hand = gameData.playerHands.get(playerId);
             List<Integer> validDiscardIndices = collectDiscardIndices(gameData, playerId, hand,
                     discardCardTypeCost, effectiveXValue);
+            if (abilityEffects.stream().anyMatch(e -> e instanceof CounterSpellIfManaValueEqualsXEffect)
+                    && targetZone == Zone.STACK && targetId != null) {
+                UUID spellTargetId = targetId;
+                for (StackEntry targetSpell : gameData.stack) {
+                    if (spellTargetId.equals(targetSpell.getTargetableId())) {
+                        int spellManaValue = targetSpell.getSpellManaValue();
+                        validDiscardIndices.removeIf(i -> hand.get(i).getManaValue() != spellManaValue);
+                        break;
+                    }
+                }
+            }
             if (discardCardIndex == null) {
                 if (validDiscardIndices.size() < discardCardTypeCost.requiredCount(effectiveXValue)) {
                     String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
@@ -8198,7 +8210,8 @@ public class AbilityActivationService {
                 if (gameData.currentStep != TurnStep.DECLARE_ATTACKERS) {
                     throw new IllegalStateException("This ability can only be activated during the declare attackers step");
                 }
-                if (!gameQueryService.isPlayerBeingAttacked(gameData, playerId)) {
+                if (!gameQueryService.isPlayerBeingAttacked(gameData, playerId)
+                        && !gameData.playersAttackedThisCombat.contains(playerId)) {
                     throw new IllegalStateException("This ability can only be activated if you've been attacked this step");
                 }
             }

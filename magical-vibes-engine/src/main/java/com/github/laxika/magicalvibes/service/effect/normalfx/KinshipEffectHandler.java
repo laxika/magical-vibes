@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -12,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +55,7 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (!sharesCreatureType(source, topCard)) {
+        if (!gameQueryService.shareCreatureType(gameData, source, topCard)) {
             gameLogService.append(gameData, GameLog.text("The top card does not share a creature type with " + sourceName + "."));
             log.info("Game {} - top card {} shares no creature type with {}", gameData.id, topCard.getName(), sourceName);
             return;
@@ -74,18 +71,5 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
                 null,
                 entry.getSourcePermanentId()
         ));
-    }
-
-    private boolean sharesCreatureType(Permanent source, Card topCard) {
-        List<CardSubtype> sourceTypes = new ArrayList<>(source.getCard().getSubtypes());
-        sourceTypes.addAll(source.getTransientSubtypes());
-        boolean sourceChangeling = source.hasKeyword(Keyword.CHANGELING);
-
-        List<CardSubtype> topTypes = topCard.getSubtypes();
-        boolean topChangeling = topCard.hasKeyword(Keyword.CHANGELING);
-
-        return (sourceChangeling && (topChangeling || !topTypes.isEmpty()))
-                || (topChangeling && !sourceTypes.isEmpty())
-                || sourceTypes.stream().anyMatch(topTypes::contains);
     }
 }

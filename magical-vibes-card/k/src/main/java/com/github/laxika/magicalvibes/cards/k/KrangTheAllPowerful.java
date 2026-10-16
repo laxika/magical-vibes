@@ -7,15 +7,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "TMC", collectorNumber = "13")
 @CardRegistration(set = "TMC", collectorNumber = "86")
 public class KrangTheAllPowerful extends Card {
 
     public KrangTheAllPowerful() {
-        addEffect(EffectSlot.STATIC, new AdditionalTriggeredAbilityEffect(
-                new PermanentTruePredicate(), null, true, false));
+        addEffect(EffectSlot.STATIC, AdditionalTriggeredAbilityEffect.forDrawCausedTriggers());
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,

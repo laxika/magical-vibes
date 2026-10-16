@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -16,14 +17,13 @@ import java.util.List;
 public class KamiOfThePalaceFields extends Card {
 
     public KamiOfThePalaceFields() {
-        addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()
+        addEffect(EffectSlot.ON_DEATH, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardMaxManaValuePredicate(5)
                 )))
                 .targetGraveyard(true)
-                .upTo(true)
-                .build());
+                .build(), "Return target Spirit card to your hand?"));
     }
 }

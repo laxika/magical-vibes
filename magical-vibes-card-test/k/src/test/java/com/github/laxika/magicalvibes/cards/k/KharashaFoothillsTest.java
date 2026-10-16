@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -29,10 +30,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KharashaFoothillsTest extends BaseCardTest {
 
     private PlanechaseService planar;
+    private TriggerCollectionService triggers;
 
     @BeforeEach
     void preparePlane() {
         planar = GameTestEngineContext.get().getBean(PlanechaseService.class);
+        triggers = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
         gd.planechase = new PlanechaseState();
         gd.planechase.controllerId = player1.getId();
         gd.planechase.faceUp.add(new PlanarObject(new KharashaFoothills(), gd.nextTimestamp()));
@@ -48,6 +51,7 @@ class KharashaFoothillsTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new AirElemental());
 
         harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -69,6 +73,7 @@ class KharashaFoothillsTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new AirElemental());
 
         harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();

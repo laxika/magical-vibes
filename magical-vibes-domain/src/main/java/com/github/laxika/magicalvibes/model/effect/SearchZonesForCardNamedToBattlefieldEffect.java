@@ -24,8 +24,24 @@ public record SearchZonesForCardNamedToBattlefieldEffect(
         boolean includeHand,
         boolean attachToTarget,
         java.util.List<String> additionalCardNames,
-        java.util.Set<com.github.laxika.magicalvibes.model.Zone> selectedZones
+        java.util.Set<com.github.laxika.magicalvibes.model.Zone> selectedZones,
+        boolean alwaysShuffle
 ) implements CardEffect {
+
+    public SearchZonesForCardNamedToBattlefieldEffect(String cardName, boolean includeHand,
+            boolean attachToTarget, java.util.List<String> additionalCardNames,
+            java.util.Set<com.github.laxika.magicalvibes.model.Zone> selectedZones) {
+        this(cardName, includeHand, attachToTarget, additionalCardNames, selectedZones, false);
+    }
+
+    /**
+     * Wording "search your graveyard, hand, and library ... then shuffle": the library is searched, and
+     * therefore shuffled, even when the card is found in the graveyard or hand (Kassandra, Eagle Bearer).
+     */
+    public static SearchZonesForCardNamedToBattlefieldEffect alwaysShuffling(String cardName) {
+        return new SearchZonesForCardNamedToBattlefieldEffect(cardName, true, false, java.util.List.of(),
+                java.util.Set.of(), true);
+    }
 
     public SearchZonesForCardNamedToBattlefieldEffect {
         additionalCardNames = java.util.List.copyOf(additionalCardNames);

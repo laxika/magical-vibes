@@ -9,14 +9,20 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "114")
 public class KalastriaHealer extends Card {
 
     public KalastriaHealer() {
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
+                new TriggeringCardConditionalEffect(new CardAnyOfPredicate(List.of(
+                        new CardIsSelfPredicate(),
+                        new CardSubtypePredicate(CardSubtype.ALLY))),
                         SequenceEffect.of(
                                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                                 new GainLifeEffect(1))));

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingTruthOrTaleCardChoice;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
@@ -987,20 +988,26 @@ public class GraveyardChoiceHandlerService {
             }
 
             UUID controllerId = pendingEntry.getControllerId();
-            List<UUID> tokenIds = gameData.playerBattlefields
-                    .getOrDefault(controllerId, List.of()).stream()
-                    .filter(permanent -> permanent.getCard().isToken())
-                    .map(Permanent::getId)
-                    .toList();
-            if (tokenIds.isEmpty()) {
+            UUID tokenId = pendingEntry.getTargetId();
+            Permanent token = tokenId == null ? null : gameQueryService.findPermanentById(gameData, tokenId);
+            if (token == null || !token.getCard().isToken()
+                    || !controllerId.equals(gameData.findControllerOf(token))) {
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
 
-            playerInputService.beginPermanentChoice(gameData, controllerId, tokenIds,
-                    new PermanentChoiceContext.KayaSpiritsJusticeTokenChoice(
-                            pendingEntry.getCard(), controllerId, chosenCard),
-                    "Choose a token you control to become a copy of the chosen creature card.");
+            StackEntry copyEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    pendingEntry.getCard(),
+                    controllerId,
+                    pendingEntry.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new BecomeCopyOfCardUntilEndOfTurnEffect(
+                            chosenCard, Set.of(), Set.of(), Set.of(Keyword.FLYING)))),
+                    null,
+                    tokenId);
+            copyEntry.setTargetId(tokenId);
+            effectResolutionService.resolveEffects(gameData, copyEntry);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -1876,6 +1883,9 @@ public class GraveyardChoiceHandlerService {
         boolean pendingAdventure = gameData.graveyardTargetOperation.castWithAdventure;
         boolean pendingKicked = gameData.graveyardTargetOperation.kicked;
         UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
+        boolean pendingMarkSourceOncePerTurnOnAcceptance =
+                gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance;
+        gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance = false;
         UUID pendingAttackedTargetId = gameData.graveyardTargetOperation.attackedTargetId;
         Integer pendingTriggeringPermanentPowerAtTrigger =
                 gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
@@ -2061,6 +2071,7 @@ public class GraveyardChoiceHandlerService {
             }
             triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
             triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger);
+            triggeredEntry.setMarkSourceOncePerTurnOnAcceptance(pendingMarkSourceOncePerTurnOnAcceptance);
             if (mixedZoneEffect != null) {
                 for (UUID cardId : cardIds) {
                     Permanent permanent = findPermanentByCardId(gameData, cardId);

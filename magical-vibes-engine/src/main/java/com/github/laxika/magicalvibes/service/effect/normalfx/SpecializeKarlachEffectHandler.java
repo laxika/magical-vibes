@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -42,7 +43,12 @@ public class SpecializeKarlachEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        CardColor color = ((SpecializeKarlachEffect) effect).color();
+        SpecializeKarlachEffect specialize = (SpecializeKarlachEffect) effect;
+        CardColor color = specialize.color();
+        if (specialize.returnFromGraveyard()) {
+            returnSpecializedCardFromGraveyard(gameData, entry, color);
+            return;
+        }
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -59,47 +65,72 @@ public class SpecializeKarlachEffectHandler implements NormalEffectHandlerBean {
         specialized.setPower(4);
         specialized.setToughness(4);
         setFaceCharacteristics(specialized, color);
-        specialized.addEffect(EffectSlot.STATIC, new CantBlockEffect());
 
         TargetFilter targetFilter = KarlachRagingTiefling.specializedTargetFilter(color);
         if (targetFilter != null) {
             specialized.target(targetFilter);
         }
 
-        UUID sourcePermanentId;
-        UUID controllerId = entry.getControllerId();
         if (source != null) {
             source.exchangeCard(specialized);
-            sourcePermanentId = source.getId();
-        } else {
-            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCard.getId());
-            if (ownerId == null
-                    || graveyardReturnSupport.isCardBlockedFromEnteringFromZone(
-                    gameData, sourceCard, Zone.GRAVEYARD)) {
-                return;
-            }
-
-            permanentRemovalService.removeCardFromGraveyardById(gameData, sourceCard.getId());
-            Permanent returned = new Permanent(specialized);
-            returned.setEnteredFromGraveyardOwnerId(ownerId);
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, ownerId, returned,
-                    battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-            graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, returned, specialized);
-            sourcePermanentId = returned.getId();
-            controllerId = ownerId;
-            gameLogService.append(gameData, GameLog.textCardText(
-                    gameData.playerIdToName.get(ownerId) + " returns ", specialized,
-                    " to the battlefield as " + specialized.getName() + "."));
+            enqueueSpecializationTrigger(gameData, specialized, source.getId(), targetFilter,
+                    entry.getControllerId(), KarlachRagingTiefling.specializedTrigger(color));
+            return;
         }
 
-        enqueueSpecializationTrigger(gameData, specialized, sourcePermanentId, targetFilter, controllerId,
+        List<Card> graveyard = gameData.playerGraveyards.get(
+                gameQueryService.findGraveyardOwnerById(gameData, sourceCard.getId()));
+        if (graveyard == null) {
+            return;
+        }
+        graveyard.replaceAll(card -> card.getId().equals(sourceCard.getId()) ? specialized : card);
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                specialized,
+                entry.getControllerId(),
+                specialized.getName() + "'s ability",
+                List.of(new SpecializeKarlachEffect(color, true)),
+                0,
+                (UUID) null));
+    }
+
+    /** Resolves "return it from your graveyard to the battlefield", then queues the face's own trigger. */
+    private void returnSpecializedCardFromGraveyard(GameData gameData, StackEntry entry, CardColor color) {
+        Card specialized = gameQueryService.findCardInGraveyardById(gameData, entry.getCard().getId());
+        UUID ownerId = specialized == null
+                ? null : gameQueryService.findGraveyardOwnerById(gameData, specialized.getId());
+        if (ownerId == null
+                || graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, specialized, Zone.GRAVEYARD)) {
+            return;
+        }
+
+        TargetFilter targetFilter = KarlachRagingTiefling.specializedTargetFilter(color);
+        permanentRemovalService.removeCardFromGraveyardById(gameData, specialized.getId());
+        // The graveyard card was frozen when its trigger was put on the stack; the returned card perpetually gains "can't block".
+        Card returnedCard = specialized.createRuntimeCopy();
+        returnedCard.addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        Permanent returned = new Permanent(returnedCard);
+        returned.setEnteredFromGraveyardOwnerId(ownerId);
+        battlefieldEntryService.putPermanentOntoBattlefield(
+                gameData, ownerId, returned,
+                battlefieldEntryService.snapshotEnterTappedTypes(gameData));
+        graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, returned, returnedCard);
+        gameLogService.append(gameData, GameLog.textCardText(
+                gameData.playerIdToName.get(ownerId) + " returns ", returnedCard,
+                " to the battlefield as " + returnedCard.getName() + "."));
+
+        enqueueSpecializationTrigger(gameData, returnedCard, returned.getId(), targetFilter, ownerId,
                 KarlachRagingTiefling.specializedTrigger(color));
     }
 
     private void enqueueSpecializationTrigger(GameData gameData, Card sourceCard,
                                               UUID sourcePermanentId, TargetFilter targetFilter,
                                               UUID controllerId, CardEffect triggerEffect) {
+        if (targetFilter != null) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, controllerId, List.of(triggerEffect), "specialize", sourcePermanentId, (Integer) null));
+            return;
+        }
         StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,

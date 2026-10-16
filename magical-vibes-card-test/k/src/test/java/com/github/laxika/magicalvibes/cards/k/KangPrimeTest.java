@@ -72,12 +72,12 @@ class KangPrimeTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(nonland);
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(nonland.getId());
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -95,10 +95,11 @@ class KangPrimeTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        declareAttackers(List.of(1));
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         assertThat(findPermanent(player1, "Grizzly Bears").isAttacking()).isTrue();
     }
@@ -163,6 +164,7 @@ class KangPrimeTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(nonland.getId());

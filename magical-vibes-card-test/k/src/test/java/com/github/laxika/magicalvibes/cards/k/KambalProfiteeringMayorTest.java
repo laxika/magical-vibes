@@ -36,8 +36,8 @@ class KambalProfiteeringMayorTest extends BaseCardTest {
 
         assertThat(vampires(player1)).hasSize(2).allSatisfy(token -> assertThat(token.isTapped()).isTrue());
         assertThat(vampires(player2)).hasSize(2);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
     @Test
@@ -87,8 +87,8 @@ class KambalProfiteeringMayorTest extends BaseCardTest {
         assertThat(vampires(player2)).hasSize(1);
         assertThat(vampires(player1)).hasSize(2)
                 .allSatisfy(token -> assertThat(token.isTapped()).isTrue());
-        harness.assertLife(player1, 22);
-        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
     }
 
     @Test

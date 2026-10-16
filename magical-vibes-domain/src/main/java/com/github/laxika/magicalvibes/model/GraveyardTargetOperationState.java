@@ -74,6 +74,8 @@ public class GraveyardTargetOperationState {
     public boolean kicked;
     /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
     public UUID sourcePermanentId;
+    /** Whether accepting the pending triggered ability's may effect consumes its once-per-turn limit. */
+    public boolean markSourceOncePerTurnOnAcceptance;
     /** Whether the source permanent was cast for an alternate cost when its trigger fired. */
     public boolean sourceAlternateCostAtTrigger;
     /** Effective power of an attack-trigger source, captured before graveyard target selection. */

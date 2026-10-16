@@ -150,6 +150,7 @@ class KolvoriGodOfKinshipTest extends BaseCardTest {
         Card forestOne = new Forest();
         Card forestTwo = new Forest();
         Card seventh = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(fynn, sentinel, crest, forestOne, magda, forestTwo, seventh));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -170,6 +171,7 @@ class KolvoriGodOfKinshipTest extends BaseCardTest {
         addCreatureReady(player1, new KolvoriGodOfKinship());
         Card fynn = new FynnTheFangbearer();
         Card forest = new Forest();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(fynn, forest));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -187,6 +189,7 @@ class KolvoriGodOfKinshipTest extends BaseCardTest {
         addCreatureReady(player1, new KolvoriGodOfKinship());
         Card sentinel = new JasperaSentinel();
         Card crest = new EsikasChariot();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(sentinel, crest));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
@@ -201,6 +204,7 @@ class KolvoriGodOfKinshipTest extends BaseCardTest {
     @Test
     void abilityResolvesWithAnEmptyLibrary() {
         addCreatureReady(player1, new KolvoriGodOfKinship());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.GREEN, 2);
 

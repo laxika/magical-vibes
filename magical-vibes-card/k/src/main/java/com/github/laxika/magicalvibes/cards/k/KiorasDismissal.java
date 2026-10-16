@@ -12,7 +12,7 @@ public class KiorasDismissal extends Card {
     public KiorasDismissal() {
         setAdditionalManaCostPerExtraTarget("{U}");
 
-        target(TargetFilters.enchantment(), 0, 99)
+        target(TargetFilters.enchantment(), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
     }
 }

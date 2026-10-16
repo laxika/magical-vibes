@@ -21,7 +21,7 @@ public class KrileBaldesion extends Card {
     public KrileBaldesion() {
         // Trace Aether — whenever you cast a noncreature spell, you may return a creature card
         // with mana value equal to that spell's mana value from your graveyard to your hand.
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new OncePerTurnTriggerEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, OncePerTurnTriggerEffect.markOnAcceptance(
                 new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         List.of(new MayEffect(

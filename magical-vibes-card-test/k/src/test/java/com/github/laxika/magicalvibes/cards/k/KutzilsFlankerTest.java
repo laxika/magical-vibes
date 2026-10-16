@@ -31,10 +31,7 @@ class KutzilsFlankerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        harness.setHand(player1, List.of(new KutzilsFlanker()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0, 0);
+        castFlanker(0);
         resolveCreatureAndEtb();
 
         Permanent flanker = findFlanker();
@@ -68,7 +65,6 @@ class KutzilsFlankerTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new Forest(), new Shock()));
 
         castFlanker(2);
-        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -123,7 +119,6 @@ class KutzilsFlankerTest extends BaseCardTest {
     void countsDeparturesBeforeTriggerResolution() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         castFlanker(0);
-        harness.passBothPriorities();
         Permanent flanker = findFlanker();
         assertThat(flanker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
@@ -145,7 +140,6 @@ class KutzilsFlankerTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCard));
 
         castFlanker(2);
-        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
@@ -159,7 +153,13 @@ class KutzilsFlankerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KutzilsFlanker()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, switch (mode) {
+            case 0 -> "Put a +1/+1 counter on this creature for each creature that left the battlefield under your control this turn";
+            case 1 -> "You gain 2 life and scry 2";
+            default -> "Exile target player's graveyard";
+        });
     }
 
     private Permanent findFlanker() {
@@ -167,7 +167,6 @@ class KutzilsFlankerTest extends BaseCardTest {
     }
 
     private void resolveCreatureAndEtb() {
-        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

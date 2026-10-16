@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -142,8 +143,8 @@ class KothophedSoulHoarderTest extends BaseCardTest {
 
     @Test
     void opponentOwnedKothophedTriggersForItsOwnDeath() {
-        var kothophed = harness.addToBattlefieldAndReturn(player2, new KothophedSoulHoarder());
-        gd.stolenCreatures.put(kothophed.getId(), player1.getId());
+        Permanent kothophed = new Permanent(new KothophedSoulHoarder());
+        setOwnerAndController(kothophed, player1, player2);
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 

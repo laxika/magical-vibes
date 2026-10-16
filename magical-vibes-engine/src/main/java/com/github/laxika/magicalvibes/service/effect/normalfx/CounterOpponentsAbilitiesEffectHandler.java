@@ -38,7 +38,7 @@ public class CounterOpponentsAbilitiesEffectHandler implements NormalEffectHandl
                 continue;
             }
 
-            if (gameQueryService.isUncounterable(gameData, candidate.getCard())) {
+            if (gameQueryService.areAbilitiesUncounterable(gameData)) {
                 log.info("Game {} - {}'s ability cannot be countered",
                         gameData.id, candidate.getCard().getName());
                 continue;

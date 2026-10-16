@@ -45,6 +45,7 @@ class KorSpiritdancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -61,6 +62,7 @@ class KorSpiritdancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -78,6 +80,7 @@ class KorSpiritdancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(notDrawn);
@@ -132,8 +135,8 @@ class KorSpiritdancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castEnchantment(player1, 0, target.getId());
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.stack).hasSize(1);

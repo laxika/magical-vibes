@@ -72,6 +72,7 @@ class KnowledgeIsPowerTest extends BaseCardTest {
     @Test
     void bonusResetsOnNextTurnAndCountsDrawsDuringOpponentsTurn() {
         harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new KnowledgeIsPower());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));

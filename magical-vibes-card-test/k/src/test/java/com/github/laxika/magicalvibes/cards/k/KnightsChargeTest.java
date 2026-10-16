@@ -31,7 +31,8 @@ class KnightsChargeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        // Youthful Knight (2/1) is unblocked and deals 2 combat damage in addition to the 1 drain.
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
 
     @Test
@@ -83,8 +84,10 @@ class KnightsChargeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        // Two Knights attack (Youthful Knight 2/1, Raging Redcap 1/2 double strike) plus Gingerbrute
+        // (not a Knight). Unblocked combat damage is 2 + 2 + 1 = 5, plus two 1-life drains.
         harness.assertLife(player1, 22);
-        harness.assertLife(player2, 18);
+        harness.assertLife(player2, 13);
     }
 
     @Test

@@ -13,12 +13,14 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
@@ -227,6 +229,12 @@ public class EffectResolutionService {
                     && entry.getTargetCardIds().isEmpty()
                     && !(entry.getTargetId() != null && entry.getTargetIds().isEmpty()
                     && entry.getCard().getSpellTargets().size() == 1)) {
+                continue;
+            }
+
+            if (isStaleSelfGraveyardReturn(gameData, entry, effectToResolve)) {
+                log.info("Game {} - {}'s graveyard return ability skipped (card left the graveyard)",
+                        gameData.id, entry.getCard().getName());
                 continue;
             }
 
@@ -513,6 +521,33 @@ public class EffectResolutionService {
                 pending.event().equals(gameData.openDamageEvent) && pending.stepIndex() == index);
         gameData.collectingDamageEvent = gameData.openDamageEvent;
         gameData.collectingDamageStep = index;
+    }
+
+    /**
+     * CR 400.7 — a graveyard-stay trigger that returns its own card refers to one stay in the graveyard.
+     * If the card has since left and re-entered, the card is a new object and the effect does nothing, so
+     * no "you may" choice is offered for it.
+     */
+    private boolean isStaleSelfGraveyardReturn(GameData gameData, StackEntry entry, CardEffect effect) {
+        if (entry.getTriggeringCardGraveyardEntryVersion() < 0
+                || entry.getTriggeringCardId() == null
+                || !entry.getTriggeringCardId().equals(entry.getCard().getId())
+                || gameData.graveyardEntryVersion(entry.getCard().getId())
+                == entry.getTriggeringCardGraveyardEntryVersion()) {
+            return false;
+        }
+        CardEffect unwrapped = effect;
+        while (true) {
+            if (unwrapped instanceof MayEffect may) {
+                unwrapped = may.wrapped();
+            } else if (unwrapped instanceof ConditionalEffect conditional) {
+                unwrapped = conditional.wrapped();
+            } else {
+                break;
+            }
+        }
+        return unwrapped instanceof ReturnCardFromGraveyardEffect returnEffect
+                && returnEffect.filter() instanceof CardIsSelfPredicate;
     }
 
     private boolean shouldSkipAcceptedOncePerTurnMay(GameData gameData, StackEntry entry, MayEffect may) {

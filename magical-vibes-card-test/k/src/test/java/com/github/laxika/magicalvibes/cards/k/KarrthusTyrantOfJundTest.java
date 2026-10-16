@@ -127,9 +127,9 @@ class KarrthusTyrantOfJundTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 5);
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0,
                 harness.getPermanentId(player1, "Karrthus, Tyrant of Jund"));
         harness.passBothPriorities();

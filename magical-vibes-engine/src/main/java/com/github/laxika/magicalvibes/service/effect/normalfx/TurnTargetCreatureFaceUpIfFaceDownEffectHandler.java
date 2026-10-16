@@ -31,7 +31,8 @@ public class TurnTargetCreatureFaceUpIfFaceDownEffectHandler implements NormalEf
         UUID targetId = entry.targetsForEffect(turnFaceUp).stream().findFirst()
                 .orElse(entry.getTargetId());
         Permanent target = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || !target.isFaceDown() || !gameQueryService.isCreature(gameData, target)) {
+        if (target == null || !target.isFaceDown() || !gameQueryService.isCreature(gameData, target)
+                || gameQueryService.isTurnFaceUpPrevented(gameData, target)) {
             return;
         }
         turnFaceUpCopyService.turnFaceUpWithoutCost(gameData, target);

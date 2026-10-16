@@ -79,7 +79,8 @@ public class RevealTopCardCreatureToBattlefieldEffectHandler implements NormalEf
 
         if (typed.sacrificeAtEndStep()) {
             gameData.queueDelayedAction(new DelayedPermanentAction(
-                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                    permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                    false, null, controllerId, controllerId));
         }
 
         log.info("Game {} - {} puts {} onto the battlefield ({})",

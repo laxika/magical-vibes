@@ -128,7 +128,7 @@ class KaitoBaneOfNightmaresTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, attacker.getId());
         harness.assertInHand(player1, "Fear of Isolation");
         harness.assertNotOnBattlefield(player1, "Fear of Isolation");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> harness.passBothPriorities());
         Permanent kaito = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(kaito.getCard()).isInstanceOf(KaitoBaneOfNightmares.class);
         assertThat(kaito.isTapped()).isTrue();

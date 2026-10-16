@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -233,7 +234,10 @@ public class StaticEffectSupport {
                 ? activeState.hasCardType(CardType.LAND)
                 : permanent.getCard().hasType(CardType.LAND);
         if (gameData != null && land
-                && matchesAnimateLand(gameData, permanent)) return true;
+                && matchesAnimateLand(gameData, permanent,
+                        activeState != null ? activeState.getSubtypes() : permanent.getCard().getSubtypes())) {
+            return true;
+        }
         if (gameData != null && gameQueryService.isAnimatedByStarfield(gameData, permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
         return false;
@@ -320,6 +324,12 @@ public class StaticEffectSupport {
             }
         } else if (wrapped instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF) {
             accumulator.setSelfBecomeCreature(true);
+            if (animate.cardTypeOverriding()) {
+                java.util.Set<CardType> types = java.util.EnumSet.of(CardType.CREATURE);
+                types.addAll(animate.grantedCardTypes());
+                accumulator.setCardTypeOverriding(true);
+                accumulator.setGrantedCardTypes(types);
+            }
             // Conditional self-become-creature statics (Rusted Relic, Warden of the Wall) always use
             // a fixed base P/T; static bonus computation has no stack entry to evaluate a dynamic amount.
             if (animate.power() instanceof Fixed p && animate.toughness() instanceof Fixed t) {
@@ -409,7 +419,8 @@ public class StaticEffectSupport {
         return false;
     }
 
-    public boolean matchesAnimateLand(GameData gameData, Permanent permanent) {
+    public boolean matchesAnimateLand(GameData gameData, Permanent permanent,
+                                      Collection<CardSubtype> subtypes) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
@@ -422,7 +433,7 @@ public class StaticEffectSupport {
                                     || (animateLands.scope() == GrantScope.OPPONENT_LANDS
                                             && !bf.contains(permanent)))
                             && (animateLands.requiredSubtype() == null
-                                    || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))) {
+                                    || subtypes.contains(animateLands.requiredSubtype()))) {
                         return true;
                     }
                 }

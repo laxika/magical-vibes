@@ -14,6 +14,6 @@ public class KnowledgeIsPower extends Card {
     public KnowledgeIsPower() {
         CardsDrawnThisTurn cardsDrawn = new CardsDrawnThisTurn();
         addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
-                cardsDrawn, cardsDrawn, GrantScope.OWN_CREATURES));
+                cardsDrawn, cardsDrawn, GrantScope.ALL_OWN_CREATURES));
     }
 }

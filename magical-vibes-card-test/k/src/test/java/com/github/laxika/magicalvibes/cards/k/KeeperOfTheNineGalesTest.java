@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -202,6 +204,7 @@ class KeeperOfTheNineGalesTest extends BaseCardTest {
         Permanent bird1 = addCreatureReady(player1, new AvenEnvoy());
         Permanent bird2 = addCreatureReady(player1, new AvenEnvoy());
         Permanent target = addCreatureReady(player2, new AvenEnvoy());
+        harness.setHand(player2, List.of());
 
         harness.activateAbility(player1, battlefieldIndex(player1, keeper), 0, null, target.getId());
         harness.getPermanentRemovalService().removePermanentToHand(gd, target);

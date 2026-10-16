@@ -146,12 +146,13 @@ class KjeldoranFrostbeastTest extends BaseCardTest {
         Permanent frostbeast = addCreatureReady(player1, new KjeldoranFrostbeast());
         Permanent blocker = addCreatureReady(player2, new ShieldBearer());
         harness.setHand(player2, List.of(new SwordsToPlowshares()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passUntil(TurnStep.END_OF_COMBAT);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.ensurePriority(player2);
         harness.castInstant(player2, 0, frostbeast.getId());
         harness.passBothPriorities();
         resolveAllTriggers();

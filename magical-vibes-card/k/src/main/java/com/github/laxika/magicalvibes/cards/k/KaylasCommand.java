@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -36,8 +37,8 @@ public class KaylasCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on a creature you control. It gains double strike until end of turn",
                         List.of(
-                                new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
-                                        new PermanentIsCreaturePredicate()),
+                                new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                                        new Fixed(1), new PermanentIsCreaturePredicate(), false, true),
                                 new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(Keyword.DOUBLE_STRIKE, null)
                         )),
                 new ChooseOneEffect.ChooseOneOption(

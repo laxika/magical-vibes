@@ -42,7 +42,10 @@ public class AttachSourceAuraToChosenPermanentEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        UUID chooserId = entry.getTargetId();
+        // The controller of the triggering permanent as it was destroyed takes precedence over the
+        // controller recorded when the ability triggered (Kudzu after an exchange of control).
+        UUID chooserId = entry.getTriggeringPermanentControllerId() != null
+                ? entry.getTriggeringPermanentControllerId() : entry.getTargetId();
         if (aura == null || chooserId == null) {
             return;
         }

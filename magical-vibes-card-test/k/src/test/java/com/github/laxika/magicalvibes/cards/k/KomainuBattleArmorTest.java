@@ -68,7 +68,7 @@ class KomainuBattleArmorTest extends BaseCardTest {
         armor.setAttackTarget(player2.getId());
         Permanent original = addCreatureReady(player2, new KomainuBattleArmor());
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
         assertThat(gd.stack).isNotEmpty();
         Permanent beforeResolution = addCreatureReady(player2, new KomainuBattleArmor());
         resolveAllTriggers();

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
@@ -22,6 +23,8 @@ import java.util.List;
 public class KairiTheSwirlingSky extends Card {
 
     public KairiTheSwirlingSky() {
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(3));
+
         PermanentPredicate nonlandPermanent = TargetFilters.nonlandPermanent().predicate();
         CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

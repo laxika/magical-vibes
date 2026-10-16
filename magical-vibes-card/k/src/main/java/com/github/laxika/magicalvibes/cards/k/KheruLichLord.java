@@ -26,7 +26,7 @@ public class KheruLichLord extends Card {
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .returnAtRandom(true)
                         .grantKeywords(Set.of(Keyword.FLYING, Keyword.TRAMPLE, Keyword.HASTE))
-                        .exileAtEndStep(true)
+                        .exileAtYourNextEndStep(true)
                         .exileIfLeavesBattlefield(true)
                         .build(),
                 "Pay {2}{B} to return a creature card at random from your graveyard to the battlefield?"));

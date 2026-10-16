@@ -35,6 +35,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code EnteringCreatureFightsTargetCreatureEffect} knows which creature "that creature" is.
      *  Used by Gruul Ragebeast. */
     ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever one or more creatures you control enter, …" counting this permanent's own entry. Batched
+     *  like {@link #ON_ALLY_CREATURES_ENTERS_BATTLEFIELD} (one trigger per entering batch), but the source
+     *  itself also counts as an entering creature. Used by Kotis, Sibsig Champion. */
+    ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD,
     /** "Whenever a nontoken creature enters under your control" (excludes this permanent and tokens).
      *  Like {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the entering permanent's id is preserved on
      *  any queued may-pay ability (mirrors {@link #ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD}), so a

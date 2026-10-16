@@ -105,7 +105,7 @@ class KnightOfObligationTest extends BaseCardTest {
     void attackingDoesNotTapKnight() {
         var knight = addCreatureReady(player1, new KnightOfObligation());
 
-        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(knight.isAttacking()).isTrue();
         assertThat(knight.isTapped()).isFalse();

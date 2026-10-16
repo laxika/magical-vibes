@@ -38,6 +38,8 @@ class KulrathZealotTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);

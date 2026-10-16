@@ -52,11 +52,13 @@ class KillerServiceTest extends BaseCardTest {
 
         advanceToEndStep();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(countPermanents(player1, "Food")).isOne();
-        assertThat(countPermanents(player1, "Rhino Warrior")).isZero();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+            assertThat(countPermanents(player1, "Food")).isOne();
+            assertThat(countPermanents(player1, "Rhino Warrior")).isZero();
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        });
     }
 
     @Test
@@ -103,11 +105,13 @@ class KillerServiceTest extends BaseCardTest {
         advanceToEndStep();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(countPermanents(player1, "Food")).isOne();
-        assertThat(countPermanents(player1, "Rhino Warrior")).isZero();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isOne();
+            assertThat(countPermanents(player1, "Food")).isOne();
+            assertThat(countPermanents(player1, "Rhino Warrior")).isZero();
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isOne();
+        });
     }
 
     @Test

@@ -6,7 +6,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreaturesLeftBattlefieldThisTurn;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -20,7 +24,7 @@ import java.util.List;
 public class KutzilsFlanker extends Card {
 
     public KutzilsFlanker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on this creature for each creature that left the battlefield under your control this turn",
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
@@ -30,7 +34,9 @@ public class KutzilsFlanker extends Card {
                         List.of(new GainLifeEffect(2), new ScryEffect(2))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile target player's graveyard",
-                        new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE))
-        )));
+                        new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE),
+                        new PlayerPredicateTargetFilter(
+                                new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
+        ))));
     }
 }

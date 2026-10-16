@@ -12,8 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>Replaces the former {@code SkipNextUntapOnTargetEffect}, {@code SkipNextUntapAllAttackingCreaturesEffect}
  * and {@code SkipNextUntapPermanentsOfTargetPlayerEffect}.
- * When {@code matchAtUntap} is true, the target-player scope stores a player-wide restriction and
- * evaluates matching permanents during that player's upcoming untap steps, including later arrivals.
+ * When {@code matchAtUntap} is true, the target-player and controlled scopes store a player-wide
+ * restriction and evaluate matching permanents during that player's upcoming untap steps, including
+ * later arrivals (the affected set is not fixed at resolution, CR 611.2c).
  *
  * <p>Also a {@link CombatOpponentReferencingEffect}: when placed on the {@code ON_BLOCK} slot of an
  * attached permanent (aura/equipment) with {@link TapUntapScope#TARGET}, {@code CombatTriggerService}

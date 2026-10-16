@@ -131,6 +131,7 @@ class KorvoldFaeCursedKingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KorvoldFaeCursedKing());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
         harness.castFromHand(player1, new BarterInBlood(), "{2}{B}{B}");
 
         resolveAllTriggers();

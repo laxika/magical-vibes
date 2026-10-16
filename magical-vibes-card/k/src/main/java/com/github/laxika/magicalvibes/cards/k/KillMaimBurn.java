@@ -19,6 +19,8 @@ import java.util.List;
 public class KillMaimBurn extends Card {
 
     public KillMaimBurn() {
+        setAllowSharedTargets(true);
+
         var artifactFilter = new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(), "Target must be an artifact.");
         var creatureFilter = new PermanentPredicateTargetFilter(

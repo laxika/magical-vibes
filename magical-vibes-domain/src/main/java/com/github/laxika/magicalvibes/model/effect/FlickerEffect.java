@@ -501,6 +501,17 @@ public record FlickerEffect(
                 false, false, 0, false, keywords, false, false);
     }
 
+    /** This flicker with a different scope and every other component unchanged. */
+    public FlickerEffect withScope(FlickerScope newScope) {
+        return new FlickerEffect(newScope, filter, timing, returnStep, returnTapped, bonusSubtype, bonusEffect,
+                plusOnePlusOneCountersOnReturn, returnUnderController, grantHaste, returnAtOwnerNextEndStep,
+                plusOnePlusOneCountersOnlyOnCreatures, loyaltyCountersOnPlaneswalkersOnReturn,
+                addCounterIfReturnedUnderControllerOtherwiseTap, grantedKeywordsOnReturn, chooseAnyNumber,
+                returnAtControllerNextStep, addAdditionalEndStepIfFirst, counterTypeOnReturn,
+                counterAmountOnReturn, bonusSubtypes, returnFaceDown, returnAttacking, tapOnImmediateReturn,
+                returnLandsTapped, countersOnReturn);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         if (scope == FlickerScope.TARGET) {
@@ -509,8 +520,7 @@ public record FlickerEffect(
         if (scope == FlickerScope.TARGET_PLAYERS_PERMANENTS) {
             return TargetSpec.benign(TargetPredicates.player());
         }
-        if (scope == FlickerScope.SELF || scope == FlickerScope.SELF_OR_TARGET
-                || scope == FlickerScope.ENCHANTED_CREATURE_AND_AURAS) {
+        if (scope == FlickerScope.SELF || scope == FlickerScope.ENCHANTED_CREATURE_AND_AURAS) {
             return new TargetSpec(null, false, null, true, 1);
         }
         return TargetSpec.NONE;

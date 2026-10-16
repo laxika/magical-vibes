@@ -155,6 +155,7 @@ class KioraTheCrashingWaveTest extends BaseCardTest {
     void additionalLandPlayIsUsableAndExpires() {
         addReadyKiora(player1, 3);
         harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.playLand(player1, 0);
@@ -175,6 +176,7 @@ class KioraTheCrashingWaveTest extends BaseCardTest {
     @DisplayName("The emblem keeps creating Krakens after Kiora leaves the battlefield")
     void emblemContinuesOnLaterTurnsWithoutKiora() {
         addReadyKiora(player1, 5);
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.activateAbility(player1, 0, 2, null, null);

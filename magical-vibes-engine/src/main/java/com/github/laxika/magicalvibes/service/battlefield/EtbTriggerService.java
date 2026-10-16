@@ -870,7 +870,10 @@ public class EtbTriggerService {
                             || effect instanceof com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect prevention
                             && prevention.etbAssignments()
                             || effect instanceof com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect distribution
-                            && distribution.etbAssignments())
+                            && distribution.etbAssignments()
+                            || effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect
+                            || effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
+                            && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect)
                     ? new java.util.LinkedHashMap<>(gameData.pendingETBDamageAssignments) : Map.of();
             if (!dividedAssignments.isEmpty() && activeTargetIds.isEmpty()
                     && otherEffects.stream().noneMatch(

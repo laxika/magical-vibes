@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "TMT", collectorNumber = "43")
@@ -21,6 +22,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class KrangMasterMind extends Card {
 
     public KrangMasterMind() {
+        // Affinity for artifacts.
+        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+                new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
+
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CardsInHandAtMost(3),
                 new DrawCardEffect(new Sum(

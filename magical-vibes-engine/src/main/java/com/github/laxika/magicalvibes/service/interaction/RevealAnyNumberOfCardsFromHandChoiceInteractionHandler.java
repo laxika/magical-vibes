@@ -232,8 +232,6 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
                 reveal.card(selectedCards.get(i));
             }
             gameLogService.append(gameData, reveal.text(".").build());
-            cardRevealService.revealToAllPlayers(
-                    gameData, interaction.playerId(), GameEventFact.RevealZone.HAND, selectedCards);
         }
 
         StackEntry entry = gameData.pendingEffectResolutionEntry;
@@ -242,13 +240,16 @@ public class RevealAnyNumberOfCardsFromHandChoiceInteractionHandler
         }
         Map<UUID, Integer> revealedCounts = new LinkedHashMap<>(context.revealedCounts());
         revealedCounts.put(interaction.playerId(), selectedCards.size());
+        Map<UUID, List<Card>> revealedCards = new LinkedHashMap<>(context.revealedCards());
+        revealedCards.put(interaction.playerId(), List.copyOf(selectedCards));
         EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensEffect effect =
                 new EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensEffect(
                         context.filter(), context.token());
 
         gameData.interaction.clearAwaitingInput();
         boolean begunNext = eachPlayerRevealSupport.beginNextChoice(
-                gameData, entry, context.remainingPlayerIds(), context.playerOrder(), revealedCounts, effect);
+                gameData, entry, context.remainingPlayerIds(), context.playerOrder(), revealedCounts,
+                revealedCards, effect);
         inputCompletionService.publishStateAfterInput(gameData);
         if (!begunNext) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

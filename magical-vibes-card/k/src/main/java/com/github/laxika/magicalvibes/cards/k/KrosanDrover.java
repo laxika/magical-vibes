@@ -19,7 +19,7 @@ public class KrosanDrover extends Card {
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
-                        new CardMinManaValuePredicate(6)
+                        new CardMinManaValuePredicate(6, true)
                 )),
                 2,
                 CostModificationScope.SELF));

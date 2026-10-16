@@ -31,7 +31,11 @@ public class KnightOfCliffhaven extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
+        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.SELF));
         addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new SourceCounterThreshold(1, CounterType.LEVEL),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new SetBasePowerToughnessEffect(2, 3, GrantScope.SELF)));

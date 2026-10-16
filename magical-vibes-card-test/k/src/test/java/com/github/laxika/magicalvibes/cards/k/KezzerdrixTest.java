@@ -93,11 +93,11 @@ class KezzerdrixTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Kezzerdrix());
         harness.addToBattlefield(player2, new HornedTurtle());
         harness.setHand(player1, List.of(new DarkBanishing()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
         int startingLife = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Horned Turtle"));
 

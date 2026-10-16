@@ -165,6 +165,10 @@ public class PermanentCounterSupport {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
+            if (source.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
+                continue;
+            }
             Card card = source.getCard();
             List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL);
             if (effects.isEmpty()) {
@@ -1028,6 +1032,11 @@ public class PermanentCounterSupport {
             case DELAY -> "delay";
             case BASE_POWER_FOUR -> "base power 4";
             case BASE_TOUGHNESS_FOUR -> "base toughness 4";
+            case HEXPROOF_FROM_WHITE -> "hexproof from white";
+            case HEXPROOF_FROM_BLUE -> "hexproof from blue";
+            case HEXPROOF_FROM_BLACK -> "hexproof from black";
+            case HEXPROOF_FROM_RED -> "hexproof from red";
+            case HEXPROOF_FROM_GREEN -> "hexproof from green";
             default -> counterType.name().toLowerCase();
         };
     }
@@ -2007,6 +2016,20 @@ public class PermanentCounterSupport {
             gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.merge(
                     controllerId, count, Integer::sum);
         }
+    }
+
+    /**
+     * Records that {@code target} received +1/+1 counters this turn from {@code placingPlayerId}, for the
+     * "put a +1/+1 counter on it this turn" checks. The placing handler owns any counter triggers.
+     */
+    public void recordPlusOnePlusOneCounterReceivedOnSource(GameData gameData, Permanent target,
+                                                            UUID placingPlayerId) {
+        if (target == null || placingPlayerId == null) {
+            return;
+        }
+        gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn
+                .computeIfAbsent(placingPlayerId, ignored -> ConcurrentHashMap.newKeySet()).add(target.getId());
+        gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.add(target.getId());
     }
 
     public void recordPlusOnePlusOneCounterPlacedOnCreature(GameData gameData, Permanent target,

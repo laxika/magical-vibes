@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
@@ -27,7 +29,8 @@ public class KembaKhaEnduring extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment you control"), 0, 1)
                 .addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                        new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.CAT),
+                        new TriggeringCardConditionalEffect(new CardAnyOfPredicate(List.of(
+                                new CardIsSelfPredicate(), new CardSubtypePredicate(CardSubtype.CAT))),
                                 new AttachTargetEquipmentToTriggeringPermanentEffect()));
 
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,

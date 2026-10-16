@@ -146,7 +146,7 @@ class KathariBomberTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.resolveCombatDamage();
 
         harness.setHand(player1, List.of(new Terminate()));
         harness.addMana(player1, ManaColor.BLACK, 1);

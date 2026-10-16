@@ -34,9 +34,12 @@ public class DestroyTargetCreatureThenCreateTokenEqualToPowerToughnessEffectHand
 
         int power = gameQueryService.getEffectivePower(gameData, target);
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
+        long previousGraveyardVersion = gameData.graveyardEntryVersion(target.getOriginalCard().getId());
         boolean destroyed = destructionSupport.tryDestroyAndLog(
                 gameData, target, entry.getCard().getName());
-        if (!destroyed) {
+        // "If that creature dies this way": a replacement that exiles it instead means no token.
+        boolean died = gameData.graveyardEntryVersion(target.getOriginalCard().getId()) > previousGraveyardVersion;
+        if (!destroyed || !died) {
             return;
         }
 

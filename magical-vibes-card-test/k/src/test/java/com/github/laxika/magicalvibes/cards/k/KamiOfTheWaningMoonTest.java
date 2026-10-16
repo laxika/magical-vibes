@@ -36,6 +36,8 @@ class KamiOfTheWaningMoonTest extends BaseCardTest {
     @DisplayName("An opponent's Spirit spell does not trigger Kami of the Waning Moon")
     void opponentSpiritSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new KamiOfTheWaningMoon());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, new KamiOfTheWaningMoon(), "{2}{B}");
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

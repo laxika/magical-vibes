@@ -117,6 +117,7 @@ class KianneTest extends BaseCardTest {
     @Test
     void imbrahamMayDeclineReturningAnyStudyCard() {
         addCreatureReady(player1, new Imbraham());
+        harness.setHand(player1, List.of());
         ArchwayCommons land = new ArchwayCommons();
         ChargeThrough spell = new ChargeThrough();
         harness.setLibrary(player1, List.of(land, spell));
@@ -163,6 +164,7 @@ class KianneTest extends BaseCardTest {
     @Test
     void kianneDoesNothingWithAnEmptyLibrary() {
         addReadyKianne();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, 0, null, null);

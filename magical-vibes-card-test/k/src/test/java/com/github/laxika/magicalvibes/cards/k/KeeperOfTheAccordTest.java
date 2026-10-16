@@ -114,8 +114,10 @@ class KeeperOfTheAccordTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(plains));
 
         advanceToEndStep(player2);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.handleMayAbilityChosen(player1, false);
+            harness.passBothPriorities();
+        });
 
         assertThat(soldierTokens(player1)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Plains");
@@ -144,7 +146,7 @@ class KeeperOfTheAccordTest extends BaseCardTest {
 
         advanceToEndStep(player2);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleCardChosen(player1, 0));
 
         assertThat(findPermanent(player1, "Plains").isTapped()).isTrue();
         assertThat(soldierTokens(player1)).isZero();
@@ -160,7 +162,7 @@ class KeeperOfTheAccordTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(creature));
 
         advanceToEndStep(player2);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);

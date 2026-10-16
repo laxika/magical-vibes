@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -39,7 +40,7 @@ public class KnightsCharge extends Card {
                                 new CardAllOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),
                                         new CardSubtypePredicate(CardSubtype.KNIGHT))),
-                                Integer.MAX_VALUE)
+                                new Fixed(Integer.MAX_VALUE), true)
                 ),
                 "{6}{W}{B}, Sacrifice this enchantment: Return all Knight creature cards from your graveyard to the battlefield."
         ));

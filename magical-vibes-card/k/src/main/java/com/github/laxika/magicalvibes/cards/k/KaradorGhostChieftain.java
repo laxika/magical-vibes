@@ -18,9 +18,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class KaradorGhostChieftain extends Card {
 
     public KaradorGhostChieftain() {
-        // This spell costs {1} less to cast for each creature card in your graveyard.
+        // This spell costs {1} less to cast for each creature card in your graveyard. A Karador cast from
+        // the graveyard is already on the stack when its cost is determined, so it doesn't count itself.
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
-                new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)));
+                new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER, true)));
 
         // Once during each of your turns, you may cast a creature spell from your graveyard.
         addEffect(EffectSlot.STATIC, new CastSpellFromGraveyardOncePerYourTurnEffect(

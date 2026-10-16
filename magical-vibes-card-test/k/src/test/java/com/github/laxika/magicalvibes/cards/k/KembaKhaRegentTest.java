@@ -193,9 +193,9 @@ class KembaKhaRegentTest extends BaseCardTest {
         Permanent kemba = harness.addToBattlefieldAndReturn(player1, new KembaKhaRegent());
         Permanent equipment = attachEquipment(player1, new LeoninScimitar(), kemba.getId());
         harness.setHand(player1, List.of(new Disperse()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castAndResolveInstant(player1, 0, equipment.getId());
         harness.assertInHand(player1, "Leonin Scimitar");
         harness.passBothPriorities();
@@ -210,9 +210,9 @@ class KembaKhaRegentTest extends BaseCardTest {
         attachEquipment(player1, new LeoninScimitar(), kemba.getId());
         attachEquipment(player1, new LeoninScimitar(), kemba.getId());
         harness.setHand(player1, List.of(new Disperse()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castAndResolveInstant(player1, 0, kemba.getId());
         harness.assertNotOnBattlefield(player1, "Kemba, Kha Regent");
         harness.assertInHand(player1, "Kemba, Kha Regent");

@@ -26,7 +26,7 @@ public class KeeperOfTheBeasts extends Card {
                 "{G}, {T}: Choose target opponent who controls more creatures than you do as you activate this ability. "
                         + "Create a 2/2 green Beast creature token.",
                 new PlayerPredicateTargetFilter(
-                        new PlayerControlsMoreCreaturesThanControllerPredicate(),
+                        new PlayerControlsMoreCreaturesThanControllerPredicate(false),
                         "Target opponent must control more creatures than you"
                 )
         ));

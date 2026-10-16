@@ -154,6 +154,8 @@ class KlauthsWillTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(commander.getOriginalCard());
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Ornithopter");

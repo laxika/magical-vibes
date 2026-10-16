@@ -93,6 +93,7 @@ class KaslaTheBrokenHaloTest extends BaseCardTest {
     @DisplayName("An opponent's convoke spell does not trigger Kasla")
     void opponentsConvokeSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new KaslaTheBrokenHalo());
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new StokeTheFlames()));
         harness.addMana(player2, ManaColor.RED, 4);
 

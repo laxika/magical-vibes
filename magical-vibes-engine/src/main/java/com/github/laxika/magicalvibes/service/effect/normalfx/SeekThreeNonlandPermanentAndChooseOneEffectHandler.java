@@ -80,6 +80,6 @@ public class SeekThreeNonlandPermanentAndChooseOneEffectHandler implements Norma
                 "Choose one of the sought nonland permanent cards to put into your hand. Shuffle the rest into your library.",
                 false,
                 1,
-                false));
+                false).withRevealSelected(false));
     }
 }

@@ -125,7 +125,7 @@ class KusariGamaTest extends BaseCardTest {
         blockAttacker(player2, new SokenzanBruiser(), 0);
         addCreatureReady(player2, new HumbleBudoka());
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.stack).anySatisfy(entry -> {
             assertThat(entry.getCard().getName()).isEqualTo("Kusari-Gama");

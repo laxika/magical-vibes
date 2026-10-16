@@ -113,6 +113,30 @@ public class ManaTapTriggerCollectorService {
             return false;
         }
 
+        if (trigger.requiredColor() == null && nonlandTap.producedManaTypes().size() > 1) {
+            GameData gameData = match.gameData();
+            Card sourceCard = match.permanent().getCard();
+            List<ManaColor> choices = nonlandTap.producedManaTypes().stream().sorted().toList();
+            StackEntry followUp = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(),
+                    null,
+                    match.permanent().getId());
+            followUp.setNonTargeting(true);
+            AnyColorManaChoiceSupport.beginOrQueueChoice(interactionHandlerRegistry, gameData,
+                    new PendingInteraction.ColorChoice(match.controllerId(), null, null,
+                            new ChoiceContext.FixedManaColorThenEffectsChoice(match.controllerId(), choices, 1, followUp),
+                            choices.stream().map(Enum::name).toList(),
+                            "Choose a type of mana the permanent produced."));
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} awaits a choice of mana type on nonland permanent tap for mana",
+                    gameData.id, sourceCard.getName());
+            return true;
+        }
+
         ManaColor manaColor = trigger.requiredColor() != null
                 ? trigger.requiredColor()
                 : nonlandTap.producedManaTypes().iterator().next();

@@ -185,7 +185,7 @@ class KefnetTheMindfulTest extends BaseCardTest {
     void returnsLandToOwnerAndExcludesOpponentsLands() {
         harness.addToBattlefield(player1, new KefnetTheMindful());
         var stolenIsland = harness.addToBattlefieldAndReturn(player1, new Island());
-        gd.stolenCreatures.put(stolenIsland.getId(), player2.getId());
+        setOwnerAndController(stolenIsland, player2, player1);
         harness.addToBattlefield(player2, new Forest());
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

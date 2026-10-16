@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -129,6 +130,7 @@ class KozilekCompleatedTest extends BaseCardTest {
         addCreatureReady(player1, new KozilekCompleated());
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
         gd.playerPoisonCounters.put(player2.getId(), 1);
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
@@ -145,6 +147,7 @@ class KozilekCompleatedTest extends BaseCardTest {
     void annihinfectStillAffectsDefenderAfterAttackedPlaneswalkerLeaves() {
         addCreatureReady(player1, new KozilekCompleated());
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Boomerang()));

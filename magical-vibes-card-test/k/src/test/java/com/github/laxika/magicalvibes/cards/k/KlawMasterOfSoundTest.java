@@ -77,7 +77,7 @@ class KlawMasterOfSoundTest extends BaseCardTest {
         Permanent klaw = addCreatureReady(player1, new KlawMasterOfSound());
         klaw.setAttacking(true);
         GrizzlyBears stolen = new GrizzlyBears();
-        harness.setLibrary(player2, List.of(stolen));
+        harness.setLibrary(player2, List.of(stolen, new GrizzlyBears()));
         resolveCombatAndTrigger();
 
         prepareMainPhase();
@@ -97,7 +97,7 @@ class KlawMasterOfSoundTest extends BaseCardTest {
         Permanent klaw = addCreatureReady(player1, new KlawMasterOfSound());
         klaw.setAttacking(true);
         Forest stolen = new Forest();
-        harness.setLibrary(player2, List.of(stolen));
+        harness.setLibrary(player2, List.of(stolen, new GrizzlyBears()));
         resolveCombatAndTrigger();
 
         prepareMainPhase();
@@ -115,7 +115,7 @@ class KlawMasterOfSoundTest extends BaseCardTest {
         Permanent klaw = addCreatureReady(player1, new KlawMasterOfSound());
         klaw.setAttacking(true);
         GrizzlyBears stolen = new GrizzlyBears();
-        harness.setLibrary(player2, List.of(stolen));
+        harness.setLibrary(player2, List.of(stolen, new GrizzlyBears()));
         resolveCombatAndTrigger();
         gd.playerBattlefields.get(player1.getId()).remove(klaw);
 

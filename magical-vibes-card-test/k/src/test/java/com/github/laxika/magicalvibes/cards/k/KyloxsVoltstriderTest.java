@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -116,14 +117,14 @@ class KyloxsVoltstriderTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         DarkRitual ritual = new DarkRitual();
         gd.addToExile(player1.getId(), ritual, voltstrider.getId());
-        harness.addMana(player1, ManaColor.BLACK, 1);
         crewVoltstrider();
 
         declareAttackers(List.of(0));
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handleMayAbilityChosen(player1, false));
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.getCardsExiledByPermanent(voltstrider.getId())).containsExactly(ritual);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }

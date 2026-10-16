@@ -99,7 +99,10 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         if (e.wrapped() instanceof PutCountersOnSourceEffect counters) {
             var source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            if (source == null || gameQueryService.cantHaveCounters(gameData, source)
+            if (source == null && e.elseEffect() == null) {
+                // Nothing replaces the counters and nothing observable depends on the choice, but the
+                // controller still makes it (Kresh's trigger after Kresh left the battlefield).
+            } else if (source == null || gameQueryService.cantHaveCounters(gameData, source)
                     || counters.powerModifier() > 0
                     && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)
                     || counters.powerModifier() < 0

@@ -129,7 +129,7 @@ class KayasGuileTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertLife(player1, 20);
 
-        harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
+        harness.handlePermanentChosen(player2, bears.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(wizard);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();

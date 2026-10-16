@@ -28,7 +28,8 @@ import org.springframework.stereotype.Component;
  *
  * <p>Each affected player multi-selects creatures to keep (pay X life each), capped by what they can
  * afford. Choices accumulate; after the last player, life is paid and non-kept creatures are
- * sacrificed together. X=0 keeps everything with no prompt (paying 0 life is free).
+ * sacrificed together. At X=0 the choice is still offered: paying 0 life is free (CR 119.4), but
+ * the controller may still decline to pay and sacrifice the creature.
  */
 @Slf4j
 @Component
@@ -54,17 +55,13 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
         int xValue = Math.max(0, entry.getXValue());
         String sourceName = entry.getCard().getName();
 
-        if (xValue == 0) {
-            // Paying 0 life keeps every creature — nothing to do.
-            return;
-        }
-
         List<UUID> playersWithCreatures = apnapPlayersWithCreatures(gameData);
         if (playersWithCreatures.isEmpty()) {
             return;
         }
 
-        beginNextPlayer(gameData, playersWithCreatures, List.of(), xValue, sourceName);
+        beginNextPlayer(gameData, playersWithCreatures, List.of(), xValue, sourceName,
+                entry.getControllerId());
     }
 
     /**
@@ -73,7 +70,7 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
      * sacrificed) with no prompt.
      */
     public void beginNextPlayer(GameData gameData, List<UUID> remainingPlayerIds,
-            List<UUID> accumulatedKeepIds, int xValue, String sourceName) {
+            List<UUID> accumulatedKeepIds, int xValue, String sourceName, UUID sourceControllerId) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         while (!remaining.isEmpty()) {
             UUID playerId = remaining.removeFirst();
@@ -95,12 +92,13 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
             List<UUID> rest = List.copyOf(remaining);
             playerInputService.beginMultiPermanentChoice(gameData, playerId, creatureIds, maxKeep,
                     new MultiPermanentChoiceContext.KillingWaveKeep(
-                            playerId, xValue, sourceName, rest, List.copyOf(accumulatedKeepIds)),
+                            playerId, xValue, sourceName, rest, List.copyOf(accumulatedKeepIds),
+                            sourceControllerId),
                     sourceName + " — choose creatures to keep (pay " + xValue + " life each).");
             return;
         }
 
-        applyDecisions(gameData, accumulatedKeepIds, xValue, sourceName);
+        applyDecisions(gameData, accumulatedKeepIds, xValue, sourceName, sourceControllerId);
     }
 
     /** Choice completion: record keeps, then prompt the next player or apply. */
@@ -122,14 +120,15 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
         }
 
         beginNextPlayer(gameData, context.remainingPlayerIds(), allKeeps,
-                context.xValue(), context.sourceName());
+                context.xValue(), context.sourceName(), context.sourceControllerId());
     }
 
     /**
      * Simultaneous resolution: each player pays X life per kept creature they control, then every
      * non-kept creature is sacrificed.
      */
-    private void applyDecisions(GameData gameData, List<UUID> keepIds, int xValue, String sourceName) {
+    private void applyDecisions(GameData gameData, List<UUID> keepIds, int xValue, String sourceName,
+            UUID sourceControllerId) {
         Set<UUID> keepSet = new HashSet<>(keepIds);
 
         // Pay life first (all players), then sacrifice — both are simultaneous; order is
@@ -148,8 +147,8 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             int lifeCost = kept * xValue;
-            if (!gameQueryService.canPlayerLifeChange(gameData, playerId)
-                    || gameData.getLife(playerId) < lifeCost) {
+            if (lifeCost > 0 && (!gameQueryService.canPlayerLifeChange(gameData, playerId)
+                    || gameData.getLife(playerId) < lifeCost)) {
                 // Life became unpayable since the choice — treat as unpaid: drop keeps for this player.
                 if (battlefield != null) {
                     for (Permanent perm : List.copyOf(battlefield)) {
@@ -168,7 +167,8 @@ public class KillingWaveEffectHandler implements NormalEffectHandlerBean {
         List<UUID> toSacrifice = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : battlefield) {
-                if (gameQueryService.isCreature(gameData, perm) && !keepSet.contains(perm.getId())) {
+                if (gameQueryService.isCreature(gameData, perm) && !keepSet.contains(perm.getId())
+                        && gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
                     toSacrifice.add(perm.getId());
                 }
             }

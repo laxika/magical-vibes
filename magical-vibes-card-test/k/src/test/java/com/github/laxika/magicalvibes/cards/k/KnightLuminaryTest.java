@@ -65,6 +65,7 @@ class KnightLuminaryTest extends BaseCardTest {
     void castFromExileCreatesAnotherTokenAndDoesNotExileAgain() {
         harness.setLibrary(player1, List.of(new KnightLuminary(), new KnightLuminary()));
         harness.setLibrary(player2, List.of(new KnightLuminary(), new KnightLuminary()));
+        harness.setHand(player2, List.of());
         KnightLuminary knight = new KnightLuminary();
         harness.setHand(player1, List.of(knight));
         harness.addMana(player1, ManaColor.WHITE, 1);

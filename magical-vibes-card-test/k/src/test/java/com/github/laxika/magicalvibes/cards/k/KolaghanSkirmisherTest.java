@@ -50,6 +50,7 @@ class KolaghanSkirmisherTest extends BaseCardTest {
         assertThat(skirmisher.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Kolaghan Skirmisher");

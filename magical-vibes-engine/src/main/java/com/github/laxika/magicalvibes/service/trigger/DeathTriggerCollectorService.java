@@ -196,8 +196,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentP
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1007,24 +1005,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    /**
-     * Attachment predicates read the dying creature's attachments as they were at death (CR 603.10a),
-     * which still holds when the Auras or Equipment were destroyed in the same event.
-     */
-    private static boolean wasAttachedAtDeath(PermanentPredicate predicate,
-                                              DyingCreatureAttachmentSnapshot attachmentSnapshot) {
-        if (attachmentSnapshot == null) {
-            return false;
-        }
-        if (predicate instanceof PermanentIsEnchantedPredicate) {
-            return !attachmentSnapshot.auraCardIds().isEmpty();
-        }
-        if (predicate instanceof PermanentIsEquippedPredicate) {
-            return !attachmentSnapshot.equipmentPermanentIds().isEmpty();
-        }
-        return false;
-    }
-
     @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class, slot = EffectSlot.ON_DEATH)
     boolean handleSelfDeathPermanentConditional(TriggerMatchContext match,
             TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
@@ -1034,11 +1014,11 @@ public class DeathTriggerCollectorService {
                 ? null
                 : DyingCreatureAttachmentSnapshot.capture(match.gameData(), dyingPermanent.getId());
         if (dyingPermanent == null
-                || !(predicateEvaluationService.matchesPermanentPredicate(
-                        dyingPermanent, effect.predicate(), FilterContext.of(match.gameData())
-                                .withSourceControllerId(sd.controllerId())
-                                .withSourcePermanentId(match.permanent().getId()))
-                        || wasAttachedAtDeath(effect.predicate(), attachmentSnapshot))) {
+                || !DyingCreatureAttachmentSnapshot.satisfiedAtDeath(attachmentSnapshot, effect.predicate(),
+                        p -> predicateEvaluationService.matchesPermanentPredicate(
+                                dyingPermanent, p, FilterContext.of(match.gameData())
+                                        .withSourceControllerId(sd.controllerId())
+                                        .withSourcePermanentId(match.permanent().getId())))) {
             return false;
         }
 
@@ -1869,14 +1849,21 @@ public class DeathTriggerCollectorService {
                 && epl.destination() != com.github.laxika.magicalvibes.model.Zone.EXILE) {
             return false;
         }
-        match.gameData().stack.add(new StackEntry(
+        UUID cardId = epl.leavingPermanent().getCard().getId();
+        var entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect(
-                        epl.leavingPermanent().getCard().getId(), epl.destination())))
-        ));
+                        cardId, epl.destination())))
+        );
+        if (epl.destination() == com.github.laxika.magicalvibes.model.Zone.GRAVEYARD) {
+            // CR 400.7: the trigger refers to the card's graveyard stay that begins after this collection;
+            // GameData.markGraveyardEntry stamps the version when the card actually enters the graveyard.
+            entry.setTriggeringCardId(cardId);
+        }
+        match.gameData().stack.add(entry);
         logEnchantedPermanentLTB(match);
         return true;
     }

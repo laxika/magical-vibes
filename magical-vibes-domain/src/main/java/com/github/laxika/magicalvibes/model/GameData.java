@@ -169,6 +169,10 @@ public class GameData {
     public final Map<UUID, List<Card>> permanentsSacrificedThisTurn = new ConcurrentHashMap<>();
     /** Permanent card ids currently being sacrificed as an additional cost of a spell cast. */
     public final Set<UUID> currentCastSacrificedPermanentIds = ConcurrentHashMap.newKeySet();
+    /** Spell whose explicit "behold or pay" cost was waived by the cast request being processed, if any. */
+    public UUID beholdCostWaivedCardId;
+    /** Hand card revealed to waive {@link #beholdCostWaivedCardId}'s cost, or null when a permanent was beheld. */
+    public Card beholdCostRevealedCard;
     /** Face-down creatures that entered under each player's control this turn, including ones that have since left or turned face up. */
     public final Map<UUID, List<Card>> faceDownCreaturesEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Face-down permanents that entered under each player's control this turn, including ones that have since left or turned face up. */
@@ -189,6 +193,8 @@ public class GameData {
     private final Map<UUID, Set<UUID>> spellsCastTargetingCreatureThisTurn = new ConcurrentHashMap<>();
     /** Card ids of spells cast with Treasure-produced mana this turn. */
     private final Set<UUID> spellsCastUsingTreasureManaThisTurn = ConcurrentHashMap.newKeySet();
+    /** Card ids of spells cast this turn that had convoke granted by a next-spell convoke grant. */
+    private final Set<UUID> spellsCastWithConvokeGrantThisTurn = ConcurrentHashMap.newKeySet();
     /** Per-player spell-cast counts by source zone for this turn. */
     private final Map<UUID, Map<Zone, Integer>> spellCastCountsByZoneThisTurn = new ConcurrentHashMap<>();
     /** Card ids of spells that were kicked when cast, grouped by caster for the current turn. */
@@ -709,6 +715,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
     /** Source object id (permanent or spell card) → creature card ids it damaged this turn. */
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySource = new ConcurrentHashMap<>();
+    /** Controller id → creature card ids damaged this turn by a source that controller controlled at the time of damage. */
+    public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnByController = new ConcurrentHashMap<>();
     /** Permanent IDs that dealt damage to another creature this turn; survives that creature leaving the battlefield. */
     public final Set<UUID> sourcesThatDealtDamageToCreaturesThisTurn = ConcurrentHashMap.newKeySet();
     /**
@@ -1101,8 +1109,6 @@ public class GameData {
     /** Progress state for each player's optional discard followed by a basic-land search. */
     public final EachPlayerMayDiscardThenSearchBasicLandState eachPlayerMayDiscardThenSearchBasicLand =
             new EachPlayerMayDiscardThenSearchBasicLandState();
-    /** Progress state for Kroxa's opponent discard and nonland comparison. */
-    public final KroxaDiscardState kroxaDiscard = new KroxaDiscardState();
     /** Progress state for Scythe Specter's opponent discard and mana-value comparison. */
     public final ScytheSpecterState scytheSpecter = new ScytheSpecterState();
     /** Progress state for Cait's two-player draw/discard mana-value comparison. */
@@ -2317,6 +2323,21 @@ public class GameData {
      * and cease to exist on resolution (CR 707.10a) instead of being put into a graveyard.
      */
     public final Set<UUID> pendingFreeCastAsCopyIds = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Offered free-cast spells whose owner loses life equal to the spell's mana value if it is cast
+     * (Kefka, Dancing Mad); resolved and cleared when the free-cast queue finishes.
+     */
+    public final List<PendingFreeCastLifeLoss> pendingFreeCastLifeLosses = new ArrayList<>();
+
+    /** Free casts from exile paused on a kicker offer, keyed by the exiled card's id. */
+    public final Map<UUID, FreeCastKickerOffer> pendingFreeCastKickerOffers = new ConcurrentHashMap<>();
+
+    /** Exiled cards whose free cast already had its kicker offer answered (so it is not offered twice). */
+    public final Set<UUID> freeCastKickerDecidedIds = ConcurrentHashMap.newKeySet();
+
+    /** Exiled cards whose kicker cost was paid for the free cast in progress; the spell enters the stack kicked. */
+    public final Set<UUID> freeCastKickedIds = ConcurrentHashMap.newKeySet();
 
     /**
      * Lands in {@link #pendingFreeCastQueue} that the resolving effect lets its controller play
@@ -4649,6 +4670,9 @@ public class GameData {
         consumePendingAnyManaTypePermission(playerId, card);
         consumeNextSpellFlashGrant(playerId, card);
         consumeNextSpellChosenSubtypeFlashGrant(playerId, card);
+        if (hasNextSpellConvokeGrant(playerId)) {
+            spellsCastWithConvokeGrantThisTurn.add(card.getId());
+        }
         consumeNextSpellConvokeGrant(playerId);
         consumeNextSpellCostReductions(playerId, card);
         consumeNextSpellPayLifeEqualToManaValue(playerId);
@@ -4997,6 +5021,10 @@ public class GameData {
 
     public boolean hasNextSpellConvokeGrant(UUID playerId) {
         return nextSpellConvokeGrantsThisTurn.getOrDefault(playerId, 0) > 0;
+    }
+
+    public boolean spellWasCastWithConvokeGrant(UUID spellCardId) {
+        return spellsCastWithConvokeGrantThisTurn.contains(spellCardId);
     }
 
     public void addNextSpellCostReduction(UUID playerId, NextSpellCostReduction reduction) {
@@ -5740,6 +5768,7 @@ public class GameData {
         spellsCastThisTurn.clear();
         spellsCastTargetingCreatureThisTurn.clear();
         spellsCastUsingTreasureManaThisTurn.clear();
+        spellsCastWithConvokeGrantThisTurn.clear();
         spellCastCountsByZoneThisTurn.clear();
         kickedSpellsCastThisTurn.clear();
         spellCastOrderThisTurn.clear();
@@ -5869,12 +5898,12 @@ public class GameData {
         for (UUID controllerId : orderedPlayerIds) {
             int controllerLife = getLife(controllerId);
             int controllerHandSize = playerHands.getOrDefault(controllerId, List.of()).size();
-            int controllerCreatureCount = countPrintedCreatures(controllerId);
+            int controllerCreatureCount = countCreaturePermanents(controllerId);
             for (UUID opponentId : orderedPlayerIds) {
                 if (controllerId.equals(opponentId)) continue;
                 if (getLife(opponentId) - controllerLife >= 10
                         || playerHands.getOrDefault(opponentId, List.of()).size() - controllerHandSize >= 3
-                        || countPrintedCreatures(opponentId) - controllerCreatureCount >= 3) {
+                        || countCreaturePermanents(opponentId) - controllerCreatureCount >= 3) {
                     playersWhoWereWayBehindThisTurn.add(controllerId);
                     break;
                 }
@@ -5882,9 +5911,13 @@ public class GameData {
         }
     }
 
-    private int countPrintedCreatures(UUID playerId) {
+    private int countCreaturePermanents(UUID playerId) {
         return (int) playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE))
+                .filter(permanent -> permanent.getCard().hasType(CardType.CREATURE)
+                        || permanent.isAnimatedUntilEndOfTurn()
+                        || permanent.isAnimatedUntilEndOfCombat()
+                        || permanent.isAnimatedUntilNextTurn()
+                        || permanent.isPermanentlyAnimated())
                 .count();
     }
 
@@ -6558,6 +6591,7 @@ public class GameData {
             antedCardIds.remove(cardId);
             stashCounterCardIds.remove(cardId);
             exiledCardScreamCounters.remove(cardId);
+            exiledCardsWithSilverCounters.remove(cardId);
             exiledCardsWithIceCounters.remove(cardId);
             exiledCardsWithBloodCounters.remove(cardId);
             exiledCardsWithCroakCounters.remove(cardId);
@@ -7346,11 +7380,6 @@ public class GameData {
                 this.eachPlayerMayDiscardThenSearchBasicLand.remaining);
         copy.eachPlayerMayDiscardThenSearchBasicLand.playersWhoDiscarded.addAll(
                 this.eachPlayerMayDiscardThenSearchBasicLand.playersWhoDiscarded);
-        copy.kroxaDiscard.active = this.kroxaDiscard.active;
-        copy.kroxaDiscard.controllerId = this.kroxaDiscard.controllerId;
-        copy.kroxaDiscard.currentPlayerId = this.kroxaDiscard.currentPlayerId;
-        copy.kroxaDiscard.remaining.addAll(this.kroxaDiscard.remaining);
-        copy.kroxaDiscard.discardedNonland.putAll(this.kroxaDiscard.discardedNonland);
         copy.scytheSpecter.active = this.scytheSpecter.active;
         copy.scytheSpecter.controllerId = this.scytheSpecter.controllerId;
         copy.scytheSpecter.currentPlayerId = this.scytheSpecter.currentPlayerId;
@@ -7372,14 +7401,6 @@ public class GameData {
                 this.eumidianWastewaker.pendingSacrificeLandIds);
         copy.eumidianWastewaker.landCardsPutIntoGraveyard =
                 this.eumidianWastewaker.landCardsPutIntoGraveyard;
-        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.active =
-                this.eachPlayerDiscardsOneThenDrawsForEachCardType.active;
-        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.controllerId =
-                this.eachPlayerDiscardsOneThenDrawsForEachCardType.controllerId;
-        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.currentPlayerId =
-                this.eachPlayerDiscardsOneThenDrawsForEachCardType.currentPlayerId;
-        copy.eachPlayerDiscardsOneThenDrawsForEachCardType.remaining.addAll(
-                this.eachPlayerDiscardsOneThenDrawsForEachCardType.remaining);
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.addAll(
                 this.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes);
         copy.dispersal.active = this.dispersal.active;
@@ -7849,6 +7870,7 @@ public class GameData {
         this.spellsCastTargetingCreatureThisTurn.forEach((k, v) ->
                 copy.spellsCastTargetingCreatureThisTurn.get(k).addAll(v));
         copy.spellsCastUsingTreasureManaThisTurn.addAll(this.spellsCastUsingTreasureManaThisTurn);
+        copy.spellsCastWithConvokeGrantThisTurn.addAll(this.spellsCastWithConvokeGrantThisTurn);
         this.spellCastCountsByZoneThisTurn.forEach((k, v) ->
                 copy.spellCastCountsByZoneThisTurn.put(k, new ConcurrentHashMap<>(v)));
         this.kickedSpellsCastThisTurn.forEach((k, v) ->
@@ -8300,6 +8322,8 @@ public class GameData {
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
         this.creatureCardsDamagedThisTurnBySource.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySource.put(k, new HashSet<>(v)));
+        this.creatureCardsDamagedThisTurnByController.forEach((k, v) ->
+                copy.creatureCardsDamagedThisTurnByController.put(k, new HashSet<>(v)));
         copy.sourcesThatDealtDamageToCreaturesThisTurn.addAll(this.sourcesThatDealtDamageToCreaturesThisTurn);
         copy.sourcesWhoseDamagedCreaturesDiedThisTurn.addAll(this.sourcesWhoseDamagedCreaturesDiedThisTurn);
         this.creatureCardsDamagedBySourceThatDiedThisTurn.forEach((k, v) ->
@@ -8912,6 +8936,10 @@ public class GameData {
         });
         copy.pendingFreeCastQueue.addAll(this.pendingFreeCastQueue);
         copy.pendingFreeCastAsCopyIds.addAll(this.pendingFreeCastAsCopyIds);
+        copy.pendingFreeCastLifeLosses.addAll(this.pendingFreeCastLifeLosses);
+        copy.pendingFreeCastKickerOffers.putAll(this.pendingFreeCastKickerOffers);
+        copy.freeCastKickerDecidedIds.addAll(this.freeCastKickerDecidedIds);
+        copy.freeCastKickedIds.addAll(this.freeCastKickedIds);
         copy.pendingFreeCastLandPlayIds.addAll(this.pendingFreeCastLandPlayIds);
         copy.pendingFreeCastManaValueBudget = this.pendingFreeCastManaValueBudget;
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);

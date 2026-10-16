@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 
+import java.util.List;
+
 /**
  * One-shot, non-targeting effect that permanently modifies the source permanent: it adds
  * {@code addedSubtype} "in addition to its other types" and, when supplied, sets its base power and toughness
@@ -25,13 +27,30 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *                                      controller's opponents
  * @param replacedSubtype the printed subtype to remove when changing the source's subtype line,
  *                        or {@code null} to leave printed subtypes unchanged
+ * @param setSubtypes     when non-empty, the exact creature types the source becomes ("becomes a Human
+ *                        Faerie Detective"); an effect that sets creature types replaces all earlier
+ *                        ones, including ones granted by an older effect such as Maskwood Nexus
  */
 public record BecomeCreatureTypeWithBasePowerToughnessEffect(Integer power, Integer toughness,
                                                              CardSubtype addedSubtype,
                                                              CardSubtype requiredSubtype,
                                                              boolean replacesGrantedSubtypes,
                                                              boolean grantsProtectionFromOpponents,
-                                                             CardSubtype replacedSubtype) implements CardEffect {
+                                                             CardSubtype replacedSubtype,
+                                                             List<CardSubtype> setSubtypes) implements CardEffect {
+
+    public BecomeCreatureTypeWithBasePowerToughnessEffect {
+        setSubtypes = setSubtypes == null ? List.of() : List.copyOf(setSubtypes);
+    }
+
+    public BecomeCreatureTypeWithBasePowerToughnessEffect(Integer power, Integer toughness,
+                                                          CardSubtype addedSubtype, CardSubtype requiredSubtype,
+                                                          boolean replacesGrantedSubtypes,
+                                                          boolean grantsProtectionFromOpponents,
+                                                          CardSubtype replacedSubtype) {
+        this(power, toughness, addedSubtype, requiredSubtype, replacesGrantedSubtypes,
+                grantsProtectionFromOpponents, replacedSubtype, List.of());
+    }
 
     public BecomeCreatureTypeWithBasePowerToughnessEffect(int power, int toughness, CardSubtype addedSubtype) {
         this(power, toughness, addedSubtype, null, false, false, null);
@@ -72,6 +91,17 @@ public record BecomeCreatureTypeWithBasePowerToughnessEffect(Integer power, Inte
             CardSubtype replacedSubtype) {
         return new BecomeCreatureTypeWithBasePowerToughnessEffect(power, toughness, addedSubtype,
                 requiredSubtype, true, false, replacedSubtype);
+    }
+
+    /**
+     * Sets the source's creature types to exactly {@code creatureTypes} (the last one being the type the
+     * ability names), optionally setting base power and toughness, when it currently has {@code requiredSubtype}.
+     */
+    public static BecomeCreatureTypeWithBasePowerToughnessEffect settingCreatureTypes(
+            Integer power, Integer toughness, CardSubtype requiredSubtype, CardSubtype... creatureTypes) {
+        return new BecomeCreatureTypeWithBasePowerToughnessEffect(power, toughness,
+                creatureTypes[creatureTypes.length - 1], requiredSubtype, true, false, null,
+                List.of(creatureTypes));
     }
 
     @Override

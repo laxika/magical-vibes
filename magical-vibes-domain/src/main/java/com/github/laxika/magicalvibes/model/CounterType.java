@@ -233,7 +233,12 @@ public enum CounterType {
     MENACE,
     REACH,
     TRAMPLE,
-    WINCH;
+    WINCH,
+    HEXPROOF_FROM_WHITE,
+    HEXPROOF_FROM_BLUE,
+    HEXPROOF_FROM_BLACK,
+    HEXPROOF_FROM_RED,
+    HEXPROOF_FROM_GREEN;
 
     public Keyword grantedKeyword() {
         return switch (this) {
@@ -250,6 +255,21 @@ public enum CounterType {
             case REACH -> Keyword.REACH;
             case TRAMPLE -> Keyword.TRAMPLE;
             case VIGILANCE -> Keyword.VIGILANCE;
+            default -> null;
+        };
+    }
+
+    /**
+     * The color a "hexproof from [color]" keyword counter makes its permanent hexproof from (CR 122.1b
+     * allows variants of the hexproof keyword), or {@code null} for every other counter.
+     */
+    public CardColor hexproofFromColor() {
+        return switch (this) {
+            case HEXPROOF_FROM_WHITE -> CardColor.WHITE;
+            case HEXPROOF_FROM_BLUE -> CardColor.BLUE;
+            case HEXPROOF_FROM_BLACK -> CardColor.BLACK;
+            case HEXPROOF_FROM_RED -> CardColor.RED;
+            case HEXPROOF_FROM_GREEN -> CardColor.GREEN;
             default -> null;
         };
     }

@@ -460,6 +460,19 @@ public class TargetValidationService {
         return -1;
     }
 
+    public UUID findSourcePermanentId(TargetValidationContext ctx) {
+        for (UUID playerId : ctx.gameData().orderedPlayerIds) {
+            List<Permanent> battlefield = ctx.gameData().playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getCard() == ctx.sourceCard()) {
+                    return p.getId();
+                }
+            }
+        }
+        return null;
+    }
+
     public UUID findSourcePermanentController(TargetValidationContext ctx) {
         for (UUID playerId : ctx.gameData().orderedPlayerIds) {
             List<Permanent> battlefield = ctx.gameData().playerBattlefields.get(playerId);

@@ -13,6 +13,6 @@ public class KnowledgeSeeker extends Card {
     public KnowledgeSeeker() {
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.ON_DEATH, CreateTokenEffect.ofClueToken(1));
+        addEffect(EffectSlot.ON_DEATH, CreateTokenEffect.ofClueToken(1).withInvestigate(false));
     }
 }

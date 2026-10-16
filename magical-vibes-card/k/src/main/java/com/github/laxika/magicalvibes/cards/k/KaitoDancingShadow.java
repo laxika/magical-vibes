@@ -36,7 +36,7 @@ public class KaitoDancingShadow extends Card {
                         new PermanentIsCreaturePredicate(),
                         new MayEffect(
                                 new ReturnOneOfCombatDamageDealersToHandThenEffect(
-                                        new MayEffect(new GrantExtraLoyaltyActivationToSourceEffect(),
+                                        new MayEffect(new GrantExtraLoyaltyActivationToSourceEffect(true),
                                                 "Activate Kaito's loyalty abilities twice this turn?"),
                                         "a creature that dealt combat damage"),
                                 "Return one of them to its owner's hand?"),
