@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
@@ -29,11 +28,16 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.interaction.KnowledgePoolCastChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,6 +72,10 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
     @Mock private InputCompletionService inputCompletionService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private TargetLegalityService targetLegalityService;
+    @Mock private ValidTargetService validTargetService;
+    @Mock private SchemeAbandonSupport schemeAbandonSupport;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -95,10 +103,13 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        ReflectionTestUtils.setField(exileSupport, "exileCastTargetSupport", new ExileCastTargetSupport(
+                gameQueryService, predicateEvaluationService, targetLegalityService, validTargetService,
+                schemeAbandonSupport));
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new KnowledgePoolCastChoiceInteractionHandler(exileSupport));
-        knowledgePoolExileAndCastHandler = new KnowledgePoolExileAndCastEffectHandler(gameQueryService, gameLogService, registry, exileService);
+        knowledgePoolExileAndCastHandler = new KnowledgePoolExileAndCastEffectHandler(gameLogService, registry, exileService);
 
     }
 
@@ -172,26 +183,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
         // =========================================================================
 
     @Test
-            @DisplayName("Fizzles when Knowledge Pool is no longer on battlefield")
-            void fizzlesWhenKPGone() {
-                UUID kpId = UUID.randomUUID();
-                Card sourceCard = createCard("Knowledge Pool");
-
-                KnowledgePoolExileAndCastEffect effect =
-                        new KnowledgePoolExileAndCastEffect(UUID.randomUUID(), kpId, player1Id);
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
-                        List.of(effect)
-                );
-
-                when(gameQueryService.findPermanentById(gd, kpId)).thenReturn(null);
-
-                knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
-
-                verify(gameLogService, never()).append(any(), any(GameLogEntry.class));
-            }
-
-            @Test
             @DisplayName("Logs and returns when original spell is no longer on the stack")
             void fizzlesWhenOriginalSpellGone() {
                 Card kpCard = createCard("Knowledge Pool");
@@ -204,7 +195,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                         List.of(effect)
                 );
 
-                when(gameQueryService.findPermanentById(gd, kp.getId())).thenReturn(kp);
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
@@ -231,7 +221,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                         List.of(effect)
                 );
 
-                when(gameQueryService.findPermanentById(gd, kp.getId())).thenReturn(kp);
                 stubExileCardTrackedWithSource();
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
@@ -270,7 +259,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 );
 
                 CardView mockCardView = mock(CardView.class);
-                when(gameQueryService.findPermanentById(gd, kp.getId())).thenReturn(kp);
                 when(cardViewFactory.create(poolCard)).thenReturn(mockCardView);
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);

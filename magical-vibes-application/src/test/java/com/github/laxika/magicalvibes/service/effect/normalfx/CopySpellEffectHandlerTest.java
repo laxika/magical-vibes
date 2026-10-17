@@ -70,6 +70,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.mockito.Mockito.verify;
@@ -102,7 +103,8 @@ class CopySpellEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        copySpellHandler = new CopySpellEffectHandler(gameLogService, copySupport);
+        copySpellHandler = new CopySpellEffectHandler(gameLogService, copySupport,
+                mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class));
 
     }
 

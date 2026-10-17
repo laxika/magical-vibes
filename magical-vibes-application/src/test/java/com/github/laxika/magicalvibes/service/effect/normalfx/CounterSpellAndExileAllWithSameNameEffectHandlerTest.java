@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSameNameEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -31,6 +32,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
@@ -70,7 +72,8 @@ class CounterSpellAndExileAllWithSameNameEffectHandlerTest {
         gd.playerHands.put(player1Id, new ArrayList<>());
         gd.playerDecks.put(player1Id, new ArrayList<>());
         handler = new CounterSpellAndExileAllWithSameNameEffectHandler(
-                counterSupport, graveyardService, drawService, playerInputService, gameLogService);
+                counterSupport, graveyardService, drawService, playerInputService, gameLogService,
+                mock(ConditionEvaluationService.class));
     }
 
     private Card creature(String name) {

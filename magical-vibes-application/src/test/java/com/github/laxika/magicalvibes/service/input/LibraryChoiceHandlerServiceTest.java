@@ -64,6 +64,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -93,6 +94,7 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffectHandler returnTwoExiledCardsWithSourceHandler;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
 
     private LibraryChoiceHandlerService service;
 
@@ -116,7 +118,7 @@ class LibraryChoiceHandlerServiceTest {
                 stateBasedActionService, gameLogService, inputCompletionService,
                 playerInputService, effectResolutionService, exileService, registry,
                 mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),
-                mock(com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.class),
+                librarySearchSupport,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport.class),
                 mock(com.github.laxika.magicalvibes.service.DrawService.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport.class),
@@ -129,6 +131,7 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport.class),
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
                 returnTwoExiledCardsWithSourceHandler,
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler.class),
                 permanentControlSupport, permanentCounterSupport,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class),
                 mock(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class));
@@ -160,6 +163,8 @@ class LibraryChoiceHandlerServiceTest {
         lenient().when(gameQueryService.cardHasSupertype(any(Card.class), eq(CardSupertype.BASIC),
                 eq(gd), any(UUID.class))).thenAnswer(invocation ->
                 invocation.<Card>getArgument(0).getSupertypes().contains(CardSupertype.BASIC));
+        lenient().when(librarySearchSupport.opponentSearchTopCardsLimit(eq(gd), any(UUID.class)))
+                .thenReturn(Integer.MAX_VALUE);
     }
 
     @Test
@@ -392,8 +397,6 @@ class LibraryChoiceHandlerServiceTest {
     void subtypeToBattlefieldPickDefersEntryWhilePicksRemain() {
         Card plains = createBasicLand("Plains");
         gd.playerDecks.get(player1Id).add(plains);
-        var librarySearchSupport = (com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport)
-                org.springframework.test.util.ReflectionTestUtils.getField(service, "librarySearchSupport");
         when(librarySearchSupport.startNextSubtypeToBattlefieldPick(eq(gd), eq(player1Id), any())).thenReturn(true);
         beginSubtypeToBattlefieldPick(plains, List.of());
 
@@ -686,6 +689,22 @@ class LibraryChoiceHandlerServiceTest {
 
     private void stubCardViewFactory() {
         lenient().when(cardViewFactory.create(any(Card.class))).thenReturn(mock(CardView.class));
+    }
+
+    /** Simulates the batched entry moving each entering card out of the library it was revealed from. */
+    private void stubBatchEntryLeavesLibrary() {
+        doAnswer(invocation -> {
+            List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> entering = invocation.getArgument(1);
+            entering.forEach(entry -> gd.playerDecks.get(entry.zoneOwnerId()).remove(entry.card()));
+            return null;
+        }).when(battlefieldEntryBatchSupport).begin(eq(gd), anyList());
+    }
+
+    private void verifyBatchEntered(Card... cards) {
+        verify(battlefieldEntryBatchSupport).begin(eq(gd),
+                argThat((List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> entering) ->
+                        entering.stream().map(com.github.laxika.magicalvibes.model.BattlefieldEntryCard::card)
+                                .toList().equals(List.of(cards))));
     }
 
     /**
@@ -1010,12 +1029,12 @@ class LibraryChoiceHandlerServiceTest {
                     player1Id, new ArrayList<>(allCards), new ArrayList<>(validIds),
                     false, false, false, true, false, 0, null, validIds.size(), "Choose."));
             when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+            stubBatchEntryLeavesLibrary();
 
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
             // Dino should have been put onto battlefield
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class), isNull());
+            verifyBatchEntered(dino);
 
             // Remaining cards should be on bottom of library (not in graveyard)
             assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
@@ -1061,11 +1080,11 @@ class LibraryChoiceHandlerServiceTest {
                     player1Id, new ArrayList<>(allCards), new ArrayList<>(validIds),
                     false, false, false, false, true, 0, null, validIds.size(), "Choose."));
             when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+            stubBatchEntryLeavesLibrary();
 
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(player1Id), any(), any(Set.class), any(List.class), isNull());
+            verifyBatchEntered(dino);
             verify(exileService).exileCard(gd, player1Id, land);
             verify(exileService).exileCard(gd, player1Id, instant);
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
@@ -1084,9 +1103,11 @@ class LibraryChoiceHandlerServiceTest {
                 player1Id, new ArrayList<>(allCards), List.of(dino.getId()),
                 false, false, true, false, false, 0, null, 1, "Choose."));
         when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
+        stubBatchEntryLeavesLibrary();
 
         service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
 
+        verifyBatchEntered(dino);
         PendingInteraction.LibraryReorder reorder =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
         assertThat(reorder).isNotNull();
