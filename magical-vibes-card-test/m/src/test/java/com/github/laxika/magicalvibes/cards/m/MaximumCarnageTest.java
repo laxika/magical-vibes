@@ -95,7 +95,7 @@ class MaximumCarnageTest extends BaseCardTest {
         castAndResolveChapterI();
         Permanent creature = addCreatureReady(player2, new LurkingLizards());
 
-        declareAttackers(player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThat(creature.isAttacking()).isTrue();
     }

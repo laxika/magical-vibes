@@ -25,10 +25,10 @@ class MultiversalPassageTest extends BaseCardTest {
     void choosingTypeAndPayingLife() {
         playPassage(20);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, "ISLAND");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "ISLAND");
 
         Permanent passage = findPassage(player1);
         assertThat(passage.getChosenSubtype()).isEqualTo(CardSubtype.ISLAND);
@@ -44,10 +44,10 @@ class MultiversalPassageTest extends BaseCardTest {
     void decliningLifePaymentEntersTapped() {
         playPassage(20);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, "MOUNTAIN");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "MOUNTAIN");
 
         Permanent passage = findPassage(player1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);

@@ -91,6 +91,7 @@ class MothersYamazakiTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -148,6 +149,7 @@ class MothersYamazakiTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
 
@@ -168,6 +170,7 @@ class MothersYamazakiTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 

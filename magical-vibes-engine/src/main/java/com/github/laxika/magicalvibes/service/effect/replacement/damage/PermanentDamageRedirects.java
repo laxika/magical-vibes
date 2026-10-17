@@ -132,6 +132,11 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                                 ctx.gameData(), ctx.target().getId()),
                         ctx -> prevention.applySourcePermanentAndControllerNextDamageRedirectToPermanent(
                                 ctx.gameData(), ctx.target().getId(), ctx.sourcePermanentId(), ctx.amount())),
+                redirect("CreatureNextEventRedirectShield", "Redirect the next damage dealt to it",
+                        ctx -> prevention.hasCreatureRedirectShield(
+                                ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey(), ctx.combat(), true),
+                        ctx -> prevention.applyCreatureRedirectShields(ctx.gameData(), ctx.target().getId(),
+                                ctx.damageSourceKey(), ctx.amount(), ctx.combat(), true)).whole(),
                 redirect("CreatureRedirectShield", "Redirect the damage dealt to it",
                         ctx -> prevention.hasCreatureRedirectShield(
                                 ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey(), ctx.combat()),

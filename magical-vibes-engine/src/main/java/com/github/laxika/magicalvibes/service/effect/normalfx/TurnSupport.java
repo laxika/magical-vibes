@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.DelayedAdditionalCombatBeginningEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.action.DealDamageToPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
@@ -114,9 +113,6 @@ public class TurnSupport {
         gameData.creaturesCantAttackThisCombat = false;
         gameData.onlyPermanentCanAttackThisCombatId = null;
         gameData.onlyPermanentsCanAttackThisCombatIds = null;
-        gameData.clearDelayedActions(DelayedAdditionalCombatBeginningEffect.class);
-        gameData.additionalCombatPhasesOnly = 0;
-        gameData.aggressiveCombatPhasesOnly = 0;
         if (gameData.mindControlUntilEndOfCombat) {
             gameData.mindControlledPlayerId = null;
             gameData.mindControllerPlayerId = null;

@@ -106,6 +106,7 @@ class MarkovBlademasterTest extends BaseCardTest {
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new ForgeDevil());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
+        blocker.addBlockingTargetId(blademaster.getId());
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

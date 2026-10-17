@@ -18,8 +18,8 @@ public class MildManneredLibrarian extends Card {
                 false,
                 "{3}{G}",
                 List.of(
-                        BecomeCreatureTypeWithBasePowerToughnessEffect.replacingSubtype(
-                                CardSubtype.WEREWOLF, null, CardSubtype.HUMAN),
+                        BecomeCreatureTypeWithBasePowerToughnessEffect.settingCreatureTypes(
+                                null, null, null, CardSubtype.WEREWOLF),
                         new PutCountersOnSourceEffect(1, 1, 2),
                         new DrawCardEffect()
                 ),

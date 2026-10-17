@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -39,6 +40,12 @@ public class TapLandsThatCouldProduceSameManaAsTappedLandEffectHandler implement
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID playerId = entry.getTargetId();
         Permanent triggeringLand = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        if (triggeringLand == null) {
+            Card lastKnownLand = entry.lastKnownPermanentCard(entry.getTriggeringPermanentId());
+            if (lastKnownLand != null) {
+                triggeringLand = new Permanent(lastKnownLand);
+            }
+        }
         if (playerId == null || triggeringLand == null) {
             return;
         }

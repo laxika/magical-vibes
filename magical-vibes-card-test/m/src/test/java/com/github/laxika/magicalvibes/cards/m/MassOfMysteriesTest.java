@@ -67,12 +67,14 @@ class MassOfMysteriesTest extends BaseCardTest {
         assertThat(copies).hasSize(1);
         Permanent copy = copies.getFirst();
         assertThat(copy.isTapped()).isTrue();
-        assertThat(copy.isAttackedThisTurn()).isTrue();
+        assertThat(copy.isAttacking()).isTrue();
+        assertThat(copy.isAttackedThisTurn()).isFalse();
         assertThat(copy.getAttackTarget()).isEqualTo(thirdPlayerId);
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Air Elemental").stream()
                 .filter(permanent -> permanent.getCard().isToken())).isEmpty();
@@ -102,7 +104,7 @@ class MassOfMysteriesTest extends BaseCardTest {
         });
 
         assertThat(findPermanents(player1, "Air Elemental")).containsExactly(elemental);
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -122,7 +124,7 @@ class MassOfMysteriesTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Air Elemental")).containsExactly(elemental);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -134,7 +136,7 @@ class MassOfMysteriesTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> advanceToCombat(player2));
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

@@ -85,21 +85,22 @@ public class LegendRuleService {
     private boolean hasGlobalExemption(GameData gameData) {
         return gameData.playerBattlefields.values().stream()
                 .flatMap(List::stream)
-                .anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(GlobalLegendRuleExemptionEffect.class::isInstance));
+                .flatMap(perm -> gameQueryService.getActiveStaticEffects(gameData, perm).stream())
+                .anyMatch(GlobalLegendRuleExemptionEffect.class::isInstance);
     }
 
     private boolean hasControlledPermanentsExemption(GameData gameData, UUID controllerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         return battlefield != null && battlefield.stream()
-                .flatMap(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(perm -> gameQueryService.getActiveStaticEffects(gameData, perm).stream())
                 .anyMatch(ControlledPermanentsLegendRuleExemptionEffect.class::isInstance);
     }
 
     /**
-     * Whether active exemptions protect the same-named permanents. The exactly-two exemption
-     * protects both permanents while either one retains the ability, and counts across all
-     * players' battlefields. Other exemptions are evaluated on each affected permanent.
+     * Whether active exemptions protect the same-named permanents. The exactly-two exemptions protect
+     * both permanents while either one retains the ability: the all-players variant counts across all
+     * battlefields, the controller variant counts the controller's permanents. Other exemptions are
+     * evaluated on each affected permanent.
      */
     private boolean allExempt(GameData gameData, List<Permanent> battlefield, String name,
                               UUID controllerId) {
@@ -109,6 +110,14 @@ public class LegendRuleService {
                 .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent).stream())
                 .anyMatch(effect -> effect instanceof IgnoreLegendRuleWhenExactlyTwoSameNameEffect exemption
                         && exemption.exemptFromLegendRule(totalWithName))) {
+            return true;
+        }
+        int controlledWithName = countControlledOnBattlefield(gameData, controllerId, name);
+        if (battlefield.stream()
+                .filter(perm -> name.equals(gameQueryService.getEffectiveName(gameData, perm)))
+                .flatMap(perm -> gameQueryService.getActiveStaticEffects(gameData, perm).stream())
+                .anyMatch(effect -> effect instanceof ControlledNameCountLegendRuleExemptionEffect exemption
+                        && exemption.exemptFromLegendRule(controlledWithName))) {
             return true;
         }
         return battlefield.stream()

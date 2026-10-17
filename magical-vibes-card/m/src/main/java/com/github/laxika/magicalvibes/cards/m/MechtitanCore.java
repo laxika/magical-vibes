@@ -30,10 +30,6 @@ import java.util.Set;
 public class MechtitanCore extends Card {
 
     public MechtitanCore() {
-        Map<EffectSlot, CardEffect> tokenEffects = Map.of(
-                EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new ReturnAllCardsExiledWithSourceEffect(false, null, false, Set.of(), true, true)
-        );
         CreateTokenEffect mechtitan = new CreateTokenEffect(
                 CardType.CREATURE,
                 1,
@@ -48,7 +44,7 @@ public class MechtitanCore extends Card {
                 Set.of(CardType.ARTIFACT),
                 false,
                 false,
-                tokenEffects,
+                Map.of(),
                 List.of(),
                 false,
                 false,
@@ -72,7 +68,8 @@ public class MechtitanCore extends Card {
                                 )),
                                 true
                         ),
-                        new CreateTokenAndLinkToSourceEffect(mechtitan, false)
+                        new CreateTokenAndLinkToSourceEffect(mechtitan, false,
+                                new ReturnAllCardsExiledWithSourceEffect(false, null, false, Set.of(), true, false))
                 ),
                 "{5}, Exile this Vehicle and four other artifact creatures and/or Vehicles you control: Create Mechtitan, a legendary 10/10 Construct artifact creature token with flying, vigilance, trample, lifelink, and haste that's all colors. When that token leaves the battlefield, return all cards exiled with this Vehicle except this card to the battlefield tapped under their owners' control."
         ));

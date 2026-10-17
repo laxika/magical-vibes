@@ -140,7 +140,7 @@ class MaskOfGriselbrandTest extends BaseCardTest {
 
         killEquippedCreature(creature);
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }

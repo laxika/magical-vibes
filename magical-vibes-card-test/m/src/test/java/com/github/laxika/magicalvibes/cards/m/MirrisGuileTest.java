@@ -118,7 +118,7 @@ class MirrisGuileTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A one-card library can be inspected and returned unchanged")
+    @DisplayName("A one-card library is looked at without a reorder prompt and stays unchanged")
     void singleCardLibraryIsReturnedUnchanged() {
         harness.addToBattlefield(player1, new MirrisGuile());
         Card onlyCard = new MirrisGuile();
@@ -127,12 +127,8 @@ class MirrisGuileTest extends BaseCardTest {
         resolveUpkeepTrigger(player1);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
-                .containsExactly(onlyCard);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
-
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
     }
 
     @Test

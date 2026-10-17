@@ -13,6 +13,8 @@ public class MagmakinArtillerist extends Card {
     public MagmakinArtillerist() {
         addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT,
                 new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.EACH_OPPONENT));
+        addEffect(EffectSlot.ON_SELF_CYCLED,
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
         addCycling("{1}{R}");
     }
 }

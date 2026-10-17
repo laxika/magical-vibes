@@ -21,8 +21,7 @@ public class MagusOfTheCandelabra extends Card {
                 new PermanentPredicateTargetFilter(
                         new PermanentIsLandPredicate(),
                         "Targets must be lands"
-                ),
-                null, null, null, List.of(), 0, 100)
-                .withXScaledTargets());
+                ))
+                .withExactXTargets());
     }
 }

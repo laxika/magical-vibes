@@ -52,7 +52,7 @@ class MaestrosConfluenceTest extends BaseCardTest {
         Card spell = new Shock();
         harness.setGraveyard(player1, List.of(spell));
 
-        cast(new int[]{2, 2, 0}, List.of(player2.getId(), player1.getId(), spell.getId()));
+        cast(new int[]{0, 2, 2}, List.of(spell.getId(), player2.getId(), player1.getId()));
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))

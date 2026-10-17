@@ -37,6 +37,7 @@ class MoriokScavengerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Ornithopter");
         harness.assertNotInGraveyard(player1, "Ornithopter");
@@ -55,6 +56,7 @@ class MoriokScavengerTest extends BaseCardTest {
                 .validCardIds()).containsExactlyInAnyOrder(ornithopter.getId(), frogmite.getId());
         harness.handleMultipleCardsChosen(player1, List.of(frogmite.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Frogmite");
         harness.assertInGraveyard(player1, "Ornithopter");

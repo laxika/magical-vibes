@@ -215,7 +215,7 @@ class MinionOfTeveshSzatTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);

@@ -30,13 +30,39 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                               CardEffect chosenCardThenEffect,
                                               CardEffect declineEffect,
                                               int libraryPosition,
-                                              boolean revealMatchingOnly)
+                                              boolean revealMatchingOnly,
+                                              boolean returnsOnSourceLeavesTrigger)
         implements CombatDamageTriggerContextEffect {
 
     public ChooseCardsFromTargetHandEffect {
         if (libraryPosition < 0) {
             throw new IllegalArgumentException("libraryPosition must not be negative");
         }
+    }
+
+    public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
+                                           List<CardType> includedTypes,
+                                           HandChoiceDestination destination,
+                                           boolean returnOnSourceLeave,
+                                           CardPredicate filter,
+                                           int declineFallbackDiscardCount,
+                                           boolean upTo,
+                                           boolean exileAllCopiesOfChosenNames,
+                                           boolean imprintOnSource,
+                                           boolean revealHand,
+                                           boolean grantPlayPermission,
+                                           boolean returnAtNextEndStep,
+                                           int exilePlayOpponentTax,
+                                           CardPredicate chosenCardCondition,
+                                           CardEffect chosenCardThenEffect,
+                                           CardEffect declineEffect,
+                                           int libraryPosition,
+                                           boolean revealMatchingOnly) {
+        this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
+                declineFallbackDiscardCount, upTo, exileAllCopiesOfChosenNames, imprintOnSource,
+                revealHand, grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
+                chosenCardCondition, chosenCardThenEffect, declineEffect, libraryPosition,
+                revealMatchingOnly, false);
     }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -156,7 +182,20 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                 returnOnSourceLeave, filter, declineFallbackDiscardCount, upTo,
                 exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
                 returnAtNextEndStep, exilePlayOpponentTax, chosenCardCondition, chosenCardThenEffect,
-                declineEffect, libraryPosition, true);
+                declineEffect, libraryPosition, true, returnsOnSourceLeavesTrigger);
+    }
+
+    /**
+     * Models a separate leaves-the-battlefield ability that returns the exiled card (Mesmeric Fiend,
+     * Tidehollow Sculler), rather than a single "until this leaves the battlefield" effect. If the
+     * source leaves before the enter ability resolves, the card is still exiled and stays exiled.
+     */
+    public ChooseCardsFromTargetHandEffect withReturnsOnSourceLeavesTrigger() {
+        return new ChooseCardsFromTargetHandEffect(count, excludedTypes, includedTypes, destination,
+                returnOnSourceLeave, filter, declineFallbackDiscardCount, upTo,
+                exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
+                returnAtNextEndStep, exilePlayOpponentTax, chosenCardCondition, chosenCardThenEffect,
+                declineEffect, libraryPosition, revealMatchingOnly, true);
     }
 
     /** Adds a follow-up effect when any chosen card matches the supplied predicate. */
@@ -165,7 +204,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                 returnOnSourceLeave, filter, declineFallbackDiscardCount, newUpTo,
                 exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
                 returnAtNextEndStep, exilePlayOpponentTax, chosenCardCondition, chosenCardThenEffect,
-                declineEffect, libraryPosition, revealMatchingOnly);
+                declineEffect, libraryPosition, revealMatchingOnly, returnsOnSourceLeavesTrigger);
     }
 
     public ChooseCardsFromTargetHandEffect withChosenCardThen(CardPredicate condition,
@@ -174,7 +213,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                 returnOnSourceLeave, filter, declineFallbackDiscardCount, upTo,
                 exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
                 returnAtNextEndStep, exilePlayOpponentTax, condition, thenEffect, declineEffect,
-                libraryPosition, revealMatchingOnly);
+                libraryPosition, revealMatchingOnly, returnsOnSourceLeavesTrigger);
     }
 
     /** "You may choose a card; if you don't, that player discards N cards." */

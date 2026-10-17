@@ -38,8 +38,14 @@ public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
-                entry.getControllerId(), new LinkedHashMap<>(), entry.getCard().getName(), entry);
+        List<UUID> voteOrder = new ArrayList<>();
+        for (UUID voterId : orderStartingWith(gameData, entry.getControllerId())) {
+            for (int i = 0; i <= gameQueryService.countAdditionalVotes(gameData, voterId); i++) {
+                voteOrder.add(voterId);
+            }
+        }
+        beginNextVote(gameData, voteOrder, entry.getControllerId(), new LinkedHashMap<>(),
+                entry.getCard().getName(), entry);
     }
 
     public void completeVote(GameData gameData, List<UUID> selectedIds,

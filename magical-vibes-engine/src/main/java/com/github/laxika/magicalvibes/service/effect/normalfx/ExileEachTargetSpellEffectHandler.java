@@ -49,7 +49,7 @@ public class ExileEachTargetSpellEffectHandler implements NormalEffectHandlerBea
             } else if (counterSupport.replaceFlashforwardDestination(gameData, target)) {
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is put on the bottom of its owner's library."));
             } else {
-                exileService.exileCard(gameData, target.getControllerId(), target.getPhysicalCard());
+                exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
             }
             log.info("Game {} - {} exiled from stack by {}",

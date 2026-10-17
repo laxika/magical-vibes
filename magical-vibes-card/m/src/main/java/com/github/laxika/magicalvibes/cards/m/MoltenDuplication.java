@@ -29,6 +29,6 @@ public class MoltenDuplication extends Card {
         target(artifactOrCreatureYouControl)
                 .addEffect(EffectSlot.SPELL, new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(CardType.ARTIFACT), null, null, Map.of(),
-                        true, false, true, false));
+                        true, false, true, false).withHasteUntilEndOfTurn());
     }
 }

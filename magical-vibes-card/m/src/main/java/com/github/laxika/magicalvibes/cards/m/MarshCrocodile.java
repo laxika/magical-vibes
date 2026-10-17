@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
@@ -27,6 +28,6 @@ public class MarshCrocodile extends Card {
         ));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new DiscardEffect(1, DiscardRecipient.EACH_PLAYER));
+                new DiscardEffect(1, DiscardRecipient.EACH_PLAYER), TriggerMode.INDEPENDENT);
     }
 }

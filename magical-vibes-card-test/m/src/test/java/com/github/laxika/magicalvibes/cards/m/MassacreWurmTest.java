@@ -167,7 +167,8 @@ class MassacreWurmTest extends BaseCardTest {
     void etbResolvesAfterWurmLeaves() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MassacreWurm(), new Unsummon()));
-        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

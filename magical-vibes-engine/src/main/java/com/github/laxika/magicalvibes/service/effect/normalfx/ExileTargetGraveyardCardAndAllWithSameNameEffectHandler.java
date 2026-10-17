@@ -43,7 +43,8 @@ public class ExileTargetGraveyardCardAndAllWithSameNameEffectHandler implements 
         String cardName = targetCard.getName();
         List<Permanent> matchingPermanents = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (permanent.getCard().getName().equals(cardName)) {
+            // A face-down permanent has no name (CR 708.2), so it never matches by name.
+            if (!permanent.isFaceDown() && permanent.getCard().getName().equals(cardName)) {
                 matchingPermanents.add(permanent);
             }
         });

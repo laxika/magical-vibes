@@ -55,10 +55,10 @@ class MazeRusherTest extends BaseCardTest {
     @Test
     @DisplayName("Maze Rusher and a newly entered multicolored creature can attack immediately")
     void hasteAllowsAttackingWithSummoningSickness() {
-        Permanent rusher = harness.addToBattlefieldAndReturn(player1, new MazeRusher());
+        Permanent rusher = addCreatureReady(player1, new MazeRusher());
         Permanent mage = harness.addToBattlefieldAndReturn(player1, new BeetleformMage());
 
-        declareAttackers(List.of(0, 1));
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         assertThat(rusher.isAttacking()).isTrue();
         assertThat(mage.isAttacking()).isTrue();

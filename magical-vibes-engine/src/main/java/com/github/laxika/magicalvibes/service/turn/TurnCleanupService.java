@@ -129,7 +129,6 @@ public class TurnCleanupService {
         gameData.drainDelayedActions(
                 com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat.class);
         gameData.controlLossUnattachTriggers.clear();
-        gameData.controlLossTapTriggers.clear();
         gameData.sacrificeForbiddenThisTurn.clear();
     }
 
@@ -343,6 +342,7 @@ public class TurnCleanupService {
         gameData.activeAdditionalCountersForEnchantmentCreatureEntryBatch.clear();
         gameData.skippedStepOrPhasesThisTurn.clear();
         gameData.matchingCreatureBlockRestrictionsThisTurn.clear();
+        gameData.counterHolderMustBlockRequirementsThisTurn.clear();
         gameData.preventDamageFromColors.clear();
         gameData.combatDamageRedirectTarget = null;
         gameData.combatDamageRedirectPlayer = null;
@@ -405,6 +405,7 @@ public class TurnCleanupService {
         gameData.creaturesWithCombatDamagePrevented.clear();
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.creaturesAssigningNoCombatDamageThisTurn.clear();
+        gameData.creaturesAssigningNoCombatDamageThisCombat.clear();
         gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
         gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
         gameData.combatDamagePreventionPredicatesByController.clear();
@@ -922,6 +923,14 @@ public class TurnCleanupService {
         if (gameData.playersWithNoMaximumHandSize.contains(playerId)
                 || gameData.playersWithNoMaximumHandSizeUntilNextTurn.contains(playerId)) {
             return true;
+        }
+        synchronized (gameData.emblems) {
+            for (var emblem : gameData.emblems) {
+                if (playerId.equals(emblem.controllerId())
+                        && emblem.staticEffects().stream().anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
+                    return true;
+                }
+            }
         }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf != null) {

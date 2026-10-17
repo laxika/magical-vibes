@@ -100,9 +100,7 @@ class MoltenDuplicationTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castDuplication(bears.getId());
         Permanent token = tokenCopy();
-        gd.playerBattlefields.get(player1.getId()).remove(token);
-        gd.playerBattlefields.get(player2.getId()).add(token);
-        gd.stolenCreatures.put(token.getId(), player1.getId());
+        setOwnerAndController(token, player1, player2);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);

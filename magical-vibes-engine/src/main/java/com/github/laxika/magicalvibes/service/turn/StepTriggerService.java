@@ -91,6 +91,7 @@ import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtEndSt
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextEndStep;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOnDeathEffect;
@@ -4112,6 +4113,7 @@ public class StepTriggerService {
     public void processPendingExileReturns(GameData gameData, TurnStep step) {
         List<PendingExileReturn> matching = gameData.drainDelayedActions(PendingExileReturn.class,
                 p -> p.returnStep() == step
+                        && gameData.pendingExileReturnEarliestTurns.getOrDefault(p, 0) <= gameData.turnNumber
                         && (!p.onlyOnControllersTurn()
                         || (p.timingControllerId() != null
                         ? p.timingControllerId() : p.controllerId()).equals(gameData.activePlayerId)));
@@ -4120,6 +4122,7 @@ public class StepTriggerService {
         }
 
         for (PendingExileReturn pending : matching) {
+            gameData.pendingExileReturnEarliestTurns.remove(pending);
             Card triggerSource = pending.triggerSourceCard() == null ? pending.card() : pending.triggerSourceCard();
             UUID triggerController = pending.triggerControllerId() == null
                     ? pending.controllerId() : pending.triggerControllerId();
@@ -4278,11 +4281,12 @@ public class StepTriggerService {
         Permanent primaryPermanent = null;
         for (Card card : returningCards) {
             Permanent perm = new Permanent(card);
-            if (pending.returnTapped()
+            boolean returningAttachment = pending.cardsToAttachToPrimary().contains(card.getId());
+            if ((pending.returnTapped() && !returningAttachment)
                     || (pending.returnLandsTapped() && card.hasType(CardType.LAND))) {
                 perm.tap();
             }
-            if (pending.returnAttacking() && attackTargetId != null) {
+            if (pending.returnAttacking() && attackTargetId != null && !returningAttachment) {
                 perm.setAttacking(true);
                 perm.setAttackTarget(attackTargetId);
             }
@@ -4412,8 +4416,7 @@ public class StepTriggerService {
         List<DelayedGraveyardToBattlefieldSelfReturn> pendingReturns =
                 gameData.drainDelayedActions(DelayedGraveyardToBattlefieldSelfReturn.class, filter);
         for (DelayedGraveyardToBattlefieldSelfReturn pending : pendingReturns) {
-            List<Card> graveyard = gameData.playerGraveyards.get(pending.ownerId());
-            if (graveyard == null) continue;
+            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(pending.ownerId(), List.of());
             Card cardToReturn = null;
             for (Card card : graveyard) {
                 if (card.getId().equals(pending.cardId())) {
@@ -4421,8 +4424,32 @@ public class StepTriggerService {
                     break;
                 }
             }
-            if (cardToReturn == null || (pending.graveyardEntryVersion() >= 0
-                    && gameData.graveyardEntryVersion(pending.cardId()) != pending.graveyardEntryVersion())) {
+            if (cardToReturn == null) {
+                // The delayed trigger exists independently of the card (CR 603.7); a card that left
+                // the graveyard is a new object, so the trigger resolves without returning anything.
+                var exiled = gameData.findExiledCard(pending.cardId());
+                if (exiled == null) {
+                    log.info("Game {} - Delayed graveyard return for card {} skipped (no longer in graveyard)",
+                            gameData.id, pending.cardId());
+                    continue;
+                }
+                StackEntry lostEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        exiled.card(),
+                        pending.upkeepPlayerId(),
+                        exiled.card().getName() + "'s delayed return ability",
+                        new ArrayList<>(List.of(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
+                                pending.tapped(), false, pending.counterType(), pending.counterAmount()))));
+                lostEntry.setTriggeringCardId(exiled.card().getId());
+                lostEntry.setTriggeringCardGraveyardEntryVersion(-1);
+                lostEntry.setNonTargeting(true);
+                gameData.enqueueTrigger(lostEntry);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(exiled.card(), "'s delayed return ability triggers."));
+                continue;
+            }
+            if (pending.graveyardEntryVersion() >= 0
+                    && gameData.graveyardEntryVersion(pending.cardId()) != pending.graveyardEntryVersion()) {
                 log.info("Game {} - Delayed graveyard return for card {} skipped (no longer in graveyard)",
                         gameData.id, pending.cardId());
                 continue;
@@ -4871,17 +4898,35 @@ public class StepTriggerService {
         if (gameData.hasDelayedAction(ExileToOwnerGraveyardAtNextEndStep.class)) {
             List<ExileToOwnerGraveyardAtNextEndStep> pending =
                     gameData.drainDelayedActions(ExileToOwnerGraveyardAtNextEndStep.class);
+            Map<UUID, List<ExileToOwnerGraveyardAtNextEndStep>> groups = new LinkedHashMap<>();
             for (ExileToOwnerGraveyardAtNextEndStep action : pending) {
-                var exiled = gameData.findExiledCard(action.cardId());
-                if (exiled == null) {
+                groups.computeIfAbsent(action.groupId() == null ? action.cardId() : action.groupId(),
+                        ignored -> new ArrayList<>()).add(action);
+            }
+            for (List<ExileToOwnerGraveyardAtNextEndStep> group : groups.values()) {
+                ExileToOwnerGraveyardAtNextEndStep action = group.getFirst();
+                List<ExileToOwnerGraveyardAtNextEndStep> remaining = group.stream()
+                        .filter(member -> gameData.findExiledCard(member.cardId()) != null)
+                        .toList();
+                if (remaining.isEmpty()) {
                     continue;
                 }
-                Card sourceCard = action.sourceCard() != null ? action.sourceCard() : exiled.card();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
-                        sourceCard.getName() + "'s delayed ability",
-                        new ArrayList<>(List.of(new PutTargetCardFromExileIntoOwnersGraveyardEffect())),
-                        action.cardId(), Zone.EXILE, null);
+                Card sourceCard = action.sourceCard() != null ? action.sourceCard()
+                        : gameData.findExiledCard(remaining.getFirst().cardId()).card();
+                StackEntry entry;
+                if (action.groupId() == null) {
+                    entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
+                            sourceCard.getName() + "'s delayed ability",
+                            new ArrayList<>(List.of(new PutTargetCardFromExileIntoOwnersGraveyardEffect())),
+                            action.cardId(), Zone.EXILE, null);
+                } else {
+                    entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
+                            sourceCard.getName() + "'s delayed ability",
+                            new ArrayList<>(List.of(new PutExiledCardsIntoOwnersGraveyardEffect(
+                                    remaining.stream().map(ExileToOwnerGraveyardAtNextEndStep::cardId).toList()))));
+                }
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(sourceCard,
@@ -5078,7 +5123,7 @@ public class StepTriggerService {
                                 ? new com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate()
                                 : new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate()));
                 StackEntry delayed = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.playerId(),
+                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect(
                                 filter, com.github.laxika.magicalvibes.model.effect.EachPermanentScope.TARGET_PLAYER, null))));

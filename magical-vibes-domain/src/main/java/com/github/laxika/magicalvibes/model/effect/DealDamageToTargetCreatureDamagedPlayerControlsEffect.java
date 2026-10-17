@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -51,6 +52,13 @@ public record DealDamageToTargetCreatureDamagedPlayerControlsEffect(DynamicAmoun
     @Override
     public CardEffect forDamagedPlayer(UUID playerId) {
         return new DealDamageToTargetCreatureEffect(damage, false,
+                new PermanentControlledByPlayerPredicate(playerId));
+    }
+
+    @Override
+    public CardEffect forDamagedPlayer(UUID playerId, int damageDealt) {
+        return new DealDamageToTargetCreatureEffect(
+                damage instanceof EventValue ? new Fixed(damageDealt) : damage, false,
                 new PermanentControlledByPlayerPredicate(playerId));
     }
 

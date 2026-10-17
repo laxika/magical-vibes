@@ -673,6 +673,11 @@ public class CombatDamageService {
         List<StackEntry> sourceDamageReflectionTriggers = new ArrayList<>(
                 gameData.stack.subList(beforeSourceDamageReflections, gameData.stack.size()));
         gameData.stack.subList(beforeSourceDamageReflections, gameData.stack.size()).clear();
+        int beforeSelfAllyDamageReflections = gameData.stack.size();
+        processSelfDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
+        List<StackEntry> selfAllyDamageReflectionTriggers = new ArrayList<>(
+                gameData.stack.subList(beforeSelfAllyDamageReflections, gameData.stack.size()));
+        gameData.stack.subList(beforeSelfAllyDamageReflections, gameData.stack.size()).clear();
         boolean damageEventTriggersQueued = gameData.stack.size() > stackSizeBeforeDamageEvents;
         stateBasedActionService.performStateBasedActions(gameData);
 
@@ -742,6 +747,7 @@ public class CombatDamageService {
 
         // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
         processAllyDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
+        gameData.stack.addAll(selfAllyDamageReflectionTriggers);
 
         // Process ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul)
         processDealtDamageTriggers(gameData, dealtDamageTriggerData);
@@ -1583,6 +1589,7 @@ public class CombatDamageService {
                 gameQueryService.hasKeyword(gameData, creature, Keyword.TRAMPLE),
                 gameQueryService.hasKeyword(gameData, creature, Keyword.INFECT),
                 gameData.creaturesAssigningNoCombatDamageThisTurn.contains(creature.getId())
+                        || gameData.creaturesAssigningNoCombatDamageThisCombat.contains(creature.getId())
                         || gameQueryService.isPreventedFromDealingDamage(gameData, creature, true),
                 gameQueryService.getEffectiveColor(gameData, creature));
     }
@@ -2077,7 +2084,7 @@ public class CombatDamageService {
                         if (damageDealt >= damageEffect.minimumDamage()) {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                                     creature.getCard(), attackerId,
-                                    List.of(new MayEffect(damageEffect.forDamagedPlayer(defenderId),
+                                    List.of(new MayEffect(damageEffect.forDamagedPlayer(defenderId, damageDealt),
                                             may.prompt(), may.elseEffect(), may.choicePlayer())),
                                     creature.getId(), damageEffect.targetChooserId(defenderId, attackerId), defenderId));
                         }
@@ -2112,7 +2119,7 @@ public class CombatDamageService {
                 }
                 if (specialEffect instanceof DamagedPlayerControlsTargetEffect damageEffect) {
                     if (damageDealt >= damageEffect.minimumDamage()) {
-                        CardEffect targeted = damageEffect.forDamagedPlayer(defenderId);
+                        CardEffect targeted = damageEffect.forDamagedPlayer(defenderId, damageDealt);
                         if (effect instanceof ConditionalEffect conditional) {
                             targeted = new ConditionalEffect(conditional.condition(), targeted, conditional.interveningIf());
                         }
@@ -2593,6 +2600,10 @@ public class CombatDamageService {
         });
     }
 
+    private static boolean isOpponentDealtDamageTrigger(CardEffect effect) {
+        return effect instanceof AllyCombatDamageTriggerEffect trigger && trigger.opponentDealtDamage();
+    }
+
     private static boolean isOwnerRelativeCommanderTrigger(CardEffect effect) {
         return effect instanceof AllyCombatDamageTriggerEffect trigger
                 && trigger.dealerPredicate() instanceof PermanentIsCommanderPredicate commander
@@ -2651,10 +2662,14 @@ public class CombatDamageService {
             try {
             for (CardEffect authoredEffect : effects) {
                 CardEffect effect = OncePerTurnTriggerSupport.unwrapIfAvailable(gameData, perm, authoredEffect);
-                if (ownerRelativePass && !isOwnerRelativeCommanderTrigger(effect)) {
+                if (ownerRelativePass && !isOwnerRelativeCommanderTrigger(effect)
+                        && !isOpponentDealtDamageTrigger(effect)) {
                     continue;
                 }
                 if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
+                    if (trigger.opponentDealtDamage() && attackerId.equals(defenderId)) {
+                        continue;
+                    }
                     FilterContext triggerContext = FilterContext.of(gameData)
                             .withSourceControllerId(attackerId)
                             .withSourcePermanentId(perm.getId());
@@ -3449,12 +3464,42 @@ public class CombatDamageService {
     }
 
     /**
+     * Collects the self-scoped ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE triggers of each combat-damage
+     * source. Runs before state-based actions so a source that dies to the same damage still triggers.
+     */
+    private void processSelfDealtDamageToCreatureReflectionTriggers(GameData gameData, CombatDamageState state,
+                                                                     Map<UUID, Permanent> damagedCreatureSnapshots) {
+        forEachCombatDamageToCreaturePair(gameData, state, damagedCreatureSnapshots,
+                (source, sourceControllerId, damagedCreatureControllerId, damagedCreatureId,
+                 damagedCreatureSnapshot, damage) ->
+                        triggerCollectionService.checkSelfDealtDamageToCreatureTriggers(
+                                gameData, source, sourceControllerId, damagedCreatureControllerId,
+                                damagedCreatureId, damagedCreatureSnapshot, damage, true));
+    }
+
+    /**
      * Fires ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen) for
      * each source/target combat-damage pair. Each source creature that dealt damage to a creature
      * this step reflects that damage to the damaged creature's controller if a watcher listens.
      */
     private void processAllyDealtDamageToCreatureReflectionTriggers(GameData gameData, CombatDamageState state,
                                                                      Map<UUID, Permanent> damagedCreatureSnapshots) {
+        forEachCombatDamageToCreaturePair(gameData, state, damagedCreatureSnapshots,
+                (source, sourceControllerId, damagedCreatureControllerId, damagedCreatureId,
+                 damagedCreatureSnapshot, damage) -> {
+                    triggerCollectionService.checkWatchersDealtDamageToCreatureTriggers(
+                            gameData, source, sourceControllerId, damagedCreatureControllerId,
+                            damagedCreatureId, damagedCreatureSnapshot, damage, true);
+                    if (damagedCreatureSnapshot != null) {
+                        triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
+                                gameData, damagedCreatureControllerId, damagedCreatureSnapshot, source, damage);
+                    }
+                });
+    }
+
+    private void forEachCombatDamageToCreaturePair(GameData gameData, CombatDamageState state,
+                                                    Map<UUID, Permanent> damagedCreatureSnapshots,
+                                                    CombatDamagePairAction action) {
         for (var entry : state.combatDamageAmountsToCreatures.entrySet()) {
             Permanent source = entry.getKey();
             UUID sourceControllerId = state.combatDamageDealerControllers.get(source);
@@ -3465,17 +3510,16 @@ public class CombatDamageService {
                 if (damagedCreatureSnapshot == null) {
                     damagedCreatureSnapshot = damagedCreatureSnapshots.get(amountEntry.getKey());
                 }
-                triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(
-                        gameData, source, sourceControllerId, damagedCreatureControllerId,
-                        amountEntry.getKey(), damagedCreatureSnapshot, amountEntry.getValue(), true);
-
-                if (damagedCreatureSnapshot != null) {
-                    triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
-                            gameData, damagedCreatureControllerId, damagedCreatureSnapshot, source,
-                            amountEntry.getValue());
-                }
+                action.accept(source, sourceControllerId, damagedCreatureControllerId, amountEntry.getKey(),
+                        damagedCreatureSnapshot, amountEntry.getValue());
             }
         }
+    }
+
+    @FunctionalInterface
+    private interface CombatDamagePairAction {
+        void accept(Permanent source, UUID sourceControllerId, UUID damagedCreatureControllerId,
+                    UUID damagedCreatureId, Permanent damagedCreatureSnapshot, int damage);
     }
 
     private void checkGraveyardAllyCreatureCombatDamageTriggers(GameData gameData, Permanent creature,
@@ -4373,6 +4417,28 @@ public class CombatDamageService {
         }
         triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(gameData, targetId, damage);
         triggerCollectionService.checkOpponentDealtDamageTriggers(gameData, targetId, sourceId, damage);
+        if (damageSource != null && sourceControllerId != null && !portion.counterDamage()) {
+            checkRedirectedCombatDamageAllyTriggers(gameData, damageSource, sourceControllerId, targetId, damage);
+        }
+    }
+
+    /**
+     * The redirected part of combat damage is still combat damage dealt to a player (CR 510.2,
+     * CR 614.9), so "whenever a creature you control deals combat damage to a player" abilities and
+     * "whenever your opponents are dealt combat damage" abilities trigger for it.
+     */
+    private void checkRedirectedCombatDamageAllyTriggers(GameData gameData, Permanent damageSource,
+                                                         UUID sourceControllerId, UUID recipientId, int damage) {
+        Map<Permanent, Integer> damageBySource = new LinkedHashMap<>();
+        damageBySource.put(damageSource, damage);
+        Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        checkAllyCreatureCombatDamageToPlayerTriggers(gameData, damageSource, sourceControllerId, recipientId,
+                damage, damageBySource, firedBatchedAllyTriggerSources, false, false);
+        for (UUID otherPlayerId : gameData.orderedPlayerIds) {
+            if (otherPlayerId.equals(sourceControllerId)) continue;
+            checkAllyCreatureCombatDamageToPlayerTriggers(gameData, damageSource, otherPlayerId, recipientId,
+                    damage, damageBySource, firedBatchedAllyTriggerSources, false, true);
+        }
     }
 
     private void dealRedirectedCombatDamageToPermanent(GameData gameData, CombatDamageState state,
@@ -5176,6 +5242,7 @@ public class CombatDamageService {
         // A creature with 0 or negative power deals no combat damage (CR 510.1a),
         // so there is nothing for the player to distribute.
         if (gameData.creaturesAssigningNoCombatDamageThisTurn.contains(atk.getId())
+                || gameData.creaturesAssigningNoCombatDamageThisCombat.contains(atk.getId())
                 || gameQueryService.getEffectiveCombatDamage(gameData, atk) <= 0) return false;
         // Blocked with no blockers (CR 510.1c): no damage is assigned, so nothing to divide.
         if (livingBlockerIndices.isEmpty() && atk.isBlockedWithoutBlockers()) return false;

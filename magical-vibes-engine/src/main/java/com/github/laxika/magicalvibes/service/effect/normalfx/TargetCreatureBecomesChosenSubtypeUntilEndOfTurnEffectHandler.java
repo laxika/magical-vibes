@@ -6,13 +6,18 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -46,7 +51,7 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
             gameData.forEachBattlefield((playerId, battlefield) -> {
                 for (Permanent permanent : battlefield) {
                     if (gameQueryService.isCreature(gameData, permanent)) {
-                        setCreatureTypeOverride(permanent, chosenSubtype);
+                        setCreatureTypeOverride(gameData, entry, permanent, chosenSubtype);
                         affectedCount[0]++;
                     }
                 }
@@ -65,7 +70,7 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
             if (battlefield != null) {
                 for (Permanent permanent : battlefield) {
                     if (gameQueryService.isCreature(gameData, permanent)) {
-                        setCreatureTypeOverride(permanent, chosenSubtype);
+                        setCreatureTypeOverride(gameData, entry, permanent, chosenSubtype);
                         affectedCount++;
                     }
                 }
@@ -83,15 +88,20 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
             return;
         }
 
-        setCreatureTypeOverride(target, chosenSubtype);
+        setCreatureTypeOverride(gameData, entry, target, chosenSubtype);
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(" becomes a " + chosenSubtype.getDisplayName() + " until end of turn.")
                 .build());
     }
 
-    private void setCreatureTypeOverride(Permanent permanent, CardSubtype chosenSubtype) {
+    private void setCreatureTypeOverride(GameData gameData, StackEntry entry, Permanent permanent,
+                                         CardSubtype chosenSubtype) {
         permanent.setTransientCreatureTypeOverride(chosenSubtype);
         permanent.getTransientCreatureTypeOverrides().clear();
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, GrantScope.TARGET, true),
+                permanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
     }
 }

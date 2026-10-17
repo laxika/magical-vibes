@@ -95,6 +95,7 @@ class MorgueTheftTest extends BaseCardTest {
         Card theft = new MorgueTheft();
         Card creature = new WildMongrel();
         harness.setGraveyard(player1, List.of(theft, creature));
+        harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castFlashback(player1, 0, creature.getId());

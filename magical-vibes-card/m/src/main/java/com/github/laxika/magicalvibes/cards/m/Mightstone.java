@@ -13,6 +13,6 @@ public class Mightstone extends Card {
 
     public Mightstone() {
         addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.ALL_CREATURES, new PermanentIsAttackingPredicate()));
+                new StaticBoostEffect(1, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF, new PermanentIsAttackingPredicate()));
     }
 }

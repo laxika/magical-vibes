@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.OracleData;
-import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.LandCasualtyEffect;
 
@@ -49,8 +46,6 @@ public class MaestrosTotallySafeHideout extends Card {
     public MaestrosTotallySafeHideout() {
         addEffect(EffectSlot.STATIC, new LandCasualtyEffect(2));
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new SourceEntryCostPaid(), new CreateTokenCopyOfSourceEffect()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

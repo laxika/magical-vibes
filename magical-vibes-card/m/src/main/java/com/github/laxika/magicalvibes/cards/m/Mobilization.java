@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Mobilization extends Card {
 
     public Mobilization() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0, Set.of(Keyword.VIGILANCE), GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0, Set.of(Keyword.VIGILANCE), GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER))));
         addActivatedAbility(new ActivatedAbility(false, "{2}{W}", List.of(CreateTokenEffect.whiteSoldier(1)), "{2}{W}: Create a 1/1 white Soldier creature token."));
     }

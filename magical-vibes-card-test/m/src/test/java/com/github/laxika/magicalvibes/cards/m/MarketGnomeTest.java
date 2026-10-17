@@ -65,6 +65,7 @@ class MarketGnomeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ClayFiredBricks());
         MarketGnome gnome = new MarketGnome();
         harness.setGraveyard(player1, List.of(gnome));
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Plains()));
         harness.setLife(player1, 10);
         harness.addMana(player1, ManaColor.COLORLESS, 5);

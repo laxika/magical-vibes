@@ -134,6 +134,9 @@ public class Permanent {
      *  is later removed (CR 702.22e). */
     @Setter private UUID bandId;
     private boolean summoningSick;
+    /** The turn number on which this permanent object was put onto the battlefield, or 0 when unrecorded.
+     *  Distinguishes this object from a later object of the same card after it re-enters (CR 400.7). */
+    @Setter private int enteredBattlefieldTurnNumber;
     /** Perpetual power modifier attached to this card identity; survives turn cleanup and zone changes. */
     @Setter private int persistentPowerModifier;
     /** Class progression is permanent state and is independent of counters. */
@@ -244,6 +247,11 @@ public class Permanent {
      * stays on the battlefield.
      */
     private final Set<String> chosenModeLabels = new HashSet<>();
+    /**
+     * Result of the "as this enters, flip a coin" replacement that fixed this permanent's form
+     * (Molten Sentry): {@code true} for heads, {@code null} when no such flip happened.
+     */
+    @Setter private Boolean entryCoinFlipHeads;
     /** Labels of modes chosen this turn for a turn-scoped modal trigger. */
     private final Set<String> chosenModeLabelsThisTurn = new HashSet<>();
     /** Room doors unlocked on this permanent, in door order. This state survives turn resets. */
@@ -698,6 +706,10 @@ public class Permanent {
     /** Whether this permanent is renowned (CR 702.111): set the first time a renown trigger resolves,
      *  and read by "if it's renowned" abilities. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean renowned;
+    /** Makeshift Mannequin's "for as long as this creature has a mannequin counter on it" grant (CR 611.2b).
+     *  Set when the creature enters with its mannequin counter, cleared when its last mannequin counter is
+     *  removed, and never restarted by a later counter. */
+    @Setter private boolean mannequinGrantActive;
     /** Whether this permanent has become monstrous. Permanent state; never cleared by {@link #resetModifiers()}. */
     @Setter private boolean monstrous;
     /** The player who paid this permanent's motivate cost, or null if it has not been motivated. Motivation belongs to that
@@ -769,6 +781,10 @@ public class Permanent {
     /** The card to revert to when the temporary copy effect ends.
      *  Only non-null when {@link #copyUntilEndOfTurn} is true. */
     @Setter private Card preCopyCard;
+    /** Keywords on {@link #card} that a temporary copy effect granted separately from the copy itself
+     *  ("becomes a copy ... and gains haste"), so they are not copiable values of this permanent.
+     *  Cleared with the temporary copy by {@link #revertEndOfTurnCopy()}. */
+    private final Set<Keyword> nonCopiableKeywords = EnumSet.noneOf(Keyword.class);
     /** When true, this permanent is a copy of another creature for as long as the Aura that made it
      *  one stays attached to it (Metamorphic Alteration). NOT cleared by {@link #resetModifiers()}.
      *  Reverts to {@link #whileAttachedPreCopyCard} via {@link #revertWhileAttachedCopy()} when that
@@ -898,6 +914,7 @@ public class Permanent {
         this.permanentIdsThatDealtDamageThisTurn.addAll(source.permanentIdsThatDealtDamageThisTurn);
         this.bandId = source.bandId;
         this.summoningSick = source.summoningSick;
+        this.enteredBattlefieldTurnNumber = source.enteredBattlefieldTurnNumber;
         this.persistentPowerModifier = source.persistentPowerModifier;
         this.classLevel = source.classLevel;
         this.powerModifier = source.powerModifier;
@@ -939,6 +956,7 @@ public class Permanent {
         this.toymakersTrapChosenNumbers.addAll(source.toymakersTrapChosenNumbers);
         this.chosenNumberDigits = List.copyOf(source.chosenNumberDigits);
         this.crossedNumberDigitPositions.addAll(source.crossedNumberDigitPositions);
+        this.entryCoinFlipHeads = source.entryCoinFlipHeads;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
         this.unlockedRoomDoors.addAll(source.unlockedRoomDoors);
@@ -1122,6 +1140,7 @@ public class Permanent {
         this.repeatedAdditionalCosts = source.repeatedAdditionalCosts;
         this.tributePaid = source.tributePaid;
         this.renowned = source.renowned;
+        this.mannequinGrantActive = source.mannequinGrantActive;
         this.castFromZone = source.castFromZone;
         this.enteredFromZone = source.enteredFromZone;
         this.putOntoBattlefieldWithAbilitySourcePermanentId = source.putOntoBattlefieldWithAbilitySourcePermanentId;
@@ -1144,6 +1163,7 @@ public class Permanent {
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
         this.preCopyCard = source.preCopyCard;
+        this.nonCopiableKeywords.addAll(source.nonCopiableKeywords);
         this.copyWhileAttached = source.copyWhileAttached;
         this.whileAttachedPreCopyCard = source.whileAttachedPreCopyCard;
         this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);
@@ -1578,6 +1598,9 @@ public class Permanent {
         }
         int previousCount = counters.getOrDefault(counterType, 0);
         int newCount = Math.max(0, count);
+        if (counterType == CounterType.MANNEQUIN && newCount == 0) {
+            mannequinGrantActive = false;
+        }
         if (previousCount > 0 && newCount == 0) {
             lastCounterRemovalVersions.merge(counterType, 1L, Long::sum);
         }
@@ -1820,6 +1843,7 @@ public class Permanent {
             case HEXPROOF -> CounterType.HEXPROOF;
             case INDESTRUCTIBLE -> CounterType.INDESTRUCTIBLE;
             case MENACE -> CounterType.MENACE;
+            case SHADOW -> CounterType.SHADOW;
             default -> null;
         };
         return (keyword == Keyword.MENACE && suspected)
@@ -2094,6 +2118,7 @@ public class Permanent {
         }
         this.copyUntilEndOfTurn = false;
         this.preCopyCard = null;
+        this.nonCopiableKeywords.clear();
     }
 
     /**

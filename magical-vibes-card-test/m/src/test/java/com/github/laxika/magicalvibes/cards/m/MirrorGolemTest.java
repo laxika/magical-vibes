@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -133,6 +135,9 @@ class MirrorGolemTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.CombatDamageAssignment) {
+            harness.handleCombatDamageAssigned(player2, 0, Map.of(golem.getId(), 4));
+        }
 
         harness.assertOnBattlefield(player1, "Mirror Golem");
         assertThat(golem.getMarkedDamage()).isZero();

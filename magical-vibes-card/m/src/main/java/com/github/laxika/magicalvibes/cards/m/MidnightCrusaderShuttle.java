@@ -17,7 +17,7 @@ import java.util.List;
 public class MidnightCrusaderShuttle extends Card {
 
     public MidnightCrusaderShuttle() {
-        addEffect(EffectSlot.ON_ATTACK, ForcedCostOrElseEffect.defendingPlayerMayPay(
+        addEffect(EffectSlot.ON_ATTACK, ForcedCostOrElseEffect.defendingPlayerFacesVillainousChoice(
                 new SacrificePermanentCost(new PermanentIsCreaturePredicate(), "Sacrifice a creature"),
                 List.of(new GainControlOfDefendingPlayerCreatureAndAttackEffect())));
 

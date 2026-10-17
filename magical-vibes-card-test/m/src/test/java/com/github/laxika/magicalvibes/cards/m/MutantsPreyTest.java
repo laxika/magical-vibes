@@ -134,9 +134,7 @@ class MutantsPreyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castInstant(player1, 0, List.of(bear.getId(), elves.getId()));
-        gd.playerBattlefields.get(player2.getId()).remove(elves);
-        gd.playerBattlefields.get(player1.getId()).add(elves);
-        gd.stolenCreatures.put(elves.getId(), player2.getId());
+        setOwnerAndController(elves, player2, player1);
         harness.passBothPriorities();
 
         assertThat(bear.getMarkedDamage()).isZero();

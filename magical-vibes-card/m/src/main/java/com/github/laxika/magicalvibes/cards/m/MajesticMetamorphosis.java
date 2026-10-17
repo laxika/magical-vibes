@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -28,8 +29,9 @@ public class MajesticMetamorphosis extends Card {
                         new PermanentIsCreaturePredicate())),
                 "Target must be an artifact or creature"))
                 .addEffect(EffectSlot.SPELL, new AnimatePermanentsEffect(
-                        4, 4, List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), null,
-                        Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
+                        new Fixed(4), new Fixed(4), List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), null,
+                        Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN,
+                        null, true))
                 .addEffect(EffectSlot.SPELL, new DrawCardEffect());
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.d.DimirGuildgate;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -94,7 +95,7 @@ class MirkoVoskMindDrinkerTest extends BaseCardTest {
         Permanent mirko = addAttackingMirko(player1);
         harness.setLibrary(player2, List.of(new DimirGuildgate(), new WindDrake()));
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(mirko);
         gd.playerGraveyards.get(player1.getId()).add(mirko.getCard());

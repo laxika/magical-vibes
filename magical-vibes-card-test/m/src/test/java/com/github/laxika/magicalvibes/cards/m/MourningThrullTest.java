@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Delirium;
 import com.github.laxika.magicalvibes.cards.s.Stratozeppelid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -100,17 +101,18 @@ class MourningThrullTest extends BaseCardTest {
     void lifeGainUsesDamageAmountCapturedWhenTriggered() {
         MourningThrull card = new MourningThrull();
         card.setPower(3);
-        addAttacker(card);
+        Permanent attacker = addCreatureReady(player1, card);
+        attacker.setAttacking(true);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 17);
         assertThat(gd.stack).hasSize(1);
 
-        card.setPower(5);
+        attacker.setPersistentPowerModifier(2);
         resolveAllTriggers();
 
         harness.assertLife(player1, 23);

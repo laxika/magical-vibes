@@ -126,11 +126,11 @@ class MtendaLionTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.handleMayAbilityChosen(player2, true);
+        harness.withAutoStop(gd.currentStep, () -> harness.handleMayAbilityChosen(player2, true));
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test

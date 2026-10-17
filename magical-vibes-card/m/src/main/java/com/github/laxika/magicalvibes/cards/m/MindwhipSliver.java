@@ -41,7 +41,7 @@ public class MindwhipSliver extends Card {
 
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 discardAbility,
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_PERMANENTS,
                 sliver
         ));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(

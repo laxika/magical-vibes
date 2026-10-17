@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.RevokeExilePlayPermissionAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class EachPlayerExilesTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final ExileSupport exileSupport;
     private final GameLogService gameLogService;
 
     @Override
@@ -46,9 +46,9 @@ public class EachPlayerExilesTopCardsMayPlayUntilNextTurnEffectHandler implement
             for (int i = 0; i < cardsToExile; i++) {
                 Card topCard = library.removeFirst();
                 exileService.exileCard(gameData, playerId, topCard);
-                gameData.exilePlayPermissions.put(topCard.getId(), playerId);
-                gameData.queueDelayedAction(new RevokeExilePlayPermissionAtNextUpkeep(
-                        expiryControllerId, topCard.getId(), entry.getCard()));
+                exileSupport.grantPlayUntilNextTurnOfPlayer(gameData, topCard.getId(), playerId, expiryControllerId);
+                int expiryTurn = gameData.exilePlayPermissionsExpireAtTurnEnd.remove(topCard.getId());
+                gameData.exilePlayPermissionsExpireAtTurnBeginning.put(topCard.getId(), expiryTurn);
                 gameLogService.append(gameData, GameLog.builder()
                         .text(gameData.playerIdToName.get(playerId) + " exiles ")
                         .card(topCard)

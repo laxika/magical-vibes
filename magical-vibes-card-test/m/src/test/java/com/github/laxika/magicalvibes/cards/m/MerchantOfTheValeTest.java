@@ -94,7 +94,6 @@ class MerchantOfTheValeTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, (java.util.UUID) null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);

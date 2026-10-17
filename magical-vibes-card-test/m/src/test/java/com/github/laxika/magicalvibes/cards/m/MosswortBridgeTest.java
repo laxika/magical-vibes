@@ -240,7 +240,6 @@ class MosswortBridgeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, triggerId);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();

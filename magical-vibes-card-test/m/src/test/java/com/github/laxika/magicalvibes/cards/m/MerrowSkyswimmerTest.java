@@ -48,7 +48,7 @@ class MerrowSkyswimmerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MerrowSkyswimmer()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castCreatureTappingPermanents(player1, 0,
+        harness.castCreatureWithConvoke(player1, 0,
                 List.of(firstCreature.getId(), secondCreature.getId(), thirdCreature.getId()));
 
         assertThat(firstCreature.isTapped()).isTrue();
@@ -74,7 +74,7 @@ class MerrowSkyswimmerTest extends BaseCardTest {
         List<Permanent> helpers = List.of(first, second, third, whiteBlueFirst, whiteBlueSecond);
         harness.setHand(player1, List.of(new MerrowSkyswimmer()));
 
-        harness.castCreatureTappingPermanents(player1, 0,
+        harness.castCreatureWithConvoke(player1, 0,
                 helpers.stream().map(Permanent::getId).toList());
 
         assertThat(helpers).allMatch(Permanent::isTapped);
@@ -94,7 +94,7 @@ class MerrowSkyswimmerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MerrowSkyswimmer()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.castCreatureTappingPermanents(player1, 0,
+        assertThatThrownBy(() -> harness.castCreatureWithConvoke(player1, 0,
                 List.of(first.getId(), second.getId(), third.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();

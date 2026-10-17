@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -65,9 +66,8 @@ class MirrorMatchTest extends BaseCardTest {
         Permanent copy = findPermanent(player2, "Air Elemental");
         assertThat(copy.getBlockingTargetIds()).containsExactly(attacker.getId());
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passPriority(player1);
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(copy);
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
@@ -93,6 +93,7 @@ class MirrorMatchTest extends BaseCardTest {
     void copiesCreaturesAttackingYourPlaneswalker() {
         Permanent attacker = addCreatureReady(player1, new AirElemental());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         declareAttackersAndPrepareBlockers(List.of(0));
         attacker.setAttackTarget(planeswalker.getId());
 

@@ -562,6 +562,9 @@ public class UntapStepService {
     }
 
     private boolean appliesToUntapStep(StaticOrbEffect effect, UUID activePlayerId, UUID sourceControllerId) {
+        if (effect.controllerOnly()) {
+            return activePlayerId.equals(sourceControllerId);
+        }
         return !effect.opponentsOnly() || !activePlayerId.equals(sourceControllerId);
     }
 

@@ -58,7 +58,7 @@ class MishrasResearchDeskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent desk = findPermanent(player1, "Mishra's Research Desk");
-        assertThat(desk.getGrantedKeywords()).contains(com.github.laxika.magicalvibes.model.Keyword.HASTE);
+        assertThat(desk.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

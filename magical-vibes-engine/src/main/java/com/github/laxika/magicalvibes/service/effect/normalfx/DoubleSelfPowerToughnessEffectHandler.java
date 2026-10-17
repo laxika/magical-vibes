@@ -41,9 +41,9 @@ public class DoubleSelfPowerToughnessEffectHandler implements NormalEffectHandle
                 ? 0 : gameQueryService.getEffectiveToughness(gameData, self);
 
         self.setPowerModifier(self.getPowerModifier()
-                + MaroGoneNutsSupport.apply(gameData, effect, currentPower));
+                + MaroGoneNutsSupport.doublingIncrease(gameData, effect, currentPower));
         self.setToughnessModifier(self.getToughnessModifier()
-                + MaroGoneNutsSupport.apply(gameData, effect, currentToughness));
+                + MaroGoneNutsSupport.doublingIncrease(gameData, effect, currentToughness));
 
         
         gameLogService.append(gameData, GameLog.builder().card(self.getCard()).text("'s power and toughness are doubled (+" + currentPower + "/+" + currentToughness + ").").build());

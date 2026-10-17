@@ -56,7 +56,7 @@ class MasterOfWindsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("4/1", "1/4");
-        harness.handleListChoice(player1, "4/1");
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleListChoice(player1, "4/1"));
 
         assertThat(master.getEffectivePower()).isEqualTo(4);
         assertThat(master.getEffectiveToughness()).isEqualTo(1);
@@ -72,7 +72,8 @@ class MasterOfWindsTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "4/1");
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleListChoice(player1, "4/1"));
+        assertThat(master.getEffectivePower()).isEqualTo(4);
 
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
@@ -127,7 +128,7 @@ class MasterOfWindsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "4/1");
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleListChoice(player1, "4/1"));
 
         assertThat(master.getEffectivePower()).isEqualTo(4);
         assertThat(master.getEffectiveToughness()).isEqualTo(1);

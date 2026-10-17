@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -42,6 +44,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -132,6 +135,21 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
                 }
                 gameLogService.append(gameData, GameLog.text(
                         "All damage that would be dealt this turn to matching permanents you control is prevented."));
+            }
+            case ALL_TO_CONTROLLED_MATCHING_PERMANENTS_AT_RESOLUTION -> {
+                UUID controllerId = entry.getControllerId();
+                List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+                if (battlefield != null) {
+                    FilterContext context = FilterContext.of(gameData).withSourceControllerId(controllerId);
+                    for (Permanent permanent : List.copyOf(battlefield)) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(
+                                permanent, e.victimPredicate(), context)) {
+                            gameData.creaturesWithAllDamagePrevented.add(permanent.getId());
+                        }
+                    }
+                }
+                gameLogService.append(gameData, GameLog.text(
+                        "All damage that would be dealt this turn to those permanents is prevented."));
             }
             case ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS -> {
                 UUID controllerId = entry.getControllerId();

@@ -184,6 +184,8 @@ class MonasteryRaidTest extends BaseCardTest {
     @Test
     @DisplayName("Play permission lasts through your next turn and then expires")
     void playPermissionExpiresAfterNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Card first = new Forest();
         Card second = new Forest();
         harness.setLibrary(player1, List.of(first, second));

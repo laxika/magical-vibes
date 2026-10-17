@@ -17,7 +17,7 @@ public class MagmaticCore extends Card {
     public MagmaticCore() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"));
 
-        target(TargetFilters.creature(), 0, 99).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
+        targetUpTo(new CountersOnSource(CounterType.AGE), TargetFilters.creature(), Integer.MAX_VALUE).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new DealDividedDamageEffect(
                         new CountersOnSource(CounterType.AGE), null, DivisionMode.CHOSEN,
                         new PermanentIsCreaturePredicate(), 0, false, false, true));

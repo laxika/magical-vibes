@@ -161,12 +161,21 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
 
     /** The attacked player, or the controller of the attacked planeswalker, of an ON_ATTACK trigger. */
     private UUID defendingPlayer(GameData gameData, StackEntry entry) {
+        if (entry.getDefendingPlayerId() != null) {
+            return entry.getDefendingPlayerId();
+        }
         UUID attackedTargetId = entry.getAttackedTargetId();
         if (attackedTargetId == null) {
             return null;
         }
-        return gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        if (gameData.playerIds.contains(attackedTargetId)) {
+            return attackedTargetId;
+        }
+        // CR 310.9d: for a battle being attacked, "defending player" refers to its protector.
+        Permanent attacked = gameQueryService.findPermanentById(gameData, attackedTargetId);
+        if (attacked != null && gameQueryService.isBattle(gameData, attacked)) {
+            return attacked.getProtectorPlayerId();
+        }
+        return gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 }

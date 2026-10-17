@@ -118,6 +118,8 @@ class MetamorphicAlterationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, giant.getId());
         Permanent firstAura = findPermanent(player1, "Metamorphic Alteration");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, bears.getId());
@@ -142,6 +144,8 @@ class MetamorphicAlterationTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, giant.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castEnchantment(player1, 0, giant.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, elemental.getId());

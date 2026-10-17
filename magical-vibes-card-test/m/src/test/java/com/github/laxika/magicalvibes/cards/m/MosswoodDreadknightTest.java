@@ -112,6 +112,7 @@ class MosswoodDreadknightTest extends BaseCardTest {
         MosswoodDreadknight card = new MosswoodDreadknight();
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.addToBattlefieldAndReturn(player1, card).setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -134,6 +135,7 @@ class MosswoodDreadknightTest extends BaseCardTest {
         MosswoodDreadknight card = new MosswoodDreadknight();
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefieldAndReturn(player1, card).setMarkedDamage(2);
         harness.runStateBasedActions();

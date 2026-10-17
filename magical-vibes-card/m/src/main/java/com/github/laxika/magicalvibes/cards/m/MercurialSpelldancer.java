@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -22,6 +23,8 @@ import java.util.List;
 public class MercurialSpelldancer extends Card {
 
     public MercurialSpelldancer() {
+        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 List.of(new PutCountersOnSelfEffect(CounterType.OIL))));

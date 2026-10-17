@@ -73,6 +73,7 @@ class MagmaticSinkholeTest extends BaseCardTest {
     @Test
     void canPayWithPartialDelveAndMana() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        target.setCounterCount(CounterType.LOYALTY, 6);
         Mountain exiled = new Mountain();
         Mountain remaining = new Mountain();
         harness.setGraveyard(player1, List.of(exiled, remaining));

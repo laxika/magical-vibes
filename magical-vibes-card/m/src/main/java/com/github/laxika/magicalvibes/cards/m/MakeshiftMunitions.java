@@ -26,7 +26,8 @@ public class MakeshiftMunitions extends Card {
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentIsCreaturePredicate()
                                 )),
-                                "Sacrifice an artifact or creature"
+                                "Sacrifice an artifact or creature",
+                                false
                         ),
                         new DealDamageToAnyTargetEffect(1)
                 ),

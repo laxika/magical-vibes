@@ -17,11 +17,12 @@ public class MazesMantle extends Card {
 
     public MazesMantle() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                        new EnchantedPermanentMatches(
-                                new PermanentHasKeywordPredicate(Keyword.TOXIC),
-                                "enchanted creature has toxic"),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET)))
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
+                new EnchantedPermanentMatches(
+                        new PermanentHasKeywordPredicate(Keyword.TOXIC),
+                        "enchanted creature has toxic"),
+                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE)));
     }
 }

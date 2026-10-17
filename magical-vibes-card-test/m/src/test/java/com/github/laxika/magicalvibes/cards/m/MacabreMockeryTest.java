@@ -86,8 +86,10 @@ class MacabreMockeryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.END_STEP);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.castInstant(player1, 0, target.getId());
+            harness.passBothPriorities();
+        });
         Permanent returned = findPermanent(player1, "Noxious Groodion");
         assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(returned.getPowerModifier()).isEqualTo(2);

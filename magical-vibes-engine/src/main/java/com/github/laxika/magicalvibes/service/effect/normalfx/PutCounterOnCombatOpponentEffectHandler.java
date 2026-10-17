@@ -15,7 +15,7 @@ import java.util.UUID;
 /**
  * Resolves {@link PutCounterOnCombatOpponentEffect}: puts the configured counters on the referenced
  * combat opponent (carried as the stack entry's non-targeting target) right away, provided it is
- * still a creature on the battlefield. Mindbender Spores.
+ * still on the battlefield (it need not still be a creature). Mindbender Spores.
  */
 @Component
 @RequiredArgsConstructor
@@ -38,7 +38,7 @@ public class PutCounterOnCombatOpponentEffectHandler implements NormalEffectHand
             return;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+        if (target == null) {
             return;
         }
 

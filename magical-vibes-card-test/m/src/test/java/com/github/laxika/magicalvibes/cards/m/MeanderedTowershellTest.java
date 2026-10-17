@@ -53,10 +53,15 @@ class MeanderedTowershellTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
+        gd.turnNumber++;
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
-        harness.passUntil(TurnStep.DECLARE_ATTACKERS);
-        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of());
+            resolveAllTriggers();
+        });
 
         Permanent returnedBears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(bears.getCard().getId()))

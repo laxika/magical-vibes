@@ -45,6 +45,12 @@ public class PerpetuallyGainKeywordsOfTriggeringCreatureEffectHandler implements
                     keywords.add(keyword);
                 }
             }
+        } else if (entry.getTriggeringPermanentKeywordsAtLeave() != null) {
+            for (Keyword keyword : PerpetuallyGainKeywordsOfTriggeringCreatureEffect.SUPPORTED_KEYWORDS) {
+                if (entry.getTriggeringPermanentKeywordsAtLeave().contains(keyword)) {
+                    keywords.add(keyword);
+                }
+            }
         } else {
             keywords.addAll(e.keywordsAtTrigger());
         }

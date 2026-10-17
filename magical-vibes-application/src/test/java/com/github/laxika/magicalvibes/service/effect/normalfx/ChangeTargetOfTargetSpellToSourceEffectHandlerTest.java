@@ -82,7 +82,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
         lenient().when(targetLegalityService.checkSpellTargetOnStack(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
         changeTargetToSourceHandler = new ChangeTargetOfTargetSpellToSourceEffectHandler(
-                gameQueryService, gameLogService, targetRedirectionSupport);
+                gameQueryService, gameLogService, targetRedirectionSupport, playerInputService);
 
     }
 

@@ -159,12 +159,12 @@ class MoonCircuitHackerTest extends BaseCardTest {
         original.setAttackTarget(player2.getId());
         harness.setHand(player1, List.of(new MoonCircuitHacker()));
         harness.setLibrary(player1, List.of(new Forest()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         harness.assertLife(player2, 18);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateHandAbility(player1, 0, original.getId());
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);

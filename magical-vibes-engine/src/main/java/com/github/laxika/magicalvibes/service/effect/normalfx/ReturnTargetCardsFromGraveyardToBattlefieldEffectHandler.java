@@ -241,6 +241,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                         || !auraAttachmentService.canEnchant(gameData, card, graveyardOwnerId, sourceHost))) {
                     continue;
                 }
+                if (e.attachToSourceHost() && !card.isAura()
+                        && (sourceHost == null || !gameQueryService.isCreature(gameData, sourceHost))) {
+                    continue;
+                }
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 Permanent permanent = new Permanent(card);
                 graveyardReturnSupport.applyPermanentGrants(permanent, e.grantColor(), e.grantSubtype());
@@ -392,6 +396,9 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             return null;
         }
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
         return source != null && source.isAttached()
                 ? gameQueryService.findPermanentById(gameData, source.getAttachedTo())
                 : null;

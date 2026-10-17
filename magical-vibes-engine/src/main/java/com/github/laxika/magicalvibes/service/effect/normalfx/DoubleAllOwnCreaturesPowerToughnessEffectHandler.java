@@ -43,9 +43,9 @@ public class DoubleAllOwnCreaturesPowerToughnessEffectHandler implements NormalE
             int currentPower = gameQueryService.getEffectivePower(gameData, permanent);
             int currentToughness = gameQueryService.getEffectiveToughness(gameData, permanent);
             permanent.setPowerModifier(permanent.getPowerModifier()
-                    + MaroGoneNutsSupport.apply(gameData, effect, currentPower));
+                    + MaroGoneNutsSupport.doublingIncrease(gameData, effect, currentPower));
             permanent.setToughnessModifier(permanent.getToughnessModifier()
-                    + MaroGoneNutsSupport.apply(gameData, effect, currentToughness));
+                    + MaroGoneNutsSupport.doublingIncrease(gameData, effect, currentToughness));
             count++;
         }
 

@@ -60,6 +60,10 @@ public class SourceBecomesChosenSubtypeUntilEndOfTurnEffectHandler implements No
         } else {
             source.setTransientCreatureTypeOverride(chosenSubtype);
             source.getTransientCreatureTypeOverrides().clear();
+            gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                    entry.getCard().getName(), source.getId(), entry.getControllerId(),
+                    new GrantSubtypeEffect(chosenSubtype, GrantScope.TARGET, true),
+                    source.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
         }
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())

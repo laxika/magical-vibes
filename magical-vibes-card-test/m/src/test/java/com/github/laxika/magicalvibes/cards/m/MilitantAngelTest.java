@@ -39,6 +39,7 @@ class MilitantAngelTest extends BaseCardTest {
     @Test
     @DisplayName("Attacks from a previous turn do not create Knights")
     void ignoresAttacksFromPreviousTurn() {
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new MilitantAngel());
         declareAttackers(List.of(0));
         resolveCombat();
@@ -53,6 +54,7 @@ class MilitantAngelTest extends BaseCardTest {
     @Test
     @DisplayName("Created Knights deal two damage and do not tap to attack")
     void createdKnightsHaveVigilanceAndDealTwoDamage() {
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new MilitantAngel());
         declareAttackers(List.of(0));
         resolveCombat();

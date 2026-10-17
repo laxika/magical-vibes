@@ -70,6 +70,7 @@ class MercenariesTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.CLEANUP);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         mercs.setSummoningSick(false);
         mercs.setAttacking(true);

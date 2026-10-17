@@ -190,6 +190,7 @@ class MathiseSurgeChannelerTest extends BaseCardTest {
     void opponentSpellDoesNotTrigger() {
         setRoll(9);
         harness.addToBattlefield(player1, new MathiseSurgeChanneler());
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Inspiration()));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
@@ -209,6 +210,7 @@ class MathiseSurgeChannelerTest extends BaseCardTest {
         setRoll(9);
         harness.addToBattlefield(player1, new MathiseSurgeChanneler());
         harness.setHand(player1, List.of(new HillGiant()));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 1);

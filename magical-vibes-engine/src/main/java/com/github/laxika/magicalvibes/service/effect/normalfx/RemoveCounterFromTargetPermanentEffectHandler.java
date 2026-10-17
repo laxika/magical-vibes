@@ -12,9 +12,12 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -26,6 +29,7 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
     private final PermanentCounterSupport permanentCounterSupport;
     private final BattleDefeatSupport battleDefeatSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,11 +73,14 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
             return;
         }
 
-        for (CounterType counterType : CounterType.values()) {
-            // ANY and SILVER are wildcard categories, not concrete stored counters.
-            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
-                continue;
-            }
+        // "Remove a counter": the ability's controller chooses the kind when several are present.
+        List<CounterType> kinds = RemoveChosenCountersFromTargetPermanentEffectHandler.counterTypesOn(target);
+        if (kinds.size() > 1 && e.amount() == 1) {
+            playerInputService.beginRemoveOneCounterChoice(gameData, entry.getControllerId(), target.getId(),
+                    entry.getCard().getName(), kinds, false);
+            return;
+        }
+        for (CounterType counterType : kinds) {
             if (removeUpTo(gameData, target, counterType, e.amount())) {
                 return;
             }

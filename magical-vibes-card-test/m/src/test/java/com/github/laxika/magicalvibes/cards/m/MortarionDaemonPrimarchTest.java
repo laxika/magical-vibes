@@ -68,7 +68,7 @@ class MortarionDaemonPrimarchTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 0);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleXValueChosen(player1, 0));
 
         assertThat(findPermanents(player1, "Astartes Warrior")).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
@@ -83,7 +83,7 @@ class MortarionDaemonPrimarchTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 1);
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleXValueChosen(player1, 1));
 
         assertThat(findPermanents(player1, "Astartes Warrior")).singleElement().satisfies(token -> {
             assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);

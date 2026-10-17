@@ -206,6 +206,7 @@ class MilaCraftyCompanionTest extends BaseCardTest {
     void milaAddsLoyaltyToUnattackedPlaneswalkersOnlyOnceForMultipleAttackers() {
         addMilaAndPlaneswalker();
         Permanent unattacked = harness.addToBattlefieldAndReturn(player1, new LukkaWaywardBonder());
+        unattacked.setCounterCount(CounterType.LOYALTY, 5);
         Permanent attacked = gd.playerBattlefields.get(player1.getId()).get(1);
         Permanent first = addCreatureReady(player2, new MilaCraftyCompanion());
         Permanent second = addCreatureReady(player2, new GrizzlyBears());

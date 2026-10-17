@@ -2862,6 +2862,28 @@ public class ManaCost {
         }
     }
 
+    /**
+     * Pays this cost using only mana carrying the creature-source tag (Myr Superion), colored symbols
+     * first and then generic. The creature tag is lowered together with the mana it sits on, so mana
+     * that was not produced by creatures stays in the pool untouched.
+     */
+    public void payCreatureOnly(ManaPool pool, int additionalGenericCost) {
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                pool.removeCreatureMana(entry.getKey(), 1);
+                pool.remove(entry.getKey());
+            }
+        }
+        int remaining = genericCost + additionalGenericCost;
+        for (ManaColor color : ManaColor.values()) {
+            while (remaining > 0 && pool.getCreatureMana(color) > 0) {
+                pool.removeCreatureMana(color, 1);
+                pool.remove(color);
+                remaining--;
+            }
+        }
+    }
+
     public void payBasicLandOnly(ManaPool pool, int xValue, int additionalGenericCost) {
         ManaPool basicLandPool = pool.copyBasicLandMana();
         EnumMap<ManaColor, Integer> before = basicLandPool.getBasicLandManaTotals();

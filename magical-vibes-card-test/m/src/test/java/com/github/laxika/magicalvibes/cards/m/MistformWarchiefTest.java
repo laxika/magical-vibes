@@ -81,6 +81,8 @@ class MistformWarchiefTest extends BaseCardTest {
     @Test
     @DisplayName("The temporary creature type no longer affects cost reduction after end of turn")
     void changedCreatureTypeWearsOffAtEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new MistformWarchief());
 
         harness.activateAbility(player1, 0, null, null);

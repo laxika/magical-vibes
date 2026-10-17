@@ -82,6 +82,7 @@ class MysticConfluenceTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent third = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new MysticConfluence()));
+        harness.setHand(player2, List.of());
         addMana(player1);
 
         int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 1, 1, 1);
@@ -98,6 +99,7 @@ class MysticConfluenceTest extends BaseCardTest {
     void repeatedCreatureModeCanTargetSameCreatureAndStillDraw() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MysticConfluence()));
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Spellbook()));
         addMana(player1);
 

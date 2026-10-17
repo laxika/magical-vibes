@@ -46,6 +46,7 @@ public class BoostReferencedPermanentEffectHandler implements NormalEffectHandle
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), context);
         referenced.setPowerModifier(referenced.getPowerModifier() + powerBoost);
         referenced.setToughnessModifier(referenced.getToughnessModifier() + toughnessBoost);
+        referenced.getGrantedKeywords().addAll(boost.keywords());
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(referenced.getCard())
@@ -69,8 +70,15 @@ public class BoostReferencedPermanentEffectHandler implements NormalEffectHandle
                 Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
                 yield attachedSnapshot == null ? null : findPermanent(gameData, attachedSnapshot.getId());
             }
-            case RETURNED -> findPermanentByCardId(gameData, entry.getTargetId());
+            case RETURNED -> findPermanentByCardId(gameData, returnedCardId(entry));
         };
+    }
+
+    private UUID returnedCardId(StackEntry entry) {
+        if (entry.getTargetId() != null) {
+            return entry.getTargetId();
+        }
+        return entry.getTargetCardIds() == null ? null : entry.getTargetCardIds().stream().findFirst().orElse(null);
     }
 
     private Permanent findPermanent(GameData gameData, UUID permanentId) {

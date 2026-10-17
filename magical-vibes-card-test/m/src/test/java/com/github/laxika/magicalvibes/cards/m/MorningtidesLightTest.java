@@ -40,7 +40,9 @@ class MorningtidesLightTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Gold Myr");
-        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+        }
 
         Permanent returnedOwnCreature = gqs.findPermanentById(gd,
                 harness.getPermanentId(player1, "Grizzly Bears"));

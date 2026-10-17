@@ -28,18 +28,18 @@ public class MobilizedDistrict extends Card {
     public MobilizedDistrict() {
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
 
-        PermanentAllOfPredicate legendaryCreature = new PermanentAllOfPredicate(List.of(
+        PermanentAllOfPredicate legendaryCreatureOrPlaneswalker = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
-                new PermanentIsCreaturePredicate()));
-        PermanentCount legendaryCreatureOrPlaneswalker = new PermanentCount(
-                new PermanentAnyOfPredicate(List.of(legendaryCreature, new PermanentIsPlaneswalkerPredicate())),
-                CountScope.CONTROLLER);
+                new PermanentAnyOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentIsPlaneswalkerPredicate()))));
+        PermanentCount legendaryCount = new PermanentCount(legendaryCreatureOrPlaneswalker, CountScope.CONTROLLER);
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}",
                 List.of(
-                        new ReduceActivationCostEffect(legendaryCreatureOrPlaneswalker),
+                        new ReduceActivationCostEffect(legendaryCount),
                         new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.CITIZEN), Set.of(Keyword.VIGILANCE))
                 ),
                 "{4}: This land becomes a 3/3 Citizen creature with vigilance until end of turn. It's still a land. "

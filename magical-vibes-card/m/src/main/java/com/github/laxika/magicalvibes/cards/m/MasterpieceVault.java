@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
 import java.util.UUID;
@@ -51,7 +51,7 @@ public class MasterpieceVault extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}",
-                List.of(new SacrificeSelfCost()),
+                List.of(new SacrificeSelfEffect()),
                 "{5}: Sacrifice this artifact."));
     }
 }

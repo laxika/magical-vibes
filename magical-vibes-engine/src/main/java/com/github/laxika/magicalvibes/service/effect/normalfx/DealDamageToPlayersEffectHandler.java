@@ -262,6 +262,9 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             }
         }
         UUID victimId = targetSpell != null ? targetSpell.getControllerId() : entry.getCounteredSpellControllerId();
+        if (victimId == null) {
+            victimId = entry.getRemovedPermanentControllers().get(targetCardId);
+        }
         if (victimId == null) return;
 
         if (!damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {

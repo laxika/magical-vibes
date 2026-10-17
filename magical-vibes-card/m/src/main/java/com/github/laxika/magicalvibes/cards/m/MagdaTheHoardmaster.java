@@ -30,7 +30,7 @@ public class MagdaTheHoardmaster extends Card {
                         new SacrificeMultiplePermanentsCost(3,
                                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),
                         new CreateTokenEffect("Scorpion Dragon", 4, 4, CardColor.RED,
-                                List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING, Keyword.HASTE), Set.of())
+                                List.of(CardSubtype.SCORPION, CardSubtype.DRAGON), Set.of(Keyword.FLYING, Keyword.HASTE), Set.of())
                 ),
                 "Sacrifice three Treasures: Create a 4/4 red Scorpion Dragon creature token with flying and haste. "
                         + "Activate only as a sorcery.",

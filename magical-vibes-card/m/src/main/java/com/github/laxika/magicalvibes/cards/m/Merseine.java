@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class Merseine extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new RemoveCounterFromSourceCost(1, CounterType.NET)),
+                List.of(new RemoveCounterFromSourceEffect(CounterType.NET, 1)),
                 "Pay enchanted creature's mana cost: Remove a net counter from this Aura. Only the controller of the enchanted creature may activate this ability.")
                 .withActivatableByAnyPlayer()
                 .withActivatableOnlyByEnchantedPermanentController()

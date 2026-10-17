@@ -3187,12 +3187,13 @@ public class AmountEvaluationService {
      */
     private int highestOpponentLifeTotal(GameData gameData, AmountContext ctx) {
         if (ctx.controllerId() == null) return 0;
-        int highest = 0;
+        Integer highest = null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(ctx.controllerId())) continue;
-            highest = Math.max(highest, gameData.playerLifeTotals.getOrDefault(playerId, 0));
+            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            highest = highest == null ? life : Math.max(highest, life);
         }
-        return highest;
+        return highest == null ? 0 : highest;
     }
 
     private int greatestOpponentHandSize(GameData gameData, AmountContext ctx) {

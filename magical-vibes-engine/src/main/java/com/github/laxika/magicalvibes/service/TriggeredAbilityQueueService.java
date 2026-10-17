@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.effect.NthCardDrawTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -731,7 +732,9 @@ public class TriggeredAbilityQueueService {
                     .filter(authored -> effects.stream()
                             .anyMatch(queued -> authored.getClass().equals(queued.getClass())
                                     || authored instanceof AllyCombatDamageTriggerEffect ally
-                                    && ally.effect().equals(queued)))
+                                    && ally.effect().equals(queued)
+                                    || authored instanceof NthCardDrawTriggerEffect nth
+                                    && nth.resolvedEffect().equals(queued)))
                     .mapToInt(sourceCard::getEffectTargetIndex)
                     .filter(index -> index >= 0 && index < sourceCard.getSpellTargets().size())
                     .boxed()
@@ -1538,8 +1541,8 @@ public class TriggeredAbilityQueueService {
             if (!pending.playerTargetOnly()) {
                 TargetFilter filter = pending.targetFilter();
                 if (filter == null) {
-                    validPermanentTargets =
-                            anyTargetPermanents(gameData, pending.controllerId(), pending.sourceCard());
+                    validPermanentTargets = permanentTargetsForEffects(
+                            gameData, pending.controllerId(), pending.sourceCard(), pending.effects());
                     if (pending.permanentTargetControllerId() != null) {
                         validPermanentTargets = validPermanentTargets.stream()
                                 .filter(id -> pending.permanentTargetControllerId().equals(
@@ -2054,7 +2057,29 @@ public class TriggeredAbilityQueueService {
                 .toList();
     }
 
+    /**
+     * Candidate permanents for a trigger without an explicit target filter: the "any target"
+     * permanents, or every permanent when the effect's own target spec admits a wider set
+     * ("target permanent", "target artifact").
+     */
+    private List<UUID> permanentTargetsForEffects(GameData gameData, UUID controllerId, Card sourceCard,
+                                                  List<CardEffect> effects) {
+        java.util.Optional<PermanentPredicate> restriction = effects.stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                .findFirst()
+                .flatMap(effect -> effect.targetSpec().targetPredicate().permanentRestriction());
+        if (restriction.isEmpty() || restriction.get().equals(ANY_TARGET_PERMANENTS)) {
+            return anyTargetPermanents(gameData, controllerId, sourceCard);
+        }
+        return candidatePermanents(gameData, controllerId, sourceCard, restriction.get());
+    }
+
     private List<UUID> anyTargetPermanents(GameData gameData, UUID controllerId, Card sourceCard) {
+        return candidatePermanents(gameData, controllerId, sourceCard, ANY_TARGET_PERMANENTS);
+    }
+
+    private List<UUID> candidatePermanents(GameData gameData, UUID controllerId, Card sourceCard,
+                                           PermanentPredicate predicate) {
         FilterContext filterContext =
                 new FilterContext(gameData, sourceCard == null ? null : sourceCard.getId(), controllerId, null, null);
         List<UUID> validTargets = new ArrayList<>();
@@ -2062,7 +2087,7 @@ public class TriggeredAbilityQueueService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(p, ANY_TARGET_PERMANENTS, filterContext)
+                if (predicateEvaluationService.matchesPermanentPredicate(p, predicate, filterContext)
                         && !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, p, controllerId)) {
                     validTargets.add(p.getId());
                 }

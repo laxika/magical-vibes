@@ -51,7 +51,9 @@ class MeddlingYouthsTest extends BaseCardTest {
         }
 
         declareAttackers(List.of(0, 1, 2, 3));
-        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         assertThat(countPermanents(player1, "Clue")).isEqualTo(4);
         assertThat(countPermanents(player2, "Clue")).isZero();
@@ -66,7 +68,9 @@ class MeddlingYouthsTest extends BaseCardTest {
         }
 
         declareAttackers(player2, List.of(0, 1, 2));
-        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
 
         assertThat(countPermanents(player1, "Clue")).isZero();
         assertThat(countPermanents(player2, "Clue")).isEqualTo(3);

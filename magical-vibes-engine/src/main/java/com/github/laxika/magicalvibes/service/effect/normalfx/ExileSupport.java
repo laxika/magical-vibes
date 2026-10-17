@@ -451,6 +451,9 @@ public class ExileSupport {
                 throw new IllegalStateException("Invalid card ID: " + id);
             }
         }
+        if (cardIds.stream().distinct().count() != cardIds.size()) {
+            throw new IllegalStateException("The same card can't be chosen more than once");
+        }
         if (cardIds.size() > ctx.maxCount()) {
             throw new IllegalStateException("Too many cards selected (max " + ctx.maxCount() + ")");
         }

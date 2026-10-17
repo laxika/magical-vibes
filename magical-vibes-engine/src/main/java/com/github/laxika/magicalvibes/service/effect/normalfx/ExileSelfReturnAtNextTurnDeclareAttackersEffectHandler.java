@@ -47,10 +47,12 @@ public class ExileSelfReturnAtNextTurnDeclareAttackersEffectHandler implements N
         Card card = cards.getFirst();
         permanentRemovalService.removePermanentToExile(gameData, self);
 
-        gameData.queueDelayedAction(PendingExileReturn.forNextControllerDeclareAttackers(
+        PendingExileReturn pendingReturn = PendingExileReturn.forNextControllerDeclareAttackers(
                 card, entry.getControllerId(),
                 cards.size() == 1 ? List.of() : cards.subList(1, cards.size()),
-                ((ExileSelfReturnAtNextTurnDeclareAttackersEffect) effect).returnCantBeBlocked()));
+                ((ExileSelfReturnAtNextTurnDeclareAttackersEffect) effect).returnCantBeBlocked());
+        gameData.queueDelayedAction(pendingReturn);
+        gameData.pendingExileReturnEarliestTurns.put(pendingReturn, gameData.turnNumber + 1);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
         gameLogService.append(gameData, GameLog.cardThen(card,

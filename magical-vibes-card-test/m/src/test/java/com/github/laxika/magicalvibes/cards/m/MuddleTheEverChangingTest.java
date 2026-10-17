@@ -58,8 +58,7 @@ class MuddleTheEverChangingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.handleMayAbilityChosen(player1, true));
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -73,9 +72,8 @@ class MuddleTheEverChangingTest extends BaseCardTest {
                 .contains(new DelayedPermanentAction(token.getId(),
                         DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, harness::passBothPriorities);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
     }

@@ -79,6 +79,9 @@ public class MayMiscHandlerService {
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
     private final BattlefieldEntryService battlefieldEntryService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final EquipSupport equipSupport;
@@ -702,6 +705,18 @@ public class MayMiscHandlerService {
 
         if (deck.isEmpty()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted && deck.getFirst().isAura()) {
+            // CR 303.4f: the controller chooses what an Aura put onto the battlefield enchants; the
+            // batch leaves the Aura in the library when there is no legal host.
+            battlefieldEntryBatchSupport.begin(gameData, List.of(
+                    new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                            controllerId, controllerId, deck.getFirst(), Zone.LIBRARY, null)));
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
 

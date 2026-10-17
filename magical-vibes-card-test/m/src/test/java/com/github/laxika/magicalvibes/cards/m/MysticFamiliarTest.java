@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -106,7 +107,9 @@ class MysticFamiliarTest extends BaseCardTest {
         harness.setHand(player2, List.of(new CripplingFatigue()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.passPriority(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castSorcery(player2, 0, familiar.getId());
 
         fillGraveyard(player1, 7);
@@ -127,7 +130,9 @@ class MysticFamiliarTest extends BaseCardTest {
         harness.setHand(player2, List.of(new CripplingFatigue()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.passPriority(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.castAndResolveSorcery(player2, 0, familiar.getId());
 

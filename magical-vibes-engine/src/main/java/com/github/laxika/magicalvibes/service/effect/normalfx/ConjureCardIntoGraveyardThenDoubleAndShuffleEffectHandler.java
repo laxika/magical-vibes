@@ -54,10 +54,6 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
         if (conjure.dyingCardId() == null) {
             return;
         }
-        Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, conjure.dyingCardId());
-        if (dyingCard == null) {
-            return;
-        }
 
         UUID controllerId = entry.getControllerId();
         Card duplicate = conjure.cardFactory().get();
@@ -67,15 +63,15 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
                 gameData, controllerId, duplicate);
         triggerCollectionService.checkConjureTriggers(gameData, controllerId, 1);
 
-        rememberDouble(gameData, dyingCard);
-        rememberDouble(gameData, duplicate);
+        rememberDouble(gameData, conjure.dyingCardId(), duplicate);
+        rememberDouble(gameData, duplicate.getId(), duplicate);
 
         Map<UUID, Integer> movedByOwner = new HashMap<>();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
-            moveToOwnersLibrary(gameData, dyingCard, movedByOwner);
+            moveToOwnersLibrary(gameData, conjure.dyingCardId(), movedByOwner);
             if (duplicateEnteredGraveyard) {
-                moveToOwnersLibrary(gameData, duplicate, movedByOwner);
+                moveToOwnersLibrary(gameData, duplicate.getId(), movedByOwner);
             }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
@@ -91,12 +87,14 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
                         + " then shuffles them into their owners' libraries."));
     }
 
-    private void rememberDouble(GameData gameData, Card card) {
-        int power = effectiveValue(card.getPower(), gameData.perpetualCardPowerToughnessModifiers
-                .get(card.getId()), true);
-        int toughness = effectiveValue(card.getToughness(), gameData.perpetualCardPowerToughnessModifiers
-                .get(card.getId()), false);
-        PerpetualCardPowerToughnessSupport.remember(gameData, card, power, toughness);
+    private void rememberDouble(GameData gameData, UUID cardId, Card printedSource) {
+        CardPowerToughnessModifier current = gameData.perpetualCardPowerToughnessModifiers.get(cardId);
+        int power = effectiveValue(printedSource.getPower(), current, true);
+        int toughness = effectiveValue(printedSource.getToughness(), current, false);
+        gameData.perpetualCardPowerToughnessModifiers.merge(
+                cardId,
+                new CardPowerToughnessModifier(power, toughness),
+                (existing, added) -> existing.add(added.power(), added.toughness()));
     }
 
     private int effectiveValue(Integer printedValue, CardPowerToughnessModifier modifier, boolean power) {
@@ -107,14 +105,15 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
         return value;
     }
 
-    private void moveToOwnersLibrary(GameData gameData, Card card, Map<UUID, Integer> movedByOwner) {
-        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+    private void moveToOwnersLibrary(GameData gameData, UUID cardId, Map<UUID, Integer> movedByOwner) {
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
         List<Card> library = ownerId == null ? null : gameData.playerDecks.get(ownerId);
         if (ownerId == null || library == null) {
             return;
         }
 
-        permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+        Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+        permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
         library.add(card);
         movedByOwner.merge(ownerId, 1, Integer::sum);
     }

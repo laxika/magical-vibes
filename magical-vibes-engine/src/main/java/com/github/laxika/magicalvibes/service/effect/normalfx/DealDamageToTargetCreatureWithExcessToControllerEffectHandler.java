@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -37,13 +38,15 @@ public class DealDamageToTargetCreatureWithExcessToControllerEffectHandler
             return;
         }
 
+        Permanent damageSource = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, e.damage(),
-                AmountContext.forStackEntry(entry, gameQueryService.findPermanentById(
-                        gameData, entry.getSourcePermanentId())));
+                AmountContext.forStackEntry(entry, damageSource));
         int damage = evaluatedDamage;
         int markedDamageBefore = target.getMarkedDamage();
+        boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(
+                gameData, entry, damageSource, Keyword.DEATHTOUCH);
         int excessDamage = damageSupport.computeExcessDamageToCreature(
-                gameData, target, damage, markedDamageBefore, false);
+                gameData, target, damage, markedDamageBefore, sourceHasDeathtouch);
         int damageToCreature = Math.max(0, damage - excessDamage);
 
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());

@@ -99,6 +99,7 @@ class MessengerHawkTest extends BaseCardTest {
         draw(player1);
         assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(3);
 
+        harness.setHand(player1, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, hawk)).isEqualTo(1);

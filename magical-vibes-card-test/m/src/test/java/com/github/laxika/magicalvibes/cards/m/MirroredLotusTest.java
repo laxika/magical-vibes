@@ -40,8 +40,9 @@ class MirroredLotusTest extends BaseCardTest {
     }
 
     @Test
-    void reflectOffersPaymentDuringEntryWithoutPassingPriority() {
+    void reflectOffersPaymentWhenTheEntryTriggerResolves() {
         harness.enterBattlefieldAndReturn(player1, new MirroredLotus());
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }

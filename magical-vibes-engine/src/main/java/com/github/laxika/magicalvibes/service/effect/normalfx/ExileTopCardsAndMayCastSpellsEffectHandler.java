@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -105,7 +106,8 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                                 .text(" from the top of their library.")
                                 .build());
 
-                if (isCastable(card, e, entry) && card.getManaValue() <= manaValueLimit) {
+                if (isCastable(card, e, entry) && card.getManaValue() <= manaValueLimit
+                        || hasCastableAdventureFace(card, e, entry, manaValueLimit)) {
                     castableSpellIds.add(card.getId());
                 } else if (e.playLands() && card.hasType(CardType.LAND)) {
                     castableSpellIds.add(card.getId());
@@ -191,6 +193,16 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
             return true;
         }
         return card.getType().isPermanentType() && !card.hasType(CardType.LAND);
+    }
+
+    /** The Adventure half of an exiled Adventure card is a spell of its own, with its own mana value. */
+    private boolean hasCastableAdventureFace(Card card, ExileTopCardsAndMayCastSpellsEffect effect,
+                                             StackEntry entry, int manaValueLimit) {
+        Card adventure = card.getBackFaceCard();
+        return card.getCastingOption(AdventureCast.class).isPresent()
+                && adventure != null
+                && adventure.getManaValue() <= manaValueLimit
+                && isCastable(adventure, effect, entry);
     }
 
     private boolean isCastable(Card card, ExileTopCardsAndMayCastSpellsEffect effect, StackEntry entry) {

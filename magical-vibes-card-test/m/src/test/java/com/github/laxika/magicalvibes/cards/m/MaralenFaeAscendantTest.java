@@ -73,11 +73,20 @@ class MaralenFaeAscendantTest extends BaseCardTest {
     @Test
     void selfEntryExilesEvenWithOnlyOneCardInLibrary() {
         harness.setLibrary(player2, List.of(new Opt()));
-        Permanent maralen = harness.enterBattlefieldAndReturn(player1, new MaralenFaeAscendant());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MaralenFaeAscendant()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
+        Permanent maralen = findPermanent(player1, "Maralen, Fae Ascendant");
         assertThat(gd.getCardsExiledByPermanent(maralen.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }

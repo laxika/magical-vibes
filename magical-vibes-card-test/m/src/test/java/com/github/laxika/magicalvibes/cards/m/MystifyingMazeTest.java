@@ -138,7 +138,7 @@ class MystifyingMazeTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Mind Control");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
         harness.passUntil(player2, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(findPermanent(player1, "Llanowar Elves").isTapped()).isTrue();
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");

@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PackHuntEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,7 +53,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
             for (Permanent p : battlefield) {
                 if (!p.isTapped()
                         && gameQueryService.isCreature(gameData, p)
-                        && p.getCard().getSubtypes().contains(huntSubtype)) {
+                        && gameQueryService.hasEffectiveSubtype(gameData, p, huntSubtype)) {
                     p.tap();
                     tappedHunters.add(p);
                     gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " taps ", p.getCard(), "."));
@@ -72,25 +75,27 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        // Step 3: Target creature deals damage equal to its power divided evenly among tapped creatures.
-        // Skip entirely when targetPower is 0 — the division below would produce no damage and spam 0-damage log lines.
+        // Step 3: Target creature deals damage equal to its power divided as its controller chooses
+        // among the creatures tapped this way. Skip entirely when its power is 0.
         int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
         if (targetPower > 0) {
-            int baseDamage = targetPower / tappedHunters.size();
-            int remainder = targetPower % tappedHunters.size();
-
-            for (int i = 0; i < tappedHunters.size(); i++) {
-                Permanent hunter = tappedHunters.get(i);
-                int damage = baseDamage + (i < remainder ? 1 : 0);
-                if (damage > 0) {
-                    if (!(gameQueryService.isDamagePreventable(gameData)
-                            && gameQueryService.hasProtectionFromSource(gameData, hunter, target))) {
-                        int actualDamage = damage;
-                        damageSupport.dealCreatureDamage(gameData, entry, hunter, actualDamage, target);
-                    } else {
-                        gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), "'s damage to ", hunter.getCard(), " is prevented."));
-                    }
+            if (tappedHunters.size() == 1) {
+                Permanent hunter = tappedHunters.getFirst();
+                if (!(gameQueryService.isDamagePreventable(gameData)
+                        && gameQueryService.hasProtectionFromSource(gameData, hunter, target))) {
+                    damageSupport.dealCreatureDamage(gameData, entry, hunter, targetPower, target);
+                } else {
+                    gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), "'s damage to ", hunter.getCard(), " is prevented."));
                 }
+            } else {
+                UUID choosingPlayerId = gameQueryService.findPermanentController(gameData, target.getId());
+                List<UUID> hunterIds = tappedHunters.stream().map(Permanent::getId).toList();
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.PackHuntDamageAssignment(
+                        entry.getCard(), entry.getControllerId(), target.getId(), choosingPlayerId, hunterIds,
+                        java.util.Map.of(), targetPower));
+                playerInputService.beginPermanentChoice(gameData, choosingPlayerId, hunterIds,
+                        "Choose a creature to be dealt 1 damage (" + targetPower + " left to assign).");
+                return;
             }
         }
 

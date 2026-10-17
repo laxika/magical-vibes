@@ -142,7 +142,7 @@ class MysticRemoraTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent with mana is prompted to pay")
     void opponentWithManaIsPrompted() {
-        setupOpponentCastsNoncreatureWithMana();
+        setupOpponentCastsNoncreatureWithMana(1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -153,7 +153,7 @@ class MysticRemoraTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent pays — no draw offer")
     void opponentPaysNoDraw() {
-        setupOpponentCastsNoncreatureWithMana();
+        setupOpponentCastsNoncreatureWithMana(1);
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -167,7 +167,7 @@ class MysticRemoraTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent declines — controller is offered a draw and may accept")
     void opponentDeclinesControllerDraws() {
-        setupOpponentCastsNoncreatureWithMana();
+        setupOpponentCastsNoncreatureWithMana(1);
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -185,7 +185,7 @@ class MysticRemoraTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent declines — controller may decline the draw")
     void opponentDeclinesControllerDeclinesDraw() {
-        setupOpponentCastsNoncreatureWithMana();
+        setupOpponentCastsNoncreatureWithMana(1);
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -239,7 +239,7 @@ class MysticRemoraTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
         for (int i = 0; i < 4; i++) {
-            harness.tapPermanent(player2, i);
+            gs.tapPermanent(gd, player2, i);
         }
         harness.handleMayAbilityChosen(player2, true);
 
@@ -278,8 +278,7 @@ class MysticRemoraTest extends BaseCardTest {
     @Test
     @DisplayName("Each Remora requires a separate payment for the same spell")
     void multipleRemorasRequireSeparatePayments() {
-        harness.addToBattlefield(player1, new MysticRemora());
-        setupOpponentCastsNoncreatureWithMana();
+        setupOpponentCastsNoncreatureWithMana(2);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         assertThat(gd.stack).hasSize(3);
@@ -295,8 +294,10 @@ class MysticRemoraTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
-    private void setupOpponentCastsNoncreatureWithMana() {
-        harness.addToBattlefield(player1, new MysticRemora());
+    private void setupOpponentCastsNoncreatureWithMana(int remoraCount) {
+        for (int i = 0; i < remoraCount; i++) {
+            harness.addToBattlefield(player1, new MysticRemora());
+        }
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -307,7 +308,7 @@ class MysticRemoraTest extends BaseCardTest {
 
         harness.castArtifact(player2, 0);
 
-        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).hasSize(remoraCount + 1);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }
 }

@@ -48,9 +48,10 @@ public class ExileTargetCreatureCardCreateTokensEqualToToughnessEffectHandler im
             return;
         }
 
-        // Printed toughness of the card in the graveyard (null / negative clamped to 0), captured
-        // before it leaves the graveyard.
-        int toughness = targetCard.getToughness() == null ? 0 : Math.max(0, targetCard.getToughness());
+        // Toughness of the card as it currently is in the graveyard (characteristic-defined values
+        // included), read before it leaves the graveyard; null / negative clamped to 0.
+        Integer effectiveToughness = gameQueryService.getEffectiveCardToughness(gameData, targetCard);
+        int toughness = effectiveToughness == null ? 0 : Math.max(0, effectiveToughness);
 
         graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard);
 

@@ -45,7 +45,7 @@ public class DoubleOtherOwnCreaturesPowerEffectHandler implements NormalEffectHa
             }
             int currentPower = gameQueryService.getEffectivePower(gameData, permanent);
             permanent.setPowerModifier(permanent.getPowerModifier()
-                    + MaroGoneNutsSupport.apply(gameData, effect, currentPower));
+                    + MaroGoneNutsSupport.doublingIncrease(gameData, effect, currentPower));
             count++;
         }
 

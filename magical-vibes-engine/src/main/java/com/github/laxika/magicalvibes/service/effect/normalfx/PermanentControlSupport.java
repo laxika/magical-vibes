@@ -277,11 +277,8 @@ public class PermanentControlSupport {
             Permanent tokenPermanent = new Permanent(tokenCard);
             if (tokenBlueprint.initialPlusOnePlusOneCounters() > 0
                     && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, tokenPermanent, controllerId)) {
-                int initial = tokenBlueprint.initialPlusOnePlusOneCounters();
-                if (blueprintIsCreature) {
-                    initial = gameQueryService.doublePlusOnePlusOneCounters(
-                            gameData, tokenPermanent, controllerId, initial);
-                }
+                int initial = gameQueryService.doublePlusOnePlusOneCounters(
+                        gameData, tokenPermanent, controllerId, tokenBlueprint.initialPlusOnePlusOneCounters());
                 if (initial > 0) {
                     tokenPermanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, initial);
                 }
@@ -331,7 +328,7 @@ public class PermanentControlSupport {
                 String logEntry = "A " + blueprintPower + "/" + blueprintToughness + " " + colorDesc + tokenBlueprint.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
             if (!hasNativeDevour) gameLogService.append(gameData, GameLog.text(logEntry));
 
-                if (!hasNativeDevour) battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+                if (!hasNativeDevour) battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenPermanent.getCard(), null, false);
                 if (!hasNativeDevour && !gameData.interaction.isAwaitingInput()) {
                     legendRuleService.checkLegendRule(gameData, controllerId);
                 }
@@ -343,7 +340,7 @@ public class PermanentControlSupport {
                 // Fire ally-artifact / equipment / etc. enters triggers (e.g. Voldaren Bloodcaster
                 // watching Blood tokens). Same entry pipeline as creature tokens — type checks
                 // inside BattlefieldEntryService gate creature-only slots.
-                if (!hasNativeDevour) battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+                if (!hasNativeDevour) battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenPermanent.getCard(), null, false);
                 if (!hasNativeDevour && !gameData.interaction.isAwaitingInput()) {
                     legendRuleService.checkLegendRule(gameData, controllerId);
                 }

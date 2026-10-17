@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.AllColorWordsBecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -253,6 +254,13 @@ public final class TextChangeTransformer {
                         exile.trackWithSource(), exile.returnOneAtEachUpkeep(), exile.ownerMayPlayWhileExiled(),
                         exile.perpetualCastCostIncrease(), exile.perpetualEnterTapped(),
                         exile.controllerMayPlayWhileExiled(), exile.controllerMaySpendAnyManaType());
+            }
+            case DestroyAllPermanentsEffect destroy -> {
+                PermanentPredicate filter = apply(destroy.filter(), substitution);
+                CardEffect thenEffect = apply(destroy.thenEffect(), substitution);
+                yield filter == destroy.filter() && thenEffect == destroy.thenEffect() ? destroy
+                        : new DestroyAllPermanentsEffect(filter, destroy.cannotBeRegenerated(), destroy.scope(),
+                        thenEffect, destroy.sparesPermanentsCreatedThisResolution(), destroy.destroyedCountScope());
             }
             case ChangeColorTextEffect change -> {
                 CardSubtype excluded = replaceSubtype(change.excludedReplacementCreatureType(), substitution);

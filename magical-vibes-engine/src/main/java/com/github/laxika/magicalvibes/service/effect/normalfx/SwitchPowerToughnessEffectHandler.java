@@ -53,10 +53,12 @@ public class SwitchPowerToughnessEffectHandler implements NormalEffectHandlerBea
 
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                    switchEffect, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    switchEffect, target.getId(), null, null,
+                    switchEffect.indefinite() ? EffectDuration.PERMANENT : EffectDuration.UNTIL_END_OF_TURN, 0));
 
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                    "'s power and toughness are switched until end of turn."));
+                    switchEffect.indefinite() ? "'s power and toughness are switched."
+                            : "'s power and toughness are switched until end of turn."));
 
             log.info("Game {} - {}'s power and toughness switched", gameData.id, target.getCard().getName());
         }

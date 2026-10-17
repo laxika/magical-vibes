@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -36,6 +37,6 @@ public class MerfolkTunnelGuide extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.MERFOLK),
                         new ExploreEffect(true, merfolkCreature)),
-                targetFilter));
+                BoonTrigger.PERMANENT_ENTERS, targetFilter));
     }
 }

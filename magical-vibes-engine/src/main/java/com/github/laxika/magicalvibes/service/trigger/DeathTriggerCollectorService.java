@@ -546,10 +546,6 @@ public class DeathTriggerCollectorService {
         int counters = effect.counterType() == null
                 ? dyingPermanent.getTotalCounterCount()
                 : dyingPermanent.getCounterCount(effect.counterType());
-        if (counters < 1) {
-            return false;
-        }
-
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sd.dyingCard(),
@@ -845,10 +841,7 @@ public class DeathTriggerCollectorService {
     boolean handleLosesLifeEqualToPower(TriggerMatchContext match,
             TargetPlayerLosesLifeEqualToPowerEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
-        Permanent dyingPermanent = sd.dyingPermanent();
-        int power = dyingPermanent != null ? dyingPermanent.getEffectivePower()
-                : (sd.dyingCard().getPower() != null ? sd.dyingCard().getPower() : 0);
-        CardEffect resolved = new LoseLifeEffect(Math.max(0, power), LoseLifeRecipient.TARGET_PLAYER);
+        CardEffect resolved = new LoseLifeEffect(Math.max(0, sd.dyingPower()), LoseLifeRecipient.TARGET_PLAYER);
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                 sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(resolved))
         ));
@@ -1059,6 +1052,8 @@ public class DeathTriggerCollectorService {
         entry.setTriggeringCardId(sd.dyingCard().getId());
         entry.setTriggeringCardGraveyardEntryVersion(
                 match.gameData().graveyardEntryVersion(sd.dyingCard().getId()));
+        entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, sd.dyingPower()));
+        entry.setEventValue(sd.dyingPower());
         match.gameData().stack.add(entry);
         return true;
     }
@@ -2019,6 +2014,11 @@ public class DeathTriggerCollectorService {
     boolean handleArtifactGraveyardDamageController(TriggerMatchContext match,
             DealDamageToPlayersEffect effect, TriggerContext ctx) {
         TriggerContext.ArtifactGraveyard ag = (TriggerContext.ArtifactGraveyard) ctx;
+        // "Whenever another artifact is put into a graveyard from the battlefield" (Magnetic Mine).
+        if (ag.artifactCard() != null && (ag.artifactCard().getId().equals(match.permanent().getCard().getId())
+                || ag.artifactCard().getId().equals(match.permanent().getOriginalCard().getId()))) {
+            return false;
+        }
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -2454,10 +2454,14 @@ public class DeathTriggerCollectorService {
             com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnTopOfLibraryEffect effect,
             TriggerContext ctx) {
         var death = (TriggerContext.AnyPermanentGraveyard) ctx;
-        match.gameData().enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(), match.controllerId(), match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect.boundToDyingCard(death.dyingCard().getId()))),
-                null, match.permanent().getId()));
+                null, match.permanent().getId());
+        entry.setTriggeringCardId(death.dyingCard().getId());
+        entry.setTriggeringCardGraveyardEntryVersion(
+                match.gameData().graveyardEntryVersion(death.dyingCard().getId()));
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
@@ -2682,6 +2686,26 @@ public class DeathTriggerCollectorService {
         log.info("Game {} - {} triggers (nontoken permanent put into a graveyard from the battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
+    }
+
+    /**
+     * A permanent-characteristic filter on a nontoken-to-graveyard trigger is judged against the permanent as it
+     * last existed on the battlefield, so an animated land that dies still counts as a creature.
+     */
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleAllyNontokenPermanentGraveyardConditional(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect effect, TriggerContext ctx) {
+        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
+        if (death.dyingPermanent() == null || !predicateEvaluationService.matchesPermanentPredicate(
+                death.dyingPermanent(), effect.predicate(), FilterContext.of(match.gameData())
+                        .withSourceCardId(match.permanent().getCard().getId())
+                        .withSourcePermanentId(match.permanent().getId())
+                        .withSourcePermanentSnapshot(match.permanent())
+                        .withSourceControllerId(match.controllerId()))) {
+            return false;
+        }
+        return handleAllyNontokenPermanentGraveyardDefault(match, effect.wrapped(), ctx);
     }
 
     @CollectsTrigger(value = CardEffect.class,
@@ -3451,10 +3475,6 @@ public class DeathTriggerCollectorService {
         int counters = effect.counterType() == null
                 ? dyingPermanent.getTotalCounterCount()
                 : dyingPermanent.getCounterCount(effect.counterType());
-        if (counters < 1) {
-            return false;
-        }
-
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

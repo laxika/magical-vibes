@@ -31,6 +31,7 @@ class MoorlandRescuerTest extends BaseCardTest {
 
         harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -53,6 +54,7 @@ class MoorlandRescuerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(bears, hillGiant));
 
         harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(

@@ -89,6 +89,7 @@ class MightOfTheMeekTest extends BaseCardTest {
     @Test
     void opponentsMouseIsLegalTargetButDoesNotEnableBoost() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ManifoldMouse());
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new MightOfTheMeek()));
         harness.setLibrary(player1, List.of(new MightOfTheMeek()));
         harness.addMana(player1, ManaColor.RED, 1);

@@ -40,7 +40,8 @@ import java.util.Set;
 @Getter
 public class CharacteristicState {
 
-    private static final Set<Keyword> TRIGGER_INSTANCE_KEYWORDS = EnumSet.of(Keyword.PERSIST, Keyword.UNDYING);
+    private static final Set<Keyword> TRIGGER_INSTANCE_KEYWORDS =
+            EnumSet.of(Keyword.PERSIST, Keyword.UNDYING, Keyword.EXALTED, Keyword.DETHRONE);
 
     private String name;
     private final Set<CardType> cardTypes = EnumSet.noneOf(CardType.class);

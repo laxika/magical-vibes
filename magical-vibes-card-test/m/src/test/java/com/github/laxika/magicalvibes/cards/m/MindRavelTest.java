@@ -155,8 +155,8 @@ class MindRavelTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 2);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }

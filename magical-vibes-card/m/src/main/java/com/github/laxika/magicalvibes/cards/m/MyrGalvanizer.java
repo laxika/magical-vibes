@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -27,8 +30,10 @@ public class MyrGalvanizer extends Card {
         // {1}, {T}: Untap each other Myr you control.
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}",
-                List.of(new UntapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES, 
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MYR)))),
+                List.of(new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MYR)),
+                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))))),
                 "{1}, {T}: Untap each other Myr you control."
         ));
     }

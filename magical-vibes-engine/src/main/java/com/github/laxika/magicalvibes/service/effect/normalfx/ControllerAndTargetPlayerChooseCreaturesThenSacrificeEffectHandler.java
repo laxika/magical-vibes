@@ -36,18 +36,25 @@ public class ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         UUID targetPlayerId = entry.getTargetId();
-        List<PendingForcedSacrifice> choosers = new ArrayList<>();
-        List<UUID> automaticChoices = new ArrayList<>();
-
-        addChooser(gameData, controllerId, controllerId, choosers, automaticChoices);
-        addChooser(gameData, targetPlayerId, controllerId, choosers, automaticChoices);
-
-        if (choosers.stream().allMatch(choice -> choice.validPermanentIds().size() <= choice.count())) {
-            completeAfterChoices(gameData, automaticChoices);
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)
+                || !gameQueryService.canEffectCauseSacrifice(gameData, targetPlayerId, controllerId)) {
             return;
         }
 
-        beginNextChoice(gameData, choosers, automaticChoices, entry);
+        List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, targetPlayerId,
+                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
+        if (creatureIds.isEmpty()) {
+            return;
+        }
+        if (creatureIds.size() == 1) {
+            completeAfterChoices(gameData, creatureIds);
+            return;
+        }
+
+        List<PendingForcedSacrifice> choosers = List.of(
+                new PendingForcedSacrifice(controllerId, 1, creatureIds),
+                new PendingForcedSacrifice(targetPlayerId, 1, creatureIds));
+        beginNextChoice(gameData, choosers, List.of(), entry);
     }
 
     /** Completes one private choice and prompts the other player, if needed. */
@@ -64,25 +71,6 @@ public class ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
         completeAfterChoices(gameData, allChoices);
     }
 
-    private void addChooser(GameData gameData, UUID playerId, UUID sourceControllerId,
-                            List<PendingForcedSacrifice> choosers, List<UUID> automaticChoices) {
-        if (playerId == null || !gameData.playerIds.contains(playerId)
-                || !gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)) {
-            return;
-        }
-
-        List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, playerId,
-                permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent));
-        if (creatureIds.isEmpty()) {
-            return;
-        }
-        if (creatureIds.size() == 1) {
-            automaticChoices.add(creatureIds.getFirst());
-        } else {
-            choosers.add(new PendingForcedSacrifice(playerId, 1, creatureIds));
-        }
-    }
-
     private void beginNextChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                  List<UUID> accumulatedChoices, StackEntry resolvingEntry) {
         PendingForcedSacrifice next = choosers.getFirst();
@@ -90,12 +78,13 @@ public class ControllerAndTargetPlayerChooseCreaturesThenSacrificeEffectHandler
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(), 1,
                 new MultiPermanentChoiceContext.ControllerAndTargetPlayerChooseCreaturesThenSacrifice(
                         remaining, accumulatedChoices, resolvingEntry),
-                "Choose a creature to sacrifice.");
+                "Secretly choose a creature the target player controls to be sacrificed.");
     }
 
     private void completeAfterChoices(GameData gameData, List<UUID> permanentIds) {
-        if (!permanentIds.isEmpty()) {
-            destructionSupport.performSimultaneousSacrifice(gameData, permanentIds);
+        List<UUID> distinctIds = permanentIds.stream().distinct().toList();
+        if (!distinctIds.isEmpty()) {
+            destructionSupport.performSimultaneousSacrifice(gameData, distinctIds);
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }

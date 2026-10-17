@@ -39,7 +39,7 @@ class MishraTamerOfMakFawaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Icy Manipulator");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Icy Manipulator");
     }
 

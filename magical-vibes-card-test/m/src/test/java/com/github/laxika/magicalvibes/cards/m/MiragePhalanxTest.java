@@ -52,9 +52,8 @@ class MiragePhalanxTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Grizzly Bears"))
                 .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Mirage Phalanx"))
                 .filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();

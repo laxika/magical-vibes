@@ -29,6 +29,13 @@ public class PutCounterOnSelfThenDrawPerCounterEffectHandler implements NormalEf
         UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
         Permanent self = gameQueryService.findPermanentById(gameData, selfId);
         if (self == null) {
+            // The source left the battlefield: no counter can be put on it, but "for each counter on it"
+            // uses its last known information.
+            Permanent lastKnown = entry.getSourcePermanentSnapshot();
+            if (lastKnown != null) {
+                playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(),
+                        lastKnown.getCounterCount(e.counterType()));
+            }
             return;
         }
 

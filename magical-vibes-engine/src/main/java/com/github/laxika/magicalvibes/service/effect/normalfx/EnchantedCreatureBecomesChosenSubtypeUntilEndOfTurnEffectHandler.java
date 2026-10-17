@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -14,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -42,14 +47,19 @@ public class EnchantedCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler im
 
         Permanent aura = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent enchanted = aura == null || aura.getAttachedTo() == null
-                ? null : gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        UUID enchantedId = aura != null ? aura.getAttachedTo()
+                : entry.getAttachedPermanentSnapshot() != null ? entry.getAttachedPermanentSnapshot().getId() : null;
+        Permanent enchanted = enchantedId == null ? null : gameQueryService.findPermanentById(gameData, enchantedId);
         if (enchanted == null) {
             return;
         }
 
         enchanted.setTransientCreatureTypeOverride(chosenSubtype);
         enchanted.getTransientCreatureTypeOverrides().clear();
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, GrantScope.TARGET, true),
+                enchanted.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.builder()
                 .card(enchanted.getCard())
                 .text(" becomes a " + chosenSubtype.getDisplayName() + " until end of turn.")

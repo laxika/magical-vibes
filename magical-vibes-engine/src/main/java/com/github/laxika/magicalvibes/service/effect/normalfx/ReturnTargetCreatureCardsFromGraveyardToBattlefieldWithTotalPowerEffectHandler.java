@@ -49,7 +49,8 @@ public class ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEf
                     entry.getControllerId(), null, null, entry.getXValue())) {
                 return;
             }
-            totalPower += card.getPower() == null ? 0 : card.getPower();
+            Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
+            totalPower += power == null ? 0 : power;
         }
 
         if (totalPower > returnEffect.maxTotalPower()) {

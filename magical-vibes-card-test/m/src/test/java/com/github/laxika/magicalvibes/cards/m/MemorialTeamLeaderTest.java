@@ -74,6 +74,8 @@ class MemorialTeamLeaderTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(leader.getId())).isNotNull();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

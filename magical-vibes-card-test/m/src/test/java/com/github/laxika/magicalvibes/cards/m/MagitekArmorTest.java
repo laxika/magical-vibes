@@ -89,6 +89,8 @@ class MagitekArmorTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, armor)).isTrue();
         assertThat(armor.isSummoningSick()).isTrue();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gqs.isCreature(gd, armor)).isFalse();
         assertThat(findPermanents(player1, "Hero")).containsExactly(hero);

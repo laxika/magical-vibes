@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfAllLandsEffect;
@@ -51,10 +53,17 @@ public class GainActivatedAbilitiesOfAllLandsSelfEffectHandler implements Static
                                                 StaticBonusAccumulator accumulator) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         boolean losesAllAbilities = staticBonus.losesAllAbilities()
-                || permanent.isLosesAllAbilitiesUntilEndOfTurn();
+                || gameQueryService.hasLostAllAbilities(gameData, permanent);
         List<ActivatedAbility> abilities = new ArrayList<>();
         if (losesAllAbilities || permanent.isFaceDown()) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
+            if (!permanent.isFaceDown()) {
+                // A land type change removes the printed abilities but the land keeps the intrinsic
+                // mana ability of its basic land types (CR 305.6), which Manascape Refractor copies.
+                for (ManaColor color : gameQueryService.intrinsicBasicLandManaColors(gameData, permanent)) {
+                    abilities.add(ManaAbilities.tapFor(color));
+                }
+            }
         } else if (staticBonus.losesAllNonManaAbilities()) {
             abilities.addAll(permanent.getCard().getActivatedAbilities().stream()
                     .filter(ActivatedAbility::isManaAbility)

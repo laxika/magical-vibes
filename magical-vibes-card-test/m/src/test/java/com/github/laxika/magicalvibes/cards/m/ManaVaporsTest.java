@@ -146,6 +146,6 @@ class ManaVaporsTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         Player nextActivePlayer = currentActivePlayer.getId().equals(player1.getId()) ? player2 : player1;
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
+        harness.passUntil(nextActivePlayer, TurnStep.UPKEEP);
     }
 }

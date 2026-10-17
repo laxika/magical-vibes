@@ -140,6 +140,7 @@ class MorgueBurstTest extends BaseCardTest {
     void canTargetBattle() {
         Card creature = new KraulWarrior();
         var battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new MorgueBurst()));
         giveMana();

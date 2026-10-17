@@ -149,6 +149,9 @@ class MineLayerTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
         land.setCounterCount(CounterType.MINE, 1);
         harness.tapPermanent(player2, 0);
+        harness.ensurePriority(player2);
+        harness.passPriority(player2);
+        assertThat(gd.stack).hasSize(1);
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);

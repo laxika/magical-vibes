@@ -38,6 +38,11 @@ public class ExileDiscardedCardFromGraveyardMayPlayUntilNextTurnEffectHandler
         if (discardedCardId == null) {
             return;
         }
+        // A card that left the graveyard and came back is a new object (CR 400.7), not the discarded one.
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(discardedCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
 
         UUID graveyardOwnerId = null;
         Card discardedCard = null;

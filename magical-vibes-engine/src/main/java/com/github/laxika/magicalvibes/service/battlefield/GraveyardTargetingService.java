@@ -1311,6 +1311,9 @@ public class GraveyardTargetingService {
             throw new IllegalStateException("Not enough legal graveyard targets");
         }
 
+        if (matchingCards.isEmpty() && minTargets == 0) {
+            return;
+        }
         int maxTargets = Math.min(maxTargetsCap, matchingCards.size());
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;

@@ -185,6 +185,8 @@ class MuerraTrashTacticianTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.RED, 8);
         castShocks(8);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());

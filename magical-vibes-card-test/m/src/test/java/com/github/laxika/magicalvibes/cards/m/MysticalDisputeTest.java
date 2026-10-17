@@ -122,7 +122,7 @@ class MysticalDisputeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, pair.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("mana");
+                .hasMessageContaining("not playable");
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(dispute);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);

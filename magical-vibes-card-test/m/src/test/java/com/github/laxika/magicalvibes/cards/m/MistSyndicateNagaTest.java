@@ -56,6 +56,8 @@ class MistSyndicateNagaTest extends BaseCardTest {
     @Test
     @DisplayName("A token copy enters untapped and outside combat and can create another copy")
     void tokenCopyCanCreateAnotherCopy() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent naga = addCreatureReady(player1, new MistSyndicateNaga());
         naga.setAttacking(true);
         resolveCombat();

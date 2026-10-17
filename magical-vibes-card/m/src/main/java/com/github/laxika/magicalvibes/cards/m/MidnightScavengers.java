@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -22,15 +23,15 @@ public class MidnightScavengers extends Card {
         setBackFaceCard(new ChitteringHost());
 
         // When this creature enters, you may return target creature card with mana value 3 or less
-        // from your graveyard to your hand. (Optional = empty MultiGraveyardChoice; no MayEffect.)
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
+        // from your graveyard to your hand. The target is chosen when the ability goes on the stack;
+        // the "may" is decided on resolution.
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
-                .upTo(true)
-                .build());
+                .build(), "Return the targeted creature card to your hand?"));
     }
 
     @Override

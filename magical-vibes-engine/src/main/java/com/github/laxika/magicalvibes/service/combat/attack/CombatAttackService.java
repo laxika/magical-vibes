@@ -771,6 +771,9 @@ public class CombatAttackService {
             if (!validTargetIds.contains(targetId)) {
                 throw new IllegalStateException("Invalid attack target for attacker at index " + idx);
             }
+            if (pending.choosingForOpponent() && !targetId.equals(defenderId)) {
+                throw new IllegalStateException("Only the active player can choose what an attacker attacks");
+            }
             // Validate must-attack-target constraints (e.g. Alluring Siren forces attack on specific player)
             Permanent attacker = battlefield.get(idx);
             if (attacker.getMustAttackTargetId() != null
@@ -1590,26 +1593,30 @@ public class CombatAttackService {
                     gameData, attacker, new PermanentAttacksPlayerWithMostLifePredicate())) {
                 continue;
             }
-            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
-            try {
-                List<CardEffect> dethroneEffects = List.of(new PutCountersOnSourceEffect(1, 1, 1));
-                StackEntry dethroneTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        playerId,
-                        attacker.getCard().getName() + "'s dethrone",
-                        dethroneEffects,
-                        null,
-                        attacker.getId()
-                );
-                gameData.stack.add(dethroneTrigger);
-                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                        gameData, attacker, dethroneTrigger);
-                gameLogService.append(gameData,
-                        GameLog.builder().card(attacker.getCard()).text("'s dethrone triggers.").build());
-                log.info("Game {} - {} dethrone trigger pushed onto stack", gameData.id, attacker.getCard().getName());
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            // CR 702.105b — each separate instance of dethrone (printed or granted) triggers on its own.
+            int dethroneInstances = gameQueryService.triggerKeywordInstances(gameData, attacker, Keyword.DETHRONE);
+            for (int instance = 0; instance < dethroneInstances; instance++) {
+                int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
+                try {
+                    List<CardEffect> dethroneEffects = List.of(new PutCountersOnSourceEffect(1, 1, 1));
+                    StackEntry dethroneTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            attacker.getCard(),
+                            playerId,
+                            attacker.getCard().getName() + "'s dethrone",
+                            dethroneEffects,
+                            null,
+                            attacker.getId()
+                    );
+                    gameData.stack.add(dethroneTrigger);
+                    triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                            gameData, attacker, dethroneTrigger);
+                    gameLogService.append(gameData,
+                            GameLog.builder().card(attacker.getCard()).text("'s dethrone triggers.").build());
+                    log.info("Game {} - {} dethrone trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                } finally {
+                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                }
             }
         }
 
@@ -2362,8 +2369,8 @@ public class CombatAttackService {
             }
         }
 
-        // Granted exalted abilities are keyword-driven, so each permanent with an effective
-        // granted Exalted keyword contributes its own +1/+1 trigger to a lone attacker.
+        // Granted exalted abilities are keyword-driven: each separate instance of granted Exalted on a
+        // permanent (one per granting source) contributes its own +1/+1 trigger to a lone attacker.
         if (attackerIndices.size() == 1) {
             Permanent attacker = battlefield.get(attackerIndices.getFirst());
             for (Permanent perm : battlefield) {
@@ -2373,20 +2380,23 @@ public class CombatAttackService {
                     continue;
                 }
 
-                StackEntry exaltedTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        playerId,
-                        perm.getCard().getName() + "'s exalted ability",
-                        List.of(new BoostTargetCreatureEffect(1, 1)),
-                        null,
-                        perm.getId());
-                exaltedTrigger.setTargetId(attacker.getId());
-                exaltedTrigger.setNonTargeting(true);
-                exaltedTrigger.setTriggeringPermanentId(attacker.getId());
-                gameData.stack.add(exaltedTrigger);
-                gameLogService.append(gameData, GameLog.builder().card(perm.getCard())
-                        .text("'s exalted ability triggers.").build());
+                int instances = gameQueryService.triggerKeywordInstances(gameData, perm, Keyword.EXALTED);
+                for (int i = 0; i < instances; i++) {
+                    StackEntry exaltedTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s exalted ability",
+                            List.of(new BoostTargetCreatureEffect(1, 1)),
+                            null,
+                            perm.getId());
+                    exaltedTrigger.setTargetId(attacker.getId());
+                    exaltedTrigger.setNonTargeting(true);
+                    exaltedTrigger.setTriggeringPermanentId(attacker.getId());
+                    gameData.stack.add(exaltedTrigger);
+                    gameLogService.append(gameData, GameLog.builder().card(perm.getCard())
+                            .text("'s exalted ability triggers.").build());
+                }
             }
         }
 
@@ -2811,6 +2821,15 @@ public class CombatAttackService {
                                 } else {
                                     matchingEffect = permConditional.wrapped();
                                 }
+                            } else if (matchingEffect instanceof ConditionalEffect attackedTargetConditional
+                                    && attackedTargetConditional.condition() instanceof AttackedTargetIsMonarch) {
+                                // Kept on the stack entry so it is checked again on resolution (CR 603.4).
+                                ConditionContext attackedTargetContext = ConditionContext
+                                        .forPermanent(perm, permController)
+                                        .withTargetId(attackedTargetId);
+                                matches = conditionEvaluationService.isMet(gameData,
+                                        attackedTargetConditional.condition(), attackedTargetContext);
+                                break;
                             } else {
                                 break;
                             }
@@ -2984,7 +3003,6 @@ public class CombatAttackService {
                     if (effect instanceof ConditionalEffect conditional
                             && (conditional.condition() instanceof AttacksEnchantedPlayer
                             || conditional.condition() instanceof ControllerAndEnchantedPlayerAttackEachOther
-                            || conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures
                             || conditional.condition() instanceof OpponentsAttackWithAtLeastCreatures
                             || conditional.condition() instanceof OpponentAttacksPlaneswalker)) {
                         playerAttackEffects.add(conditional.wrapped());

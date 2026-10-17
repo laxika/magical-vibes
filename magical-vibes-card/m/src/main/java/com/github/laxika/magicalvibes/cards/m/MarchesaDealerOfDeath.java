@@ -12,7 +12,7 @@ public class MarchesaDealerOfDeath extends Card {
     public MarchesaDealerOfDeath() {
         addEffect(EffectSlot.ON_CONTROLLER_COMMITS_CRIME,
                 new MayPayManaEffect("{1}",
-                        LookAtTopCardsEffect.chooseNToHandRestToGraveyard(2, 1),
+                        LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1),
                         "Pay {1} to look at the top two cards?"));
     }
 }

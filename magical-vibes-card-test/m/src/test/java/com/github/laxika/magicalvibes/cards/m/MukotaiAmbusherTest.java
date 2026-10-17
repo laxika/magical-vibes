@@ -37,15 +37,17 @@ class MukotaiAmbusherTest extends BaseCardTest {
         addCreatureReady(player2, new MukotaiAmbusher());
         harness.setHand(player1, List.of(new MukotaiAmbusher()));
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, List.of());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateHandAbility(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
 
         harness.assertInHand(player1, "Mukotai Ambusher");
         Permanent ambusher = findPermanent(player1, "Mukotai Ambusher");
         assertThat(ambusher.isTapped()).isTrue();
+        resolveCombat();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
@@ -56,7 +58,8 @@ class MukotaiAmbusherTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new MukotaiAmbusher());
         harness.setHand(player1, List.of(new MukotaiAmbusher()));
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, List.of());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

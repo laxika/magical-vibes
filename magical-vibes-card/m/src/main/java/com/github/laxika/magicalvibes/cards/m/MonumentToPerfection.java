@@ -11,7 +11,11 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.ControlsDistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -64,16 +68,21 @@ public class MonumentToPerfection extends Card {
                 false,
                 "{3}",
                 List.of(
-                        new LosesAllAbilitiesEffect(GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN),
+                        new LosesAllAbilitiesEffect(GrantScope.SELF, EffectDuration.PERMANENT),
                         new AnimatePermanentsEffect(
-                                9,
-                                9,
+                                new Fixed(9),
+                                new Fixed(9),
                                 List.of(CardSubtype.PHYREXIAN, CardSubtype.CONSTRUCT),
                                 Set.of(),
                                 null,
-                                Set.of(CardType.ARTIFACT)
+                                Set.of(CardType.ARTIFACT),
+                                GrantScope.SELF,
+                                EffectDuration.PERMANENT,
+                                null
                         ),
-                        new GrantKeywordEffect(Set.of(Keyword.INDESTRUCTIBLE, Keyword.TOXIC), GrantScope.SELF)
+                        new GrantKeywordEffect(Set.of(Keyword.INDESTRUCTIBLE, Keyword.TOXIC), GrantScope.SELF,
+                                GrantDuration.INDEFINITE),
+                        new GrantStaticEffectToSourceEffect(new ToxicEffect(9), EffectDuration.PERMANENT)
                 ),
                 "{3}: This artifact becomes a 9/9 Phyrexian Construct artifact creature, loses all abilities, and gains indestructible and toxic 9. Activate only if there are nine or more lands with different names among the basic, Sphere, and Locus lands you control."
         ).withActivationCondition(

@@ -139,8 +139,9 @@ class MagmaticGalleonTest extends BaseCardTest {
         assertThat(crew.isTapped()).isTrue();
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.isCreature(gd, vehicle)).isFalse();
     }

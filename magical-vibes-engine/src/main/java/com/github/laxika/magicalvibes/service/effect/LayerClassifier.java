@@ -302,7 +302,10 @@ public final class LayerClassifier {
         map.put(GrantSubtypesToSelfEffect.class, fixed(Layer.L4_TYPE));
         map.put(SelfBecomesCreatureOutsideBattlefieldEffect.class,
                 fixedCharacteristicDefining(Layer.L4_TYPE, Layer.L7B_SET_PT));
-        map.put(GrantAllCreatureTypesToOwnCreaturesEffect.class, fixed(Layer.L4_TYPE));
+        // "[This] is every creature type" is a characteristic-defining ability (CR 604.3).
+        map.put(GrantAllCreatureTypesToOwnCreaturesEffect.class, new Entry(Set.of(Layer.L4_TYPE),
+                (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L4_TYPE),
+                        ((GrantAllCreatureTypesToOwnCreaturesEffect) effect).scope() == GrantScope.SELF, false)));
         map.put(GrantCardTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeToOwnCardsEffect.class, fixed(Layer.L4_TYPE));
         map.put(GrantCardTypeToOwnNonlandPermanentsEffect.class, fixed(Layer.L4_TYPE));

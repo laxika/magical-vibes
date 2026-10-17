@@ -489,6 +489,7 @@ public class MayAbilityHandlerService {
             entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
             entry.setTriggeringPermanentToughnessAtTrigger(ability.triggeringPermanentToughnessAtTrigger());
             entry.setTriggeringCardId(ability.triggeringCardId());
+            entry.setTriggeringCardGraveyardEntryVersion(ability.triggeringCardGraveyardEntryVersion());
             if (ability.xValue() != null) {
                 entry.setXValue(ability.xValue());
             }
@@ -528,6 +529,9 @@ public class MayAbilityHandlerService {
             }
             if (ability.effects().stream().anyMatch(e -> e.usesEnteringPermanentReference()
                     || e instanceof OtherAttackingCreatureReferenceEffect)) {
+                entry.setNonTargeting(true);
+            }
+            if (ability.effects().stream().anyMatch(ImprintDyingCreatureEffect.class::isInstance)) {
                 entry.setNonTargeting(true);
             }
             entry.setAttackedTargetId(ability.attackedTargetId());

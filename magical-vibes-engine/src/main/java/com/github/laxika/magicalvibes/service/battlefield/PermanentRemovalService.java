@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -646,7 +647,9 @@ public class PermanentRemovalService {
         // A creature made a token by a continuous effect is still put into its owner's hand and
         // ceases to exist the next time state-based actions are checked (CR 111.7, CR 704.5d).
         for (Card leaving : target.cardsLeavingBattlefield()) {
-            gameData.addCardToHand(ownerOfCard(leaving, ownerId), leaving);
+            UUID handOwnerId = leaving.getId().equals(target.getOriginalCard().getId())
+                    ? ownerId : ownerOfCard(leaving, ownerId);
+            gameData.addCardToHand(handOwnerId, leaving);
         }
         if (!dynamicToken) {
             Card companion = detachWerewhatCompanion(gameData, target);
@@ -1009,8 +1012,11 @@ public class PermanentRemovalService {
             if (target.isMergedByMutation()) {
                 putMutationComponentsInLibrary(gameData, target, ownerId, true, null, true);
             } else {
+                // A token that leaves the battlefield ceases to exist; it never reaches the library.
                 for (Card leaving : target.cardsLeavingBattlefield()) {
-                    gameData.playerDecks.get(ownerId).add(leaving);
+                    if (!leaving.isToken()) {
+                        gameData.playerDecks.get(ownerId).add(leaving);
+                    }
                 }
             }
             if (werewhatCompanion != null) {
@@ -1020,9 +1026,8 @@ public class PermanentRemovalService {
             clearDynamicToken(gameData, target);
         }
         triggerCollectionService.checkCardsPutIntoLibraryTriggers(
-                gameData, ownerId, (target.isMergedByMutation()
-                        ? (int) target.cardsLeavingBattlefield().stream().filter(card -> !isToken(gameData, card)).count()
-                        : target.cardsLeavingBattlefield().size())
+                gameData, ownerId, (int) target.cardsLeavingBattlefield().stream()
+                        .filter(card -> !isToken(gameData, card)).count()
                         + (werewhatCompanion == null ? 0 : 1));
         forgetDepartedPermanentState(gameData, target);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
@@ -1774,6 +1779,7 @@ public class PermanentRemovalService {
                     }
                 }
                 snapshotBeheldPower(gameData, target);
+                snapshotTriggeringPermanentKeywords(gameData, target);
                 snapshotChosenPermanentStats(gameData, target,
                         gameQueryService.getEffectivePower(gameData, target),
                         gameQueryService.getEffectiveToughness(gameData, target));
@@ -1848,6 +1854,20 @@ public class PermanentRemovalService {
             }
         }
         return Optional.empty();
+    }
+
+    private void snapshotTriggeringPermanentKeywords(GameData gameData, Permanent target) {
+        Set<Keyword> keywords = null;
+        for (StackEntry entry : gameData.stack) {
+            if (!target.getId().equals(entry.getTriggeringPermanentId())) continue;
+            if (keywords == null) {
+                keywords = EnumSet.noneOf(Keyword.class);
+                for (Keyword keyword : Keyword.values()) {
+                    if (gameQueryService.hasKeyword(gameData, target, keyword)) keywords.add(keyword);
+                }
+            }
+            entry.setTriggeringPermanentKeywordsAtLeave(EnumSet.copyOf(keywords));
+        }
     }
 
     private void snapshotBeheldPower(GameData gameData, Permanent target) {
@@ -2809,7 +2829,15 @@ public class PermanentRemovalService {
                 .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
                 .anyMatch(effect -> effect instanceof ExileTargetPermanentUntilSourceLeavesEffect exile
                         && exile.returnsOnSourceLeavesTrigger());
-        if (pendingReturns == null && !returnsOnSourceLeavesTrigger && !hasLeavesTriggerExile) {
+        // Tidehollow Sculler / Mesmeric Fiend style: the return is a separate leaves-the-battlefield trigger
+        // that goes on the stack even if the enters ability has not exiled anything yet (CR 603.6c).
+        boolean hasLeavesTriggerHandExile = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
+                .stream()
+                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect hand
+                        && hand.returnOnSourceLeave()
+                        && hand.destination() == com.github.laxika.magicalvibes.model.effect.HandChoiceDestination.EXILE);
+        if (pendingReturns == null && !returnsOnSourceLeavesTrigger && !hasLeavesTriggerExile
+                && !hasLeavesTriggerHandExile) {
             triggerCollectionService.processDelayedExileReturnCounterTriggers(
                     gameData, removedPermanent.getId(), List.of(), List.of());
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
@@ -2828,6 +2856,7 @@ public class PermanentRemovalService {
                         && leaveTriggerExile.returnsOnSourceLeavesTrigger()
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect);
         returnsThroughLeavesTrigger |= returnsOnSourceLeavesTrigger;
+        returnsThroughLeavesTrigger |= hasLeavesTriggerHandExile;
         returnsThroughLeavesTrigger |= removedPermanent.getCard().getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost.class::isInstance);
         if (returnsThroughLeavesTrigger) {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,8 +48,7 @@ public class ExileTargetCardFromGraveyardWithConditionalEffectsEffectHandler imp
 
         boolean matches = predicateEvaluationService.matchesCardPredicate(
                 targetCard, effect.matchPredicate(), entry.getCard().getId());
-        boolean secondaryMatches = !matches
-                && effect.secondaryMatchPredicate() != null
+        boolean secondaryMatches = effect.secondaryMatchPredicate() != null
                 && predicateEvaluationService.matchesCardPredicate(
                 targetCard, effect.secondaryMatchPredicate(), entry.getCard().getId());
         if (!graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, targetCardId, targetCard)) {
@@ -60,13 +60,20 @@ public class ExileTargetCardFromGraveyardWithConditionalEffectsEffectHandler imp
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(entry.getControllerId()) + " exiles ", targetCard,
                 " from a graveyard."));
-        CardEffect branch = matches
-                ? effect.matchingEffect()
-                : secondaryMatches ? effect.secondaryMatchingEffect() : effect.nonMatchingEffect();
+        List<CardEffect> branches = new ArrayList<>();
+        if (matches) {
+            branches.add(effect.matchingEffect());
+        }
+        if (secondaryMatches) {
+            branches.add(effect.secondaryMatchingEffect());
+        }
+        if (branches.isEmpty()) {
+            branches.add(effect.nonMatchingEffect());
+        }
         int effectIndex = entry.getEffectsToResolve().indexOf(effectToResolve);
         if (effectIndex < 0) {
             throw new IllegalStateException("Could not locate conditional graveyard exile effect on stack entry");
         }
-        entry.insertEffectsToResolve(effectIndex + 1, List.of(branch));
+        entry.insertEffectsToResolve(effectIndex + 1, branches);
     }
 }

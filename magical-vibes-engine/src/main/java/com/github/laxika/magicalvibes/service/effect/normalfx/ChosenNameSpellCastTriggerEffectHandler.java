@@ -29,7 +29,18 @@ public class ChosenNameSpellCastTriggerEffectHandler implements NormalEffectHand
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            // The Saga may have left the battlefield; the chapter ability uses its last known information.
+            source = entry.getSourcePermanentSnapshot();
+        }
         if (source == null || source.getChosenName() == null) {
+            return;
+        }
+
+        String chosenName = source.getChosenName();
+        boolean alreadyCastThisTurn = gameData.getSpellsCastThisTurn(entry.getControllerId()).stream()
+                .anyMatch(spell -> chosenName.equalsIgnoreCase(spell.getName()));
+        if (alreadyCastThisTurn) {
             return;
         }
 

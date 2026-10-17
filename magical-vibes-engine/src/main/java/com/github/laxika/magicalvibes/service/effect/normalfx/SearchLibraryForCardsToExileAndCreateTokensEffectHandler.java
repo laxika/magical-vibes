@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,8 @@ public class SearchLibraryForCardsToExileAndCreateTokensEffectHandler implements
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " searches their library but it is empty. Library is shuffled."));
             return;
@@ -55,6 +58,13 @@ public class SearchLibraryForCardsToExileAndCreateTokensEffectHandler implements
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, filter, null, gameData, controllerId))
                 .toList();
+        int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
+        if (topLimit < deck.size()) {
+            List<Card> searchable = deck.subList(0, topLimit);
+            matchingCards = matchingCards.stream()
+                    .filter(card -> searchable.stream().anyMatch(top -> top == card))
+                    .toList();
+        }
         String description = CardPredicateUtils.describeFilter(filter);
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);

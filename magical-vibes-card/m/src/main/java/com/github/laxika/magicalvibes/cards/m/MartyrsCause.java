@@ -17,7 +17,7 @@ public class MartyrsCause extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(),
-                        PreventDamageFromChosenSourceEffect.nextDamageToAnyTarget()
+                        PreventDamageFromChosenSourceEffect.nextDamageToTarget()
                 ),
                 "Sacrifice a creature: The next time a source of your choice would deal damage to any target this turn, prevent that damage."
         ));

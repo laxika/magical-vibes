@@ -260,6 +260,7 @@ class MakeshiftMunitionsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MakeshiftMunitions());
         harness.addToBattlefield(player1, new Spellbook());
         Permanent vraska = harness.addToBattlefieldAndReturn(player2, new VraskaRelicSeeker());
+        vraska.setCounterCount(CounterType.LOYALTY, 4);
         harness.addMana(player1, ManaColor.RED, 1);
         int loyaltyBefore = vraska.getCounterCount(CounterType.LOYALTY);
 

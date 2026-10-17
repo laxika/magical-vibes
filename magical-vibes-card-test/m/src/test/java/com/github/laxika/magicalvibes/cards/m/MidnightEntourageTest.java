@@ -125,6 +125,7 @@ class MidnightEntourageTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GiftedAetherborn());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GiftedAetherborn());
         harness.setLibrary(player1, List.of(new GiftedAetherborn(), new GiftedAetherborn(), new GiftedAetherborn()));
+        harness.setHand(player1, List.of());
         int lifeBefore = gd.getLife(player1.getId());
         entourage.setMarkedDamage(gqs.getEffectiveToughness(gd, entourage));
         first.setMarkedDamage(gqs.getEffectiveToughness(gd, first));

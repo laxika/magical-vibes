@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -54,7 +55,9 @@ class MaulfistSquadTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate chooses whether to put counters on the creature only as the trigger resolves")
     void fabricateChoiceIsMadeOnResolution() {
-        castMaulfistSquad(0);
+        harness.setHand(player1, List.of(new MaulfistSquad()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         Permanent squad = findPermanent(player1, "Maulfist Squad");
@@ -64,7 +67,7 @@ class MaulfistSquadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleListChoice(player1, "Create a 1/1 colorless Servo artifact creature token");
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(squad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -74,7 +77,9 @@ class MaulfistSquadTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate creates a Servo if Maulfist Squad leaves before its trigger resolves")
     void fabricateCreatesServoWhenSourceLeaves() {
-        castMaulfistSquad(0);
+        harness.setHand(player1, List.of(new MaulfistSquad()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent squad = findPermanent(player1, "Maulfist Squad");
 
@@ -93,8 +98,8 @@ class MaulfistSquadTest extends BaseCardTest {
     @DisplayName("Menace rejects one blocker and permits two blockers")
     void menaceRequiresTwoBlockers() {
         addCreatureReady(player1, new MaulfistSquad());
-        addCreatureReady(player2, new MaulfistSquad());
-        addCreatureReady(player2, new MaulfistSquad());
+        Permanent firstBlocker = addCreatureReady(player2, new MaulfistSquad());
+        Permanent secondBlocker = addCreatureReady(player2, new MaulfistSquad());
         declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -105,12 +110,17 @@ class MaulfistSquadTest extends BaseCardTest {
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(firstBlocker.getId(), 1, secondBlocker.getId(), 2));
         harness.assertInGraveyard(player1, "Maulfist Squad");
     }
 
     private void castMaulfistSquad(int mode) {
         harness.setHand(player1, List.of(new MaulfistSquad()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, mode == 0);
     }
 }

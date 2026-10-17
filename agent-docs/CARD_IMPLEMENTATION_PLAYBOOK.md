@@ -601,6 +601,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SourceStartedTurnUntapped(), wrapped)` | - | yes | - | intervening-if "if this permanent started the turn untapped" — reads the source's status before its controller's untap step; use for Rasputin Dreamweaver's upkeep trigger |
 | `ConditionalEffect(new SourceIsCreature(), wrapped)` | - | yes | - | intervening-if "if this permanent is a creature" — reads the source's effective creature type |
 | `ConditionalEffect(new SourceIsToken(), wrapped)` | - | yes | - | intervening-if "if this permanent is a token" — reads `source.getCard().isToken()`. Wrap in `NotCondition` for Progenitor Mimic's "if this creature isn't a token" |
+| `ConditionalEffect(new SourceAttackingPlayer(), wrapped)` | - | yes | - | "whenever this creature attacks a player" (not a planeswalker or battle); Master of Cruelties |
 | `ConditionalEffect(new SourceIsAttacking(), wrapped)` | yes | - | - | "as long as this creature is attacking" — reads `source.isAttacking()`. Thorned Moloch STATIC first strike |
 | `ConditionalEffect(new SourceIsAttackingOrBlocking(), wrapped)` | yes | - | - | "unless it's attacking or blocking" — reads the source's current combat flags. Tromokratis's conditional hexproof |
 | `ConditionalEffect(new SourceAttackedThisTurn(), wrapped)` | yes | - | - | "as long as this permanent attacked this turn" — reads the source's turn attack record, so the condition remains true after combat. The Lunar Whale |

@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect;
@@ -37,7 +39,8 @@ public class MercurialTransformation extends Card {
     }
 
     private static AnimatePermanentsEffect animate(int power, int toughness, CardSubtype subtype) {
-        return new AnimatePermanentsEffect(power, toughness, List.of(subtype), Set.of(), CardColor.BLUE,
-                Set.of(), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN);
+        return new AnimatePermanentsEffect(new Fixed(power), new Fixed(toughness), List.of(subtype), Set.of(),
+                CardColor.BLUE, Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN,
+                null, true);
     }
 }

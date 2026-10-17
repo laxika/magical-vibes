@@ -66,7 +66,7 @@ class MysteriousLimousineTest extends BaseCardTest {
         Permanent firstTarget = addCreatureReady(player2, new GrizzlyBears());
         Permanent limousine = castLimousine(firstTarget);
         limousine.setSummoningSick(false);
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
         harness.castFromHand(player1, new CitizensCrowbar(), "{1}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -75,6 +75,8 @@ class MysteriousLimousineTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, token.getId());

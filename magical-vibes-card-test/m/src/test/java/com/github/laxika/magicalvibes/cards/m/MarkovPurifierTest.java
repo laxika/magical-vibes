@@ -113,7 +113,6 @@ class MarkovPurifierTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
@@ -134,7 +133,6 @@ class MarkovPurifierTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
     @Test

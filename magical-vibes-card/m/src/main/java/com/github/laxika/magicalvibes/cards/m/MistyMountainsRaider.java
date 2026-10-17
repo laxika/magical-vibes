@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 public class MistyMountainsRaider extends Card {
 
     public MistyMountainsRaider() {
-        addEffect(EffectSlot.ON_ATTACK, new AmassGoblinsEffect(2));
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new AmassGoblinsEffect(2));
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -40,28 +39,34 @@ public class MarathWillOfTheWild extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target");
 
+        String costText = "{X}, Remove X +1/+1 counters from Marath: ";
+        String xCantBeZero = " X can't be 0.";
+
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}",
-                List.of(
-                        new RemoveXCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
-                        new ChooseOneEffect(List.of(
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Put X +1/+1 counters on target creature",
-                                        new PutCounterOnTargetPermanentEffect(
-                                                CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
-                                        TargetFilters.creature()),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Marath deals X damage to any target",
-                                        new DealDamageToAnyTargetEffect(new XValue()),
-                                        anyTarget),
-                                new ChooseOneEffect.ChooseOneOption(
-                                        "Create an X/X green Elemental creature token",
-                                        new CreateTokenEffect("Elemental", new XValue(), new XValue(),
-                                                CardColor.GREEN, List.of(CardSubtype.ELEMENTAL), Set.of(), Set.of()))))),
-                "{X}, Remove X +1/+1 counters from Marath: Choose one — Put X +1/+1 counters on target creature; "
-                        + "Marath deals X damage to any target; or create an X/X green Elemental creature token. "
-                        + "X can't be 0."
+                List.of(new RemoveXCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())),
+                costText + "Put X +1/+1 counters on target creature." + xCantBeZero,
+                TargetFilters.creature()
+        ).withMinimumXValue(1));
+
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                "{X}",
+                List.of(new RemoveXCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
+                        new DealDamageToAnyTargetEffect(new XValue())),
+                costText + "Marath deals X damage to any target." + xCantBeZero,
+                anyTarget
+        ).withMinimumXValue(1));
+
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                "{X}",
+                List.of(new RemoveXCountersFromSourceCost(CounterType.PLUS_ONE_PLUS_ONE),
+                        new CreateTokenEffect("Elemental", new XValue(), new XValue(),
+                                CardColor.GREEN, List.of(CardSubtype.ELEMENTAL), Set.of(), Set.of())),
+                costText + "Create an X/X green Elemental creature token." + xCantBeZero
         ).withMinimumXValue(1));
     }
 }

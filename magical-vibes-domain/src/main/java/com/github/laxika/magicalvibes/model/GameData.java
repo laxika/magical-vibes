@@ -616,6 +616,13 @@ public class GameData {
      */
     public final Map<PendingExileReturn, Long> pendingExileReturnExileVersions =
             Collections.synchronizedMap(new IdentityHashMap<>());
+    /**
+     * Earliest turn number on which a queued {@link PendingExileReturn} may fire, keyed by the queued
+     * instance. Used by returns worded "on your next turn", which must not fire during an extra
+     * step of the turn on which they were created.
+     */
+    public final Map<PendingExileReturn, Integer> pendingExileReturnEarliestTurns =
+            Collections.synchronizedMap(new IdentityHashMap<>());
     /** Affected permanent mapped to the player whose next turn ends the attack restriction. */
     public final Map<UUID, Set<UUID>> permanentsCantAttackUntilNextTurn = new ConcurrentHashMap<>();
     private long graveyardEntryVersion;
@@ -853,6 +860,13 @@ public class GameData {
     /** Rules restricting blockers of matching creatures controlled by the keyed player this turn. */
     public final Map<UUID, List<GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect>>
             matchingCreatureBlockRestrictionsThisTurn = new ConcurrentHashMap<>();
+    /**
+     * "All creatures with [counter] counters on them block that creature this turn if able": the counter
+     * types per attacking creature. The requirement is not a characteristic change, so it applies to every
+     * creature that has such a counter whenever blockers are declared (CR 611.2c), not just to those that had
+     * one when the ability resolved.
+     */
+    public final Map<UUID, Set<CounterType>> counterHolderMustBlockRequirementsThisTurn = new ConcurrentHashMap<>();
     /** Restrictions evaluated against the player's permanents during upcoming untap steps. */
     public final Map<UUID, List<SkipNextUntapEffect>>
             matchingPermanentUntapRestrictions = new ConcurrentHashMap<>();
@@ -1501,6 +1515,8 @@ public class GameData {
      * can't be overridden by "damage can't be prevented" effects.
      */
     public final Set<UUID> creaturesAssigningNoCombatDamageThisTurn = ConcurrentHashMap.newKeySet();
+    /** Creatures that assign no combat damage during the current combat only (cleared when it ends). */
+    public final Set<UUID> creaturesAssigningNoCombatDamageThisCombat = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage dealt to them is prevented during the current combat. */
     public final Set<UUID> creaturesWithCombatDamagePreventedThisCombat = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage is prevented during the current combat. */
@@ -6593,6 +6609,8 @@ public class GameData {
             delayedSpellExiles.removeIf(pending -> pending.cardId().equals(cardId));
             delayedActions.replaceAll(action -> action instanceof DelayedStillExiledCardsEndStepTrigger still
                     && still.cardIds().contains(cardId) ? still.withoutCard(cardId) : action);
+            delayedActions.removeIf(action -> action instanceof com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextEndStep back
+                    && back.cardId().equals(cardId));
             exiledVoyageCounters.remove(cardId);
             exiledVoyageControllerIds.remove(cardId);
             hauntingCardToPermanentId.remove(cardId);
@@ -7571,6 +7589,7 @@ public class GameData {
         copy.untapLockActivatorBySource.putAll(this.untapLockActivatorBySource);
         copy.exileEntryVersions.putAll(this.exileEntryVersions);
         copy.pendingExileReturnExileVersions.putAll(this.pendingExileReturnExileVersions);
+        copy.pendingExileReturnEarliestTurns.putAll(this.pendingExileReturnEarliestTurns);
         this.permanentsCantAttackUntilNextTurn.forEach((permanentId, controllers) ->
                 copy.permanentsCantAttackUntilNextTurn.put(permanentId, new java.util.HashSet<>(controllers)));
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
@@ -7683,6 +7702,7 @@ public class GameData {
         copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
         copy.creaturesAssigningNoCombatDamageThisTurn.addAll(this.creaturesAssigningNoCombatDamageThisTurn);
+        copy.creaturesAssigningNoCombatDamageThisCombat.addAll(this.creaturesAssigningNoCombatDamageThisCombat);
         copy.creaturesWithCombatDamagePreventedThisCombat.addAll(
                 this.creaturesWithCombatDamagePreventedThisCombat);
         copy.creaturesPreventedFromDealingCombatDamageThisCombat.addAll(
@@ -8972,6 +8992,8 @@ public class GameData {
         copy.skipCombatPhasesNextTurn.addAll(this.skipCombatPhasesNextTurn);
         this.matchingCreatureBlockRestrictionsThisTurn.forEach((id, restrictions) ->
                 copy.matchingCreatureBlockRestrictionsThisTurn.put(id, new ArrayList<>(restrictions)));
+        this.counterHolderMustBlockRequirementsThisTurn.forEach((id, counterTypes) ->
+                copy.counterHolderMustBlockRequirementsThisTurn.put(id, new HashSet<>(counterTypes)));
         this.matchingPermanentUntapRestrictions.forEach((id, restrictions) ->
                 copy.matchingPermanentUntapRestrictions.put(id, new ArrayList<>(restrictions)));
         copy.skipNextDrawStepCount.putAll(this.skipNextDrawStepCount);

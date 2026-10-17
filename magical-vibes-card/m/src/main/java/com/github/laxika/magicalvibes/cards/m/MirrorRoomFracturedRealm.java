@@ -29,7 +29,7 @@ public class MirrorRoomFracturedRealm extends Card {
                         .withManaCost("{5}{U}{U}")
         )));
 
-        target(TargetFilters.creatureYouControl(), 0, 1).addEffect(
+        target(TargetFilters.creatureYouControl()).addEffect(
                 EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
                 new TriggeringRoomDoorConditionalEffect(0,
                         new CreateTokenCopyOfTargetPermanentEffect(

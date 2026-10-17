@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class MercurialPretender extends Card {
                 List.of(new ActivatedAbility(
                         false,
                         "{2}{U}{U}",
-                        List.of(new ReturnSelfToHandCost()),
+                        List.of(ReturnToHandEffect.self()),
                         "{2}{U}{U}: Return this creature to its owner's hand."
                 ))
         ));

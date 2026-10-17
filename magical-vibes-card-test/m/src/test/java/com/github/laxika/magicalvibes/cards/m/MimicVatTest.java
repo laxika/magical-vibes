@@ -391,8 +391,7 @@ class MimicVatTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castAndResolveSorcery(player2, 0, player1.getId());
 
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));
         assertThat(gd.playerBattlefields.get(player1.getId()))

@@ -59,14 +59,16 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
     @DisplayName("Wolves deal damage equal to their power to target creature")
     void wolvesDealDamageToTarget() {
         addReadyMaster(player1);
-        addReadyWolf(player1);
-        addReadyWolf(player1);
+        Permanent wolf1 = addReadyWolf(player1);
+        Permanent wolf2 = addReadyWolf(player1);
 
         // Opponent has a 2/2
         Permanent target = addCreatureReady(player2, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities(); // resolve ability
+        harness.handlePermanentChosen(player2, wolf1.getId());
+        harness.handlePermanentChosen(player2, wolf2.getId());
 
         // Two 2/2 wolves deal 4 total damage to the 2/2 — lethal
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -253,6 +255,25 @@ class MasterOfTheWildHuntTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput())
                 .as("The target controller can put both damage on one Wolf instead of splitting it")
                 .isTrue();
+    }
+
+    @Test
+    @DisplayName("The target controller can put all return damage on a single Wolf")
+    void targetControllerCanPutAllDamageOnOneWolf() {
+        addReadyMaster(player1);
+        Permanent wolf1 = addReadyWolf(player1);
+        Permanent wolf2 = addReadyWolf(player1);
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, wolf1.getId());
+        harness.handlePermanentChosen(player2, wolf1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wolf1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wolf2);
+        assertThat(wolf2.getMarkedDamage()).isZero();
     }
 
     @Test

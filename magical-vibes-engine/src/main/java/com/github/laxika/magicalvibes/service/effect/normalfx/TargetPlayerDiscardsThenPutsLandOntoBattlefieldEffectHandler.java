@@ -42,7 +42,7 @@ public class TargetPlayerDiscardsThenPutsLandOntoBattlefieldEffectHandler
             return;
         }
 
-        gameData.discardCausedByOpponent = true;
+        gameData.discardCausedByOpponent = !targetPlayerId.equals(entry.getControllerId());
         playerInteractionSupport.resolveDiscardCards(gameData, targetPlayerId, e.discardAmount(),
                 DiscardFollowUp.chooseDiscardedLandForBattlefield(entry.getControllerId()));
     }

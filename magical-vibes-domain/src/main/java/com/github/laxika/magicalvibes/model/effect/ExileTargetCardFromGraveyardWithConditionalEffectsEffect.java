@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Exiles a targeted card from any graveyard, then resolves the first matching branch, the second
- * matching branch when present, or the fallback branch based on the exiled card's characteristics.
+ * Exiles a targeted card from any graveyard, then resolves every matching branch (the primary and the
+ * optional secondary one are independent, so a card matching both resolves both), or the fallback
+ * branch when neither matches, based on the exiled card's characteristics.
  */
 public record ExileTargetCardFromGraveyardWithConditionalEffectsEffect(
         CardPredicate matchPredicate,

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
@@ -20,6 +21,8 @@ public class MizziumMeddler extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryHasTargetPredicate(),
                 "Target must be a spell or ability on the stack."
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChangeTargetOfTargetSpellToSourceEffect());
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
+                new ChangeTargetOfTargetSpellToSourceEffect(),
+                "Change a target of the spell or ability to this creature?"));
     }
 }

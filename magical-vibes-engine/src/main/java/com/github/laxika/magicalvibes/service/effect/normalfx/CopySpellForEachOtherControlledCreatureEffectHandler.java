@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,7 +132,12 @@ public class CopySpellForEachOtherControlledCreatureEffectHandler implements Nor
                             Permanent target) {
         Card spellCard = spellSnapshot.getCard();
         Card copyCard = copySupport.createCopyCard(spellCard);
-        StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, target.getId());
+        StackEntry copyEntry = spellSnapshot.getDamageAssignments().isEmpty()
+                ? copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, target.getId())
+                : copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, target.getId(),
+                        Map.of(target.getId(), spellSnapshot.getDamageAssignments().values().stream()
+                                .mapToInt(Integer::intValue).sum()),
+                        List.of(target.getId()));
         copyEntry.setDeclaredTargetIds(spellSnapshot.getDeclaredTargetIds().stream()
                 .map(ignored -> target.getId()).toList());
 

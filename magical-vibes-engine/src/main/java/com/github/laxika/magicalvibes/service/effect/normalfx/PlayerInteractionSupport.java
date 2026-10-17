@@ -1214,6 +1214,11 @@ public class PlayerInteractionSupport {
 
         // A discard forced by an opponent enables replacement effects (e.g. Obstinate Baloth).
         if (destination == HandChoiceDestination.DISCARD) {
+            if (!gameQueryService.canEffectCauseDiscard(gameData, targetPlayerId, controllerId)) {
+                gameLogService.append(gameData, GameLog.text(targetName + " can't be made to discard cards."));
+                log.info("Game {} - {} can't be made to discard by reveal-and-discard", gameData.id, targetName);
+                return;
+            }
             gameData.discardCausedByOpponent = !controllerId.equals(targetPlayerId);
         }
 

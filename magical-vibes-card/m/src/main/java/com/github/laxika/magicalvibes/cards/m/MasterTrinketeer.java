@@ -19,7 +19,7 @@ import java.util.Set;
 public class MasterTrinketeer extends Card {
 
     public MasterTrinketeer() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SERVO, CardSubtype.THOPTER))));
 
         addActivatedAbility(new ActivatedAbility(

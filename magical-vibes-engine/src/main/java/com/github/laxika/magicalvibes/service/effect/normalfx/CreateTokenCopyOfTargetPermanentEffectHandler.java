@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -33,6 +35,8 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     private final AmountEvaluationService amountEvaluationService;
     private final EsixTokenReplacementSupport esixTokenReplacementSupport;
     private final ObjectProvider<CreateTokenCopyOfChosenCreatureEffectHandler> chosenCreatureCopyHandler;
+    private final ObjectProvider<CreateTokenCopyOfEquippedCreatureEffectHandler> equippedCreatureCopyHandler;
+    private final ObjectProvider<CreateTokenCopyOfEnchantedPermanentEffectHandler> enchantedPermanentCopyHandler;
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
         return TokenCopySupport.buildTokenCopyCard(sourceCard, effect);
@@ -109,17 +113,24 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                                            List<UUID> targetIds, int copyCount) {
         PendingTokenCreationReplacement pending = gameData.pendingTokenCreationReplacement;
         if (pending != null) {
-            if (!pending.copyChosenCreature()) {
-                return false;
-            }
             gameData.pendingTokenCreationReplacement = null;
             Boolean accepted = gameData.resolvedMayAccepted;
             gameData.resolvedMayAccepted = null;
             if (!Boolean.TRUE.equals(accepted)) {
                 return false;
             }
-            chosenCreatureCopyHandler.getObject().resolve(gameData, entry,
-                    new CreateTokenCopyOfChosenCreatureEffect(pending.amount(), pending.replacementPermanentId()));
+            if (pending.copyChosenCreature()) {
+                chosenCreatureCopyHandler.getObject().resolve(gameData, entry,
+                        new CreateTokenCopyOfChosenCreatureEffect(pending.amount(), pending.replacementPermanentId()));
+            } else if (pending.copyEnchantedPermanent()) {
+                enchantedPermanentCopyHandler.getObject().resolve(gameData, entry,
+                        new CreateTokenCopyOfEnchantedPermanentEffect(
+                                pending.amount(), pending.replacementPermanentId()));
+            } else {
+                equippedCreatureCopyHandler.getObject().resolve(gameData, entry,
+                        new CreateTokenCopyOfEquippedCreatureEffect(
+                                pending.amount(), false, false, pending.replacementPermanentId()));
+            }
             return true;
         }
         if (copyEffect.chooseAttackTarget() || copyEffect.createForTargetController()
@@ -132,8 +143,10 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         if (existingTargets == 0) {
             return false;
         }
-        return esixTokenReplacementSupport.offer(gameData, entry.getControllerId(),
-                (int) (copyCount * existingTargets), 0, 0);
+        int replacedAmount = (int) (copyCount * existingTargets);
+        return esixTokenReplacementSupport.offerMirrormindCrown(gameData, entry.getControllerId(), replacedAmount)
+                || esixTokenReplacementSupport.offerMoonlitMeditation(gameData, entry.getControllerId(), replacedAmount)
+                || esixTokenReplacementSupport.offer(gameData, entry.getControllerId(), replacedAmount, 0, 0);
     }
 
     private Card copySourceFor(Permanent targetPermanent) {

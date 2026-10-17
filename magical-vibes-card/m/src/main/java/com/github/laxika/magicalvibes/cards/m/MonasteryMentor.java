@@ -36,6 +36,6 @@ public class MonasteryMentor extends Card {
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new BoostSelfEffect(1, 1), monkToken)));
+                List.of(monkToken)));
     }
 }

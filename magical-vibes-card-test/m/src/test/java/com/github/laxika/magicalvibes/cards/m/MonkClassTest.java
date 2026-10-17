@@ -105,6 +105,7 @@ class MonkClassTest extends BaseCardTest {
     void levelTwoCanDeclineToReturnAnyPermanent() {
         Permanent monkClass = harness.addToBattlefieldAndReturn(player1, new MonkClass());
         harness.addToBattlefield(player2, new GnollHunter());
+        harness.setHand(player2, List.of());
         levelUpToTwo(monkClass);
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();

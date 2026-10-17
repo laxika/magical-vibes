@@ -41,7 +41,7 @@ class MishrasJuggernautTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent juggernaut = findPermanent(player1, "Mishra's Juggernaut");
-        assertThat(juggernaut.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(juggernaut.hasKeyword(Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Mishra's Juggernaut");
     }
 

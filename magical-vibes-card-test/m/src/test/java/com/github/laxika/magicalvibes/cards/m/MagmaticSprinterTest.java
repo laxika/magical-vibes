@@ -166,9 +166,7 @@ class MagmaticSprinterTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
         castSprinter();
         harness.handlePermanentChosen(player1, artifact.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(artifact);
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
-        gd.stolenCreatures.put(artifact.getId(), player1.getId());
+        setOwnerAndController(artifact, player1, player2);
 
         harness.passBothPriorities();
 
@@ -181,7 +179,7 @@ class MagmaticSprinterTest extends BaseCardTest {
         MagmaticSprinter card = new MagmaticSprinter();
         card.setOwnerId(player2.getId());
         Permanent sprinter = harness.addToBattlefieldAndReturn(player1, card);
-        gd.stolenCreatures.put(sprinter.getId(), player2.getId());
+        setOwnerAndController(sprinter, player2, player1);
 
         beginEndStep();
 
@@ -208,6 +206,6 @@ class MagmaticSprinterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.CLEANUP, harness::passBothPriorities);
     }
 }

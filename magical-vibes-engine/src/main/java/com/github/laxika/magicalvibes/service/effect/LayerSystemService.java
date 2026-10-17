@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffec
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -2159,7 +2160,6 @@ public class LayerSystemService {
                 // running during assembly (setting the animated flag) with the MV base P/T
                 // injected there at this instance's timestamp.
                 for (PermanentSlot target : slots) {
-                    if (isSource(instance, target)) continue;
                     Permanent permanent = target.permanent();
                     CharacteristicState state = states.get(permanent.getId());
                     if (state.hasCardType(CardType.ARTIFACT) && !state.hasCardType(CardType.CREATURE)
@@ -3126,6 +3126,15 @@ public class LayerSystemService {
         }
         StaticEffectHandler handler = staticEffectRegistry.getHandler(grant.staticEffect());
         if (handler == null) {
+            if (grant.staticEffect() instanceof ToxicEffect) {
+                CharacteristicState sourceState = board.states().get(source.permanent().getId());
+                if (sourceState != null) {
+                    sourceState.addStaticEffect(grant.staticEffect());
+                    board.recordGrantedEffect(source.permanent().getId(), provenanceSourceName(instance),
+                            grant.staticEffect());
+                    board.l56Touched().add(source.permanent().getId());
+                }
+            }
             return;
         }
         CardEffect transformed = TextChangeTransformer.transform(
@@ -3266,6 +3275,26 @@ public class LayerSystemService {
                         AmountContext context = AmountContext.forStaticEffect(
                                 source, instance.floating().controllerId());
                         for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
+                            // The only floating source of this effect is an animation's granted
+                            // "power and toughness are each equal to ..." ability, so a later
+                            // "loses all abilities" removes it (CR 613.1f, 613.4a).
+                            CharacteristicState targetState = board.states().get(target.permanent().getId());
+                            if (targetState != null
+                                    && ((targetState.isLosesAllAbilities()
+                                    && instance.timestamp() < targetState.getLosesAllAbilitiesTimestamp())
+                                    || (targetState.isLosesAllNonManaAbilities()
+                                    && instance.timestamp() < targetState.getLosesAllNonManaAbilitiesTimestamp()))) {
+                                // Without the ability the permanent keeps only its printed power and
+                                // toughness, not the value the animation computed when it resolved.
+                                Integer printedPower = target.permanent().getCard().getPower();
+                                Integer printedToughness = target.permanent().getCard().getToughness();
+                                entries.add(new BasePtEntry(target.permanent().getId(),
+                                        printedPower == null ? 0 : printedPower,
+                                        printedToughness == null ? 0 : printedToughness,
+                                        instance.timestamp(), instance.position(),
+                                        provenanceSourceName(instance)));
+                                continue;
+                            }
                             entries.add(new BasePtEntry(target.permanent().getId(),
                                     amountEvaluationService.evaluate(gameData, setPt.power(), context),
                                     amountEvaluationService.evaluate(gameData, setPt.toughness(), context),
@@ -3326,6 +3355,11 @@ public class LayerSystemService {
                         continue;
                     }
                     PermanentSlot source = instance.source();
+                    CharacteristicState sourceState = board.states().get(source.permanent().getId());
+                    if (sourceState != null && sourceState.isLosesAllAbilities()
+                            && sourceState.getLosesAllAbilitiesTimestamp() > instance.timestamp()) {
+                        continue;
+                    }
                     AmountContext context = AmountContext.forStaticEffect(source.permanent(), source.controllerId());
                     Integer power = setPt.power() == null ? null
                             : amountEvaluationService.evaluate(gameData, setPt.power(), context);
@@ -3365,7 +3399,6 @@ public class LayerSystemService {
                     // Gated off for artifacts that animate themselves — their own animation
                     // defines the base P/T, not March's MV.
                     for (PermanentSlot target : slots) {
-                        if (isSource(instance, target)) continue;
                         Permanent permanent = target.permanent();
                         if (board.marchAnimatedIds().contains(permanent.getId())
                                 && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {

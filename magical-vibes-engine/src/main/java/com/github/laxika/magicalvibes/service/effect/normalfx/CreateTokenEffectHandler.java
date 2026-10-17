@@ -125,9 +125,17 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                             new CreateTokenCopyOfChosenCreatureEffect(
                                     pending.amount(), pending.replacementPermanentId()));
                 } else {
+                    int createdBefore = entry.getCreatedPermanentIds().size();
                     tokenCopyHandler.resolve(gameData, entry,
                             new CreateTokenCopyOfEquippedCreatureEffect(
                                     pending.amount(), false, false, pending.replacementPermanentId()));
+                    if (e.tapped()) {
+                        // The replacement changes what is created, not how the original event had it enter.
+                        entry.getCreatedPermanentIds().stream().skip(createdBefore)
+                                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                                .filter(java.util.Objects::nonNull)
+                                .forEach(Permanent::tap);
+                    }
                 }
                 return;
             }
@@ -242,6 +250,9 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     }
 
     private Permanent availableMirrormindCrown(GameData gameData, UUID controllerId) {
+        if (gameData.playersWhoCreatedTokensThisTurn.contains(controllerId)) {
+            return null;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return null;
@@ -261,6 +272,9 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     }
 
     private Permanent availableMoonlitMeditation(GameData gameData, UUID controllerId) {
+        if (gameData.playersWhoCreatedTokensThisTurn.contains(controllerId)) {
+            return null;
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {
             return null;

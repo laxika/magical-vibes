@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -89,6 +90,7 @@ class MoltingHarpyTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.UPKEEP));
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotOnBattlefield(player1, "Molting Harpy");

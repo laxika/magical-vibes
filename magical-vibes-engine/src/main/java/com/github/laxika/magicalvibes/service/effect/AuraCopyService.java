@@ -96,10 +96,12 @@ public class AuraCopyService {
 
         Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         Permanent chosen = gameQueryService.findPermanentById(gameData, aura.getChosenPermanentId());
-        if (enchanted == null || chosen == null || enchanted.getId().equals(chosen.getId())) {
+        if (enchanted == null || chosen == null) {
             return;
         }
 
+        // The chosen creature's copiable values are locked in now, even when it is the enchanted
+        // creature itself and already carries an earlier copy effect (Metamorphic Alteration rulings).
         applyWhileAttachedCopy(gameData, aura, enchanted, chosen,
                 new EnchantedCreatureIsCopyOfChosenCreatureEffect());
     }

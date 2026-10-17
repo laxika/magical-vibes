@@ -1574,10 +1574,6 @@ public class GameActionAvailabilityService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
         boolean cantCastDueToAttack = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
-        Optional<UUID> graveyardCastSourceId = castingPermissionService.findGraveyardCastSourcePermanentId(gameData, playerId);
-        Set<CardType> typesCastFromGraveyard = graveyardCastSourceId
-                .map(id -> gameData.permanentTypesCastFromGraveyardThisTurn.getOrDefault(id, Set.of()))
-                .orElse(Set.of());
         boolean graveyardAbilitiesSuppressed = gameQueryService.graveyardCardsHaveLostAllAbilities(gameData);
 
         for (int i = 0; i < graveyard.size(); i++) {
@@ -1670,10 +1666,9 @@ public class GameActionAvailabilityService {
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
             if (flashback.isEmpty() && !isDisturb && !isHarmonize && !grantedFlashback && !emblemFlashback && !grantedGraveyardCardCast
-                    && !isGrantedGraveyardPlay && !isGraveyardCast
-                    && graveyardCastSourceId.isPresent()) {
-                // Card must be a non-land permanent type with at least one unused type slot
-                isGrantedGraveyardCast = CastingPermissionService.hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
+                    && !isGrantedGraveyardPlay && !isGraveyardCast) {
+                isGrantedGraveyardCast = castingPermissionService
+                        .findGraveyardCastSourcePermanentId(gameData, playerId, card).isPresent();
             }
 
             Optional<CastingPermissionService.FilteredGraveyardPermission> filteredGraveyardPermission =

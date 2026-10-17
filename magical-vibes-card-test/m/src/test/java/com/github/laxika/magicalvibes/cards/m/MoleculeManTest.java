@@ -138,10 +138,12 @@ class MoleculeManTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        for (int choices = 0; choices < 4
-                && gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice choice;
-                choices++) {
-            harness.handleMayAbilityChosen(player1, "{0}".equals(choice.manaCost()));
+        for (int steps = 0; steps < 6
+                && (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice
+                || !gd.stack.isEmpty()); steps++) {
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice choice) {
+                harness.handleMayAbilityChosen(player1, choice.manaCost() == null || "{0}".equals(choice.manaCost()));
+            }
             harness.passBothPriorities();
         }
 

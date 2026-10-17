@@ -47,9 +47,13 @@ public class CreateTokenCopiesOfAttackingModifiedCreaturesEffectHandler
                         permanent, MODIFIED, filterContext))
                 .toList();
 
-        for (Permanent attacker : attackers) {
-            tokenCopySupport.createTokenCopies(
-                    gameData, entry, List.of(attacker.getCard()), attacker, controllerId, TOKEN_COPY_PROFILE);
+        if (attackers.isEmpty()) {
+            return;
         }
+        List<UUID> attackTargets = attackers.stream().map(Permanent::getAttackTarget).toList();
+        tokenCopySupport.createTokenCopies(
+                gameData, entry, attackers.stream().map(Permanent::getCard).toList(), attackers.getFirst(),
+                controllerId, TOKEN_COPY_PROFILE,
+                attackTargets.contains(null) ? null : attackTargets);
     }
 }

@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class MaskOfMemory extends Card {
 
     public MaskOfMemory() {
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(2),
                         new DiscardEffect(1, DiscardRecipient.CONTROLLER)

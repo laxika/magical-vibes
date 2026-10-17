@@ -173,6 +173,8 @@ class MazzyTrueswordPaladinTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
         aura.setAttachedTo(creature.getId());
         destroyWithNaturalize(aura);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

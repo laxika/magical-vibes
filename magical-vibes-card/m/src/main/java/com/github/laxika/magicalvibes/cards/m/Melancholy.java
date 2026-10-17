@@ -18,7 +18,7 @@ public class Melancholy extends Card {
 
     public Melancholy() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED,
                         new ForcedCostOrElseEffect(

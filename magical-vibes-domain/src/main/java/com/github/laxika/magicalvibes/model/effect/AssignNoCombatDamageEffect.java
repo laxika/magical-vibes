@@ -9,11 +9,23 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>When {@code useTargetId} is true the creature is the stack entry's {@code targetId} instead, for
  * abilities whose source permanent is something else (Delif's Cube's delayed trigger: the Cube is the
  * source, "it" is the watched attacker). It applies even if the source has left the battlefield.</p>
+ *
+ * <p>When {@code thisCombatOnly} is true the restriction ends with the current combat instead of
+ * lasting the whole turn ("assigns no combat damage this combat").</p>
  */
-public record AssignNoCombatDamageEffect(boolean useTargetId) implements CardEffect {
+public record AssignNoCombatDamageEffect(boolean useTargetId, boolean thisCombatOnly) implements CardEffect {
+
+    public AssignNoCombatDamageEffect(boolean useTargetId) {
+        this(useTargetId, false);
+    }
 
     public AssignNoCombatDamageEffect() {
         this(false);
+    }
+
+    /** The source permanent assigns no combat damage this combat only (Master of Cruelties). */
+    public static AssignNoCombatDamageEffect thisCombat() {
+        return new AssignNoCombatDamageEffect(false, true);
     }
 
     /** The entry's {@code targetId} creature assigns no combat damage this turn. */

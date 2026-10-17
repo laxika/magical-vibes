@@ -87,6 +87,7 @@ class MiasmaDemonTest extends BaseCardTest {
     @CardUsed({MiasmaDemon.class})
     void canChooseFewerTargetsAndTargetItsOwnSourceWithASeparateTrigger() {
         harness.setHand(player1, List.of(new MiasmaDemon(), new MiasmaDemon()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent demon = harness.enterBattlefieldAndReturn(player1, new MiasmaDemon());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

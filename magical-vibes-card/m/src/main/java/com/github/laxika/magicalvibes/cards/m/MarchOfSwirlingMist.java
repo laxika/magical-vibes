@@ -19,7 +19,7 @@ public class MarchOfSwirlingMist extends Card {
                 new ExileAnyNumberOfCardsFromHandCost(new CardColorPredicate(CardColor.BLUE), 2));
 
         PhaseOutEffect phaseOut = new PhaseOutEffect(PhaseOutSubject.TARGET);
-        targetUpTo(new XValue(), TargetFilters.creature(), 100);
+        targetUpTo(new XValue(), TargetFilters.creature(), 1000);
         registerEffectTargetIndex(phaseOut, 0);
         addEffect(EffectSlot.SPELL, phaseOut);
     }

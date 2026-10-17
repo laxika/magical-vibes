@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMysticReflection;
@@ -152,12 +154,19 @@ public class BattlefieldPlacementService {
     @Lazy
     private CreaturePositioningSupport creaturePositioningSupport;
     private com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler opponentEntryControlHandler;
+    private com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfSourceEffectHandler createTokenCopyOfSourceEffectHandler;
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Autowired
     void setOpponentEntryControlHandler(
             @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler handler) {
         this.opponentEntryControlHandler = handler;
+    }
+
+    @Autowired
+    void setCreateTokenCopyOfSourceEffectHandler(
+            @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfSourceEffectHandler handler) {
+        this.createTokenCopyOfSourceEffectHandler = handler;
     }
 
     @Autowired
@@ -258,6 +267,7 @@ public class BattlefieldPlacementService {
         if (cloneService != null && cloneService.beginEntryCopyChoice(gameData, request.withControllerId(
                 resolveEnteringController(gameData, request.controllerId(), request.permanent())))) return;
         if (beginEnterAsCopyOrderChoice(gameData, request)) return;
+        if (beginMysticReflectionOrderChoice(gameData, request)) return;
         if (beginAmplifyChoice(gameData, request)) return;
         if (beginUnleashChoice(gameData, request)) return;
         if (beginRiotChoices(gameData, request)) return;
@@ -387,13 +397,13 @@ public class BattlefieldPlacementService {
             applySpellEntryCounters(gameData, controllerId, permanent);
             applySpellGrantedSubtypes(gameData, permanent);
             applySpellCastCharacteristics(gameData, permanent, request.sourceStackEntry());
-            applyEntryReplacementEffects(gameData, controllerId, permanent, xValue);
+            applyEntryReplacementEffects(gameData, controllerId, permanent, xValue, kicked);
             applyEnterWithKeywords(gameData, controllerId, permanent, xValue, kicked, repeatedAdditionalCosts);
             applyControlledPermanentEntryCharacteristics(gameData, controllerId, permanent);
             applyDiscardEntryCounters(gameData, controllerId, permanent, discardReplacement);
             applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledPermanentEntryReplacements(gameData, controllerId, permanent);
-            applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
+            applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered, false);
             applyAdditionalEnterCountersThisTurn(gameData, controllerId, permanent);
             applyNextEnchantmentCreatureEntryCounters(gameData, controllerId, permanent, simultaneouslyEntered);
             applyControlledCreaturesEnterWithSourcePowerCounters(gameData, controllerId, permanent);
@@ -556,6 +566,7 @@ public class BattlefieldPlacementService {
                         gameData, permanent, counter.getKey(), counter.getValue(), controllerId);
             }
         }
+        permanent.setEnteredBattlefieldTurnNumber(gameData.turnNumber);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(enteredCharacteristics);
@@ -797,14 +808,73 @@ public class BattlefieldPlacementService {
             gameData.activeMysticReflectionsForEntryBatch.addAll(gameData.pendingMysticReflections);
             gameData.pendingMysticReflections.clear();
         }
-        for (PendingMysticReflection reflection
-                : List.copyOf(gameData.activeMysticReflectionsForEntryBatch)) {
+        List<PendingMysticReflection> reflections = List.copyOf(gameData.activeMysticReflectionsForEntryBatch);
+        UUID lastApplied = permanent.getChosenEnterAsCopySourceId();
+        if (lastApplied != null && reflections.stream()
+                .anyMatch(reflection -> lastApplied.equals(reflection.targetPermanentId()))) {
+            // The entering permanent's controller chose which replacement applies last (CR 616.1);
+            // it overwrites the copiable values every earlier one set.
+            reflections = reflections.stream()
+                    .filter(reflection -> lastApplied.equals(reflection.targetPermanentId()))
+                    .toList();
+        }
+        for (PendingMysticReflection reflection : reflections) {
             boolean wasToken = permanent.getCard().isToken();
-            Card reflected = permanent.getCard().createRuntimeCopyWithFace(reflection.lastKnownTargetCard());
+            Permanent liveTarget = gameQueryService.findPermanentById(gameData, reflection.targetPermanentId());
+            Card copiedValues = mysticReflectionCopiedValues(liveTarget, reflection);
+            Card reflected = permanent.getCard().createRuntimeCopyWithFace(copiedValues);
             // The tokens are still tokens; only their copiable characteristics become the chosen creature's.
             reflected.setToken(wasToken);
             permanent.setCard(reflected);
         }
+        if (!reflections.isEmpty() && !permanent.getCard().hasType(CardType.PLANESWALKER)
+                && permanent.getCounterCount(CounterType.LOYALTY) > 0) {
+            // A planeswalker spell's loyalty counters belong to a planeswalker; the copy is not one, so
+            // it enters without them and, as a creature, is summoning sick.
+            permanent.setCounterCount(CounterType.LOYALTY, 0);
+            permanent.setSummoningSick(true);
+        }
+    }
+
+    private Card mysticReflectionCopiedValues(Permanent liveTarget, PendingMysticReflection reflection) {
+        if (liveTarget != null) {
+            return liveTarget.getCard();
+        }
+        return reflection.targetPermanent() != null
+                ? reflection.targetPermanent().getCard() : reflection.lastKnownTargetCard();
+    }
+
+    /**
+     * CR 616.1: when several Mystic Reflection replacements would apply to the same entering creature or
+     * planeswalker, its controller chooses which one applies last. Asked before any of them is consumed,
+     * and only when the replacements would copy differently named permanents.
+     */
+    private boolean beginMysticReflectionOrderChoice(GameData gameData, BattlefieldEntryRequest request) {
+        Permanent entering = request.permanent();
+        if (entering.getChosenEnterAsCopySourceId() != null || interactionHandlerRegistry == null
+                || (!entering.getCard().hasType(CardType.CREATURE)
+                && !entering.getCard().hasType(CardType.PLANESWALKER))) {
+            return false;
+        }
+        List<PendingMysticReflection> reflections =
+                request.simultaneouslyEntered().isEmpty() || gameData.activeMysticReflectionsForEntryBatch.isEmpty()
+                        ? gameData.pendingMysticReflections : gameData.activeMysticReflectionsForEntryBatch;
+        Map<String, UUID> targetIdByCopiedName = new java.util.LinkedHashMap<>();
+        for (PendingMysticReflection reflection : reflections) {
+            Card copied = mysticReflectionCopiedValues(
+                    gameQueryService.findPermanentById(gameData, reflection.targetPermanentId()), reflection);
+            targetIdByCopiedName.putIfAbsent(copied.getName(), reflection.targetPermanentId());
+        }
+        if (targetIdByCopiedName.size() < 2) {
+            return false;
+        }
+        UUID controllerId = resolveEnteringController(gameData, request.controllerId(), entering);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(controllerId, null, null,
+                new com.github.laxika.magicalvibes.model.ChoiceContext.EnterAsCopyOrderChoice(
+                        request.withControllerId(controllerId), List.copyOf(targetIdByCopiedName.values())),
+                List.copyOf(targetIdByCopiedName.keySet()), "Choose the creature " + entering.getCard().getName()
+                        + " enters as a copy of (the replacement effect applied last)."));
+        return true;
     }
 
     /** Obtains the unleash replacement choice before entry costs or battlefield triggers run. */
@@ -1798,6 +1868,23 @@ public class BattlefieldPlacementService {
         }
         if (battlefieldEntryBatchSupport.completeNativeChoice(gameData, permanent)) return;
         place(gameData, defaultRequest(gameData, controllerId, permanent));
+        if (sacrificed && gameQueryService.findPermanentById(gameData, permanent.getId()) != null) {
+            createLandCasualtyCopy(gameData, controllerId, permanent);
+        }
+    }
+
+    /** Creates the token copy of a land that entered with its land casualty cost paid, without using the stack. */
+    private void createLandCasualtyCopy(GameData gameData, UUID controllerId, Permanent permanent) {
+        CreateTokenCopyOfSourceEffect copyEffect = new CreateTokenCopyOfSourceEffect();
+        StackEntry copyEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                permanent.getCard(),
+                controllerId,
+                permanent.getCard().getName() + "'s land casualty",
+                new ArrayList<>(List.of(copyEffect)),
+                null,
+                permanent.getId());
+        createTokenCopyOfSourceEffectHandler.resolve(gameData, copyEntry, copyEffect);
     }
 
     public void completeSacrificePermanentsToEnter(GameData gameData, UUID controllerId, Permanent permanent,
@@ -2031,14 +2118,14 @@ public class BattlefieldPlacementService {
     }
 
     private void applyEntryReplacementEffects(GameData gameData, UUID controllerId,
-                                              Permanent permanent, int xValue) {
+                                              Permanent permanent, int xValue, boolean kicked) {
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             return;
         }
         List<CardEffect> entryEffects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
         entryEffects.addAll(permanent.getCard().getEffects(EffectSlot.STATIC));
         for (CardEffect effect : entryEffects) {
-            entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect, xValue);
+            entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect, xValue, kicked);
         }
     }
 
@@ -2063,6 +2150,7 @@ public class BattlefieldPlacementService {
                         List.of(), 0, permanent.getCard(), null);
             }
         }
+        applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, List.of(), true);
         int countersPlaced = permanent.getCounters().values().stream().mapToInt(Integer::intValue).sum()
                 - countersBeforeTotal;
         if (countersPlaced > 0) {
@@ -2415,9 +2503,13 @@ public class BattlefieldPlacementService {
      * battlefield, and a source entering simultaneously does not apply its effect (CR 614.12).
      *
      * @param simultaneouslyEntered permanents to exclude from subtype lookahead (see CR 614.12)
+     * @param afterSubtypeChoice    true when the entering permanent is already on the battlefield and has just
+     *                              made its "as this enters, choose a creature type" choice; only counters
+     *                              that the chosen type newly qualifies it for are then applied
      */
     private void applyControlledCreaturesEnterWithAdditionalCounters(GameData gameData, UUID controllerId,
-                                                                     Permanent permanent, List<Permanent> simultaneouslyEntered) {
+                                                                     Permanent permanent, List<Permanent> simultaneouslyEntered,
+                                                                     boolean afterSubtypeChoice) {
         if (!permanent.getCard().hasType(CardType.CREATURE)) return;
 
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
@@ -2428,6 +2520,7 @@ public class BattlefieldPlacementService {
         record SourcedCounters(Permanent source, CardSubtype subtype, DynamicAmount count,
                                boolean allCreatures) {}
         List<SourcedCounters> effects = battlefield.stream()
+                .filter(source -> source != permanent)
                 .filter(source -> !gameQueryService.hasLostAllAbilities(gameData, source))
                 .flatMap(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
                         .flatMap(effect -> {
@@ -2454,9 +2547,29 @@ public class BattlefieldPlacementService {
                 .toList();
         if (effects.isEmpty()) return;
 
-        EnteringSubtypes resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
+        EnteringSubtypes resolved;
+        EnteringSubtypes resolvedBeforeChoice = null;
+        if (afterSubtypeChoice) {
+            boolean wasOnBattlefield = battlefield.remove(permanent);
+            CardSubtype chosenSubtype = permanent.getChosenSubtype();
+            try {
+                resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
+                permanent.setChosenSubtype(null);
+                resolvedBeforeChoice = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
+            } finally {
+                permanent.setChosenSubtype(chosenSubtype);
+                if (wasOnBattlefield) {
+                    battlefield.add(permanent);
+                }
+            }
+        } else {
+            resolved = resolveEnteringSubtypes(gameData, permanent, controllerId, simultaneouslyEntered);
+        }
+        EnteringSubtypes beforeChoice = resolvedBeforeChoice;
         int additionalCounters = effects.stream()
                 .filter(sourced -> sourced.allCreatures() || hasSubtype(resolved, sourced.subtype()))
+                .filter(sourced -> beforeChoice == null
+                        || (!sourced.allCreatures() && !hasSubtype(beforeChoice, sourced.subtype())))
                 .mapToInt(sourced -> amountEvaluationService.evaluate(gameData, sourced.count(),
                         new AmountContext(controllerId, sourced.source(), null, 0, 0)))
                 .sum();
@@ -2637,7 +2750,7 @@ public class BattlefieldPlacementService {
      */
     private void applyControlledCreaturesEnterWithSourcePowerCounters(GameData gameData, UUID controllerId,
                                                                       Permanent permanent) {
-        if (!permanent.getCard().hasType(CardType.CREATURE)) return;
+        if (!gameQueryService.isCreature(gameData, permanent)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;

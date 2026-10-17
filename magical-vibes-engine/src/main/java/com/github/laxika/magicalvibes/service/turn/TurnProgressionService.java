@@ -143,6 +143,7 @@ public class TurnProgressionService {
             gameData.expireEndOfCombatFloatingEffects();
             gameData.creaturesWithCombatDamagePreventedThisCombat.clear();
             gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
+            gameData.creaturesAssigningNoCombatDamageThisCombat.clear();
             gameData.onlyLandCreaturesCanAttackThisCombat = false;
             gameData.onlyAggressiveCreaturesCanAttackThisCombat = false;
             gameData.creaturesCantAttackThisCombat = false;

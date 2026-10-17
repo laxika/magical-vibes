@@ -29,10 +29,10 @@ class MasterOfCrueltiesTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, harness::passBothPriorities);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(1);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(master.getId());
+        assertThat(gd.creaturesAssigningNoCombatDamageThisCombat).contains(master.getId());
     }
 
     @Test
@@ -47,7 +47,7 @@ class MasterOfCrueltiesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
-        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(master.getId());
+        assertThat(gd.creaturesAssigningNoCombatDamageThisCombat).doesNotContain(master.getId());
     }
 
     @Test

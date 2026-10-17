@@ -75,7 +75,7 @@ class MrHousePresidentAndCEOTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(house), null, null);
 
-        harness.getStackResolutionService().resolveTopOfStack(gd);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingManaAbilityTriggers).isEmpty();

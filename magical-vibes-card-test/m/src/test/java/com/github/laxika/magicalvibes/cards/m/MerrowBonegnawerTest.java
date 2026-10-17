@@ -84,6 +84,7 @@ class MerrowBonegnawerTest extends BaseCardTest {
         Permanent bonegnawer = addCreatureReady(player1, new MerrowBonegnawer());
         bonegnawer.tap();
         harness.castFromHand(player1, new LingeringTormentor(), "{3}{B}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -99,6 +100,8 @@ class MerrowBonegnawerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castCreature(player1, 0);
+
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -111,6 +114,7 @@ class MerrowBonegnawerTest extends BaseCardTest {
         Permanent bonegnawer = addCreatureReady(player1, new MerrowBonegnawer());
         bonegnawer.tap();
         harness.castFromHand(player1, new LingeringTormentor(), "{3}{B}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -126,6 +130,8 @@ class MerrowBonegnawerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castCreature(player1, 0);
+
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

@@ -71,6 +71,8 @@ class MirrorStyleMasterTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Grizzly Bears"))
                 .filteredOn(permanent -> permanent.getCard().isToken()).isEmpty();

@@ -38,12 +38,10 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
         UUID dyingCardId = e.dyingCardId();
         if (dyingCardId == null) return;
 
-        // Find the source permanent (Mimic Vat) on the battlefield
+        // The ability resolves even if the source left the battlefield: the card is still exiled and the
+        // previously exiled cards still return, but the new card is no longer linked to a permanent.
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (sourcePermanent == null) {
-            log.info("Game {} - Mimic Vat no longer on battlefield, imprint fizzles", gameData.id);
-            return;
-        }
+        Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : entry.getCard();
 
         // Find the dying card in any graveyard
         Card dyingCard = null;
@@ -67,7 +65,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
         }
 
         // Return previously imprinted card to its owner's graveyard
-        Card previouslyImprinted = gameData.getImprintedCard(sourcePermanent.getCard());
+        Card previouslyImprinted = gameData.getImprintedCard(sourceCard);
         if (previouslyImprinted != null) {
             // Find and remove from exile, tracking the owner
             var previousExiledEntry = gameData.findExiledCard(previouslyImprinted.getId());
@@ -87,11 +85,16 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
         // Exile the dying card (add to card owner's exile zone)
         exileService.exileCard(gameData, graveyardOwnerId, dyingCard);
 
-        // Set as imprinted on the source permanent
-        gameData.setImprintedCard(sourcePermanent.getCard(), dyingCard);
+        if (sourcePermanent == null) {
+            gameData.setImprintedCard(sourceCard, null);
+            gameLogService.append(gameData, GameLog.cardTextCard(dyingCard, " is exiled by ", sourceCard, "."));
+            return;
+        }
 
-        
-        gameLogService.append(gameData, GameLog.cardTextCard(dyingCard, " is exiled and imprinted on ", sourcePermanent.getCard(), "."));
-        log.info("Game {} - {} imprinted on {}", gameData.id, dyingCard.getName(), sourcePermanent.getCard().getName());
+        // Set as imprinted on the source permanent
+        gameData.setImprintedCard(sourceCard, dyingCard);
+
+        gameLogService.append(gameData, GameLog.cardTextCard(dyingCard, " is exiled and imprinted on ", sourceCard, "."));
+        log.info("Game {} - {} imprinted on {}", gameData.id, dyingCard.getName(), sourceCard.getName());
     }
 }

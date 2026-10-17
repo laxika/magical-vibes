@@ -217,6 +217,7 @@ class MorbidPlunderTest extends BaseCardTest {
         Card opposingCreature = new LlanowarElves();
         harness.setGraveyard(player1, List.of(ownCreature));
         harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new MorbidPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

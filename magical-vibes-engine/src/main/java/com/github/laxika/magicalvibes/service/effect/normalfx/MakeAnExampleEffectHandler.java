@@ -89,20 +89,26 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
 
         UUID sacrificingPlayerId = state.controllerId();
         List<UUID> chosenPile = choosePile1 ? state.pile1Ids() : state.pile2Ids();
+        List<Permanent> toSacrifice = new ArrayList<>();
         for (UUID permanentId : chosenPile) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent == null || !gameQueryService.isCreature(gameData, permanent)
                     || gameQueryService.cantBeSacrificed(gameData, permanent)) {
                 continue;
             }
-            if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
-                triggerCollectionService.checkAllyPermanentSacrificedTriggers(
-                        gameData, sacrificingPlayerId, permanent.getCard());
-                gameData.recordSacrificedPermanent(sacrificingPlayerId, permanent.getCard());
-                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
-                permanentRemovalService.removeOrphanedAuras(gameData);
-            }
+            toSacrifice.add(permanent);
         }
+        permanentRemovalService.performSimultaneousRemovals(gameData, toSacrifice, () -> {
+            for (Permanent permanent : toSacrifice) {
+                if (permanentRemovalService.sacrificePermanentToGraveyard(gameData, permanent)) {
+                    triggerCollectionService.checkAllyPermanentSacrificedTriggers(
+                            gameData, sacrificingPlayerId, permanent.getCard());
+                    gameData.recordSacrificedPermanent(sacrificingPlayerId, permanent.getCard());
+                    gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is sacrificed."));
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                }
+            }
+        });
 
         PendingMakeAnExample progress = gameData.pollPendingInteraction(PendingMakeAnExample.class);
         if (progress == null) {

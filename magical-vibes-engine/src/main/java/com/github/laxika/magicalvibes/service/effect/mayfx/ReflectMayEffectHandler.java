@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Component;
 public class ReflectMayEffectHandler implements MayEffectHandlerBean {
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReflectEffectHandler effectHandler;
-    private final CreateTokenCopyOfSourceEffectHandler createTokenCopyHandler;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -46,7 +44,8 @@ public class ReflectMayEffectHandler implements MayEffectHandlerBean {
                     null,
                     reflect.sourcePermanentId());
             tokenEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-            createTokenCopyHandler.resolve(gameData, tokenEntry, copyEffect);
+            // "When they do, they create a token copy" is a reflexive triggered ability (CR 603.12).
+            gameData.stack.add(tokenEntry);
         }
 
         effectHandler.completeChoice(gameData, ability, reflect);

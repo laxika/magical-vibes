@@ -38,7 +38,6 @@ class MarathWillOfTheWildTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 2, bears.getId());
-        harness.handleListChoice(player1, "Put X +1/+1 counters on target creature");
         harness.passBothPriorities();
 
         assertThat(marath.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -51,8 +50,7 @@ class MarathWillOfTheWildTest extends BaseCardTest {
         marath.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 0, 2, player2.getId());
-        harness.handleListChoice(player1, "Marath deals X damage to any target");
+        harness.activateAbility(player1, 0, 1, 2, player2.getId());
         harness.passBothPriorities();
 
         assertThat(marath.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -65,8 +63,7 @@ class MarathWillOfTheWildTest extends BaseCardTest {
         marath.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 0, 2, null);
-        harness.handleListChoice(player1, "Create an X/X green Elemental creature token");
+        harness.activateAbility(player1, 0, 2, 2, null);
         harness.passBothPriorities();
 
         assertThat(marath.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -80,7 +77,7 @@ class MarathWillOfTheWildTest extends BaseCardTest {
         Permanent marath = addCreatureReady(player1, new MarathWillOfTheWild());
         marath.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, 0, null))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(marath.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -93,7 +90,7 @@ class MarathWillOfTheWildTest extends BaseCardTest {
         marath.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, 3, null))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(marath.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -116,8 +113,7 @@ class MarathWillOfTheWildTest extends BaseCardTest {
         marath.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 1, null);
-        harness.handleListChoice(player1, "Create an X/X green Elemental creature token");
+        harness.activateAbility(player1, 0, 2, 1, null);
 
         harness.assertNotOnBattlefield(player1, "Marath, Will of the Wild");
         harness.assertInGraveyard(player1, "Marath, Will of the Wild");

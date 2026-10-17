@@ -10,12 +10,33 @@ import java.util.Objects;
  * source permanent. The source's leaves-the-battlefield effect can then clean up those tokens. The
  * optional reciprocal link gives each token a reference to the source when it leaves; cards that
  * only need source tracking can disable that behavior.
+ *
+ * <p>{@code leavesBattlefieldEffect}, when set, is registered as a delayed triggered ability for each
+ * created token: "When that token leaves the battlefield, [effect]". It is controlled by the ability's
+ * controller, has the ability's source as its source, and does not depend on the token's own
+ * abilities (CR 603.7).
+ *
+ * <p>{@code sourceLeavesBattlefieldEffect}, when set, is registered as one delayed triggered ability on
+ * the source: "Exile those tokens when this creature leaves the battlefield". It only exists once this
+ * effect resolves, so a source that already left has nothing to trigger, and it does not depend on the
+ * source's own abilities (CR 603.7).
  */
-public record CreateTokenAndLinkToSourceEffect(CreateTokenEffect token, boolean linkTokenToSource)
+public record CreateTokenAndLinkToSourceEffect(CreateTokenEffect token, boolean linkTokenToSource,
+                                               CardEffect leavesBattlefieldEffect,
+                                               CardEffect sourceLeavesBattlefieldEffect)
         implements TokenCreatingEffect {
 
     public CreateTokenAndLinkToSourceEffect(CreateTokenEffect token) {
-        this(token, true);
+        this(token, true, null, null);
+    }
+
+    public CreateTokenAndLinkToSourceEffect(CreateTokenEffect token, boolean linkTokenToSource) {
+        this(token, linkTokenToSource, null, null);
+    }
+
+    public CreateTokenAndLinkToSourceEffect(CreateTokenEffect token, boolean linkTokenToSource,
+                                            CardEffect leavesBattlefieldEffect) {
+        this(token, linkTokenToSource, leavesBattlefieldEffect, null);
     }
 
     public CreateTokenAndLinkToSourceEffect {

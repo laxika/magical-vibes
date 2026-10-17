@@ -2079,8 +2079,19 @@ public class PlayerInputService {
 
     public void beginRemoveOneCounterChoice(GameData gameData, UUID playerId, UUID targetId,
                                              String sourceCardName, List<CounterType> counterTypes) {
+        beginRemoveOneCounterChoice(gameData, playerId, targetId, sourceCardName, counterTypes, true);
+    }
+
+    /**
+     * Asks {@code playerId} which kind of counter to remove from the permanent. When
+     * {@code requireControl} is false the permanent may be controlled by any player (a targeted
+     * "remove a counter from target permanent" effect).
+     */
+    public void beginRemoveOneCounterChoice(GameData gameData, UUID playerId, UUID targetId,
+                                             String sourceCardName, List<CounterType> counterTypes,
+                                             boolean requireControl) {
         ChoiceContext.RemoveOneCounterChoice context = new ChoiceContext.RemoveOneCounterChoice(
-                targetId, playerId, sourceCardName, counterTypes);
+                targetId, playerId, sourceCardName, counterTypes, requireControl);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, context.options(),
                 sourceCardName + " — Choose a counter to remove."));
@@ -2683,12 +2694,12 @@ public class PlayerInputService {
 
     /**
      * Mindblaze, second prompt: the controller chooses a number greater than 0. The offered range
-     * stops at the target's library size — a larger guess can never match the number of cards in
-     * that library, so it is outcome-identical to any losing guess in range.
+     * stops one above the target's library size — a larger guess can never match the number of cards in
+     * that library, so it is outcome-identical to that always-losing guess.
      */
     public void beginRevealLibraryNumberGuessChoice(GameData gameData, ChoiceContext.RevealLibraryNumberGuessChoice ctx) {
         List<Card> library = gameData.playerDecks.get(ctx.targetPlayerId());
-        int max = Math.max(1, library == null ? 1 : library.size());
+        int max = (library == null ? 0 : library.size()) + 1;
 
         List<String> options = java.util.stream.IntStream.rangeClosed(1, max)
                 .mapToObj(Integer::toString)
@@ -2762,6 +2773,15 @@ public class PlayerInputService {
 
     private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes) {
         return collectCardNamesInGameExcluding(gameData, excludedTypes, null);
+    }
+
+    /**
+     * Whether {@code cardName} could have been offered by a "choose a card name that isn't a [type]" prompt,
+     * including names of cards that exist only in the card catalog rather than in the game.
+     */
+    public boolean isOfferedCardNameExcludingTypes(GameData gameData, String cardName, List<CardType> excludedTypes) {
+        return !isNameExcludedByType(gameData, cardName, excludedTypes)
+                && collectCardNamesInGameExcluding(gameData, excludedTypes).contains(cardName);
     }
 
     public boolean isNameExcludedByType(GameData gameData, String cardName, List<CardType> excludedTypes) {

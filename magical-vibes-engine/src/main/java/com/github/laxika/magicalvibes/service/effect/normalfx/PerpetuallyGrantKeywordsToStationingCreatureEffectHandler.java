@@ -37,7 +37,7 @@ public class PerpetuallyGrantKeywordsToStationingCreatureEffectHandler implement
         }
 
         Set<Keyword> grantable = EnumSet.noneOf(Keyword.class);
-        Permanent permanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent permanent = gameQueryService.findPermanentByCardId(gameData, entry.getTargetId());
         for (var keyword : e.keywords()) {
             if (permanent == null || !gameQueryService.cantHaveOrGainKeyword(gameData, permanent, keyword)) {
                 grantable.add(keyword);

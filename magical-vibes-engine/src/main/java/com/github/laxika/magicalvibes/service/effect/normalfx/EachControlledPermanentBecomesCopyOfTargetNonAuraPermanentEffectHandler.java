@@ -69,6 +69,17 @@ public class EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffectHan
 
         for (Permanent permanent : permanents) {
             permanentCopierService.applyCloneCopy(permanent, target, null, null);
+            // This copy effect is newer than any active temporary copy, so when that one expires
+            // the permanent keeps this permanent copy rather than reverting past it.
+            if (permanent.isCopyUntilEndOfTurn()) {
+                permanent.setPreCopyCard(permanent.getCard());
+            }
+            if (permanent.isCopyUntilControllerNextTurn()) {
+                permanent.setUntilNextTurnPreCopyCard(permanent.getCard());
+            }
+            if (permanent.isCopyWhileAttached()) {
+                permanent.setWhileAttachedPreCopyCard(permanent.getCard());
+            }
         }
 
         gameLogService.append(gameData, GameLog.builder()

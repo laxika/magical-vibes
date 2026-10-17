@@ -147,6 +147,7 @@ class MoggBombersTest extends BaseCardTest {
     void illegalTargetDoesNotSacrificeBombers() {
         harness.addToBattlefield(player1, new MoggBombers());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         Permanent flunkies = harness.enterBattlefieldAndReturn(player1, new MoggFlunkies());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, planeswalker.getId());

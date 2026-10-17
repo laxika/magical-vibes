@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 
 /**
  * Trigger-only effect for an entering-creature trigger that sacrifices its source and then
- * creates token copies based on the entering creature's mana value.
+ * creates tokens based on the entering creature's mana value.
  *
  * <p>The trigger collector snapshots that mana value on the stack entry. The normal effect handler
- * materializes the token blueprint and reuses {@link SacrificeSelfThenEffect} for the sacrifice
- * and conditional follow-up.
+ * materializes the token blueprint and creates the tokens whether or not the sacrifice happened
+ * ("sacrifice this artifact and create ..." has no "if you do").
  */
 public record SacrificeSelfThenCreateTokensEqualToEnteringManaValueEffect(CreateTokenEffect tokenTemplate)
         implements TokenCreatingEffect {

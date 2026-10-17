@@ -42,8 +42,10 @@ public class DealDamageToCombatOpponentControllerEffectHandler implements Normal
         var e = (DealDamageToCombatOpponentControllerEffect) effect;
 
         Permanent opponent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        UUID controllerId = opponent == null ? entry.getTriggeringPermanentControllerId()
-                : gameQueryService.findPermanentController(gameData, opponent.getId());
+        UUID controllerId = opponent != null
+                ? gameQueryService.findPermanentController(gameData, opponent.getId())
+                : entry.getRemovedPermanentControllers().getOrDefault(entry.getTargetId(),
+                        entry.getTriggeringPermanentControllerId());
         if (controllerId == null) {
             return;
         }

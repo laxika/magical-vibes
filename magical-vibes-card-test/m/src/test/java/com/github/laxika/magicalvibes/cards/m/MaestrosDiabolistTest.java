@@ -40,7 +40,7 @@ class MaestrosDiabolistTest extends BaseCardTest {
         assertThat(devil.getCard().getColor()).isEqualTo(CardColor.RED);
         assertThat(devil.getCard().getSubtypes()).containsExactly(CardSubtype.DEVIL);
         assertThat(devil.isTapped()).isTrue();
-        assertThat(devil.isAttackedThisTurn()).isTrue();
+        assertThat(devil.isAttackedThisTurn()).isFalse();
     }
 
     @Test

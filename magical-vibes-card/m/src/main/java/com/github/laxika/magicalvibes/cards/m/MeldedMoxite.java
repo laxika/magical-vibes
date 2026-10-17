@@ -20,7 +20,7 @@ public class MeldedMoxite extends Card {
 
     public MeldedMoxite() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
-                new DiscardCardThenEffect(null, new DrawCardEffect(2), "a card"),
+                DiscardCardThenEffect.continuing(null, new DrawCardEffect(2), "a card"),
                 "Discard a card to draw two cards?"));
 
         addActivatedAbility(new ActivatedAbility(

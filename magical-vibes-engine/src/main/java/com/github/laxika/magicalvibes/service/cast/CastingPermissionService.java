@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -798,7 +799,7 @@ public class CastingPermissionService {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.CantCastSpellsSharingColorWithMostRecentSpellEffect) {
                         if (mostRecentSpell != null && card != null
-                                && gameQueryService.getEffectiveCardColors(gameData, mostRecentSpell).stream()
+                                && colorsWhenCast(gameData, mostRecentSpell).stream()
                                 .anyMatch(gameQueryService.getEffectiveCardColors(gameData, card)::contains)) {
                             return true;
                         }
@@ -812,6 +813,23 @@ public class CastingPermissionService {
             }
         }
         return false;
+    }
+
+    /**
+     * The colors the most recently cast spell had when it was cast: a color-changing effect that
+     * applied to it afterwards (Blind Seer) doesn't change which spells Mana Maze restricts.
+     */
+    private Set<CardColor> colorsWhenCast(GameData gameData, Card spell) {
+        if (gameData.spellColorOverridesUntilEndOfTurn.containsKey(spell.getId())
+                || gameData.spellColorOverrides.containsKey(spell.getId())) {
+            Set<CardColor> printed = EnumSet.noneOf(CardColor.class);
+            printed.addAll(spell.getColors());
+            if (spell.getColor() != null) {
+                printed.add(spell.getColor());
+            }
+            return printed;
+        }
+        return gameQueryService.getEffectiveCardColors(gameData, spell);
     }
 
     public boolean isSpellCastingRestrictedByTopLibraryCard(GameData gameData, Card card) {
@@ -1933,15 +1951,20 @@ public class CastingPermissionService {
 
     /**
      * Returns the permanent ID of the first permanent the player controls that has
-     * CastPermanentSpellsFromGraveyardEffect, or empty if none.
+     * CastPermanentSpellsFromGraveyardEffect, still has its abilities, and has an unused permanent type slot
+     * for the given card, or empty if none. Permissions only work during the controller's turn.
      * The returned UUID is used to key per-instance graveyard cast tracking.
      */
-    public Optional<UUID> findGraveyardCastSourcePermanentId(GameData gameData, UUID playerId) {
+    public Optional<UUID> findGraveyardCastSourcePermanentId(GameData gameData, UUID playerId, Card card) {
+        if (!playerId.equals(gameData.activePlayerId)) return Optional.empty();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return Optional.empty();
         for (Permanent perm : battlefield) {
+            if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CastPermanentSpellsFromGraveyardEffect) {
+                if (effect instanceof CastPermanentSpellsFromGraveyardEffect
+                        && hasUnusedPermanentTypeSlot(card,
+                        gameData.permanentTypesCastFromGraveyardThisTurn.getOrDefault(perm.getId(), Set.of()))) {
                     return Optional.of(perm.getId());
                 }
             }

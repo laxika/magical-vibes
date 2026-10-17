@@ -85,7 +85,8 @@ class MagistratesVetoTest extends BaseCardTest {
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, veto));
         prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, attackerIndex)));
+        int remainingAttackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, remainingAttackerIndex)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }

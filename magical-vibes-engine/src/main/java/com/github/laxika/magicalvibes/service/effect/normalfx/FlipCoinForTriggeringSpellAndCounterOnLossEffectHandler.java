@@ -35,13 +35,16 @@ public class FlipCoinForTriggeringSpellAndCounterOnLossEffectHandler implements 
         UUID spellId = entry.getTargetId();
         if (spellId == null) return;
 
-        StackEntry triggeringSpell = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getTargetableId().equals(spellId))
-                .findFirst()
-                .orElse(null);
-        if (triggeringSpell == null) return;
-
-        UUID casterId = triggeringSpell.getControllerId();
+        // The caster flips even when the spell was already countered or otherwise left the stack.
+        UUID casterId = ((FlipCoinForTriggeringSpellAndCounterOnLossEffect) effect).casterId();
+        if (casterId == null) {
+            StackEntry triggeringSpell = gameData.stack.stream()
+                    .filter(stackEntry -> stackEntry.getTargetableId().equals(spellId))
+                    .findFirst()
+                    .orElse(null);
+            if (triggeringSpell == null) return;
+            casterId = triggeringSpell.getControllerId();
+        }
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, casterId);
         String sourceName = entry.getCard().getName();
         String resultText = result.heads() ? " wins " : " loses ";

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -274,6 +275,8 @@ public class StackEntry {
     @Setter private boolean beholdCostPaid;
     /** The last-known power of the permanent or card used to pay this spell's behold cost. */
     @Setter private int beholdPower;
+    /** The triggering permanent's keywords when it left the battlefield, or null while it is still there. */
+    @Setter private Set<Keyword> triggeringPermanentKeywordsAtLeave;
     /** The permanent used to pay this spell's behold cost, when the choice was from the battlefield. */
     @Setter private UUID beholdPermanentId;
     /** Whether this spell's optional reveal-a-card-from-hand additional cost was paid. */
@@ -617,8 +620,15 @@ public class StackEntry {
      */
     private final List<UUID> playersDealtDamageThisResolution = new ArrayList<>();
 
-    /** Trigger effects already fired for the single noncombat damage event represented by this entry. */
-    private final Map<UUID, Set<CardEffect>> noncombatExcessDamageTriggerEffectsFired = new HashMap<>();
+    /**
+     * Permanents this entry has actually dealt damage to while resolving, in order, including damage a
+     * redirect moved onto a different permanent. Read back by a later effect on the same entry that acts
+     * on "if a [permanent] is dealt damage this way".
+     */
+    private final List<UUID> permanentsDealtDamageThisResolution = new ArrayList<>();
+
+    /** Trigger effects already fired, keyed by the damage event of the effect that dealt the damage. */
+    private final Map<UUID, Set<List<Object>>> noncombatExcessDamageTriggerEffectsFired = new HashMap<>();
 
     /** Records that this entry dealt damage to {@code playerId}; duplicates are ignored. */
     public void recordPlayerDealtDamage(UUID playerId) {
@@ -627,10 +637,17 @@ public class StackEntry {
         }
     }
 
+    /** Records that this entry dealt damage to {@code permanentId}; duplicates are ignored. */
+    public void recordPermanentDealtDamage(UUID permanentId) {
+        if (permanentId != null && !permanentsDealtDamageThisResolution.contains(permanentId)) {
+            permanentsDealtDamageThisResolution.add(permanentId);
+        }
+    }
+
     public boolean markNoncombatExcessDamageTriggerFired(UUID sourcePermanentId, CardEffect effect) {
         return noncombatExcessDamageTriggerEffectsFired
                 .computeIfAbsent(sourcePermanentId, ignored -> new HashSet<>())
-                .add(effect);
+                .add(Arrays.asList(getResolvingDamageEvent(), effect));
     }
 
     /**
@@ -934,6 +951,8 @@ public class StackEntry {
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
         this.beholdCostPaid = source.beholdCostPaid;
         this.beholdPower = source.beholdPower;
+        this.triggeringPermanentKeywordsAtLeave = source.triggeringPermanentKeywordsAtLeave == null
+                ? null : EnumSet.copyOf(source.triggeringPermanentKeywordsAtLeave);
         this.beholdPermanentId = source.beholdPermanentId;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.casualtyCostPaid = source.casualtyCostPaid;
@@ -1538,11 +1557,17 @@ public class StackEntry {
 
     /**
      * The player to whom this spell's card belongs for disposition purposes (graveyard/hand/library on
-     * leaving the stack). Defaults to the controller — correct for every normal cast, where owner ==
-     * controller — unless an {@link #ownerIdOverride} was set for a control-diverged cast (Sen Triplets).
+     * leaving the stack). An {@link #ownerIdOverride} set for a control-diverged cast (Sen Triplets) wins,
+     * then the physical card's recorded owner (a spell cast from another player's hand, Mindclaw Shaman),
+     * and otherwise the controller — correct for every normal cast, where owner == controller.
      */
     public UUID getOwnerId() {
-        return ownerIdOverride != null ? ownerIdOverride : controllerId;
+        if (ownerIdOverride != null) {
+            return ownerIdOverride;
+        }
+        Card physical = getPhysicalCard();
+        UUID cardOwnerId = physical != null ? physical.getOwnerId() : null;
+        return cardOwnerId != null ? cardOwnerId : controllerId;
     }
 
     /**

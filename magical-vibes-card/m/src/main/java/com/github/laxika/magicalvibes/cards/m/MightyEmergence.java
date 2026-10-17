@@ -11,7 +11,8 @@ public class MightyEmergence extends Card {
 
     public MightyEmergence() {
         // Whenever a creature you control with power 5 or greater enters, you may put two +1/+1 counters on it.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        // The trigger includes Mighty Emergence itself entering.
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(5,
                         new PutCountersOnEnteringCreatureEffect(2)));
     }

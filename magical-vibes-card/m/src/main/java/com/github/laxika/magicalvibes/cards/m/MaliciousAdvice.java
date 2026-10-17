@@ -27,7 +27,7 @@ public class MaliciousAdvice extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Targets must be artifacts, creatures, or lands"
-        ), 100).addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
+        ), 1000).addEffect(EffectSlot.SPELL, new TapPermanentsEffect(TapUntapScope.TARGET));
 
         addEffect(EffectSlot.SPELL, new LoseLifeEffect(new XValue(), LoseLifeRecipient.CONTROLLER));
     }

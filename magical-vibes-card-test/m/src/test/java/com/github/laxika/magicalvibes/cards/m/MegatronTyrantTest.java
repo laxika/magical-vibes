@@ -75,8 +75,8 @@ class MegatronTyrantTest extends BaseCardTest {
     void controllerCanCastDuringCombat() {
         harness.addToBattlefield(player1, new MegatronTyrant());
         harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
@@ -126,9 +126,9 @@ class MegatronTyrantTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new Unsummon()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         advanceToPostcombatMain();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, megatron.getId());
         harness.assertInHand(player1, "Megatron, Tyrant");
         gd.playerManaPools.get(player1.getId()).clear();
@@ -184,7 +184,7 @@ class MegatronTyrantTest extends BaseCardTest {
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(megatron)));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.handleMayAbilityChosen(player1, false));
 
         harness.assertOnBattlefield(player1, "Worn Powerstone");
         assertThat(megatron.isTransformed()).isTrue();

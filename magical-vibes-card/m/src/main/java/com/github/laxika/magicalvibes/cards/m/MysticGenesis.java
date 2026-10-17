@@ -18,11 +18,9 @@ public class MysticGenesis extends Card {
 
     public MysticGenesis() {
         // Counter target spell. Create an X/X green Ooze creature token, where X is that spell's
-        // mana value.
-        //
-        // The token is listed before the counter so the targeted spell is still on the stack when
-        // its mana value is snapshotted. The two instructions are independent, so this ordering is
-        // rules-equivalent (the token is created at its size even for an uncounterable spell).
+        // mana value. Countering records the spell's mana value on the resolving entry, so the token
+        // is still created at that size after the spell has left the stack (even if it was uncounterable).
+        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
         addEffect(EffectSlot.SPELL, new CreateTokenEffect(
                 "Ooze",
                 new TargetSpellManaValue(),
@@ -31,6 +29,5 @@ public class MysticGenesis extends Card {
                 List.of(CardSubtype.OOZE),
                 Set.of(),
                 Set.of()));
-        addEffect(EffectSlot.SPELL, new CounterSpellEffect());
     }
 }

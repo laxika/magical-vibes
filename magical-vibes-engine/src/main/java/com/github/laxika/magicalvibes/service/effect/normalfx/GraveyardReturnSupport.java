@@ -152,14 +152,18 @@ public class GraveyardReturnSupport {
     }
 
     /**
-     * Exiles the source card from its controller's graveyard when the effect declares
+     * Exiles the source card from its owner's graveyard when the effect declares
      * {@code exileSourceFromGraveyard} ("exile it, then …" — Moldgraf Monstrosity, Sylvan
      * Hierophant). A no-op when the source card has already left the graveyard.
      */
     private void exileSourceFromGraveyardIfRequested(GameData gameData, ReturnCardFromGraveyardEffect effect,
                                                      UUID controllerId, UUID sourceCardId) {
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (!effect.exileSourceFromGraveyard() || graveyard == null || sourceCardId == null) {
+        if (!effect.exileSourceFromGraveyard() || sourceCardId == null) {
+            return;
+        }
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCardId);
+        List<Card> graveyard = ownerId == null ? null : gameData.playerGraveyards.get(ownerId);
+        if (graveyard == null) {
             return;
         }
         Card sourceCard = graveyard.stream()
@@ -170,8 +174,8 @@ public class GraveyardReturnSupport {
             return;
         }
         graveyard.remove(sourceCard);
-        graveyardService.notifyCardsExiledFromGraveyard(gameData, controllerId, sourceCard);
-        exileService.exileCard(gameData, controllerId, sourceCard);
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, ownerId, sourceCard);
+        exileService.exileCard(gameData, ownerId, sourceCard);
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", sourceCard, " from graveyard."));
         log.info("Game {} - {} exiles {} from graveyard", gameData.id, playerName, sourceCard.getName());
@@ -280,6 +284,7 @@ public class GraveyardReturnSupport {
             permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
             gameData.interaction.setPendingAuraCard(targetCard);
             gameData.interaction.setPendingAuraOwnerId(auraControllerId);
+            gameData.interaction.setPendingAuraGraveyardReturn(effect);
             playerInputService.beginAnyTargetChoice(gameData, auraControllerId, attachTargetIds, attachPlayerIds,
                     "Choose a permanent or player for " + targetCard.getName() + " to enchant.");
             return;
@@ -639,7 +644,9 @@ public class GraveyardReturnSupport {
                 continue;
             }
             if (effect.enterWithMannequinCounter()) {
-                p.setCounterCount(CounterType.MANNEQUIN, 1);
+                permanentCounterSupport.placeCounterOnPermanentForPlayer(gameData, entry, p,
+                        CounterType.MANNEQUIN, 1, entry == null ? controllerId : entry.getControllerId());
+                p.setMannequinGrantActive(true);
             }
             if (enterWithCounter) {
                 permanentCounterSupport.placeCounterOnPermanentForPlayer(gameData, entry, p,
@@ -1095,6 +1102,14 @@ public class GraveyardReturnSupport {
         }
 
         List<Card> returnedCards = new ArrayList<>();
+        List<ReturnedPermanent> deferredEtbs = new ArrayList<>();
+        boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
+        if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+            gameData.collectingSimultaneousCreatureEntryTriggers = true;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
+            }
+        }
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Map.Entry<UUID, List<Card>> cardsEntry : cardsByGraveyard.entrySet()) {
@@ -1125,7 +1140,16 @@ public class GraveyardReturnSupport {
                             returnedPermanent = putCardOntoBattlefield(
                                     gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
                                     effect.enterTapped(), effect.enterAttacking(), null, false,
-                                    losesAllAbilitiesBeforeEntering(effect));
+                                    losesAllAbilitiesBeforeEntering(effect), 0, permanent -> { }, deferredEtbs);
+                        }
+                        if (returnedPermanent == null) {
+                            List<Card> blockedIn = gameData.playerGraveyards.get(targetPlayerId);
+                            if (!graveyardOwnerId.equals(targetPlayerId) && blockedIn != null && blockedIn.remove(card)) {
+                                graveyard.add(card);
+                            }
+                            if (trackedIds != null) {
+                                trackedIds.add(card.getId());
+                            }
                         }
                         applyBattlefieldReturnRiders(
                                 gameData, targetPlayerId, card, effect, entry, graveyardOwnerId);
@@ -1137,8 +1161,15 @@ public class GraveyardReturnSupport {
                     returnedCards.add(card);
                 }
             }
+            for (ReturnedPermanent returned : deferredEtbs) {
+                handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
+            }
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
+            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
+            }
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -1931,7 +1962,8 @@ public class GraveyardReturnSupport {
         Permanent permanent = new Permanent(card);
         applyPermanentGrants(permanent, grantColor, grantSubtype, grantIndestructible);
         permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
-        if (enterWithCounter != null && enterWithCounterAmount > 0) {
+        if (enterWithCounter != null && enterWithCounterAmount > 0
+                && !gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
             int counters = gameQueryService.replaceCounters(gameData, permanent, controllerId,
                     enterWithCounter, enterWithCounterAmount, controllerId);
             permanent.setCounterCount(enterWithCounter, counters);

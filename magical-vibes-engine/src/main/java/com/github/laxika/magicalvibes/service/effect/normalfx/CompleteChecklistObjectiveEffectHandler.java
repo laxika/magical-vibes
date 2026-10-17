@@ -29,8 +29,14 @@ public class CompleteChecklistObjectiveEffectHandler implements NormalEffectHand
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null || !source.getChosenModeLabels().add(objectiveEffect.objective())
-                || !source.getChosenModeLabels().containsAll(objectiveEffect.objectives())) {
+        if (source == null) {
+            return;
+        }
+        // Completing an objective that is already checked off still counts as completing it, and the
+        // "if all are checked off" check happens on resolution, so a map whose sacrifice could not be
+        // performed earlier (for example after changing controllers) completes on the next objective.
+        source.getChosenModeLabels().add(objectiveEffect.objective());
+        if (!source.getChosenModeLabels().containsAll(objectiveEffect.objectives())) {
             return;
         }
 

@@ -654,6 +654,7 @@ public class CombatBlockService {
                     ? new ArrayList<>() : new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
             blockEffects.addAll(blocker.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
+            blockEffects.addAll(triggerCollectionService.grantedTriggeredEffects(gameData, blocker, EffectSlot.ON_BLOCK));
             if (!blockersWithBushidoTrigger.add(blocker.getId())) {
                 blockEffects.removeIf(BushidoEffect.class::isInstance);
             }
@@ -1013,6 +1014,7 @@ public class CombatBlockService {
             ? new ArrayList<>() : new ArrayList<>(blocker.getCard().getEffects(EffectSlot.ON_BLOCK));
         blockEffects.addAll(blocker.getTemporaryTriggeredEffects(EffectSlot.ON_BLOCK));
         blockEffects.addAll(blocker.getPersistentTriggeredEffects(EffectSlot.ON_BLOCK));
+        blockEffects.addAll(triggerCollectionService.grantedTriggeredEffects(gameData, blocker, EffectSlot.ON_BLOCK));
         if (blockEffects.isEmpty()) {
             return;
         }
@@ -1388,9 +1390,10 @@ public class CombatBlockService {
         Map<Integer, List<Integer>> mustBlockReqs = new LinkedHashMap<>();
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            if (blocker.getRequiredBlockSourceIds().isEmpty()) continue;
+            Set<UUID> requiredBlockSourceIds = requiredBlockSourceIds(gameData, blocker);
+            if (requiredBlockSourceIds.isEmpty()) continue;
             List<Integer> requiredAttackerIndices = new ArrayList<>();
-            for (UUID mustBlockId : blocker.getRequiredBlockSourceIds()) {
+            for (UUID mustBlockId : requiredBlockSourceIds) {
                 for (int atkIdx : attackerIndices) {
                     Permanent attacker = attackerBattlefield.get(atkIdx);
                     if (attacker.getId().equals(mustBlockId)
@@ -2816,6 +2819,26 @@ public class CombatBlockService {
         }
     }
 
+    /**
+     * The attackers {@code blocker} must block this turn if able: those stamped on it directly plus those
+     * of every "creatures with [counter] counters block that creature" requirement whose counter it has now;
+     * such a requirement binds only creatures that currently have the counter, so a creature that lost it is released.
+     */
+    private Set<UUID> requiredBlockSourceIds(GameData gameData, Permanent blocker) {
+        Set<UUID> sources = new HashSet<>(blocker.getRequiredBlockSourceIds());
+        gameData.counterHolderMustBlockRequirementsThisTurn.forEach((attackerId, counterTypes) -> {
+            if (attackerId.equals(blocker.getId())) {
+                return;
+            }
+            if (counterTypes.stream().anyMatch(type -> blocker.getCounterCount(type) > 0)) {
+                sources.add(attackerId);
+            } else {
+                sources.remove(attackerId);
+            }
+        });
+        return sources;
+    }
+
     private void validatePerCreatureMustBlockRequirements(GameData gameData,
                                                            BlockLegalityContext blockContext,
                                                            List<Permanent> attackerBattlefield,
@@ -2824,12 +2847,13 @@ public class CombatBlockService {
                                                            List<BlockerAssignment> blockerAssignments) {
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            if (blocker.getRequiredBlockSourceIds().isEmpty()) {
+            Set<UUID> requiredBlockSourceIds = requiredBlockSourceIds(gameData, blocker);
+            if (requiredBlockSourceIds.isEmpty()) {
                 continue;
             }
 
             Set<Integer> requiredAttackerIndices = new HashSet<>();
-            for (UUID mustBlockId : blocker.getRequiredBlockSourceIds()) {
+            for (UUID mustBlockId : requiredBlockSourceIds) {
                 for (int i = 0; i < attackerBattlefield.size(); i++) {
                     Permanent attacker = attackerBattlefield.get(i);
                     if (attacker.isAttacking() && attacker.getId().equals(mustBlockId)

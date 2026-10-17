@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,13 +17,12 @@ public class MoriokScavenger extends Card {
 
     public MoriokScavenger() {
         // When this creature enters, you may return target artifact creature card from your graveyard to your hand.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.CREATURE))))
                 .targetGraveyard(true)
-                .upTo(true)
-                .build());
+                .build(), "Return the targeted artifact creature card to your hand?"));
     }
 }

@@ -57,7 +57,7 @@ class MaskOfTheJadecrafterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent mask = findPermanent(player1, "Mask of the Jadecrafter");
-        assertThat(mask.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, mask, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

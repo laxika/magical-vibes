@@ -28,8 +28,8 @@ class MerchantOfVenomTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, ownBears.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownBears.getId()));
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -49,7 +49,7 @@ class MerchantOfVenomTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, ownBears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownBears.getId()));
         resolveSacrificeTriggers();
 
         harness.assertOnBattlefield(player1, "Merchant of Venom");
@@ -99,11 +99,11 @@ class MerchantOfVenomTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, ownBears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownBears.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownBears);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingBears, opposingOtherBears);
 
-        harness.handlePermanentChosen(player2, opposingBears.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(opposingBears.getId()));
         resolveSacrificeTriggers();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

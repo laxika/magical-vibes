@@ -31,7 +31,7 @@ public class PermanentMustAttackItsOwnerThisTurnEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent permanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (permanent == null || !gameQueryService.isCreature(gameData, permanent)) {
+        if (permanent == null) {
             return;
         }
 

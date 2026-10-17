@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class MirarisWake extends Card {
 
     public MirarisWake() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddOneOfEachManaTypeProducedByLandEffect(true));
     }
 }

@@ -17,7 +17,7 @@ public class MightformHarmonizer extends Card {
 
     public MightformHarmonizer() {
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
-                new BoostTargetCreatureEffect(new TargetPower(), new Fixed(0)));
+                new BoostTargetCreatureEffect(new TargetPower(true), new Fixed(0)));
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{G}"))));
     }
 }

@@ -74,6 +74,7 @@ class MidnightPathlighterTest extends BaseCardTest {
     void allyCombatDamageMakesControllerVentureOnce() {
         addCreatureReady(player1, new MidnightPathlighter());
         addCreatureReady(player1, new SolemnSimulacrum());
+        harness.setLibrary(player1, List.of());
 
         declareAttackers(List.of(0, 1));
         resolveCombat();

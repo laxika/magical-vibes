@@ -17,7 +17,7 @@ public class MaximumCarnage extends Card {
 
     public MaximumCarnage() {
         addEffect(EffectSlot.SAGA_CHAPTER_I,
-                new GoadCreaturesUntilNextTurnEffect(new PermanentTruePredicate()));
+                GoadCreaturesUntilNextTurnEffect.requirementOnly(new PermanentTruePredicate()));
         addEffect(EffectSlot.SAGA_CHAPTER_II, new AwardManaEffect(ManaColor.RED, 3));
         addEffect(EffectSlot.SAGA_CHAPTER_III,
                 new DealDamageToPlayersEffect(5, DamageRecipient.EACH_OPPONENT));

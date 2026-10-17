@@ -17,7 +17,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect}: the target creature's
  * controller sacrifices it, then that same player creates one token per point of the sacrificed
- * creature's power (Mercy Killing).
+ * creature's power (Mercy Killing). A creature that can't be sacrificed stays on the battlefield, but
+ * its controller still creates the tokens.
  *
  * <p>The creature's effective power is captured before removal (static bonuses still apply), so the
  * token count reflects the creature as it existed on the battlefield.
@@ -51,12 +52,16 @@ public class SacrificeTargetCreatureThenCreateTokensEqualToPowerEffectHandler im
         UUID controllerId = gameData.findControllerOf(target);
         int power = gameQueryService.getEffectivePower(gameData, target);
 
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
-
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
-        log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
-                target.getCard().getName(), entry.getCard().getName());
+        if (gameQueryService.cantBeSacrificed(gameData, target)) {
+            log.info("Game {} - {} can't be sacrificed, so it stays on the battlefield", gameData.id,
+                    target.getCard().getName());
+        } else {
+            permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
+            gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices " , target.getCard(), "."));
+            log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
+                    target.getCard().getName(), entry.getCard().getName());
+        }
 
         if (power > 0) {
             permanentControlSupport.applyCreateToken(

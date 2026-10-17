@@ -3732,6 +3732,9 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice vote) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
                     "permanent:" + selectedIds.getFirst());
+        } else if (context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice vote) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
+                    "permanent:" + selectedIds.getFirst());
         } else if (context instanceof MultiPermanentChoiceContext.SecretCouncilChoice vote) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId,
                     "permanent:" + selectedIds.getFirst());

@@ -26,6 +26,7 @@ import java.util.List;
 public class MishrasCommand extends Card {
 
     public MishrasCommand() {
+        setAllowSharedTargets(true);
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose target player. They may discard up to X cards, then draw a card for each card discarded this way",

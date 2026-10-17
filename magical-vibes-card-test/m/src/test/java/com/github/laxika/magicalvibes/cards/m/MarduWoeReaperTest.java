@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.a.ArashinCleric;
 import com.github.laxika.magicalvibes.cards.p.PressurePoint;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,10 +24,10 @@ class MarduWoeReaperTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         castWoeReaper();
+        chooseGraveyardTarget(player1, creature);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         harness.assertNotInGraveyard(player2, "Arashin Cleric");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -57,6 +58,9 @@ class MarduWoeReaperTest extends BaseCardTest {
 
         harness.addToBattlefield(player1, new MarduWoeReaper());
         castWoeReaper();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -68,10 +72,12 @@ class MarduWoeReaperTest extends BaseCardTest {
 
     @Test
     void decliningExileDoesNotGainLife() {
-        harness.setGraveyard(player2, List.of(new ArashinCleric()));
+        ArashinCleric creature = new ArashinCleric();
+        harness.setGraveyard(player2, List.of(creature));
         int lifeBefore = gd.getLife(player1.getId());
 
         castWoeReaper();
+        chooseGraveyardTarget(player1, creature);
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player2, "Arashin Cleric");
@@ -85,8 +91,8 @@ class MarduWoeReaperTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player1.getId());
 
         castWoeReaper();
+        chooseGraveyardTarget(player1, creature);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         harness.assertNotInGraveyard(player1, "Arashin Cleric");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
@@ -112,12 +118,13 @@ class MarduWoeReaperTest extends BaseCardTest {
     @Test
     void opponentsWarriorDoesNotTriggerOurWoeReaper() {
         harness.addToBattlefield(player1, new MarduWoeReaper());
-        harness.setGraveyard(player1, List.of(new ArashinCleric()));
+        ArashinCleric creature = new ArashinCleric();
+        harness.setGraveyard(player1, List.of(creature));
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, new MarduWoeReaper(), "{W}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        chooseGraveyardTarget(player2, creature);
 
         harness.handleMayAbilityChosen(player2, false);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -133,8 +140,8 @@ class MarduWoeReaperTest extends BaseCardTest {
         harness.castFromHand(player1, new MarduWoeReaper(), "{W}");
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        assertThat(((PendingInteraction.GraveyardChoice) gd.interaction.activeInteraction()).playerId())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(((PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player1.getId());
     }
 
@@ -143,6 +150,11 @@ class MarduWoeReaperTest extends BaseCardTest {
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new MarduWoeReaper(), "{W}");
         harness.passBothPriorities();
+    }
+
+    private void chooseGraveyardTarget(Player chooser, ArashinCleric target) {
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(chooser, List.of(target.getId()));
         harness.passBothPriorities();
     }
 }

@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 /**
  * Applies Bank only when the spell successfully resolves from its owner's hand.
  *
- * <p>The match lifecycle is not represented by the engine, so the resulting exile entry remains
- * available through a card-specific exile permission for the rest of the game state.</p>
+ * <p>A banked card may only be cast from exile in a later game of the match, never in the same
+ * game, so no exile cast permission is granted. The engine doesn't model multi-game matches.</p>
  */
 @Component
 public class BankEffectHandler implements NormalEffectHandlerBean {
@@ -27,7 +27,6 @@ public class BankEffectHandler implements NormalEffectHandlerBean {
                 && entry.getControllerId() != null
                 && entry.getControllerId().equals(entry.getOwnerId())) {
             entry.setExileInsteadOfGraveyard(true);
-            gameData.exilePlayPermissions.put(entry.getPhysicalCard().getId(), entry.getControllerId());
         }
     }
 }

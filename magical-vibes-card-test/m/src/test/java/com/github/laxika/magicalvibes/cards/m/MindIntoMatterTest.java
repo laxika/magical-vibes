@@ -132,6 +132,7 @@ class MindIntoMatterTest extends BaseCardTest {
 
     @Test
     void auraEntersAttachedToChosenCreature() {
+        harness.addToBattlefield(player1, new InklingMascot());
         harness.addToBattlefield(player2, new InklingMascot());
         Permanent creature = findPermanent(player2, "Inkling Mascot");
         harness.setHand(player1, List.of(new MindIntoMatter(), new Pacifism()));

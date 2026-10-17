@@ -178,6 +178,8 @@ class MarthaJonesTest extends BaseCardTest {
         assertThat(martha.isCantBeBlocked()).isTrue();
         assertThat(target.isCantBeBlocked()).isTrue();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
 

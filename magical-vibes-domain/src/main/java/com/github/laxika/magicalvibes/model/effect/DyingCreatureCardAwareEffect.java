@@ -12,4 +12,13 @@ public interface DyingCreatureCardAwareEffect {
 
     /** Returns a copy of this effect with the dying creature's card id bound in. */
     CardEffect boundToDyingCard(UUID dyingCardId);
+
+    /**
+     * Returns a copy that also records the dying card's graveyard-entry version, so the effect can
+     * tell whether that card is still the object that died. Effects that don't act on the card
+     * itself keep the default and return themselves.
+     */
+    default CardEffect boundToDyingCardEntryVersion(long graveyardEntryVersion) {
+        return (CardEffect) this;
+    }
 }

@@ -145,7 +145,7 @@ class MobileHomesteadTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }

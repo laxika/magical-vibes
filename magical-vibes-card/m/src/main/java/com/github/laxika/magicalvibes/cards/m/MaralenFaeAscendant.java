@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -32,13 +33,19 @@ public class MaralenFaeAscendant extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));
 
+        CardAnyOfPredicate elfOrFaerie = new CardAnyOfPredicate(List.of(
+                new CardSubtypePredicate(CardSubtype.ELF),
+                new CardSubtypePredicate(CardSubtype.FAERIE)));
+        ExileTopCardsToSourceEffect exileTopTwo = new ExileTopCardsToSourceEffect(2, false, false,
+                LibraryScope.TARGET_OPPONENT, true);
+
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new TriggeringCardConditionalEffect(elfOrFaerie, exileTopTwo));
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.ELF),
-                                new CardSubtypePredicate(CardSubtype.FAERIE))),
-                        new ExileTopCardsToSourceEffect(2, false, false,
-                                LibraryScope.TARGET_OPPONENT, true)));
+                        new CardAllOfPredicate(List.of(elfOrFaerie,
+                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))),
+                        exileTopTwo));
 
         addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
                 false,

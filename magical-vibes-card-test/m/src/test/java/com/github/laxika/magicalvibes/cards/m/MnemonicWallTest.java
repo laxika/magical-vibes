@@ -90,6 +90,7 @@ class MnemonicWallTest extends BaseCardTest {
         Card opposingSorcery = new ReadTheBones();
         harness.setGraveyard(player1, List.of(ownSorcery));
         harness.setGraveyard(player2, List.of(opposingSorcery));
+        harness.setHand(player2, List.of());
 
         castMnemonicWall();
 

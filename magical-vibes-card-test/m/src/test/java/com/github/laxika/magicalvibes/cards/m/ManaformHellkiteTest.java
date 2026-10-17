@@ -68,6 +68,7 @@ class ManaformHellkiteTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Dragon Illusion")).isEmpty();
     }

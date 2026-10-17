@@ -506,6 +506,22 @@ public class StackResolutionService {
                 .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect c
                         && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.CastForAlternateCost
                         && c.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect);
+        // CR 702.152a: a blitzed permanent has haste as a static ability, not as an enters-the-battlefield
+        // trigger, so Torpor Orb-style suppression of enters triggers doesn't remove it.
+        boolean printedBlitzHaste = entry.isAlternateCost()
+                && entry.getCard().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect c
+                        && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.CastForAlternateCost
+                        && c.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect grant
+                        && grant.keywords().contains(Keyword.HASTE));
+        if (printedBlitzHaste) {
+            gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
+                    UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
+                    new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
+                            Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
+                            com.github.laxika.magicalvibes.model.effect.GrantDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                    permanent.getId(), null, null, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
+        }
         // CR 702.152a: the blitz end-step sacrifice is a delayed triggered ability created as the spell
         // resolves, not an enters-the-battlefield trigger (see EtbEffectResolver).
         if (entry.isGrantedBlitzOnEntry() || printedBlitzSacrifice) {

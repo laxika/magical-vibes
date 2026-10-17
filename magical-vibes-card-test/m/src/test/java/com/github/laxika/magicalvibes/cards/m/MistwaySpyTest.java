@@ -166,6 +166,8 @@ class MistwaySpyTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        return findPermanent(player1, "Mistway Spy");
+        return findPermanents(player1, "Mistway Spy").stream()
+                .filter(Permanent::isFaceDown)
+                .findFirst().orElseThrow();
     }
 }

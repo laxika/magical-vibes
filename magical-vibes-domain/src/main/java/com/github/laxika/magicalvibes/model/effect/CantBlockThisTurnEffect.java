@@ -27,6 +27,11 @@ public record CantBlockThisTurnEffect(TapUntapScope scope, PermanentPredicate fi
     }
 
     @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return scope == TapUntapScope.ENCHANTED;
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         return switch (scope) {
             case TARGET -> TargetSpec.benign(TargetPredicates.creature());

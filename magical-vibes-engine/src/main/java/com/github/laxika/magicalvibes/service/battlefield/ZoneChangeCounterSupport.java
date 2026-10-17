@@ -21,6 +21,13 @@ public final class ZoneChangeCounterSupport {
         if (permanent == null || !hasPersistenceAbility(permanent.getCard())) {
             return;
         }
+        if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            // A face-down or ability-less permanent doesn't have the ability that retains counters.
+            if (permanent.getCard() != null) {
+                gameData.countersPreservedAcrossZoneChanges.remove(permanent.getCard().getId());
+            }
+            return;
+        }
         if (permanent.getCounters().isEmpty()) {
             gameData.countersPreservedAcrossZoneChanges.remove(permanent.getCard().getId());
             return;

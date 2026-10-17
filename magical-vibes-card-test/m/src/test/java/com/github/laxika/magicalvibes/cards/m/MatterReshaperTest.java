@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GraspOfDarkness;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.u.UntamedHunger;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MatterReshaper.class, WrathOfGod.class, Forest.class, SerraAngel.class,
-        GraspOfDarkness.class, UntamedHunger.class})
+        GraspOfDarkness.class, UntamedHunger.class, GrizzlyBears.class})
 class MatterReshaperTest extends BaseCardTest {
 
     @Test
@@ -144,6 +145,7 @@ class MatterReshaperTest extends BaseCardTest {
         UntamedHunger aura = new UntamedHunger();
         harness.setLibrary(player1, List.of(aura));
         harness.addToBattlefield(player2, new MatterReshaper());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         var creatureId = harness.getPermanentId(player2, "Matter Reshaper");
         killWithGraspOfDarkness();
 

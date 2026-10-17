@@ -318,6 +318,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public SpellRetarget(UUID spellCardId) { this(spellCardId, null); }
     }
 
+    /**
+     * Pending choice of which of a multi-target spell or ability's targets to change to the source
+     * permanent (Mizzium Meddler: "change a target of target spell or ability to this creature").
+     */
+    record ChangeSpellTargetToSource(UUID spellTargetableId, UUID sourcePermanentId)
+            implements PermanentChoiceContext {}
+
     /** Red Herring: choose a controlled permanent or spell to exchange with the revealed hand card. */
     record RedHerringExchange(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
 
@@ -910,6 +917,19 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DealDamageToOneOfTwoThenOtherCantBlock(UUID choosingPlayerId, Card sourceCard, UUID controllerId,
                                                   UUID firstPermanentId, UUID secondPermanentId, int damage)
             implements PermanentChoiceContext {}
+
+    /** Pack hunt (Master of the Wild Hunt): the controller of the creature that is dividing its damage
+     *  assigns that damage one point at a time among {@code hunterIds}; {@code assigned} holds the
+     *  points handed out so far and {@code remaining} the points still to assign. */
+    record PackHuntDamageAssignment(Card sourceCard, UUID controllerId, UUID damageSourceId,
+                                    UUID choosingPlayerId, List<UUID> hunterIds,
+                                    Map<UUID, Integer> assigned, int remaining)
+            implements PermanentChoiceContext {
+        public PackHuntDamageAssignment {
+            hunterIds = List.copyOf(hunterIds);
+            assigned = Map.copyOf(assigned);
+        }
+    }
 
     /** Cannibalize: the spell's controller picks which target to exile; the other gets two +1/+1 counters. */
     record CannibalizeChoice(Card sourceCard, UUID controllerId,

@@ -109,12 +109,12 @@ class MeasureOfWickednessTest extends BaseCardTest {
     void changingControlAfterEndStepTriggerStillLosesLife() {
         harness.addToBattlefield(player1, new MeasureOfWickedness());
         harness.setHand(player1, List.of(new OneWithNothing()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThat(gd.stack).hasSize(1);
         harness.castAndResolveInstant(player1, 0);
@@ -189,12 +189,12 @@ class MeasureOfWickednessTest extends BaseCardTest {
         harness.setHand(player2, List.of(new RendingVines(), new OneWithNothing(),
                 new OneWithNothing(), new OneWithNothing(), new OneWithNothing()));
         harness.setLibrary(player2, List.of(new OneWithNothing()));
-        harness.addMana(player2, ManaColor.GREEN, 3);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player2, ManaColor.GREEN, 3);
 
         harness.castAndResolveInstant(player2, 0, measureId);
 

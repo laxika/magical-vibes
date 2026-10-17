@@ -21,7 +21,7 @@ public class MarchOfTheWorldOoze extends Card {
         addEffect(EffectSlot.STATIC, new SetBasePowerToughnessEffect(6, 6, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.OOZE, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
-                SpellCastTriggerEffect.duringYourTurn(null, List.of(new CreateTokenEffect(
+                SpellCastTriggerEffect.whenCasterIsNotActiveTurn(List.of(new CreateTokenEffect(
                         "Elephant", 3, 3, CardColor.GREEN, List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()))));
     }
 }

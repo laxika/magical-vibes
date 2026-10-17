@@ -959,7 +959,10 @@ public class GraveyardChoiceHandlerService {
                 selectedCards.add(card);
             }
             int selectedPower = selectedCards.stream()
-                    .mapToInt(card -> card.getPower() == null ? 0 : card.getPower())
+                    .mapToInt(card -> {
+                        Integer power = gameQueryService.getEffectiveCardPower(gameData, card);
+                        return power == null ? 0 : power;
+                    })
                     .sum();
             if (selectedPower > maxTotalPower) {
                 throw new IllegalStateException("Selected cards exceed the total power "

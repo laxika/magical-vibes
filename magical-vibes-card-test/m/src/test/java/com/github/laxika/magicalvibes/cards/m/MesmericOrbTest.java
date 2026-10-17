@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -235,6 +236,17 @@ class MesmericOrbTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    /**
+     * Untap-step triggers are put on the stack without priority being given in the untap step, so the
+     * step moves straight to upkeep with them still waiting there.
+     */
+    @Override
+    protected void advanceToUpkeep(Player activePlayer) {
+        harness.performUntapStep(activePlayer);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
     }
 
     private void trimDeck(Player player, int size) {

@@ -25,7 +25,7 @@ public class Malfunction extends Card {
                 )),
                 "Target must be an artifact or creature"
         ))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
     }
 }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -78,7 +79,7 @@ class MarisiBreakerOfTheCoilTest extends BaseCardTest {
         marisi.setAttackTarget(player2.getId());
         Permanent original = addCreatureReady(player2, new GrizzlyBears());
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         Permanent beforeResolution = addCreatureReady(player2, new GrizzlyBears());
         resolveAllTriggers();
         Permanent afterResolution = addCreatureReady(player2, new GrizzlyBears());
@@ -113,9 +114,19 @@ class MarisiBreakerOfTheCoilTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        advanceToUpkeep(player2);
+        advanceToNextTurn(player1);
         assertThat(als.getMustAttackRequirementCount(gd, defender)).isEqualTo(1);
-        advanceToUpkeep(player1);
+        advanceToNextTurn(player2);
         assertThat(als.getMustAttackRequirementCount(gd, defender)).isZero();
+    }
+
+    private void advanceToNextTurn(Player currentActivePlayer) {
+        harness.forceActivePlayer(currentActivePlayer);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        Player nextActivePlayer = currentActivePlayer.getId().equals(player1.getId()) ? player2 : player1;
+        harness.passUntil(nextActivePlayer, TurnStep.UPKEEP);
     }
 }

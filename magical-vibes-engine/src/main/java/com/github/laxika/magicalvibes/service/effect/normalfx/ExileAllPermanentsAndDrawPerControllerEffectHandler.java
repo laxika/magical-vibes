@@ -63,7 +63,11 @@ public class ExileAllPermanentsAndDrawPerControllerEffectHandler implements Norm
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        // Draws happen as one simultaneous action, so they are ordered APNAP (CR 101.4).
+        List<UUID> ordered = gameData.orderedPlayerIds;
+        int activeIndex = Math.max(ordered.indexOf(gameData.activePlayerId), 0);
+        for (int i = 0; i < ordered.size(); i++) {
+            UUID playerId = ordered.get((activeIndex + i) % ordered.size());
             playerInteractionSupport.applyDrawCards(
                     gameData, playerId, exiledByController.getOrDefault(playerId, 0));
         }

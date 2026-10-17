@@ -71,6 +71,7 @@ class MarduSiegebreakerTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
     }
@@ -130,7 +131,7 @@ class MarduSiegebreakerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, first.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, second.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent source = findPermanent(player1, "Mardu Siegebreaker");
         assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(2);
@@ -165,6 +166,7 @@ class MarduSiegebreakerTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
@@ -172,15 +174,14 @@ class MarduSiegebreakerTest extends BaseCardTest {
     @Test
     void doesNotSacrificeTokenControlledByOpponentAtCreatorsEndStep() {
         Permanent token = createAttackingBearToken();
-        gd.playerBattlefields.get(player1.getId()).remove(token);
-        gd.playerBattlefields.get(player2.getId()).add(token);
-        gd.stolenCreatures.put(token.getId(), player1.getId());
+        setOwnerAndController(token, player1, player2);
         token.recordControlChange();
         token.setAttacking(false);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(findPermanents(player2, "Grizzly Bears")).containsExactly(token);

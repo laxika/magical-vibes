@@ -29,6 +29,7 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -51,6 +52,7 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(moku.getPowerModifier()).isZero();
@@ -69,6 +71,7 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -102,6 +105,7 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -119,9 +123,11 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -138,6 +144,7 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         Permanent laterBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -169,6 +176,7 @@ class MokuMeanderingDrummerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(moku.getPowerModifier()).isZero();

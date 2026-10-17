@@ -141,6 +141,7 @@ class MightformHarmonizerTest extends BaseCardTest {
     void warpedCardCanBeCastFromExileForItsNormalCostOnALaterTurn() {
         MightformHarmonizer harmonizer = new MightformHarmonizer();
         harness.setHand(player1, List.of(harmonizer));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreatureWithAlternateCost(player1, 0, List.of());

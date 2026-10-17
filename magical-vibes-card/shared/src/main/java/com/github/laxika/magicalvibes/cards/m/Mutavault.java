@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -25,11 +25,10 @@ public class Mutavault extends Card {
         // {T}: Add {C}.
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
         // {1}: This land becomes a 2/2 creature with all creature types until end of turn. It's still a land.
-        // "all creature types" == Changeling.
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new AnimatePermanentsEffect(2, 2, List.of(), Set.of(Keyword.CHANGELING))),
+                List.of(new AnimatePermanentsEffect(2, 2, CardSubtype.creatureTypes(), Set.of())),
                 "{1}: This land becomes a 2/2 creature with all creature types until end of turn. It's still a land."
         ));
     }

@@ -48,7 +48,7 @@ public class LookAtTopCardsHandTopBottomEffectHandler implements NormalEffectHan
         }
 
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.HandTopBottomChoice(controllerId, topCards));
+                new PendingInteraction.HandTopBottomChoice(controllerId, topCards, e.topToGraveyard()));
 
         gameLogService.append(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);

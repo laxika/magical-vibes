@@ -119,10 +119,11 @@ class MolecularModifierTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MolecularModifier());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
 
         advanceToCombat(player1);
+        harness.addMana(player2, ManaColor.RED, 1);
         harness.handlePermanentChosen(player1, target.getId());
+        harness.passPriority(player1);
         harness.castInstant(player2, 0, source.getId());
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
@@ -139,10 +140,11 @@ class MolecularModifierTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MolecularModifier());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
 
         advanceToCombat(player1);
+        harness.addMana(player2, ManaColor.RED, 1);
         harness.handlePermanentChosen(player1, target.getId());
+        harness.passPriority(player1);
         harness.castInstant(player2, 0, target.getId());
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);

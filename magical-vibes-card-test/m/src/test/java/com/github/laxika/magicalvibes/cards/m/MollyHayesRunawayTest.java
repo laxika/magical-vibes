@@ -112,6 +112,8 @@ class MollyHayesRunawayTest extends BaseCardTest {
 
     @Test
     void playPermissionLastsThroughNextTurnAndThenExpires() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.enterBattlefieldAndReturn(player1, new MollyHayesRunaway());
         Card topCard = new Shock();
         harness.setLibrary(player1, List.of(topCard, new Shock(), new Shock(), new Shock()));
@@ -122,7 +124,7 @@ class MollyHayesRunawayTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 

@@ -57,6 +57,7 @@ class MonstrousWarLeechTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -78,6 +79,7 @@ class MonstrousWarLeechTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -101,6 +103,7 @@ class MonstrousWarLeechTest extends BaseCardTest {
 
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

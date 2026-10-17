@@ -24,7 +24,8 @@ class MerchantRaidersTest extends BaseCardTest {
         castMerchantRaiders(target);
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
     }
 
     @Test
@@ -38,7 +39,8 @@ class MerchantRaidersTest extends BaseCardTest {
         chooseTargetAndResolve(target);
 
         assertThat(target.isTapped()).isTrue();
-        assertThat(target.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
     }
 
     @Test

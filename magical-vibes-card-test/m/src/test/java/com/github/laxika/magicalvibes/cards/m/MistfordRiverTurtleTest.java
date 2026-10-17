@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.s.SporecapSpider;
 import com.github.laxika.magicalvibes.cards.w.WorthyKnight;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -92,7 +93,7 @@ class MistfordRiverTurtleTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(turtle.isCantBeBlocked()).isFalse();
     }

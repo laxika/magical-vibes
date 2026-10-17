@@ -2109,6 +2109,20 @@ public class DamagePreventionService {
      */
     public int applyCreatureRedirectShields(GameData gameData, UUID protectedPermanentId, UUID sourcePermanentId,
                                             int damage, boolean combatDamage) {
+        return applyCreatureRedirectShields(gameData, protectedPermanentId, sourcePermanentId, damage, combatDamage,
+                false);
+    }
+
+    private static boolean isAnySourceNextEvent(CreatureDamageRedirectShield shield) {
+        return shield.isNextEvent() && shield.damageSourceId() == null;
+    }
+
+    /**
+     * Applies the creature redirect shields of one kind: the any-source next-event shields when
+     * {@code anySourceNextEvent} is set, every other shield otherwise.
+     */
+    public int applyCreatureRedirectShields(GameData gameData, UUID protectedPermanentId, UUID sourcePermanentId,
+                                            int damage, boolean combatDamage, boolean anySourceNextEvent) {
         // No isDamagePreventable check — this is redirection (replacement), not prevention.
         if (damage <= 0 || protectedPermanentId == null
                 || gameData.creatureDamageRedirectShields.isEmpty()) return damage;
@@ -2120,6 +2134,7 @@ public class DamagePreventionService {
         while (it.hasNext() && remaining > 0) {
             CreatureDamageRedirectShield shield = it.next();
             if (!shield.protectedPermanentId().equals(protectedPermanentId)) continue;
+            if (isAnySourceNextEvent(shield) != anySourceNextEvent) continue;
             if (shield.combatOnly() && !combatDamage) continue;
             // A null source matches any source (e.g. Zealous Inquisitor); otherwise it must match exactly.
             if (shield.damageSourceId() != null && !shield.damageSourceId().equals(sourcePermanentId)) continue;
@@ -3489,9 +3504,20 @@ public class DamagePreventionService {
 
     /** Whether Oracle's Attendants-style shields redirect damage from {@code sourceId} to {@code permanentId}. */
     public boolean hasCreatureRedirectShield(GameData gameData, UUID permanentId, UUID sourceId, boolean combatDamage) {
+        return hasCreatureRedirectShield(gameData, permanentId, sourceId, combatDamage, false);
+    }
+
+    /**
+     * Whether a creature redirect shield covers the damage; {@code anySourceNextEvent} selects the
+     * next-event shields that match any source (Mirrorwood Treefolk), which redirect the whole damage
+     * event rather than one source's part of it, or, when false, every other shield.
+     */
+    public boolean hasCreatureRedirectShield(GameData gameData, UUID permanentId, UUID sourceId, boolean combatDamage,
+                                             boolean anySourceNextEvent) {
         if (permanentId == null) return false;
         return gameData.creatureDamageRedirectShields.stream()
                 .anyMatch(shield -> shield.protectedPermanentId().equals(permanentId)
+                        && isAnySourceNextEvent(shield) == anySourceNextEvent
                         && (!shield.combatOnly() || combatDamage)
                         && (shield.damageSourceId() == null || shield.damageSourceId().equals(sourceId))
                         && isRedirectDestination(gameData, shield.redirectTargetId())

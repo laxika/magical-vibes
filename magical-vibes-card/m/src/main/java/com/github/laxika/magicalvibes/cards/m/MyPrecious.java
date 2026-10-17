@@ -27,7 +27,7 @@ public class MyPrecious extends Card {
         addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
-                null,
+                "{2}",
                 List.of(new PayLifeCost(2), new EquipEffect()),
                 "Equip—{2}, Pay 2 life.",
                 TargetFilters.creatureYouControl(),

@@ -37,6 +37,7 @@ public class DiceRollTriggerCollectorService {
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_ROLLS_DIE)
     private boolean handleControllerRollsDice(TriggerMatchContext match, CardEffect effect,
                                                TriggerContext context) {
         if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()

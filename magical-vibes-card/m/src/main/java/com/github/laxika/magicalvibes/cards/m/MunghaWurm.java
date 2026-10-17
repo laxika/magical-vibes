@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class MunghaWurm extends Card {
 
     public MunghaWurm() {
-        addEffect(EffectSlot.STATIC, new StaticOrbEffect(1, new PermanentIsLandPredicate(), false));
+        addEffect(EffectSlot.STATIC, new StaticOrbEffect(1, new PermanentIsLandPredicate(), false, false, true));
     }
 }

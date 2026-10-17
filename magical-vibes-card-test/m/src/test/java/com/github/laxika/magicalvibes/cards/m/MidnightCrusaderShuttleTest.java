@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AdiposeOffspring;
 import com.github.laxika.magicalvibes.cards.t.TheValeyard;
 import com.github.laxika.magicalvibes.cards.y.YasharnImplacableEarth;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -96,9 +97,11 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
         creature.tap();
         crewShuttle();
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, false);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player2, false);
+        });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);

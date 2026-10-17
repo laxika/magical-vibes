@@ -10,9 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsDuringCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuringCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfThenEffect;
 
 @CardRegistration(set = "BOT", collectorNumber = "12")
 @CardRegistration(set = "BOT", collectorNumber = "26")
@@ -22,11 +21,10 @@ public class MegatronTyrant extends Card {
         setBackFaceCard(new MegatronDestructiveForce());
         addCastingOption(AlternateHandCast.moreThanMeetsTheEye("{1}{R}{W}{B}"));
 
-        addEffect(EffectSlot.STATIC, new PlayersCantCastSpellsDuringCombatEffect());
+        addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsDuringCombatEffect());
         addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
                 new MayEffect(
-                        SequenceEffect.of(
-                                new TransformSelfEffect(),
+                        new TransformSelfThenEffect(
                                 new AwardManaEffect(ManaColor.COLORLESS,
                                         new LifeLostThisTurn(CountScope.OPPONENTS))),
                         "Convert Megatron?",

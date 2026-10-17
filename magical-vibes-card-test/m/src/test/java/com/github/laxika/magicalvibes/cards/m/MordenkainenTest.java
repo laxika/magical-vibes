@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -81,7 +83,8 @@ class MordenkainenTest extends BaseCardTest {
         assertThat(mordenkainen.getCounterCount(CounterType.LOYALTY)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(libraryCard, secondLibraryCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(handCard);
-        assertThat(gd.playersWithNoMaximumHandSize).contains(player1.getId());
+        assertThat(GameTestEngineContext.get().getBean(TurnCleanupService.class)
+                .hasNoMaximumHandSize(gd, player1.getId())).isTrue();
     }
 
     @Test

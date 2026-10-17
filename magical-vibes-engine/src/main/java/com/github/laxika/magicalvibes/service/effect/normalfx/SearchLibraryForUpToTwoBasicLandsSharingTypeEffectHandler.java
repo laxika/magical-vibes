@@ -1,35 +1,42 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForUpToTwoBasicLandsSharingTypeEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
+/**
+ * Searches for up to two basic land cards that share a land type. Both cards are chosen before either
+ * is put onto the battlefield, so they enter simultaneously: the second pick is narrowed by the land
+ * types of the first through {@link LibrarySearchParams#requireSharedLandType()}.
+ */
 @Component
 @RequiredArgsConstructor
 public class SearchLibraryForUpToTwoBasicLandsSharingTypeEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final SearchLibraryEffectHandler searchLibraryEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,44 +45,48 @@ public class SearchLibraryForUpToTwoBasicLandsSharingTypeEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        SearchLibraryForUpToTwoBasicLandsSharingTypeEffect searchEffect =
-                (SearchLibraryForUpToTwoBasicLandsSharingTypeEffect) effect;
-        if (!searchEffect.secondPick()) {
-            searchLibraryEffectHandler.resolveWithFollowUp(
-                    gameData,
-                    entry,
-                    new SearchLibraryEffect(new Fixed(1), CardPredicateUtils.basicLand(),
-                            LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                    LibrarySearchFollowUp.forSelectedCard(
-                            new CardTruePredicate(),
-                            new SearchLibraryForUpToTwoBasicLandsSharingTypeEffect(true)));
-            return;
-        }
-
         UUID controllerId = entry.getControllerId();
-        Card firstPick = entry.getChosenObjectCard();
-        if (controllerId == null || firstPick == null) {
+        if (controllerId == null || librarySearchSupport.isSearchPrevented(gameData, controllerId)) {
             return;
         }
 
-        Set<CardSubtype> firstLandTypes = gameQueryService.landTypesOf(firstPick);
-        librarySearchSupport.performLibrarySearch(
-                gameData,
-                controllerId,
-                card -> isBasicLand(gameData, card, controllerId)
-                        && !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)
-                        && gameQueryService.landTypesOf(card).stream().anyMatch(firstLandTypes::contains),
-                "a basic land card that shares a land type with the first land",
-                "Search your library for up to one basic land card that shares a land type with the first land, "
-                        + "put it onto the battlefield tapped, then shuffle.",
-                false,
-                true,
-                LibrarySearchDestination.BATTLEFIELD_TAPPED
-        );
-    }
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        CardPredicate basicLand = CardPredicateUtils.basicLand();
 
-    private boolean isBasicLand(GameData gameData, Card card, UUID controllerId) {
-        return predicateEvaluationService.matchesCardPredicate(
-                card, CardPredicateUtils.basicLand(), null, gameData, controllerId);
+        List<Card> matchingCards = deck == null ? List.of() : deck.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, basicLand, null, gameData, controllerId))
+                .filter(card -> !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY))
+                .toList();
+
+        int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
+        if (deck != null && topLimit < deck.size()) {
+            List<Card> searchable = deck.subList(0, topLimit);
+            matchingCards = matchingCards.stream()
+                    .filter(card -> searchable.stream().anyMatch(top -> top == card))
+                    .toList();
+        }
+
+        if (matchingCards.isEmpty()) {
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            gameLogService.append(gameData, GameLog.text(playerName
+                    + " searches their library but finds no basic land cards. Library is shuffled."));
+            return;
+        }
+
+        String prompt = "Search your library for up to two basic land cards that share a land type, "
+                + "put them onto the battlefield tapped, then shuffle.";
+        librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
+                LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+                        .remainingCount(2)
+                        .canFailToFind(true)
+                        .filterPredicate(basicLand)
+                        .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                        .requireSharedLandType(true)
+                        .prompt(prompt)
+                        .build(),
+                prompt, true);
     }
 }

@@ -32,7 +32,7 @@ public class ManaCache extends Card {
         );
 
         addEffect(EffectSlot.END_STEP_TRIGGERED,
-                new PutCountersOnSelfEffect(CounterType.CHARGE, untappedLands, true));
+                new PutCountersOnSelfEffect(CounterType.CHARGE, untappedLands));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

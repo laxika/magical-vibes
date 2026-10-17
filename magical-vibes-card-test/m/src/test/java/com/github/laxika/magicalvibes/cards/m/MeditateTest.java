@@ -86,7 +86,7 @@ class MeditateTest extends BaseCardTest {
         assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
 
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
     }
 
@@ -107,12 +107,14 @@ class MeditateTest extends BaseCardTest {
         assertThat(gd.skipNextTurnCount.getOrDefault(player1.getId(), 0)).isZero();
 
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
     }
 
     private void advanceTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
     }
 }

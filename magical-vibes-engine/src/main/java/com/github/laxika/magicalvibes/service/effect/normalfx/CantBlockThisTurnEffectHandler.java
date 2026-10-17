@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -21,6 +22,10 @@ import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMat
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 @Slf4j
@@ -45,7 +50,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             case TARGET -> resolveTarget(gameData, entry);
             case ENCHANTED -> resolveEnchanted(gameData, entry);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e, filterContext);
-            case TARGET_CONTROLLERS_OTHER_CREATURES -> resolveTargetControllersOtherCreatures(gameData, entry, e, filterContext);
+            case TARGET_CONTROLLERS_OTHER_CREATURES -> resolveTargetControllersOtherCreatures(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
             default -> throw new IllegalStateException("Unsupported can't-block scope: " + e.scope());
         }
@@ -81,11 +86,15 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private void resolveEnchanted(GameData gameData, StackEntry entry) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null || !source.isAttached()) {
-            return;
+        Permanent enchanted;
+        if (source != null && source.isAttached()) {
+            enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+        } else {
+            // The Aura left the battlefield in response: the ability still affects the permanent it
+            // was attached to when it was activated (captured as the entry's target).
+            enchanted = entry.getTargetId() == null
+                    ? null : gameQueryService.findPermanentById(gameData, entry.getTargetId());
         }
-
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
         if (enchanted == null) {
             return;
         }
@@ -125,36 +134,35 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
     /**
      * "Other creatures that player controls can't block this turn" — the affected player is the
      * target permanent's controller, and the target itself is deliberately left able to block.
+     * The restriction does not modify characteristics (CR 611.2c), so it is a floating rule that
+     * also covers creatures that enter under that player's control later in the turn.
      */
-    private void resolveTargetControllersOtherCreatures(GameData gameData, StackEntry entry, CantBlockThisTurnEffect e,
-                                                        FilterContext filterContext) {
+    private void resolveTargetControllersOtherCreatures(GameData gameData, StackEntry entry, CantBlockThisTurnEffect e) {
         UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
         UUID affectedPlayerId = gameQueryService.findPermanentController(gameData, targetId);
         if (affectedPlayerId == null) return;
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(affectedPlayerId);
-        if (battlefield == null) return;
+        List<PermanentPredicate> conditions = new ArrayList<>(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentControlledByPlayerPredicate(affectedPlayerId),
+                new PermanentNotPredicate(new PermanentIsSpecificPermanentPredicate(targetId))));
+        if (e.filter() != null) {
+            conditions.add(e.filter());
+        }
+        PermanentPredicate predicate = new PermanentAllOfPredicate(conditions);
+
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(),
+                new MatchingCreaturesCantBlockMatchingCreaturesEffect(predicate,
+                        new PermanentTruePredicate(), "can't block this turn"),
+                null, null, predicate, EffectDuration.UNTIL_END_OF_TURN, 0));
 
         String playerName = gameData.playerIdToName.get(affectedPlayerId);
-        int count = 0;
-        for (Permanent p : battlefield) {
-            if (!p.getId().equals(targetId)
-                    && gameQueryService.isCreature(gameData, p)
-                    && (e.filter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
-                p.setCantBlockThisTurn(true);
-                count++;
-            }
-        }
-
-        if (count > 0) {
-            gameLogService.append(gameData, GameLog.text(
-                    "Other creatures controlled by " + playerName + " can't block this turn."));
-            log.info("Game {} - {} other creatures controlled by {} can't block this turn",
-                    gameData.id, count, playerName);
-        }
+        gameLogService.append(gameData, GameLog.text(
+                "Other creatures controlled by " + playerName + " can't block this turn."));
+        log.info("Game {} - other creatures controlled by {} can't block this turn", gameData.id, playerName);
     }
 
     private void resolveAllCreatures(GameData gameData, StackEntry entry, CantBlockThisTurnEffect effect) {

@@ -177,6 +177,8 @@ class MagmaticHellkiteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent forest = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals("Forest"))
                 .findFirst().orElseThrow();

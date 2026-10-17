@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -25,8 +25,10 @@ public class MirrorShield extends Card {
         CardEffect destroyDeathtouchCreature = new TriggeringPermanentConditionalEffect(
                 new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
                 new DestroyCombatOpponentEffect(false), false, true);
-        addEffect(EffectSlot.ON_BLOCK, destroyDeathtouchCreature);
-        addEffect(EffectSlot.ON_BECOMES_BLOCKED, destroyDeathtouchCreature, TriggerMode.PER_BLOCKER);
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_BLOCK, destroyDeathtouchCreature, GrantScope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                EffectSlot.ON_BECOMES_BLOCKED, destroyDeathtouchCreature, GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 public enum CardSubtype {
@@ -371,6 +373,66 @@ SYNTH("Synth"),
             AJANI, BASRI, GARRUK, KOTH, HUATLI, ASHIOK, KARN, GIDEON, LILIANA, JACE, NISSA,
             OKO, SARKHAN, CHANDRA, BOLAS, DOMRI, DOVIN, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, ROWAN, YANGGU, YANLING, WRENN, ELSPETH);
 
+    private static final Set<CardSubtype> NON_CREATURE_TYPES = EnumSet.of(
+            FOREST,
+            MOUNTAIN,
+            ISLAND,
+            PLAINS,
+            SWAMP,
+            DESERT,
+            GATE,
+            LOCUS,
+            AURA,
+            EQUIPMENT,
+            INCUBATOR,
+            MUTAGEN,
+            AJANI,
+            KOTH,
+            BOLAS,
+            BLOOD,
+            BOBBLEHEAD,
+            BOOK,
+            CLUE,
+            FOOD,
+            FORTIFICATION,
+            GOLD,
+            JUNK,
+            LANDER,
+            MAP,
+            POWERSTONE,
+            SPACECRAFT,
+            TREASURE,
+            VEHICLE,
+            CARTOUCHE,
+            CURSE,
+            PLAN,
+            ROLE,
+            ROOM,
+            RUNE,
+            SAGA,
+            SHARD,
+            SHRINE,
+            LESSON,
+            OMEN,
+            TRAP,
+            ARCANE,
+            SIEGE,
+            PLANET,
+            MIRRODIN,
+            SERRAS_REALM,
+            ASSASSIN_OR_FREERUNNING,
+            OUTLAW);
+
+    private static final List<CardSubtype> CREATURE_TYPES;
+
+    static {
+        NON_CREATURE_TYPES.addAll(LAND_TYPES);
+        NON_CREATURE_TYPES.addAll(PLANESWALKER_TYPES);
+        CREATURE_TYPES = java.util.Arrays.stream(values())
+                .filter(subtype -> !NON_CREATURE_TYPES.contains(subtype))
+                .toList();
+    }
+
     public static List<CardSubtype> basicLandTypes() {
         return BASIC_LAND_TYPES;
     }
@@ -381,6 +443,16 @@ SYNTH("Synth"),
 
     public static List<CardSubtype> planeswalkerTypes() {
         return PLANESWALKER_TYPES;
+    }
+
+    /** Every subtype that is a creature type, i.e. what "all creature types" grants. */
+    public static List<CardSubtype> creatureTypes() {
+        return CREATURE_TYPES;
+    }
+
+    /** True unless this subtype is a land, planeswalker, artifact, enchantment, or other noncreature type. */
+    public boolean isCreatureType() {
+        return !NON_CREATURE_TYPES.contains(this);
     }
 
     @Getter

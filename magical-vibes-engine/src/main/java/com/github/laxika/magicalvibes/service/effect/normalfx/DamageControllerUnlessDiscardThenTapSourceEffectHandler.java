@@ -62,17 +62,20 @@ public class DamageControllerUnlessDiscardThenTapSourceEffectHandler implements 
 
     /**
      * Deals {@code damage} to the entry's controller through the normal damage path, then taps the
-     * source permanent iff the damage actually landed (the controller's life dropped). Redirected or
-     * prevented damage leaves the source untapped — "if it deals damage to you this way, tap it".
+     * source permanent iff damage was actually dealt. Redirected or prevented damage leaves the source
+     * untapped — "if it deals damage to you this way, tap it". Dealt damage is detected from the
+     * per-source damage record rather than the controller's life total, so simultaneous lifelink gain
+     * does not hide it.
      */
     public void applyDamageThenTapIfDealt(GameData gameData, StackEntry entry, int damage) {
-        UUID controllerId = entry.getControllerId();
-        int lifeBefore = gameData.getLife(controllerId);
+        UUID damageSourceId = entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId() : entry.getCard().getId();
+        int damageBefore = gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0);
 
         dealDamageToPlayersEffectHandler.resolve(gameData, entry,
                 new DealDamageToPlayersEffect(damage, DamageRecipient.CONTROLLER));
 
-        if (gameData.getLife(controllerId) < lifeBefore) {
+        if (gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0) > damageBefore) {
             Permanent source = entry.getSourcePermanentId() != null
                     ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                     : null;

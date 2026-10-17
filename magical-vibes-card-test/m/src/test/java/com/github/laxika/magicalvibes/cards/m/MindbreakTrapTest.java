@@ -159,7 +159,11 @@ class MindbreakTrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.castCreature(player2, 0);
+        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, List.of(stomper.getId()));
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(stomper);

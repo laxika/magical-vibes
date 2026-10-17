@@ -58,7 +58,7 @@ class MirrorshellCrabTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passPriority(player2);
-        harness.activateHandAbility(player1, 0, sorcerer.getCard().getId());
+        harness.activateHandAbility(player1, 0, gd.stack.getLast().getTargetableId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);

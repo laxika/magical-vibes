@@ -40,12 +40,19 @@ public class AssignNoCombatDamageEffectHandler implements NormalEffectHandlerBea
             return;
         }
 
-        gameData.creaturesPreventedFromDealingCombatDamage.add(attackerId);
-        gameData.creaturesAssigningNoCombatDamageThisTurn.add(attackerId);
+        boolean thisCombatOnly = ((AssignNoCombatDamageEffect) effect).thisCombatOnly();
+        if (thisCombatOnly) {
+            gameData.creaturesPreventedFromDealingCombatDamageThisCombat.add(attackerId);
+            gameData.creaturesAssigningNoCombatDamageThisCombat.add(attackerId);
+        } else {
+            gameData.creaturesPreventedFromDealingCombatDamage.add(attackerId);
+            gameData.creaturesAssigningNoCombatDamageThisTurn.add(attackerId);
+        }
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
         String attackerName = attacker != null ? attacker.getCard().getName() : "the attacking creature";
+        String duration = thisCombatOnly ? "combat" : "turn";
         gameLogService.append(gameData,
-                GameLog.text(attackerName + " assigns no combat damage this turn."));
-        log.info("Game {} - {} assigns no combat damage this turn", gameData.id, attackerName);
+                GameLog.text(attackerName + " assigns no combat damage this " + duration + "."));
+        log.info("Game {} - {} assigns no combat damage this {}", gameData.id, attackerName, duration);
     }
 }

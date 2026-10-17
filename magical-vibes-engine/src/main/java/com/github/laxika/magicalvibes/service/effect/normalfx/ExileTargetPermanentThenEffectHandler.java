@@ -71,36 +71,43 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
         boolean runThen = e.thenCondition() == null
                 || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.thenCondition());
 
-        permanentRemovalService.removePermanentToExile(gameData, target);
-        gameLogService.append(gameData, GameLog.text(target.getCard().getName() + " is exiled."));
-        log.info("Game {} - {} is exiled by {}",
-                gameData.id, target.getCard().getName(), entry.getCard().getName());
-        permanentRemovalService.removeOrphanedAuras(gameData);
+        // The exiled permanent and the then-effect's permanent leave at the same time, so leave
+        // triggers look back at both (CR 603.10a).
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            permanentRemovalService.removePermanentToExile(gameData, target);
+            gameLogService.append(gameData, GameLog.text(target.getCard().getName() + " is exiled."));
+            log.info("Game {} - {} is exiled by {}",
+                    gameData.id, target.getCard().getName(), entry.getCard().getName());
+            permanentRemovalService.removeOrphanedAuras(gameData);
 
-        if (runThen) {
-            UUID thenControllerId = switch (e.recipient()) {
-                case TARGET_CONTROLLER -> targetControllerId;
-                case TARGET_OWNER -> targetOwnerId;
-                case CONTROLLER, TARGET_CONTROLLER_AS_TARGET, TARGET_OWNER_AS_TARGET -> entry.getControllerId();
-            };
-            if (thenControllerId != null) {
-                UUID thenTargetId = switch (e.recipient()) {
-                    case TARGET_CONTROLLER_AS_TARGET -> targetControllerId;
-                    case TARGET_OWNER_AS_TARGET -> targetOwnerId;
-                    default -> entry.getTargetId();
+            if (runThen) {
+                UUID thenControllerId = switch (e.recipient()) {
+                    case TARGET_CONTROLLER -> targetControllerId;
+                    case TARGET_OWNER -> targetOwnerId;
+                    case CONTROLLER, TARGET_CONTROLLER_AS_TARGET, TARGET_OWNER_AS_TARGET -> entry.getControllerId();
                 };
-                StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
-                        entry.getDescription(), List.of(e.thenEffect()), thenTargetId, entry.getSourcePermanentId());
-                thenEntry.setEventValue(statValue);
-                thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+                if (thenControllerId != null) {
+                    UUID thenTargetId = switch (e.recipient()) {
+                        case TARGET_CONTROLLER_AS_TARGET -> targetControllerId;
+                        case TARGET_OWNER_AS_TARGET -> targetOwnerId;
+                        default -> entry.getTargetId();
+                    };
+                    StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
+                            entry.getDescription(), List.of(e.thenEffect()), thenTargetId, entry.getSourcePermanentId());
+                    thenEntry.setEventValue(statValue);
+                    thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
-                EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());
-                if (handler != null) {
-                    handler.resolve(gameData, thenEntry, e.thenEffect());
-                } else {
-                    log.warn("Game {} - No handler for then-effect: {}", gameData.id, e.thenEffect().getClass().getSimpleName());
+                    EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());
+                    if (handler != null) {
+                        handler.resolve(gameData, thenEntry, e.thenEffect());
+                    } else {
+                        log.warn("Game {} - No handler for then-effect: {}", gameData.id, e.thenEffect().getClass().getSimpleName());
+                    }
                 }
             }
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
 
         gameOutcomeService.checkWinCondition(gameData);

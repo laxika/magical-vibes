@@ -707,6 +707,23 @@ public class CastingCostService {
         ManaCost effectiveCost = cost.increasedBy(
                 gameData.perpetualManaCostIncreases.get(card.getId()));
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
+            if (handler != null) {
+                ManaCost increase = handler.coloredManaCostIncrease(
+                        context, effect, CostModificationSource.SPELL_ITSELF);
+                if (increase != null) {
+                    effectiveCost = effectiveCost.increasedBy(increase);
+                }
+            }
+        }
+        for (CollectedCostModifier modifier : snapshot.modifiers()) {
+            ManaCost increase = modifier.handler().coloredManaCostIncrease(
+                    context, modifier.effect(), modifier.source());
+            if (increase != null) {
+                effectiveCost = effectiveCost.increasedBy(increase);
+            }
+        }
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ReduceOwnCastCostIfTargetingStackEntryEffect stackReduction
                     && stackReduction.coloredManaReduction() != null && !targetIds.isEmpty()) {
                 StackEntry target = gameQueryService.findStackEntryByCardId(gameData, targetIds.getFirst());
@@ -717,11 +734,6 @@ public class CastingCostService {
             }
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
-                ManaCost increase = handler.coloredManaCostIncrease(
-                        context, effect, CostModificationSource.SPELL_ITSELF);
-                if (increase != null) {
-                    effectiveCost = effectiveCost.increasedBy(increase);
-                }
                 ManaCost reduction = handler.coloredManaCostReduction(
                         context, effect, CostModificationSource.SPELL_ITSELF);
                 if (reduction != null) {
@@ -732,11 +744,6 @@ public class CastingCostService {
             }
         }
         for (CollectedCostModifier modifier : snapshot.modifiers()) {
-            ManaCost increase = modifier.handler().coloredManaCostIncrease(
-                    context, modifier.effect(), modifier.source());
-            if (increase != null) {
-                effectiveCost = effectiveCost.increasedBy(increase);
-            }
             ManaCost reduction = modifier.handler().coloredManaCostReduction(
                     context, modifier.effect(), modifier.source());
             if (reduction != null) {

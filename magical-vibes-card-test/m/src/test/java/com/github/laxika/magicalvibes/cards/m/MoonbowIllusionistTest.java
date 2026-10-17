@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -65,6 +67,8 @@ class MoonbowIllusionistTest extends BaseCardTest {
     @Test
     @DisplayName("The type change wears off at end of turn")
     void typeChangeWearsOffAtEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new MoonbowIllusionist());
         harness.addToBattlefield(player1, new MirenTheMoaningWell());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MirenTheMoaningWell());

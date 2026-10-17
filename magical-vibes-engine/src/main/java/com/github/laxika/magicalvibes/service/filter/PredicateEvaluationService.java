@@ -2,6 +2,11 @@ package com.github.laxika.magicalvibes.service.filter;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
+import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubtypeTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -409,6 +414,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
@@ -475,6 +482,10 @@ public class PredicateEvaluationService {
     @Autowired
     @Lazy
     private LandManaTypeSupport landManaTypeSupport;
+
+    @Autowired
+    @Lazy
+    private ConditionEvaluationService conditionEvaluationService;
 
     /** Creature leaf built here rather than taken from an ability, so it never reads the CR 613.6 memo. */
     private static final PermanentIsCreaturePredicate STATIC_CREATURE_LEAF = new PermanentIsCreaturePredicate();
@@ -645,6 +656,14 @@ public class PredicateEvaluationService {
                         && gameData.spellWasCastWithConvokeGrant(card.getId())) {
                     granted = true;
                 }
+                if (p.keyword() == Keyword.FLASH && gameData != null && cardOwnerId != null
+                        && card.getFlashCastCondition() != null && card.getCardText() != null
+                        && card.getCardText().contains("has flash")) {
+                    // "This spell has flash as long as ..." is a static ability that grants the keyword;
+                    // "you may cast this spell as though it had flash" does not.
+                    granted |= conditionEvaluationService.isMet(gameData, card.getFlashCastCondition(),
+                            ConditionContext.forCasting(cardOwnerId));
+                }
                 if (p.keyword() == Keyword.FLASH && gameData != null && cardOwnerId != null) {
                     granted |= gameData.playerBattlefields.entrySet().stream()
                             .flatMap(battlefield -> battlefield.getValue().stream()
@@ -757,13 +776,17 @@ public class PredicateEvaluationService {
                             .anyMatch(RepeatableAdditionalManaCost::multikicker);
             case CardHasManaAbilityPredicate ignored ->
                     PotentialManaService.hasOnTapManaEffects(card)
+                            || hasTriggeredManaAbility(card)
                             || card.getActivatedAbilities().stream()
+                            .anyMatch(AbilityActivationService::isManaAbility)
+                            || card.getGraveyardActivatedAbilities().stream()
                             .anyMatch(AbilityActivationService::isManaAbility);
             case CardHasNonManaActivatedAbilityPredicate ignored ->
                     card.getActivatedAbilities().stream()
                             .anyMatch(ability -> !AbilityActivationService.isManaAbility(ability));
             case CardHasNoAbilitiesPredicate ignored ->
-                    card.getCardText() == null && card.getKeywords().isEmpty();
+                    card.hasKeyword(Keyword.DEWORDED)
+                            || (card.getCardText() == null && card.getKeywords().isEmpty());
             case CardIsPermanentPredicate ignored ->
                     card.getType().isPermanentType();
             case CardIsTokenPredicate ignored ->
@@ -2179,6 +2202,12 @@ public class PredicateEvaluationService {
             case PermanentToughnessAtMostPredicate toughnessAtMostPredicate -> {
                 if (gameData == null) {
                     yield gameQueryService.toughnessForStaticFilter(permanent) <= toughnessAtMostPredicate.maxToughness();
+                }
+                // A permanent that has left the battlefield keeps the toughness it last had there,
+                // static bonuses from its controller's permanents included (CR 603.10a).
+                if (permanent.getLastKnownToughness() != null
+                        && gameQueryService.findPermanentById(gameData, permanent.getId()) == null) {
+                    yield permanent.getLastKnownToughness() <= toughnessAtMostPredicate.maxToughness();
                 }
                 yield gameQueryService.getEffectiveToughness(gameData, permanent) <= toughnessAtMostPredicate.maxToughness();
             }
@@ -4384,7 +4413,7 @@ public class PredicateEvaluationService {
             }
         }
         return hasOutOfBandGrantedAbility(permanent)
-                || hasAnyPrintedAbility(permanent.getCard());
+                || hasAnyPrintedAbility(permanent);
     }
 
     private boolean hasAnyEffectiveNonKeywordAbility(GameData gameData, Permanent permanent) {
@@ -4411,7 +4440,7 @@ public class PredicateEvaluationService {
             }
         }
         return hasOutOfBandGrantedAbility(permanent)
-                || hasAnyPrintedNonKeywordAbility(permanent.getCard());
+                || hasAnyPrintedNonKeywordAbility(permanent);
     }
 
     private boolean hasAnyEffectiveAbilityFromLayeredState(Permanent permanent,
@@ -4423,13 +4452,13 @@ public class PredicateEvaluationService {
             // evaluated. Printed and out-of-band abilities are the recursion-safe fallback.
             if (GameQueryService.isStaticEvaluationActive()) {
                 return hasOutOfBandGrantedAbility(permanent)
-                        || hasAnyPrintedAbility(permanent.getCard());
+                        || hasAnyPrintedAbility(permanent);
             }
             return hasAnyEffectiveAbility(context == null ? null : context.gameData(), permanent);
         }
 
         Set<Keyword> effectiveKeywords = new java.util.HashSet<>(state.getKeywords());
-        if (state.isPrintedAbilitiesRemoved()) {
+        if (state.isPrintedAbilitiesRemoved() || printedAbilitiesSuppressed(permanent)) {
             effectiveKeywords.removeAll(permanent.getCard().getKeywords());
         }
         if (!effectiveKeywords.isEmpty()
@@ -4451,7 +4480,7 @@ public class PredicateEvaluationService {
         if (state.isPrintedAbilitiesRemoved()) {
             return hasBasicLandIntrinsicManaAbility(state);
         }
-        return hasAnyPrintedAbility(permanent.getCard());
+        return hasAnyPrintedAbility(permanent);
     }
 
     private boolean hasAnyEffectiveNonKeywordAbilityFromLayeredState(Permanent permanent,
@@ -4460,7 +4489,7 @@ public class PredicateEvaluationService {
         if (state == null) {
             if (GameQueryService.isStaticEvaluationActive()) {
                 return hasOutOfBandGrantedAbility(permanent)
-                        || hasAnyPrintedNonKeywordAbility(permanent.getCard());
+                        || hasAnyPrintedNonKeywordAbility(permanent);
             }
             return hasAnyEffectiveNonKeywordAbility(context == null ? null : context.gameData(), permanent);
         }
@@ -4483,7 +4512,7 @@ public class PredicateEvaluationService {
         if (state.isPrintedAbilitiesRemoved()) {
             return hasBasicLandIntrinsicManaAbility(state);
         }
-        return hasAnyPrintedNonKeywordAbility(permanent.getCard());
+        return hasAnyPrintedNonKeywordAbility(permanent);
     }
 
     private boolean hasOutOfBandGrantedAbility(Permanent permanent) {
@@ -4508,6 +4537,23 @@ public class PredicateEvaluationService {
                 .anyMatch(AbilityActivationService::isManaAbility)
                 || permanent.getUntilNextTurnActivatedAbilities().stream()
                 .anyMatch(AbilityActivationService::isManaAbility);
+    }
+
+    /**
+     * A face-down permanent has no characteristics beyond those listed (CR 708.2), so no abilities,
+     * and a Deworded permanent counts as having none, so its printed abilities do not count when
+     * checking for "no abilities".
+     */
+    private static boolean printedAbilitiesSuppressed(Permanent permanent) {
+        return permanent.isFaceDown() || permanent.getCard().hasKeyword(Keyword.DEWORDED);
+    }
+
+    private static boolean hasAnyPrintedAbility(Permanent permanent) {
+        return !printedAbilitiesSuppressed(permanent) && hasAnyPrintedAbility(permanent.getCard());
+    }
+
+    private static boolean hasAnyPrintedNonKeywordAbility(Permanent permanent) {
+        return !printedAbilitiesSuppressed(permanent) && hasAnyPrintedNonKeywordAbility(permanent.getCard());
     }
 
     private static boolean hasAnyPrintedAbility(Card card) {
@@ -5172,5 +5218,18 @@ public class PredicateEvaluationService {
             return all.predicates().stream().anyMatch(this::requiresCreature);
         }
         return false;
+    }
+
+    /**
+     * Triggered mana abilities (CR 605.1b) that fire when a land is tapped for mana and add mana
+     * on resolution, such as Caged Sun's extra-mana trigger.
+     */
+    private static boolean hasTriggeredManaAbility(Card card) {
+        return card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).stream()
+                .anyMatch(effect -> effect instanceof AddExtraManaOfChosenColorOnLandTapEffect
+                        || effect instanceof AddOneOfEachManaTypeProducedByLandEffect
+                        || effect instanceof AddProducedManaWhenSnowLandTappedEffect
+                        || effect instanceof AddProducedManaWhenLandOfSubtypeTappedEffect
+                        || effect instanceof AddManaOnEnchantedLandTapEffect);
     }
 }

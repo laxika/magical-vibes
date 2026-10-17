@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "PIP", collectorNumber = "109")
 @CardRegistration(set = "PIP", collectorNumber = "418")
@@ -17,17 +19,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class MarcusMutantMayor extends Card {
 
     public MarcusMutantMayor() {
-        // A creature with a +1/+1 counter draws a card when it deals combat damage to a player.
+        SourceCounterThreshold hasCounter = new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE);
+        // One trigger; the dealing creature's counters are checked as it resolves ("draw a card if
+        // that creature has a +1/+1 counter on it. If it doesn't, put a +1/+1 counter on it").
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
-                        new DrawCardEffect(1)));
-
-        // A creature without a +1/+1 counter gets one instead.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
-                new AllyCombatDamageTriggerEffect(
-                        new PermanentNotPredicate(new PermanentHasCountersPredicate(
-                                CounterType.PLUS_ONE_PLUS_ONE)),
-                        new PutCountersOnSourceEffect(1, 1, 1), true));
+                new AllyCombatDamageTriggerEffect(null, SequenceEffect.of(
+                        ConditionalEffect.unless(hasCounter, new DrawCardEffect(1)),
+                        ConditionalEffect.unless(new NotCondition(hasCounter),
+                                new PutCountersOnSourceEffect(1, 1, 1))), true));
     }
 }

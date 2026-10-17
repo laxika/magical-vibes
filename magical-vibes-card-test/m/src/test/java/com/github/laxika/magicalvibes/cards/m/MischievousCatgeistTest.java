@@ -127,7 +127,7 @@ class MischievousCatgeistTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
 
         resolveCombat(player2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

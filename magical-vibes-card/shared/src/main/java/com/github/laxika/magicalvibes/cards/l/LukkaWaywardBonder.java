@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCreatureEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -24,8 +25,8 @@ public class LukkaWaywardBonder extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(new MayEffect(new DiscardCardThenEffect(
-                        null, new DrawCardEffect(1), "a card", CardType.CREATURE,
-                        new DrawCardEffect(2)), "Discard a card?")),
+                        null, new DrawCardEffect(1), "a card", null, false, CardType.CREATURE,
+                        new DrawCardEffect(2), DiscardRecipient.CONTROLLER, true), "Discard a card?")),
                 "+1: You may discard a card. If you do, draw a card. If a creature card was discarded this way, draw two cards instead."
         ));
 

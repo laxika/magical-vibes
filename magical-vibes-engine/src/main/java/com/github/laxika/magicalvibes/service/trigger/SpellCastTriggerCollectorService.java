@@ -163,6 +163,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureByCastSpellMana
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -1614,18 +1615,13 @@ public class SpellCastTriggerCollectorService {
         }
 
         if (trigger.sacrificeFilter() != null) {
+            // "If you do, copy that spell" is part of the same resolution, not a reflexive trigger.
             CardEffect sacrificeAndCopy = new SacrificePermanentThenEffect(
-                    trigger.sacrificeFilter(), copyEffect, trigger.sacrificeDescription());
+                    trigger.sacrificeFilter(), copyEffect, trigger.sacrificeDescription(), false, false);
             if (match.rawEffect() instanceof MayEffect may) {
-                match.gameData().pendingMayAbilities.add(new PendingMayAbility(
-                        match.permanent().getCard(),
-                        match.controllerId(),
-                        new ArrayList<>(List.of(sacrificeAndCopy)),
-                        match.permanent().getCard().getName() + " — " + may.prompt(),
-                        null,
-                        null,
-                        match.permanent().getId()));
-                return true;
+                // The sacrifice is optional, but it is chosen as the triggered ability resolves.
+                sacrificeAndCopy = new MayEffect(sacrificeAndCopy,
+                        match.permanent().getCard().getName() + " — " + may.prompt());
             }
             match.gameData().stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -2624,9 +2620,12 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger))
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()
         );
         entry.setTargetId(sc.castingPlayerId());
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }
@@ -2653,7 +2652,8 @@ public class SpellCastTriggerCollectorService {
             MillEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         // "That player mills N cards" — carry the casting opponent on targetId so the
-        // TARGET_PLAYER mill lands on them (not a chosen target). Memory Erosion.
+        // TARGET_PLAYER mill lands on them (not a chosen target). Memory Erosion. The player is not
+        // targeted, so shroud and similar protection do not stop the mill.
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -2662,6 +2662,7 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(trigger))
         );
         entry.setTargetId(sc.castingPlayerId());
+        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }
@@ -3270,6 +3271,11 @@ public class SpellCastTriggerCollectorService {
                         null,
                         null
                 );
+                if (resolved.stream().anyMatch(
+                        com.github.laxika.magicalvibes.model.effect.FlipCoinForTriggeringSpellAndCounterOnLossEffect.class::isInstance)) {
+                    // The spell is not a target of the ability, so the caster still flips if it already left the stack.
+                    entry.setNonTargeting(true);
+                }
             } else if (selfTarget) {
                 UUID selfTargetId = attachedSelfTarget
                         ? match.permanent().getAttachedTo()
@@ -3488,6 +3494,20 @@ public class SpellCastTriggerCollectorService {
                             gameData, sourceControllerId),
                     conditional.interveningIf());
         }
+        if (effect instanceof RollD20Effect roll) {
+            return new RollD20Effect(
+                    snapshotRollBranch(roll.zeroOrLess(), spellSnapshot, castingPlayerId, gameData, sourceControllerId),
+                    snapshotRollBranch(roll.oneToNine(), spellSnapshot, castingPlayerId, gameData, sourceControllerId),
+                    snapshotRollBranch(roll.tenToNineteen(), spellSnapshot, castingPlayerId, gameData, sourceControllerId),
+                    snapshotRollBranch(roll.twenty(), spellSnapshot, castingPlayerId, gameData, sourceControllerId),
+                    roll.amountToSubtract(), roll.amountToAdd(), roll.firstBranchMax(),
+                    roll.repeatOnHighBranch(), roll.twentyUsesRawResult());
+        }
+        if (effect instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinForTriggeringSpellAndCounterOnLossEffect flipForSpell
+                && flipForSpell.casterId() == null) {
+            return new com.github.laxika.magicalvibes.model.effect.FlipCoinForTriggeringSpellAndCounterOnLossEffect(
+                    castingPlayerId);
+        }
         if (effect instanceof FlipCoinWinEffect flip && flip.triggeringSpellController()) {
             return new FlipCoinWinEffect(flip.wrapped(), flip.lost(), true, castingPlayerId);
         }
@@ -3515,6 +3535,13 @@ public class SpellCastTriggerCollectorService {
                     sacrifice.reflexive());
         }
         return effect;
+    }
+
+    private CardEffect snapshotRollBranch(CardEffect branch, StackEntry spellSnapshot,
+                                          UUID castingPlayerId, GameData gameData,
+                                          UUID sourceControllerId) {
+        return branch == null ? null
+                : snapshotTriggeringSpell(branch, spellSnapshot, castingPlayerId, gameData, sourceControllerId);
     }
 
     private int countMatchingSpellTargets(GameData gameData, StackEntry spellSnapshot,
@@ -3666,12 +3693,12 @@ public class SpellCastTriggerCollectorService {
         List<CardEffect> resolvedEffects = List.of(new PutCountersOnSourceEffect(1, 1, amount));
 
         if (match.rawEffect() instanceof MayEffect may) {
-            match.gameData().pendingMayAbilities.add(new PendingMayAbility(
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
                     match.permanent().getCard(),
                     match.controllerId(),
-                    resolvedEffects,
-                    match.permanent().getCard().getName() + " — " + may.prompt(),
-                    null,
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new MayEffect(resolvedEffects.getFirst(), may.prompt()))),
                     null,
                     match.permanent().getId()
             ));

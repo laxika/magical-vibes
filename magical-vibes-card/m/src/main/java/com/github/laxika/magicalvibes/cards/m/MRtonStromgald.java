@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
@@ -41,6 +42,6 @@ public class MRtonStromgald extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsBlockingPredicate(),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                ))));
+                ))), TriggerMode.ONCE_PER_BLOCK);
     }
 }

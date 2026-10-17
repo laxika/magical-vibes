@@ -53,6 +53,8 @@ public class PerpetuallyBoostEquippedCreatureIfNameSharedEffectHandler implement
     private Permanent findEquippedCreature(GameData gameData, StackEntry entry) {
         UUID triggeringPermanentId = entry.getTriggeringPermanentId();
         if (triggeringPermanentId != null) {
+            // The trigger is about the creature that attacked. If it has left the battlefield, the
+            // boost must not move to whatever creature the equipment is attached to now.
             for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
                 for (Permanent permanent : battlefield) {
                     if (triggeringPermanentId.equals(permanent.getId())) {
@@ -60,6 +62,7 @@ public class PerpetuallyBoostEquippedCreatureIfNameSharedEffectHandler implement
                     }
                 }
             }
+            return null;
         }
 
         Permanent equipment = null;

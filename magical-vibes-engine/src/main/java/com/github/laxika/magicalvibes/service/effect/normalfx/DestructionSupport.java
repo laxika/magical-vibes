@@ -921,11 +921,12 @@ public class DestructionSupport {
 
     private void dealDamageToControllerThenTapSourceIfDealt(GameData gameData, StackEntry entry, int damage) {
         UUID controllerId = entry.getControllerId();
-        int lifeBefore = gameData.getLife(controllerId);
+        int damageBefore = gameData.damageDealtToPlayersThisTurn.getOrDefault(controllerId, 0);
         damageSupportProvider.getObject().dealDamageToPlayer(gameData, entry, controllerId, damage);
         gameOutcomeService.checkWinCondition(gameData);
-        // "If this creature deals damage to you this way, tap it" — prevention/redirect leaves it untapped.
-        if (gameData.getLife(controllerId) < lifeBefore) {
+        // "If this creature deals damage to you this way, tap it" — prevention/redirect leaves it untapped,
+        // while damage that causes no life change (Platinum Emperion) was still dealt.
+        if (gameData.damageDealtToPlayersThisTurn.getOrDefault(controllerId, 0) > damageBefore) {
             tapSourcePermanent(gameData, entry);
         }
     }

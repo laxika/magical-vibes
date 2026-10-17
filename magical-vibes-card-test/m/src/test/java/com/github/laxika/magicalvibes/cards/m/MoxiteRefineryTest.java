@@ -39,7 +39,7 @@ class MoxiteRefineryTest extends BaseCardTest {
         source.setCounterCount(CounterType.CHARGE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 1, 0, 2, target.getId());
+        harness.activateAbility(player1, 0, 1, 2, target.getId());
         harness.passBothPriorities();
 
         assertThat(source.getCounterCount(CounterType.CHARGE)).isZero();

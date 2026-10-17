@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,7 +32,7 @@ class MarkovWaltzerTest extends BaseCardTest {
         Permanent viper2 = harness.addToBattlefieldAndReturn(player1, new AmbushViper());
 
         advanceToCombat(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(viper1.getId(), viper2.getId()));
+        chooseTargets(viper1.getId(), viper2.getId());
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(viper1.getPowerModifier()).isEqualTo(1);
@@ -48,7 +48,7 @@ class MarkovWaltzerTest extends BaseCardTest {
         Permanent viper = harness.addToBattlefieldAndReturn(player1, new AmbushViper());
 
         advanceToCombat(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(viper.getId()));
+        chooseTargets(viper.getId());
         harness.passBothPriorities();
 
         assertThat(viper.getPowerModifier()).isEqualTo(1);
@@ -62,9 +62,9 @@ class MarkovWaltzerTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(enemy.getId())))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, enemy.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid selection");
+                .hasMessageContaining("Invalid permanent");
     }
 
     @Test
@@ -85,7 +85,7 @@ class MarkovWaltzerTest extends BaseCardTest {
         Permanent viper = harness.addToBattlefieldAndReturn(player1, new AmbushViper());
 
         advanceToCombat(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(viper.getId()));
+        chooseTargets(viper.getId());
         harness.passBothPriorities();
         assertThat(viper.getPowerModifier()).isEqualTo(1);
 
@@ -104,7 +104,7 @@ class MarkovWaltzerTest extends BaseCardTest {
         Permanent viper = harness.addToBattlefieldAndReturn(player1, new AmbushViper());
 
         advanceToCombat(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        chooseTargets();
         harness.passBothPriorities();
 
         assertThat(waltzer.getPowerModifier()).isZero();
@@ -118,7 +118,7 @@ class MarkovWaltzerTest extends BaseCardTest {
         Permanent waltzer = harness.addToBattlefieldAndReturn(player1, new MarkovWaltzer());
 
         advanceToCombat(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(waltzer.getId()));
+        chooseTargets(waltzer.getId());
         harness.passBothPriorities();
 
         assertThat(waltzer.getPowerModifier()).isEqualTo(1);
@@ -132,10 +132,10 @@ class MarkovWaltzerTest extends BaseCardTest {
         Permanent viper = harness.addToBattlefieldAndReturn(player1, new AmbushViper());
 
         advanceToCombat(player1);
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(
-                player1, List.of(viper.getId(), viper.getId())))
+        harness.handlePermanentChosen(player1, viper.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, viper.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(waltzer.getId(), viper.getId()));
+        harness.handlePermanentChosen(player1, waltzer.getId());
         harness.passBothPriorities();
 
         assertThat(waltzer.getPowerModifier()).isEqualTo(1);
@@ -150,7 +150,7 @@ class MarkovWaltzerTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player1, new AmbushViper());
 
         advanceToCombat(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        chooseTargets(first.getId(), second.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, first));
         harness.passBothPriorities();
 
@@ -166,12 +166,21 @@ class MarkovWaltzerTest extends BaseCardTest {
         Permanent viper = harness.addToBattlefieldAndReturn(player1, new AmbushViper());
 
         advanceToCombat(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(viper.getId()));
+        chooseTargets(viper.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, waltzer));
         harness.passBothPriorities();
 
         assertThat(viper.getPowerModifier()).isEqualTo(1);
         assertThat(viper.getToughnessModifier()).isZero();
         assertThat(gd.stack).isEmpty();
+    }
+
+    private void chooseTargets(UUID... targetIds) {
+        for (UUID targetId : targetIds) {
+            harness.handlePermanentChosen(player1, targetId);
+        }
+        if (targetIds.length < 2 && gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
     }
 }

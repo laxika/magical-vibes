@@ -20,7 +20,8 @@ import java.util.List;
 public class MysticalTether extends Card {
 
     public MysticalTether() {
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{W}")), null, true));
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{W}")), null, true)
+                .withFlashAdditionalGenericCost(2));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

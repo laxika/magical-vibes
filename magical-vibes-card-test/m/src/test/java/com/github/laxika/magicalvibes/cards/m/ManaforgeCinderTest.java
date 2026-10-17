@@ -107,9 +107,8 @@ class ManaforgeCinderTest extends BaseCardTest {
             harness.handleListChoice(player1, "RED");
         }
 
-        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.passPriority(player2);
         for (int activation = 0; activation < 3; activation++) {
             harness.activateAbility(player1, 0, 0, null, null);
             harness.handleListChoice(player1, "BLACK");

@@ -95,6 +95,7 @@ class MODOKTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.END_STEP));
 
         harness.activateAbility(player1, 0, null, null);
         harness.assertLife(player1, 17);

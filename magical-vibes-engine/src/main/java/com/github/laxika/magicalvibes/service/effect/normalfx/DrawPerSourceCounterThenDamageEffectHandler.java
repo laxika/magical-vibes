@@ -51,12 +51,17 @@ public class DrawPerSourceCounterThenDamageEffectHandler implements NormalEffect
         }
 
         UUID playerId = entry.getTargetId();
+        int drawnBefore = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
         for (int i = 0; i < count; i++) {
             drawService.resolveDrawCard(gameData, playerId);
         }
+        int drawn = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0) - drawnBefore;
+        if (drawn <= 0) {
+            return;
+        }
 
-        damageSupport.dealDamageToPlayer(gameData, entry, playerId, count);
+        damageSupport.dealDamageToPlayer(gameData, entry, playerId, drawn);
         log.info("Game {} - {} made player {} draw {} card(s) and dealt {} damage",
-                gameData.id, entry.getCard().getName(), playerId, count, count);
+                gameData.id, entry.getCard().getName(), playerId, drawn, drawn);
     }
 }

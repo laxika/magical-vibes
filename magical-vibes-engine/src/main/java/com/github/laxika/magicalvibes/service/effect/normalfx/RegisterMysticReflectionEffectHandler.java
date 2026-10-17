@@ -42,7 +42,7 @@ public class RegisterMysticReflectionEffectHandler implements NormalEffectHandle
         }
 
         gameData.pendingMysticReflections.add(
-                new PendingMysticReflection(targetId, target.getCard()));
+                new PendingMysticReflection(targetId, target.getCard(), target));
         gameLogService.append(gameData, GameLog.textCardText(
                 entry.getCard().getName() + " will make the next creatures or planeswalkers enter as copies of ",
                 target.getCard(), "."));

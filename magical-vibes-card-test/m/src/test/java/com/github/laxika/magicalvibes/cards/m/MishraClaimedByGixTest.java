@@ -61,6 +61,7 @@ class MishraClaimedByGixTest extends BaseCardTest {
         assertThat(melded.isAttacking()).isTrue();
 
         harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
         assertThat(findPermanents(player1, "Powerstone")).hasSize(2);
@@ -76,6 +77,7 @@ class MishraClaimedByGixTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(mishra)));
         resolveAllTriggers();
         chooseNonTargetingBackModes();
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.MENACE)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isTrue();
@@ -96,7 +98,7 @@ class MishraClaimedByGixTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player1, 21);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 17);
         harness.assertOnBattlefield(player1, "Mishra, Claimed by Gix");
     }
 
@@ -115,7 +117,7 @@ class MishraClaimedByGixTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Argothian Sprite");
         harness.assertLife(player1, 21);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 16);
     }
 
     @Test
@@ -135,7 +137,7 @@ class MishraClaimedByGixTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mishra, Claimed by Gix");
         assertThat(findPermanents(player1, "Mishra, Lost to Phyrexia")).isEmpty();
         harness.assertLife(player1, 21);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 16);
     }
 
     @Test
@@ -204,6 +206,7 @@ class MishraClaimedByGixTest extends BaseCardTest {
         addCreatureReady(player1, new MishraLostToPhyrexia());
 
         declareAttackers(List.of(0));
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         chooseNonTargetingBackModes();
@@ -232,7 +235,7 @@ class MishraClaimedByGixTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertLife(player2, 17);
+        harness.assertLife(player2, 8);
         harness.assertInGraveyard(player2, "Phyrexian Dragon Engine");
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .filteredOn(card -> card.getName().equals("Argothian Sprite")).hasSize(2);

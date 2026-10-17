@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.AttackDirection;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttackOnlyNearestOpponentInDirectionEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAttackDirectionEffect;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class MysticBarrier extends Card {
                         new SetAttackDirectionEffect(AttackDirection.RIGHT))
         ));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(directionChoice));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtResolutionEffect(directionChoice));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, directionChoice);
         addEffect(EffectSlot.STATIC, new AttackOnlyNearestOpponentInDirectionEffect());
     }

@@ -41,6 +41,12 @@ public class PutTriggeringCardFromGraveyardOnTopOfLibraryEffectHandler
         if (graveyard == null) {
             return;
         }
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(dyingCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            gameLogService.append(gameData,
+                    GameLog.cardThen(entry.getCard(), "'s ability fizzles (card is a new object)."));
+            return;
+        }
 
         Card deadCard = null;
         for (Card card : graveyard) {

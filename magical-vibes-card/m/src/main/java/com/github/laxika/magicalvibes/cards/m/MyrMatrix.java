@@ -18,7 +18,7 @@ import java.util.Set;
 public class MyrMatrix extends Card {
 
     public MyrMatrix() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSubtypePredicate(CardSubtype.MYR)));
 
         addActivatedAbility(new ActivatedAbility(

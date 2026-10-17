@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffe
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseEquipmentAttachmentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
@@ -351,6 +352,8 @@ public class EtbTriggerService {
                 .filter(e -> !(e instanceof ChooseColorEffect))
                 .filter(e -> !(e instanceof ChooseCardTypeOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseBasicLandTypeOnEnterEffect))
+                // "As enters, choose a creature" is made while the Aura enters (AuraCopyService), not a trigger.
+                .filter(e -> !(e instanceof ChooseCreatureOnEnterEffect))
                 .filter(e -> !(e instanceof ChooseEquipmentAttachmentOnEnterEffect))
                 // Primal Clay's shape choice is made while the new permanent enters, not as an ETB ability.
                 .filter(e -> !(e instanceof ChoosePrimalClayFormOnEnterEffect))
@@ -1232,9 +1235,18 @@ public class EtbTriggerService {
             int targetXValue = enteringPermanent != null && target != null
                     && target.maximumManaValue() instanceof com.github.laxika.magicalvibes.model.amount.ManaSpentToCast
                     ? enteringPermanent.getManaSpentToCast() : xValue;
+            // A cap that counts the spell's repeated additional costs ("up to X target cards, where X
+            // is the number of times it was kicked") is evaluated here, where those payments are known.
+            int dynamicMaxTargets = target != null && target.maximumTargetCount() != null
+                    && repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()
+                    ? Math.max(0, amountEvaluationService.evaluate(gameData, target.maximumTargetCount(),
+                            new AmountContext(controllerId, null, null, targetXValue, 0, false, null,
+                                    repeatedAdditionalCosts, card)))
+                    : 0;
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, controllerId, List.of(effect), null, minimumGraveyardTargets, targetXValue));
+                        card, controllerId, List.of(effect), null, minimumGraveyardTargets, targetXValue,
+                        dynamicMaxTargets));
             }
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)

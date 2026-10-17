@@ -4736,8 +4736,8 @@ public class AbilityActivationService {
             gameData.playerManaPools.get(playerId).removeMulticoloredSourceMana();
         }
         if (abilityCost != null) {
-            boolean artifactContext = gameQueryService.isArtifact(permanent);
-            boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
+            boolean artifactContext = gameQueryService.isArtifact(gameData, permanent);
+            boolean myrContext = gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.MYR);
             boolean colorlessPermanentContext = gameQueryService.getEffectiveColors(gameData, permanent).isEmpty();
             Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, permanent, ability);
             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, permanent)
@@ -6933,7 +6933,7 @@ public class AbilityActivationService {
         if (payLifeCost.isPresent()) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
             int needed = lifePaymentAmount(gameData, playerId, permanent, payLifeCost.get());
-            if (life < needed) {
+            if (needed > 0 && life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
         }
@@ -7035,8 +7035,8 @@ public class AbilityActivationService {
                 affordabilityPool = copyManaPool(affordabilityPool);
                 affordabilityPool.promoteCreatureAbilityMana();
             }
-            boolean artifactCtx = gameQueryService.isArtifact(permanent);
-            boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
+            boolean artifactCtx = gameQueryService.isArtifact(gameData, permanent);
+            boolean myrCtx = gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.MYR);
             Set<CardSubtype> soaCtx = effectiveSpellOrAbilitySubtypes(gameData, permanent, ability);
             Set<CardSubtype> creatureSourceSoaCtx = gameQueryService.isCreature(gameData, permanent)
                     ? soaCtx : Set.of();
@@ -8630,8 +8630,8 @@ public class AbilityActivationService {
             affordabilityPool = copyManaPool(affordabilityPool);
             affordabilityPool.promoteCreatureSpellOrAbilityMana();
         }
-        boolean artifactContext = gameQueryService.isArtifact(source);
-        boolean myrContext = source.getCard().getSubtypes().contains(CardSubtype.MYR);
+        boolean artifactContext = gameQueryService.isArtifact(gameData, source);
+        boolean myrContext = gameQueryService.hasEffectiveSubtype(gameData, source, CardSubtype.MYR);
         Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, source, ability);
         Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, source)
                 ? subtypeSpellOrAbilityContext : Set.of();
@@ -8668,8 +8668,8 @@ public class AbilityActivationService {
 
         int remaining = amount - tapCount;
         if (remaining > 0) {
-            boolean artifactContext = gameQueryService.isArtifact(source);
-            boolean myrContext = source.getCard().getSubtypes().contains(CardSubtype.MYR);
+            boolean artifactContext = gameQueryService.isArtifact(gameData, source);
+            boolean myrContext = gameQueryService.hasEffectiveSubtype(gameData, source, CardSubtype.MYR);
             Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSpellOrAbilitySubtypes(gameData, source, ability);
             Set<CardSubtype> subtypeCreatureSourceSpellOrAbilityContext = gameQueryService.isCreature(gameData, source)
                     ? subtypeSpellOrAbilityContext : Set.of();

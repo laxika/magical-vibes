@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class MaiAndZuko extends Card {
 
     public MaiAndZuko() {
+        addEffect(EffectSlot.ON_ATTACK, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 3));
         addEffect(EffectSlot.STATIC,
                 new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.ALLY)));
         addEffect(EffectSlot.STATIC,

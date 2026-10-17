@@ -33,7 +33,7 @@ public class PutOpponentOwnedExiledCardIntoGraveyardEffectHandler
         List<UUID> validCardIds = new ArrayList<>();
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry exiled : gameData.exiledCards) {
-                if (!exiled.faceDown() && gameData.playerIds.contains(exiled.ownerId())
+                if (gameData.playerIds.contains(exiled.ownerId())
                         && !controllerId.equals(exiled.ownerId())) {
                     validCardIds.add(exiled.card().getId());
                 }

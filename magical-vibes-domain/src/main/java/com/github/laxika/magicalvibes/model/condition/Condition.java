@@ -359,6 +359,7 @@ public sealed interface Condition permits
         SourceCardSuspended,
         SourceCanSoulbond,
         SourceAttackedBattleThisTurn,
+        SourceAttackingPlayer,
         SourceAttackedDuringControllersLastTurn,
         SourceAttackedOrBlockedThisCombat,
         SourceAttackedThisCombat,

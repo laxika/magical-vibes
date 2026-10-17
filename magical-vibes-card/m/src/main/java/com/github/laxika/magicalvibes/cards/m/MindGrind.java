@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilLandsMillTargetPla
 public class MindGrind extends Card {
 
     public MindGrind() {
+        setMinimumXValue(1);
         // Each opponent reveals cards from the top of their library until they reveal X land cards,
         // then puts all cards revealed this way into their graveyard. The paid X rides on the stack
         // entry's xValue, which XValue reads at resolution.

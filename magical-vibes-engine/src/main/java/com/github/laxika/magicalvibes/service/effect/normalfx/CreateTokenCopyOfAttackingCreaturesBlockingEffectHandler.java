@@ -41,13 +41,19 @@ public class CreateTokenCopyOfAttackingCreaturesBlockingEffectHandler implements
 
         CreateTokenCopyOfTargetPermanentEffect copyEffect =
                 CreateTokenCopyOfTargetPermanentEffect.exiledAtEndOfCombat();
-        for (Permanent attacker : attackers) {
-            List<UUID> createdIds = tokenCopySupport.createTokenCopies(
-                    gameData, entry, List.of(attacker.getCard()), attacker, controllerId, copyEffect);
-            for (UUID createdId : createdIds) {
-                combatBlockService.markTokenAsBlocking(
-                        gameData, gameQueryService.findPermanentById(gameData, createdId), attacker);
-            }
+        if (attackers.isEmpty()) {
+            return;
+        }
+        // The copies are created as one event, so each sees the others enter (CR 603.6a).
+        List<UUID> createdIds = tokenCopySupport.createTokenCopies(
+                gameData, entry, attackers.stream().map(Permanent::getCard).toList(), attackers.getFirst(),
+                controllerId, copyEffect, null);
+        if (createdIds.size() != attackers.size()) {
+            return;
+        }
+        for (int i = 0; i < attackers.size(); i++) {
+            combatBlockService.markTokenAsBlocking(
+                    gameData, gameQueryService.findPermanentById(gameData, createdIds.get(i)), attackers.get(i));
         }
     }
 

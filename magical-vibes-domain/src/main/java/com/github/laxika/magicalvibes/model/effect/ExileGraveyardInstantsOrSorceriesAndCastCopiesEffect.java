@@ -24,8 +24,9 @@ public record ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect(
         this(mayCastCopies, false);
     }
 
+    /** Mysterious Stranger: if two or more cards were exiled, copy one at random; the controller may cast that copy. */
     public static ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect forRandomSingleCopy() {
-        return new ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect(false, true);
+        return new ExileGraveyardInstantsOrSorceriesAndCastCopiesEffect(true, true);
     }
 
     @Override

@@ -27,8 +27,23 @@ public record PendingMayAbility(
         UUID triggeringPermanentId,
         Integer sourcePowerAtTrigger,
         Integer xValue,
-        Integer triggeringPermanentToughnessAtTrigger
+        Integer triggeringPermanentToughnessAtTrigger,
+        long triggeringCardGraveyardEntryVersion
 ) {
+
+    /** Backward-compatible constructor without a triggering card graveyard entry version ({@code -1}: none). */
+    public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
+                             UUID targetCardId, String manaCost, UUID sourcePermanentId,
+                             TapMultiplePermanentsCost tapPermanentsCost, int lifeCost, int additionalLifeCost,
+                             UUID attackedTargetId, UUID activePlayerId, UUID choicePlayerId,
+                             Permanent sourcePermanentSnapshot, UUID sourceControllerId, UUID triggeringCardId,
+                             int eventValue, UUID triggeringPermanentId, Integer sourcePowerAtTrigger,
+                             Integer xValue, Integer triggeringPermanentToughnessAtTrigger) {
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
+                tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId, activePlayerId,
+                choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId, eventValue,
+                triggeringPermanentId, sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger, -1L);
+    }
 
     /** Backward-compatible constructor without a triggering permanent toughness snapshot. */
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
@@ -180,7 +195,7 @@ public record PendingMayAbility(
                 targetCardId, manaCost, sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost,
                 attackedTargetId, activePlayerId, choicePlayerId, sourcePermanentSnapshot,
                 sourceControllerId, triggeringCardId, eventValue, triggeringPermanentId,
-                sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger);
+                sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion);
     }
 
     public PendingMayAbility withEventValue(int updatedEventValue) {
@@ -188,7 +203,7 @@ public record PendingMayAbility(
                 sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 updatedEventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
-                triggeringPermanentToughnessAtTrigger);
+                triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion);
     }
 
     public PendingMayAbility withXValue(Integer updatedXValue) {
@@ -196,7 +211,7 @@ public record PendingMayAbility(
                 sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, updatedXValue,
-                triggeringPermanentToughnessAtTrigger);
+                triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion);
     }
 
     /** Copies pending entry requests whose permanent has not entered the battlefield yet. */
@@ -214,6 +229,6 @@ public record PendingMayAbility(
                 manaCost, sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost,
                 attackedTargetId, activePlayerId, choicePlayerId, sourcePermanentSnapshot,
                 sourceControllerId, triggeringCardId, eventValue, triggeringPermanentId,
-                sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger);
+                sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion);
     }
 }

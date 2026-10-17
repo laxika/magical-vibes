@@ -244,19 +244,8 @@ public class PsychicBattleSupport {
                 && !entry.getCard().getSpellTargets().isEmpty()) {
             List<UUID> replacement = new ArrayList<>(entry.getDeclaredTargetIds());
             replacement.set(targetIndex, candidate);
-            try {
-                if (entry.getTargetZone() == Zone.STACK) {
-                    targetLegalityService.validateMultiSpellTargetsOnStack(
-                            gameData, entry.getCard(), replacement, entry.getControllerId(), entry.isKicked());
-                } else {
-                    targetLegalityService.validateMultiSpellTargets(
-                            gameData, entry.getCard(), replacement, entry.getControllerId(), entry.getXValue(),
-                            entry.isKicked());
-                }
-                return true;
-            } catch (IllegalStateException ignored) {
-                return false;
-            }
+            return hasLegalCompletion(gameData, entry, replacement, targetIndex + 1,
+                    collectCandidates(gameData, entry));
         }
 
         if (entry.getTargetZone() == Zone.STACK) {
@@ -281,5 +270,48 @@ public class PsychicBattleSupport {
         }
         return targetLegalityService.checkSpellTargeting(
                 gameData, entry.getCard(), candidate, null, entry.getControllerId()).isEmpty();
+    }
+
+    /**
+     * Whether the targets from {@code fromIndex} on can each be kept or changed so that the whole
+     * target list is legal. Choosing new targets one position at a time (CR 115.7d) may pass through
+     * an intermediate list that is illegal, such as a target swap between two "other target" slots.
+     */
+    private boolean hasLegalCompletion(GameData gameData, StackEntry entry, List<UUID> targets,
+                                       int fromIndex, Set<UUID> candidates) {
+        if (isLegalMultiSpellTargets(gameData, entry, targets)) {
+            return true;
+        }
+        for (int index = fromIndex; index < targets.size(); index++) {
+            UUID original = targets.get(index);
+            for (UUID candidate : candidates) {
+                if (candidate.equals(original)) {
+                    continue;
+                }
+                targets.set(index, candidate);
+                boolean legal = hasLegalCompletion(gameData, entry, targets, index + 1, candidates);
+                targets.set(index, original);
+                if (legal) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isLegalMultiSpellTargets(GameData gameData, StackEntry entry, List<UUID> targets) {
+        try {
+            if (entry.getTargetZone() == Zone.STACK) {
+                targetLegalityService.validateMultiSpellTargetsOnStack(
+                        gameData, entry.getCard(), targets, entry.getControllerId(), entry.isKicked());
+            } else {
+                targetLegalityService.validateMultiSpellTargets(
+                        gameData, entry.getCard(), targets, entry.getControllerId(), entry.getXValue(),
+                        entry.isKicked());
+            }
+            return true;
+        } catch (IllegalStateException ignored) {
+            return false;
+        }
     }
 }

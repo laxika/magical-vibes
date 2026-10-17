@@ -42,7 +42,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         Permanent equipment = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (equipment == null) {
+        if (equipment == null && entry.getSourcePermanentId() == null) {
             equipment = equipSupport.findEquipmentByCardId(gameData, entry.getCard().getId());
         }
 

@@ -96,7 +96,7 @@ class MistbreathElderTest extends BaseCardTest {
     void returnsStolenCreatureToItsOwnerAndStillGetsCounter() {
         Permanent elder = harness.addToBattlefieldAndReturn(player1, new MistbreathElder());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BarkformHarvester());
-        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        setOwnerAndController(creature, player2, player1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -154,9 +154,7 @@ class MistbreathElderTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VorinclexMonstrousRaider());
 
         advanceToUpkeep(player1);
-        gd.playerBattlefields.get(player1.getId()).remove(elder);
-        gd.playerBattlefields.get(player2.getId()).add(elder);
-        gd.stolenCreatures.put(elder.getId(), player1.getId());
+        setOwnerAndController(elder, player1, player2);
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, creature.getId());

@@ -38,6 +38,7 @@ public class ExileOpponentsGraveyardsAndMayCastThisTurnEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         int totalExiled = 0;
+        UUID groupId = UUID.randomUUID();
 
         for (UUID opponentId : gameData.orderedPlayerIds) {
             if (opponentId.equals(controllerId)) {
@@ -61,7 +62,7 @@ public class ExileOpponentsGraveyardsAndMayCastThisTurnEffectHandler
                     gameData.exilePlayAnyManaType.add(card.getId());
                 }
                 gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextEndStep(
-                        card.getId(), opponentId, entry.getCard(), controllerId));
+                        card.getId(), opponentId, entry.getCard(), controllerId, groupId));
             }
 
             totalExiled += exiledCards.size();

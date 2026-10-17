@@ -17,7 +17,7 @@ public class MorningtidesLight extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Targets must be creatures"
-        ), 0, 99)
+        ), 0, Integer.MAX_VALUE)
                 .addEffect(EffectSlot.SPELL, FlickerEffect.exileTargetReturnAtEndStep(true))
                 .addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControllerUntilNextTurn())
                 .addEffect(EffectSlot.SPELL, new ExileSpellEffect());

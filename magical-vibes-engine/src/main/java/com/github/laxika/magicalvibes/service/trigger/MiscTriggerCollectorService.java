@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.NykthosParagonLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
@@ -1148,12 +1149,21 @@ public class MiscTriggerCollectorService {
         String playerName = gameData.playerIdToName.get(ll.losingPlayerId());
         int amount = ll.lifeLostAmount();
 
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(new MillEffect(amount, MillRecipient.TARGET_PLAYER))),
+                ll.losingPlayerId(),
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        gameData.enqueueTrigger(entry);
+
         gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
                 " triggers — " + playerName + " mills " + amount + " card" + (amount != 1 ? "s" : "") + "."));
-        log.info("Game {} - {} triggers on life loss, milling {} for {} cards",
+        log.info("Game {} - {} triggers on life loss, {} will mill {} cards",
                 gameData.id, cardName, playerName, amount);
-
-        graveyardService.resolveMillPlayer(gameData, ll.losingPlayerId(), amount);
         return true;
     }
 
@@ -2603,6 +2613,9 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 opponentId,
                 match.permanent().getId());
+        // "Each opponent loses life" does not target, so hexproof/shroud cannot stop it; only an explicit
+        // "target player" recipient is a real target.
+        entry.setNonTargeting(effect.recipient() != LoseLifeRecipient.TARGET_PLAYER);
         // Snapshot the life gained onto the entry's event value — parallel to the spell-mana-spent
         // xValue plumbing — so the effect's EventValue amount ("equal to the life gained") reads it
         // back at resolution.

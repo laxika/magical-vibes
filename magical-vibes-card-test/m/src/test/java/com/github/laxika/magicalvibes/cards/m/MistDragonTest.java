@@ -89,6 +89,8 @@ class MistDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Mist Dragon phases back in during its controller's next untap step, keeping flying")
     void phasesBackInWithFlying() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent dragon = addCreatureReady(player1, new MistDragon());
         harness.addMana(player1, ManaColor.BLUE, 5);
 
@@ -145,6 +147,8 @@ class MistDragonTest extends BaseCardTest {
     @Test
     @DisplayName("An ability resolving while Mist Dragon is phased out cannot grant flying")
     void pendingFlyingGrantDoesNotAffectPhasedOutDragon() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent dragon = addCreatureReady(player1, new MistDragon());
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.activateAbility(player1, 0, 0, null, null);

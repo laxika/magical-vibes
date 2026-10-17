@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -70,15 +69,15 @@ class MirrorEntityTest extends BaseCardTest {
     void ownCreaturesGainAllCreatureTypes() {
         addCreatureReady(player1, new MirrorEntity());
         Permanent healer = addCreatureReady(player1, new KithkinHealer());
-        assertThat(GameQueryService.permanentHasSubtype(healer, CardSubtype.ELF)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, healer)).doesNotContain(CardSubtype.ELF);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
 
-        // Now a changeling — has every creature type
-        assertThat(GameQueryService.permanentHasSubtype(healer, CardSubtype.ELF)).isTrue();
-        assertThat(GameQueryService.permanentHasSubtype(healer, CardSubtype.GOBLIN)).isTrue();
+        // Every creature type, as a layer 4 type change rather than the Changeling ability
+        assertThat(gqs.effectiveCreatureSubtypes(gd, healer)).contains(CardSubtype.ELF, CardSubtype.GOBLIN);
+        assertThat(healer.hasKeyword(Keyword.CHANGELING)).isFalse();
     }
 
     @Test
@@ -94,7 +93,7 @@ class MirrorEntityTest extends BaseCardTest {
         // Opponent's Kithkin Healer stays a 2/2 with no granted types
         assertThat(gqs.getEffectivePower(gd, opponentHealer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentHealer)).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(opponentHealer, CardSubtype.ELF)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, opponentHealer)).doesNotContain(CardSubtype.ELF);
     }
 
     @Test
@@ -110,7 +109,7 @@ class MirrorEntityTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, laterHealer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, laterHealer)).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(laterHealer, CardSubtype.ELF)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, laterHealer)).doesNotContain(CardSubtype.ELF);
     }
 
     @Test
@@ -130,7 +129,7 @@ class MirrorEntityTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, healer)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, healer)).isEqualTo(2);
-        assertThat(GameQueryService.permanentHasSubtype(healer, CardSubtype.ELF)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, healer)).doesNotContain(CardSubtype.ELF);
     }
 
     @Test

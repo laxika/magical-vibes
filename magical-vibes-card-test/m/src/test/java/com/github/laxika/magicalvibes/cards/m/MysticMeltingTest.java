@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -61,6 +62,7 @@ class MysticMeltingTest extends BaseCardTest {
     @Test
     @DisplayName("Does not draw immediately or at an upkeep in the same turn")
     void waitsForNextTurn() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player2, new FountainOfYouth());
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
         castMysticMelting(harness.getPermanentId(player2, "Fountain of Youth"));
@@ -73,7 +75,7 @@ class MysticMeltingTest extends BaseCardTest {
 
         gd.turnNumber++;
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, harness::passBothPriorities);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
     }

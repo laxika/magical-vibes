@@ -61,6 +61,7 @@ class MarshCrocodileTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, blueId);
+        resolveAllTriggers();
 
         PendingInteraction.DiscardChoice player1Choice =
                 gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
@@ -95,6 +96,7 @@ class MarshCrocodileTest extends BaseCardTest {
         harness.castFromHand(player1, new MarshCrocodile(), "{2}{U}{B}");
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, stolenCreature.getId());
+        resolveAllTriggers();
 
         PendingInteraction.DiscardChoice player2Choice =
                 gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
@@ -143,6 +145,7 @@ class MarshCrocodileTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player2, 0);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Marsh Crocodile");

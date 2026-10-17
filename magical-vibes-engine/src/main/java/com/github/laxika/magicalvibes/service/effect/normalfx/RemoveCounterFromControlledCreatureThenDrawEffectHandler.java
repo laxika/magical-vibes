@@ -62,10 +62,18 @@ public class RemoveCounterFromControlledCreatureThenDrawEffectHandler implements
             return;
         }
 
-        CounterType counterType = firstPresentCounterType(permanent);
-        if (counterType == null) {
+        List<CounterType> counterTypes = RemoveChosenCountersFromTargetPermanentEffectHandler.counterTypesOn(permanent);
+        if (counterTypes.isEmpty()) {
             return;
         }
+        if (counterTypes.size() > 1 && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
+                    gameData.pendingEffectResolutionIndex, List.of(new DrawCardEffect()));
+            playerInputService.beginRemoveOneCounterChoice(gameData, entry.getControllerId(), permanentId,
+                    entry.getCard().getName(), counterTypes);
+            return;
+        }
+        CounterType counterType = counterTypes.getFirst();
 
         permanentCounterSupport.removeCounterFromPermanent(gameData, permanent, counterType, 1);
         drawCardEffectHandler.resolve(gameData, entry, new DrawCardEffect());

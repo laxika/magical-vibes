@@ -21,6 +21,6 @@ public class MadameHydra extends Card {
                 new CardSubtypePredicate(CardSubtype.VILLAIN),
                 List.of(new CreateTokenEffect(
                         1, "Villain", 2, 1, CardColor.BLACK,
-                        List.of(CardSubtype.VILLAIN), Set.of(Keyword.MENACE), Set.of(), true))));
+                        List.of(CardSubtype.VILLAIN), Set.of(Keyword.MENACE), Set.of()))));
     }
 }

@@ -29,7 +29,7 @@ public class MariTheKillingQuill extends Card {
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
                 new ExileTriggeringCreatureWithHitCounterEffect());
         addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES, outlaw));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, outlaw));
         addEffect(EffectSlot.STATIC,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
@@ -38,6 +38,6 @@ public class MariTheKillingQuill extends Card {
                                         SequenceEffect.of(new DrawCardEffect(1),
                                                 CreateTokenEffect.ofTreasureToken(2))),
                                 "Remove a hit counter from a card that player owns in exile?"),
-                        GrantScope.OWN_CREATURES, outlaw));
+                        GrantScope.ALL_OWN_CREATURES, outlaw));
     }
 }

@@ -80,10 +80,10 @@ class MindUnboundTest extends BaseCardTest {
         var enchantment = harness.addToBattlefieldAndReturn(player1, new MindUnbound());
         enchantment.setCounterCount(CounterType.LORE, 3);
         harness.setHand(player2, List.of(new Naturalize()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castAndResolveInstant(player2, 0, enchantment.getId());
         harness.assertNotOnBattlefield(player1, "Mind Unbound");
         harness.passBothPriorities();

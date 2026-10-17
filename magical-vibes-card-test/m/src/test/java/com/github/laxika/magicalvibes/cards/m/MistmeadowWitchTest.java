@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -122,14 +123,19 @@ class MistmeadowWitchTest extends BaseCardTest {
     @Test
     @DisplayName("Exiling during an end step waits until the following turn's end step")
     void activationDuringEndStepWaitsForNextEndStep() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new MistmeadowWitch());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         addWitchMana(player1);
         UUID witchId = harness.getPermanentId(player1, "Mistmeadow Witch");
 
-        harness.activateAbility(player1, 0, 0, null, witchId);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, 0, 0, null, witchId);
+            harness.passBothPriorities();
+        });
         harness.assertNotOnBattlefield(player1, "Mistmeadow Witch");
 
         harness.passUntil(player2, TurnStep.UPKEEP);

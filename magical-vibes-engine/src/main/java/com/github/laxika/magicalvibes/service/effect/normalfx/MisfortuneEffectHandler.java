@@ -1,30 +1,33 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
-import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Misfortune: prompts an opponent to choose one of two modes for the controller via the may-ability
- * (accept/decline) system. The choice is applied in
- * {@code MayPenaltyChoiceHandlerService#handleMisfortuneChoice}.
+ * Misfortune on resolution: carries out the mode the opponent chose while the spell was cast (CR 700.2e,
+ * see {@code MayPenaltyChoiceHandlerService#handleMisfortuneChoice}) as the next steps of this resolution.
+ * Accepted puts a +1/+1 counter on each creature the controller controls and gains them 4 life; declined
+ * puts a -1/-1 counter on each creature the opponent controls and deals 4 damage to them.
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class MisfortuneEffectHandler implements NormalEffectHandlerBean {
-
-    private final GameQueryService gameQueryService;
-    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,22 +36,27 @@ public class MisfortuneEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-        if (opponentId == null) {
+        Boolean accepted = ((MisfortuneEffect) effect).accepted();
+        if (accepted == null) {
             return;
         }
-
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String prompt = "Choose one for " + controllerName + " (Misfortune) — Accept: they put a +1/+1"
-                + " counter on each creature they control and gain 4 life. Decline: they put a -1/-1"
-                + " counter on each creature you control and Misfortune deals 4 damage to you.";
-
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(entry.getCard(), opponentId,
-                List.of(new MisfortuneEffect()), prompt));
-        playerInputService.processNextMayAbility(gameData);
-
-        log.info("Game {} - Misfortune: {} chooses a mode for {}", gameData.id,
-                gameData.playerIdToName.get(opponentId), controllerName);
+        List<CardEffect> chosenMode = accepted
+                ? List.of(
+                        new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
+                                new PermanentIsCreaturePredicate()),
+                        new GainLifeEffect(4))
+                : List.of(
+                        new PutCounterOnEachMatchingPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1,
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
+                                EachPermanentScope.ALL_PLAYERS),
+                        new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT));
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        for (int i = 0; i < effects.size(); i++) {
+            if (effects.get(i) == effect) {
+                entry.insertEffectsToResolve(i + 1, chosenMode);
+                return;
+            }
+        }
     }
 }

@@ -169,10 +169,10 @@ class MudbuttonClangerTest extends BaseCardTest {
         Permanent clanger = addCreatureReady(player1, new MudbuttonClanger());
         harness.setLibrary(player1, List.of(new MudbuttonClanger()));
         harness.setHand(player1, List.of(new EgoErasure()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
 

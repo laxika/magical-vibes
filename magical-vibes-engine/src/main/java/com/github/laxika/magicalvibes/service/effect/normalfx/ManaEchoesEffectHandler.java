@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaEchoesEffect;
@@ -40,9 +40,28 @@ public class ManaEchoesEffectHandler implements NormalEffectHandlerBean {
         ManaEchoesEffect manaEchoes = (ManaEchoesEffect) effect;
         Permanent enteringPermanent = entry.getTargetId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        Set<CardSubtype> enteringTypes = enteringPermanent == null
-                ? manaEchoes.enteringCreatureTypes()
-                : creatureTypes(gameData, enteringPermanent);
+        Card lastKnownEntering = enteringPermanent != null || entry.getTargetId() == null
+                ? null : entry.lastKnownPermanentCard(entry.getTargetId());
+        Set<CardSubtype> enteringTypes;
+        if (enteringPermanent != null) {
+            enteringTypes = creatureTypes(gameData, enteringPermanent);
+        } else if (lastKnownEntering != null) {
+            enteringTypes = new HashSet<>();
+            for (CardSubtype subtype : lastKnownEntering.getSubtypes()) {
+                if (gameQueryService.isCreatureSubtype(subtype)) {
+                    enteringTypes.add(subtype);
+                }
+            }
+            if (lastKnownEntering.getKeywords().contains(Keyword.CHANGELING)) {
+                for (CardSubtype subtype : CardSubtype.values()) {
+                    if (gameQueryService.isCreatureSubtype(subtype)) {
+                        enteringTypes.add(subtype);
+                    }
+                }
+            }
+        } else {
+            enteringTypes = manaEchoes.enteringCreatureTypes();
+        }
 
         int matchingCreatures = 0;
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of())) {

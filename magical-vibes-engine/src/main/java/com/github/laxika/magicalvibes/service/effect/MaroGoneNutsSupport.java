@@ -16,6 +16,9 @@ public final class MaroGoneNutsSupport {
     public static int doublingFactor(GameData gameData) {
         int[] count = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
+            if (permanent.isFaceDown()) {
+                return;
+            }
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof MaroGoneNutsEffect) {
                     count[0]++;
@@ -33,6 +36,15 @@ public final class MaroGoneNutsSupport {
     /** Applies Maro's multiplier to the result of one doubling effect. */
     public static int apply(GameData gameData, CardEffect effect, int value) {
         return isDoublingEffect(effect) ? value * doublingFactor(gameData) : value;
+    }
+
+    /**
+     * Returns the amount a doubling effect adds to {@code current} when it is applied as an
+     * increase: a plain doubling adds {@code current}, and under Maro's multiplier the doubling
+     * multiplies by {@code 2 * doublingFactor}, so it adds {@code current * (2 * doublingFactor - 1)}.
+     */
+    public static int doublingIncrease(GameData gameData, CardEffect effect, int current) {
+        return isDoublingEffect(effect) ? current * (apply(gameData, effect, 2) - 1) : current;
     }
 
     private static int powerOfTwo(int exponent) {

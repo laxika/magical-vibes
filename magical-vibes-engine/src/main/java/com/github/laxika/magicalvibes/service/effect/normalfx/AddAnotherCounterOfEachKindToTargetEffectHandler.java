@@ -69,6 +69,18 @@ public class AddAnotherCounterOfEachKindToTargetEffectHandler implements NormalE
             lifeSupport.applyPoisonCounters(gameData, playerId, 1, entry.getCard().getName());
         }
 
+        if (gameData.playerRadCounters.getOrDefault(playerId, 0) > 0) {
+            gameData.playerRadCounters.merge(playerId, 1, Integer::sum);
+        }
+
+        if (gameData.playerSparkCounters.getOrDefault(playerId, 0) > 0) {
+            gameData.playerSparkCounters.merge(playerId, 1, Integer::sum);
+        }
+
+        if (gameData.playerExperienceCounters.getOrDefault(playerId, 0) > 0) {
+            gameData.playerExperienceCounters.merge(playerId, 1, Integer::sum);
+        }
+
         if (gameData.playerEnergyCounters.getOrDefault(playerId, 0) > 0) {
             int energyAmount = gameQueryService.replaceEnergyCounters(gameData, playerId, 1);
             if (energyAmount > 0) {

@@ -103,6 +103,7 @@ class MothlightProcessionistTest extends BaseCardTest {
     void opponentsEnchantmentDoesNotTriggerEerie() {
         harness.addToBattlefield(player1, new MothlightProcessionist());
         harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new DazzlingTheaterPropRoom()));
         harness.addMana(player2, ManaColor.WHITE, 4);
 

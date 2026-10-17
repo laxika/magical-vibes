@@ -92,7 +92,9 @@ class MarrowShardsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        harness.assertLife(player1, 20);
+        // The unblocked Blind Zealot still deals its own 2 combat damage to player1 afterwards;
+        // Marrow-Shards itself deals nothing to either player.
+        harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
     }
 

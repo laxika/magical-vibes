@@ -113,6 +113,7 @@ class MoggConscriptsTest extends BaseCardTest {
     @Test
     @DisplayName("A creature spell cast on a previous turn does not lift the attack restriction")
     void creatureSpellFromPreviousTurnDoesNotLiftRestriction() {
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new MoggConscripts());
         harness.castFromHand(player1, new TrainedArmodon(), "{1}{G}{G}");
         harness.passBothPriorities();

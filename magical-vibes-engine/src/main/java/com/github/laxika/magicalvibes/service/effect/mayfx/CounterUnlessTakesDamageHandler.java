@@ -46,7 +46,8 @@ public class CounterUnlessTakesDamageHandler implements MayEffectHandlerBean {
         StackEntry sourceEntry = new StackEntry(
                 StackEntryType.INSTANT_SPELL, ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName(), List.of(effect), ability.targetCardId(), (UUID) null);
-        StackEntry targetEntry = counterSupport.findCounterTarget(gameData, ability.targetCardId(), sourceEntry);
+        StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(
+                gameData, ability.targetCardId(), sourceEntry);
         if (targetEntry == null) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
@@ -60,7 +61,7 @@ public class CounterUnlessTakesDamageHandler implements MayEffectHandlerBean {
                     ability.sourceCard().getName() + "'s effect", new ArrayList<>(List.of(damage)),
                     ability.targetCardId(), (UUID) null);
             dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
-        } else {
+        } else if (counterSupport.findCounterTarget(gameData, ability.targetCardId(), sourceEntry) != null) {
             counterSupport.counterSpell(gameData, sourceEntry, targetEntry);
         }
 

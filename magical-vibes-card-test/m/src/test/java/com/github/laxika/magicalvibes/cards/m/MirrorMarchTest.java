@@ -45,7 +45,7 @@ class MirrorMarchTest extends BaseCardTest {
                 .toList();
 
         assertThat(tokens).hasSize((int) wonFlips);
-        assertThat(tokens).allSatisfy(token -> assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE));
+        assertThat(tokens).allSatisfy(token -> assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue());
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .filteredOn(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP)
                 .hasSize((int) wonFlips);
@@ -56,6 +56,7 @@ class MirrorMarchTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

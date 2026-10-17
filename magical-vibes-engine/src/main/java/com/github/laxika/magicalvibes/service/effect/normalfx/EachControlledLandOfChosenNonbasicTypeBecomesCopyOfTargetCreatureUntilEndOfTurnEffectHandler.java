@@ -102,7 +102,9 @@ public class EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUn
             permanentCopierService.applyCloneCopy(permanent, targetCard, null, null, Set.of());
             EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
             keywords.addAll(permanent.getCard().getKeywords());
-            keywords.add(Keyword.HASTE);
+            if (keywords.add(Keyword.HASTE)) {
+                permanent.getNonCopiableKeywords().add(Keyword.HASTE);
+            }
             permanent.getCard().setKeywords(Set.copyOf(keywords));
             permanent.setCopyUntilEndOfTurn(true);
             gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(

@@ -91,7 +91,7 @@ class MordantDragonTest extends BaseCardTest {
         assertThat(dragon.getPowerModifier()).isEqualTo(2);
         assertThat(dragon.getToughnessModifier()).isZero();
 
-        harness.passUntil(player1, TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(dragon.getPowerModifier()).isZero();
         assertThat(dragon.getToughnessModifier()).isZero();

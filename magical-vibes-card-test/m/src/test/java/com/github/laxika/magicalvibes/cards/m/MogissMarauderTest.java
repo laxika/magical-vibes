@@ -61,7 +61,9 @@ class MogissMarauderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(first.hasKeyword(Keyword.HASTE)).isTrue();
@@ -95,7 +97,7 @@ class MogissMarauderTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
         castMarauder();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -114,7 +116,9 @@ class MogissMarauderTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
         Permanent third = harness.addToBattlefieldAndReturn(player2, new NessianCourser());
         castMarauder();
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, third.getId());
 
         harness.setHand(player2, List.of(new HerosDownfall()));
         harness.addMana(player2, ManaColor.BLACK, 2);
@@ -136,7 +140,9 @@ class MogissMarauderTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new NessianCourser());
         castMarauder();
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
 
         harness.setHand(player2, List.of(new HerosDownfall()));
         harness.addMana(player2, ManaColor.BLACK, 2);

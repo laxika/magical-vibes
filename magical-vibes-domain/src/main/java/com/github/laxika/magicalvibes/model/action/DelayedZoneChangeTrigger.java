@@ -9,8 +9,14 @@ import java.util.UUID;
 
 /** A one-shot delayed ability watching a permanent leave for one of the specified zones. */
 public record DelayedZoneChangeTrigger(UUID watchedPermanentId, UUID controllerId, Card sourceCard,
-                                       Map<Zone, CardEffect> effectsByDestination) implements DelayedAction {
+                                       Map<Zone, CardEffect> effectsByDestination,
+                                       UUID sourcePermanentId) implements DelayedAction {
     public DelayedZoneChangeTrigger {
         effectsByDestination = Map.copyOf(effectsByDestination);
+    }
+
+    public DelayedZoneChangeTrigger(UUID watchedPermanentId, UUID controllerId, Card sourceCard,
+                                    Map<Zone, CardEffect> effectsByDestination) {
+        this(watchedPermanentId, controllerId, sourceCard, effectsByDestination, null);
     }
 }

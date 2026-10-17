@@ -20,5 +20,6 @@ public class MachineGodsEffigy extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CopyPermanentOnEnterEffect.withCardTypesOverride(
                 new PermanentIsCreaturePredicate(), "creature", Set.of(CardType.ARTIFACT), Set.of(),
                 List.of(ManaAbilities.tapFor(ManaColor.BLUE))));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
     }
 }

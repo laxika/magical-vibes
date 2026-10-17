@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -50,7 +52,10 @@ public class MerryBards extends Card {
                         EffectSlot.ON_ATTACK,
                         new TriggeringPermanentConditionalEffect(
                                 new PermanentToughnessAtMostPredicate(3),
-                                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                                new ConditionalEffect(
+                                        new SourceMatchesPermanentPredicate(
+                                                new PermanentToughnessAtMostPredicate(3)),
+                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
                         GrantScope.ENCHANTED_CREATURE)),
                 List.of(),
                 false,

@@ -186,7 +186,7 @@ class MaelstromArchangelTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(spell.getId());
-        assertThat(gd.getSpellCastManaSpent(spell.getId())).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
     private Permanent addAttackingArchangel(Player player) {

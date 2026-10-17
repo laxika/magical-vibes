@@ -125,8 +125,9 @@ class ModelOfUnityTest extends BaseCardTest {
     @Test
     void triggersAfterSecretCreatureVotingFinishes() {
         harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
-        Permanent saga = harness.enterBattlefieldAndReturn(player1, new Vault11VotersDilemma());
+        harness.castFromHand(player1, new Vault11VotersDilemma(), "{2}{W}{B}");
         resolveAllTriggers();
+        Permanent saga = findPermanent(player1, "Vault 11: Voter's Dilemma");
         Permanent soldier = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst().orElseThrow();

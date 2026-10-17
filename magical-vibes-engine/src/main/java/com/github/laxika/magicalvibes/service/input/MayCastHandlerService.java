@@ -2364,6 +2364,22 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (cardToCast.getOwnerId() == null) {
+            for (Map.Entry<UUID, List<Card>> handEntry : gameData.playerHands.entrySet()) {
+                if (handEntry.getValue() == hand) {
+                    cardToCast.setOwnerId(handEntry.getKey());
+                    break;
+                }
+            }
+        }
+
+        if (cardToCast.hasType(CardType.LAND)) {
+            queueDeclineEffect(gameData, ability);
+            gameLogService.append(gameData, GameLog.text(playerName + " cannot cast a land card."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (cardToCast.isCastOnlyFromGraveyard()) {
             queueDeclineEffect(gameData, ability);
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
@@ -2394,6 +2410,15 @@ public class MayCastHandlerService {
         }
 
         if (!castingPermissionService.isSpellCastingAllowed(gameData, player.getId(), cardToCast)) {
+            queueDeclineEffect(gameData, ability);
+            if (scryIfDeclined) queueScryFallback(gameData);
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast right now and remains in hand."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (!castingPermissionService.canCastWithCastCondition(gameData, player.getId(), cardToCast)) {
             queueDeclineEffect(gameData, ability);
             if (scryIfDeclined) queueScryFallback(gameData);
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,

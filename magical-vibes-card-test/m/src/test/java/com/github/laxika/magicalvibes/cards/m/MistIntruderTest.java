@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.e.EldraziSkyspawner;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -52,7 +53,7 @@ class MistIntruderTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(topCard, nextCard));
         harness.setLibrary(player1, List.of(ownCard));
 
-        resolveCombatAndTrigger();
+        resolveCombat();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
         assertThat(gd.exiledCards).hasSize(1);
@@ -83,7 +84,7 @@ class MistIntruderTest extends BaseCardTest {
         EldraziSkyspawner topCard = new EldraziSkyspawner();
         harness.setLibrary(player2, List.of(topCard));
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
         gd.playerBattlefields.get(player1.getId()).remove(intruder);

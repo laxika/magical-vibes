@@ -134,7 +134,7 @@ class MazeOfIthTest extends BaseCardTest {
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
 
-        activateMaze(maze, attacker);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> activateMaze(maze, attacker));
 
         assertThat(attacker.isTapped()).isFalse();
         assertThat(attacker.isAttacking()).isTrue();

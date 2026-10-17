@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 public class MeteorBlast extends Card {
 
     public MeteorBlast() {
-        targetExactlyX(null, 100).addEffect(EffectSlot.SPELL,
+        targetExactlyX(null, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL,
                 new DealDamageToEachTargetEffect(new Fixed(4)));
     }
 }

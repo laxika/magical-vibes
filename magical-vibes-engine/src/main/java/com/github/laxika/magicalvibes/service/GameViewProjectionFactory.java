@@ -276,6 +276,10 @@ public class GameViewProjectionFactory {
                             com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance)) {
                         continue;
                     }
+                    if (p.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream().anyMatch(
+                            com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileFaceDownPileEffect.class::isInstance)) {
+                        continue;
+                    }
                     boolean grantsImplicitLookPermission = !data.exiledCardsWithIntelCounters.contains(entry.card().getId())
                             && java.util.Arrays.stream(EffectSlot.values())
                             .flatMap(slot -> p.getCard().getEffects(slot).stream())

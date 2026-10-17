@@ -81,7 +81,7 @@ class MinotaurSkullcleaverTest extends BaseCardTest {
     void boostLastsThroughEndStep() {
         Permanent skullcleaver = castSkullcleaver(player1);
 
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gqs.getEffectivePower(gd, skullcleaver)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, skullcleaver)).isEqualTo(2);

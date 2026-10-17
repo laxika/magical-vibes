@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
+import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessBlightsEffect;
@@ -1524,54 +1525,36 @@ public class MayPenaltyChoiceHandlerService {
     }
 
     /**
-     * Misfortune: the opponent ({@code player}) chooses one of two modes for the spell's controller.
-     * Accept is "you put a +1/+1 counter on each creature you control and gain 4 life"; decline is
-     * "you put a -1/-1 counter on each creature that player controls and Misfortune deals 4 damage to
-     * that player". Both modes ride one stack entry controlled by the spell's controller, so the
-     * "each creature you control" / "your opponents' creatures" scopes resolve against them.
+     * Misfortune: the opponent ({@code player}) chooses one of two modes for the spell's controller as
+     * the spell is cast (CR 700.2e). Accept is "you put a +1/+1 counter on each creature you control and
+     * gain 4 life"; decline is "you put a -1/-1 counter on each creature that player controls and
+     * Misfortune deals 4 damage to that player". The choice is recorded on the spell and carried out as
+     * part of its resolution.
      */
     public void handleMisfortuneChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         UUID opponentId = ability.controllerId(); // opponent is the decision maker
-        UUID controllerId = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (!pid.equals(opponentId)) {
-                controllerId = pid;
-                break;
+        StackEntry spell = gameData.stack.stream()
+                .filter(entry -> entry.getCard() != null
+                        && entry.getCard().getId().equals(ability.sourceCard().getId()))
+                .reduce((first, second) -> second)
+                .orElse(null);
+        if (spell != null) {
+            List<CardEffect> effects = spell.getEffectsToResolve();
+            for (int i = 0; i < effects.size(); i++) {
+                if (effects.get(i) instanceof MisfortuneEffect misfortune && misfortune.accepted() == null) {
+                    spell.replaceEffectToResolve(i, new MisfortuneEffect(accepted));
+                    break;
+                }
             }
-        }
-        if (controllerId == null) {
-            throw new IllegalStateException("Cannot find Misfortune controller");
-        }
-
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String opponentName = gameData.playerIdToName.get(opponentId);
-
-        List<CardEffect> effects;
-        if (accepted) {
-            effects = List.of(
-                    new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
-                            new PermanentIsCreaturePredicate()),
-                    new GainLifeEffect(4));
+            String controllerName = gameData.playerIdToName.get(spell.getControllerId());
+            String opponentName = gameData.playerIdToName.get(opponentId);
             gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + " puts a +1/+1 counter on each creature they control and gains 4 life."));
-        } else {
-            effects = List.of(
-                    new PutCounterOnEachMatchingPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1,
-                            new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
-                                    new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
-                            EachPermanentScope.ALL_PLAYERS),
-                    new DealDamageToPlayersEffect(4, DamageRecipient.EACH_OPPONENT));
-            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + " puts a -1/-1 counter on each creature " + opponentName
-                    + " controls and Misfortune deals 4 damage to them."));
+                    + (accepted ? " puts a +1/+1 counter on each creature they control and gains 4 life."
+                    : " puts a -1/-1 counter on each creature " + opponentName
+                    + " controls and Misfortune deals 4 damage to them.")));
+            log.info("Game {} - {} chooses {} for {} (Misfortune)", gameData.id, opponentName,
+                    accepted ? "counters-and-life" : "shrink-and-burn", controllerName);
         }
-        log.info("Game {} - {} chooses {} for {} (Misfortune)", gameData.id, opponentName,
-                accepted ? "counters-and-life" : "shrink-and-burn", controllerName);
-
-        StackEntry continuation = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
-                controllerId, ability.sourceCard().getName(), new ArrayList<>(effects), 0);
-        continuation.setSpellDamageContinuation(true);
-        gameData.stack.add(continuation);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
@@ -1916,6 +1899,16 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.forcedCostOrElseSourceControllerId != null
                 ? gameData.forcedCostOrElseSourceControllerId
                 : decidingPlayerId;
+
+        if (effect.villainousChoice()) {
+            var villainousState = gameData.villainousChoice;
+            if (villainousState.additionalChoicesRemaining > 0) {
+                villainousState.additionalChoicesRemaining--;
+                gameData.pendingMayAbilities.addFirst(ability);
+            } else {
+                villainousState.additionalChoicesRemaining = -1;
+            }
+        }
 
         if (accepted && effect.forcedCost() instanceof PayLifeCost payLifeCost) {
             int lifeAmount = effectiveLifeAmount(gameData, decidingPlayerId, ability, payLifeCost);
@@ -2309,6 +2302,12 @@ public class MayPenaltyChoiceHandlerService {
                                 ability.sourceCard(), effect));
                 playerInputService.beginPermanentChoice(gameData, sacrificingPlayerId, matchingIds,
                         "Choose a permanent to sacrifice (" + sacrificeCost.description() + ").");
+                return;
+            }
+            if (effect.villainousChoice()) {
+                // CR 701.55b: the option is performed as far as possible, which here is not at all.
+                clearAnyPlayerPayState(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }
             // Accepted but nothing left to sacrifice — fall through to the penalty.

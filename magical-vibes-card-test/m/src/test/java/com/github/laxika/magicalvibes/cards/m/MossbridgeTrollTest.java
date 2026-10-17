@@ -159,6 +159,7 @@ class MossbridgeTrollTest extends BaseCardTest {
         Permanent first = addCreatureReady(player1, new MossbridgeTroll());
         Permanent second = addCreatureReady(player1, new MossbridgeTroll());
         addCreatureReady(player1, new MossbridgeTroll());
+        addCreatureReady(player1, new MossbridgeTroll());
         harness.setHand(player1, List.of(new TorporDust(), new TorporDust()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

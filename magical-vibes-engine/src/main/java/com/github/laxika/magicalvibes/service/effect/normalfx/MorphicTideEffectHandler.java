@@ -84,23 +84,23 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
                     tide.auraCardsLast());
         }
         List<CardEffect> followUps = new ArrayList<>();
-        if (tide.auraCardsLast()) {
+        if (!tide.auraCardsLast()) {
+            Set<CardType> secondBatchEnterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
             for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
-                for (Card card : playerCards.getValue()) {
-                    if (!card.isAura()) {
-                        continue;
-                    }
-                    acceptedCardIds.computeIfAbsent(playerCards.getKey(), ignored -> java.util.HashSet.newHashSet(1))
-                            .add(card.getId());
-                    followUps.add(new MorphicTideAuraEffect(
-                            playerCards.getKey(), card, tide.randomBottomOrder()));
-                }
+                putEnchantmentBatch(gameData, playerCards.getKey(), playerCards.getValue(),
+                        secondBatchEnterTappedTypes, simultaneouslyEntered, enteredByController,
+                        acceptedCardIds, rejectedCardIds, false);
             }
-        } else {
-            for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
-                putEnchantmentBatch(gameData, playerCards.getKey(), playerCards.getValue(), enterTappedTypes,
-                        simultaneouslyEntered, enteredByController, acceptedCardIds, rejectedCardIds,
-                        false);
+        }
+        for (Map.Entry<UUID, List<Card>> playerCards : revealedByPlayer.entrySet()) {
+            for (Card card : playerCards.getValue()) {
+                if (!card.isAura()) {
+                    continue;
+                }
+                acceptedCardIds.computeIfAbsent(playerCards.getKey(), ignored -> java.util.HashSet.newHashSet(1))
+                        .add(card.getId());
+                followUps.add(new MorphicTideAuraEffect(
+                        playerCards.getKey(), card, tide.randomBottomOrder()));
             }
         }
 
@@ -156,7 +156,7 @@ public class MorphicTideEffectHandler implements NormalEffectHandlerBean {
                                      Map<UUID, Set<UUID>> acceptedCardIds, Map<UUID, Set<UUID>> rejectedCardIds,
                                      boolean auraCardsLast) {
         for (Card card : cards) {
-            if (!(auraCardsLast ? card.isAura() : card.hasType(CardType.ENCHANTMENT))
+            if (!card.hasType(CardType.ENCHANTMENT) || card.isAura()
                     || acceptedCardIds.getOrDefault(ownerId, Set.of()).contains(card.getId())
                     || rejectedCardIds.getOrDefault(ownerId, Set.of()).contains(card.getId())) {
                 continue;

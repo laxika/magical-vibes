@@ -60,10 +60,10 @@ class MazesMantleTest extends BaseCardTest {
     void flashOnOpponentsCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawlingChorus());
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.ensurePriority(player1);
 
-        castAndResolve(creature);
+        harness.withAutoStop(TurnStep.END_STEP, () -> castAndResolve(creature));
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);

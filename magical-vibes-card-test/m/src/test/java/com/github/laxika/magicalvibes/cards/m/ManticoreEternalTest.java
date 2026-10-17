@@ -83,7 +83,7 @@ class ManticoreEternalTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
-        harness.assertLife(player2, 20);
+        harness.assertLife(player2, 15);
     }
 
     @Test
@@ -156,6 +156,12 @@ class ManticoreEternalTest extends BaseCardTest {
     }
 
     private void prepareAttackerDeclaration() {
-        prepareAttackerDeclaration();
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
     }
 }

@@ -19,12 +19,14 @@ class MythUnboundTest extends BaseCardTest {
 
     @Test
     void reducesTheCommandersSecondCastAndDrawsWhenItReturnsToTheCommandZone() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new MythUnbound());
         Card commander = addCommanderToCommandZone();
         Card drawnCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawnCard));
 
         castCommander(commander, 1, 1);
+        harness.passBothPriorities();
         Permanent commanderPermanent = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(commander.getId()))
                 .findFirst().orElseThrow();
@@ -40,6 +42,7 @@ class MythUnboundTest extends BaseCardTest {
 
     @Test
     void doesNotDrawWhenANonCommanderEntersTheCommandZone() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new MythUnbound());
         Permanent nonCommander = addCreatureReady(player1, new GrizzlyBears());
         Card drawnCard = new GrizzlyBears();

@@ -45,9 +45,9 @@ class MaddeningWindTest extends BaseCardTest {
         UUID auraId = harness.getPermanentId(player1, "Maddening Wind");
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
         harness.setHand(player2, List.of(new Disenchant()));
-        harness.addMana(player2, ManaColor.WHITE, 2);
 
         advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
         harness.castAndResolveInstant(player2, 0, auraId);
 
         harness.assertInGraveyard(player1, "Maddening Wind");

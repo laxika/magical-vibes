@@ -61,7 +61,8 @@ public class BecomeCopyOfTargetArtifactUntilEndOfTurnEffectHandler implements No
                 .toList()
                 : List.of();
 
-        if (!source.isCopyUntilEndOfTurn()) {
+        boolean temporary = !copyEffect.retainsAbility() || source.isCopyUntilEndOfTurn();
+        if (temporary && !source.isCopyUntilEndOfTurn()) {
             source.setPreCopyCard(source.getCard());
         }
 
@@ -69,6 +70,10 @@ public class BecomeCopyOfTargetArtifactUntilEndOfTurnEffectHandler implements No
         String targetName = target.getCard().getName();
         permanentCopierService.applyCloneCopy(source, target.getCard(), null, null, Set.of(),
                 retainedAbilities);
+        if (!temporary) {
+            gameLogService.append(gameData, GameLog.text(originalName + " becomes a copy of " + targetName + "."));
+            return;
+        }
         source.setCopyUntilEndOfTurn(true);
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), sourceId,

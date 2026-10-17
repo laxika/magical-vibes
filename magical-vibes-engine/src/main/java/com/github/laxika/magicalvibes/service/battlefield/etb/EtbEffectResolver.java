@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -200,6 +202,11 @@ public class EtbEffectResolver {
                 case CardsInHandAtMost cardsInHandAtMost ->
                         conditionEvaluationService.isMet(ctx.gameData(), cardsInHandAtMost, conditionContext)
                                 ? conditional.wrapped() : null;
+                // "When this enters, if it's a creature" (CR 603.4): a token copy that is not a creature
+                // never triggers, so no target is chosen for it.
+                case SourceIsCreature creatureGate -> (ctx.sourcePermanent() != null
+                        ? conditionEvaluationService.isMet(ctx.gameData(), creatureGate, conditionContext)
+                        : ctx.card().hasType(CardType.CREATURE)) ? effect : null;
                 case SourceUntapped ignored ->
                         conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)
                                 ? conditional.wrapped() : null;

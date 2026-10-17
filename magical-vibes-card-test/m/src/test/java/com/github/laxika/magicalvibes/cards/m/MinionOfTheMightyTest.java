@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.d.DragonWhelp;
 import com.github.laxika.magicalvibes.cards.z.ZarielArchdukeOfAvernus;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,11 +32,11 @@ class MinionOfTheMightyTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handleCardChosen(player1, 0));
 
         Permanent dragon = findPermanent(player1, "Dragon Whelp");
         assertThat(dragon.isTapped()).isTrue();
-        assertThat(dragon.isAttackedThisTurn()).isTrue();
+        assertThat(dragon.isAttacking()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -76,7 +77,8 @@ class MinionOfTheMightyTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new ZarielArchdukeOfAvernus());
+        Permanent zariel = harness.addToBattlefieldAndReturn(player2, new ZarielArchdukeOfAvernus());
+        zariel.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player1, List.of(new DragonWhelp()));
 
         declareAttackers(List.of(0, 1, 2, 3));

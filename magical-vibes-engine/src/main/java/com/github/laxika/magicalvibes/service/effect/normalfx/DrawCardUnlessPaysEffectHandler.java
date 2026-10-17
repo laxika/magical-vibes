@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
@@ -30,6 +31,7 @@ public class DrawCardUnlessPaysEffectHandler implements NormalEffectHandlerBean 
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
     private final DrawService drawService;
+    private final PotentialManaService potentialManaService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,7 +56,11 @@ public class DrawCardUnlessPaysEffectHandler implements NormalEffectHandlerBean 
         ManaCost cost = new ManaCost("{" + payAmount + "}");
         ManaPool pool = gameData.playerManaPools.get(castingPlayerId);
 
-        if (!cost.canPayResolutionCost(pool)) {
+        // Mana abilities may be activated while the choice is open, so untapped mana sources count
+        // toward what the casting player can pay.
+        boolean canPayWithSources = potentialManaService
+                .buildVirtualManaPool(gameData, castingPlayerId).getTotal() >= payAmount;
+        if (!cost.canPayResolutionCost(pool) && !canPayWithSources) {
             // Can't pay — skip straight to the controller's draw.
             if (e.mandatoryDraw()) {
                 drawService.resolveDrawCards(gameData, drawingPlayerId, e.drawCount());

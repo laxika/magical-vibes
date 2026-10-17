@@ -55,7 +55,7 @@ public class MountDoom extends Card {
                                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)
                                 )),
                                 "a legendary artifact",
-                                false
+                                true
                         ),
                         new ChooseUpToTwoCreaturesDestroyRestEffect()
                 ),

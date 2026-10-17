@@ -78,62 +78,6 @@ public class StaticEffectSupport {
 
     private static final PermanentIsLandPredicate LAND_PREDICATE = new PermanentIsLandPredicate();
 
-    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
-            CardSubtype.FOREST,
-            CardSubtype.MOUNTAIN,
-            CardSubtype.ISLAND,
-            CardSubtype.PLAINS,
-            CardSubtype.SWAMP,
-            CardSubtype.DESERT,
-            CardSubtype.GATE,
-            CardSubtype.LOCUS,
-            CardSubtype.AURA,
-            CardSubtype.EQUIPMENT,
-            CardSubtype.INCUBATOR,
-            CardSubtype.MUTAGEN,
-            CardSubtype.AJANI,
-            CardSubtype.KOTH,
-            CardSubtype.BOLAS,
-            CardSubtype.BLOOD,
-            CardSubtype.BOBBLEHEAD,
-            CardSubtype.BOOK,
-            CardSubtype.CLUE,
-            CardSubtype.FOOD,
-            CardSubtype.FORTIFICATION,
-            CardSubtype.GOLD,
-            CardSubtype.JUNK,
-            CardSubtype.LANDER,
-            CardSubtype.MAP,
-            CardSubtype.POWERSTONE,
-            CardSubtype.SPACECRAFT,
-            CardSubtype.TREASURE,
-            CardSubtype.VEHICLE,
-            CardSubtype.CARTOUCHE,
-            CardSubtype.CURSE,
-            CardSubtype.PLAN,
-            CardSubtype.ROLE,
-            CardSubtype.ROOM,
-            CardSubtype.RUNE,
-            CardSubtype.SAGA,
-            CardSubtype.SHARD,
-            CardSubtype.SHRINE,
-            CardSubtype.LESSON,
-            CardSubtype.OMEN,
-            CardSubtype.TRAP,
-            CardSubtype.ARCANE,
-            CardSubtype.SIEGE,
-            CardSubtype.PLANET,
-            CardSubtype.MIRRODIN,
-            CardSubtype.SERRAS_REALM,
-            CardSubtype.ASSASSIN_OR_FREERUNNING,
-            CardSubtype.OUTLAW
-    );
-
-    static {
-        NON_CREATURE_SUBTYPES.addAll(CardSubtype.landTypes());
-        NON_CREATURE_SUBTYPES.addAll(CardSubtype.planeswalkerTypes());
-    }
-
     /**
      * Returns true if the target matches the given creature-centric scope.
      * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_UNTAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, and OWN_PERMANENTS.
@@ -403,7 +347,7 @@ public class StaticEffectSupport {
     }
 
     public static boolean isCreatureSubtype(CardSubtype subtype) {
-        return !NON_CREATURE_SUBTYPES.contains(subtype);
+        return subtype.isCreatureType();
     }
 
     public boolean hasAnimateArtifactEffect(GameData gameData) {

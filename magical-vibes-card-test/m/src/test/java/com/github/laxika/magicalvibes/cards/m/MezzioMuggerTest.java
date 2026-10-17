@@ -220,6 +220,7 @@ class MezzioMuggerTest extends BaseCardTest {
 
     @Test
     void blitzRetainsHasteAfterItsSacrificeIsCountered() {
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new MezzioMugger(), new Stifle()));
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Forest()));
@@ -234,7 +235,7 @@ class MezzioMuggerTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, gd.stack.getLast().getCard().getId());
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Mezzio Mugger");
         assertThat(gqs.hasKeyword(gd, mugger, Keyword.HASTE)).isTrue();

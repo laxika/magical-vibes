@@ -24,6 +24,7 @@ public class MesmericFiend extends Card {
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), List.of(),
-                        HandChoiceDestination.EXILE, true));
+                        HandChoiceDestination.EXILE, true)
+                        .withReturnsOnSourceLeavesTrigger());
     }
 }

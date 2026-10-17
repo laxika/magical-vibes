@@ -193,7 +193,7 @@ class MechtitanCoreTest extends BaseCardTest {
 
     @Test
     @CardUsed({NeurokTransmuter.class})
-    void vehicleThatIsNoLongerAnArtifactStillPaysTheExileCost() {
+    void vehicleThatIsNoLongerAnArtifactCannotPayTheExileCost() {
         List<Permanent> vehicles = addFiveCores();
         Permanent transmuter = harness.addToBattlefieldAndReturn(player1, new NeurokTransmuter());
         harness.activateAbility(player1, 1, 1, null, null);
@@ -207,12 +207,11 @@ class MechtitanCoreTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, vehicles.get(1))).isFalse();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
 
-        harness.assertOnBattlefield(player1, "Mechtitan");
-        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(5);
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(transmuter);
+        assertThat(findPermanents(player1, "Mechtitan")).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     @Test

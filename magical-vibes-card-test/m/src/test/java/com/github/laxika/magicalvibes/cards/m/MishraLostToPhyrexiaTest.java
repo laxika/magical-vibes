@@ -49,6 +49,7 @@ class MishraLostToPhyrexiaTest extends BaseCardTest {
         addCreatureReady(player2, new PhyrexianDragonEngine());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(mishra)));
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.pendingEffectResolutionEntry).isNull();
@@ -58,6 +59,7 @@ class MishraLostToPhyrexiaTest extends BaseCardTest {
     @Test
     void enteredModesMustBeChosenBeforePlayersCanRespond() {
         harness.enterBattlefieldAndReturn(player1, new MishraLostToPhyrexia());
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.pendingEffectResolutionEntry).isNull();
@@ -95,6 +97,7 @@ class MishraLostToPhyrexiaTest extends BaseCardTest {
     @Test
     void enteredKeywordModeIncludesMishraItself() {
         Permanent mishra = harness.enterBattlefieldAndReturn(player1, new MishraLostToPhyrexia());
+        resolveAllTriggers();
 
         chooseNonTargetingModes();
 
@@ -108,6 +111,7 @@ class MishraLostToPhyrexiaTest extends BaseCardTest {
         addCreatureReady(player2, new PhyrexianDragonEngine());
 
         declareAttackers(List.of(0));
+        resolveAllTriggers();
         chooseNonTargetingModes();
 
         assertThat(gqs.hasKeyword(gd, mishra, Keyword.MENACE)).isTrue();
@@ -121,6 +125,7 @@ class MishraLostToPhyrexiaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MachineOverMatter()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.enterBattlefieldAndReturn(player1, new MishraLostToPhyrexia());
+        resolveAllTriggers();
         harness.handleListChoice(player1, "Destroy target artifact or planeswalker");
         harness.handleListChoice(player1, "Creatures you control gain menace and trample until end of turn");
         harness.handleListChoice(player1, "Create two tapped Powerstone tokens");
@@ -139,12 +144,13 @@ class MishraLostToPhyrexiaTest extends BaseCardTest {
     void discardModeCannotTargetItsControllerAlongsideAnotherTargetedMode() {
         harness.setHand(player2, List.of());
         harness.enterBattlefieldAndReturn(player1, new MishraLostToPhyrexia());
+        resolveAllTriggers();
         harness.handleListChoice(player1, "Target opponent discards two cards");
         harness.handleListChoice(player1, "Mishra deals 3 damage to any target");
         harness.handleListChoice(player1, "Create two tapped Powerstone tokens");
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();

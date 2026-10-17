@@ -32,6 +32,8 @@ public class SwitchAllCreaturesPowerToughnessEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var switchAll = (SwitchAllCreaturesPowerToughnessEffect) effect;
+        EffectDuration duration = switchAll.indefinite() ? EffectDuration.PERMANENT : EffectDuration.UNTIL_END_OF_TURN;
         int[] count = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
             if (!gameQueryService.isCreature(gameData, permanent)) {
@@ -40,13 +42,13 @@ public class SwitchAllCreaturesPowerToughnessEffectHandler implements NormalEffe
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), new SwitchPowerToughnessEffect(), permanent.getId(),
-                    null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+                    null, null, duration, 0));
             count[0]++;
         });
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(" switches the power and toughness of " + count[0] + " creature(s) until end of turn.")
+                .text(" switches the power and toughness of " + count[0] + " creature(s)" + (switchAll.indefinite() ? "." : " until end of turn."))
                 .build());
         log.info("Game {} - {} switches P/T of {} creatures", gameData.id,
                 entry.getCard().getName(), count[0]);

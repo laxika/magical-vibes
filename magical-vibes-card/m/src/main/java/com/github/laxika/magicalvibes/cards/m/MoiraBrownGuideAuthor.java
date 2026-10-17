@@ -34,7 +34,7 @@ public class MoiraBrownGuideAuthor extends Card {
         CreateTokenEffect wastelandSurvivalGuide = CreateTokenEffect.ofArtifactToken(
                         1,
                         "Wasteland Survival Guide",
-                        List.of(CardSubtype.EQUIPMENT),
+                        List.of(CardSubtype.BOOK, CardSubtype.EQUIPMENT),
                         List.of(new EquipActivatedAbility("{1}")))
                 .withTokenEffects(Map.of(
                         EffectSlot.STATIC,

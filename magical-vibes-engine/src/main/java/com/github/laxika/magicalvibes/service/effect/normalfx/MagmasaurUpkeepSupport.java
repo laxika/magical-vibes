@@ -30,6 +30,9 @@ public class MagmasaurUpkeepSupport {
     private static final PermanentNotPredicate WITHOUT_FLYING =
             new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING));
 
+    private static final List<Keyword> DAMAGE_KEYWORDS =
+            List.of(Keyword.LIFELINK, Keyword.DEATHTOUCH, Keyword.INFECT, Keyword.WITHER);
+
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final DestructionSupport destructionSupport;
@@ -67,6 +70,17 @@ public class MagmasaurUpkeepSupport {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         Permanent damageSource = source != null ? source : snapshot;
         int damage = damageSource == null ? 0 : damageSource.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+        Permanent lastKnownSource = snapshot;
+        if (source != null) {
+            // The damage keeps the keywords the creature had on the battlefield (CR 608.2h), including ones
+            // granted by an Aura that leaves with it, so lifelink and deathtouch still apply to the blast.
+            lastKnownSource = new Permanent(source);
+            for (Keyword keyword : DAMAGE_KEYWORDS) {
+                if (gameQueryService.hasKeyword(gameData, source, keyword)) {
+                    lastKnownSource.getGrantedKeywords().add(keyword);
+                }
+            }
+        }
         if (source != null) {
             destructionSupport.sacrificeAndLog(gameData, source, controllerId);
         }
@@ -83,6 +97,7 @@ public class MagmasaurUpkeepSupport {
                 List.of(massDamage),
                 null,
                 sourcePermanentId);
+        entry.setSourcePermanentSnapshot(lastKnownSource);
         massDamageEffectHandler.resolve(gameData, entry, massDamage);
     }
 }

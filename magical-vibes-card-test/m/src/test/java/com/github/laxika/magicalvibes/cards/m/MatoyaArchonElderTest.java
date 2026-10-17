@@ -97,8 +97,7 @@ class MatoyaArchonElderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        gs.handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(spellDrawnCard);
         harness.passBothPriorities();
 
@@ -114,8 +113,7 @@ class MatoyaArchonElderTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(keptCard, new Island()));
         harness.castFromHand(player2, new DreamsOfLaguna(), "{1}{U}");
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player2,
-                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptCard);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

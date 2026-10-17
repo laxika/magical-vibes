@@ -129,9 +129,10 @@ class MysticalTetherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castFromGraveyardTargeting(player1, 0, target.getId());
+        harness.castFromGraveyard(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Mystical Tether");

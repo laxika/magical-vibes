@@ -37,6 +37,14 @@ public class ConjureDuplicateOfTriggeringPermanentOntoBattlefieldEffectHandler
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         Card sourceCard = triggeringPermanent == null ? null : triggeringPermanent.getCard();
+        if (sourceCard == null && entry.getTriggeringPermanentId() != null) {
+            // The permanent left the battlefield before the trigger resolved: use its last-known
+            // information, or the card it became in a graveyard.
+            sourceCard = entry.lastKnownPermanentCard(entry.getTriggeringPermanentId());
+            if (sourceCard == null && entry.getTriggeringCardId() != null) {
+                sourceCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
+            }
+        }
         if (sourceCard == null || sourceCard.isToken()) return;
 
         Card conjuredCard = sourceCard.createConjuredCopy();

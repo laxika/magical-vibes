@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -85,6 +86,8 @@ class MomosHeistTest extends BaseCardTest {
     @Test
     @DisplayName("Countering the sacrifice trigger preserves control and haste across cleanup")
     void retainsControlAndHasteWhenSacrificeTriggerIsCountered() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
         cast(artifact);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -94,7 +97,8 @@ class MomosHeistTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.setHand(player1, List.of(new Stifle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castAndResolveInstant(player1, 0, gd.stack.getLast().getTargetableId());
+        UUID sacrificeTriggerId = gd.stack.getLast().getTargetableId();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.castAndResolveInstant(player1, 0, sacrificeTriggerId));
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player1, "Ornithopter");

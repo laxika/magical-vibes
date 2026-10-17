@@ -19,11 +19,11 @@ public class MarchOfTheDrowned extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
-                                new CardTypePredicate(CardType.CREATURE), 1)),
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(
+                                new CardTypePredicate(CardType.CREATURE))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return two target Pirate cards from your graveyard to your hand",
-                        new ReturnTargetCardsFromGraveyardToHandEffect(
+                        ReturnTargetCardsFromGraveyardToHandEffect.exactly(
                                 new CardSubtypePredicate(CardSubtype.PIRATE), 2))
         )));
     }

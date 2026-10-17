@@ -1455,7 +1455,7 @@ public class PermanentChoiceTriggerHandlerService {
         boolean validTarget = attackerControllerId != null
                 && attackTargetId != null
                 && !attackerControllerId.equals(attackTargetId)
-                && attackLegalityService.getValidAttackTargetIds(gameData, attackerControllerId)
+                && attackLegalityService.getValidReselectionTargetIds(gameData, attackerControllerId)
                 .contains(attackTargetId);
         if (attacker != null && attacker.isAttacking()
                 && gameQueryService.isCreature(gameData, attacker) && validTarget) {

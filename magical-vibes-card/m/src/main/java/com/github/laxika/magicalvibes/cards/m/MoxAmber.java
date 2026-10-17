@@ -28,7 +28,10 @@ public class MoxAmber extends Card {
                                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                                         new PermanentIsCreaturePredicate()
                                 )),
-                                new PermanentIsPlaneswalkerPredicate()
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
+                                        new PermanentIsPlaneswalkerPredicate()
+                                ))
                         ))
                 )),
                 "{T}: Add one mana of any color among legendary creatures and planeswalkers you control."

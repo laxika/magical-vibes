@@ -214,6 +214,9 @@ class ManorSkeletonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new DeadWeight()));
         harness.addMana(player2, ManaColor.BLACK, 1);
 

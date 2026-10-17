@@ -98,7 +98,7 @@ class MarshalsPathcruiserTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, pathcruiser)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, pathcruiser)).isEqualTo(5);
         harness.setLibrary(player2, List.of(new Plains(), new Plains()));
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gqs.isCreature(gd, pathcruiser)).isFalse();
         assertThat(gqs.isArtifact(gd, pathcruiser)).isTrue();
     }
@@ -124,7 +124,7 @@ class MarshalsPathcruiserTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.setLibrary(player2, List.of(new Plains(), new Plains()));
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.isCreature(gd, pathcruiser)).isTrue();
         assertThat(gqs.getEffectivePower(gd, pathcruiser)).isEqualTo(8);

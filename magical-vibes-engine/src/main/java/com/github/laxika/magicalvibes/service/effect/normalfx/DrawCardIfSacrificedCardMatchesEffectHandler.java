@@ -29,6 +29,9 @@ public class DrawCardIfSacrificedCardMatchesEffectHandler implements NormalEffec
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DrawCardIfSacrificedCardMatchesEffect draw = (DrawCardIfSacrificedCardMatchesEffect) effect;
         Card sacrificed = entry.getSacrificedCardSnapshot();
+        if (sacrificed == null && entry.getSacrificedPermanentSnapshot() != null) {
+            sacrificed = entry.getSacrificedPermanentSnapshot().getCard();
+        }
         if (sacrificed == null && entry.getSacrificedCardId() != null) {
             sacrificed = gameQueryService.findCardInGraveyardById(gameData, entry.getSacrificedCardId());
             if (sacrificed == null) {

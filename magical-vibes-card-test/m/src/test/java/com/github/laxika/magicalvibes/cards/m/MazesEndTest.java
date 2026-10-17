@@ -121,6 +121,7 @@ class MazesEndTest extends BaseCardTest {
     @DisplayName("Returns Maze's End and pays mana before the ability resolves")
     void paysCostsBeforeResolution() {
         Permanent maze = addMazeReady();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new SimicGuildgate()));
 
         activateMaze(maze);

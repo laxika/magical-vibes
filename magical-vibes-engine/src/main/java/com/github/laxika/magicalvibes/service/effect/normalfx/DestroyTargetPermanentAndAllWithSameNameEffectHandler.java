@@ -43,15 +43,20 @@ public class DestroyTargetPermanentAndAllWithSameNameEffectHandler implements No
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         List<Permanent> toDestroy = new ArrayList<>();
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            for (Permanent permanent : battlefield) {
-                if (targetName.equals(gameQueryService.getEffectiveName(gameData, permanent))
-                        && predicateEvaluationService.matchesPermanentPredicate(
-                                permanent, sameNameEffect.sameNamePredicate(), filterContext)) {
-                    toDestroy.add(permanent);
+        if (targetName == null) {
+            // A face-down permanent has no name (CR 708.2), so no other permanent shares it.
+            toDestroy.add(target);
+        } else {
+            gameData.forEachBattlefield((playerId, battlefield) -> {
+                for (Permanent permanent : battlefield) {
+                    if (targetName.equals(gameQueryService.getEffectiveName(gameData, permanent))
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                                    permanent, sameNameEffect.sameNamePredicate(), filterContext)) {
+                        toDestroy.add(permanent);
+                    }
                 }
-            }
-        });
+            });
+        }
 
         destructionSupport.destroyBatch(gameData, toDestroy, entry.getCard().getName(), false);
         permanentRemovalService.removeOrphanedAuras(gameData);

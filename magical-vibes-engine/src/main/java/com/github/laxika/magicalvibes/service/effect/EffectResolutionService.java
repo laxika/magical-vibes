@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
@@ -275,8 +277,16 @@ public class EffectResolutionService {
             }
 
             if (effectToResolve instanceof ConditionalEffect conditional) {
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        conditionContext, entry.getEventValue())) {
+                boolean conditionMet = conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        conditionContext, entry.getEventValue());
+                if (conditional.condition() instanceof OpponentAttacksWithAtLeastCreatures attacks) {
+                    conditionMet = conditionEvaluationService.isMet(gameData, new OpponentAttacksWithAtLeastCreatures(
+                            Math.max(0, attacks.minimum() - (int) conditionEvaluationService
+                                    .countDepartedDeclaredAttackersAtController(gameData, conditionContext,
+                                            attacks.includePlaneswalkers(), entry.getAttackingPermanentSnapshots())),
+                            attacks.includePlaneswalkers()), conditionContext, entry.getEventValue());
+                }
+                if (!conditionMet) {
                     continue;
                 }
                 effectToResolve = conditional.wrapped();
@@ -408,6 +418,9 @@ public class EffectResolutionService {
                 List<UUID> groupTargets = entry.targetsForEffect(effect);
                 if (!groupTargets.isEmpty()) {
                     entry.setTargetIdForEffectResolution(groupTargets.getFirst());
+                } else if (targetIdx > 0 && entry.getTargetIds().isEmpty()
+                        && effect.targetSpec().declaredTarget() != null) {
+                    continue;
                 }
             }
 
@@ -573,6 +586,19 @@ public class EffectResolutionService {
         }
         if (condition instanceof NotCondition not) {
             return !isConditionMet(gameData, entry, not.inner(), context);
+        }
+        // Declared attackers that left the battlefield are judged by who they were attacking before they
+        // left; attackers still on the battlefield (or phased out) are judged by their current status.
+        if (condition instanceof OpponentAttacksWithAtLeastCreatures attacks) {
+            long departedAtController = conditionEvaluationService.countDepartedDeclaredAttackersAtController(
+                    gameData, context, attacks.includePlaneswalkers(), entry.getAttackingPermanentSnapshots());
+            return conditionEvaluationService.isMet(gameData, new OpponentAttacksWithAtLeastCreatures(
+                    Math.max(0, attacks.minimum() - (int) departedAtController), attacks.includePlaneswalkers()),
+                    context, entry.getEventValue());
+        }
+        if (condition instanceof AttackedTargetIsMonarch && entry.getAttackedTargetId() != null) {
+            return conditionEvaluationService.isMet(gameData, condition,
+                    context.withTargetId(entry.getAttackedTargetId()), entry.getEventValue());
         }
         // A target that an earlier step of this ability removed (e.g. exiled) is still judged by the
         // power it had when it left the battlefield (CR 608.2h).

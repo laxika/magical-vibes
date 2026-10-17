@@ -144,7 +144,6 @@ class MindbladeRenderTest extends BaseCardTest {
         warrior.setAttacking(true);
 
         resolveCombat(player2);
-        harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
         assertThat(gd.stack).isEmpty();

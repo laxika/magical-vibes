@@ -716,7 +716,7 @@ public class AsEntersInteractionService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             int life = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
-            int maxLife = life;
+            int maxLife = gameQueryService.canPlayerLoseLife(gameData, controllerId) ? life : 0;
             if (lifePayment.maxAmount() != null) {
                 int maximum = amountEvaluationService.evaluate(gameData, lifePayment.maxAmount(),
                         AmountContext.forEnteringPermanent(controllerId, justEntered, xValue));

@@ -92,7 +92,7 @@ public class OpponentOwnedExiledCardToGraveyardChoiceInteractionHandler
     private ExiledCardEntry findEligibleCard(GameData gameData, UUID controllerId, UUID cardId) {
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry exiled : gameData.exiledCards) {
-                if (cardId.equals(exiled.card().getId()) && !exiled.faceDown()
+                if (cardId.equals(exiled.card().getId())
                         && gameData.playerIds.contains(exiled.ownerId())
                         && !controllerId.equals(exiled.ownerId())) {
                     return exiled;

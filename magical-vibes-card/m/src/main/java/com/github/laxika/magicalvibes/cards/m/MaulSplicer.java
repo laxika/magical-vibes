@@ -25,7 +25,7 @@ public class MaulSplicer extends Card {
 
         // Golem creatures you control have trample.
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.OWN_CREATURES,
+                Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }
 }

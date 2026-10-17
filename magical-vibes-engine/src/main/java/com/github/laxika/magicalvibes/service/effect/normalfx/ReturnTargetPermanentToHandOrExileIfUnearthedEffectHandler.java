@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class ReturnTargetPermanentToHandOrExileIfUnearthedEffectHandler implements NormalEffectHandlerBean {
@@ -32,7 +34,11 @@ public class ReturnTargetPermanentToHandOrExileIfUnearthedEffectHandler implemen
             return;
         }
 
-        boolean removed = target.isEnteredViaUnearth()
+        UUID ownerId = target.getCard().getOwnerId() != null
+                ? target.getCard().getOwnerId()
+                : gameQueryService.findPermanentController(gameData, target.getId());
+        boolean hasUnearth = gameQueryService.cardHasUnearthAbility(gameData, ownerId, target.getCard());
+        boolean removed = hasUnearth
                 ? permanentRemovalService.removeUnearthedPermanentToHand(gameData, target)
                 : permanentRemovalService.removePermanentToHand(gameData, target);
         if (removed) {

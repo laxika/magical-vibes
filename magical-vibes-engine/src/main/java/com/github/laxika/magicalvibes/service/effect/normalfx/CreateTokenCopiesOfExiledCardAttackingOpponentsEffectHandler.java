@@ -42,10 +42,10 @@ public class CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler implem
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         List<Card> exiledCards = gameData.getCardsExiledByPermanent(entry.getSourcePermanentId());
-        Card exiledCard = exiledCards.isEmpty() && entry.getSourceZone() == Zone.GRAVEYARD
-                ? entry.getCard()
-                : exiledCards.isEmpty() ? null : exiledCards.get(0);
-        if (exiledCard == null) {
+        List<Card> cardsToCopy = exiledCards.isEmpty() && entry.getSourceZone() == Zone.GRAVEYARD
+                ? List.of(entry.getCard())
+                : exiledCards;
+        if (cardsToCopy.isEmpty()) {
             return;
         }
         List<UUID> opponentIds = opponentIds(gameData, entry.getControllerId());
@@ -53,45 +53,48 @@ public class CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler implem
             return;
         }
 
-        int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                gameData, entry.getControllerId(), 1, exiledCard.getSubtypes(), true);
         Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
         var copyEffect = (CreateTokenCopiesOfExiledCardAttackingOpponentsEffect) effect;
         CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect = new CreateTokenCopyOfTargetPermanentEffect();
 
-        for (UUID opponentId : opponentIds) {
-            for (int copy = 0; copy < tokenMultiplier; copy++) {
-                Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(exiledCard, tokenCopyEffect);
-                if (copyEffect.grantHaste()) {
-                    EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-                    if (tokenCard.getKeywords() != null) {
-                        keywords.addAll(tokenCard.getKeywords());
+        for (Card exiledCard : List.copyOf(cardsToCopy)) {
+            int tokenMultiplier = gameQueryService.getTokenCreationAmount(
+                    gameData, entry.getControllerId(), 1, exiledCard.getSubtypes(), true);
+            for (UUID opponentId : opponentIds) {
+                for (int copy = 0; copy < tokenMultiplier; copy++) {
+                    Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(exiledCard, tokenCopyEffect);
+                    if (copyEffect.grantHaste()) {
+                        EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+                        if (tokenCard.getKeywords() != null) {
+                            keywords.addAll(tokenCard.getKeywords());
+                        }
+                        keywords.add(Keyword.HASTE);
+                        tokenCard.setKeywords(keywords);
                     }
-                    keywords.add(Keyword.HASTE);
-                    tokenCard.setKeywords(keywords);
-                }
-                tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                        gameData, entry.getControllerId(), tokenCard);
-                Permanent tokenPermanent = new Permanent(tokenCard);
-                battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, entry.getControllerId(), tokenPermanent,
-                        enterTappedTypesSnapshot, simultaneouslyEntered);
-                simultaneouslyEntered.add(tokenPermanent);
+                    tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                            gameData, entry.getControllerId(), tokenCard);
+                    Permanent tokenPermanent = new Permanent(tokenCard);
+                    battlefieldEntryService.putPermanentOntoBattlefield(
+                            gameData, entry.getControllerId(), tokenPermanent,
+                            enterTappedTypesSnapshot, simultaneouslyEntered);
+                    simultaneouslyEntered.add(tokenPermanent);
 
-                tokenPermanent.tap();
-                if (tokenCard.hasType(CardType.CREATURE)) {
-                    tokenPermanent.setAttacking(true);
-                    tokenPermanent.setAttackTarget(opponentId);
-                }
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                    tokenPermanent.tap();
+                    if (tokenCard.hasType(CardType.CREATURE)) {
+                        tokenPermanent.enterAttacking(true);
+                        tokenPermanent.setAttackTarget(opponentId);
+                    }
+                    gameData.queueDelayedAction(new DelayedPermanentAction(
+                            tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                            false, null, entry.getControllerId(), entry.getControllerId(), false, entry.getCard()));
 
-                gameLogService.append(gameData, GameLog.textCardText("A token copy of ", exiledCard, " is created."));
-                log.info("Game {} - Token copy of {} created attacking {} via {}", gameData.id,
-                        exiledCard.getName(), opponentId, entry.getCard().getName());
-                battlefieldEntryService.handleCreatureEnteredBattlefield(
-                        gameData, entry.getControllerId(), tokenCard, null, false);
+                    gameLogService.append(gameData, GameLog.textCardText("A token copy of ", exiledCard, " is created."));
+                    log.info("Game {} - Token copy of {} created attacking {} via {}", gameData.id,
+                            exiledCard.getName(), opponentId, entry.getCard().getName());
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(
+                            gameData, entry.getControllerId(), tokenCard, null, false);
+                }
             }
         }
     }

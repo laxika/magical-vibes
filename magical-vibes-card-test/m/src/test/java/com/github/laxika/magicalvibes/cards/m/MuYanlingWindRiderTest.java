@@ -35,11 +35,12 @@ class MuYanlingWindRiderTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, vehicle, Keyword.FLYING)).isTrue();
 
         Permanent crew = addCreatureReady(player1, new GrizzlyBears());
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vehicle), null, null);
-        if (gd.interaction.isAwaitingInput()) {
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vehicle), null, null);
             harness.handlePermanentChosen(player1, crew.getId());
-        }
-        harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, player1.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();
         assertThat(crew.isTapped()).isTrue();

@@ -312,7 +312,8 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             // paid nor the unpaid effect can find it, but the ability still resolves and its
             // controller may still pay (Garza's Assassin's recover).
             e = new ForcedCostOrElseEffect(e.forcedCost(), List.of(), true, e.anyPlayerMayPay(),
-                    e.payerIsEnchantedController(), e.payerIsDefendingPlayer(), List.of());
+                    e.payerIsEnchantedController(), e.payerIsDefendingPlayer(), List.of(),
+                    e.villainousChoice());
         }
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost cost) {
@@ -356,7 +357,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
             e = new ForcedCostOrElseEffect(
                     resolvedEchoCost,
                     e.elseEffects(), e.optional(), e.anyPlayerMayPay(), e.payerIsEnchantedController(),
-                    e.payerIsDefendingPlayer(), e.paidEffects());
+                    e.payerIsDefendingPlayer(), e.paidEffects(), e.villainousChoice());
         }
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinsCost flipCost) {
@@ -897,7 +898,10 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                                 && predicateEvaluationService.matchesPermanentPredicate(
                                 p, sacrificePermanent.filter(), costFilterContext));
 
-                if (matchingPermanentIds.isEmpty()) {
+                if (e.villainousChoice()) {
+                    gameData.villainousChoice.additionalChoicesRemaining =
+                            gameQueryService.countAdditionalVillainousChoices(gameData, payerId);
+                } else if (matchingPermanentIds.isEmpty()) {
                     destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);
                     return;
                 }

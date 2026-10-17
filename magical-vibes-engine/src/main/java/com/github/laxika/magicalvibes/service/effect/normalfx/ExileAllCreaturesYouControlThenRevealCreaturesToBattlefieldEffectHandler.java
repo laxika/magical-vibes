@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -34,6 +35,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
     private final BattlefieldEntryService battlefieldEntryService;
     private final LegendRuleService legendRuleService;
     private final CardSpecificSupport cardSpecificSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +50,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
         // Step 1: Find all creatures the controller controls
         List<Permanent> creaturesToExile = new ArrayList<>(
                 gameData.playerBattlefields.get(controllerId).stream()
-                        .filter(p -> p.getCard().hasType(CardType.CREATURE))
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
                         .toList()
         );
 

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -171,7 +172,8 @@ class MiresTollTest extends BaseCardTest {
     @DisplayName("Tamiyo prevents the discard caused by an opponent's Mire's Toll")
     void cannotDiscardThroughTamiyo() {
         harness.addToBattlefield(player1, new Swamp());
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales())
+                .setCounterCount(CounterType.LOYALTY, 5);
         Swamp protectedCard = new Swamp();
         harness.setHand(player2, List.of(protectedCard));
 

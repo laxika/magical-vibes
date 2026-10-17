@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
@@ -29,14 +30,17 @@ public class MrHousePresidentAndCEO extends Card {
                 "Robot", 3, 3, null,
                 List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT));
 
-        addEffect(EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
-                ConditionalEffect.unless(
+        addEffect(EffectSlot.ON_CONTROLLER_ROLLS_DIE,
+                new ConditionalEffect(
                         new EventValueAtLeast(4),
                         SequenceEffect.of(
-                                robot,
+                                ConditionalEffect.unless(
+                                        new NotCondition(new EventValueAtLeast(6)),
+                                        robot),
                                 ConditionalEffect.unless(
                                         new EventValueAtLeast(6),
-                                        CreateTokenEffect.ofTreasureToken(1)))));
+                                        robot.withSimultaneousTokens(
+                                                List.of(CreateTokenEffect.ofTreasureToken(1)))))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

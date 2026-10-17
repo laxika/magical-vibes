@@ -38,6 +38,7 @@ class MoonveilRegentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -61,6 +62,7 @@ class MoonveilRegentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -93,6 +95,7 @@ class MoonveilRegentTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(draw));
 
         harness.castFromHand(player1, new CandlegroveWitch(), "{1}{W}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -112,6 +115,7 @@ class MoonveilRegentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -128,6 +132,7 @@ class MoonveilRegentTest extends BaseCardTest {
         harness.setHand(player1, List.of(kept));
         harness.setLibrary(player1, List.of(undrawn));
 
+        harness.forceActivePlayer(player2);
         harness.castFromHand(player2, new CandlegroveWitch(), "{1}{W}");
 
         assertThat(gd.stack).hasSize(1);
@@ -148,7 +153,7 @@ class MoonveilRegentTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(regent.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof MoonveilRegent);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 

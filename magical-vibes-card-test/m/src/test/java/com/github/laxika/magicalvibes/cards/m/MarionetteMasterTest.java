@@ -180,9 +180,10 @@ class MarionetteMasterTest extends BaseCardTest {
     private void castMarionetteMaster(int mode) {
         harness.setHand(player1, List.of(new MarionetteMaster()));
         harness.addMana(player1, ManaColor.BLACK, 6);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, mode == 0);
     }
 
     private void destroyArtifact(com.github.laxika.magicalvibes.model.Player artifactController) {

@@ -61,8 +61,8 @@ class MishrasFoundryTest extends BaseCardTest {
     void pumpsTargetAttackingAssemblyWorker() {
         harness.addToBattlefield(player1, new MishrasFoundry());
         Permanent assembler = addCreatureReady(player1, new AutonomousAssembler());
+        declareAttackersAndPrepareBlockers(List.of(1));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        declareAttackers(List.of(1));
 
         harness.activateAbility(player1, 0, 1, null, assembler.getId());
         harness.passBothPriorities();
@@ -87,8 +87,8 @@ class MishrasFoundryTest extends BaseCardTest {
     void canPumpAnOpponentsAttackingAssemblyWorkerAndPaysTapAndManaCosts() {
         Permanent foundry = harness.addToBattlefieldAndReturn(player1, new MishrasFoundry());
         Permanent assembler = addCreatureReady(player2, new AutonomousAssembler());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        declareAttackers(player2, List.of(0));
 
         harness.activateAbility(player1, 0, 1, null, assembler.getId());
         assertThat(foundry.isTapped()).isTrue();
@@ -107,8 +107,8 @@ class MishrasFoundryTest extends BaseCardTest {
     void doesNotPumpTargetThatStopsAttackingBeforeResolution() {
         harness.addToBattlefield(player1, new MishrasFoundry());
         Permanent assembler = addCreatureReady(player1, new AutonomousAssembler());
+        declareAttackersAndPrepareBlockers(List.of(1));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        declareAttackers(List.of(1));
 
         harness.activateAbility(player1, 0, 1, null, assembler.getId());
         assembler.setAttacking(false);
@@ -151,13 +151,15 @@ class MishrasFoundryTest extends BaseCardTest {
     void canPumpAnotherAttackingFoundryAndReanimationKeepsTheBoost() {
         harness.addToBattlefield(player1, new MishrasFoundry());
         Permanent attacker = addCreatureReady(player1, new MishrasFoundry());
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
-        declareAttackers(List.of(1));
+        declareAttackersAndPrepareBlockers(List.of(1));
 
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 1, null, attacker.getId());
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 

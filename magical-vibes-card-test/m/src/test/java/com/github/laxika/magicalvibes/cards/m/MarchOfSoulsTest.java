@@ -101,7 +101,7 @@ class MarchOfSoulsTest extends BaseCardTest {
         GrizzlyBears card = new GrizzlyBears();
         card.setOwnerId(player1.getId());
         Permanent stolen = harness.addToBattlefieldAndReturn(player2, card);
-        gd.stolenCreatures.put(stolen.getId(), player1.getId());
+        setOwnerAndController(stolen, player1, player2);
 
         castMarchOfSouls();
 

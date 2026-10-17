@@ -46,9 +46,10 @@ class MeanderingTowershellTest extends BaseCardTest {
         gd.turnNumber++;
         beginAnotherCombat();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(towershell.getCard());
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> gs.declareAttackers(gd, player1, List.of()));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of());
+            resolveAllTriggers();
+        });
 
         Permanent returned = findPermanent(player1, "Meandering Towershell");
         assertThat(returned.getCard().getId()).isEqualTo(towershell.getCard().getId());

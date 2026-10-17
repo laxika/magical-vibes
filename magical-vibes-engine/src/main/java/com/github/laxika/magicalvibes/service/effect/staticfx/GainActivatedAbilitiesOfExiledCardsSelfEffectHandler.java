@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -48,6 +49,12 @@ public class GainActivatedAbilitiesOfExiledCardsSelfEffectHandler implements Sta
                 continue;
             }
             for (var ability : card.getActivatedAbilities()) {
+                // "X is the mana value of the exiled card" refers to a card exiled by the ability's own
+                // source, so a borrowed copy has no such card (Prototype Portal) and can never be activated.
+                if (ability.getEffects().stream().anyMatch(e -> e instanceof ImprintedCardXCostEffect imprinted
+                        && imprinted.requiresImprintedXCost())) {
+                    continue;
+                }
                 List<CardEffect> gainedEffects = ability.getEffects().stream().map(gainedEffect ->
                         gainedEffect instanceof ExileTargetPermanentAndTrackWithSourceEffect exile
                                 && exile.abilityLink() != null

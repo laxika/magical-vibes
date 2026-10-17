@@ -91,6 +91,7 @@ class MouthFeedTest extends BaseCardTest {
         Permanent hyena = harness.addToBattlefieldAndReturn(player1, new HyenaPack());
         harness.addToBattlefield(player2, new Colossapede());
         harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setGraveyard(player1, List.of(new MouthFeed()));
         harness.addMana(player1, ManaColor.GREEN, 4);

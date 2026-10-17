@@ -32,9 +32,7 @@ public class DrawTwoToTheXCardsForTargetPlayerEffectHandler implements NormalEff
         int exponent = Math.max(0, Math.min(entry.getXValue(), 30));
         int amount = 1 << exponent;
 
-        for (int i = 0; i < amount; i++) {
-            drawService.resolveDrawCard(gameData, targetPlayerId);
-        }
+        drawService.resolveDrawCards(gameData, targetPlayerId, amount);
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         

@@ -14,7 +14,7 @@ public class MysticDecree extends Card {
     public MysticDecree() {
         // All creatures lose flying and islandwalk.
         // Two continuous layer-6 keyword removals over every creature on the battlefield.
-        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ALL_CREATURES));
-        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.ISLANDWALK, GrantScope.ALL_CREATURES));
+        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.ISLANDWALK, GrantScope.ALL_CREATURES_INCLUDING_SELF));
     }
 }

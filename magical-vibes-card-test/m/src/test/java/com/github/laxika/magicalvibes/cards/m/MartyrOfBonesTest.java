@@ -249,7 +249,7 @@ class MartyrOfBonesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> activate(martyr, 2, List.of(target.getId(), target.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("same card twice");
+                .hasMessageContaining("same graveyard card twice");
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(martyr);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);

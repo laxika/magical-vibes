@@ -98,6 +98,7 @@ class MysticSkyfishTest extends BaseCardTest {
     @Test
     void flyingExpiresAndDrawCountResetsForNextTurn() {
         Permanent fish = harness.addToBattlefieldAndReturn(player1, new MysticSkyfish());
+        harness.setHand(player1, List.of());
         stockLibrary(player1);
         draw(player1);
         draw(player1);

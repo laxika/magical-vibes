@@ -794,7 +794,9 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameAtResolutionChoice ctx) {
-            if (!colorChoice.options().contains(colorName)) {
+            if (!colorChoice.options().contains(colorName)
+                    && (ctx.requiredType() != null
+                    || !libraryRevealSupport.isCatalogCardNameAllowed(colorName, List.of()))) {
                 throw new IllegalArgumentException("Invalid card name choice: " + colorName);
             }
             handleChooseCardNameAtResolutionChosen(gameData, player, colorName, ctx);
@@ -1075,7 +1077,7 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice ctx) {
-            handleAddBasicLandTypeChoice(gameData, colorName, ctx);
+            handleAddBasicLandTypeChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SnowLandwalkGrantChoice ctx) {
@@ -1926,19 +1928,29 @@ public class ChoiceHandlerService {
             return;
         }
         Permanent source = gameQueryService.findPermanentById(gameData, parkedActivation.permanentId());
+        if (source == null) {
+            // The source left the battlefield as its mana ability resolved (Gemstone Mine's final
+            // use): it was still tapped for mana, so land-tap watchers see it as it last existed.
+            Permanent departed = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> snapshot.getId().equals(parkedActivation.permanentId()))
+                    .findFirst().orElse(null);
+            if (departed != null && departed.getCard().hasType(CardType.LAND)) {
+                int stackBeforeTriggers = gameData.stack.size();
+                triggerCollectionService.checkLandTapTriggers(gameData, playerId, departed.getId(),
+                        newlyProducedColors(gameData, parkedActivation, playerId));
+                if (gameData.stack.size() > stackBeforeTriggers) {
+                    List<StackEntry> triggers = new ArrayList<>(
+                            gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
+                    gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
+                    gameData.pendingManaAbilityTriggers.addAll(triggers);
+                }
+            }
+        }
         if (source != null) {
             int stackBeforeTriggers = gameData.stack.size();
             if (gameQueryService.isLand(gameData, source)) {
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                java.util.Set<ManaColor> producedColors = java.util.EnumSet.noneOf(ManaColor.class);
-                for (ManaColor color : ManaColor.values()) {
-                    if (parkedActivation.allManaBefore() != null
-                            && pool.getAllManaTotals().getOrDefault(color, 0)
-                            > parkedActivation.allManaBefore().getOrDefault(color, 0)) {
-                        producedColors.add(color);
-                    }
-                }
-                triggerCollectionService.checkLandTapTriggers(gameData, playerId, source.getId(), producedColors);
+                triggerCollectionService.checkLandTapTriggers(gameData, playerId, source.getId(),
+                        newlyProducedColors(gameData, parkedActivation, playerId));
             }
             triggerCollectionService.checkManaAbilityResolutionTriggers(
                     gameData, source, playerId, manaProduced);
@@ -1950,6 +1962,36 @@ public class ChoiceHandlerService {
             }
         }
         AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
+    }
+
+    private java.util.Set<ManaColor> newlyProducedColors(GameData gameData, PendingManaActivation parkedActivation,
+                                                          UUID playerId) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        java.util.Set<ManaColor> producedColors = java.util.EnumSet.noneOf(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            if (parkedActivation.allManaBefore() != null
+                    && pool.getAllManaTotals().getOrDefault(color, 0)
+                    > parkedActivation.allManaBefore().getOrDefault(color, 0)) {
+                producedColors.add(color);
+            }
+        }
+        return producedColors;
+    }
+
+    /**
+     * The multiplier a "tap a permanent for mana" replacement (Mana Reflection) applies to each mana
+     * of a fixed-color combination: the combination is chosen once and every chosen mana is
+     * produced that many times.
+     */
+    private int fixedColorPickMultiplier(GameData gameData, ChoiceContext.ManaColorChoice ctx) {
+        if (ctx.sourcePermanentId() == null) {
+            return 1;
+        }
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source == null || !source.isTapped()) {
+            return 1;
+        }
+        return gameQueryService.manaProductionMultiplier(gameData, ctx.playerId(), source);
     }
 
     private void handleManaColorChosen(GameData gameData, Player player, String colorName,
@@ -2199,38 +2241,39 @@ public class ChoiceHandlerService {
         } else if (ctx.fixedColorOptions() != null) {
             // Filter lands ("Add {R}{R}, {R}{G}, or {G}{G}") — each mana is chosen individually from
             // the fixed color list; add one and re-prompt until all picks have been made.
+            int pick = fixedColorPickMultiplier(gameData, ctx);
             if (ctx.planeswalkerSpellOnly()) {
                 manaPool.addSubtypeOrPlaneswalkerSpellMana(
                         new ManaRestriction.SubtypeOrPlaneswalkerSpells(), manaColor, 1);
             } else {
-                manaPool.add(manaColor, 1);
-                tagLegendarySourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, 1);
-                tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, 1);
+                manaPool.add(manaColor, pick);
+                tagLegendarySourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, pick);
+                tagMulticoloredSourceMana(gameData, ctx.sourcePermanentId(), manaPool, manaColor, pick);
                 if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
-                    manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, 1);
+                    manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, pick);
                 }
                 if (ctx.fromSnowSource()) {
-                    manaPool.addSnowManaTag(manaColor, 1);
+                    manaPool.addSnowManaTag(manaColor, pick);
                 }
                 if (ctx.fromArtifactSource()) {
-                    manaPool.addArtifactSourceManaTag(manaColor, 1);
+                    manaPool.addArtifactSourceManaTag(manaColor, pick);
                 }
                 if (ctx.fromCaveSource()) {
-                    manaPool.addCaveManaTag(manaColor, 1);
+                    manaPool.addCaveManaTag(manaColor, pick);
                 }
                 if (ctx.fromDesertSource()) {
-                    manaPool.addDesertManaTag(manaColor, 1);
+                    manaPool.addDesertManaTag(manaColor, pick);
                 }
                 if (ctx.fromCreature()) {
-                    manaPool.addCreatureMana(manaColor, 1);
+                    manaPool.addCreatureMana(manaColor, pick);
                 }
                 if (ctx.fromBasicLandSource()) {
-                    manaPool.addBasicLandManaTag(manaColor, 1);
+                    manaPool.addBasicLandManaTag(manaColor, pick);
                 }
                 if (ctx.fromTreasureSource()) {
-                    manaPool.addTreasureMana(manaColor, 1);
+                    manaPool.addTreasureMana(manaColor, pick);
                 }
-                tagArtifactSourceMana(gameData, manaPool, ctx, manaColor, 1);
+                tagArtifactSourceMana(gameData, manaPool, ctx, manaColor, pick);
             }
 
             String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
@@ -2259,6 +2302,9 @@ public class ChoiceHandlerService {
                 List<String> colors = nextColors.stream().map(Enum::name).toList();
                 nextCtx = nextCtx.withTreasureSource(ctx.fromTreasureSource());
                 nextCtx = nextCtx.withArtifactSource(ctx.fromArtifactSource());
+                if (ctx.sourcePermanentId() != null) {
+                    nextCtx = nextCtx.withSourcePermanentId(ctx.sourcePermanentId());
+                }
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
                 inputCompletionService.publishStateAfterInput(gameData);
@@ -4094,7 +4140,8 @@ public class ChoiceHandlerService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown counter type: " + choice));
         if (target != null
-                && ctx.controllerId().equals(gameQueryService.findPermanentController(gameData, ctx.targetId()))
+                && (!ctx.requireControl()
+                || ctx.controllerId().equals(gameQueryService.findPermanentController(gameData, ctx.targetId())))
                 && target.getCounterCount(counterType) > 0) {
             permanentCounterSupport.removeCounterFromPermanent(gameData, target, counterType, 1);
             if (gameData.pendingEffectResolutionEntry != null) {
@@ -6580,7 +6627,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleAddBasicLandTypeChoice(GameData gameData, String subtypeName, ChoiceContext.AddBasicLandTypeChoice ctx) {
+    private void handleAddBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.AddBasicLandTypeChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         if (!ctx.allowedTypes().isEmpty() && !ctx.allowedTypes().contains(subtype)) {
@@ -6591,7 +6638,16 @@ public class ChoiceHandlerService {
 
         Permanent targetLand = gameQueryService.findPermanentById(gameData, ctx.targetLandId());
         if (targetLand != null) {
-            GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(targetLand, subtype, ctx.duration(), ctx.replacing());
+            if (ctx.replacing() && ctx.duration() == EffectDuration.UNTIL_END_OF_TURN) {
+                // A timestamped layer-4 floating effect, so a later "becomes" effect (Phantasmal Terrain,
+                // Blood Moon) overrides it by timestamp rather than the transient override always winning.
+                gameData.addFloatingEffect(new FloatingContinuousEffect(
+                        UUID.randomUUID(), "Basic land type choice", null, player.getId(),
+                        new GrantSubtypeEffect(subtype, GrantScope.TARGET, true),
+                        targetLand.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
+            } else {
+                GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(targetLand, subtype, ctx.duration(), ctx.replacing());
+            }
 
             String durationText = switch (ctx.duration()) {
                 case UNTIL_END_OF_TURN -> " until end of turn";
@@ -7895,7 +7951,7 @@ public class ChoiceHandlerService {
      */
     private void handleRevealLibraryNameGuessChoice(GameData gameData, String cardName,
             ChoiceContext.RevealLibraryNameGuessChoice ctx) {
-        if (playerInputService.isNameExcludedByType(gameData, cardName, ctx.excludedTypes())) {
+        if (!playerInputService.isOfferedCardNameExcludingTypes(gameData, cardName, ctx.excludedTypes())) {
             throw new IllegalArgumentException("Choose a nonland card name");
         }
         gameData.interaction.clearAwaitingInput();

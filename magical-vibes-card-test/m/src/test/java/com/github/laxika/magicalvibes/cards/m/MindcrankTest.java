@@ -33,6 +33,7 @@ class MindcrankTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
 
         // Player2 lost 2 life → mills 2 cards
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -55,6 +56,7 @@ class MindcrankTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         // Player2 took 2 combat damage → mills 2 cards
@@ -92,6 +94,8 @@ class MindcrankTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
 
         // 2 damage → each Mindcrank mills 2 → total 4 milled
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 4);
@@ -139,6 +143,7 @@ class MindcrankTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
 
         // Player1 lost 2 life → player2's Mindcrank mills player1 for 2
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);

@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
@@ -673,6 +674,17 @@ public class CardChoiceHandlerService {
                 gameLogService.append(gameData, GameLog.cardThen(
                         selectedCard, " has nothing to enchant and stays in hand."));
                 inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+                return;
+            }
+            // CR 303.4f: the player putting an Aura onto the battlefield chooses what it enchants.
+            if (!isTargeted && selectedCard.isAura() && !selectedCard.isEnchantZone()
+                    && thenEffect == null && returnSourcePermanentId == null && attachEquipmentCardId == null) {
+                battlefieldEntryBatchSupport.begin(gameData, List.of(
+                        new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(playerId, playerId,
+                                selectedCard, Zone.HAND, null).withTapped(enterTapped)));
+                if (!gameData.interaction.isAwaitingInput()) {
+                    inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+                }
                 return;
             }
             Card card = hand.remove(cardIndex);
@@ -1527,6 +1539,18 @@ public class CardChoiceHandlerService {
                         discardedCard, followUp.thenEffectCondition(), followUp.thenEffectSourceCard().getId());
         if (thenEffectConditionMet && selectedThenEffect != null && followUp.thenEffectSourceCard() != null) {
             CardEffect thenEffect = selectedThenEffect;
+            if (discardedCard != null
+                    && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect typeCountDamage
+                    && typeCountDamage.damage() instanceof com.github.laxika.magicalvibes.model.amount.LastDiscardedCardTypeCount) {
+                java.util.Set<com.github.laxika.magicalvibes.model.CardType> discardedTypes =
+                        java.util.EnumSet.noneOf(com.github.laxika.magicalvibes.model.CardType.class);
+                if (discardedCard.getType() != null) {
+                    discardedTypes.add(discardedCard.getType());
+                }
+                discardedTypes.addAll(discardedCard.getAdditionalTypes());
+                thenEffect = typeCountDamage.withDamage(
+                        new com.github.laxika.magicalvibes.model.amount.Fixed(discardedTypes.size()));
+            }
             Card sourceCard = followUp.thenEffectSourceCard();
 
             // Discard follow-ups that belong to the resolving spell or ability resume that
@@ -2118,6 +2142,17 @@ public class CardChoiceHandlerService {
     }
 
     /**
+     * Whether the resolving enter ability belongs to a card whose return is a separate
+     * leaves-the-battlefield ability (Mesmeric Fiend), so the exile still happens when the source
+     * left first and the card then stays exiled.
+     */
+    private boolean exileReturnsThroughSeparateLeavesTrigger(GameData gameData) {
+        StackEntry resolving = gameData.pendingEffectResolutionEntry;
+        return resolving != null && resolving.getEffectsToResolve().stream().anyMatch(effect ->
+                effect instanceof ChooseCardsFromTargetHandEffect hand && hand.returnsOnSourceLeavesTrigger());
+    }
+
+    /**
      * Applies the batch action of a completed {@link PendingInteraction.RevealedHandChoice} (discard
      * / exile / bottom-then-draw / put on top of library / shuffle into library) and resumes the
      * interrupted resolution.
@@ -2139,6 +2174,7 @@ public class CardChoiceHandlerService {
 
         boolean exileDurationAlreadyEnded = exileMode && revealedHandChoice.sourcePermanentId() != null
                 && !revealedHandChoice.imprintOnSource()
+                && !exileReturnsThroughSeparateLeavesTrigger(gameData)
                 && gameQueryService.findPermanentById(gameData, revealedHandChoice.sourcePermanentId()) == null;
         if (keepInHand || exileDurationAlreadyEnded) {
             gameData.playerHands.get(targetPlayerId).addAll(chosenCards);
@@ -3254,8 +3290,10 @@ public class CardChoiceHandlerService {
             return;
         }
         boolean lastDiscard = pending.remainingDiscards() == 1;
+        int nonlandDiscards = pending.nonlandDiscards() + (discardedCard.hasType(CardType.LAND) ? 0 : 1);
         gameData.pendingConnive = pending.remainingDiscards() > 1
                 ? pending.withRemainingDiscards(pending.remainingDiscards() - 1)
+                        .withNonlandDiscards(nonlandDiscards)
                 : null;
         Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
         if (source == null) {
@@ -3265,10 +3303,10 @@ public class CardChoiceHandlerService {
             }
             return;
         }
-        if (!discardedCard.hasType(CardType.LAND)) {
-            permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
-        }
         if (lastDiscard) {
+            if (nonlandDiscards > 0) {
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, nonlandDiscards);
+            }
             triggerCollectionService.checkAllyCreatureConniveTriggers(gameData, source);
         }
     }

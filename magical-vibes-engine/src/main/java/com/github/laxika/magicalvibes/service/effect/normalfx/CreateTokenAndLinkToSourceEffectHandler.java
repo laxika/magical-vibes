@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -65,6 +68,25 @@ public class CreateTokenAndLinkToSourceEffectHandler implements NormalEffectHand
         gameData.sourceCreatedTokens
                 .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
                 .addAll(createdIds);
+        if (linked.leavesBattlefieldEffect() != null) {
+            Map<Zone, CardEffect> effectsByDestination = new EnumMap<>(Zone.class);
+            for (Zone destination : List.of(Zone.GRAVEYARD, Zone.EXILE, Zone.HAND, Zone.LIBRARY, Zone.COMMAND)) {
+                effectsByDestination.put(destination, linked.leavesBattlefieldEffect());
+            }
+            for (UUID createdId : createdIds) {
+                gameData.queueDelayedAction(new DelayedZoneChangeTrigger(createdId, entry.getControllerId(),
+                        entry.getCard(), effectsByDestination, source.getId()));
+            }
+        }
+        if (linked.sourceLeavesBattlefieldEffect() != null
+                && gameQueryService.findPermanentById(gameData, source.getId()) != null) {
+            Map<Zone, CardEffect> effectsByDestination = new EnumMap<>(Zone.class);
+            for (Zone destination : List.of(Zone.GRAVEYARD, Zone.EXILE, Zone.HAND, Zone.LIBRARY, Zone.COMMAND)) {
+                effectsByDestination.put(destination, linked.sourceLeavesBattlefieldEffect());
+            }
+            gameData.queueDelayedAction(new DelayedZoneChangeTrigger(source.getId(), entry.getControllerId(),
+                    entry.getCard(), effectsByDestination, source.getId()));
+        }
         for (UUID createdId : createdIds) {
             Permanent tokenPermanent = gameQueryService.findPermanentById(gameData, createdId);
             if (tokenPermanent != null) {

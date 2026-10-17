@@ -32,7 +32,7 @@ class MegaFlareTest extends BaseCardTest {
     @Test
     void kickedSpellCreatesDragon() {
         harness.setHand(player1, List.of(new MegaFlare()));
-        addMana(2);
+        addMana(3);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castKickedSorcery(player1, 0);

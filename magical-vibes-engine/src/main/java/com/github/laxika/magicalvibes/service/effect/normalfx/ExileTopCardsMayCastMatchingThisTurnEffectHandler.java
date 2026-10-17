@@ -62,6 +62,7 @@ public class ExileTopCardsMayCastMatchingThisTurnEffectHandler implements Normal
             if (predicateEvaluationService.matchesCardPredicate(topCard, e.filter(), null)) {
                 gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
                 gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
+                gameData.exilePlayPermissionSpellFilters.put(topCard.getId(), e.filter());
                 if (e.withoutPayingManaCost()) {
                     gameData.exilePlayWithoutPayingManaCost.add(topCard.getId());
                 }

@@ -76,6 +76,7 @@ class MemoriesReturningTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(only));
         Card spell = new MemoriesReturning();
         harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
@@ -100,6 +101,7 @@ class MemoriesReturningTest extends BaseCardTest {
         harness.setLibrary(player1, cards.subList(0, count));
         Card spell = new MemoriesReturning();
         harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0);

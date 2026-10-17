@@ -89,7 +89,7 @@ class MoongloveExtractorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertLife(player2, 19);
-        harness.assertLife(player1, 20);
+        harness.assertLife(player1, 18);
     }
 
     @Test

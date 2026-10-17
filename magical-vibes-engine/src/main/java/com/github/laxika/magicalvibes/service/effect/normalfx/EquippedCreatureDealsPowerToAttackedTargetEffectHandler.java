@@ -43,10 +43,15 @@ public class EquippedCreatureDealsPowerToAttackedTargetEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (equipment == null || equipment.getAttachedTo() == null) return;
-
-        Permanent equippedCreature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        // The trigger is about the creature that attacked: it keeps dealing damage even if the
+        // equipment has since left it or moved to another creature.
+        Permanent equippedCreature = entry.getTriggeringPermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        if (equippedCreature == null) {
+            Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (equipment == null || equipment.getAttachedTo() == null) return;
+            equippedCreature = gameQueryService.findPermanentById(gameData, equipment.getAttachedTo());
+        }
         if (equippedCreature == null) return;
 
         UUID targetId = equippedCreature.getAttackTarget();

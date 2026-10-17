@@ -58,6 +58,19 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                     return;
                 }
 
+                // A card that left exile is a new object, so it is no longer "a card exiled with" the source.
+                if (gameData.findExiledCard(imprintedCard.getId()) == null) {
+                    log.info("Game {} - Imprinted card {} is no longer in exile, no token created",
+                            gameData.id, imprintedCard.getName());
+                    return;
+                }
+                // A token copy of an instant or sorcery card cannot exist on the battlefield.
+                if (!imprintedCard.hasType(CardType.CREATURE) && !imprintedCard.hasType(CardType.ARTIFACT)
+                        && !imprintedCard.hasType(CardType.ENCHANTMENT) && !imprintedCard.hasType(CardType.LAND)
+                        && !imprintedCard.hasType(CardType.PLANESWALKER) && !imprintedCard.hasType(CardType.BATTLE)) {
+                    return;
+                }
+
                 int tokenMultiplier = gameQueryService.getTokenCreationAmount(
                         gameData, entry.getControllerId(), 1, imprintedCard.getSubtypes(), imprintedCard.hasType(CardType.CREATURE));
                 for (int copy = 0; copy < tokenMultiplier; copy++) {

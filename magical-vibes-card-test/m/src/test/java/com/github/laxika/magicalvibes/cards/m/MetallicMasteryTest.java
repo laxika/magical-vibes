@@ -140,10 +140,7 @@ class MetallicMasteryTest extends BaseCardTest {
         assertThat(artifactCreature.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(artifactCreature.isTapped()).isFalse();
 
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
 
         assertThat(artifactCreature.isAttacking()).isTrue();
     }

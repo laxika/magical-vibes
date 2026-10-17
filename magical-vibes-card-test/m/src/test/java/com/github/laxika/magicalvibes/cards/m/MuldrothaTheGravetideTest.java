@@ -451,6 +451,7 @@ class MuldrothaTheGravetideTest extends BaseCardTest {
 
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 2);

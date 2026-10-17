@@ -121,7 +121,6 @@ class MaelstromArtisanRocketVolleyTest extends BaseCardTest {
     private Permanent castMaelstromArtisan() {
         harness.castFromHand(player1, new MaelstromArtisanRocketVolley(), "{1}{R}{R}");
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof MaelstromArtisanRocketVolley)

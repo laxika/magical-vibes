@@ -159,6 +159,8 @@ class MomoFriendlyFlierTest extends BaseCardTest {
     @Test
     @DisplayName("The reduction becomes available again on the controller's next turn")
     void reductionResetsOnNextOwnTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addMomo();
         harness.setHand(player1, List.of(new SerraAngel()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));

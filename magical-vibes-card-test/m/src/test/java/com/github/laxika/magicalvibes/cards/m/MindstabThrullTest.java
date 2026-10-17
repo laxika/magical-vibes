@@ -90,7 +90,6 @@ class MindstabThrullTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInHand(player1, "Mindstab Thrull");
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotInGraveyard(player1, "Mindstab Thrull");

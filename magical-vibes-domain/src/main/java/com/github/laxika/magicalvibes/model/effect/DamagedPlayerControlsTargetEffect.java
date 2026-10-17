@@ -26,4 +26,12 @@ public interface DamagedPlayerControlsTargetEffect extends CardEffect {
     }
 
     CardEffect forDamagedPlayer(UUID playerId);
+
+    /**
+     * Binds the damaged player and the amount of damage that caused the trigger, for effects
+     * whose own amount is "that much damage". Defaults to ignoring the damage amount.
+     */
+    default CardEffect forDamagedPlayer(UUID playerId, int damageDealt) {
+        return forDamagedPlayer(playerId);
+    }
 }

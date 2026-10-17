@@ -49,10 +49,13 @@ class MishraEminentOneTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.CONSTRUCT);
         assertThat(token.getCard().getPower()).isEqualTo(4);
         assertThat(token.getCard().getToughness()).isEqualTo(4);
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(token.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .containsExactly(new DelayedPermanentAction(
-                        token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+                .singleElement()
+                .satisfies(action -> {
+                    assertThat(action.permanentId()).isEqualTo(token.getId());
+                    assertThat(action.kind()).isEqualTo(DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
+                });
     }
 
     @Test
@@ -67,9 +70,8 @@ class MishraEminentOneTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Mishra's Warform")).hasSize(1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Mishra's Warform")).isEmpty();
     }

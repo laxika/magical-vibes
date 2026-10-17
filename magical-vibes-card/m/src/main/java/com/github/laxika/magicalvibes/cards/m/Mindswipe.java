@@ -12,10 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 public class Mindswipe extends Card {
 
     public Mindswipe() {
-        // Mindswipe deals X damage to that spell's controller. Resolve this before the counter so
-        // the target spell remains on the stack while its controller is determined.
+        // Counter target spell unless its controller pays {X}. Mindswipe deals X damage to that spell's controller.
+        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(0, true, false));
         addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(
                 new XValue(), DamageRecipient.TARGET_SPELL_CONTROLLER));
-        addEffect(EffectSlot.SPELL, new CounterUnlessPaysEffect(0, true, false));
     }
 }

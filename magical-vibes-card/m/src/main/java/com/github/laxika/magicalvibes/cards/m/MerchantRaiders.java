@@ -9,8 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "163")
 public class MerchantRaiders extends Card {
@@ -19,9 +23,10 @@ public class MerchantRaiders extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                         new TriggeringCardConditionalEffect(
-                                new CardSubtypePredicate(CardSubtype.PIRATE),
+                                new CardAnyOfPredicate(List.of(new CardIsSelfPredicate(),
+                                        new CardSubtypePredicate(CardSubtype.PIRATE))),
                                 SequenceEffect.of(
                                         new TapPermanentsEffect(TapUntapScope.TARGET),
-                                        DoesntUntapEffect.targetWhileSourceOnBattlefield())));
+                                        DoesntUntapEffect.targetWhileSourceControlled())));
     }
 }

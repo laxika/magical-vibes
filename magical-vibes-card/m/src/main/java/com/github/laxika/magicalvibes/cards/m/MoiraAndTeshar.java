@@ -30,6 +30,7 @@ public class MoiraAndTeshar extends Card {
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(nonlandPermanent)
                         .targetGraveyard(true)
+                        .chooseAuraAttachment(true)
                         .grantHaste(true)
                         .exileAtEndStep(true)
                         .exileIfLeavesBattlefield(true)

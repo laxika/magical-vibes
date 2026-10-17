@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -25,6 +26,7 @@ public class MaximusKnightApparent extends Card {
                 new SearchLibraryEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.EQUIPMENT),
+                                new CardMinManaValuePredicate(2),
                                 new CardMaxManaValuePredicate(2))),
                         LibrarySearchDestination.HAND),
                 "Search your library for an Equipment card with mana value 2?"));
@@ -33,7 +35,7 @@ public class MaximusKnightApparent extends Card {
                 false,
                 "{1}",
                 List.of(
-                        new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact"),
+                        new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
                         new EnergyCountersEffect(2)),
                 "{1}, Sacrifice an artifact: You get {E}{E}."
         ));

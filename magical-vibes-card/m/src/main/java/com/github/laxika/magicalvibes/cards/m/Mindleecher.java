@@ -12,7 +12,8 @@ public class Mindleecher extends Card {
 
     public Mindleecher() {
         addEffect(EffectSlot.ON_SELF_MUTATES,
-                new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.EACH_OPPONENT));
+                new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.EACH_OPPONENT,
+                        false, null, false, true, true));
         addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, false, false, false, true));
     }

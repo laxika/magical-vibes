@@ -146,6 +146,7 @@ class MagmawTest extends BaseCardTest {
     void dealsDamageToAPlaneswalkerAfterSacrificingItself() {
         harness.addToBattlefield(player1, new Magmaw());
         var gideon = harness.addToBattlefieldAndReturn(player2, new GideonJura());
+        gideon.setCounterCount(CounterType.LOYALTY, 6);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int loyaltyBefore = gideon.getCounterCount(CounterType.LOYALTY);
 

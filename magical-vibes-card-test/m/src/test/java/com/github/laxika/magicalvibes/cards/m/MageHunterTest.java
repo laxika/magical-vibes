@@ -56,6 +56,7 @@ class MageHunterTest extends BaseCardTest {
 
         harness.castWithConspire(player2, 0, target.getId(), List.of(conspireA.getId(), conspireB.getId()));
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 

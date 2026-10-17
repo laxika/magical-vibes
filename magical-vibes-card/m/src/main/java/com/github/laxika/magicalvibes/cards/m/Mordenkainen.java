@@ -10,11 +10,12 @@ import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExchangeHandAndLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
+import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 
@@ -51,7 +52,8 @@ public class Mordenkainen extends Card {
                 List.of(
                         new ExchangeHandAndLibraryEffect(),
                         new ShuffleLibraryEffect(false),
-                        new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME)
+                        new CreateEmblemEffect(List.of(new NoMaximumHandSizeEffect()),
+                                "You have no maximum hand size.", EmblemRecipient.CONTROLLER)
                 ),
                 "\u221210: Exchange your hand and library, then shuffle. You get an emblem with \"You have no maximum hand size.\""
         ));

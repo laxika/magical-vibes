@@ -268,7 +268,23 @@ public class AnimationSupport {
         }
         self.getTransientSubtypes().addAll(effect.grantedSubtypes());
         self.getGrantedKeywords().addAll(effect.grantedKeywords());
-        self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+        if (effect.cardTypeOverriding()) {
+            // "Becomes a [creature type] creature" also replaces the other creature types (CR 205.1a).
+            List<CardSubtype> setCreatureTypes = effect.grantedSubtypes().stream()
+                    .filter(gameQueryService::isCreatureSubtype)
+                    .toList();
+            if (!setCreatureTypes.isEmpty()) {
+                self.setTransientCreatureTypeOverride(null);
+                self.getTransientCreatureTypeOverrides().clear();
+                self.getTransientCreatureTypeOverrides().addAll(setCreatureTypes);
+            }
+            // "Becomes a creature" replaces the other card types (CR 205.1a).
+            Set<CardType> replacementTypes = EnumSet.of(CardType.CREATURE);
+            replacementTypes.addAll(effect.grantedCardTypes());
+            addAnimationCardTypeOverrideFloatingEffect(gameData, entry, self, replacementTypes);
+        } else {
+            self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+        }
 
         // CR 301.5c — Equipment that's also a creature can't stay attached
         if (self.isAttached() && self.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {

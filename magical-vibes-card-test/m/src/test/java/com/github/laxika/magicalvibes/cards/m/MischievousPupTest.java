@@ -81,8 +81,8 @@ class MischievousPupTest extends BaseCardTest {
 
     @Test
     void returnsBorrowedPermanentToItsOwnersHand() {
-        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        gd.stolenCreatures.put(forest.getId(), player2.getId());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        setOwnerAndController(forest, player2, player1);
         castPup(List.of(forest.getId()));
 
         harness.passBothPriorities();
@@ -99,9 +99,7 @@ class MischievousPupTest extends BaseCardTest {
         castPup(List.of(forest.getId()));
         harness.passBothPriorities();
 
-        gd.playerBattlefields.get(player1.getId()).remove(forest);
-        gd.playerBattlefields.get(player2.getId()).add(forest);
-        gd.stolenCreatures.put(forest.getId(), player1.getId());
+        setOwnerAndController(forest, player1, player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Forest");

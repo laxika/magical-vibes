@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.ImprintedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -22,12 +24,12 @@ public class MoriaScavenger extends Card {
                 true,
                 null,
                 List.of(
+                        new DiscardCardTypeCost(null, null, false, 1, false, false, true),
                         new DrawCardEffect(1),
-                        new DiscardCardThenEffect(
-                                null,
-                                new AmassGoblinsEffect(1, CardSubtype.ORC),
-                                "a card",
-                                new CardTypePredicate(CardType.CREATURE))),
+                        new ConditionalEffect(
+                                new ImprintedCardMatches(new CardTypePredicate(CardType.CREATURE),
+                                        "a creature card", "discarded card"),
+                                new AmassGoblinsEffect(1, CardSubtype.ORC))),
                 "{T}, Discard a card: Draw a card. If the discarded card was a creature card, "
                         + "amass Orcs 1."));
     }

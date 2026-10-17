@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MuldrothaTheGravetide extends Card {
 
     public MuldrothaTheGravetide() {
-        addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect());
+        addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect(null, true));
         addEffect(EffectSlot.STATIC, new CastPermanentSpellsFromGraveyardEffect());
     }
 }

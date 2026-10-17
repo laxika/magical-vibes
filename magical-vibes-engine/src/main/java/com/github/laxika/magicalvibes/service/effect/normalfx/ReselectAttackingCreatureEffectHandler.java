@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,7 +46,7 @@ public class ReselectAttackingCreatureEffectHandler implements NormalEffectHandl
         }
 
         Set<UUID> validAttackTargetIds = attackLegalityService
-                .getValidAttackTargetIds(gameData, creatureControllerId);
+                .getValidReselectionTargetIds(gameData, creatureControllerId);
         List<UUID> validPlayerIds = validAttackTargetIds.stream()
                 .filter(gameData.playerIds::contains)
                 .filter(playerId -> !playerId.equals(creatureControllerId))
@@ -53,9 +54,7 @@ public class ReselectAttackingCreatureEffectHandler implements NormalEffectHandl
         List<UUID> validPermanentIds = validAttackTargetIds.stream()
                 .filter(targetId -> !gameData.playerIds.contains(targetId))
                 .map(targetId -> gameQueryService.findPermanentById(gameData, targetId))
-                .filter(target -> target != null
-                        && !creatureControllerId.equals(gameQueryService.findPermanentController(
-                        gameData, target.getId())))
+                .filter(Objects::nonNull)
                 .map(Permanent::getId)
                 .toList();
         if (validPlayerIds.isEmpty() && validPermanentIds.isEmpty()) {

@@ -24,7 +24,7 @@ public class MutationalAdvantage extends Card {
         PermanentHasCountersPredicate hasCounters = new PermanentHasCountersPredicate(CounterType.ANY);
         addEffect(EffectSlot.SPELL, new GrantKeywordEffect(
                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.OWN_PERMANENTS, hasCounters));
-        addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControlledMatchingPermanents(hasCounters));
+        addEffect(EffectSlot.SPELL, PreventDamageEffect.allToControlledMatchingPermanentsAtResolution(hasCounters));
         addEffect(EffectSlot.SPELL, new ProliferateEffect());
     }
 }

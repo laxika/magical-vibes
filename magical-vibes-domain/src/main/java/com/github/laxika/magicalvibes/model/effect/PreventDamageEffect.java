@@ -94,6 +94,7 @@ public record PreventDamageEffect(
         }
         boolean acceptsVictimPredicate = scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS_AT_RESOLUTION
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE;
@@ -103,6 +104,7 @@ public record PreventDamageEffect(
         }
         if (victimPredicate == null && (scope == PreventionScope.ALL_TO_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS_AT_RESOLUTION
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS)) {
             throw new IllegalArgumentException(scope + " requires a victimPredicate");
@@ -251,6 +253,13 @@ public record PreventDamageEffect(
     public static PreventDamageEffect allToControlledMatchingPermanents(PermanentPredicate victimPredicate) {
         return new PreventDamageEffect(
                 PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS, null, false, null, null, victimPredicate);
+    }
+
+    /** "Prevent all damage that would be dealt this turn to those permanents" (the matching permanents you control as this resolves). */
+    public static PreventDamageEffect allToControlledMatchingPermanentsAtResolution(PermanentPredicate victimPredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS_AT_RESOLUTION, null, false, null, null,
+                victimPredicate);
     }
 
     /** "Prevent all combat damage that would be dealt this turn to matching permanents you control." */

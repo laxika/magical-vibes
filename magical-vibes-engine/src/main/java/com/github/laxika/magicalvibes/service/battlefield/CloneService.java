@@ -854,11 +854,14 @@ public class CloneService {
             }
         }
 
+        // X in a copied mana cost is 0; a copy effect whose own exception uses X (Altered Ego) passes
+        // the spell's X on to the copied enters abilities (CR 107.3m).
+        int copiedEntryX = copiedCard != null && additionalPlusOnePlusOneCounters == null ? 0 : xValue;
         if (entryRequest != null) {
             battlefieldPlacementService.place(gameData,
                     entryRequest.withPermanent(perm, entryRequest.simultaneouslyEntered()));
         } else {
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, xValue, false);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm, copiedEntryX, false);
         }
         if (ninjutsuEntry) {
             perm.setAttacking(true);
@@ -895,7 +898,7 @@ public class CloneService {
             }
         } else {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId,
-                    !ninjutsuEntry && entryRequest == null);
+                    !ninjutsuEntry && entryRequest == null, 0, copiedEntryX, false, List.of());
         }
 
         if (exileCopiedGraveyardCard && targetCard != null) {

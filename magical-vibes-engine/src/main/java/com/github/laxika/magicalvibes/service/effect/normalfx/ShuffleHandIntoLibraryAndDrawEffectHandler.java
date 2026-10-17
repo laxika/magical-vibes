@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDraw
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,7 @@ public class ShuffleHandIntoLibraryAndDrawEffectHandler implements NormalEffectH
                 ? gameData.orderedPlayerIds
                 : List.of(entry.getControllerId());
 
+        Map<UUID, Integer> handSizes = new LinkedHashMap<>();
         for (UUID playerId : playerIds) {
             List<Card> hand = gameData.playerHands.get(playerId);
             String playerName = gameData.playerIdToName.get(playerId);
@@ -50,25 +53,23 @@ public class ShuffleHandIntoLibraryAndDrawEffectHandler implements NormalEffectH
 
             int handSize = hand.size();
 
-            // Shuffle hand into library
             List<Card> deck = gameData.playerDecks.get(playerId);
             deck.addAll(hand);
             hand.clear();
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+            handSizes.put(playerId, handSize);
 
             gameLogService.append(gameData, GameLog.text(playerName + " shuffles " + handSize + " card" + (handSize != 1 ? "s" : "")
                             + " from hand into their library."));
             log.info("Game {} - {} shuffles {} cards from hand into library ({})",
                     gameData.id, playerName, handSize, cardName);
+        }
 
-            // Draw that many cards
-            for (int i = 0; i < handSize; i++) {
-                drawService.resolveDrawCard(gameData, playerId);
-            }
-
+        handSizes.forEach((playerId, handSize) -> {
+            String playerName = gameData.playerIdToName.get(playerId);
+            drawService.resolveDrawCards(gameData, playerId, handSize);
             gameLogService.append(gameData, GameLog.text(playerName + " draws " + handSize + " card" + (handSize != 1 ? "s" : "") + "."));
             log.info("Game {} - {} draws {} cards ({})", gameData.id, playerName, handSize, cardName);
-        }
-    
+        });
     }
 }

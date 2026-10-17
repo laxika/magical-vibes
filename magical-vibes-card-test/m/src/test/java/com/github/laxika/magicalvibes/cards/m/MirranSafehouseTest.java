@@ -28,7 +28,9 @@ class MirranSafehouseTest extends BaseCardTest {
 
         List<ActivatedAbility> granted = gqs.computeStaticBonus(gd, safehouse).grantedActivatedAbilities();
 
-        assertThat(granted).hasSize(4);
+        // Blasted Landscape's tap ability plus Strip Mine's two; Blasted Landscape's cycling functions only
+        // in a player's hand (CR 702.29a), so it is not an activated ability a battlefield permanent has.
+        assertThat(granted).hasSize(3);
     }
 
     @Test

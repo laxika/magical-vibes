@@ -48,7 +48,9 @@ public class MishraClaimedByGix extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsAttackingPredicate(),
                                 new PermanentOwnedBySourceControllerPredicate()))))),
-                new MeldWithNamedCreatureEffect(PARTNER_NAME, true)));
+                new MeldWithNamedCreatureEffect(PARTNER_NAME, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentIsAttackingPredicate())), true)));
     }
 
     @Override

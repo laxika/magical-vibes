@@ -24,7 +24,9 @@ public class MarshlandHordemaster extends Card {
             new GainLifeEffect(1));
 
     public MarshlandHordemaster() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                new PerpetuallyGrantKeywordToSourceEffect(Keyword.BATTLE_CRY));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.LIZARD),
                         new PerpetuallyGrantKeywordToSourceEffect(Keyword.BATTLE_CRY)));

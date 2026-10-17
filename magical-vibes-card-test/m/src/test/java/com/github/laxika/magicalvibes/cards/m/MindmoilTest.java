@@ -117,7 +117,7 @@ class MindmoilTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalHandCard);
-        harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1));
         harness.passBothPriorities();
 
         PendingInteraction.LibraryReorder reorder =

@@ -177,7 +177,7 @@ class MemoryJarTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.exiledCards).hasSize(1);
         harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(originalHand);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

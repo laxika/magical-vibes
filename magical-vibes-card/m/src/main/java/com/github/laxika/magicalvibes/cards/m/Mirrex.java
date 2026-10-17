@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 
 import java.util.List;
 import java.util.Map;
@@ -62,10 +62,7 @@ public class Mirrex extends Card {
                 Set.of(CardType.ARTIFACT),
                 false,
                 false,
-                Map.of(
-                        EffectSlot.STATIC, new CantBlockEffect(),
-                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                        new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER)),
+                Map.of(EffectSlot.STATIC, SequenceEffect.of(new CantBlockEffect(), new ToxicEffect(1))),
                 List.of(),
                 false,
                 false,

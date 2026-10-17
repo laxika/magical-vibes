@@ -41,9 +41,9 @@ public class MobRule extends Card {
 
     private static ChooseOneEffect.ChooseOneOption mode(String label, PermanentPredicate filter) {
         return new ChooseOneEffect.ChooseOneOption(label, List.of(
-                new GainControlOfAllPermanentsMatchingEffect(filter, ControlDuration.END_OF_TURN),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, filter),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES, filter)
+                new GainControlOfAllPermanentsMatchingEffect(filter, ControlDuration.END_OF_TURN,
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
         ));
     }
 }

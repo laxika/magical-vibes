@@ -19,6 +19,6 @@ public class MindbreakTrap extends Card {
 
     public MindbreakTrap() {
         addCastingOption(new AlternateHandCast(List.of(), new OpponentCastThreeOrMoreSpellsThisTurn(), false));
-        target(null, 0, 99).addEffect(EffectSlot.SPELL, new ExileEachTargetSpellEffect());
+        target(null, 0, Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, new ExileEachTargetSpellEffect());
     }
 }

@@ -60,13 +60,16 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentId(entry.getSourcePermanentId())
                 .withSourcePermanentSnapshot(source);
-        Predicate<Permanent> baseFilter = p -> gameQueryService.isCreature(gameData, p)
-                || (e.damagesPlaneswalkers() && p.getCard().hasType(CardType.PLANESWALKER))
-                || (e.damagesBattles() && p.getCard().hasType(CardType.BATTLE));
-        Predicate<Permanent> creatureFilter = e.filter() == null
-                ? baseFilter
-                : p -> baseFilter.test(p)
-                        && predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext);
+        // The filter describes creatures only (e.g. "each creature without flying"); planeswalkers and
+        // battles are damaged by their own flags whatever their keywords are.
+        Predicate<Permanent> creatureFilter = p -> {
+            if (gameQueryService.isCreature(gameData, p)) {
+                return e.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext);
+            }
+            return (e.damagesPlaneswalkers() && p.getCard().hasType(CardType.PLANESWALKER))
+                    || (e.damagesBattles() && p.getCard().hasType(CardType.BATTLE));
+        };
 
         boolean previousExilesCreaturesDamaged = entry.isExilesCreaturesDamaged();
         entry.setExilesCreaturesDamaged(previousExilesCreaturesDamaged || e.exileInsteadOfDie());

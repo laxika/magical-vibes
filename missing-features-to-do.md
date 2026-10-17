@@ -198,6 +198,83 @@ Implement CR 616.1 ordering for competing "if a creature would die, exile it ins
 
 ---
 
+## 32. Simultaneous batches: "one or more" events and APNAP choices
+
+**Status:** open · **Found:** 2026-10-17, while fixing M-card tests
+
+**Failing tests:**
+- `MascotExhibitionTest` — Esix must replace all three tokens of one creation event, not each `CreateTokenEffect` separately
+- `MythweaverPoqTest.simultaneousLandsEachReceiveADuplicate` — "one or more nontoken lands … for each of them", once each turn
+- `MichelangeloImproviserTest` — a creature and a land must enter as one simultaneous batch
+- `MogMoogleWarriorTest` — each player's discard choice must stay hidden until all players have chosen
+- `MindSwordsTest` — each player's exile-from-hand choice must happen before any card is exiled
+
+**What the rules require.** CR 101.4: when several players make choices at the same time, they choose in
+APNAP order, then the actions happen simultaneously. CR 603.2c: an ability triggers once per event unless one
+event contains multiple occurrences, so "one or more" triggers need to see one grouped event. The engine
+creates tokens and moves cards one effect (or one player) at a time, so these triggers and replacements see
+several separate events, and later players can see earlier players' choices.
+
+**Why it's large.** It needs a shared "event batch" concept spanning token creation, battlefield entry,
+discard and exile-from-hand choices, plus the replacement (Esix) and trigger collectors that read those
+batches. Regression risk is high across token, landfall and discard cards.
+
+**Prompt to start it:**
+
+```
+Add simultaneous event batching to the engine (missing-features-to-do.md entry 32): one token-creation event
+for multi-token effects (Esix), grouped "one or more lands/permanents enter" triggers, and APNAP choose-then-act
+for each-player discard/exile choices (CR 101.4). Start with the five listed M-card tests, verify CR numbers with
+the rules MCP, then ask me to run the full suite.
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 33. Remaining M-card failures
+
+**Status:** open · **Found:** 2026-10-17, while fixing M-card tests
+
+These M-card tests still fail after two Haiku rounds, two Sonnet passes and a Sonnet escalation with real test
+runs. Each is a one-card engine gap:
+
+- `MeriekeRiBeritTest` (4 tests) — needs a per-activation delayed trigger ("when you lose control of Merieke or it
+  becomes untapped, destroy that creature") instead of a static linked ability (CR 603.7a).
+- `MangarasTomeTest` (2) — several Tomes' replacement effects need a player choice between them, and one draw
+  should take a card from each pile.
+- `MarchesasSurprisePartyTest` (2) — the secret-mission choice isn't modeled, so the end-step trigger fires
+  automatically.
+- `MikeyMonaMutantSittersTest` (2) — each mode must target a different player, and targets should be prompted in
+  selection order.
+- `MarkovBaronTest` — the madness cast pays only from the mana pool, with no convoke.
+- `MarshlandHordemasterTest` — granted keywords are a set, so multiple battle cry instances can't exist.
+- `MeteoricMaceTest` — a free cascade cast ignores additional costs such as Harrow's land sacrifice.
+- `MmmenonTheRightHandTest` — its mana must not pay for abilities, but it shares `ManaRestriction.NonHandSpells`
+  with cards whose mana may; it needs its own mana-pool bucket.
+- `MemoricideTest` — non-matching hand and library cards must be shown to the searcher, which needs a protocol
+  change (the frontend matches card views to pickable ids by index).
+- `MalcolmKeenEyedNavigatorTest` — damage-to-opponent triggers only see creature sources; a Pirate spell source isn't
+  supported.
+- `MalcolmAlluringScoundrelTest.discardedCardCanBeCastWhenAReplacementExilesIt` — casting a discarded card that a
+  replacement exiled instead needs cast-from-exile support; no official ruling was found.
+- `MurktideRegentTest.escapeExilePaymentIsSeparateFromOptionalDelve` — the test expects 2 counters when delve is used
+  together with an escape-style graveyard cast; the engine gives 0. No official ruling was found either way.
+
+**What the rules require.** It differs per card. Verify the Oracle text and rulings for each one first. Several
+of these tests already had wrong agent "fixes" reverted, so read the whole test class before changing anything.
+
+**Why it's large.** Twelve classes, each needing its own engine feature.
+
+**Prompt to start it:**
+
+```
+Work through the classes in missing-features-to-do.md entry 33 one at a time: run them, confirm the root cause,
+and fix the engine or card (never weaken an assertion without an official ruling or verified CR text).
+Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

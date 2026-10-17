@@ -154,11 +154,11 @@ class ManaChargedDragonTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.tapPermanent(player1, 1);
+        gs.tapPermanent(gd, player1, 1);
         harness.handleXValueChosen(player1, 1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        harness.tapPermanent(player2, 0);
+        gs.tapPermanent(gd, player2, 0);
         harness.handleXValueChosen(player2, 1);
 
         assertThat(dragon.getPowerModifier()).isEqualTo(2);

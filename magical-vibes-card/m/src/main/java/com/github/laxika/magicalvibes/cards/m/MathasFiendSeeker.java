@@ -22,17 +22,16 @@ import java.util.List;
 public class MathasFiendSeeker extends Card {
 
     public MathasFiendSeeker() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantEffectsToCounterBearersEffect(CounterType.BOUNTY, List.of(
-                        new GrantTriggeredAbilityEffect(
-                                EffectSlot.ON_DEATH,
-                                SequenceEffect.of(
-                                        new EachOpponentDrawsCardEffect(1),
-                                        new GainLifeEffect(new Fixed(2), GainLifeRecipient.OPPONENT)),
-                                GrantScope.SELF))));
-
-        target(TargetFilters.creatureAnOpponentControls()).addEffect(
-                EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY));
+        target(TargetFilters.creatureAnOpponentControls())
+                .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(
+                        new PutCounterOnTargetPermanentEffect(CounterType.BOUNTY),
+                        new GrantEffectsToCounterBearersEffect(CounterType.BOUNTY, List.of(
+                                new GrantTriggeredAbilityEffect(
+                                        EffectSlot.ON_DEATH,
+                                        SequenceEffect.of(
+                                                new EachOpponentDrawsCardEffect(1),
+                                                new GainLifeEffect(new Fixed(2), GainLifeRecipient.OPPONENT)),
+                                        GrantScope.SELF)),
+                                true)));
     }
 }

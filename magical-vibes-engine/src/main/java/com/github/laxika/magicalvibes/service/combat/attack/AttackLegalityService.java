@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureAttackRestri
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
@@ -911,6 +912,7 @@ public class AttackLegalityService {
                     .count();
         });
 
+        Set<UUID> goadingPlayerIds = new HashSet<>();
         for (FloatingContinuousEffect floatingEffect : floatingAttackRequirements(gameData)) {
             if (floatingEffect.effect() instanceof CombatAttackRequirementEffect requirement
                     && floatingRequirementMatches(gameData, creature, floatingEffect, requirement)) {
@@ -918,6 +920,11 @@ public class AttackLegalityService {
                         ? null : gameQueryService.findPermanentById(gameData, floatingEffect.sourcePermanentId());
                 UUID requiredTargetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
                 if (requiredTargetId != null && !canAttackRequiredTarget(gameData, creature, requiredTargetId)) {
+                    continue;
+                }
+                // CR 701.15d: a player goading a creature again creates no additional requirement.
+                if (floatingEffect.effect() instanceof GoadStatusEffect goad && goad.makesGoaded()
+                        && !goadingPlayerIds.add(floatingEffect.controllerId())) {
                     continue;
                 }
                 count[0]++;
@@ -1190,6 +1197,19 @@ public class AttackLegalityService {
      * display name and rejects a null one — legality must not depend on a permanent being nameable.
      */
     public Set<UUID> getValidAttackTargetIds(GameData gameData, UUID activePlayerId) {
+        return validAttackTargetIds(gameData, activePlayerId, false);
+    }
+
+    /**
+     * Attack targets a reselection effect (Misleading Signpost) may choose. Reselecting ignores all
+     * requirements, restrictions and costs associated with attacking, so a planeswalker that "can't be
+     * attacked" while attached to a creature (The Aetherspark) is still a legal choice.
+     */
+    public Set<UUID> getValidReselectionTargetIds(GameData gameData, UUID attackerControllerId) {
+        return validAttackTargetIds(gameData, attackerControllerId, true);
+    }
+
+    private Set<UUID> validAttackTargetIds(GameData gameData, UUID activePlayerId, boolean ignoreRestrictions) {
         Set<UUID> validIds = new HashSet<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(activePlayerId)) {
@@ -1197,7 +1217,7 @@ public class AttackLegalityService {
             }
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
                 if (!playerId.equals(activePlayerId) && gameQueryService.isPlaneswalker(gameData, permanent)
-                        && !isAttackTargetRestricted(gameData, permanent)) {
+                        && (ignoreRestrictions || !isAttackTargetRestricted(gameData, permanent))) {
                     validIds.add(permanent.getId());
                 } else if (gameQueryService.isBattle(gameData, permanent)
                         && permanent.getProtectorPlayerId() != null

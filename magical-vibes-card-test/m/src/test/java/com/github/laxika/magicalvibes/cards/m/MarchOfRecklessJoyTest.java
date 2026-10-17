@@ -138,6 +138,7 @@ class MarchOfRecklessJoyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MarchOfRecklessJoy()));
         harness.setLibrary(player1, List.of(first, second, third, new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castInstantForX(player1, 0, 3, List.of());
@@ -166,6 +167,7 @@ class MarchOfRecklessJoyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MarchOfRecklessJoy()));
         harness.setLibrary(player1, List.of(exiled, new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstantForX(player1, 0, 1, List.of());

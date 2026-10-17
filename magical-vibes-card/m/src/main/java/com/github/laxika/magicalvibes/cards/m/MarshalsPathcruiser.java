@@ -29,8 +29,9 @@ public class MarshalsPathcruiser extends Card {
                 false,
                 "{W}{U}{B}{R}{G}",
                 List.of(
-                        new AnimatePermanentsEffect(6, 5, List.of(), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT),
+                        new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
+                                Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.PERMANENT, null,
+                                Set.of(), false, false),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
                 ),
                 "Exhaust — {W}{U}{B}{R}{G}: This Vehicle becomes an artifact creature. Put two +1/+1 counters on it."

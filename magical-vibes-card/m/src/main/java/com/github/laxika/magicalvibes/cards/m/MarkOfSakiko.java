@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BOK", collectorNumber = "135")
@@ -13,8 +15,9 @@ public class MarkOfSakiko extends Card {
 
     public MarkOfSakiko() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                        new AwardPersistentManaEffect(ManaColor.GREEN, new EventValue(),
-                                AwardPersistentManaEffect.Recipient.ENCHANTED_PERMANENT_CONTROLLER));
+                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                        EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                        new AwardPersistentManaEffect(ManaColor.GREEN, new EventValue()),
+                        GrantScope.ENCHANTED_CREATURE));
     }
 }

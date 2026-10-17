@@ -23,13 +23,17 @@ class MarkForDeathTest extends BaseCardTest {
     void resolvesAllThreeEffects() {
         Permanent target = addCreatureReady(player2, new FrilledOculus());
         Permanent other = addCreatureReady(player2, new FrilledOculus());
+        Permanent attacker = addCreatureReady(player1, new FrilledOculus());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
         target.tap();
         castMarkForDeath(target);
 
+        List<Permanent> defenders = gd.playerBattlefields.get(player2.getId());
         assertThat(target.isTapped()).isFalse();
         assertThat(target.isMustBlockThisTurnIfAble()).isTrue();
-        assertThat(target.isCantBlockThisTurn()).isFalse();
-        assertThat(other.isCantBlockThisTurn()).isTrue();
+        assertThat(bls.canBlockAttacker(gd, target, attacker, defenders)).isTrue();
+        assertThat(bls.canBlockAttacker(gd, other, attacker, defenders)).isFalse();
     }
 
     @Test

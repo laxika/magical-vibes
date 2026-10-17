@@ -2,13 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageFromSelfToYouEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +22,6 @@ import org.springframework.stereotype.Component;
 public class PreventNextDamageFromSelfToYouEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,15 +36,10 @@ public class PreventNextDamageFromSelfToYouEffectHandler implements NormalEffect
             return;
         }
 
-        Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-        if (source == null) {
-            return;
-        }
-
         gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(playerId, sourceId));
 
         String playerName = gameData.playerIdToName.get(playerId);
-        String sourceName = source.getCard().getName();
+        String sourceName = entry.getCard().getName();
         gameLogService.append(gameData, GameLog.text(
                 "The next time " + sourceName + " would deal damage to " + playerName
                         + " this turn, it is prevented."));

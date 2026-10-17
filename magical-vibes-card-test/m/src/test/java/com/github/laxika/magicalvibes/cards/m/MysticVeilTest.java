@@ -74,7 +74,7 @@ class MysticVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Mystic Veil");
     }
@@ -95,7 +95,7 @@ class MysticVeilTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mystic Veil");
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         harness.assertOnBattlefield(player1, "Mystic Veil");
         harness.passBothPriorities();
 
@@ -138,7 +138,7 @@ class MysticVeilTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Boomerang");
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Mystic Veil");
         assertThat(gqs.hasKeyword(gd, bears, Keyword.SHROUD)).isFalse();

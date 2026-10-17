@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -144,6 +145,7 @@ class MilitiasPrideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MilitiasPride());
         addCreatureReady(player1, new GoldmeadowDodger());
         Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
         battle.setProtectorPlayerId(player2.getId());
         harness.addMana(player1, ManaColor.WHITE, 1);
 

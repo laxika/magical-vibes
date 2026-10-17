@@ -79,9 +79,9 @@ class MirageMesaTest extends BaseCardTest {
     @Test
     @DisplayName("Copies entering without being played retain independent chosen colors")
     void copiesChooseColorsIndependently() {
-        Permanent first = harness.enterBattlefieldAndReturn(player1, new MirageMesa());
+        Permanent first = harness.enterLandBattlefieldAndReturn(player1, new MirageMesa());
         harness.handleListChoice(player1, "WHITE");
-        Permanent second = harness.enterBattlefieldAndReturn(player1, new MirageMesa());
+        Permanent second = harness.enterLandBattlefieldAndReturn(player1, new MirageMesa());
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(first.isTapped()).isTrue();

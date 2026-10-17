@@ -41,7 +41,7 @@ public class MidnightClock extends Card {
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new PutCountersOnSelfEffect(CounterType.HOUR));
 
-        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, new ConditionalEffect(
+        addEffect(EffectSlot.ON_SELF_COUNTERS_PUT, ConditionalEffect.atTriggerTime(
                 new SourceCounterThreshold(12, CounterType.HOUR),
                 SequenceEffect.of(
                         new ShuffleControllerHandAndGraveyardIntoLibraryEffect(),

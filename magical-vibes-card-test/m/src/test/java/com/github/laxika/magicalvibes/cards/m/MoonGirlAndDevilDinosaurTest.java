@@ -72,6 +72,7 @@ class MoonGirlAndDevilDinosaurTest extends BaseCardTest {
 
     @Test
     void artifactDrawCanBeTheSecondDrawAndBoostTheSource() {
+        harness.setHand(player1, List.of());
         Permanent source = addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         draw(player1);
@@ -91,6 +92,7 @@ class MoonGirlAndDevilDinosaurTest extends BaseCardTest {
 
     @Test
     void opponentsArtifactDoesNotTriggerOrConsumeTheTurnLimit() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
@@ -125,6 +127,7 @@ class MoonGirlAndDevilDinosaurTest extends BaseCardTest {
 
     @Test
     void artifactTriggerLimitAppliesBeforeTheFirstTriggerResolves() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
@@ -138,6 +141,7 @@ class MoonGirlAndDevilDinosaurTest extends BaseCardTest {
     @Test
     @CardUsed({MoonGirlAndDevilDinosaur.class, Panharmonicon.class, Ornithopter.class, GrizzlyBears.class})
     void panharmoniconCannotMakeTheOncePerTurnArtifactAbilityTriggerTwice() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
         harness.addToBattlefield(player1, new Panharmonicon());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
@@ -150,6 +154,8 @@ class MoonGirlAndDevilDinosaurTest extends BaseCardTest {
 
     @Test
     void artifactAbilityCanTriggerAgainDuringTheNextPlayersTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new MoonGirlAndDevilDinosaur());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));

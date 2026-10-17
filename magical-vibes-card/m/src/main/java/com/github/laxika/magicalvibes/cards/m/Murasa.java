@@ -40,6 +40,6 @@ public class Murasa extends Card {
                                 MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)));
         target(TargetFilters.land()).addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new AnimatePermanentsEffect(4, 4, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, EffectDuration.UNTIL_PLANESWALK));
+                        GrantScope.TARGET, EffectDuration.PERMANENT));
     }
 }

@@ -102,6 +102,8 @@ class MoiraBrownGuideAuthorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, guide.getId());
         resolveAllTriggers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(guide.getCounterCount(CounterType.QUEST)).isEqualTo(1);
@@ -145,6 +147,7 @@ class MoiraBrownGuideAuthorTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+        gs.declareBlockers(gd, player1, List.of());
         resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

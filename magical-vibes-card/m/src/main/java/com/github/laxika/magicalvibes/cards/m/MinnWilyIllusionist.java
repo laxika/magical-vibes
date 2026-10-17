@@ -34,10 +34,13 @@ public class MinnWilyIllusionist extends Card {
                         List.of(CardSubtype.ILLUSION), Set.of(), Set.of(),
                         Map.of(EffectSlot.STATIC, illusionBoost)));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.ILLUSION),
-                        new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent")
-                                .boundedByEventValue()));
+        TriggeringPermanentConditionalEffect illusionDies = new TriggeringPermanentConditionalEffect(
+                new PermanentHasSubtypePredicate(CardSubtype.ILLUSION),
+                new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent")
+                        .boundedByEventValue());
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, illusionDies);
+        // Minn itself is an Illusion when it has every creature type (Maskwood Nexus); a printed creature's
+        // own death is only collected from ON_DEATH.
+        addEffect(EffectSlot.ON_DEATH, illusionDies);
     }
 }

@@ -79,7 +79,7 @@ class MunghaWurmTest extends BaseCardTest {
         firstLand.tap();
         secondLand.tap();
 
-        advanceToNextTurn(player2);
+        advanceToNextTurn(player2, TurnStep.UPKEEP);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(firstLand.isTapped()).isFalse();
@@ -111,19 +111,23 @@ class MunghaWurmTest extends BaseCardTest {
         Permanent land = addCreatureReady(player1, new RhysticCave());
         land.tap();
 
-        advanceToNextTurn(player2);
+        advanceToNextTurn(player2, TurnStep.UPKEEP);
 
         assertThat(land.isTapped()).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
+        advanceToNextTurn(currentActivePlayer, TurnStep.UNTAP);
+    }
+
+    private void advanceToNextTurn(Player currentActivePlayer, TurnStep targetStep) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(nextActivePlayer, targetStep);
     }
 }

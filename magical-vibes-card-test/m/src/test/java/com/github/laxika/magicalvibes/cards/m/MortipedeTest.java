@@ -123,6 +123,7 @@ class MortipedeTest extends BaseCardTest {
     void requirementExpiresAtEndOfTurn() {
         addCreatureReady(player1, new Mortipede());
         Permanent blocker = addCreatureReady(player2, new DromadPurebred());
+        harness.setHand(player2, List.of());
         activateMortipedeAbility();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

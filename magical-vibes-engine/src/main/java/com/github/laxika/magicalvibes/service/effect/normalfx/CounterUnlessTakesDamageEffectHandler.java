@@ -30,7 +30,7 @@ public class CounterUnlessTakesDamageEffectHandler implements NormalEffectHandle
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
-        StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+        StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
         String prompt = "Have " + entry.getCard().getName() + " deal " + e.damage()

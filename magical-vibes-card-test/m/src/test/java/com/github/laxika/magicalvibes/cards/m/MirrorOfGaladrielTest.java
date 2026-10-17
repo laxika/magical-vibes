@@ -81,6 +81,7 @@ class MirrorOfGaladrielTest extends BaseCardTest {
     @Test
     void drawsTheNextCardAfterPuttingTheTopCardOnTheBottom() {
         harness.addToBattlefield(player1, new MirrorOfGaladriel());
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new LlanowarElves()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 

@@ -2293,7 +2293,8 @@ public sealed interface ChoiceContext {
     }
 
     record RemoveOneCounterChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                  List<CounterType> counterTypes) implements ChoiceContext {
+                                  List<CounterType> counterTypes, boolean requireControl)
+            implements ChoiceContext {
 
         public RemoveOneCounterChoice {
             counterTypes = List.copyOf(counterTypes);

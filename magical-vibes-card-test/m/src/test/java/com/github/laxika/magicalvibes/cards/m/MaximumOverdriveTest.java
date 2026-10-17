@@ -113,7 +113,8 @@ class MaximumOverdriveTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MaximumOverdrive(), new Unsummon()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castInstant(player1, 0, target.getId());

@@ -51,6 +51,8 @@ public enum PreventionScope {
     ALL_TO_MATCHING_PERMANENTS,
     /** "Prevent all damage that would be dealt this turn to matching permanents you control." */
     ALL_TO_CONTROLLED_MATCHING_PERMANENTS,
+    /** "Prevent all damage that would be dealt this turn to those permanents": only the matching permanents you control as the effect resolves (Mutational Advantage). */
+    ALL_TO_CONTROLLED_MATCHING_PERMANENTS_AT_RESOLUTION,
     /** "Prevent all combat damage that would be dealt this turn to matching permanents you control" (Pack Leader). */
     ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS,
     /** "Prevent all [combat] damage that would be dealt to target creature(s) this turn" (Foxfire, Redeem). */

@@ -6,12 +6,11 @@ import java.util.UUID;
 /**
  * Siren's Call: at the beginning of the next end step, destroy all non-Wall creatures the given
  * player controls that didn't attack this turn. Creatures that player didn't control continuously
- * since the beginning of the turn (summoning sick) are ignored.
+ * since the beginning of the turn (summoning sick) are ignored. The delayed trigger is controlled by
+ * {@code controllerId}, the player who controlled the spell or ability that created it.
  */
 public record DestroyNonAttackersAtEndStep(UUID playerId, Card sourceCard,
                                           boolean excludeWallsFromAttack,
-                                          boolean excludeSummoningSickFromDestruction) implements DelayedAction {
-    public DestroyNonAttackersAtEndStep(UUID playerId, Card sourceCard) {
-        this(playerId, sourceCard, false, true);
-    }
+                                          boolean excludeSummoningSickFromDestruction,
+                                          UUID controllerId) implements DelayedAction {
 }

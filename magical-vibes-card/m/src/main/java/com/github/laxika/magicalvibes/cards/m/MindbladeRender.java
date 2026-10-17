@@ -19,6 +19,7 @@ public class MindbladeRender extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.WARRIOR),
                         SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1)),
                         false,
+                        true,
                         true));
     }
 }

@@ -40,6 +40,7 @@ public class MomentOfReckoning extends Card {
                                 .filter(NONLAND_PERMANENT_CARD)
                                 .source(GraveyardSearchScope.CONTROLLERS_GRAVEYARD)
                                 .targetGraveyard(true)
+                                .chooseAuraAttachment(true)
                                 .build(),
                         new GraveyardCardPredicateTargetFilter(
                                 NONLAND_PERMANENT_CARD, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))

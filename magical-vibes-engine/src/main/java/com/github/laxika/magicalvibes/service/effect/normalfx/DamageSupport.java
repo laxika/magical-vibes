@@ -374,6 +374,9 @@ public class DamageSupport {
 
         if (dealsCounterDamage) {
             placeDamageMinusOneCounters(gameData, entry, target, damage, damageSourceControllerId, sourceCard);
+            if (damage > 0) {
+                entry.recordPermanentDealtDamage(target.getId());
+            }
             // Counter damage is still damage dealt, so a deathtouch+wither/infect source
             // marks the creature for the CR 704.5h destruction check as well.
             if (sourceHasDeathtouch) {
@@ -387,6 +390,9 @@ public class DamageSupport {
         // Record only — the state-based action check (CR 704.5g/704.5h) is the single place
         // creatures die from damage; it runs after the current resolution completes.
         target.addMarkedDamage(damageSourceKey(entry, damageSource), damage);
+        if (damage > 0) {
+            entry.recordPermanentDealtDamage(target.getId());
+        }
         if (sourceHasDeathtouch) {
             target.setDamagedByDeathtouch(true);
         }

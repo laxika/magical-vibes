@@ -126,8 +126,10 @@ class MagusOfTheUnseenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, artifact.getId());
         resolveAllTriggers();
 
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
-        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        // Mesmeric Orb's trigger resolves after the whole Magus ability, so "that permanent's controller"
+        // uses the artifact's current controller (CR 608.2h): Magus's controller mills.
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
     }
 
     @Test

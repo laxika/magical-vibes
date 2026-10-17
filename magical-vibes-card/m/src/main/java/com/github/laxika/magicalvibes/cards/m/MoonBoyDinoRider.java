@@ -19,7 +19,7 @@ public class MoonBoyDinoRider extends Card {
         addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.DINOSAUR), 1, CostModificationScope.SELF));
 
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)),
                 new BoostSelfEffect(1, 1)));
     }

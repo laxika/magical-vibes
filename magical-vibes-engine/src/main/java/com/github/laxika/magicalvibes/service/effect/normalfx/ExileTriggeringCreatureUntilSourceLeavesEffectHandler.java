@@ -33,22 +33,42 @@ public class ExileTriggeringCreatureUntilSourceLeavesEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        resolve(gameData, entry, (ExileTriggeringCreatureUntilSourceLeavesEffect) effect, false);
+        resolve(gameData, entry, (ExileTriggeringCreatureUntilSourceLeavesEffect) effect);
     }
 
+    /**
+     * Exiles the entering cast creature (if it is still on the battlefield) and then returns every
+     * other permanent card exiled with the source. The exile is not tied to the source leaving, and the
+     * return still happens when the entering creature or the source is already gone.
+     */
     void resolveAndReturnOthers(GameData gameData, StackEntry entry) {
         UUID enteringPermanentId = entry.getTriggeringPermanentId();
         Permanent enteringPermanent = enteringPermanentId == null
                 ? null : gameQueryService.findPermanentById(gameData, enteringPermanentId);
-        if (enteringPermanent == null || !enteringPermanent.isCast()) {
-            return;
+        UUID excludedCardId = null;
+        if (enteringPermanent != null) {
+            UUID sourcePermanentId = entry.getSourcePermanentId();
+            Card card = enteringPermanent.getOriginalCard();
+            UUID currentControllerId = gameQueryService.findPermanentController(gameData, enteringPermanentId);
+            UUID ownerId = gameData.stolenCreatures.getOrDefault(enteringPermanentId, currentControllerId);
+
+            permanentRemovalService.removePermanentToExile(gameData, enteringPermanent);
+            gameLogService.append(gameData, GameLog.cardTextCard(card, " is exiled by ", entry.getCard(), "."));
+            log.info("Game {} - {} exiles {}", gameData.id, entry.getCard().getName(), card.getName());
+
+            var exiledEntry = gameData.findExiledCard(card.getId());
+            if (sourcePermanentId != null && exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
+                gameData.removeFromExile(card.getId());
+                gameData.addToExile(ownerId, card, sourcePermanentId);
+            }
+            excludedCardId = card.getId();
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
-        resolve(gameData, entry, new ExileTriggeringCreatureUntilSourceLeavesEffect(0), true);
+        returnHandler.returnAllCardsExiledWithSourceExcept(gameData, entry, excludedCardId);
     }
 
     private void resolve(GameData gameData, StackEntry entry,
-                         ExileTriggeringCreatureUntilSourceLeavesEffect exileEffect,
-                         boolean returnOthers) {
+                         ExileTriggeringCreatureUntilSourceLeavesEffect exileEffect) {
         UUID enteringPermanentId = entry.getTriggeringPermanentId();
         Permanent enteringPermanent = enteringPermanentId == null
                 ? null
@@ -77,10 +97,6 @@ public class ExileTriggeringCreatureUntilSourceLeavesEffectHandler implements No
             if (exiledEntry != null && exiledEntry.sourcePermanentId() == null) {
                 gameData.removeFromExile(card.getId());
                 gameData.addToExile(ownerId, card, sourcePermanentId);
-            }
-
-            if (returnOthers) {
-                returnHandler.returnAllCardsExiledWithSourceExcept(gameData, entry, card.getId());
             }
         }
 

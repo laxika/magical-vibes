@@ -2399,7 +2399,10 @@ public class TargetLegalityService {
             int totalPower = targetIds.stream()
                     .map(targetId -> gameQueryService.findCardInGraveyardById(gameData, targetId))
                     .filter(Objects::nonNull)
-                    .mapToInt(targetCard -> targetCard.getPower() == null ? 0 : targetCard.getPower())
+                    .mapToInt(targetCard -> {
+                        Integer power = gameQueryService.getEffectiveCardPower(gameData, targetCard);
+                        return power == null ? 0 : power;
+                    })
                     .sum();
             int maxTotalPower = choosingEffect.graveyardChoiceMaxTotalPower();
             if (totalPower > maxTotalPower) {
@@ -4291,6 +4294,10 @@ public class TargetLegalityService {
         if (entryType == StackEntryType.TRIGGERED_ABILITY || entryType == StackEntryType.ACTIVATED_ABILITY) {
             return false;
         }
+        if (gameQueryService.hasProtectionFromSourceSubtypes(targetPerm, entry.getCard())
+                || gameQueryService.hasProtectionFromSourceSubtypes(gameData, targetPerm, entry.getCard())) {
+            return true;
+        }
         Set<CardColor> spellColors = effectiveSpellColors(gameData, entry);
         return spellColors.stream().anyMatch(color ->
                 gameQueryService.hasProtectionFrom(gameData, targetPerm, color)
@@ -5067,10 +5074,16 @@ public class TargetLegalityService {
                 return true;
             }
             // A spell whose card gained a card type from a static grant (Encroaching Mycosynth) has that
-            // type while on the stack, so "artifact spell" targeting matches it.
+            // type while on the stack, so "artifact spell" targeting matches it. A spell is entered on the
+            // stack with one spell type, so an artifact creature spell also matches "creature spell".
+            if (stackEntry.getCard() == null) {
+                return false;
+            }
             return typeInPredicate.spellTypes().contains(StackEntryType.ARTIFACT_SPELL)
-                    && stackEntry.getCard() != null
                     && gameQueryService.cardHasType(stackEntry.getCard(), CardType.ARTIFACT, gameData,
+                    stackEntry.getControllerId())
+                    || typeInPredicate.spellTypes().contains(StackEntryType.CREATURE_SPELL)
+                    && gameQueryService.cardHasType(stackEntry.getCard(), CardType.CREATURE, gameData,
                     stackEntry.getControllerId());
         }
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {

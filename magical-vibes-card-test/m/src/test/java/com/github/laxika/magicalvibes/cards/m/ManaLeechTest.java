@@ -190,7 +190,7 @@ class ManaLeechTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(newActivePlayer, TurnStep.UPKEEP);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {

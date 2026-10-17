@@ -33,7 +33,7 @@ public class MysterioMasterOfIllusion extends Card {
                 "Illusion Villain", 3, 3, CardColor.BLUE,
                 List.of(CardSubtype.ILLUSION, CardSubtype.VILLAIN), Set.of(), Set.of());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateTokenAndLinkToSourceEffect(illusionVillain, false));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ExileTokensCreatedWithSourceEffect());
+                new CreateTokenAndLinkToSourceEffect(illusionVillain, false, null,
+                        new ExileTokensCreatedWithSourceEffect()));
     }
 }

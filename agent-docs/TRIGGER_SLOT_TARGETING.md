@@ -212,6 +212,7 @@ combat damage step is processed.
 | `ON_RING_TEMPTS_YOU` | `TriggerCollectionService.checkRingTemptsYouTriggers` + `RingTemptsYouTriggerCollectorService` | Non-targeting |
 | `ON_CONTROLLER_BECOMES_MONARCH` / `ON_OPPONENT_BECOMES_MONARCH` | `TriggerCollectionService.checkBecomesMonarchTriggers` | Non-targeting; opponent becomes-monarch effects receive the new monarch as a baked-in player context |
 | `ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE` (targeting variants) | `DiceRollTriggerCollectorService` → `SpellTargetTriggerAnyTarget`; non-targeting effects enqueue directly | Controller rolls one or more dice |
+| `ON_CONTROLLER_ROLLS_DIE` | `TriggerCollectionService.checkControllerRollsHighestNaturalResultTriggers` (fired for every die, before the highest-result filter) → ordinary trigger dispatch | One trigger per die rolled; the die's result is the event value, so "whenever you roll a 4 or higher" is `ConditionalEffect(EventValueAtLeast(4), ...)` (Mr. House) |
 | `ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT` | `TriggerCollectionService.checkControllerRollsHighestNaturalResultTriggers` → ordinary trigger dispatch | One trigger for each non-ignored die whose natural face is that die's highest result |
 | `ON_CONTROLLER_INVESTIGATES` | `InvestigateTriggerCollectorService` | The controller's first investigate event each turn; non-targeting effects enqueue directly |
 | `ON_CONTROLLER_INVESTIGATES_EACH_TIME` | `InvestigateTriggerCollectorService` | Every controller investigate event; non-targeting effects enqueue directly |

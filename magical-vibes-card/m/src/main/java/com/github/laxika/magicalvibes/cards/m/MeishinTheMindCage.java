@@ -16,6 +16,6 @@ public class MeishinTheMindCage extends Card {
     public MeishinTheMindCage() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
-                new Scaled(cardsInHand, -1), new Fixed(0), GrantScope.ALL_CREATURES));
+                new Scaled(cardsInHand, -1), new Fixed(0), GrantScope.ALL_CREATURES_INCLUDING_SELF));
     }
 }

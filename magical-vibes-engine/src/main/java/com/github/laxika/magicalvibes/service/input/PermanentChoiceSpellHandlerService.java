@@ -706,7 +706,17 @@ public class PermanentChoiceSpellHandlerService {
             entry.setExileInsteadOfGraveyard(gct.exileInsteadOfGraveyard());
             entry.setOwnerIdOverride(gct.ownerId());
             entry.setSourceZone(Zone.GRAVEYARD);
-            if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
+            try {
+                if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
+            } catch (IllegalStateException ex) {
+                UUID ownerId = gct.ownerId() != null ? gct.ownerId() : gct.controllerId();
+                graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());
+                gameLogService.append(gameData, GameLog.cardThen(gct.cardToCast(),
+                        " can't be cast because its additional cost can't be paid."));
+                copySupport.flushDeferredGraveyardCastCopies(gameData);
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             gameData.stack.add(entry);
 
             copySupport.copyGraveyardCastSpell(gameData, entry, gct.cardToCast(), gct.controllerId(),

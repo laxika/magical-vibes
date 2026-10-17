@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * Creates a token that's a copy of the card imprinted on the source permanent.
  *
- * @param grantHaste     if true, the token gains haste (e.g. Mimic Vat)
+ * @param grantHaste     if true, the token copy has haste as a copiable value
  * @param exileAtEndStep if true, the token is exiled at the beginning of the next end step (e.g. Mimic Vat)
  */
 public record CreateTokenCopyOfImprintedCardEffect(
@@ -43,6 +43,6 @@ public record CreateTokenCopyOfImprintedCardEffect(
      * Backward-compatible constructor for Mimic Vat: grants haste and exiles at end step.
      */
     public CreateTokenCopyOfImprintedCardEffect() {
-        this(true, true, List.of(), Set.of(), null, null, false, List.of(), false);
+        this(false, true, List.of(), Set.of(), null, null, true, List.of(), false);
     }
 }

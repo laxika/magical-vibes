@@ -596,7 +596,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /** "Look at the top N cards: one to hand, one on top, rest on the bottom" (e.g. Anticipate-style picks). */
-    record HandTopBottomChoice(UUID playerId, java.util.List<Card> cards) implements PendingInteraction {
+    record HandTopBottomChoice(UUID playerId, java.util.List<Card> cards, boolean topToGraveyard)
+            implements PendingInteraction {
+
+        public HandTopBottomChoice(UUID playerId, java.util.List<Card> cards) {
+            this(playerId, cards, false);
+        }
 
         @Override
         public UUID decidingPlayerId() {

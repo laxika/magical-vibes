@@ -87,6 +87,7 @@ class MoggCannonTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.END_STEP));
         harness.addToBattlefield(player1, new MoggCannon());
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new LowlandGiant());
         harness.setLibrary(player2, List.of(new LowlandGiant()));

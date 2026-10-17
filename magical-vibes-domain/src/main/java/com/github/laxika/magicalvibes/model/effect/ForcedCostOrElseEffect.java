@@ -28,6 +28,11 @@ import java.util.List;
  * controller, read from the {@code ON_ATTACK} trigger's {@code attackedTargetId} (Ogre Marauder:
  * "unless defending player sacrifices a creature of their choice"). Mutually exclusive with the
  * other payer flags.
+ *
+ * <p>When {@code villainousChoice} is true the defending player is "facing a villainous choice"
+ * (CR 701.55): the prompt is offered even if the payer controls nothing the cost could sacrifice
+ * (CR 701.55b), choosing the cost then does as much as possible, and replacement effects that add
+ * further villainous choices (The Valeyard) repeat the prompt.
  */
 public record ForcedCostOrElseEffect(
         CostEffect forcedCost,
@@ -36,7 +41,8 @@ public record ForcedCostOrElseEffect(
         boolean anyPlayerMayPay,
         boolean payerIsEnchantedController,
         boolean payerIsDefendingPlayer,
-        List<CardEffect> paidEffects
+        List<CardEffect> paidEffects,
+        boolean villainousChoice
 ) implements CombatDamageTriggerContextEffect {
     public ForcedCostOrElseEffect {
         paidEffects = paidEffects == null ? List.of() : List.copyOf(paidEffects);
@@ -60,6 +66,14 @@ public record ForcedCostOrElseEffect(
             }
         }
         return TargetSpec.NONE;
+    }
+
+    public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects,
+                                  boolean optional, boolean anyPlayerMayPay,
+                                  boolean payerIsEnchantedController, boolean payerIsDefendingPlayer,
+                                  List<CardEffect> paidEffects) {
+        this(forcedCost, elseEffects, optional, anyPlayerMayPay, payerIsEnchantedController,
+                payerIsDefendingPlayer, paidEffects, false);
     }
 
     public ForcedCostOrElseEffect(CostEffect forcedCost, List<CardEffect> elseEffects) {
@@ -88,6 +102,16 @@ public record ForcedCostOrElseEffect(
     public static ForcedCostOrElseEffect defendingPlayerMayPay(CostEffect forcedCost,
                                                                List<CardEffect> elseEffects) {
         return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, false, true, List.of());
+    }
+
+    /**
+     * "Defending player faces a villainous choice — That player [pays the cost], or [else
+     * effects]" on an {@code ON_ATTACK} trigger.
+     */
+    public static ForcedCostOrElseEffect defendingPlayerFacesVillainousChoice(
+            CostEffect forcedCost, List<CardEffect> elseEffects) {
+        return new ForcedCostOrElseEffect(forcedCost, elseEffects, true, false, false, true,
+                List.of(), true);
     }
 
     /**

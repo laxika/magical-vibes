@@ -124,6 +124,7 @@ class MomirVigSimicVisionaryTest extends BaseCardTest {
         Card creature = new EnigmaEidolon();
         Card noncreature = new SimicSignet();
         harness.setLibrary(player1, List.of(noncreature, creature));
+        harness.setAutoOrderTriggers(player1, false);
         harness.castFromHand(player1, new AssaultZeppelid(), "{2}{G}{U}");
 
         var order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
@@ -149,6 +150,7 @@ class MomirVigSimicVisionaryTest extends BaseCardTest {
         Card creature = new EnigmaEidolon();
         Card noncreature = new SimicSignet();
         harness.setLibrary(player1, List.of(noncreature, creature));
+        harness.setAutoOrderTriggers(player1, false);
         harness.castFromHand(player1, new AssaultZeppelid(), "{2}{G}{U}");
 
         var order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);

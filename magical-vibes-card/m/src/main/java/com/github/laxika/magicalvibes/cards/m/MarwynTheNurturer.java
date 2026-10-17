@@ -21,7 +21,7 @@ public class MarwynTheNurturer extends Card {
 
     public MarwynTheNurturer() {
         // Whenever another Elf you control enters, put a +1/+1 counter on Marwyn, the Nurturer.
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ELF),
                         new PutCountersOnSourceEffect(1, 1, 1)));
 

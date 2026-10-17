@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -112,7 +113,7 @@ class MindlinkMechTest extends BaseCardTest {
     }
 
     @Test
-    void copyingAnAnimatedLandWithoutCopiablePowerAndToughnessDies() {
+    void copyingAnAnimatedLandStillHasTheExceptedPowerAndToughness() {
         Permanent mech = addReadyMech(player1);
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new HarmoniousEmergence()));
@@ -128,9 +129,10 @@ class MindlinkMechTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, forest.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mech);
-        harness.assertInGraveyard(player1, "Mindlink Mech");
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mech, forest);
+        assertThat(gqs.isCreature(gd, mech)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mech)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, mech)).isEqualTo(3);
     }
 
     private Permanent addReadyMech(Player player) {
@@ -142,6 +144,11 @@ class MindlinkMechTest extends BaseCardTest {
         harness.activateAbility(player, mechIndex, null, null);
         if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
             harness.handlePermanentChosen(player, crewer.getId());
+        }
+        PendingInteraction.PermanentChoice extraCrewers =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (extraCrewers != null && extraCrewers.context() instanceof PermanentChoiceContext.ActivatedAbilityCostChoice) {
+            harness.handlePermanentChosen(player, player.getId());
         }
         harness.passBothPriorities();
     }

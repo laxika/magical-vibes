@@ -19,7 +19,7 @@ public class MalcolmAlluringScoundrel extends Card {
                 SequenceEffect.of(
                         new PutCountersOnSelfEffect(CounterType.CHORUS),
                         new DrawCardEffect(1),
-                        new DiscardCardThenEffect(null,
+                        DiscardCardThenEffect.continuing(null,
                                 new MayCastDiscardedCardWithoutPayingManaCostEffect(),
                                 "a card")));
     }

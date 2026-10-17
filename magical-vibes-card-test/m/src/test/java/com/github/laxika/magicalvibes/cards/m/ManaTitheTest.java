@@ -94,7 +94,8 @@ class ManaTitheTest extends BaseCardTest {
     void canCounterItsControllersOwnSpell() {
         KavuPredator predator = new KavuPredator();
         harness.setHand(player1, List.of(predator, new ManaTithe()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);

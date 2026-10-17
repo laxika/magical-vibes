@@ -178,6 +178,8 @@ class MistriseVillageTest extends BaseCardTest {
     @Test
     @DisplayName("Unused protection expires at the end of the turn")
     void unusedProtectionExpires() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addVillageReady();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, 1, null, null);

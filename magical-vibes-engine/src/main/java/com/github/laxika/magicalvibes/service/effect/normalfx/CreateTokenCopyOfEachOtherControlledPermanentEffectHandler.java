@@ -67,6 +67,7 @@ public class CreateTokenCopyOfEachOtherControlledPermanentEffectHandler
         List<Permanent> batch = new ArrayList<>();
         List<UUID> createdTokenIds = new ArrayList<>();
         var enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Card> sourceCardsOfBatch = new ArrayList<>();
         for (Permanent sourcePermanent : sourcePermanents) {
             Card sourceCard = sourcePermanent.getCard();
             for (int copy = 0; copy < tokenMultiplier; copy++) {
@@ -84,18 +85,25 @@ public class CreateTokenCopyOfEachOtherControlledPermanentEffectHandler
                             tokenCard.getLoyalty() == null ? 0 : tokenCard.getLoyalty());
                     tokenPermanent.setSummoningSick(false);
                 }
-                battlefieldEntryService.putPermanentOntoBattlefield(
-                        gameData, entry.getControllerId(), tokenPermanent, enterTappedTypes, batch);
                 batch.add(tokenPermanent);
-                entry.getCreatedPermanentIds().add(tokenPermanent.getId());
-                createdTokenIds.add(tokenPermanent.getId());
-
-                gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
-                log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
-                        entry.getCard() == null ? "ability" : entry.getCard().getName());
-                battlefieldEntryService.handleCreatureEnteredBattlefield(
-                        gameData, entry.getControllerId(), tokenCard, null, false);
+                sourceCardsOfBatch.add(sourceCard);
             }
+        }
+        for (int i = 0; i < batch.size(); i++) {
+            Permanent tokenPermanent = batch.get(i);
+            Card sourceCard = sourceCardsOfBatch.get(i);
+            battlefieldEntryService.putPermanentOntoBattlefield(
+                    gameData, entry.getControllerId(), tokenPermanent, enterTappedTypes, batch);
+            entry.getCreatedPermanentIds().add(tokenPermanent.getId());
+            createdTokenIds.add(tokenPermanent.getId());
+
+            gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
+            log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
+                    entry.getCard() == null ? "ability" : entry.getCard().getName());
+        }
+        for (Permanent tokenPermanent : batch) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, entry.getControllerId(), tokenPermanent.getCard(), null, false);
         }
         battlefieldEntryService.checkAllyTokenEntersTriggers(
                 gameData, entry.getControllerId(), createdTokenIds);

@@ -167,6 +167,8 @@ class MagosiTheWaterveilTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(TurnStep.UPKEEP);
 

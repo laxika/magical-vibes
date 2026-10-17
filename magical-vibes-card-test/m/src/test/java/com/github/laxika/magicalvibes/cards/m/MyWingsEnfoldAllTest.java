@@ -57,6 +57,9 @@ class MyWingsEnfoldAllTest extends BaseCardTest {
                 sourceCard.getEffects(EffectSlot.SPELL)));
         harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
+        if (!gd.interaction.isAwaitingInput()) {
+            harness.passBothPriorities();
+        }
     }
 
     private void resolveRemainingStack() {

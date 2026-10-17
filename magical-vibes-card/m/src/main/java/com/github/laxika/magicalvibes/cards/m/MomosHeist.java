@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
@@ -20,7 +21,7 @@ public class MomosHeist extends Card {
         target(TargetFilters.artifact())
                 .addEffect(EffectSlot.SPELL, new GainControlOfTargetEffect(ControlDuration.PERMANENT))
                 .addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new SacrificeTargetPermanentAtEndStepEffect());
+                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET, GrantDuration.INDEFINITE))
+                .addEffect(EffectSlot.SPELL, new SacrificeTargetPermanentAtEndStepEffect(false, true));
     }
 }

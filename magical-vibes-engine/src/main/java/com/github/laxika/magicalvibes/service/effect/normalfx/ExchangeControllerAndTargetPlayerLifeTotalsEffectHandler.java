@@ -47,7 +47,9 @@ public class ExchangeControllerAndTargetPlayerLifeTotalsEffectHandler implements
         }
 
         UUID gainingPlayerId = controllerLife < targetLife ? controllerId : targetId;
-        if (!gameQueryService.canPlayerGainLife(gameData, gainingPlayerId)) {
+        UUID losingPlayerId = controllerLife < targetLife ? targetId : controllerId;
+        if (!gameQueryService.canPlayerGainLife(gameData, gainingPlayerId)
+                || !gameQueryService.canPlayerLoseLife(gameData, losingPlayerId)) {
             gameLogService.append(gameData, GameLog.text("The life totals can't be exchanged."));
             return;
         }

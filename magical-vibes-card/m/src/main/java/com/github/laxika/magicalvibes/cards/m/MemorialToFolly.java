@@ -30,6 +30,7 @@ public class MemorialToFolly extends Card {
                 List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))
+                        .targetGraveyard(true)
                         .build()),
                 "{2}{B}, {T}, Sacrifice Memorial to Folly: Return target creature card from your graveyard to your hand."
         ));

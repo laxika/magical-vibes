@@ -1458,6 +1458,7 @@ public class Card {
                 effectTargetIndexMap.put(effect, new ArrayList<>(targetIndices)));
         opponentChosenSpellTargetIndices = original.opponentChosenSpellTargetIndices;
         castTimeTargetFilter = original.castTimeTargetFilter;
+        allowSharedTargets = original.allowSharedTargets;
     }
 
     // ── Effect management ───────────────────────────────────────────

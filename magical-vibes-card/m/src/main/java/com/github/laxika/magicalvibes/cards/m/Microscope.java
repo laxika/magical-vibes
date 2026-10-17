@@ -18,12 +18,12 @@ public class Microscope extends Card {
 
     public Microscope() {
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 null,
                 List.of(new SurveilEffect(1)),
                 "{T}: Surveil 1."));
         addActivatedAbility(new ActivatedAbility(
-                false,
+                true,
                 null,
                 List.of(new AnimateTargetGraveyardCardEffect(
                         0,

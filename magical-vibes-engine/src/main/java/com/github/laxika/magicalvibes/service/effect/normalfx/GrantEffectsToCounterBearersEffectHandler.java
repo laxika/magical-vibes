@@ -76,7 +76,7 @@ public class GrantEffectsToCounterBearersEffectHandler implements NormalEffectHa
     private static Permanent findPermanentOfCard(GameData gameData, UUID cardId) {
         List<Permanent> found = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (permanent.getCard().getId().equals(cardId)) {
+            if (permanent.getId().equals(cardId) || permanent.getCard().getId().equals(cardId)) {
                 found.add(permanent);
             }
         });

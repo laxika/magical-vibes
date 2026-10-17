@@ -865,7 +865,8 @@ public class ActivatedAbilityExecutionService {
                     revertable ? AbilityActivationService.snapshotCreatureManaColors(pool) : null;
             int pendingTriggersBefore = gameData.pendingManaAbilityTriggers.size();
 
-            resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, effectiveXValue);
+            resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, effectiveXValue,
+                    ability.isRequiresTap());
             boolean manaTypeChoicePending = AbilityActivationService.isAwaitingOwnManaColorChoice(
                     gameData, playerId);
             if (!manaTypeChoicePending) {
@@ -1199,19 +1200,19 @@ public class ActivatedAbilityExecutionService {
         return result;
     }
 
-    private void resolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects, int xValue) {
+    private void resolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects, int xValue, boolean tappedForMana) {
         // CR 603.2 / 603.3: triggers fired from effects resolving inside a mana ability
         // (e.g. Pristine Talisman's life-gain triggering Sanguine Bond) must queue and
         // wait for the next priority window, not land on the stack immediately.
         gameData.manaAbilityResolutionDepth++;
         try {
-            doResolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, xValue);
+            doResolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, xValue, tappedForMana);
         } finally {
             gameData.manaAbilityResolutionDepth--;
         }
     }
 
-    private void doResolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects, int xValue) {
+    private void doResolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects, int xValue, boolean tappedForMana) {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         boolean snowSource = gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.SNOW);
         boolean caveSource = predicateEvaluationService.matchesPermanentPredicate(
@@ -1226,8 +1227,10 @@ public class ActivatedAbilityExecutionService {
         Map<ManaColor, Integer> artifactSourceTagsBefore = nonTreasureArtifactSource
                 ? manaPool.getArtifactSourceManaTotals() : null;
 
-        // Mana-production replacement effects are applied to the tapped permanent.
-        int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId, permanent);
+        // Mana-production replacement effects ("if you tap a permanent for mana") apply only to a
+        // mana ability whose cost includes {T}.
+        int manaMultiplier = tappedForMana
+                ? gameQueryService.manaProductionMultiplier(gameData, playerId, permanent) : 1;
 
         boolean landManaReplaced = false;
         if (gameQueryService.isLand(gameData, permanent)) {
@@ -1440,8 +1443,10 @@ public class ActivatedAbilityExecutionService {
                             gameData.id, player.getUsername());
                 }
             } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
+                // A fixed-color combination is chosen once; the multiplier applies to each chosen mana.
                 int picks = amountEvaluationService.evaluate(gameData, ofColors.amount(),
-                        AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
+                        AmountContext.forManaAbility(permanent, playerId, xValue))
+                        * (ofColors.colors().size() == 1 ? manaMultiplier : 1);
                 if (picks <= 0) {
                     // no-op
                 } else if (ofColors.colors().size() == 1) {

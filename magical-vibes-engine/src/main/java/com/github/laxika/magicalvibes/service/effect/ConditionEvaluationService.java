@@ -376,6 +376,7 @@ import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceExertedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedBattleThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceAttackingPlayer;
 import com.github.laxika.magicalvibes.model.condition.SourceCardToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedDuringControllersLastTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedOrBlockedThisCombat;
@@ -539,6 +540,8 @@ public class ConditionEvaluationService {
             CardType.ENCHANTMENT, CardType.LAND, CardType.PLANESWALKER);
     private static final ThreadLocal<Set<UUID>> COVEN_EVALUATION =
             ThreadLocal.withInitial(HashSet::new);
+    private static final ThreadLocal<Set<UUID>> SELF_KEYWORD_EVALUATION =
+            ThreadLocal.withInitial(HashSet::new);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -615,7 +618,7 @@ public class ConditionEvaluationService {
                     sourceEnteredThisTurn(gameData, ctx);
             case SourceEnteredBattlefieldThisTurn ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
-                yield source != null && sourceEnteredBattlefieldThisTurn(gameData, source);
+                yield source != null && sourceEnteredBattlefieldThisTurn(gameData, ctx, source);
             }
             case PlaneswalkedToPlaneThisTurn c ->
                     gameData.planechase != null
@@ -1697,7 +1700,7 @@ public class ConditionEvaluationService {
             }
             case SelfHasKeyword c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
-                yield source != null && source.hasKeyword(c.keyword());
+                yield source != null && selfHasKeyword(gameData, source, c.keyword());
             }
             case SourceCardInCommandZone ignored ->
                     isSourceCardInCommandZone(gameData, ctx);
@@ -1877,6 +1880,15 @@ public class ConditionEvaluationService {
             case TriggeringPermanentHasKeyword c -> {
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                if (triggeringPermanent == null && ctx.triggeringPermanentId() != null) {
+                    // The permanent left the battlefield: use its last known information (CR 608.2h).
+                    Permanent lastKnown = gameData.departedPermanentSnapshots.values().stream()
+                            .filter(snapshot -> snapshot.getId().equals(ctx.triggeringPermanentId()))
+                            .findFirst().orElse(null);
+                    if (lastKnown != null) {
+                        yield lastKnown.hasKeyword(c.keyword());
+                    }
+                }
                 yield triggeringPermanent != null
                         ? gameQueryService.hasKeyword(gameData, triggeringPermanent, c.keyword())
                         : ctx.triggeringCard() != null && ctx.triggeringCard().hasKeyword(c.keyword());
@@ -1921,6 +1933,11 @@ public class ConditionEvaluationService {
             case SourceAttackedBattleThisTurn ignored ->
                     ctx.sourcePermanentId() != null
                             && gameData.permanentsThatAttackedBattlesThisTurn.contains(ctx.sourcePermanentId());
+            case SourceAttackingPlayer ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isAttacking() && source.getAttackTarget() != null
+                        && gameData.playerIds.contains(source.getAttackTarget());
+            }
             case DevouredCreature ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && !source.getDevouredCreatures().isEmpty();
@@ -2593,6 +2610,12 @@ public class ConditionEvaluationService {
             Permanent live = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
             if (live != null) return live;
         }
+        if (ctx.sourcePermanent() == null && ctx.sourcePermanentId() != null) {
+            // The source left the battlefield: use its last known information (CR 608.2h).
+            return gameData.departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> snapshot.getId().equals(ctx.sourcePermanentId()))
+                    .findFirst().orElse(null);
+        }
         return ctx.sourcePermanent();
     }
 
@@ -2754,6 +2777,27 @@ public class ConditionEvaluationService {
             evaluatingControllers.remove(ctx.controllerId());
             if (evaluatingControllers.isEmpty()) {
                 COVEN_EVALUATION.remove();
+            }
+        }
+    }
+
+    /**
+     * Whether the source currently has the keyword after the layered ability pass (so a later grant of the
+     * keyword restores it after an earlier removal). A conditional static ability that depends on its own
+     * source's keywords re-enters the layered pass; the nested evaluation falls back to the permanent's own
+     * keyword state instead of recursing.
+     */
+    private boolean selfHasKeyword(GameData gameData, Permanent source, Keyword keyword) {
+        Set<UUID> evaluating = SELF_KEYWORD_EVALUATION.get();
+        if (!evaluating.add(source.getId())) {
+            return source.hasKeyword(keyword);
+        }
+        try {
+            return gameQueryService.hasKeyword(gameData, source, keyword);
+        } finally {
+            evaluating.remove(source.getId());
+            if (evaluating.isEmpty()) {
+                SELF_KEYWORD_EVALUATION.remove();
             }
         }
     }
@@ -3330,7 +3374,8 @@ public class ConditionEvaluationService {
         if (battlefield == null) return 0;
         return battlefield.stream()
                 .filter(p -> matchesPermanent(gameData, p, filter, ctx))
-                .map(p -> p.getCard().getName())
+                .map(p -> gameQueryService.getEffectiveName(gameData, p))
+                .filter(java.util.Objects::nonNull)
                 .distinct()
                 .count();
     }
@@ -3845,6 +3890,35 @@ public class ConditionEvaluationService {
                 .count();
     }
 
+    /**
+     * Counts the declared attackers that left the battlefield after the attack was declared, using their
+     * last known attack target (for example Mangara, the Diplomat's ruling on attackers that die while the
+     * trigger is on the stack). Attackers that are still on the battlefield, including phased-out ones, are
+     * judged by their current status instead and are not counted here.
+     */
+    public long countDepartedDeclaredAttackersAtController(GameData gameData, ConditionContext ctx,
+                                                           boolean includePlaneswalkers,
+                                                           List<Permanent> declaredAttackerSnapshots) {
+        UUID controllerId = ctx.controllerId();
+        if (controllerId == null || declaredAttackerSnapshots == null || declaredAttackerSnapshots.isEmpty()) {
+            return 0;
+        }
+        Set<UUID> remaining = new HashSet<>();
+        gameData.forEachPermanent((owner, permanent) -> remaining.add(permanent.getId()));
+        gameData.phasedOutPermanents.values().forEach(list -> list.forEach(p -> remaining.add(p.getId())));
+        Set<UUID> controlledPlaneswalkerIds = includePlaneswalkers
+                ? gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                        .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                        .map(Permanent::getId)
+                        .collect(java.util.stream.Collectors.toSet())
+                : Set.of();
+        return declaredAttackerSnapshots.stream()
+                .filter(snapshot -> !remaining.contains(snapshot.getId()))
+                .filter(snapshot -> controllerId.equals(snapshot.getAttackTarget())
+                        || controlledPlaneswalkerIds.contains(snapshot.getAttackTarget()))
+                .count();
+    }
+
     private long countOpponentAttackersAtControllerOrPlaneswalkers(GameData gameData,
                                                                     ConditionContext ctx,
                                                                     boolean includePlaneswalkers) {
@@ -4266,9 +4340,16 @@ public class ConditionEvaluationService {
                         card, condition.predicate(), null));
     }
 
-    private boolean sourceEnteredBattlefieldThisTurn(GameData gameData, Permanent source) {
-        return gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
-                .flatMap(List::stream)
+    private boolean sourceEnteredBattlefieldThisTurn(GameData gameData, ConditionContext ctx, Permanent source) {
+        if (gameQueryService.findPermanentById(gameData, source.getId()) == null) {
+            // The source left the battlefield: its last known information says when that object entered,
+            // not when a later object of the same card did.
+            return source.getEnteredBattlefieldTurnNumber() == gameData.turnNumber;
+        }
+        Stream<Card> entered = ctx.controllerId() == null
+                ? gameData.permanentsEnteredBattlefieldThisTurn.values().stream().flatMap(List::stream)
+                : gameData.permanentsEnteredBattlefieldThisTurn.getOrDefault(ctx.controllerId(), List.of()).stream();
+        return entered
                 .anyMatch(card -> card.getId().equals(source.getCard().getId()));
     }
 

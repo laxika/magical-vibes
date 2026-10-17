@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -8,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.MirrorOfFateEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,7 +34,16 @@ public class MirrorOfFateEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = entry.getControllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
-        List<Card> exiledCards = gameData.getPlayerExiledCards(controllerId);
+        Set<UUID> faceDownIds;
+        synchronized (gameData.exiledCards) {
+            faceDownIds = gameData.exiledCards.stream()
+                    .filter(ExiledCardEntry::faceDown)
+                    .map(exiled -> exiled.card().getId())
+                    .collect(Collectors.toSet());
+        }
+        List<Card> exiledCards = gameData.getPlayerExiledCards(controllerId).stream()
+                .filter(card -> !faceDownIds.contains(card.getId()))
+                .toList();
         if (exiledCards.isEmpty()) {
             // No exiled cards to choose — just exile the entire library
             exileSupport.exileLibraryAndPutChosenOnTop(gameData, controllerId, List.of());

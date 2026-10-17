@@ -82,7 +82,7 @@ class ManholeCoverTest extends BaseCardTest {
     void flashCanProtectOpponentsCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.END_STEP);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.setHand(player1, List.of(new ManholeCover()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

@@ -7,8 +7,12 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -27,6 +31,9 @@ public class HandTopBottomChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+
+    @Autowired @Lazy
+    private GraveyardService graveyardService;
 
     @Override
     public Class<PendingInteraction.HandTopBottomChoice> handledType() {
@@ -67,9 +74,13 @@ public class HandTopBottomChoiceInteractionHandler
         Card handCard = handTopBottomCards.get(handCardIndex);
         gameData.addCardToHand(playerId, handCard);
 
-        // Put the chosen card on top of library
+        // Put the chosen card on top of library, or into the graveyard (not a mill) when requested
         Card topCard = handTopBottomCards.get(topCardIndex);
-        deck.add(0, topCard);
+        if (interaction.topToGraveyard()) {
+            graveyardService.addCardToGraveyard(gameData, playerId, topCard, Zone.LIBRARY);
+        } else {
+            deck.add(0, topCard);
+        }
 
         // Put the remaining card on the bottom of library
         for (int i = 0; i < count; i++) {
@@ -83,9 +94,13 @@ public class HandTopBottomChoiceInteractionHandler
 
         String logMsg;
         if (count == 2) {
-            logMsg = player.getUsername() + " puts one card into their hand and one on top of their library.";
+            logMsg = player.getUsername() + (interaction.topToGraveyard()
+                    ? " puts one card into their hand and one into their graveyard."
+                    : " puts one card into their hand and one on top of their library.");
         } else {
-            logMsg = player.getUsername() + " puts one card into their hand, one on top of their library, and one on the bottom.";
+            logMsg = player.getUsername() + (interaction.topToGraveyard()
+                    ? " puts one card into their hand, one into their graveyard, and one on the bottom."
+                    : " puts one card into their hand, one on top of their library, and one on the bottom.");
         }
         gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} completed hand/top/bottom choice", gameData.id, player.getUsername());

@@ -72,10 +72,8 @@ public class MadcapExperimentEffectHandler implements NormalEffectHandlerBean {
                 permanent.setCounterCount(CounterType.LOYALTY, artifact.getLoyalty());
                 permanent.setSummoningSick(false);
             }
-            if (artifact.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(
-                        gameData, controllerId, artifact, null, false);
-            }
+            battlefieldEntryService.handleCreatureEnteredBattlefield(
+                    gameData, controllerId, artifact, null, false);
             revealedCards.remove(artifact);
         } else if (!revealedCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(

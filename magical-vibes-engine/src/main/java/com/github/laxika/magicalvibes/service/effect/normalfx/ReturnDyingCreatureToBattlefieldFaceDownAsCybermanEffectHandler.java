@@ -47,7 +47,6 @@ public class ReturnDyingCreatureToBattlefieldFaceDownAsCybermanEffectHandler
         Card cardToReturn = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);
         if (cardToReturn == null || ownerId == null
-                || !cardToReturn.hasType(CardType.CREATURE)
                 || gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, Zone.GRAVEYARD)) {
             return;
         }

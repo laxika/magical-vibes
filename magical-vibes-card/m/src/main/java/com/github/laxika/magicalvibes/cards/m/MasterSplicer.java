@@ -28,7 +28,7 @@ public class MasterSplicer extends Card {
 
         // Golems you control get +1/+1.
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(
-                1, 1, GrantScope.OWN_CREATURES,
+                1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }
 }

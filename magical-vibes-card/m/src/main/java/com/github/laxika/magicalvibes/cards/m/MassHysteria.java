@@ -15,6 +15,6 @@ public class MassHysteria extends Card {
 
     public MassHysteria() {
         // All creatures have haste.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
     }
 }

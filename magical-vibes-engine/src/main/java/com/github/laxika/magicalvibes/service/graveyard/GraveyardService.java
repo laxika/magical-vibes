@@ -192,6 +192,9 @@ public class GraveyardService {
         cardsEnteredGraveyard.stream().filter(card -> card.hasType(CardType.LAND)).findFirst()
                 .ifPresent(card -> triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(
                         gameData, targetPlayerId, card, true));
+        cardsEnteredGraveyard.stream().filter(card -> !isToken(gameData, card) && isPermanentCard(card)).findFirst()
+                .ifPresent(card -> triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(
+                        gameData, targetPlayerId, card, true));
         if (!cardsEnteredGraveyard.isEmpty()) {
             ManaCost manaCost = cardsEnteredGraveyard.getLast().getParsedManaCost();
             if (manaCost != null) {
@@ -754,7 +757,8 @@ public class GraveyardService {
                     card, battlefieldPermanentId, battlefieldSnapshot);
         }
         if (!isToken(gameData, card) && isPermanentCard(card)) {
-            triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+            triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card,
+                    suppressOncePerBatchLandTriggers ? Boolean.FALSE : null);
             if (sourceZone == Zone.LIBRARY) {
                 triggerCollectionService.checkPermanentCardPutIntoGraveyardFromLibraryTriggers(
                         gameData, ownerId, card);
@@ -1378,8 +1382,8 @@ public class GraveyardService {
     }
 
     /**
-     * Matopi Golem: a regeneration shield granted by its ability puts a -1/-1 counter on the
-     * permanent once that shield is chosen and spent.
+     * Matopi Golem: when a regeneration shield granted by its ability is chosen and spent, a
+     * triggered ability that puts a -1/-1 counter on the permanent is put on the stack.
      */
     private void spendMinusOneCounterRegenerationShield(GameData gameData, Permanent perm) {
         if (perm.getMinusOneCounterRegenerationShield() <= 0) {
@@ -1387,23 +1391,13 @@ public class GraveyardService {
         }
         perm.setMinusOneCounterRegenerationShield(perm.getMinusOneCounterRegenerationShield() - 1);
 
-        if (gameQueryService.cantHaveCounters(gameData, perm)
-                || gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
-            return;
-        }
-        int amount = gameQueryService.reduceMinusOneMinusOneCounters(gameData, perm, 1);
-        if (amount <= 0) {
-            return;
-        }
-        perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
-                perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + amount);
-        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " gets a -1/-1 counter."));
-        log.info("Game {} - {} gets a -1/-1 counter (Matopi Golem regenerate rider)",
-                gameData.id, perm.getCard().getName());
-
-        UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-        permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
-                gameData, perm, amount, controllerId);
+        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(),
+                gameQueryService.findPermanentController(gameData, perm.getId()),
+                perm.getCard().getName() + "'s regeneration ability",
+                new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(-1, -1, 1))),
+                perm.getId(), perm.getId());
+        trigger.setNonTargeting(true);
+        gameData.enqueueTrigger(trigger);
     }
 
     /**

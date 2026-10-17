@@ -516,7 +516,7 @@ public class CounterSupport {
         }
         triggerCollectionService.checkControllerCountersSpellTriggers(gameData, counteringPlayerId);
         if (!target.isCopy()) {
-            triggerCollectionService.checkControllerSpellCounteredTriggers(gameData, target.getControllerId());
+            triggerCollectionService.checkControllerSpellCounteredTriggers(gameData, target.getCasterId());
         }
     }
 

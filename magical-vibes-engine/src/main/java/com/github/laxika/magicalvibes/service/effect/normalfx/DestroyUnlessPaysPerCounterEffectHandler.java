@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * "Destroy this permanent unless you pay {@code costPerCounter} for each [counter] on it."
- * With zero counters the cost is empty and the permanent is left alone (no prompt).
+ * With zero counters the cost is {0}; the controller may still decline to pay it (CR 118.12).
  */
 @Component
 @RequiredArgsConstructor
@@ -40,11 +40,7 @@ public class DestroyUnlessPaysPerCounterEffectHandler implements NormalEffectHan
         }
 
         int counters = self.getCounterCount(e.counterType());
-        if (counters <= 0) {
-            return;
-        }
-
-        String totalCost = e.costPerCounter().repeat(counters);
+        String totalCost = counters <= 0 ? "{0}" : e.costPerCounter().repeat(counters);
         CardEffect elseEffect = e.sacrifice() ? new SacrificeSelfEffect() : new DestroyReferencedPermanentEffect(PermanentReference.SOURCE);
         ForcedCostOrElseEffect payOrDestroy = new ForcedCostOrElseEffect(
                 new PayManaCost(totalCost),

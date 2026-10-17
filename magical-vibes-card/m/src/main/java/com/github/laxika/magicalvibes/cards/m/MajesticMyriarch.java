@@ -53,7 +53,8 @@ public class MajesticMyriarch extends Card {
                             new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                                     new PermanentIsCreaturePredicate(),
                                     new PermanentHasKeywordPredicate(keyword)))),
-                            new GrantKeywordEffect(keyword, GrantScope.SELF)));
+                            new GrantKeywordEffect(keyword, GrantScope.SELF),
+                            false));
         }
     }
 }

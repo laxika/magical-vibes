@@ -62,6 +62,13 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
                 preventRegenerationWithoutDamage, sourceIsTriggeringPermanent, false);
     }
 
+    /** Returns the same effect with a different damage amount (for example one fixed at trigger time). */
+    public DealDamageToAnyTargetEffect withDamage(DynamicAmount newDamage) {
+        return new DealDamageToAnyTargetEffect(newDamage, cantRegenerate, exileInsteadOfDie, targetGroup,
+                unpreventableWhen, onlyIfSacrificed, cantBeRedirectedWhenUnpreventable,
+                preventRegenerationWithoutDamage, sourceIsTriggeringPermanent, recordDamageDealt);
+    }
+
     /** Stores the damage actually dealt in the stack entry for subsequent effects. */
     public DealDamageToAnyTargetEffect recordingDamageDealt() {
         return new DealDamageToAnyTargetEffect(damage, cantRegenerate, exileInsteadOfDie, targetGroup,

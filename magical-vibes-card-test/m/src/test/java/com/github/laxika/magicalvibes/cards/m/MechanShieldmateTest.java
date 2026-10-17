@@ -121,6 +121,7 @@ class MechanShieldmateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 

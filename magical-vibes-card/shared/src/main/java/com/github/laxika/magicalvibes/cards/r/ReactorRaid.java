@@ -20,7 +20,7 @@ public class ReactorRaid extends Card {
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate())),
                         new DrawCardEffect(2),
-                        "an artifact or creature"),
+                        "an artifact or creature", false, false),
                 "Sacrifice an artifact or creature?"));
     }
 }

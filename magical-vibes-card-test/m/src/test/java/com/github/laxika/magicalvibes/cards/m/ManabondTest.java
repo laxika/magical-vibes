@@ -149,7 +149,8 @@ class ManabondTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard() == controllerLand);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(controllerSpell);
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentLand, opponentSpell);
+        // The game moves on to the opponent's turn after the trigger resolves, so only its draw may follow.
+        assertThat(gd.playerHands.get(player1.getId())).startsWith(opponentLand, opponentSpell).hasSize(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }

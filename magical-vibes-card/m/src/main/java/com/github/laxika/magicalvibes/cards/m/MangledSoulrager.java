@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 public class MangledSoulrager extends Card {
 
     public MangledSoulrager() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SwitchAllCreaturesPowerToughnessEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SwitchAllCreaturesPowerToughnessEffect(true));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new CreateBoonEffect(12, new SwitchPowerToughnessEffect()));
+                new CreateBoonEffect(12, new SwitchPowerToughnessEffect(false, true)));
         addCycling("{1}{U}");
     }
 }

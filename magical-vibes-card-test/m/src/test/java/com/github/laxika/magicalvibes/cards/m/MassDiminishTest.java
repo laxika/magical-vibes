@@ -52,10 +52,11 @@ class MassDiminishTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, targetBear)).isEqualTo(1);
 
-        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, targetBear)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, targetBear)).isEqualTo(2);

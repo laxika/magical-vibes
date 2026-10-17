@@ -220,11 +220,20 @@ public record PreventDamageFromChosenSourceEffect(
                 false, false, null, null, false, false, false, false);
     }
 
+    /** Martyr's Cause: the ability targets any target, and only the chosen source's next damage to it is prevented. */
+    public static PreventDamageFromChosenSourceEffect nextDamageToTarget() {
+        return new PreventDamageFromChosenSourceEffect(
+                ChosenSourcePreventionScope.NEXT_DAMAGE_TO_TARGET,
+                false, false, null, null, false, false, false, false);
+    }
+
     @Override
     public TargetSpec targetSpec() {
-        return scope == ChosenSourcePreventionScope.NEXT_DAMAGE_TO_TARGET_CREATURE
-                ? TargetSpec.benign(TargetPredicates.creature())
-                : TargetSpec.NONE;
+        return switch (scope) {
+            case NEXT_DAMAGE_TO_TARGET_CREATURE -> TargetSpec.benign(TargetPredicates.creature());
+            case NEXT_DAMAGE_TO_TARGET -> TargetSpec.benign(TargetPredicates.anyTarget());
+            default -> TargetSpec.NONE;
+        };
     }
 
     /** Auriok Replica: prevent all damage the chosen source would deal to you this turn. */

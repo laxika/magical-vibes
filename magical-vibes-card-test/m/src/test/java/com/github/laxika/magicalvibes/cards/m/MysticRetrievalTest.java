@@ -164,6 +164,7 @@ class MysticRetrievalTest extends BaseCardTest {
     @DisplayName("Flashback exiles Mystic Retrieval when its target disappears")
     void flashbackExilesSpellWhenTargetBecomesIllegal() {
         Card retrieval = new MysticRetrieval();
+        harness.setHand(player1, List.of());
         Card instant = new HolyDay();
         harness.setGraveyard(player1, List.of(retrieval, instant));
         harness.addMana(player1, ManaColor.RED, 3);

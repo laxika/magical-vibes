@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
@@ -149,10 +149,10 @@ class MirrodinBesiegedTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setGraveyard(player1, artifactGraveyard(15));
         harness.setHand(player2, List.of(new Demystify()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
 
         advanceToEndStep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.addMana(player2, ManaColor.WHITE, 1);
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Mirrodin Besieged"));
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Mirrodin Besieged");

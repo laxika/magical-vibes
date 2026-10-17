@@ -428,7 +428,8 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.handTopBottom(
                 cardViews(interaction.cards()),
                 "Look at the top " + interaction.cards().size()
-                        + " cards of your library. Choose one to put into your hand.");
+                        + " cards of your library. Choose one to put into your hand"
+                        + (interaction.topToGraveyard() ? " and one to put into your graveyard." : "."));
     }
 
     private InteractionPromptMessage projectHandBottomExileChoice(

@@ -164,7 +164,7 @@ class MurmuringBoskTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handleCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
 
         assertThat(findLand(player1).isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);

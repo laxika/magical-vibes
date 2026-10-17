@@ -5,11 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongCardsInGraveyard;
-import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.MillAsEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
@@ -18,8 +15,7 @@ public class MonstrousWarLeech extends Card {
 
     public MonstrousWarLeech() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{U}"));
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
-                new MillEffect(4, MillRecipient.CONTROLLER)));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillAsEntersEffect(4, true));
 
         var greatestManaValue = new GreatestManaValueAmongCardsInGraveyard(
                 new CardTruePredicate(), CountScope.CONTROLLER);

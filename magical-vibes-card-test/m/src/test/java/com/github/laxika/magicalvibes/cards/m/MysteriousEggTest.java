@@ -75,6 +75,8 @@ class MysteriousEggTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castWithAlternateCost(player1, 0, egg.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BOTTOM");
         resolveAllTriggers();
 
         assertThat(egg.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

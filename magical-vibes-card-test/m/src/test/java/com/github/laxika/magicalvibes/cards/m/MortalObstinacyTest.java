@@ -184,8 +184,8 @@ class MortalObstinacyTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchantment);
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(enchantment.getCard());
     }

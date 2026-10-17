@@ -153,7 +153,8 @@ class MetallicRebukeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Metallic Rebuke");
     }
 }

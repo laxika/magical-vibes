@@ -20,6 +20,7 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
+    private final com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService permanentCopierService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,15 +33,24 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
         UUID auraPermanentId = copyEffect.auraPermanentId() != null
                 ? copyEffect.auraPermanentId() : entry.getSourcePermanentId();
         Permanent aura = gameQueryService.findPermanentById(gameData, auraPermanentId);
-        Permanent enchanted = null;
+        UUID enchantedId = null;
 
         if (aura != null && aura.getAttachedTo() != null) {
-            enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+            enchantedId = aura.getAttachedTo();
         } else if (aura == null && copyEffect.auraPermanentId() == null) {
             Permanent auraSnapshot = entry.getSourcePermanentSnapshot();
-            if (auraSnapshot != null && auraSnapshot.getAttachedTo() != null) {
-                enchanted = gameQueryService.findPermanentById(gameData, auraSnapshot.getAttachedTo());
+            if (auraSnapshot != null) {
+                enchantedId = auraSnapshot.getAttachedTo();
             }
+        }
+        Permanent enchanted = enchantedId == null
+                ? null : gameQueryService.findPermanentById(gameData, enchantedId);
+        if (enchanted == null && enchantedId != null) {
+            UUID departedId = enchantedId;
+            enchanted = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(departed -> departedId.equals(departed.getId()))
+                    .findFirst()
+                    .orElse(null);
         }
 
         if (enchanted == null) {
@@ -51,7 +61,7 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
             return;
         }
 
-        Card sourceCard = enchanted.getCard();
+        Card sourceCard = permanentCopierService.copiableCard(enchanted);
         tokenCopySupport.createTokenCopies(gameData, entry,
                 Collections.nCopies(copyEffect.amount(), sourceCard), enchanted,
                 copyEffect.copyEffect());

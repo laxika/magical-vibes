@@ -109,13 +109,13 @@ class MarshalsAnthemTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1)).filteredOn(p -> p.getCard() instanceof GrizzlyBears)
+        assertThat(gd.playerBattlefields.get(player1.getId())).filteredOn(p -> p.getCard() instanceof GrizzlyBears)
                 .hasSize(2).allSatisfy(p -> {
                     assertThat(p.isTapped()).isFalse();
                     assertThat(gqs.getEffectivePower(gd, p)).isEqualTo(3);
                     assertThat(gqs.getEffectiveToughness(gd, p)).isEqualTo(3);
                 });
-        assertThat(gd.playerGraveyards.get(player1)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 

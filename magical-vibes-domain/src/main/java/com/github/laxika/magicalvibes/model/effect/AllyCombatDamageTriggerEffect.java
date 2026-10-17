@@ -6,11 +6,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Marker effect for the ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER slot.
  * When a matching creature deals combat damage to a player, the wrapped effect is put on the stack.
  * {@code bindSourceToDealer} makes the dealing creature the effect source. {@code oncePerDamageStep}
- * models the batched "one or more" wording.
+ * models the batched "one or more" wording. {@code opponentDealtDamage} models "whenever your
+ * opponents are dealt combat damage" wording: the dealer may be controlled by any player, but the damaged
+ * player must be an opponent of the trigger's controller.
  */
 public record AllyCombatDamageTriggerEffect(PermanentPredicate dealerPredicate, CardEffect effect,
                                             boolean bindSourceToDealer,
-                                            boolean oncePerDamageStep) implements CardEffect {
+                                            boolean oncePerDamageStep,
+                                            boolean opponentDealtDamage) implements CardEffect {
+
+    public AllyCombatDamageTriggerEffect(PermanentPredicate dealerPredicate, CardEffect effect,
+                                         boolean bindSourceToDealer, boolean oncePerDamageStep) {
+        this(dealerPredicate, effect, bindSourceToDealer, oncePerDamageStep, false);
+    }
 
     public AllyCombatDamageTriggerEffect(PermanentPredicate dealerPredicate, CardEffect effect) {
         this(dealerPredicate, effect, false, false);

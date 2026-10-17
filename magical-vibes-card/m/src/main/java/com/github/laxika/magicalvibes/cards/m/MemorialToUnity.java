@@ -27,7 +27,7 @@ public class MemorialToUnity extends Card {
                 true,
                 "{2}{G}",
                 List.of(new SacrificeSelfCost(),
-                        LookAtTopCardsEffect.mayRevealOneToHandRestOnBottom(5, new CardTypePredicate(CardType.CREATURE))),
+                        LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(5, new CardTypePredicate(CardType.CREATURE))),
                 "{2}{G}, {T}, Sacrifice Memorial to Unity: Look at the top five cards of your library. You may reveal a creature card from among them and put it into your hand. Put the rest on the bottom of your library in a random order."
         ));
     }

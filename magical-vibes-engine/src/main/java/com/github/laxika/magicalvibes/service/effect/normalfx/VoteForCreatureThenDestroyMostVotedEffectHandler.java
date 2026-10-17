@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.VoteForCreatureThenDestroyMostVotedEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +27,7 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
+    private final VotingFinishedSupport votingFinishedSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +37,7 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
-                new HashMap<>(), entry.getCard().getName());
+                entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
     }
 
     public void completeVote(GameData gameData, List<UUID> permanentIds,
@@ -44,10 +46,11 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
         if (!permanentIds.isEmpty()) {
             votes.merge(permanentIds.getFirst(), 1, Integer::sum);
         }
-        beginNextVote(gameData, context.remainingPlayerIds(), votes, context.sourceName());
+        beginNextVote(gameData, context.remainingPlayerIds(), context.effectControllerId(), votes,
+                context.sourceName());
     }
 
-    private void beginNextVote(GameData gameData, List<UUID> remainingPlayerIds,
+    private void beginNextVote(GameData gameData, List<UUID> remainingPlayerIds, UUID effectControllerId,
                                Map<UUID, Integer> votes, String sourceName) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         while (!remaining.isEmpty()) {
@@ -60,11 +63,12 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
             playerInputService.beginMultiPermanentChoice(
                     gameData, choosingPlayerId, creatureIds, 1,
                     new MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice(
-                            remaining, votes, sourceName),
+                            effectControllerId, remaining, votes, sourceName),
                     sourceName + " — vote for up to one creature.");
             return;
         }
 
+        votingFinishedSupport.finishVoting(gameData, effectControllerId);
         finishVote(gameData, votes, sourceName);
     }
 

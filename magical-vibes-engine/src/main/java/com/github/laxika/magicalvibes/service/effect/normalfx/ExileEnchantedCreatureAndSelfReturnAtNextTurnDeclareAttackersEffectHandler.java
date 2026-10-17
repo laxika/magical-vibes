@@ -39,39 +39,42 @@ public class ExileEnchantedCreatureAndSelfReturnAtNextTurnDeclareAttackersEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null || !aura.isAttached() || aura.getAttachedTo() == null) {
-            return;
-        }
-
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        // The creature is the one that attacked when the trigger went on the stack, so moving or
+        // destroying the Aura afterwards does not change which creature is exiled.
+        Permanent enchanted = entry.getTriggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         UUID enchantedControllerId = enchanted == null
                 ? null : gameQueryService.findPermanentController(gameData, enchanted.getId());
         if (enchanted == null || enchantedControllerId == null) {
             return;
         }
 
+        Permanent aura = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         List<Card> enchantedCards = enchanted.cardsLeavingBattlefield();
-        List<Card> auraCards = aura.cardsLeavingBattlefield();
-        if (enchantedCards.isEmpty() || auraCards.isEmpty()) {
+        List<Card> auraCards = aura == null ? List.of() : aura.cardsLeavingBattlefield();
+        if (enchantedCards.isEmpty() || (aura != null && auraCards.isEmpty())) {
             return;
         }
 
         Card enchantedCard = enchantedCards.getFirst();
-        Card auraCard = auraCards.getFirst();
-        if (!permanentRemovalService.removePermanentToExile(gameData, aura)
-                || !permanentRemovalService.removePermanentToExile(gameData, enchanted)) {
+        if (aura != null && !permanentRemovalService.removePermanentToExile(gameData, aura)) {
+            return;
+        }
+        if (!permanentRemovalService.removePermanentToExile(gameData, enchanted)) {
             return;
         }
 
-        gameData.queueDelayedAction(new PendingExileReturn(
+        List<Card> returningAuras = aura == null ? List.of() : List.of(auraCards.getFirst());
+        Set<UUID> attachToCardIds = aura == null ? Set.of() : Set.of(auraCards.getFirst().getId());
+        PendingExileReturn pendingReturn = new PendingExileReturn(
                 enchantedCard,
                 enchantedControllerId,
                 true,
                 false,
                 TurnStep.DECLARE_ATTACKERS,
                 0,
-                List.of(auraCard),
+                returningAuras,
                 true,
                 false,
                 true,
@@ -81,17 +84,20 @@ public class ExileEnchantedCreatureAndSelfReturnAtNextTurnDeclareAttackersEffect
                 false,
                 false,
                 0,
-                Set.of(auraCard.getId()),
+                attachToCardIds,
                 null,
                 0,
                 Map.of(),
-                false));
+                false);
+        gameData.queueDelayedAction(pendingReturn);
+        gameData.pendingExileReturnEarliestTurns.put(pendingReturn, gameData.turnNumber + 1);
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-        gameLogService.append(gameData, GameLog.cardThen(enchantedCard,
-                " and " + auraCard.getName()
-                        + " are exiled. They return at the beginning of their controller's next declare-attackers step."));
-        log.info("Game {} - {} and its Aura {} are exiled until the enchanted creature controller's next declare-attackers step",
-                gameData.id, enchantedCard.getName(), auraCard.getName());
+        gameLogService.append(gameData, GameLog.cardThen(enchantedCard, aura == null
+                ? " is exiled. It returns at the beginning of its controller's next declare-attackers step."
+                : " and " + auraCards.getFirst().getName()
+                + " are exiled. They return at the beginning of their controller's next declare-attackers step."));
+        log.info("Game {} - {} is exiled until the controller's next declare-attackers step",
+                gameData.id, enchantedCard.getName());
     }
 }

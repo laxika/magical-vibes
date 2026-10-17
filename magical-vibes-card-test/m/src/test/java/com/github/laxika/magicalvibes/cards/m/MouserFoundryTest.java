@@ -105,7 +105,7 @@ class MouserFoundryTest extends BaseCardTest {
     void returningToHandCreatesRobotForController() {
         Permanent foundry = harness.addToBattlefieldAndReturn(player2, new MouserFoundry());
 
-        harness.getPermanentRemovalService().removePermanentToHand(gd, foundry);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, foundry));
         harness.passBothPriorities();
 
         harness.assertInHand(player2, "Mouser Foundry");

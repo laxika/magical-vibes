@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class MirranSpy extends Card {
     public MirranSpy() {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(new CardTypePredicate(CardType.ARTIFACT),
-                        List.of(new UntapPermanentsEffect(TapUntapScope.TARGET))),
+                        List.of(new UntapPermanentsEffect(TapUntapScope.TARGET)), null, TargetFilters.creature()),
                 "Untap target creature?"
         ));
     }

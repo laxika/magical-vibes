@@ -36,7 +36,6 @@ class MisfortuneTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -55,7 +54,6 @@ class MisfortuneTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int controllerLife = gd.playerLifeTotals.get(player1.getId());
 
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
@@ -71,7 +69,6 @@ class MisfortuneTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AshnodsCylix());
         setupAndCast();
 
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -85,7 +82,6 @@ class MisfortuneTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AshnodsCylix());
         setupAndCast();
 
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 

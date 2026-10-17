@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceIsAttached;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -23,8 +25,9 @@ public class MagitekScythe extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new AttachSourceEquipmentToTargetCreatureEffect(),
-                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET),
-                                new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BE_BLOCKED)),
+                                new ConditionalEffect(new SourceIsAttached(), SequenceEffect.of(
+                                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET),
+                                        new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BE_BLOCKED)))),
                         "Attach Magitek Scythe to target creature you control?"));
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

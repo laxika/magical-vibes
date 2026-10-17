@@ -23,4 +23,13 @@ public interface EntryReplacementHandlerBean {
                        CardEffect effect, int xValue) {
         apply(gameData, controllerId, enteringPermanent, effect);
     }
+
+    /**
+     * Applies the replacement knowing whether the entering permanent's spell was kicked. Entry
+     * replacements that do not depend on kicker fall back to the X-value form.
+     */
+    default void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent,
+                       CardEffect effect, int xValue, boolean kicked) {
+        apply(gameData, controllerId, enteringPermanent, effect, xValue);
+    }
 }

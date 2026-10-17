@@ -49,7 +49,6 @@ class MayhemPatrolTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         Permanent patrol = findPermanent(player1, "Mayhem Patrol");
         assertThat(gqs.hasKeyword(gd, patrol, Keyword.HASTE)).isTrue();

@@ -21,6 +21,10 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -393,7 +397,9 @@ public class TokenCopySupport {
             copiableCard.setKeywords(keywords);
         }
         Permanent token = new Permanent(copiableCard);
-        token.getPersistentGrantedKeywords().add(Keyword.HASTE);
+        if (!effect.hasteUntilEndOfTurn()) {
+            token.getPersistentGrantedKeywords().add(Keyword.HASTE);
+        }
         return token;
     }
 
@@ -497,6 +503,13 @@ public class TokenCopySupport {
             if (effect.sacrificeAtNextUpkeep()) {
                 gameData.queueDelayedAction(new DelayedPermanentAction(
                         tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP));
+            }
+            if (effect.grantHaste() && effect.hasteUntilEndOfTurn()) {
+                tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
+                gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                        entry.getCard().getName(), null, entry.getControllerId(),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        tokenPermanent.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
             }
 
             Card sourceCard = tokenPermanent.getCard();

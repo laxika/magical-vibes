@@ -19,11 +19,10 @@ public class MossbridgeTroll extends Card {
 
         // "Tap any number of untapped creatures you control other than this creature with total
         // power 10 or greater: This creature gets +20/+20 until end of turn."
-        // CrewCost taps untapped creatures (excluding the source) up to the given total power.
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new CrewCost(10), new BoostSelfEffect(20, 20)),
+                List.of(CrewCost.tapCreaturesWithTotalPower(10), new BoostSelfEffect(20, 20)),
                 "Tap any number of untapped creatures you control other than this creature with total power 10 or greater: This creature gets +20/+20 until end of turn."
         ));
     }

@@ -152,9 +152,9 @@ class MagusOfTheWillTest extends BaseCardTest {
         Shock secondShock = new Shock();
         harness.setHand(player1, List.of(firstShock, secondShock));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.RED, 2);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, ownRaider.getId());
         harness.passBothPriorities();

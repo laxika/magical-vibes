@@ -1011,6 +1011,17 @@ public class LandTapTriggerCollectorService {
                 match.permanent().getId());
         entry.setNonTargeting(true);
         entry.setTriggeringPermanentId(lt.tappedLandId());
+        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
+        if (tappedLand == null) {
+            // The land left the battlefield as its mana ability resolved (Gemstone Mine's final use):
+            // the trigger still uses what it could produce as it last existed.
+            tappedLand = match.gameData().departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> snapshot.getId().equals(lt.tappedLandId()))
+                    .findFirst().orElse(null);
+        }
+        if (tappedLand != null) {
+            entry.rememberLastKnownPermanentCard(tappedLand.getId(), tappedLand.getCard());
+        }
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on opponent land tap", match.gameData().id,

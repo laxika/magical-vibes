@@ -17,7 +17,7 @@ public class MilitaryDiscipline extends Card {
         target(TargetFilters.creature())
                 // When this Aura enters, enchanted creature gains first strike until end of turn.
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET))
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ENCHANTED_CREATURE))
                 // Enchanted creature gets +1/+0.
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE));
     }

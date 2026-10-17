@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -32,6 +33,7 @@ public class InteractionState {
     private Card pendingAuraOriginalCard;
     private UUID pendingAuraOwnerId;
     private EnterWithCountersEffect pendingAuraEntryReplacement;
+    private ReturnCardFromGraveyardEffect pendingAuraGraveyardReturn;
     private StackEntry pendingAuraResolutionEntry;
     private UUID pendingEquipmentAttachEquipmentId;
     private UUID pendingEquipmentAttachTargetId;
@@ -87,6 +89,7 @@ public class InteractionState {
         copy.pendingAuraOriginalCard = this.pendingAuraOriginalCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
         copy.pendingAuraEntryReplacement = this.pendingAuraEntryReplacement;
+        copy.pendingAuraGraveyardReturn = this.pendingAuraGraveyardReturn;
         copy.pendingAuraResolutionEntry = this.pendingAuraResolutionEntry == null
                 ? null : new StackEntry(this.pendingAuraResolutionEntry);
         copy.pendingEquipmentAttachEquipmentId = this.pendingEquipmentAttachEquipmentId;
@@ -288,6 +291,20 @@ public class InteractionState {
         EnterWithCountersEffect replacement = this.pendingAuraEntryReplacement;
         this.pendingAuraEntryReplacement = null;
         return replacement;
+    }
+
+    /**
+     * The graveyard-return effect whose haste and exile riders apply to the pending Aura once it has
+     * been put onto the battlefield; {@code null} when none applies.
+     */
+    public void setPendingAuraGraveyardReturn(ReturnCardFromGraveyardEffect graveyardReturn) {
+        this.pendingAuraGraveyardReturn = graveyardReturn;
+    }
+
+    public ReturnCardFromGraveyardEffect consumePendingAuraGraveyardReturn() {
+        ReturnCardFromGraveyardEffect graveyardReturn = this.pendingAuraGraveyardReturn;
+        this.pendingAuraGraveyardReturn = null;
+        return graveyardReturn;
     }
 
     public void setPendingAuraResolutionEntry(StackEntry entry) {

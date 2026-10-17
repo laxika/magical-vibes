@@ -47,8 +47,11 @@ public class MayCastFromTargetPlayerHandWithoutPayingManaCostEffectHandler imple
         List<Card> hand = gameData.playerHands.get(targetId);
         if (hand == null || hand.isEmpty()) return;
 
+        // The "look at that player's hand" form offers every card so the controller can inspect the hand;
+        // a land among them is shown but cannot be cast.
+        boolean inspectsHand = !e.targetsPlayer() && e.spellFilter() == null;
         List<Card> eligible = hand.stream()
-                .filter(c -> !c.hasType(CardType.LAND))
+                .filter(c -> inspectsHand || !c.hasType(CardType.LAND))
                 .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.spellFilter(), null))
                 .toList();
 
@@ -56,7 +59,7 @@ public class MayCastFromTargetPlayerHandWithoutPayingManaCostEffectHandler imple
             Card c = eligible.get(i);
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     c, controllerId,
-                    List.of(new MayCastFromHandWithoutPayingManaCostEffect()),
+                    List.of(new MayCastFromHandWithoutPayingManaCostEffect(e.targetsPlayer())),
                     "Cast " + c.getName() + " without paying its mana cost?"
             ));
         }

@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.RiskyMoveEffectHan
 import com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BoostEquippedCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExploreEachControlledCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChangeTargetOfTargetSpellToSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromControlledCreatureThenDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetOpponentChoosesPlayerForRestrictionEffectHandler;
@@ -107,6 +108,7 @@ public class PermanentChoiceHandlerService {
     private final TurnOwnCreatureFaceUpEffectHandler turnOwnCreatureFaceUpEffectHandler;
     private final RemoveCounterFromControlledCreatureThenDrawEffectHandler
             removeCounterFromControlledCreatureThenDrawEffectHandler;
+    private final ChangeTargetOfTargetSpellToSourceEffectHandler changeTargetOfTargetSpellToSourceEffectHandler;
     private final ExploreEachControlledCreatureEffectHandler exploreEachControlledCreatureEffectHandler;
     private final BoostEquippedCreatureUntilEndOfTurnEffectHandler boostEquippedCreatureUntilEndOfTurnEffectHandler;
     private final InputCompletionService inputCompletionService;
@@ -266,6 +268,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificeOneOfTwoThenCounterOnOther(gameData, permanentId, sacrificeOneOfTwo);
         } else if (context instanceof PermanentChoiceContext.DealDamageToOneOfTwoThenOtherCantBlock dealDamage) {
             battlefieldHandler.handleDealDamageToOneOfTwoThenOtherCantBlock(gameData, permanentId, dealDamage);
+        } else if (context instanceof PermanentChoiceContext.PackHuntDamageAssignment packHunt) {
+            battlefieldHandler.handlePackHuntDamageAssignment(gameData, permanentId, packHunt);
         } else if (context instanceof PermanentChoiceContext.SacrificeOneOfTwo sacrificeOneOfTwo) {
             battlefieldHandler.handleSacrificeOneOfTwo(gameData, permanentId, sacrificeOneOfTwo);
         } else if (context instanceof PermanentChoiceContext.CannibalizeChoice cannibalize) {
@@ -428,6 +432,9 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChosenPermanentCopyChoice(gameData, permanentId, copyChoice);
         } else if (context instanceof PermanentChoiceContext.ExploreOrderChoice exploreOrder) {
             exploreEachControlledCreatureEffectHandler.completeChoice(gameData, permanentId, exploreOrder);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.ChangeSpellTargetToSource changeTarget) {
+            changeTargetOfTargetSpellToSourceEffectHandler.completeChoice(gameData, permanentId, changeTarget);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.RemoveCounterFromControlledCreatureThenDraw removeCounter) {
             removeCounterFromControlledCreatureThenDrawEffectHandler.completeChoice(

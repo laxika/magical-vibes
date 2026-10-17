@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -23,14 +24,14 @@ public class MeandersGuide extends Card {
         addEffect(EffectSlot.ON_ATTACK, new MayPayTapPermanentsEffect(
                 new TapMultiplePermanentsCost(1,
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), true),
-                ReturnCardFromGraveyardEffect.builder()
+                new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardAllOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardMaxManaValuePredicate(3)
                         )))
                         .targetGraveyard(true)
-                        .build(),
+                        .build()),
                 "Tap another untapped Merfolk you control?"));
     }
 }

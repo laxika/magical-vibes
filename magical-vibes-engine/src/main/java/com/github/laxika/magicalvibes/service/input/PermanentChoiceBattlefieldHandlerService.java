@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -766,6 +769,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
         Card sacrificedCard = target.getCard();
+        boolean sacrificedCreature = gameQueryService.isCreature(gameData, target);
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
@@ -774,7 +778,8 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // Collect both ally-permanent-sacrificed and global creature-sacrificed triggers; this
         // interactive single-creature-choice path bypasses DestructionSupport.sacrificeAndLog.
-        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, sacrificingPlayerId, sacrificedCard);
+        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, sacrificingPlayerId,
+                sacrificedCard, null, sacrificedCreature);
 
         // The choice was begun mid-resolution (e.g. Fleshbag Marauder's "each player sacrifices"),
         // so the standard epilogue must run: it resumes the parked resolution entry — otherwise
@@ -1769,7 +1774,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                     .orElse(null)
                     : gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
             if (source != null) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1);
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, 1, context.controllerId());
             }
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -1795,7 +1800,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                     .orElse(null)
                     : gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
             if (source != null) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, power);
+                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, power, context.controllerId());
             }
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -2802,6 +2807,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         Card sacrificedCharacteristics = toSacrifice.getCard().createRuntimeCopy();
         sacrificedCharacteristics.setType(sacrificedTypes.stream().findFirst().orElse(null));
         sacrificedCharacteristics.setAdditionalTypes(Set.copyOf(sacrificedTypes));
+        sacrificedCharacteristics.setSubtypes(
+                permanentRemovalService.snapshotEffectivePermanentCard(gameData, toSacrifice).getSubtypes());
         sacrificedCharacteristics.freeze();
         sacrificedSnapshot.setCard(sacrificedCharacteristics);
         if (originalEntry != null) {
@@ -2826,8 +2833,11 @@ public class PermanentChoiceBattlefieldHandlerService {
                 if (originalEntry == null) {
                     throw new IllegalStateException("No pending effect resolution for synchronous sacrifice follow-up");
                 }
-                originalEntry.insertEffectsToResolve(
-                        gameData.pendingEffectResolutionIndex, List.of(ctx.thenEffect()));
+                int followUpIndex = originalEntry.getResolvingEffectIndex() >= 0
+                        ? originalEntry.getResolvingEffectIndex() + 1
+                        : gameData.pendingEffectResolutionIndex;
+                originalEntry.insertEffectsToResolve(followUpIndex, List.of(ctx.thenEffect()));
+                gameData.pendingEffectResolutionIndex = followUpIndex;
             }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
@@ -3466,6 +3476,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // If an explicit aura owner was set (e.g. Necrotic Plague), use it instead of the chooser
         UUID auraControllerId = auraOwnerId != null ? auraOwnerId : playerId;
         EnterWithCountersEffect auraEntryReplacement = gameData.interaction.consumePendingAuraEntryReplacement();
+        ReturnCardFromGraveyardEffect auraGraveyardReturn = gameData.interaction.consumePendingAuraGraveyardReturn();
 
         Permanent enchantTarget = gameQueryService.findPermanentById(gameData, permanentId);
         boolean playerTarget = gameData.playerIds.contains(permanentId);
@@ -3516,6 +3527,18 @@ public class PermanentChoiceBattlefieldHandlerService {
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraControllerId, auraPerm);
             }
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, auraControllerId, auraCard, null, false);
+            if (auraGraveyardReturn != null) {
+                if (auraGraveyardReturn.grantHaste()) {
+                    auraPerm.getPersistentGrantedKeywords().add(Keyword.HASTE);
+                }
+                if (auraGraveyardReturn.exileIfLeavesBattlefield()) {
+                    auraPerm.setExileIfLeavesBattlefield(true);
+                }
+                if (auraGraveyardReturn.exileAtEndStep()) {
+                    gameData.queueDelayedAction(new DelayedPermanentAction(
+                            auraPerm.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                }
+            }
 
             boolean hasControlEffect = enchantTarget != null && auraCard.getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
@@ -3577,6 +3600,52 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (other != null) {
             other.setCantBlockThisTurn(true);
             gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " can't block this turn."));
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Pack hunt: one point of the dividing creature's damage goes to the chosen creature. Once every
+     * point is assigned, the dividing creature deals all of it at once.
+     */
+    public void handlePackHuntDamageAssignment(GameData gameData, UUID permanentId,
+                                               PermanentChoiceContext.PackHuntDamageAssignment context) {
+        if (!context.hunterIds().contains(permanentId)) {
+            throw new IllegalStateException("Chosen creature is not one of the creatures tapped for the hunt");
+        }
+        Map<UUID, Integer> assigned = new java.util.LinkedHashMap<>(context.assigned());
+        assigned.merge(permanentId, 1, Integer::sum);
+        int remaining = context.remaining() - 1;
+
+        if (remaining > 0) {
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.PackHuntDamageAssignment(
+                    context.sourceCard(), context.controllerId(), context.damageSourceId(),
+                    context.choosingPlayerId(), context.hunterIds(), assigned, remaining));
+            playerInputService.beginPermanentChoice(gameData, context.choosingPlayerId(), context.hunterIds(),
+                    "Choose a creature to be dealt 1 damage (" + remaining + " left to assign).");
+            return;
+        }
+
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            entry = new StackEntry(context.sourceCard(), context.controllerId());
+        }
+        Permanent damageSource = gameQueryService.findPermanentById(gameData, context.damageSourceId());
+        if (damageSource != null) {
+            for (Map.Entry<UUID, Integer> share : assigned.entrySet()) {
+                Permanent hunter = gameQueryService.findPermanentById(gameData, share.getKey());
+                if (hunter == null) {
+                    continue;
+                }
+                if (gameQueryService.isDamagePreventable(gameData)
+                        && gameQueryService.hasProtectionFromSource(gameData, hunter, damageSource)) {
+                    gameLogService.append(gameData, GameLog.cardTextCard(damageSource.getCard(),
+                            "'s damage to ", hunter.getCard(), " is prevented."));
+                    continue;
+                }
+                damageSupport.dealCreatureDamage(gameData, entry, hunter, share.getValue(), damageSource);
+            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

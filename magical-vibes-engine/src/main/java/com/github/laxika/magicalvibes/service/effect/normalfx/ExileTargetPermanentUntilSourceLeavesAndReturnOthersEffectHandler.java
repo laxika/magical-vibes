@@ -45,9 +45,16 @@ public class ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffectHandler
             return;
         }
 
-        ExiledCardEntry exiledEntry = gameData.findExiledCard(targetCard.getId());
-        if (exiledEntry == null || !sourcePermanentId.equals(exiledEntry.sourcePermanentId())) {
-            return;
+        if (targetCard.isToken()) {
+            // A token put into exile ceases to exist, so no exile entry records it.
+            if (gameQueryService.findPermanentById(gameData, target.getId()) != null) {
+                return;
+            }
+        } else {
+            ExiledCardEntry exiledEntry = gameData.findExiledCard(targetCard.getId());
+            if (exiledEntry == null || !sourcePermanentId.equals(exiledEntry.sourcePermanentId())) {
+                return;
+            }
         }
 
         returnHandler.returnAllCardsExiledWithSourceExcept(gameData, entry, targetCard.getId());

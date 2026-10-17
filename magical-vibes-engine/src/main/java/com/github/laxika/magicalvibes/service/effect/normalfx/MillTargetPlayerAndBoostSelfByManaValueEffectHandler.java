@@ -43,12 +43,9 @@ public class MillTargetPlayerAndBoostSelfByManaValueEffectHandler implements Nor
             return;
         }
 
-        // Snapshot the top card before milling to get its mana value
-        Card topCard = deck.getFirst();
-        int manaValue = topCard.getManaValue();
-
-        // Mill one card
-        graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
+        // A mill multiplier (Bruvac the Grandiloquent) mills extra cards, so X is their total mana value.
+        List<Card> milled = graveyardService.resolveMillPlayerAndReturnAllMilledCards(gameData, targetPlayerId, 1);
+        int manaValue = milled.stream().mapToInt(Card::getManaValue).sum();
 
         // Boost the source creature
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -61,8 +58,9 @@ public class MillTargetPlayerAndBoostSelfByManaValueEffectHandler implements Nor
             self.setToughnessModifier(self.getToughnessModifier() + manaValue);
         }
 
-        
-        gameLogService.append(gameData, GameLog.builder().text(cardName + " gets +" + manaValue + "/+" + manaValue + " until end of turn (milled ").card(topCard).text(", mana value " + manaValue + ").").build());
-        log.info("Game {} - {} gets +{}/+{} from milling {}", gameData.id, cardName, manaValue, manaValue, topCard.getName());
+        String milledNames = milled.stream().map(Card::getName).collect(java.util.stream.Collectors.joining(", "));
+        gameLogService.append(gameData, GameLog.text(cardName + " gets +" + manaValue + "/+" + manaValue
+                + " until end of turn (milled " + milledNames + ", total mana value " + manaValue + ")."));
+        log.info("Game {} - {} gets +{}/+{} from milling {}", gameData.id, cardName, manaValue, manaValue, milledNames);
     }
 }

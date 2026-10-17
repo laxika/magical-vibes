@@ -45,14 +45,16 @@ public class CounterSpellAndDiscardSplicedNamesEffectHandler implements NormalEf
         if (targetCardId == null) {
             return;
         }
-        StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+        StackEntry targetEntry = counterSupport.findCounterTargetIgnoringCounterability(gameData, targetCardId, entry);
         if (targetEntry == null) {
             return;
         }
 
         UUID controllerId = targetEntry.getControllerId();
         List<String> splicedNames = gameData.getSpellCastSplicedNames(targetEntry.getTargetableId());
-        counterSupport.counterSpell(gameData, entry, targetEntry);
+        if (counterSupport.findCounterTarget(gameData, targetCardId, entry) != null) {
+            counterSupport.counterSpell(gameData, entry, targetEntry);
+        }
         gameData.clearSpellCastSplicedNames(targetEntry.getTargetableId());
 
         if (controllerId == null) {
@@ -71,17 +73,23 @@ public class CounterSpellAndDiscardSplicedNamesEffectHandler implements NormalEf
                 toDiscard.add(card);
             }
         }
-        for (Card card : toDiscard) {
-            discardCard(gameData, controllerId, card, entry.getCard());
+        if (toDiscard.isEmpty()) {
+            return;
         }
+        triggerCollectionService.beginDiscardEvent(gameData, controllerId);
+        for (Card card : toDiscard) {
+            discardCard(gameData, controllerId, card, entry);
+        }
+        triggerCollectionService.finishDiscardEvent(gameData);
     }
 
-    private void discardCard(GameData gameData, UUID playerId, Card card, Card sourceCard) {
+    private void discardCard(GameData gameData, UUID playerId, Card card, StackEntry source) {
+        Card sourceCard = source.getCard();
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || !hand.remove(card)) {
             return;
         }
-        gameData.discardCausedByOpponent = true;
+        gameData.discardCausedByOpponent = !playerId.equals(source.getControllerId());
         graveyardService.discardCard(gameData, playerId, card);
         gameLogService.append(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(playerId) + " discards ", card, "."));

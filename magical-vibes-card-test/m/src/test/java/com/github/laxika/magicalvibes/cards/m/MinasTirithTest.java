@@ -49,7 +49,7 @@ class MinasTirithTest extends BaseCardTest {
         Permanent minasTirith = addReadyMinasTirith();
         Card drawn = new BattleScarredGoblin();
         harness.setLibrary(player1, List.of(drawn));
-        gd.creaturesAttackedCountThisTurn.put(player1.getId(), 2);
+        attackWithTwoCreatures();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -193,7 +193,7 @@ class MinasTirithTest extends BaseCardTest {
     void tappedLandCannotActivateDrawAbility() {
         Permanent minasTirith = addReadyMinasTirith();
         minasTirith.tap();
-        gd.creaturesAttackedCountThisTurn.put(player1.getId(), 2);
+        attackWithTwoCreatures();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(minasTirith), 1, null, null))
@@ -207,6 +207,12 @@ class MinasTirithTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new MinasTirith()));
         harness.playLand(player1, 0);
+    }
+
+    private void attackWithTwoCreatures() {
+        Permanent first = addCreatureReady(player1, new BattleScarredGoblin());
+        Permanent second = addCreatureReady(player1, new BattleScarredGoblin());
+        declareAttackers(List.of(indexOf(first), indexOf(second)));
     }
 
     private Permanent addReadyMinasTirith() {

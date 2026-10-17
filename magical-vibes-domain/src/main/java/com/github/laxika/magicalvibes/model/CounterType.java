@@ -252,6 +252,7 @@ public enum CounterType {
             case HEXPROOF -> Keyword.HEXPROOF;
             case INDESTRUCTIBLE -> Keyword.INDESTRUCTIBLE;
             case MENACE -> Keyword.MENACE;
+            case SHADOW -> Keyword.SHADOW;
             case REACH -> Keyword.REACH;
             case TRAMPLE -> Keyword.TRAMPLE;
             case VIGILANCE -> Keyword.VIGILANCE;

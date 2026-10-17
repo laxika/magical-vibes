@@ -18,6 +18,8 @@ class MjLnirsMightTest extends BaseCardTest {
 
     @Test
     void dealsDamageAndExilesTopCardWithPlayPermissionUntilNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
         harness.setLife(player2, 20);
@@ -53,6 +55,8 @@ class MjLnirsMightTest extends BaseCardTest {
 
     @Test
     void unplayedCardRemainsExiledAfterPermissionExpires() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));

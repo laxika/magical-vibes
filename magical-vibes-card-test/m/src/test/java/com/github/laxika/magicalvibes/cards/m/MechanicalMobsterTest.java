@@ -30,10 +30,10 @@ class MechanicalMobsterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         discardByName("Grizzly Bears");
@@ -54,8 +54,8 @@ class MechanicalMobsterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
         discardByName("Mountain");
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

@@ -41,6 +41,7 @@ class MoldAdderTest extends BaseCardTest {
 
         // Accept the may ability
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, adder)).isEqualTo(2);
@@ -69,6 +70,7 @@ class MoldAdderTest extends BaseCardTest {
 
         // Accept the may ability
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -162,6 +164,7 @@ class MoldAdderTest extends BaseCardTest {
         harness.castSorcery(player2, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.stack).hasSize(1);

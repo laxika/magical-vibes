@@ -601,7 +601,15 @@ public class PermanentCounterSupport {
         if (counters <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
             return;
         }
-        UUID placingPlayerId = placingPlayerId(gameData, entry, target);
+        applyPlusOnePlusOneCounters(gameData, entry, target, counters, placingPlayerId(gameData, entry, target));
+    }
+
+    /** As above, for an effect whose controller (the player putting the counters, CR 122.1) is already known. */
+    public void applyPlusOnePlusOneCounters(GameData gameData, StackEntry entry, Permanent target, int counters,
+                                            UUID placingPlayerId) {
+        if (counters <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
+            return;
+        }
         int previousCount = target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         counters = gameQueryService.replaceCounters(gameData, target, CounterType.PLUS_ONE_PLUS_ONE,
                 counters, placingPlayerId);

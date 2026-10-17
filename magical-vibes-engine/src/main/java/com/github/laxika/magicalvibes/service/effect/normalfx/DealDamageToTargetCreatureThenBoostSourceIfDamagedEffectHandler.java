@@ -52,7 +52,13 @@ public class DealDamageToTargetCreatureThenBoostSourceIfDamagedEffectHandler imp
             return;
         }
         int actualDamage = damageSupport.dealCreatureDamage(gameData, entry, target, damage);
-        if (actualDamage > 0 && targetMatches) {
+        // Damage a redirect effect moved onto another permanent is still this ability's damage (CR 614.9),
+        // so the permanent that actually took it is the one checked against the predicate.
+        boolean matchingPermanentDamaged = entry.getPermanentsDealtDamageThisResolution().stream()
+                .map(damagedId -> gameQueryService.findPermanentById(gameData, damagedId))
+                .anyMatch(damaged -> damaged != null && predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, damaged, damageEffect.boostTargetPredicate()));
+        if (actualDamage > 0 && targetMatches || matchingPermanentDamaged) {
             boostSelfEffectHandler.resolve(gameData, entry,
                     new BoostSelfEffect(damageEffect.powerBoost(), damageEffect.toughnessBoost()));
         }

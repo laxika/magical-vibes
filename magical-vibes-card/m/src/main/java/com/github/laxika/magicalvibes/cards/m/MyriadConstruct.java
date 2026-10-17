@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -38,10 +38,10 @@ public class MyriadConstruct extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentCount(nonbasicLand, CountScope.OPPONENTS))));
-        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new SacrificeSelfThenEffect(
-                new CreateTokenEffect(
-                        CardType.CREATURE, new SourcePower(), "Construct", 1, 1, null, null,
-                        List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT),
-                        false, false, Map.of(), List.of(), false, false, false, 0, Set.of())));
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new SacrificeSelfEffect());
+        addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new CreateTokenEffect(
+                CardType.CREATURE, new SourcePower(), "Construct", 1, 1, null, null,
+                List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT),
+                false, false, Map.of(), List.of(), false, false, false, 0, Set.of()));
     }
 }

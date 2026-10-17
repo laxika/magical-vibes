@@ -1477,6 +1477,7 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** Vault 11: Voter's Dilemma: the current player voted for up to one creature. */
     record VoteForCreatureThenDestroyMostVotedChoice(
+            UUID effectControllerId,
             java.util.List<UUID> remainingPlayerIds,
             java.util.Map<UUID, Integer> votes,
             String sourceName)

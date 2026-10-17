@@ -12,8 +12,13 @@ import java.util.UUID;
  * active-player filter — "the next end step" is chronological, not "your next end step".
  * The delayed ability is controlled by {@code controllerId}, the controller of the ability that
  * created it (CR 603.7e), which is not necessarily the player the card was exiled from.
+ * Actions sharing a non-null {@code groupId} are handled by a single delayed trigger (Mnemonic Betrayal).
  */
 public record ExileToOwnerGraveyardAtNextEndStep(UUID cardId, UUID ownerId, Card sourceCard,
-                                                 UUID controllerId)
+                                                 UUID controllerId, UUID groupId)
         implements DelayedAction {
+
+    public ExileToOwnerGraveyardAtNextEndStep(UUID cardId, UUID ownerId, Card sourceCard, UUID controllerId) {
+        this(cardId, ownerId, sourceCard, controllerId, null);
+    }
 }

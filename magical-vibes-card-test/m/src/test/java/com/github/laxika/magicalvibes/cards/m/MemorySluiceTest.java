@@ -26,8 +26,9 @@ class MemorySluiceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
-        harness.setLibrary(player1, deck.subList(deck.size() - 10, deck.size()));
-        Card topCard = gd.playerDecks.get(player2.getId()).getFirst();
+        List<Card> library = List.copyOf(deck.subList(deck.size() - 10, deck.size()));
+        harness.setLibrary(player2, library);
+        Card topCard = library.getFirst();
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
@@ -43,7 +44,7 @@ class MemorySluiceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        harness.setLibrary(player2, deck.subList(deck.size() - 10, deck.size()));
+        harness.setLibrary(player1, List.copyOf(deck.subList(deck.size() - 10, deck.size())));
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 

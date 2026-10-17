@@ -42,12 +42,14 @@ class MachineGodsEffigyTest extends BaseCardTest {
 
     @Test
     void decliningToCopyLeavesArtifactThatCanProduceBlueMana() {
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         MachineGodsEffigy effigy = new MachineGodsEffigy();
         harness.setHand(player1, List.of(effigy));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
 
         Permanent entered = findEffigy(effigy);

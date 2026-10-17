@@ -24,8 +24,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ManicVandalTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Casting Manic Vandal can preselect its ETB target")
-    void castingCanPreselectEtbTarget() {
+    @DisplayName("Casting Manic Vandal does not target anything; its ETB target is chosen on entry")
+    void castingDoesNotTargetItsEtbTarget() {
         harness.addToBattlefield(player2, new CrystalBall());
         harness.setHand(player1, List.of(new ManicVandal()));
         harness.addMana(player1, ManaColor.RED, 3);
@@ -38,7 +38,7 @@ class ManicVandalTest extends BaseCardTest {
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Manic Vandal");
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 

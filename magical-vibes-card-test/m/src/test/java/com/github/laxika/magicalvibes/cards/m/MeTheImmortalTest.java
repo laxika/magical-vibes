@@ -143,7 +143,7 @@ class MeTheImmortalTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, me));
         harness.setHand(player1, List.of(new MeTheImmortal(), new MeTheImmortal()));
         addMana();
-        harness.castFromGraveyardWithDiscards(player1, 0, 0, List.of(1));
+        harness.castFromGraveyardWithDiscards(player1, 1, 0, List.of(1));
         harness.passBothPriorities();
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()

@@ -16,5 +16,9 @@ public class MeltstriderEulogist extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
                         new DrawCardEffect(1)));
+        addEffect(EffectSlot.ON_DEATH,
+                new TriggeringPermanentConditionalEffect(
+                        new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE),
+                        new DrawCardEffect(1)));
     }
 }

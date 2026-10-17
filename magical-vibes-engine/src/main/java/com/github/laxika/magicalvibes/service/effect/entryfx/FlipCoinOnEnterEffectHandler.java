@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ public class FlipCoinOnEnterEffectHandler implements EntryReplacementHandlerBean
 
     private final CoinFlipService coinFlipService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,12 +47,7 @@ public class FlipCoinOnEnterEffectHandler implements EntryReplacementHandlerBean
                 : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName
                         + coinFlipService.replacementDetails(result) + ".";
         gameLogService.append(gameData, GameLog.text(flipLog));
-        if (heads && result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-        } else if (result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
-        }
-
+        enteringPermanent.setEntryCoinFlipHeads(heads);
         int power = heads ? flipEffect.headsPower() : flipEffect.tailsPower();
         int toughness = heads ? flipEffect.headsToughness() : flipEffect.tailsToughness();
         Set<Keyword> keywords = heads ? flipEffect.headsKeywords() : flipEffect.tailsKeywords();

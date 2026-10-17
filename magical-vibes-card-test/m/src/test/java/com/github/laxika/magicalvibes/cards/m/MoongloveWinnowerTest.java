@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 @CardUsed({MoongloveWinnower.class, OakgnarlWarrior.class})
 class MoongloveWinnowerTest extends BaseCardTest {
 
@@ -36,6 +38,9 @@ class MoongloveWinnowerTest extends BaseCardTest {
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 3,
+                player2.getId(), 2));
 
         harness.assertInGraveyard(player1, "Oakgnarl Warrior");
         harness.assertInGraveyard(player2, "Moonglove Winnower");

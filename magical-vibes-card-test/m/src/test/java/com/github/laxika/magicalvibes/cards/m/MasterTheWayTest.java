@@ -62,6 +62,7 @@ class MasterTheWayTest extends BaseCardTest {
     void dealsDamageToAPlaneswalker() {
         harness.addToBattlefield(player2, new SarkhanTheDragonspeaker());
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        target.setCounterCount(CounterType.LOYALTY, 4);
         harness.setHand(player1, List.of(new MasterTheWay(), new Plains()));
         harness.setLibrary(player1, List.of(new Island()));
         addMana(player1);

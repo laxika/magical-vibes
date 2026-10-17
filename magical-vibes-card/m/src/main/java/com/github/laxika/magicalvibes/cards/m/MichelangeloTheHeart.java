@@ -22,7 +22,7 @@ import java.util.List;
 public class MichelangeloTheHeart extends Card {
 
     public MichelangeloTheHeart() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
+        target(TargetFilters.creature()).addEffect(EffectSlot.SECOND_MAIN_PHASE_TRIGGERED,
                 new ConditionalEffect(new Raid(), SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         foodToken())));

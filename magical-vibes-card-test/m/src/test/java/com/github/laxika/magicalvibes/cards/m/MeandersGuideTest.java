@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,7 +24,8 @@ class MeandersGuideTest extends BaseCardTest {
         addCreatureReady(player1, new MeandersGuide());
         Permanent merfolk = addCreatureReady(player1, new MerfolkOfThePearlTrident());
         addCreatureReady(player1, new MerfolkOfThePearlTrident());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -31,6 +33,7 @@ class MeandersGuideTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, merfolk.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         assertThat(merfolk.isTapped()).isTrue();
@@ -86,11 +89,13 @@ class MeandersGuideTest extends BaseCardTest {
     void tappingCreatesASeparateReanimationTrigger() {
         addCreatureReady(player1, new MeandersGuide());
         Permanent merfolk = addCreatureReady(player1, new MeandersGuide());
-        harness.setGraveyard(player1, List.of(new MeandersGuide()));
+        Card graveyardGuide = new MeandersGuide();
+        harness.setGraveyard(player1, List.of(graveyardGuide));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardGuide.getId()));
 
         assertThat(merfolk.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Meanders Guide");
@@ -108,11 +113,13 @@ class MeandersGuideTest extends BaseCardTest {
     void canTapSummoningSickMerfolkAndReturnManaValueThree() {
         addCreatureReady(player1, new MeandersGuide());
         Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new MeandersGuide());
-        harness.setGraveyard(player1, List.of(new MeandersGuide()));
+        Card graveyardGuide = new MeandersGuide();
+        harness.setGraveyard(player1, List.of(graveyardGuide));
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardGuide.getId()));
         harness.passBothPriorities();
 
         assertThat(merfolk.isTapped()).isTrue();

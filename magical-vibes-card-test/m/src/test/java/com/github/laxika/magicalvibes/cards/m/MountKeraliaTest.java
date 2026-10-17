@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MountKeralia.class, GrizzlyBears.class, JaceBeleren.class})
+@CardUsed({MountKeralia.class, GrizzlyBears.class, JaceBeleren.class, LlanowarElves.class})
 class MountKeraliaTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -108,15 +109,16 @@ class MountKeraliaTest extends BaseCardTest {
     @Test
     void departureUsesOldCountersAndDoesNotDamagePlayers() {
         source.getCounters().put(CounterType.PRESSURE, 1);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
         int ownLife = gd.playerLifeTotals.get(player1.getId());
         int opponentLife = gd.playerLifeTotals.get(player2.getId());
 
         planeswalkAway();
 
-        assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
-        assertThat(opponentCreature.getMarkedDamage()).isEqualTo(1);
+        // Damage wears off in the cleanup step (CR 514.2), so the one damage is observed as lethal to 1/1s.
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
         assertThat(gd.planechase.faceUp.getFirst().getCounters()).isEmpty();
         harness.assertLife(player1, ownLife);
         harness.assertLife(player2, opponentLife);

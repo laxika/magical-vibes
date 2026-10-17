@@ -101,6 +101,7 @@ class MonologueTaxTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.castAndResolveInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
     }

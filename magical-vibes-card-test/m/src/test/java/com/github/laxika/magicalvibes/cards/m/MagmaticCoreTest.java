@@ -125,7 +125,7 @@ class MagmaticCoreTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, creature.getId());
         harness.handleListChoice(player1, "1");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
@@ -178,7 +178,7 @@ class MagmaticCoreTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, player1.getId());
         }
         harness.handleListChoice(player1, "1");
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(first.getMarkedDamage()).isEqualTo(1);
         assertThat(second.getMarkedDamage()).isZero();

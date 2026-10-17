@@ -178,6 +178,8 @@ class MountainTitanTest extends BaseCardTest {
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.setHand(player2, List.of());
         harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(titan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

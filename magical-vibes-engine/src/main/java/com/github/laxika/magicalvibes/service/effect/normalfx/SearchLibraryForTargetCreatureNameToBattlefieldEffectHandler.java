@@ -53,7 +53,8 @@ public class SearchLibraryForTargetCreatureNameToBattlefieldEffectHandler implem
         librarySearchSupport.performLibrarySearch(
                 gameData,
                 controllerId,
-                card -> (allNames || card.hasAllCardNames() || targetName.equals(card.getName()))
+                card -> (allNames || card.hasAllCardNames()
+                        || (targetName != null && targetName.equals(card.getName())))
                         && (!searchEffect.permanentCardOnly() || card.getType().isPermanentType())
                         && (!searchEffect.creatureCardOnly()
                         || card.hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE)),

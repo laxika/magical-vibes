@@ -48,8 +48,44 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         boolean chooseAttackTarget,
         List<CardColor> additionalColors,
         String nameOverride,
-        boolean replaceCardTypes
+        boolean replaceCardTypes,
+        boolean hasteUntilEndOfTurn
 ) implements CardEffect {
+    /** Backward-compatible constructor for copies whose granted haste lasts for the token's whole life. */
+    public CreateTokenCopyOfTargetPermanentEffect(
+            List<CardSubtype> additionalSubtypes,
+            Set<CardType> additionalTypes,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            boolean sacrificeAtEndStep,
+            boolean tappedAndAttacking,
+            boolean trackWithSource,
+            boolean createForTargetController,
+            CardColor colorOverride,
+            Set<Keyword> additionalKeywords,
+            boolean sacrificeAtNextUpkeep,
+            Map<EffectSlot, List<CardEffect>> additionalSlotEffects,
+            List<CardSubtype> creatureSubtypeOverride,
+            boolean tapped,
+            boolean removeLegendary,
+            DynamicAmount amount,
+            boolean exileAtEndOfCombat,
+            Set<CardSupertype> additionalSupertypes,
+            boolean chooseAttackTarget,
+            List<CardColor> additionalColors,
+            String nameOverride,
+            boolean replaceCardTypes) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource,
+                createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep,
+                additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount,
+                exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors, nameOverride,
+                replaceCardTypes, false);
+    }
+
     /** Backward-compatible constructor for copies whose card types are added to, not replaced. */
     public CreateTokenCopyOfTargetPermanentEffect(
             List<CardSubtype> additionalSubtypes,
@@ -81,7 +117,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep,
                 additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary, amount,
                 exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors, nameOverride,
-                false);
+                false, false);
     }
 
     /**
@@ -94,7 +130,20 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, true);
+                nameOverride, true, hasteUntilEndOfTurn);
+    }
+
+    /**
+     * Returns this copy effect with the granted haste lasting only until end of turn ("it gains haste
+     * until end of turn") instead of for as long as the token exists.
+     */
+    public CreateTokenCopyOfTargetPermanentEffect withHasteUntilEndOfTurn() {
+        return new CreateTokenCopyOfTargetPermanentEffect(additionalSubtypes, additionalTypes, powerOverride,
+                toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep,
+                tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
+                sacrificeAtNextUpkeep, additionalSlotEffects, creatureSubtypeOverride, tapped, removeLegendary,
+                amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
+                nameOverride, replaceCardTypes, true);
     }
 
     /** Backward-compatible full constructor without a name override. */

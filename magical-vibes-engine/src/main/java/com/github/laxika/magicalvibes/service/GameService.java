@@ -341,6 +341,18 @@ public class GameService {
      * If the controller is acting as themselves (e.g., passing their own priority as
      * non-active player), the original player is returned.
      */
+    /**
+     * Rejects a decision made directly by a player whose turn another player is controlling (CR 723.1);
+     * the controlling player's own request is translated to the controlled player by
+     * {@link #resolveActingPlayer}.
+     */
+    private void requireNotControlledByAnotherPlayer(GameData gameData, Player player) {
+        if (gameData.mindControllerPlayerId != null
+                && player.getId().equals(gameData.mindControlledPlayerId)) {
+            throw new IllegalStateException("Another player is making your decisions this turn");
+        }
+    }
+
     private Player resolveActingPlayer(GameData gameData, Player player) {
         if (gameData.mindControllerPlayerId == null) return player;
         if (!player.getId().equals(gameData.mindControllerPlayerId)) return player;
@@ -652,6 +664,7 @@ public class GameService {
         if (runAsActionIfNeeded(gameData,
                 () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, List.of(), List.of(), false, null);
@@ -676,6 +689,7 @@ public class GameService {
             return;
         }
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithGift(gameData, player, cardIndex, xValue, targetId,
@@ -713,6 +727,7 @@ public class GameService {
                 () -> playModalXCard(gameData, actionPlayer, cardIndex, modeIndex, modalXValue, targetId,
                         targetIds, damageAssignments))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, modeIndex, targetId, damageAssignments,
@@ -727,6 +742,7 @@ public class GameService {
                 () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
                         targetIds, convokeCreatureIds))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, false, null);
@@ -739,6 +755,7 @@ public class GameService {
                 () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
                         targetIds, convokeCreatureIds, fromGraveyard))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, null);
@@ -751,6 +768,7 @@ public class GameService {
                 () -> playCard(gameData, actionPlayer, cardIndex, xValue, targetId, damageAssignments,
                         targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId);
@@ -764,6 +782,7 @@ public class GameService {
                         targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId,
                         phyrexianLifeCount))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount);
@@ -777,6 +796,7 @@ public class GameService {
                         targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId,
                         phyrexianLifeCount, alternateCostSacrificePermanentIds))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds);
@@ -791,6 +811,7 @@ public class GameService {
                         phyrexianLifeCount, alternateCostSacrificePermanentIds,
                         exileGraveyardCardIndex))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex);
@@ -809,6 +830,7 @@ public class GameService {
                         phyrexianLifeCount, alternateCostSacrificePermanentIds,
                         exileGraveyardCardIndex, exileGraveyardCardIndices, kicked))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked);
@@ -845,6 +867,7 @@ public class GameService {
                         discardHandCardIndex, discardHandCardIndices,
                         imposedSacrificePermanentIds, additionalCostSacrificePermanentIds))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments,
@@ -898,6 +921,7 @@ public class GameService {
                         imposedSacrificePermanentIds, additionalCostSacrificePermanentIds,
                         repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments,
@@ -1025,6 +1049,7 @@ public class GameService {
                         beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType, waterbendPaid,
                         payLifeForAdditionalCost, chosenAdditionalCostObjectId))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments,
@@ -1065,6 +1090,7 @@ public class GameService {
                         beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype,
                         casualtyCreatureIds))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithCasualty(gameData, player, cardIndex, xValue, targetId,
@@ -1264,6 +1290,7 @@ public class GameService {
                 () -> playCardWithEvoke(gameData, actionPlayer, cardIndex, xValue, targetId,
                         damageAssignments, targetIds))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithEvoke(gameData, player, cardIndex, xValue, targetId, damageAssignments,
@@ -1278,6 +1305,7 @@ public class GameService {
                 () -> playCardWithProwl(gameData, actionPlayer, cardIndex, xValue, targetId,
                         damageAssignments, targetIds))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithProwl(gameData, player, cardIndex, xValue, targetId, damageAssignments,
@@ -1302,6 +1330,7 @@ public class GameService {
                 () -> playCardWithAlternateCost(gameData, actionPlayer, cardIndex, xValue, targetId,
                         damageAssignments, targetIds, sacrificePermanentId))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithAlternateCost(gameData, player, cardIndex, xValue, targetId,
@@ -1323,6 +1352,7 @@ public class GameService {
                 () -> playCardWithAdventure(gameData, actionPlayer, cardIndex, xValue, targetId,
                         damageAssignments, targetIds, sacrificePermanentId))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithAdventure(gameData, player, cardIndex, xValue, targetId,
@@ -1384,6 +1414,7 @@ public class GameService {
                 () -> playCardWithMorph(gameData, actionPlayer, cardIndex, xValue, targetId,
                         damageAssignments, targetIds, revealedHandCardIndex))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithMorph(gameData, player, cardIndex, xValue, targetId,
@@ -1907,6 +1938,7 @@ public class GameService {
         if (runAsActionIfNeeded(gameData,
                 () -> playCardWithOverload(gameData, actionPlayer, cardIndex, xValue))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithOverload(gameData, player, cardIndex, xValue);
@@ -1920,6 +1952,7 @@ public class GameService {
                 () -> playCardWithConspire(gameData, actionPlayer, cardIndex, xValue, targetId,
                         damageAssignments, targetIds, conspireCreatureIds))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithConspire(gameData, player, cardIndex, xValue, targetId, damageAssignments,
@@ -1942,6 +1975,7 @@ public class GameService {
                 () -> playCardWithSplice(gameData, actionPlayer, cardIndex, xValue, targetId,
                         damageAssignments, targetIds, spliceHandCardIndices, splicePermanentIds))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardWithSplice(gameData, player, cardIndex, xValue, targetId, damageAssignments,
@@ -1978,6 +2012,7 @@ public class GameService {
                 () -> playCardFromExile(gameData, actionPlayer, exileCardId, xValue, targetId,
                         flashforwardCast))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardFromExile(gameData, player, exileCardId, xValue, targetId,
@@ -2008,6 +2043,7 @@ public class GameService {
                         exileCounterCostPermanentIds, convokeCreatureIds, waterbendPermanentIds,
                         waterbendPaid))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardFromExile(gameData, player, exileCardId, xValue, targetId,
@@ -2041,6 +2077,7 @@ public class GameService {
                 () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId,
                         counterCostPermanentIds, additionalCostSacrificePermanentIds, castFaceDown))) return;
         synchronized (gameData) {
+            requireNotControlledByAnotherPlayer(gameData, player);
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId,

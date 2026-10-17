@@ -39,12 +39,17 @@ public class SearchTargetPermanentControllerLibraryForSameNameToBattlefieldEffec
             return;
         }
 
+        String targetName = gameQueryService.getEffectiveName(gameData, target);
+        if (targetName == null) {
+            return;
+        }
+
         searchTargetLibraryEffectHandler.resolveForTargetPlayer(
                 gameData,
                 entry,
                 new SearchTargetLibraryEffect(
                         1,
-                        new CardNamedPredicate(target.getCard().getName()),
+                        new CardNamedPredicate(targetName),
                         LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER,
                         true),
                 targetControllerId);

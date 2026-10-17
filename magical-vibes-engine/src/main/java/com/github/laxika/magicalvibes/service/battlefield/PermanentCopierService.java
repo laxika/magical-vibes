@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.FlipCoinOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.LicidEndEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -45,11 +47,37 @@ public class PermanentCopierService {
         Card original = permanent.getBecomeCreatureBaseCard() != null
                 && permanent.getBecomeCreatureResultCard() == permanent.getCard()
                 ? permanent.getBecomeCreatureBaseCard() : permanent.getCard();
+        if (!permanent.getNonCopiableKeywords().isEmpty()) {
+            Card withoutGrantedKeywords = original.createRuntimeCopy();
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(original.getKeywords());
+            keywords.removeAll(permanent.getNonCopiableKeywords());
+            withoutGrantedKeywords.setKeywords(keywords);
+            original = withoutGrantedKeywords;
+        }
         if (original.getActivatedAbilities().stream().anyMatch(ability -> ability.getEffects().stream()
                 .anyMatch(LicidEndEffect.class::isInstance))) {
             // A Licid that became an Aura: that is the effect of its ability, not a copiable value, so a
             // copy sees the printed creature form (CR 707.2).
             return permanent.getOriginalCard();
+        }
+        FlipCoinOnEnterEffect entryFlip = permanent.getEntryCoinFlipHeads() == null ? null
+                : original.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .filter(FlipCoinOnEnterEffect.class::isInstance)
+                        .map(FlipCoinOnEnterEffect.class::cast)
+                        .findFirst().orElse(null);
+        if (entryFlip != null) {
+            // A permanent that copies this one already on the battlefield takes the form the entry
+            // coin flip fixed, without flipping again (Molten Sentry ruling).
+            boolean heads = permanent.getEntryCoinFlipHeads();
+            Card formCopy = original.createRuntimeCopy();
+            formCopy.setPower(heads ? entryFlip.headsPower() : entryFlip.tailsPower());
+            formCopy.setToughness(heads ? entryFlip.headsToughness() : entryFlip.tailsToughness());
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(formCopy.getKeywords());
+            keywords.addAll(heads ? entryFlip.headsKeywords() : entryFlip.tailsKeywords());
+            formCopy.setKeywords(keywords);
+            return formCopy;
         }
         if (original.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .noneMatch(ChooseIndependentModesOnEnterEffect.class::isInstance)) {

@@ -227,6 +227,10 @@ public final class FaceOracleMapper {
                 .matcher(cardText).find()) {
             keywords.add(Keyword.NIMBLE);
         }
+        if (cardText != null && java.util.regex.Pattern.compile("(?m)^Deworded(?:[ (]|$)")
+                .matcher(cardText).find()) {
+            keywords.add(Keyword.DEWORDED);
+        }
         if (cardText != null && java.util.regex.Pattern.compile("(?m)^Positioning(?:[ (]|$)")
                 .matcher(cardText).find()) {
             keywords.add(Keyword.POSITIONING);

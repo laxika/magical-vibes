@@ -35,7 +35,7 @@ public class MoltenSlagheap extends Card {
 
         // {1}, Remove X storage counters from this land: Add X mana in any combination of {B} and/or {R}.
         addActivatedAbility(new ActivatedAbility(
-                true,
+                false,
                 "{1}",
                 List.of(new RemoveCountersForManaEffect(
                         List.of(ManaColor.BLACK, ManaColor.RED), CounterType.STORAGE)),

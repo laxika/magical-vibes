@@ -13,9 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -43,13 +41,10 @@ public class Mirkwood extends Card {
                 "{2}{B}{G}, {T}, Sacrifice this land: Put two +1/+1 counters on target Bear, Spider, or Wolf you control. "
                         + "Activate only as a sorcery.",
                 new ControlledPermanentPredicateTargetFilter(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentHasAnySubtypePredicate(Set.of(
-                                        CardSubtype.BEAR,
-                                        CardSubtype.SPIDER,
-                                        CardSubtype.WOLF
-                                ))
+                        new PermanentHasAnySubtypePredicate(Set.of(
+                                CardSubtype.BEAR,
+                                CardSubtype.SPIDER,
+                                CardSubtype.WOLF
                         )),
                         "Target must be a Bear, Spider, or Wolf you control"
                 ),

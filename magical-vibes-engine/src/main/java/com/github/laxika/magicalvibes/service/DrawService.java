@@ -395,10 +395,6 @@ public class DrawService {
             return;
         }
 
-        if (!firstDrawStepDraw && resolveChainsOfMephistophelesDrawReplacement(gameData, playerId)) {
-            return;
-        }
-
         List<Integer> dredgeIndices = skipDredge ? List.of()
                 : dredgeSupport.eligibleGraveyardIndices(gameData, playerId);
         if (!dredgeIndices.isEmpty()) {
@@ -406,6 +402,10 @@ public class DrawService {
                     .builder(playerId, dredgeIndices, GraveyardChoiceDestination.DREDGE,
                             "Choose a card to dredge, or decline.")
                     .build());
+            return;
+        }
+
+        if (!firstDrawStepDraw && resolveChainsOfMephistophelesDrawReplacement(gameData, playerId)) {
             return;
         }
 
@@ -756,12 +756,13 @@ public class DrawService {
         int unconditionalDoublers = countDrawDoublers(gameData, playerId, false);
         int exceptFirstDoublers = countDrawDoublers(gameData, playerId, true);
         if (unconditionalDoublers > 0 || (!firstDrawStepDraw && exceptFirstDoublers > 0)) {
-            int unconditionalCount = 1 << Math.min(unconditionalDoublers, 20);
-            int exceptFirstMultiplier = 1 << Math.min(exceptFirstDoublers, 20);
+            // Each doubler multiplies by 2, and by Maro's Gone Nuts' factor on top, independently.
+            int perDoubler = 2 * MaroGoneNutsSupport.doublingFactor(gameData);
+            int unconditionalCount = repeatedProduct(perDoubler, unconditionalDoublers);
+            int exceptFirstMultiplier = repeatedProduct(perDoubler, exceptFirstDoublers);
             int drawCount = firstDrawStepDraw
                     ? 1 + (unconditionalCount - 1) * exceptFirstMultiplier
                     : unconditionalCount * exceptFirstMultiplier;
-            drawCount *= MaroGoneNutsSupport.doublingFactor(gameData);
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(playerName + "'s draw is doubled — they draw "
                     + drawCount + " cards instead."));
@@ -987,10 +988,30 @@ public class DrawService {
         }
 
         gameData.chainsDrawReplacementsApplied.put(playerId, alreadyApplied + 1);
-        gameData.discardCausedByOpponent = false;
+        gameData.discardCausedByOpponent = chainsControlledByOpponent(gameData, playerId);
         playerInteractionSupport.resolveDiscardCards(
                 gameData, playerId, 1, DiscardFollowUp.rummage(1));
         return true;
+    }
+
+    /** Whether a Chains of Mephistopheles effect that replaces this player's draws is controlled by another player. */
+    private boolean chainsControlledByOpponent(GameData gameData, UUID drawingPlayerId) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(drawingPlayerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent permanent : battlefield) {
+                if (gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
+                        .anyMatch(ChainsOfMephistophelesDrawReplacement.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private int countChainsOfMephistopheles(GameData gameData) {
@@ -1001,7 +1022,7 @@ public class DrawService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                count += permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                count += gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                         .filter(ChainsOfMephistophelesDrawReplacement.class::isInstance)
                         .count();
             }
@@ -1407,6 +1428,14 @@ public class DrawService {
         if (gameData.status != GameStatus.FINISHED) {
             resolveDrawCards(gameData, secondPlayerId, 1, null, true);
         }
+    }
+
+    private static int repeatedProduct(int factor, int count) {
+        int result = 1;
+        for (int i = 0; i < Math.min(count, 20); i++) {
+            result *= factor;
+        }
+        return result;
     }
 
     private int countDrawDoublers(GameData gameData, UUID playerId, boolean exceptFirst) {

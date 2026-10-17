@@ -37,4 +37,13 @@ public record MayPayLifeEffect(int lifeCost, CardEffect wrapped, String prompt,
                 ? aware.boundToDyingCard(dyingCardId) : elseEffect;
         return new MayPayLifeEffect(lifeCost, boundWrapped, prompt, payer, boundElse);
     }
+
+    @Override
+    public CardEffect boundToDyingCardEntryVersion(long graveyardEntryVersion) {
+        CardEffect versionedWrapped = wrapped instanceof DyingCreatureCardAwareEffect aware
+                ? aware.boundToDyingCardEntryVersion(graveyardEntryVersion) : wrapped;
+        CardEffect versionedElse = elseEffect instanceof DyingCreatureCardAwareEffect aware
+                ? aware.boundToDyingCardEntryVersion(graveyardEntryVersion) : elseEffect;
+        return new MayPayLifeEffect(lifeCost, versionedWrapped, prompt, payer, versionedElse);
+    }
 }

@@ -140,8 +140,10 @@ class MyojinOfCleansingFireTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
 
-        harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(myojin);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);

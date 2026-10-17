@@ -50,6 +50,8 @@ class MizziumMeddlerTest extends BaseCardTest {
 
         // Resolve the ETB trigger (redirect), then Boomerang itself.
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -80,6 +82,8 @@ class MizziumMeddlerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, abilityId);
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         // The 1 damage hit the 1/4 Meddler instead of the 1/1 Elves.
@@ -106,6 +110,7 @@ class MizziumMeddlerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, lavaAxe.getId());
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         // Lava Axe targets a player or planeswalker; the Meddler is not a legal new target.
@@ -196,6 +201,7 @@ class MizziumMeddlerTest extends BaseCardTest {
                 PendingInteraction.PermanentChoice.class).validIds()).contains(spell.getId());
         harness.handlePermanentChosen(player1, spell.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Mizzium Meddler");

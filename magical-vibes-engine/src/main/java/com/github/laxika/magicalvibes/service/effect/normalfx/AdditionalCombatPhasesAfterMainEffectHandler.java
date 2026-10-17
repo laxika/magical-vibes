@@ -44,6 +44,14 @@ public class AdditionalCombatPhasesAfterMainEffectHandler implements NormalEffec
                             : TurnStep.END_STEP;
         }
 
+        if (additionalCombats.additionalCombatBeginningEffect() != null) {
+            for (int i = 0; i < additionalCombats.count(); i++) {
+                gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(
+                        entry.getControllerId(), entry.getCard(),
+                        additionalCombats.additionalCombatBeginningEffect(), entry.getSourcePermanentId()));
+            }
+        }
+
         if (additionalCombats.onlyTargetCreaturesCanAttack()) {
             for (int i = 0; i < additionalCombats.count(); i++) {
                 gameData.queueDelayedAction(new DelayedAdditionalCombatBeginningEffect(

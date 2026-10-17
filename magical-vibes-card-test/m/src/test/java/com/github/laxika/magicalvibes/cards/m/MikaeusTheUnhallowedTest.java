@@ -172,13 +172,13 @@ class MikaeusTheUnhallowedTest extends BaseCardTest {
         Permanent griffin = harness.addToBattlefieldAndReturn(player1, new SilverclawGriffin());
         harness.setHand(player2, List.of(new FiresOfUndeath(), new FiresOfUndeath(), new TragicSlip()));
         harness.addMana(player2, ManaColor.RED, 6);
-        harness.addMana(player2, ManaColor.BLACK, 1);
         harness.castInstant(player2, 0, griffin.getId());
         resolveAllTriggers();
         harness.castInstant(player2, 0, griffin.getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Silverclaw Griffin");
 
+        harness.addMana(player2, ManaColor.BLACK, 1);
         harness.castInstant(player2, 0, mikaeus.getId());
         resolveAllTriggers();
 

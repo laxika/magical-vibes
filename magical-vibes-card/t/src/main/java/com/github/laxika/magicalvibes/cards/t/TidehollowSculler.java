@@ -23,6 +23,7 @@ public class TidehollowSculler extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), List.of(), HandChoiceDestination.EXILE, true));
+                new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), List.of(), HandChoiceDestination.EXILE, true)
+                        .withReturnsOnSourceLeavesTrigger());
     }
 }

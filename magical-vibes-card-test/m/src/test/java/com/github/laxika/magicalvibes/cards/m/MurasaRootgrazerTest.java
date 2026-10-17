@@ -168,10 +168,10 @@ class MurasaRootgrazerTest extends BaseCardTest {
     @DisplayName("A basic land controlled by the ability's controller returns to its actual owner")
     void returnsBorrowedLandToOwner() {
         addReadyRootgrazer(player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
-        gd.playerBattlefields.get(player2.getId()).remove(plains);
-        gd.playerBattlefields.get(player1.getId()).add(plains);
-        gd.stolenCreatures.put(plains.getId(), player2.getId());
+        setOwnerAndController(plains, player2, player1);
 
         harness.activateAbility(player1, 0, 1, null, plains.getId());
         harness.passBothPriorities();
@@ -185,12 +185,12 @@ class MurasaRootgrazerTest extends BaseCardTest {
     @DisplayName("The return ability does not return a land that changes controller before resolution")
     void cannotReturnLandNoLongerControlled() {
         addReadyRootgrazer(player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
 
         harness.activateAbility(player1, 0, 1, null, plains.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(plains);
-        gd.playerBattlefields.get(player2.getId()).add(plains);
-        gd.stolenCreatures.put(plains.getId(), player1.getId());
+        setOwnerAndController(plains, player1, player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Plains");

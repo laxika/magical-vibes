@@ -17,7 +17,7 @@ import java.util.List;
 public class MasteryOfTheUnseen extends Card {
 
     public MasteryOfTheUnseen() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP,
                 new GainLifeEffect(new PermanentCount(
                         new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
         addActivatedAbility(new ActivatedAbility(false, "{3}{W}",

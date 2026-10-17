@@ -49,6 +49,10 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
 
     @Override public CardEffect costEffect() { return cost; }
 
+    private boolean isCrew() {
+        return cost instanceof CrewCost crew && crew.crewsVehicle();
+    }
+
     /**
      * Returns the required power. The framework uses this as the initial {@code remaining}
      * value, which then decreases by {@link #lastPaymentWeight()} after each creature is tapped.
@@ -76,7 +80,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
                 // "Other untapped creatures" excludes the source permanent.
                 .filter(p -> sourcePermanentId == null || !p.getId().equals(sourcePermanentId))
                 .filter(p -> gameQueryService.isCreature(gameData, p))
-                .filter(p -> !(cost instanceof CrewCost)
+                .filter(p -> !(isCrew())
                         || !gameQueryService.hasAuraWithEffect(gameData, p, EnchantedCreatureCantCrewEffect.class))
                 .map(Permanent::getId)
                 .toList();
@@ -96,19 +100,20 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Permanent is not a creature");
         }
-        if (cost instanceof CrewCost
+        if (isCrew()
                 && gameQueryService.hasAuraWithEffect(gameData, chosen, EnchantedCreatureCantCrewEffect.class)) {
             throw new IllegalStateException("Creature can't crew Vehicles");
         }
         Permanent sourcePermanent = sourcePermanentId == null
                 ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        lastTappedCreaturePower = Math.max(0,
-                gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, chosen, cost instanceof CrewCost));
+        // A creature with negative power lowers the total (CR 107.1b).
+        lastTappedCreaturePower =
+                gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, chosen, isCrew());
         chosen.tap();
-        if (cost instanceof CrewCost && sourcePermanent != null) {
+        if (isCrew() && sourcePermanent != null) {
             sourcePermanent.recordCreatureThatCrewedThisTurn(chosen.getId());
         }
-        if (cost instanceof CrewCost && sourcePermanentId != null) {
+        if (isCrew() && sourcePermanentId != null) {
             gameData.recordCreatureCrewingPermanent(sourcePermanentId, chosen.getId());
             Set<CardSubtype> subtypes = gameQueryService.effectiveCreatureSubtypes(gameData, chosen);
             subtypes.stream()
@@ -157,7 +162,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(Objects::nonNull)
                 .mapToInt(p -> Math.max(0,
-                        gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, p, cost instanceof CrewCost)))
+                        gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, p, isCrew())))
                 .min().orElse(0);
         return (totalPower - minPower) < remaining;
     }
@@ -169,7 +174,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(Objects::nonNull)
                 .mapToInt(p -> Math.max(0,
-                        gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, p, cost instanceof CrewCost)))
+                        gameQueryService.getEffectivePowerForCrewOrSaddle(gameData, sourcePermanent, p, isCrew())))
                 .sum();
     }
 }

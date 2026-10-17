@@ -134,7 +134,7 @@ class MagusOfTheJarTest extends BaseCardTest {
         addReadyMagus();
         harness.forceStep(TurnStep.END_STEP);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.CLEANUP, harness::passBothPriorities);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7).doesNotContain(original1);
@@ -169,7 +169,7 @@ class MagusOfTheJarTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
         assertThat(gd.exiledCards).hasSize(2);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.CLEANUP, harness::passBothPriorities);
 
         advanceToEndStep(player2);
 
@@ -187,7 +187,7 @@ class MagusOfTheJarTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.CLEANUP, harness::passBothPriorities);
     }
 
     private void setDeck(Player player, int count) {

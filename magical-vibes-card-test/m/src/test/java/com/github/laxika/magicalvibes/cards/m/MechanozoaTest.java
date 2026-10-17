@@ -160,6 +160,8 @@ class MechanozoaTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
 
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         addNormalMana();
         harness.castFromExile(player1, card.getId(), target.getId());

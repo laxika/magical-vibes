@@ -514,6 +514,7 @@ public class LibraryChoiceHandlerService {
                     }
                     return;
                 }
+                boolean auraStayedInSourceCards = false;
                 if (destination == LibrarySearchDestination.EXILE_PLAYABLE_REST_TO_BOTTOM_RANDOM) {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
                     gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
@@ -554,6 +555,21 @@ public class LibraryChoiceHandlerService {
                         accumulatedCards.add(chosenCard);
                     } else {
                         graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard, Zone.LIBRARY);
+                    }
+                } else if (toBattlefield && !placeBattlefieldCardsSimultaneously
+                        && destination == LibrarySearchDestination.BATTLEFIELD && chosenCard.isAura()
+                        && !toBattlefieldTapped && !grantHaste && !returnToHandAtEndStep && !exileAtEndStep
+                        && battlefieldCounter == null && enterWithCounters == null
+                        && gameData.findExiledCard(chosenCard.getId()) == null) {
+                    // CR 303.4f: the Aura's host is chosen as it enters. The revealed card is put back so
+                    // the entry removes it from the library; one that can't enter stays among the rest.
+                    UUID auraId = chosenCard.getId();
+                    deck.add(chosenCard);
+                    battlefieldEntryBatchSupport.begin(gameData, List.of(
+                            new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                                    battlefieldControllerId, deckOwnerId, chosenCard, Zone.LIBRARY, null)));
+                    if (!gameData.interaction.isAwaitingInput()) {
+                        auraStayedInSourceCards = deck.removeIf(deckCard -> deckCard.getId().equals(auraId));
                     }
                 } else if (toBattlefield && !placeBattlefieldCardsSimultaneously) {
                     boolean selectedFromExile = gameData.findExiledCard(chosenCard.getId()) != null;
@@ -624,7 +640,7 @@ public class LibraryChoiceHandlerService {
                 } else if (!toBattlefield) {
                     addCardFromLibraryToHand(gameData, handOwnerId, chosenCard, deckOwnerId, sourceZone == deck);
                 }
-                for (int i = 0; i < sourceCards.size(); i++) {
+                for (int i = 0; i < sourceCards.size() && !auraStayedInSourceCards; i++) {
                     if (sourceCards.get(i).getId().equals(chosenCard.getId())) {
                         sourceCards.remove(i);
                         break;
@@ -1147,6 +1163,7 @@ public class LibraryChoiceHandlerService {
             List<Card> remainingMatches = deck.stream()
                     .filter(card -> predicateEvaluationService.matchesCardPredicate(
                             card, filterPredicate, null, gameData, deckOwnerId))
+                    .filter(searchCards::contains)
                     .toList();
             if (!remainingMatches.isEmpty()) {
                 beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
@@ -1808,6 +1825,13 @@ public class LibraryChoiceHandlerService {
                         .filter(c -> !excluded.contains(c.getName()))
                         .toList();
             }
+            if (librarySearch.requireSharedLandType() && !accumulatedCards.isEmpty()) {
+                newSearchCards = newSearchCards.stream()
+                        .filter(c -> accumulatedCards.stream().allMatch(selected ->
+                                gameQueryService.landTypesOf(c).stream()
+                                        .anyMatch(gameQueryService.landTypesOf(selected)::contains)))
+                        .toList();
+            }
             if (requireDifferentPowers && !accumulatedCards.isEmpty()) {
                 newSearchCards = newSearchCards.stream()
                         .filter(c -> accumulatedCards.stream()
@@ -1884,6 +1908,7 @@ public class LibraryChoiceHandlerService {
                     .followUp(followUp)
                     .requireDifferentNames(requireDifferentNames)
                     .requireDifferentPowers(requireDifferentPowers)
+                    .requireSharedLandType(librarySearch.requireSharedLandType())
                     .manaValueBound(manaValueBoundValue, manaValueExact)
                     .totalManaValueBound(totalManaValueBound)
                     .excludedCardNames(excludedCardNames)
@@ -3361,6 +3386,14 @@ public class LibraryChoiceHandlerService {
         }
 
         if (libraryRevealChoice.selectedToTop()) {
+            if (!selectedCards.isEmpty()) {
+                GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals ");
+                for (int i = 0; i < selectedCards.size(); i++) {
+                    if (i > 0) revealBuilder.text(", ");
+                    revealBuilder.card(selectedCards.get(i));
+                }
+                gameLogService.append(gameData, revealBuilder.text(".").build());
+            }
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
                     controllerId, allRevealedCards, true, controllerId,
                     "Put the selected cards on top of your library and the rest on the bottom in any order.",
@@ -4392,10 +4425,20 @@ public class LibraryChoiceHandlerService {
     private void requireControllerLifeAffordable(GameData gameData, int selectedCount,
                                                  UUID controllerId, int lifeCost) {
         int totalLifeCost = selectedCount * lifeCost;
-        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)
-                || totalLifeCost > gameData.getLife(controllerId)) {
+        if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             throw new IllegalStateException("Not enough life to pay for " + selectedCount
                     + " cards (need " + totalLifeCost + ", have " + gameData.getLife(controllerId) + ")");
+        }
+        // Each card is a separate payment (CR 119.4): it needs the life total to cover its own amount at
+        // that moment, and a life-loss multiplier such as Bloodletter of Aclazotz's shrinks what is left.
+        int multiplier = gameQueryService.opponentLifeLossMultiplier(gameData, controllerId);
+        int remainingLife = gameData.getLife(controllerId);
+        for (int i = 0; i < selectedCount; i++) {
+            if (lifeCost > remainingLife) {
+                throw new IllegalStateException("Not enough life to pay for " + selectedCount
+                        + " cards (need " + totalLifeCost + ", have " + gameData.getLife(controllerId) + ")");
+            }
+            remainingLife -= lifeCost * multiplier;
         }
     }
 

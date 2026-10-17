@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -34,8 +35,8 @@ public class MishraLostToPhyrexia extends Card {
 
     public MishraLostToPhyrexia() {
         ChooseOneEffect modes = chooseThreeModes();
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, modes);
-        addEffect(EffectSlot.ON_ATTACK, modes);
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(modes));
+        addEffect(EffectSlot.ON_ATTACK, new ChooseOneAtTriggerTimeEffect(modes));
     }
 
     private ChooseOneEffect chooseThreeModes() {
@@ -46,33 +47,36 @@ public class MishraLostToPhyrexia extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsPlaneswalkerPredicate())));
 
-        registerEffectTargetIndex(discard, target(new PlayerPredicateTargetFilter(
-                new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")).getIndex());
-        registerEffectTargetIndex(damage, target(new AnyTargetPredicateTargetFilter(
+        PlayerPredicateTargetFilter discardFilter = new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
+        AnyTargetPredicateTargetFilter damageFilter = new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentIsBattlePredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be a creature, planeswalker, battle, or player")).getIndex());
-        registerEffectTargetIndex(destroy, target(new PermanentPredicateTargetFilter(
+                "Target must be a creature, planeswalker, battle, or player");
+        PermanentPredicateTargetFilter destroyFilter = new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
-                "Target must be an artifact or planeswalker")).getIndex());
+                "Target must be an artifact or planeswalker");
+        registerEffectTargetIndex(discard, target(discardFilter).getIndex());
+        registerEffectTargetIndex(damage, target(damageFilter).getIndex());
+        registerEffectTargetIndex(destroy, target(destroyFilter).getIndex());
 
         return new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
-                        "Target opponent discards two cards", discard),
+                        "Target opponent discards two cards", discard, discardFilter),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Mishra deals 3 damage to any target", damage),
+                        "Mishra deals 3 damage to any target", damage, damageFilter),
                 new ChooseOneEffect.ChooseOneOption(
-                        "Destroy target artifact or planeswalker", destroy),
+                        "Destroy target artifact or planeswalker", destroy, destroyFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain menace and trample until end of turn",
                         List.of(
-                                new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES))),
+                                new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you don't control get -1/-1 until end of turn",
                         new BoostAllCreaturesEffect(-1, -1,
